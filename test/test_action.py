@@ -87,6 +87,15 @@ class ActionWidgetsCase( ModelThreadTestCase ):
                                    self.application_gui_context,
                                    self.parent )
         self.grab_widget_states( widget, 'application' )
+    
+    def test_hide_progress_dialog( self ):
+        from camelot.view.action_runner import hide_progress_dialog
+        dialog = QtGui.QWidget()
+        dialog.show()
+        self.application_gui_context.progress_dialog = dialog
+        with hide_progress_dialog( self.application_gui_context ):
+            self.assertTrue( dialog.isHidden() )
+        self.assertFalse( dialog.isHidden() )
         
 class ActionStepsCase( ModelThreadTestCase ):
     """Test the various steps that can be executed during an

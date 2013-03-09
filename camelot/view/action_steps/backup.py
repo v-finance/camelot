@@ -34,6 +34,7 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext, variant_to_pyobject
+from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.art import Icon
 import logging
@@ -286,10 +287,11 @@ class SelectBackup( ActionStep ):
     
     def gui_run( self, gui_context ):
         dialog = self.render()
-        result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
-            raise CancelRequest()
-        return ( dialog.label, dialog.storage )
+        with hide_progress_dialog( gui_context ):
+            result = dialog.exec_()
+            if result == QtGui.QDialog.Rejected:
+                raise CancelRequest()
+            return ( dialog.label, dialog.storage )
 
 class SelectRestore( SelectBackup ):
     

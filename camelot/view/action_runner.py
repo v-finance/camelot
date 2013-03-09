@@ -22,15 +22,32 @@
 #
 #  ============================================================================
 
+import contextlib
 import logging
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.model_thread import post
 
 LOGGER = logging.getLogger( 'camelot.view.action_runner' )
+
+@contextlib.contextmanager
+def hide_progress_dialog( gui_context ):
+    """A context manager to hide the progress dialog of the gui context when
+    the context is entered, and restore the original state at exit"""
+    progress_dialog = gui_context.progress_dialog
+    original_state = None
+    if isinstance( progress_dialog, ( QtGui.QWidget, ) ):
+        original_state = progress_dialog.isHidden()
+    try:
+        if original_state == False:
+            progress_dialog.hide()
+        yield
+    finally:
+        if original_state == False:
+            progress_dialog.show()
 
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action

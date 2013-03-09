@@ -31,6 +31,7 @@ from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
+from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import Icon
 from camelot.view.controls import delegates
 from camelot.view.controls.actionsbox import ActionsBox
@@ -242,10 +243,11 @@ class ChangeObject( ActionStep ):
         
     def gui_run( self, gui_context ):
         dialog = self.render( gui_context )
-        result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
-            raise CancelRequest()
-        return self._obj
+        with hide_progress_dialog( gui_context ):
+            result = dialog.exec_()
+            if result == QtGui.QDialog.Rejected:
+                raise CancelRequest()
+            return self._obj
 
 class ChangeObjects( ActionStep ):
     """
@@ -312,10 +314,11 @@ class ChangeObjects( ActionStep ):
         
     def gui_run( self, gui_context ):
         dialog = self.render()
-        result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
-            raise CancelRequest()
-        return self.objects
+        with hide_progress_dialog( gui_context ):
+            result = dialog.exec_()
+            if result == QtGui.QDialog.Rejected:
+                raise CancelRequest()
+            return self.objects
 
 class ChangeFieldDialog( StandaloneWizardPage ):
     """A dialog to change a field of  an object. 
@@ -437,7 +440,8 @@ class ChangeField( ActionStep ):
     
     def gui_run( self, gui_context ):
         dialog = self.render()
-        result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
-            raise CancelRequest()
-        return (dialog.field, dialog.value)
+        with hide_progress_dialog( gui_context ):
+            result = dialog.exec_()
+            if result == QtGui.QDialog.Rejected:
+                raise CancelRequest()
+            return (dialog.field, dialog.value)

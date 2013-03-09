@@ -26,6 +26,7 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.controls.editors import RichTextEditor
 from camelot.view.utils import resize_widget_to_screen
@@ -89,6 +90,7 @@ class EditTextDocument( ActionStep ):
     def gui_run( self, gui_context ):
         try:
             dialog = self.render()
-            dialog.exec_()
+            with hide_progress_dialog( gui_context ):
+                dialog.exec_()
         finally:
             self.document.moveToThread( self.thread )

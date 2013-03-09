@@ -25,6 +25,7 @@
 from PyQt4 import QtGui, QtCore
   
 from camelot.admin.action import ActionStep
+from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 
 class SelectFile( ActionStep ):
@@ -83,10 +84,11 @@ class SelectFile( ActionStep ):
         settings = QtCore.QSettings()
         directory = settings.value( 'datasource' ).toString()
         dialog = self.render( directory )
-        if dialog.exec_() == QtGui.QDialog.Rejected:
-            raise CancelRequest()
-        file_names = [unicode(fn) for fn in dialog.selectedFiles()]
-        if file_names:
-            settings.setValue( 'datasource', QtCore.QVariant( file_names[0] ) )
-        return file_names
+        with hide_progress_dialog( gui_context ):
+            if dialog.exec_() == QtGui.QDialog.Rejected:
+                raise CancelRequest()
+            file_names = [unicode(fn) for fn in dialog.selectedFiles()]
+            if file_names:
+                settings.setValue( 'datasource', QtCore.QVariant( file_names[0] ) )
+            return file_names
 

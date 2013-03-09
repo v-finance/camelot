@@ -27,6 +27,7 @@ from PyQt4 import QtCore, QtGui
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
+from camelot.view.action_runner import hide_progress_dialog
 
 class SelectDialog( QtGui.QDialog ):
     
@@ -63,8 +64,8 @@ class SelectObject( ActionStep ):
         
     def gui_run( self, gui_context ):
         select_dialog = SelectDialog( self.admin, self.query )
-        select_dialog.exec_()
-        if select_dialog.object_getter:
-            return select_dialog.object_getter
-        raise CancelRequest()
-
+        with hide_progress_dialog( gui_context ):
+            select_dialog.exec_()
+            if select_dialog.object_getter:
+                return select_dialog.object_getter
+            raise CancelRequest()

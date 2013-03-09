@@ -29,6 +29,7 @@ from camelot.admin.action import ( ActionStep,
 from camelot.admin.action.document_action import EditDocument
 from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
+from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
 
 class PrintPreviewDialog( QtGui.QPrintPreviewDialog ):
@@ -159,7 +160,8 @@ class PrintPreview( ActionStep ):
      
     def gui_run( self, gui_context ):
         dialog = self.render( gui_context )
-        dialog.exec_()
+        with hide_progress_dialog( gui_context ):
+            dialog.exec_()
         
     def get_pdf( self ):
         self.config_printer()
