@@ -175,23 +175,17 @@ def code_from_string(s, separator):
     return s.split(separator)
 
 def int_from_string(s):
-    if s is None: raise ParsingError()
-    if s.isspace(): return int()
-
-    s = s.strip()
-    if len(s) == 0: return int()
-
-    try:
-	# Convert to float first, to be able to convert a string like '1.0'
-	# to 1
-        i = int( float( s ) )
-    except ValueError:
-        raise ParsingError()
-    return i
+    value = float_from_string(s)
+    if value != None:
+	value = int( value )
+    return value
 
 def float_from_string(s):
-    if not s:
-        return None
+    if s == None:
+	return None
+    s = s.strip()
+    if len(s) == 0:
+	return None
     locale = QtCore.QLocale()
     # floats in python are implemented as double in C
     f, ok = locale.toDouble(s)

@@ -759,25 +759,26 @@ class ImportFromFile( EditAction ):
         #
         # import the temporary objects into real objects
         #
-        for i,row in enumerate( collection ):
-            new_entity_instance = admin.entity()
-            for field_name, attributes in row_data_admin.get_columns():
-                try:
-                    from_string = attributes['from_string']
-                except KeyError:
-                    LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
-                    from_string = lambda _a:None
-                setattr(
-                    new_entity_instance,
-                    attributes['original_field'],
-                    from_string(getattr(row, field_name))
-                )
-            admin.add( new_entity_instance )
-            # in case the model is a collection proxy, the new objects should
-            # be appended
-            model_context._model.append( new_entity_instance )
-            yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
-        yield action_steps.FlushSession( model_context.session )
+        with model_context.session.begin():
+            for i,row in enumerate( collection ):
+                new_entity_instance = admin.entity()
+                for field_name, attributes in row_data_admin.get_columns():
+                    try:
+                        from_string = attributes['from_string']
+                    except KeyError:
+                        LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
+                        from_string = lambda _a:None
+                    setattr(
+                        new_entity_instance,
+                        attributes['original_field'],
+                        from_string(getattr(row, field_name))
+                    )
+                admin.add( new_entity_instance )
+                # in case the model is a collection proxy, the new objects should
+                # be appended
+                model_context._model.append( new_entity_instance )
+                yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
+            yield action_steps.FlushSession( model_context.session )
         yield action_steps.Refresh()
         
 
@@ -793,9 +794,10 @@ class ReplaceFieldContents( EditAction ):
         yield action_steps.UpdateProgress( text = _('Replacing field') )
         if value_getter != None:
             value = value_getter()
-            for obj in model_context.get_selection():
-                setattr( obj, field_name, value )
-            yield action_steps.FlushSession( model_context.session )
+            with model_context.session.begin():
+                for obj in model_context.get_selection():
+                    setattr( obj, field_name, value )
+                yield action_steps.FlushSession( model_context.session )
         
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
