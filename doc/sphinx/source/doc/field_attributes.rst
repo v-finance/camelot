@@ -280,14 +280,6 @@ class of the target class.  This can be used to make the table view
 within a one2many widget look different from the default table view for
 the same object.
 
-.. _field-attribute-embedded:
-
-embedded
---------
-
-Should be True or False, if True, the related object will be
-displayed with its own form inside the form of the parent object.
-
 .. _field-attribute-address_type:
 
 address_type

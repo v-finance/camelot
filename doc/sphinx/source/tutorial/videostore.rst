@@ -245,7 +245,7 @@ Configuring the Application
 We are now working with :file:`application_admin.py`.  
 One of the tasks of :file:`application_admin.py` is to specify the sections in the left pane of the main window.
 
-Camelot defined a class, ``MyApplicationAdmin``, for us. 
+The created application has a class, ``MyApplicationAdmin``. 
 This class is a subclass of :class:`camelot.admin.application_admin.ApplicationAdmin`, which is used to control the overall look and feel of every Camelot application.
 
 To change sections in the left pane of the main window, simply overwrite the ``get_sections`` method, to return a list of the desired sections.  
@@ -391,9 +391,6 @@ follows::
    Look in the startup logs to see where they are stored on your system, look for a line like ::
    
 	[INFO   ] [camelot.core.conf] - store database and media in /home/username/.camelot/videostore
-	
-   To simply add columns and tables, the function :func:`camelot.core.sql.update_database_from_model`
-   can be used.
    
 For completeness the two entities are once again listed below::
 

@@ -175,6 +175,7 @@ class ShowHistory( Action ):
                 yield step
         
 class CloseForm( Action ):
+    """Validte the form can be closed, and close it"""
     
     shortcut = QtGui.QKeySequence.Close
     icon = Icon('tango/16x16/actions/system-log-out.png')

@@ -38,18 +38,13 @@ are installed and available in your **PYTHONPATH**.
  
 **Dependencies**
 
-Notice that bugs in QT 4.6 and PyQt 4.7 may cause a Camelot application
-to crash, so newer versions of those libraries are required.
-
- * QT 4.7
+ * Qt 4.8
  * PyQt 4.8 `PyQt Website <http://www.riverbankcomputing.co.uk/>`_
- * SQLAlchemy >= 0.7.7 and < 0.8.0 `SQLAlchemy Website <http://www.sqlalchemy.org>`_
- * sqlalchemy-migrate 0.7.1
+ * SQLAlchemy 0.8.0 `SQLAlchemy Website <http://www.sqlalchemy.org>`_
  * Jinja2 2.5.5
  * chardet 1.0.1 
  * xlwt 0.7.2 
  * xlrd 0.7.1
- * Elixir 0.7.1 (only needed for examples and default model)
                         
 **Releases**
 
@@ -59,24 +54,18 @@ extracted::
 
   tar xzvf Camelot-10.07.02.tar.gz
 
-**Master branch**
+**Repository**
 
 The latest and greatest version of the source can be checked out
-from the gitorious repository::
+from the Bitbucket repository::
 
-  git clone git@gitorious.org:camelot/camelot.git
+  hg clone https://bitbucket.org/conceptive/camelot
   
 **Adapting PYTHONPATH**
 
 You need to make sure Camelot and all its dependencies are in the **PYTHONPATH**
-before you start using it::
+before you start using it.
 
-  export PYTHONPATH=/home/username/Camelot-10.07.02
-  
-or::
-
-  export PYTHONPATH=/home/username/Camelot-10.07.02:path to sqlalchemy:path to elxir:...
-  
 Verifiy the installation
 ========================
 

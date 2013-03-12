@@ -6,7 +6,7 @@ Calculated Fields
 
 To display fields in forms that are not stored into the database but, are
 calculated at run time, two main options exist.  Either those fields are
-calculated within python or they are calculated by Python.  Normal Python
+calculated within the database or they are calculated by Python.  Normal Python
 properties can be used to do the calculation in Python, whereas ColumnProperties
 can be used to do the logic in the database.
 
@@ -25,10 +25,10 @@ the field attributes to make them writeable by the user.
 Properties are also used to summarize information from multiple attributes and
 put them in a single field.
   
-Attach actions to field changes
-===============================
+Cascading field changes
+=======================
 
-Whenever the value of a field is changed, an action on the model can be triggered by
+Whenever the value of a field is changed, this change can cascade through the model by
 using properties to manipulate the field instead of manipulating it directly.  The
 example below demonstrates how the value of y should be chopped when x is changed.
 

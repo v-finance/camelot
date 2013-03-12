@@ -210,14 +210,6 @@ be specified using the verbose_name attribute.
     The name of the group in settings in which user dependent settings will
     be stored, defaults to the class name for which this Admin class is used.
     
-.. attribute:: model
-
-    The QAbstractItemModel class to be used to display collections of this object,
-    defaults to a CollectionProxy
-
-.. attribute:: TableView
-
-    The QWidget class to be used when a table view is needed
     """
     
     name = None
@@ -482,13 +474,13 @@ be specified using the verbose_name attribute.
         The returned list has the same order than the requested
         field_names.  A reimplementation of this method can look like::
         
-        def get_dynamic_field_attributes(self, obj, field_names):
-            for field_attributes in super( MyAdmin, self ).get_dynamic_field_attributes(obj, field_names):
-                if obj.status == 'finished':
-                    field_attributes['editable'] = True
-                else:
-                    field_attributes['editable'] = False
-                yield field_attributes
+            def get_dynamic_field_attributes(self, obj, field_names):
+                for field_attributes in super( MyAdmin, self ).get_dynamic_field_attributes(obj, field_names):
+                    if obj.status == 'finished':
+                        field_attributes['editable'] = True
+                    else:
+                        field_attributes['editable'] = False
+                    yield field_attributes
                 
         """
         for field_name in field_names:
