@@ -103,4 +103,4 @@ to facilitate this.
 
 .. literalinclude:: ../../../../test/test_model.py
    :start-after: begin load csv if fixture version
-   :end-before: end  load csv if fixture version
+   :end-before: end load csv if fixture version

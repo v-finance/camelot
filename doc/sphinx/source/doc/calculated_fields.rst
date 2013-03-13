@@ -45,8 +45,8 @@ summary builds on information in related records, having the database build the 
 reduces the need to transfer additional data from the database to the server.
 
 To display fields in the table and the form view that are the result of a calculation 
-done by the database, a `column_property` needs to be defined in the Declarative model.  In this 
-`column_property`, the sql query can be defined using SQLAlchemy statements.  In this example, the `Movie` class gains the
+done by the database, a :class:`camelot.core.orm.properties.ColumnProperty` needs to be defined in the Declarative model.  In this 
+column property, the sql query can be defined using SQLAlchemy statements.  In this example, the `Movie` class gains the
 `total_visitors` attribute which contains the sum of all visitors that went to a movie.
 
 .. literalinclude:: ../../../../camelot_example/model.py

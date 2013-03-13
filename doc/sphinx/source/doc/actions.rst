@@ -312,6 +312,8 @@ method, and a :class:`ApplicationActionModelContext` object as the
    :noindex:
    :members:
    
+.. _doc-form-actions:
+
 Form Actions
 ------------
 
@@ -342,6 +344,8 @@ An action specified here will receive a :class:`FormActionGuiContext`  object as
    :noindex:
    :members:
    
+.. _doc-list-actions:
+
 List Actions
 ------------
 

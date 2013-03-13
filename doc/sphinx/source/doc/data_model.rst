@@ -15,11 +15,8 @@ To activate a model, the model should be imported in the `setup_model` method of
        from camelot.model import authentication
        from camelot.model import party
        from camelot.model import i18n
-       from elixir import setup_all
+       from camelot.core.orm import setup_all
        setup_all( create_tables=True )    
-
-Some of these models are still developed using `Elixir`, therefor, when using these models the `setup_all` method should be called in `settings.py` to activate
-the `Elixir` mapping.  This is not needed when only `Declarative` model definitions are used.
 
 .. _model-persons:
 

@@ -84,7 +84,11 @@ def hostname():
 
 @documented_entity()
 class BatchJob( Entity, type_and_status.StatusMixin ):
-    """Information the batch job that is planned, running or has run"""
+    """A batch job is a long running task that is scheduled by
+    the user or started periodically.  The BatchJob objects can be used
+    to store information on such running task so the end user can review
+    them
+    """
     using_options( tablename = 'batch_job', order_by=['-id'] )
     host    = Field( sqlalchemy.types.Unicode(256), required=True, default=hostname )
     type    = ManyToOne( 'BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )

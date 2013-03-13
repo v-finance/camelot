@@ -25,13 +25,14 @@ To use *Declarative*, threre are some base classes that should be imported:
    
 Those are :
 
- * :class:`camelot.core.orm.entity.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database
+ * :class:`camelot.core.orm.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database,
+   and is a subclass of :class:`camelot.core.orm.entity.EntityBase`
  
  * :class:`camelot.admin.entity_admin.EntityAdmin` is the base class that describes how an `Entity` subclass should be represented in the GUI
  
  * :class:`sqlalchemy.schema.Column` describes a column in the database and a field in the model
  
- * :module:`sqlalchemy.types` contains the various column types that can be used
+ * :mod:`sqlalchemy.types` contains the various column types that can be used
  
 Next a model can be defined:
    
@@ -41,7 +42,7 @@ Next a model can be defined:
 The code above defines the model for a `Tag` class, an object with only a name that can be related to other
 ojbects later on.  This code has some things to notice :
 
- * `Tag` is a subclass of :class:`camelot.core.orm.entity.Entity`, 
+ * `Tag` is a subclass of :class:`camelot.core.orm.Entity`, 
    
  * the `__tablename__` class attribute allows us to specify the name of the table in the database in which
    the tags will be stored.

@@ -26,7 +26,6 @@ Contents:
    migrate/index.rst
    api/index.rst
    advanced/index.rst
-   cep/index.rst
 
 Support
 =======
@@ -35,7 +34,7 @@ Community
 ---------
 
 Community support is available on the `mailing list <http://groups.google.com/group/project-camelot>`_.
-Camelot is on Gitorious to lower contribution efforts: https://gitorious.org/camelot .
+Camelot is on `Bitbucket <http://bitbucket.org/conceptive/camelot>`_ to lower contribution efforts.
 
 Commercial
 ----------

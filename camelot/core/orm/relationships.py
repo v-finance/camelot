@@ -290,7 +290,7 @@ relationships accept the following optional (keyword) arguments:
 |                    | strings, each corresponding to the name of a field in  |
 |                    | the target entity. These field names can optionally be |
 |                    | prefixed by a minus (for descending order).            |
-+----------------------+------------------------------------------------------+
++--------------------+--------------------------------------------------------+
 | ``ondelete``       | Value for the foreign key constraint ondelete clause.  |
 |                    | May be one of: ``cascade``, ``restrict``,              |
 |                    | ``set null``, or ``set default``.                      |

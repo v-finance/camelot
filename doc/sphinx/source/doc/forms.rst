@@ -111,7 +111,7 @@ Each field on the form can be given a dynamic tooltip, using the `tooltip` field
 Buttons
 -------
 
-Buttons bound to a specific action can be put on a form, using the `form_actions` attribute, attribute of the Admin class : :ref:`form-actions`.
+Buttons bound to a specific action can be put on a form, using the `form_actions` attribute, attribute of the Admin class : :ref:`doc-form-actions`.
 
 Validation
 ----------

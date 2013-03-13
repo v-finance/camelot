@@ -29,7 +29,5 @@ All other sections can be read on an as needed base.
    data_model.rst
    fixtures.rst
    manage.rst
-   schemas.rst
-   shortcuts.rst
    threads.rst
    faq.rst
