@@ -116,19 +116,20 @@ class Status( Property ):
 	# classes a specific name, so these classes can be used whithin the
 	# memento and the fixture module
 	if self.enumeration == None:
-	    
-	    status_type = type( entity.__name__ + 'StatusType', 
-	                        (StatusType, entity._descriptor.entity_base,),
-	                        {'__tablename__':status_type_name} )
-	    
-	    foreign_key = schema.ForeignKey( status_type.id,
-	                                     ondelete = 'cascade', 
-	                                     onupdate = 'cascade')
-	    
+
 	    status_type_admin = type( entity.__name__ + 'StatusType',
 	                              ( StatusTypeAdmin, ),
 	                              { 'verbose_name':_(entity.__name__ + ' Status'),
 	                                'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
+	    
+	    status_type = type( entity.__name__ + 'StatusType', 
+	                        (StatusType, entity._descriptor.entity_base,),
+	                        { '__tablename__':status_type_name,
+	                          'Admin':status_type_admin } )	 
+
+	    foreign_key = schema.ForeignKey( status_type.id,
+	                                     ondelete = 'cascade', 
+	                                     onupdate = 'cascade')	    
 	                              
 	    status_history = type( entity.__name__ + 'StatusHistory',
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
