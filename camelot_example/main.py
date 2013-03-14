@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 
 logger = logging.getLogger('videostore.main')
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
-
+import wingdbstub
 try:
     import matplotlib
 except:
