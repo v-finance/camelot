@@ -36,7 +36,7 @@ Master
  
  * The frozen columns feature has been removed in favor of the column groups
  
- * The embedded form has been removed in favour of :method:`camelot.admin.object_admin.ObjectAdmin.get_compounding_objects`
+ * The embedded form has been removed in favour of :meth:`camelot.admin.object_admin.ObjectAdmin.get_compounding_objects`
 
 Release 12.06.29
 ----------------
