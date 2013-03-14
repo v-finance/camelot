@@ -342,7 +342,7 @@ class EntityBase( object ):
 	    Session().add( self ) 
                                     
     #
-    # methods below were copied from Elixir to mimic the Elixir Entity
+    # methods below were copied from camelot.core.orm to mimic the Elixir Entity
     # behavior
     #
     
