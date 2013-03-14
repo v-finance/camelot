@@ -94,8 +94,9 @@ class EntityDescriptor(object):
             return
 
         self.call_builders( 'create_pk_cols' )
+	base_descriptor = getattr( self.entity_base, '_descriptor', None )
 
-        if not self.has_pk:
+        if not self.has_pk and base_descriptor == None:
             colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
 
             self.add_column(

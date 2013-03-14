@@ -48,14 +48,11 @@ The list of supported arguments are as follows:
 +---------------------+-------------------------------------------------------+
 | ``session``         | Specify a custom contextual session for this entity.  |
 |                     | By default, entities uses the global                  |
-|                     | ``elixir.session``.                                   |
+|                     | ``camelot.core.orm.Session``.                         |
 |                     | This option takes a ``ScopedSession`` object or       |
 |                     | ``None``. In the later case your entity will be       |
 |                     | mapped using a non-contextual mapper which requires   |
 |                     | manual session management, as seen in pure SQLAlchemy.|
-|                     | This option can also be set for all entities of a     |
-|                     | module by setting the ``__session__`` attribute of    |
-|                     | that module.                                          |
 +---------------------+-------------------------------------------------------+
 
 For examples, please refer to the examples and unit tests.
@@ -107,7 +104,7 @@ class using_options( ClassMutator ):
     
     def process( self, entity_dict, tablename = None, **kwargs ):
         if tablename:
-            entity_dict['__tablename__'] = tablename
+            entity_dict.setdefault('__tablename__', tablename )
         for kwarg in kwargs:
             if kwarg in valid_options:
                 setattr( entity_dict['_descriptor'], kwarg, kwargs[kwarg])
