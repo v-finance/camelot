@@ -38,6 +38,7 @@ from camelot.core.orm.entity import entity_to_dict
 from camelot.admin.validator.entity_validator import EntityValidator
 
 from sqlalchemy import orm, schema
+from sqlalchemy.orm.attributes import instance_state
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -624,7 +625,11 @@ It has additional class attributes that customise its behaviour.
             self._expand_compounding_objects( objects_to_refresh )
             for obj in objects_to_refresh:
                 if obj in session:
-                    session.refresh( obj )
+                    state = instance_state( obj )
+                    if state.has_identity:
+                        session.refresh( obj )
+                    else:
+                        session.expunge( obj )
        
     @model_function
     def is_persistent(self, obj):
@@ -644,7 +649,6 @@ It has additional class attributes that customise its behaviour.
         """
         :return: True if the object has been deleted from the persistent
             state, False otherwise"""
-        from sqlalchemy.orm.attributes import instance_state
         state = instance_state( obj )
         if state != None and state.deleted:
             return True
