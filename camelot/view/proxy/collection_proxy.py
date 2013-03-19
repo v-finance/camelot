@@ -990,7 +990,8 @@ position in the query.
             columns = self._columns
             collection = self.get_collection()
             skipped_rows = 0
-            for i in range(offset, min(offset + limit + 1, self._rows)):
+            for i in range(offset, min( offset + limit + 1,
+                                        len( collection ) ) ):
                 object_found = False
                 while not object_found:
                     unsorted_row = self._sort_and_filter[i]
