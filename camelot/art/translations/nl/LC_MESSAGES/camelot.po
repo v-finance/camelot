@@ -198,7 +198,7 @@ msgstr "Toon de historiek van dit formulier"
 
 #: camelot/admin/action/form_action.py:153
 msgid "Change"
-msgstr "Wijzigigin"
+msgstr "Wijziging"
 
 #: camelot/admin/action/form_action.py:154
 msgid "Changes"
