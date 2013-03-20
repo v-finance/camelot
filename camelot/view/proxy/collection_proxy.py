@@ -990,16 +990,22 @@ position in the query.
             columns = self._columns
             collection = self.get_collection()
             skipped_rows = 0
-            for i in range(offset, min(offset + limit + 1, self._rows)):
-                object_found = False
-                while not object_found:
-                    unsorted_row = self._sort_and_filter[i]
-                    obj = collection[unsorted_row+skipped_rows]
-                    if self._skip_row(i, obj):
-                        skipped_rows = skipped_rows + 1
-                    else:
-                        self._add_data(columns, i, obj)
-                        object_found = True
+            try:
+                for i in range(offset, min( offset + limit + 1,
+                                            len( collection ) ) ):
+                    object_found = False
+                    while not object_found:
+                        unsorted_row = self._sort_and_filter[i]
+                        obj = collection[unsorted_row+skipped_rows]
+                        if self._skip_row(i, obj):
+                            skipped_rows = skipped_rows + 1
+                        else:
+                            self._add_data(columns, i, obj)
+                            object_found = True
+            except IndexError:
+                # stop when the end of the collection is reached, no matter
+                # what the request was
+                pass
         return ( offset, limit )
 
     @model_function

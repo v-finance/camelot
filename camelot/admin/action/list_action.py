@@ -92,14 +92,12 @@ class ListActionModelContext( ApplicationActionModelContext ):
             should fetched from the database at the same time.
         :return: a generator over the objects selected
         """
-        if self.selection_count == self.collection_count:
-            # if all rows are selected, take a shortcut
-            for obj in self.get_collection( yield_per ):
-                yield obj
-        else:
-            for (first_row, last_row) in self.selected_rows:
-                for row in range( first_row, last_row + 1 ):
-                    yield self._model._get_object( row )
+        # during deletion or duplication, the collection might
+        # change, while the selection remains the same, so we should
+        # be careful when using the collection to generate selection data
+        for (first_row, last_row) in self.selected_rows:
+            for row in range( first_row, last_row + 1 ):
+                yield self._model._get_object( row )
     
     def get_collection( self, yield_per = None ):
         """
