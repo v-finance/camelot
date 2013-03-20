@@ -1,5 +1,5 @@
 import unittest
-import wingdbstub
+
 from camelot.core.orm import EntityBase, EntityMeta, Session
 
 class TestMetaData( unittest.TestCase ):
