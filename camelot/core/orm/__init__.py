@@ -90,11 +90,17 @@ def process_deferred_properties( class_registry = entities ):
     """After all mappers have been configured, process the Deferred Propoperties.
     This function is called automatically for the default class_registry.
     """
+    from sqlalchemy.ext.declarative.clsregistry import ( _ModuleMarker,
+                                                         _MultipleClassMarker )
     LOGGER.debug( 'process deferred properties' )
-    classes = list( class_registry.values() )
-    classes.sort( key = lambda c:c._descriptor.counter )
+    classes = list()
+    for cls in class_registry.values():
+        if isinstance( cls, ( _ModuleMarker, _MultipleClassMarker ) ):
+            continue
+        classes.append( ( cls._descriptor.counter, cls ) )
+    classes.sort()
     
-    for cls in classes:
+    for counter, cls in classes:
         mapper = orm.class_mapper( cls )
         # set some convenience attributes to the Entity
         setattr( cls, 'table', mapper.local_table )
@@ -104,7 +110,7 @@ def process_deferred_properties( class_registry = entities ):
                          'append_constraints',
                          'create_properties',
                          'finalize', ):
-        for cls in classes:
+        for counter, cls in classes:
             method = getattr( cls._descriptor, method_name )
             method()
 

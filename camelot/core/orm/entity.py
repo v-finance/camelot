@@ -9,8 +9,8 @@ These classes can be reused if a custom base class is needed.
 import sys
 
 from sqlalchemy import orm, schema, sql
-from sqlalchemy.ext.declarative import ( _declarative_constructor,
-                                         DeclarativeMeta )
+from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
+                                             DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
 from . statements import MUTATORS
