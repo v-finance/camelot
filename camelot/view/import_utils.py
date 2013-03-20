@@ -30,6 +30,8 @@ import csv
 import codecs
 import itertools
 import logging
+import string
+import re
 
 from camelot.view import forms
 from camelot.view.controls import delegates
@@ -146,13 +148,26 @@ class ColumnMappingAdmin( ObjectAdmin ):
         self.columns = columns
         self.admin = admin
         self.field_choices = field_choices
+        self.column_field_expression = re.compile('^column_([0-9]*)_field$')
         super( ColumnMappingAdmin, self ).__init__( admin, entity )
         
+    def verbose_name_for_column( self, column ):
+        """Create a column name starting from an index starting at 0
+        eg : column=0 -> name='A'
+        """
+        if column <= 25:
+            return string.uppercase[column];
+        else:
+            return self.verbose_name_for_column(column/26 - 1) + self.verbose_name_for_column(column%26)        
+
     def get_field_attributes( self, field_name ):
         fa = ObjectAdmin.get_field_attributes( self, field_name )
-        if field_name.startswith( 'column' ) and field_name.endswith('field'):
+        match = self.column_field_expression.match( field_name )
+        if match != None:
+            column = int( match.group(1) )
             fa.update( { 'delegate':delegates.ComboBoxDelegate,
                          'editable':True,
+                         'name':self.verbose_name_for_column( column ),
                          'choices': [(None,'')] + self.field_choices } )
         return fa
             
