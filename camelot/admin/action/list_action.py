@@ -291,9 +291,6 @@ class OpenFormView( ListContextAction ):
             model, 
             row, 
         )
-        # make sure there is no 'pythonw' window title in windows for a
-        # second
-        formview.setWindowTitle( u' ' )
         show_top_level( formview, gui_context.item_view )
         
 class OpenNewView( EditAction ):
