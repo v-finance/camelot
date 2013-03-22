@@ -442,7 +442,7 @@ def show_top_level(view, parent):
     # Make the window title blank to prevent the something
     # like main.py or pythonw being displayed
     #
-    view.setWindowTitle( u'' )
+    view.setWindowTitle( u' ' )
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)

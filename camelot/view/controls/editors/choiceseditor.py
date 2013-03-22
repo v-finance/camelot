@@ -112,9 +112,6 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
             self.setCurrentIndex( -1 )
             LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( unicode( value ),
                                                                                                            unicode( self.objectName() ) ) )
-            LOGGER.error( u'Valid choices include : ' )
-            for i in range(self.count()):
-                LOGGER.error( ' - %s'%unicode(variant_to_pyobject(self.itemData(i))) )
 
     def get_value(self):
         """Get the current value of the combobox"""
