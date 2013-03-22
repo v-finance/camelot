@@ -608,9 +608,9 @@ class ExportSpreadsheet( ListContextAction ):
                     if isinstance( value, (unicode, str) ):
                         if attributes.get( 'translate_content', False ) == True:
                             value = ugettext( value )
-                    # handle fields of type code
                     elif isinstance( value, list ):
-                        value = u'.'.join(value)
+                        separator = attributes.get('separator', u', ')
+                        value = separator.join([unicode(el) for el in value])
                     elif isinstance( value, float ):
                         precision = attributes.get( 'precision', 2 )
                         format_string = '0.' + '0'*precision
