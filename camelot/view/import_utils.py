@@ -228,7 +228,7 @@ class UnicodeReader( object ):
         return self
     
 class XlsReader( object ):
-    """Read an XLS file and iterator over its lines.
+    """Read an XLS/XLSX file and iterator over its lines.
     
     The iterator returns each line of the excel as a list of strings.
     
@@ -239,8 +239,12 @@ class XlsReader( object ):
     def __init__( self, filename ):
         import xlrd
         # assume a single sheet xls doc
+        formatting_info = True
+        # xlsx does not yet support formatting info
+        if filename.endswith('.xlsx'):
+            formatting_info = False
         workbook = xlrd.open_workbook( filename,
-                                       formatting_info = True )
+                                       formatting_info = formatting_info )
         self.xf_list = workbook.xf_list
         self.datemode = workbook.datemode
         self.format_map = workbook.format_map
@@ -252,6 +256,9 @@ class XlsReader( object ):
         
     def get_format_string( self, xf_index ):
         """:return: the string that specifies the format of a cell"""
+        # xlsx has no formatting info, as such the xf_index is None
+        if xf_index == None:
+            return '0.00'
         try:
             xf = self.xf_list[ xf_index ]
         except IndexError:

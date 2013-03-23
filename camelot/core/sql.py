@@ -34,7 +34,6 @@ from sqlalchemy import event, MetaData
 import sqlalchemy.sql.operators
 
 from camelot.core.auto_reload import auto_reload
-from camelot.core.conf import settings
 
 LOGGER = logging.getLogger('camelot.core.sql')
 

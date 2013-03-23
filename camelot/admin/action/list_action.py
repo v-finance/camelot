@@ -711,7 +711,7 @@ class ImportFromFile( EditAction ):
         #
         # read the data into temporary row_data objects
         #
-        if os.path.splitext( file_name )[-1] == '.xls':
+        if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
             items = XlsReader( file_name )
         else:
             detected = chardet.detect( open( file_name ).read() )['encoding']
