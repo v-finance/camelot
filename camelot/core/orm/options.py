@@ -24,7 +24,7 @@ The list of supported arguments are as follows:
 +=====================+=======================================================+
 | ``metadata``        | Specify a custom MetaData for this entity.            |
 |                     | By default, entities uses the global                  |
-|                     | ``elixir.metadata``.                                  |
+|                     | ``camelot.core.orm.metadata``.                        |
 |                     | This option can also be set for all entities of a     |
 |                     | module by setting the ``__metadata__`` attribute of   |
 |                     | that module.                                          |

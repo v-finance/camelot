@@ -391,7 +391,7 @@ class FormTest(ModelThreadTestCase):
     def setUp(self):
         ModelThreadTestCase.setUp(self)
         from camelot.view.controls.formview import FormEditors
-        from elixir import entities
+        from camelot.core.orm import entities
         self.entities = [e for e in entities]
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -419,7 +419,7 @@ class FormTest(ModelThreadTestCase):
         #
         # The global list of entities should remain clean for subsequent tests
         #
-        from elixir import entities
+        from camelot.core.orm import entities
         for e in entities:
             if e not in self.entities:
                 entities.remove(e)
