@@ -39,7 +39,7 @@ from camelot.core.conf import settings
 LOGGER = logging.getLogger('camelot.core.sql')
 
 #
-# Singleton metadata object, to be used together with elixir or in SQLAlchemy
+# Singleton metadata object, to be used in SQLAlchemy
 # setups with only a single database
 #
 metadata = MetaData()
@@ -50,24 +50,3 @@ event.listen( auto_reload, 'before_reload', metadata.clear )
     
 def like_op(column, string):
     return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
-
-def update_database_from_model():
-    """Introspection the model and add missing columns in the database.    
-    this function can be ran in setup_model after::
-    
-        metadata.create_all()
-        
-    """
-    migrate_engine = settings.ENGINE()
-    migrate_connection = migrate_engine.connect()
-    
-    from sqlalchemy.schema import MetaData 
-    from migrate.versioning import schemadiff
-    from migrate.changeset import create_column
-    schema_diff = schemadiff.SchemaDiff(metadata, MetaData(migrate_connection, reflect=True))
-   
-    for table_name, difference in schema_diff.tables_different.items():
-        for column in difference.columns_missing_from_B:
-            LOGGER.warn( 'column %s missing in table %s'%(column, table_name) )
-            table = metadata.tables[table_name]
-            create_column(column, table)

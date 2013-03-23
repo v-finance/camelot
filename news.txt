@@ -1,6 +1,8 @@
 Master
 ------
 
+ * Uses SQLAlchemy 0.8.0
+ 
  * All default models migrated from Elixir to Declarative
  
  * Replacements for most of the Elixir functions that are compatible with
