@@ -243,10 +243,3 @@ def main(application_admin):
     """
     app = Application(application_admin)
     app.main()
-
-if __name__ == '__main__':
-    from application_admin import ApplicationAdmin
-    main(ApplicationAdmin())
-
-
-

@@ -472,6 +472,8 @@ class ListActionsCase( test_model.ExampleModelCase ):
         for step in generator:
             if isinstance( step, action_steps.ChangeField ):
                 dialog = step.render()
+                field_editor = dialog.findChild( QtGui.QWidget, 'field_choice' )
+                field_editor.set_value( 'rating' )
                 dialog.show()
                 self.grab_widget( dialog ) 
                 generator.send( ('rating', lambda:3) )

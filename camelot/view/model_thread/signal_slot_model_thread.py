@@ -79,6 +79,11 @@ class Task(QtCore.QObject):
     exception = QtCore.pyqtSignal(object)
 
     def __init__(self, request, name='', args=()):
+        """A task to be executed in a different thread
+        :param request: the function to execture
+        :param name: a string with the name of the task to be used in the gui
+        :param args: a tuple with the arguments to be passed to the request
+        """
         QtCore.QObject.__init__(self)
         self._request = request
         self._name = name
