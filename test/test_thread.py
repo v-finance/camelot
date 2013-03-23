@@ -35,5 +35,7 @@ class ModelThreadCase( unittest.TestCase ):
         task_handler = signal_slot_model_thread.TaskHandler( queue )
         task_handler.handle_task()
         self.assertEqual( len( queue ), 0 )
-
         
+    def test_model_thread( self ):
+        mt = signal_slot_model_thread.SignalSlotModelThread( lambda:None )
+        mt.post( lambda:None )
