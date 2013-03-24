@@ -51,6 +51,8 @@ class ColoredFloatEditor(CustomEditor):
                  field_name = 'float',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         action = QtGui.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )

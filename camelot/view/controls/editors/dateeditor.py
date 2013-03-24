@@ -47,7 +47,8 @@ class DateEditor(CustomEditor):
                        field_name = 'date',
                        **kwargs):
         CustomEditor.__init__(self, parent)
-
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()

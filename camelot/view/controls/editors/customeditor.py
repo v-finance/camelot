@@ -75,6 +75,10 @@ class AbstractCustomEditor(object):
     * When an editor has widgets that should not get selected when the user tabs
       through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
       widgets.
+      
+    * Editor should set their size policy, for most editor this means their
+      vertical size policy should be  `QtGui.QSizePolicy.Fixed`
+      
     """
 
     def __init__(self):

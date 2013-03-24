@@ -40,6 +40,8 @@ class StarEditor( CustomEditor ):
                  field_name = 'star',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)

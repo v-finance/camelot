@@ -83,8 +83,9 @@ class Many2OneEditor( CustomEditor ):
         """:param entity_admin : The Admin interface for the object on the one
         side of the relation
         """
-
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
         self.entity_set = False

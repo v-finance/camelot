@@ -47,6 +47,8 @@ class LocalFileEditor( CustomEditor ):
                  file_filter = 'All files (*)',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         self._directory = directory
         self._save_as = save_as

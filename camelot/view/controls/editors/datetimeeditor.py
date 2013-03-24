@@ -64,6 +64,8 @@ class DateTimeEditor(CustomEditor):
                  field_name = 'datetime',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         import itertools
         self.nullable = nullable

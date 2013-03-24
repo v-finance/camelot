@@ -83,6 +83,8 @@ an unneeded update of the db.
         
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         action = QtGui.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)

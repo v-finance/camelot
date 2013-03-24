@@ -23,7 +23,7 @@
 #  ============================================================================
 
 from PyQt4.QtCore import Qt
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QHBoxLayout
 from PyQt4.QtGui import QAbstractSpinBox
 
@@ -40,6 +40,8 @@ class MonthsEditor(CustomEditor):
 
     def __init__(self, parent=None, editable=True, field_name='months', **kw):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()

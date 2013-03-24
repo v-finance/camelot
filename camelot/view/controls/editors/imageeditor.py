@@ -56,7 +56,7 @@ class ImageEditor( FileEditor ):
             self, parent=parent, storage=storage,
             **kwargs
         )
-        self.setObjectName( field_name )
+        self.setObjectName( field_name )        
 
     def setup_widget(self):
         layout = QtGui.QVBoxLayout()

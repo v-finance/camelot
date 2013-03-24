@@ -55,6 +55,8 @@ class SmileyEditor(CustomEditor):
                  field_name = 'icons',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         self.box = QtGui.QComboBox()
         self.box.setFrame(True)

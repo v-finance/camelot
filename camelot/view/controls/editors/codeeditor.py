@@ -68,6 +68,8 @@ class CodeEditor(CustomEditor):
     def __init__(self, parent=None, parts=['99','AA'], editable=True, field_name='code', **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.value = None
         self.parts = parts
         layout = QtGui.QHBoxLayout()

@@ -95,6 +95,8 @@ class FloatEditor(CustomEditor):
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
         action = QtGui.QAction(self)
