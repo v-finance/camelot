@@ -29,7 +29,7 @@ class ExampleModelCase( ModelThreadTestCase ):
     def tearDown( self ):
         metadata.drop_all()
         
-class ModelCase( ModelThreadTestCase ):
+class ModelCase( ExampleModelCase ):
     """Test the build in camelot model"""
         
     def test_memento( self ):
@@ -70,6 +70,16 @@ class ModelCase( ModelThreadTestCase ):
         except StopIteration:
             pass
         
+    def test_batch_job_example( self ):
+        # begin batch job example
+        from camelot.model.batch_job import BatchJob, BatchJobType
+        synchronize = BatchJobType.get_or_create( u'Synchronize' )
+        with BatchJob.create( synchronize ) as batch_job:
+            batch_job.add_strings_to_message( [ u'Synchronize part A',
+                                                u'Synchronize part B' ] )
+            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
+        # end batch job example
+            
     def test_batch_job( self ):
         from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
@@ -102,7 +112,7 @@ class ModelCase( ModelThreadTestCase ):
         self.assertTrue( authentication.username )
         self.assertTrue( unicode( authentication ) )
 
-class PartyCase( ModelThreadTestCase ):
+class PartyCase( ExampleModelCase ):
     """Test the build in party - address - contact mechanism model"""
   
     def setUp(self):
@@ -342,7 +352,7 @@ class PartyCase( ModelThreadTestCase ):
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
         self.assertTrue( unicode( category ) )
 
-class FixtureCase( ModelThreadTestCase ):
+class FixtureCase( ExampleModelCase ):
     """Test the build in camelot model for fixtures"""
       
     def test_fixture( self ):
@@ -401,6 +411,21 @@ class FixtureCase( ModelThreadTestCase ):
         self.assertTrue( Person.query.count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           1 )
+        
+class CustomizationCase( ExampleModelCase ):
+    
+    def test_add_field( self ):
+        metadata.drop_all()
+        session = Session()
+        # begin add custom field
+        party.Person.language = schema.Column( types.Unicode(30) )
+        
+        metadata.create_all()
+        p = party.Person( first_name = u'Peter', 
+                          last_name = u'Principle', 
+                          language = u'English' )
+        session.flush()
+        # end add custom field
         
 class StatusCase( TestMetaData ):
     
