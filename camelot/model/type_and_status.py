@@ -22,8 +22,29 @@
 #
 #  ============================================================================
 """
-Convenience classes to give entities a status, and create the needed status
-tables for each entity.
+Convenience classes to give entities a status, and create the needed related
+status tables for each entity.  Status changes are tracked in a related status
+history table.
+
+Possible statuses can be defined as an enumeration or as a reference to a
+table of related statuses.
+
+Enumeration
+-----------
+
+In this setup there is a limited number of possible statuses an object can
+have, this cannot be changed by the user of the application.
+
+.. literalinclude:: ../../test/test_model.py
+   :start-after: begin status enumeration definition
+   :end-before: end status enumeration definition
+   
+Related status type table
+-------------------------
+
+In this setup, an additional table with possible status types is created.
+The user of the application can modify this table and create additional
+statuses as needed.
 
 """
 import datetime
@@ -261,4 +282,3 @@ class ChangeStatus( Action ):
 	for obj in model_context.get_selection():
 	    obj.change_status( self.new_status )
 	yield action_steps.FlushSession( model_context.session )
-
