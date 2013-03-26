@@ -678,11 +678,13 @@ class TableView( AbstractView  ):
         filters_widget = self.findChild(FilterList, 'filters')
         actions_widget = self.findChild(ActionsBox, 'actions')
         
-        for i in range( self.filters_layout.count() ):
-            item = self.filters_layout.takeAt( i )
+        while True:
+            item = self.filters_layout.takeAt( 0 )
+            if item == None:
+                break
             widget = item.widget()
-            widget.deleteLater()            
-            self.filters_layout.removeItem( item )
+            if widget != None:
+                widget.deleteLater()            
         if filters:
             splitter = self.findChild( QtGui.QWidget, 'splitter' )
             filters_widget = FilterList( filters, parent=splitter )
