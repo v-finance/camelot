@@ -677,13 +677,12 @@ class TableView( AbstractView  ):
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
         actions_widget = self.findChild(ActionsBox, 'actions')
-        if filters_widget:
-            filters_widget.filters_changed_signal.disconnect( self.rebuild_query )
-            self.filters_layout.removeWidget(filters_widget)
-            filters_widget.deleteLater()
-        if actions_widget:
-            self.filters_layout.removeWidget(actions_widget)
-            actions_widget.deleteLater()
+        
+        for i in range( self.filters_layout.count() ):
+            item = self.filters_layout.takeAt( i )
+            widget = item.widget()
+            widget.deleteLater()            
+            self.filters_layout.removeItem( item )
         if filters:
             splitter = self.findChild( QtGui.QWidget, 'splitter' )
             filters_widget = FilterList( filters, parent=splitter )
@@ -694,6 +693,7 @@ class TableView( AbstractView  ):
         # filters might have default values, so we can only build the queries now
         #
         self.rebuild_query()
+        self.filters_layout.addStretch(1)
         if actions:
             actions_widget = ActionsBox( parent = self,
                                          gui_context = self.gui_context )
