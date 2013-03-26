@@ -3,8 +3,11 @@ import os
 import camelot
 from setuptools import setup, find_packages
 
-README = os.path.join(os.path.dirname(__file__), 'readme.txt')
+src_dir = os.path.dirname(__file__)
+README = os.path.join(src_dir, 'readme.txt')
 long_description = open(README).read() + '\n\n'
+dependencies = os.path.join(src_dir, 'dependencies.txt') 
+install_requires = open( dependencies ).read().splitlines()
 
 setup(
     name = 'Camelot',
@@ -36,11 +39,7 @@ setup(
     },  
     license = 'GPL, Commercial',
     platforms = 'Linux, Windows, OS X',
-    install_requires = ['SQLAlchemy==0.8.0',
-                        'Jinja2>=2.6',
-                        'chardet>=2.1.1', 
-                        'xlwt==0.7.4', 
-                        'xlrd==0.9.0', ],
+    install_requires = install_requires,
     entry_points = {'console_scripts':[
                      'camelot_admin = camelot.bin.camelot_admin:main',
                      'camelot_example = camelot_example.main:main',
