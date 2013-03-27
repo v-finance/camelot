@@ -1,5 +1,5 @@
-Master
-------
+Development
+-----------
 
  * Uses SQLAlchemy 0.8.0
  
@@ -39,6 +39,11 @@ Master
  * The frozen columns feature has been removed in favor of the column groups
  
  * The embedded form has been removed in favour of :meth:`camelot.admin.object_admin.ObjectAdmin.get_compounding_objects`
+ 
+ * Unittests cover 80% of the code
+ 
+ * See :ref:`migrate-latest` for documentation on how to upgrade an 
+   existing Camelot project to the latest version. 
 
 Release 12.06.29
 ----------------
