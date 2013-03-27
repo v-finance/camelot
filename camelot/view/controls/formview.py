@@ -114,6 +114,7 @@ class FormWidget(QtGui.QWidget):
         self._admin = admin
         widget_mapper = QtGui.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
+        widget_mapper.currentIndexChanged.connect( self.current_index_changed )
         if self._admin.get_save_mode()=='on_leave':
             widget_mapper.setSubmitPolicy(QtGui.QDataWidgetMapper.ManualSubmit)
         widget_layout = QtGui.QHBoxLayout()
