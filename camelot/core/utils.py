@@ -102,10 +102,24 @@ data types supported by QVariant, including GUI-related types:
  QColor color = palette().background().color();
  QVariant variant = color;
 """
+
+def qobject_to_pyobject( value ):
+    if isinstance( value, QtCore.QDate ):
+        value = datetime.date( year=value.year(),
+                               month=value.month(),
+                               day=value.day() )
+    elif isinstance( value, QtCore.QTime ):
+        value = datetime.time( hour = value.hour(),
+                               minute = value.minute(),
+                               second = value.second() )        
+    elif isinstance( value, QtCore.QDateTime ):
+        value = value.toPyDateTime()
+    return value
+    
 def variant_to_pyobject(qvariant=None):
     """Try to convert a QVariant to a python object as good as possible"""
     if not pyqt:
-        return qvariant
+        return qobject_to_pyobject( qvariant )
     import datetime
     if not qvariant:
         return None
@@ -116,9 +130,7 @@ def variant_to_pyobject(qvariant=None):
         value = unicode(qvariant.toString())
     elif type == QtCore.QVariant.Date:
         value = qvariant.toDate()
-        value = datetime.date(year=value.year(),
-                              month=value.month(),
-                              day=value.day())
+        value = qobject_to_pyobject( value )
     elif type == QtCore.QVariant.Int:
         value = int(qvariant.toInt()[0])
     elif type == QtCore.QVariant.LongLong:
@@ -129,12 +141,10 @@ def variant_to_pyobject(qvariant=None):
         value = bool(qvariant.toBool())
     elif type == QtCore.QVariant.Time:
         value = qvariant.toTime()
-        value = datetime.time(hour = value.hour(),
-                              minute = value.minute(),
-                              second = value.second())
+        value = qobject_to_pyobject( value )
     elif type == QtCore.QVariant.DateTime:
         value = qvariant.toDateTime()
-        value = value.toPyDateTime ()
+        value = qobject_to_pyobject( value )
     elif type == QtCore.QVariant.Color:
         value = QtGui.QColor(qvariant)
     else:
