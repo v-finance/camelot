@@ -158,13 +158,13 @@ else:
         elif isinstance( value, QtCore.QDateTime ):
             date = value.date()
             time = value.time()
-            value = datetime.date( year = date.year(),
-                                   month = date.month(),
-                                   day = date.day(),
-                                   hour = time.hour(),
-                                   minute = time.minute(),
-                                   second = time.second()                                   
-                                   )
+            value = datetime.datetime( year = date.year(),
+                                       month = date.month(),
+                                       day = date.day(),
+                                       hour = time.hour(),
+                                       minute = time.minute(),
+                                       second = time.second()                                   
+                                       )
         return value
 
 #
