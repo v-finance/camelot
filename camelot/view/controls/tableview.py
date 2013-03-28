@@ -193,7 +193,7 @@ and above the text.
         """
         assert object_thread( self )
         current_index = self.currentIndex()
-        if not current_index:
+        if not current_index.isValid():
             return
         self.closePersistentEditor( current_index )
                 
