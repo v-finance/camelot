@@ -27,7 +27,9 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+import datetime
 import logging
+
 logger = logging.getLogger('camelot.core.utils')
 
 def is_deleted_pyqt( qobj ):
@@ -103,55 +105,67 @@ data types supported by QVariant, including GUI-related types:
  QVariant variant = color;
 """
 
-def qobject_to_pyobject( value ):
-    if isinstance( value, QtCore.QDate ):
-        value = datetime.date( year=value.year(),
-                               month=value.month(),
-                               day=value.day() )
-    elif isinstance( value, QtCore.QTime ):
-        value = datetime.time( hour = value.hour(),
-                               minute = value.minute(),
-                               second = value.second() )        
-    elif isinstance( value, QtCore.QDateTime ):
-        value = value.toPyDateTime()
-    return value
+if pyqt:
     
-def variant_to_pyobject(qvariant=None):
-    """Try to convert a QVariant to a python object as good as possible"""
-    if not pyqt:
-        return qobject_to_pyobject( qvariant )
-    import datetime
-    if not qvariant:
-        return None
-    if qvariant.isNull():
-        return None
-    type = qvariant.type()
-    if type == QtCore.QVariant.String:
-        value = unicode(qvariant.toString())
-    elif type == QtCore.QVariant.Date:
-        value = qvariant.toDate()
-        value = qobject_to_pyobject( value )
-    elif type == QtCore.QVariant.Int:
-        value = int(qvariant.toInt()[0])
-    elif type == QtCore.QVariant.LongLong:
-        value = int(qvariant.toLongLong()[0])
-    elif type == QtCore.QVariant.Double:
-        value = float(qvariant.toDouble()[0])
-    elif type == QtCore.QVariant.Bool:
-        value = bool(qvariant.toBool())
-    elif type == QtCore.QVariant.Time:
-        value = qvariant.toTime()
-        value = qobject_to_pyobject( value )
-    elif type == QtCore.QVariant.DateTime:
-        value = qvariant.toDateTime()
-        value = qobject_to_pyobject( value )
-    elif type == QtCore.QVariant.Color:
-        value = QtGui.QColor(qvariant)
-    else:
-        value = qvariant.toPyObject()
+    def variant_to_pyobject(qvariant=None):
+        """Try to convert a QVariant to a python object as good as possible"""
+        if not qvariant:
+            return None
+        if qvariant.isNull():
+            return None
+        type = qvariant.type()
+        if type == QtCore.QVariant.String:
+            value = unicode(qvariant.toString())
+        elif type == QtCore.QVariant.Date:
+            value = qvariant.toDate()
+            value = datetime.date( year=value.year(),
+                                   month=value.month(),
+                                   day=value.day() )
+        elif type == QtCore.QVariant.Int:
+            value = int(qvariant.toInt()[0])
+        elif type == QtCore.QVariant.LongLong:
+            value = int(qvariant.toLongLong()[0])
+        elif type == QtCore.QVariant.Double:
+            value = float(qvariant.toDouble()[0])
+        elif type == QtCore.QVariant.Bool:
+            value = bool(qvariant.toBool())
+        elif type == QtCore.QVariant.Time:
+            value = qvariant.toTime()
+            value = datetime.time( hour = value.hour(),
+                                   minute = value.minute(),
+                                   second = value.second() )        
+        elif type == QtCore.QVariant.DateTime:
+            value = qvariant.toDateTime()
+            value = value.toPyDateTime()
+        elif type == QtCore.QVariant.Color:
+            value = QtGui.QColor(qvariant)
+        else:
+            value = qvariant.toPyObject()
+    
+        return value
 
-    return value
-
+else:
+    
+    def variant_to_pyobject( value ):
+        if isinstance( value, QtCore.QDate ):
+            value = datetime.date( year = value.year(),
+                                   month = value.month(),
+                                   day = value.day() )
+        elif isinstance( value, QtCore.QTime ):
+            value = datetime.time( hour = value.hour(),
+                                   minute = value.minute(),
+                                   second = value.second() )        
+        elif isinstance( value, QtCore.QDateTime ):
+            date = value.date()
+            time = value.time()
+            value = datetime.date( year = date.year(),
+                                   month = date.month(),
+                                   day = date.day(),
+                                   hour = time.hour(),
+                                   minute = time.minute(),
+                                   second = time.second()                                   
+                                   )
+        return value
 
 #
 # Global dictionary containing all user defined translations in the
