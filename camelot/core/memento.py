@@ -94,13 +94,14 @@ class SqlMemento( object ):
         self.memento_id_by_type = dict( (t,i) for i,t in memento_types )
         
     def _get_memento_table( self ):
-        """:return: the `Table` to which to store the changes"""
+        """:return: the :class:`sqlalchemy:sqlalchemy.schema.Table` to which to 
+        store the changes"""
         from camelot.model.memento import Memento
         return orm.class_mapper( Memento ).mapped_table
     
     def _get_authentication_table( self ):
-        """:return: the `Table` in which the authentication id and
-        username are stored"""
+        """:return: the :class:`sqlalchemy:sqlalchemy.schema.Table` in 
+        which the authentication id and username are stored"""
         from camelot.model.authentication import AuthenticationMechanism
         return orm.class_mapper( AuthenticationMechanism ).mapped_table    
 

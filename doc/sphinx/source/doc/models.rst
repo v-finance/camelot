@@ -25,14 +25,14 @@ To use *Declarative*, threre are some base classes that should be imported:
    
 Those are :
 
- * :class:`camelot.core.orm.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database,
+ * :class:`camelot.core.orm.base.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database,
    and is a subclass of :class:`camelot.core.orm.entity.EntityBase`
  
  * :class:`camelot.admin.entity_admin.EntityAdmin` is the base class that describes how an `Entity` subclass should be represented in the GUI
  
- * :class:`sqlalchemy.schema.Column` describes a column in the database and a field in the model
+ * :class:`sqlalchemy:sqlalchemy.schema.Column` describes a column in the database and a field in the model
  
- * :mod:`sqlalchemy.types` contains the various column types that can be used
+ * :mod:`sqlalchemy:sqlalchemy.types` contains the various column types that can be used
  
 Next a model can be defined:
    

@@ -66,10 +66,8 @@ to SQLAlchemy documentation for a list of `types supported by SQLAlchemy
 Following that first mandatory argument, fields can take any number of
 optional keyword arguments. Please note that all the **arguments** that are
 **not specifically processed by the Camelot orm module**, as mentioned in the 
-documentation below **are passed on to the SQLAlchemy ``Column`` object**. 
-Please refer to the `SQLAlchemy Column object's documentation
-<http://docs.sqlalchemy.org/en/rel_0_7/core/schema.html>`_ for more details 
-about other supported keyword arguments.
+documentation below **are passed on to the 
+:class:`sqlalchemy:sqlalchemy.schema.Column` object**.
 
 The following non SQLAlchemy-specific arguments are supported:
 

@@ -144,7 +144,7 @@ It has additional class attributes that customise its behaviour.
         """Returns a set of default field attributes based on introspection
         of the SQLAlchemy columns that form a field
         
-        :param: columns a list of :class:`sqlalchemy.schema.Column` objects.
+        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column` objects.
         :return: a dictionary with field attributes
         
         By default this method looks at the first column that defines the
