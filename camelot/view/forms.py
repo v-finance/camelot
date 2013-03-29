@@ -261,6 +261,8 @@ class Label( Form ):
             widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,unicode(self.label)) )
         else:
             widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,unicode(self.label)) )
+        widget.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                              QtGui.QSizePolicy.Fixed )    
         return widget
 
 class DelayedTabWidget( QtGui.QTabWidget ):
