@@ -25,7 +25,7 @@ To use *Declarative*, threre are some base classes that should be imported:
    
 Those are :
 
- * :class:`camelot.core.orm.base.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database,
+ * :class:`camelot.core.orm.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database,
    and is a subclass of :class:`camelot.core.orm.entity.EntityBase`
  
  * :class:`camelot.admin.entity_admin.EntityAdmin` is the base class that describes how an `Entity` subclass should be represented in the GUI
@@ -44,15 +44,16 @@ ojbects later on.  This code has some things to notice :
 
  * `Tag` is a subclass of :class:`camelot.core.orm.Entity`, 
    
- * the `__tablename__` class attribute allows us to specify the name of the table in the database in which
+ * the ``__tablename__`` class attribute allows us to specify the name of the table in the database in which
    the tags will be stored.
    
- * The `Column` statement add fields of a certain type, in this case `Unicode`, to the `Tag` class
-   as well as to the `tags` table
+ * The :class:`sqlalchemy:sqlalchemy.schema.Column` statement add fields of a certain type, 
+   in this case :class:`sqlalchemy:sqlalchemy.types.Unicode`, 
+   to the `Tag` class as well as to the `tags` table
    
- * The `__unicode__` method is implemented, this method will be called within Camelot whenever a textual
+ * The ``__unicode__`` method is implemented, this method will be called within Camelot whenever a textual
    representation of the object is needed, eg in a window title or a many to one widget.  It's good 
-   practice to always implement the `__unicode__` method for all `Entity` subclasses.
+   practice to always implement the ``__unicode__`` method for all `Entity` subclasses.
 
 When a new Camelot project is created, the :ref:`camelot-admin` tool creates an empty ``models.py`` file that
 can be used as a place to start the model definition.

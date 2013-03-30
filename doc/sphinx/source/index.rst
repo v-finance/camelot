@@ -26,6 +26,7 @@ Contents:
    migrate/index.rst
    api/index.rst
    advanced/index.rst
+   cep/index.rst
 
 Support
 =======

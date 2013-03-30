@@ -157,7 +157,7 @@ that we add to our :file:`model.py` module::
    The complete source code of this tutorial can be found in the
    :file:`camelot_example` folder of the Camelot source code.
    
-:class:`Movie` inherits :class:`Entity`.  :class:`camelot.core.orm.Entity`` is the declarative base class for all objects that should be stored in the database.  
+:class:`Movie` inherits :class:`camelot.core.orm.Entity`, which is the declarative base class for all objects that should be stored in the database.  
 We use the ``__tablename__`` attribute to to name the table ourselves in which the data will be stored, otherwise a default tablename would have been used.
 
 Our entity holds four fields that are stored in columns in the table.

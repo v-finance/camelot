@@ -271,8 +271,6 @@ Release 10.11.27
    choices, prefix, suffix, arrow
 
  * Document merge wizard
- 
-   .. image:: _static/mergedocumentwizard/wizard_widget.png
    
  * Support for SQLAlchemy 0.6.x
  
@@ -338,11 +336,7 @@ Release 09.12.07
    
  * Generic import wizard
  
-   .. image:: _static/importwizard/csv_wizard.png
- 
  * The busy indicator in the status bar
- 
-   .. image:: _static/controls/status_bar.png
  
  * Support for lazy translations
  

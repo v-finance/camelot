@@ -8,8 +8,7 @@ from camelot.view.controls import delegates
 from camelot.core.utils import ugettext_lazy as _
 
 class Options(object):
-    """A python object in which the options for
-    the action will be stored.
+    """A python object in which we store the change in rating
     """
     
     def __init__(self):
@@ -19,6 +18,7 @@ class Options(object):
     # Since Options is a plain old python object, we cannot
     # use an EntityAdmin, and should use the ObjectAdmin            
     class Admin( ObjectAdmin ):
+        verbose_name = _('Change rating options')
         form_display = ['change', 'only_selected']
         form_size = (100, 100)
         # Since there is no introspection, the delegate should

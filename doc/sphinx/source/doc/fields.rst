@@ -10,43 +10,6 @@ An overview of field types from SQLAlchemy and Camelot is given in the table bel
 
 .. automodule:: camelot.view.field_attributes
 
-SQLAlchemy column types
------------------------
+All SQLAlchemy field types can be found in the :mod:`sqlalchemy:sqlalchemy.types` module.
+All additional Camelot field types can be found in the :mod:`camelot.types` module.
 
-SQLAlchemy provides a number of column types that map to available data types in SQL, more information on those
-can be found on the `SQLAlchemy website <http://www.sqlalchemy.org/docs/reference/sqlalchemy/types.html>`_ .
-
-The types used mosed common are :
-
-.. autoclass:: sqlalchemy.types.Boolean
-   :noindex:
-
-.. autoclass:: sqlalchemy.types.Date
-   :noindex:
-   
-.. autoclass:: sqlalchemy.types.DateTime
-   :noindex:
-   
-.. autoclass:: sqlalchemy.types.Float
-   :noindex:
-   
-.. autoclass:: sqlalchemy.types.Integer
-   :noindex:
-   
-.. autoclass:: sqlalchemy.types.Numeric
-   :noindex:
-   
-.. autoclass:: sqlalchemy.types.Time
-   :noindex:
-   
-.. autoclass:: sqlalchemy.types.Unicode
-   :noindex:
-   
-.. _camelot-column-types:
-
-Camelot column types
---------------------
-
-.. automodule:: camelot.types
-   :members:
-   :noindex:
