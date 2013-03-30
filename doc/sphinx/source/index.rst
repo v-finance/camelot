@@ -49,10 +49,9 @@ main authors of Camelot :
 | 2222 Heist-op-den-Berg
 | Belgium 
 |
-| project-camelot@conceptive.be
+| info@conceptive.be
 | http://www.conceptive.be
 | VAT BE 0878 169 209
-| Fax : +32 3 303 64 41
 |
 
 Priority support tickets can be purchased from the `shop <http://www.python-camelot.com/shop.html>`_.
