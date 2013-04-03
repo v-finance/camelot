@@ -111,6 +111,20 @@ class ModelCase( ExampleModelCase ):
         authentication = get_current_authentication()
         self.assertTrue( authentication.username )
         self.assertTrue( unicode( authentication ) )
+        
+    def test_authentication_group( self ):
+        # begin roles definition
+        from camelot.model import authentication
+        authentication.roles.extend( [ (1, 'administrator'),
+                                       (2, 'movie_editor') ] )
+        # end roles definition
+        # begin intial group creation
+        authentication.update_last_login( initial_group_name = 'Admin',
+                                          initial_group_roles = ['administrator'] )
+        # end initial group creation
+        auth = authentication.get_current_authentication()
+        self.assertTrue( auth.has_role( 'administrator' ) )
+        self.assertFalse( auth.has_role( 'movie_editor' ) )
 
 class PartyCase( ExampleModelCase ):
     """Test the build in party - address - contact mechanism model"""

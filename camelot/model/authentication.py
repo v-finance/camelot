@@ -28,14 +28,17 @@
 import datetime
 import threading
 
-from sqlalchemy.types import Date, Unicode, DateTime
-from sqlalchemy.schema import Column
+from sqlalchemy.types import Date, Unicode, DateTime, Integer
+from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy import orm
 
 import camelot.types
-from camelot.core.orm import Entity, Session
+from camelot.core.document import documented_entity
+from camelot.core.orm import Entity, Session, ManyToMany
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.view import forms
+from camelot.view.controls import delegates
 
 def end_of_times():
     return datetime.date( year = 2400, month = 12, day = 31 )
@@ -55,14 +58,37 @@ def get_current_authentication( _obj = None ):
 def clear_current_authentication():
     _current_authentication_.mechanism = None
 
-def update_last_login():
-    """Update the last login of the current person to now"""
+def update_last_login( initial_group_name = None,
+                       initial_group_roles = [] ):
+    """Update the last login of the currently logged in user to now.  If there
+    is no :class:`AuthenticationGroup` yet in the database, create one and add
+    the user to it.  This can be used to bootstrap the authentication system
+    and create an `admin` group and add the user to it.
+    
+    :param initial_group_name: The name of the authentication group that needs
+        to be created if there is none yet.
+    :param initial_group_roles: a :class:`list` with the roles for the initial
+        group
+    """
     authentication = get_current_authentication()
     authentication.last_login = datetime.datetime.now()
     session = orm.object_session( authentication )
     if session:
+        if initial_group_name:
+            group_count = session.query( AuthenticationGroup ).count()
+            if group_count == 0:
+                group = AuthenticationGroup( name = initial_group_name )
+                for role in initial_group_roles:
+                    setattr( group, role, True )
+                group.members.append( authentication )
         session.flush()
 
+#
+# Enumeration for the roles in an application
+#
+roles = []
+
+@documented_entity()
 class AuthenticationMechanism( Entity ):
     
     __tablename__ = 'authentication_mechanism'
@@ -88,6 +114,18 @@ class AuthenticationMechanism( Entity ):
             session.flush()
         return authentication
 
+    def has_role( self, role_name ):
+        """
+        :param role_name: a string with the name of the role
+        :return; `True` if the user is associated to this role, otherwise 
+            `False`.
+            
+        """
+        for group in self.groups:
+            if getattr( group, role_name ) == True:
+                return True
+        return False
+        
     def __unicode__( self ):
         return self.username
     
@@ -95,3 +133,79 @@ class AuthenticationMechanism( Entity ):
         verbose_name = _('Authentication mechanism')
         list_display = ['authentication_type', 'username', 'from_date', 'thru_date', 'last_login']
 
+@documented_entity()
+class AuthenticationGroup( Entity ):
+    """A group of users (defined by their :class:`AuthenticationMechanism`).
+    Different roles can be assigned to a group.
+    """
+    
+    __tablename__ = 'authentication_group'
+    
+    name = Column( Unicode(256), nullable=False )
+    members = ManyToMany( AuthenticationMechanism, 
+                          tablename = 'authentication_group_member',
+                          backref = 'groups' )
+    
+    def __getattr__( self, name ):
+        for role_id, role_name in roles:
+            if role_name == name:
+                for role in self.roles:
+                    if role.role_id == role_id:
+                        return True
+                return False
+        raise AttributeError( name )
+                
+    def __setattr__( self, name, value ):
+        for role_id, role_name in roles:
+            if role_name == name:
+                current_value = getattr( self, name )
+                if value==True and current_value==False:
+                    group_role = AuthenticationGroupRole( role_id = role_id )
+                    self.roles.append( group_role )
+                elif value==False and current_value==True:
+                    for group_role in self.roles:
+                        if group_role.role_id == role_id:
+                            self.roles.remove( group_role )
+                            break
+                break
+        return super( AuthenticationGroup, self ).__setattr__( name, value )
+        
+    def __unicode__( self ):
+        return self.name or ''
+    
+    class Admin( EntityAdmin ):
+        verbose_name = _('Authentication group')
+        verbose_name_plural = _('Authenication groups')
+        list_display = [ 'name' ]
+        
+        def get_form_display( self ):
+            return forms.TabForm( [(_('Group'), ['name', 'members']),
+                                   (_('Roles'), [role[1] for role in roles])
+                                   ])
+        
+        def get_field_attributes( self, field_name ):
+            fa = EntityAdmin.get_field_attributes( self, field_name )
+            if field_name in [role[1] for role in roles]:
+                fa['delegate'] = delegates.BoolDelegate
+                fa['editable'] = True
+            return fa
+        
+class AuthenticationGroupRole( Entity ):
+    """Table with the different roles associated with an
+    :class:`AuthenticationGroup`
+    """
+    
+    __tablename__ = 'authentication_group_role'
+    
+    role_id = Column( Integer(), 
+                      nullable = False,
+                      primary_key = True)
+    group_id = Column( Integer(), 
+                       ForeignKey( 'authentication_group.id',
+                                   onupdate = 'cascade',
+                                   ondelete = 'cascade' ),
+                       nullable = False,
+                       primary_key = True )
+
+AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
+                                              cascade = 'all, delete, delete-orphan')
