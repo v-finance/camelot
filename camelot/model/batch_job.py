@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,13 +12,13 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 """Most applications need to perform some scheduled jobs to process information.
@@ -28,6 +28,7 @@ These classes provide the means to store the result of batch jobs to enable the
 user to review or plan them.
 """
 
+import logging
 import sys
 
 import sqlalchemy.types
@@ -43,11 +44,14 @@ import camelot.types
 
 from . import type_and_status
 
+LOGGER = logging.getLogger('batch_job')
+
 #
 # Run batch jobs in separate session to get out of band writing
-# to the database
+# to the database, the session is scoped per thread to prevent the
+# session from being garbage collected when the context manager ends
 #
-BatchSession = orm.sessionmaker( autoflush = False )
+BatchSession = orm.scoped_session( orm.sessionmaker( autoflush = False ) )
 
 batch_job_statusses = [ (-2, 'planned'), 
                         (-1, 'running'), 
@@ -183,6 +187,8 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         if exc_type != None:
             self.add_exception_to_message( exc_type, exc_val, exc_tb )
             self.change_status( 'errors' )
+            LOGGER.info( 'batch job closed with exception', 
+                         exc_info = (exc_type, exc_val, exc_tb) )
         elif self.current_status == 'running':
             self.change_status( 'success' )
         orm.object_session( self ).commit()
@@ -196,3 +202,4 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
                                         ( _('History'), ['status'] ) ] )
         form_actions = [ type_and_status.ChangeStatus( 'canceled',
                                                        _('Cancel') ) ]
+

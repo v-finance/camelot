@@ -4,9 +4,6 @@
  Creating Forms
 ###############
 
-:Release: |version|
-:Date: |today|
-
 This section describes how to place fields on forms and applying
 various layouts.  It also covers how to customize forms to your
 specific needs.  As with everything in Camelot, the goal of the framework
@@ -20,14 +17,14 @@ Form
 A form is a collection of fields organized within a layout.  Each
 field is represented by its editor.
 
-Usually forms are defined by specifying the 'form_display' attribute of an
+Usually forms are defined by specifying the `form_display` attribute of an
 Admin class :
 
 .. literalinclude:: ../../../../test/snippet/form/simple_form.py
 
 .. image:: ../_static/form/form.png
 
-The 'form_display' attribute should either be a list of fields to display
+The `form_display` attribute should either be a list of fields to display
 or an instance of camelot.view.forms.Form or its subclasses.
 
 Forms can be nested into each other :
@@ -59,21 +56,18 @@ delegate and where the widget is inside a WidgetOnlyForm.
 In the case of a Person, we display a note if another person with the same name
 already exists :
 
-.. literalinclude:: ../../../../camelot/model/Party.py
+.. literalinclude:: ../../../../camelot/model/party.py
    :pyobject: Person.note
    
-.. literalinclude:: ../../../../camelot/model/Party.py
+.. literalinclude:: ../../../../camelot/model/party.py
    :pyobject: Person.Admin
 
 Available Form Subclasses
 =========================
 
-camelot.view.forms.Form has several subclasses that can be used to create
-various layouts.  Each subclass maps to a QT Layout class.
-
-.. automodule:: camelot.view.forms
-   :members:
-   :noindex:
+The :class:`camelot.view.forms.Form` class has several subclasses that can be used to create
+various layouts.  Those can be found in the :mod:`camelot.view.forms` module.
+Each subclass maps to a Qt Layout class.
    
 Customizing Forms
 =================

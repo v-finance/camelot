@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,18 +12,39 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 """
-Convenience classes to give entities a status, and create the needed status
-tables for each entity.
+Convenience classes to give entities a status, and create the needed related
+status tables for each entity.  Status changes are tracked in a related status
+history table.
+
+Possible statuses can be defined as an enumeration or as a reference to a
+table of related statuses.
+
+Enumeration
+-----------
+
+In this setup there is a limited number of possible statuses an object can
+have, this cannot be changed by the user of the application.
+
+.. literalinclude:: ../../test/test_model.py
+   :start-after: begin status enumeration definition
+   :end-before: end status enumeration definition
+   
+Related status type table
+-------------------------
+
+In this setup, an additional table with possible status types is created.
+The user of the application can modify this table and create additional
+statuses as needed.
 
 """
 import datetime

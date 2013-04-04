@@ -436,6 +436,9 @@ class ListActionsCase( test_model.ExampleModelCase ):
         
     def test_import_from_xls_file( self ):
         self.test_import_from_file( 'import_example.xls' )
+        
+    def test_import_from_xlsx_file( self ):
+        self.test_import_from_file( 'import_example.xlsx' )        
 
     def test_import_from_file( self, filename = 'import_example.csv' ):
         from camelot.model.party import Person
@@ -469,6 +472,8 @@ class ListActionsCase( test_model.ExampleModelCase ):
         for step in generator:
             if isinstance( step, action_steps.ChangeField ):
                 dialog = step.render()
+                field_editor = dialog.findChild( QtGui.QWidget, 'field_choice' )
+                field_editor.set_value( 'rating' )
                 dialog.show()
                 self.grab_widget( dialog ) 
                 generator.send( ('rating', lambda:3) )

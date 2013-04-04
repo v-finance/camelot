@@ -30,9 +30,9 @@ Those are :
  
  * :class:`camelot.admin.entity_admin.EntityAdmin` is the base class that describes how an `Entity` subclass should be represented in the GUI
  
- * :class:`sqlalchemy.schema.Column` describes a column in the database and a field in the model
+ * :class:`sqlalchemy:sqlalchemy.schema.Column` describes a column in the database and a field in the model
  
- * :mod:`sqlalchemy.types` contains the various column types that can be used
+ * :mod:`sqlalchemy:sqlalchemy.types` contains the various column types that can be used
  
 Next a model can be defined:
    
@@ -44,15 +44,16 @@ ojbects later on.  This code has some things to notice :
 
  * `Tag` is a subclass of :class:`camelot.core.orm.Entity`, 
    
- * the `__tablename__` class attribute allows us to specify the name of the table in the database in which
+ * the ``__tablename__`` class attribute allows us to specify the name of the table in the database in which
    the tags will be stored.
    
- * The `Column` statement add fields of a certain type, in this case `Unicode`, to the `Tag` class
-   as well as to the `tags` table
+ * The :class:`sqlalchemy:sqlalchemy.schema.Column` statement add fields of a certain type, 
+   in this case :class:`sqlalchemy:sqlalchemy.types.Unicode`, 
+   to the `Tag` class as well as to the `tags` table
    
- * The `__unicode__` method is implemented, this method will be called within Camelot whenever a textual
+ * The ``__unicode__`` method is implemented, this method will be called within Camelot whenever a textual
    representation of the object is needed, eg in a window title or a many to one widget.  It's good 
-   practice to always implement the `__unicode__` method for all `Entity` subclasses.
+   practice to always implement the ``__unicode__`` method for all `Entity` subclasses.
 
 When a new Camelot project is created, the :ref:`camelot-admin` tool creates an empty ``models.py`` file that
 can be used as a place to start the model definition.

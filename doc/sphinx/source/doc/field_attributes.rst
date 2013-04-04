@@ -295,21 +295,12 @@ Customizing multiple field attributes
 When multiple field attributes need to be customized, specifying the
 `field_attributes` dictionary can become inefficient.
 
-Several methods of the `Admin` class can be overwritten to take care of
-this.
+Several methods of the :class:`camelot.admin.object_admin.ObjectAdmin` class can be overwritten to take care of this.
 
-Instead of filling the `field_attributes` dictionary manually, the
-`get_field_attributes` method can be overwritten :
+Instead of filling the `field_attributes` dictionary manually, the :method:`camelot.admin.object_admin.ObjectAdmin.get_field_attributes` method can be overwritten :
 
-.. automethod:: camelot.admin.object_admin.ObjectAdmin.get_field_attributes
+When multiple dynamic field attributes need to execute the same logic to determine their value, 
+it can be more efficient to overwrite the method :method:`camelot.admin.object_admin.ObjectAdmin.get_dynamic_field_attributes` and 
+execute the logic once there and set the value for all dynamic field attributes at once.
 
-When multiple dynamic field attributes need to execute the same logic
-to determine their value, it can be more efficient to overwrite the
-method `get_dynamic_field_attributes` and execute the logic once there
-and set the value for all dynamic field attributes at once.
-
-.. automethod:: camelot.admin.object_admin.ObjectAdmin.get_dynamic_field_attributes
-
-The complement of `get_dynamic_field_attributes` is `get_static_field_attributes` :
-
-.. automethod:: camelot.admin.object_admin.ObjectAdmin.get_static_field_attributes
+The complement of `get_dynamic_field_attributes` is :method:`camelot.admin.object_admin.ObjectAdmin.get_static_field_attributes`.

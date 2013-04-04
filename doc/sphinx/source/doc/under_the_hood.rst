@@ -100,7 +100,7 @@ Transactions
 ============
 
 Transactions in Camelot can be used just as in normal SQLAlchemy.  
-This means that inside a :meth:`camelot.admin.action.Action.model_run` method a transaction can be started and committed ::
+This means that inside a :meth:`camelot.admin.action.base.Action.model_run` method a transaction can be started and committed ::
 
     with model_context.session.begin()
         ...do some modifications...

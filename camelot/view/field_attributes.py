@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,13 +12,13 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 
@@ -266,8 +266,8 @@ class DummyField(object):
         self.storage = None
         self.separator = u'.'
 
-row_separator = '+' + '-'*20 + '+' + '-'*70 + '+' + '-'*70 + '+'
-row_format = """| %-18s | %-68s | %-68s |"""
+row_separator = '+' + '-'*50 + '+' + '-'*100 + '+' + '-'*70 + '+'
+row_format = """| %-48s | %-98s | %-68s |"""
 
 doc = """Field types handled through introspection :
 
@@ -282,9 +282,9 @@ field_types.sort(lambda x, y: cmp(x.__name__, y.__name__))
 for field_type in field_types:
     field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
     delegate = field_attributes['delegate']
-    row = row_format%(field_type.__name__,
-                      ':ref:`%s <delegate-%s>`'%(delegate.__name__, delegate.__name__),
-                      '.. image:: /_static/editors/%s_editable.png'%(delegate.editor.__name__))
+    row = row_format%( ':class:`' + field_type.__module__ + '.' + field_type.__name__ + '`',
+                       ':class:`' + delegate.__module__ + '.' + delegate.__name__ + '`',
+                       '.. image:: /_static/editors/%s_editable.png'%(delegate.editor.__name__))
     doc += row + """
 """ + row_separator + """
 """
@@ -293,6 +293,7 @@ doc += """
 """
 
 __doc__ = doc
+
 
 
 

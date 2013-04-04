@@ -141,6 +141,7 @@ class Movie( Entity ):
     # To fully customize the way the entity is visualized, the EntityAdmin
     # subclass should overrule some of the EntityAdmin's methods
     #
+    bar = 3
     class Admin(EntityAdmin):
         # the list_display attribute specifies which entity attributes should
         # be visible in the table view

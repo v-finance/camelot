@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,13 +12,13 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 
@@ -261,6 +261,8 @@ class Label( Form ):
             widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,unicode(self.label)) )
         else:
             widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,unicode(self.label)) )
+        widget.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                              QtGui.QSizePolicy.Fixed )    
         return widget
 
 class DelayedTabWidget( QtGui.QTabWidget ):
@@ -649,3 +651,4 @@ def structure_to_form( structure ):
     if isinstance( structure, Form ):
         return structure
     return Form( structure )
+

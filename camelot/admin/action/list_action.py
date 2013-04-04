@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,13 +12,13 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 
@@ -711,7 +711,7 @@ class ImportFromFile( EditAction ):
         #
         # read the data into temporary row_data objects
         #
-        if os.path.splitext( file_name )[-1] == '.xls':
+        if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
             items = XlsReader( file_name )
         else:
             detected = chardet.detect( open( file_name ).read() )['encoding']
@@ -841,3 +841,4 @@ class RemoveSelection( DeleteSelection ):
     def handle_object( self, model_context, obj ):
         model_context._model.remove( obj )
         raise StopIteration
+

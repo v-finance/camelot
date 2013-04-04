@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,18 +12,18 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 
 from PyQt4.QtCore import Qt
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QHBoxLayout
 from PyQt4.QtGui import QAbstractSpinBox
 
@@ -40,6 +40,8 @@ class MonthsEditor(CustomEditor):
 
     def __init__(self, parent=None, editable=True, field_name='months', **kw):
         CustomEditor.__init__(self, parent)
+        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
@@ -116,5 +118,6 @@ class MonthsEditor(CustomEditor):
         months = int(self.months_spinbox.value())
         value = (years * 12) + months
         return value
+
 
 

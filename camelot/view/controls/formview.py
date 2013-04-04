@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,13 +12,13 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 
@@ -114,6 +114,7 @@ class FormWidget(QtGui.QWidget):
         self._admin = admin
         widget_mapper = QtGui.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
+        widget_mapper.currentIndexChanged.connect( self.current_index_changed )
         if self._admin.get_save_mode()=='on_leave':
             widget_mapper.setSubmitPolicy(QtGui.QDataWidgetMapper.ManualSubmit)
         widget_layout = QtGui.QHBoxLayout()
@@ -366,3 +367,4 @@ class FormView(AbstractView):
             # is processed
             QtCore.QTimer.singleShot( 0, self.validate_close )
             event.ignore()
+

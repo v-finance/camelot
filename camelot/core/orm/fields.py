@@ -1,3 +1,26 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file license.txt included in the packaging of
+#  this file.  Please review this information to ensure GNU
+#  General Public Licensing requirements will be met.
+#
+#  If you are unsure which license is appropriate for your use, please
+#  visit www.python-camelot.com or contact info@conceptive.be
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  info@conceptive.be
+#
+#  ============================================================================
 from sqlalchemy import schema, orm
 
 from . properties import Property
@@ -43,10 +66,8 @@ to SQLAlchemy documentation for a list of `types supported by SQLAlchemy
 Following that first mandatory argument, fields can take any number of
 optional keyword arguments. Please note that all the **arguments** that are
 **not specifically processed by the Camelot orm module**, as mentioned in the 
-documentation below **are passed on to the SQLAlchemy ``Column`` object**. 
-Please refer to the `SQLAlchemy Column object's documentation
-<http://docs.sqlalchemy.org/en/rel_0_7/core/schema.html>`_ for more details 
-about other supported keyword arguments.
+documentation below **are passed on to the 
+:class:`sqlalchemy:sqlalchemy.schema.Column` object**.
 
 The following non SQLAlchemy-specific arguments are supported:
 
@@ -159,3 +180,4 @@ class has_field( ClassMutator ):
     
     def process( self, entity_dict, name, *args, **kwargs ):
         entity_dict[ name ] = Field( *args, **kwargs )
+

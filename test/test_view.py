@@ -78,6 +78,10 @@ class EditorsTest(ModelThreadTestCase):
         #editor.keyPressEvent( up_event )
         #self.assertFalse( up_event.isAccepted() )
         
+    def assert_vertical_size( self, editor ):
+        self.assertEqual( editor.sizePolicy().verticalPolicy(), 
+                          QtGui.QSizePolicy.Fixed )
+        
     def test_ChartEditor(self):
         import math
         from camelot.container import chartcontainer
@@ -92,10 +96,10 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_widget( editor, 'disabled' )
         self.assert_valid_editor( editor, plot )
         
-        
     def test_DateEditor(self):
         import datetime
         editor = self.editors.DateEditor()
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
@@ -106,6 +110,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_TextLineEditor(self):
         editor = self.editors.TextLineEditor(parent=None, length=10)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( u'za coś tam' )
         self.grab_default_states( editor )
@@ -145,6 +150,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_LocalFileEditor( self ):
         editor = self.editors.LocalFileEditor( parent=None )
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( '/home/lancelot/quests.txt' )
         self.grab_default_states( editor )
@@ -153,6 +159,7 @@ class EditorsTest(ModelThreadTestCase):
         
     def test_StarEditor(self):
         editor = self.editors.StarEditor(parent=None, maximum=5)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 4 )
         self.grab_default_states( editor )
@@ -161,6 +168,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_SmileyEditor(self):
         editor = self.editors.SmileyEditor(parent=None)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 'face-kiss' )
         self.grab_default_states( editor )
@@ -169,6 +177,7 @@ class EditorsTest(ModelThreadTestCase):
         
     def test_BoolEditor(self):
         editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( True )
         self.grab_default_states( editor )
@@ -193,6 +202,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_CodeEditor(self):
         editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( ['XYZ', '123'] )
         self.grab_default_states( editor )
@@ -201,6 +211,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_ColorEditor(self):
         editor = self.editors.ColorEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( (255, 200, 255, 255) )
         self.grab_default_states( editor )
@@ -209,6 +220,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_ColoredFloatEditor(self):
         editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -219,6 +231,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_ChoicesEditor(self):
         editor = self.editors.ChoicesEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
         editor.set_choices( choices1 )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -243,6 +256,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_FileEditor(self):
         editor = self.editors.FileEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
@@ -250,6 +264,7 @@ class EditorsTest(ModelThreadTestCase):
     def test_DateTimeEditor(self):
         import datetime
         editor = self.editors.DateTimeEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
@@ -259,6 +274,7 @@ class EditorsTest(ModelThreadTestCase):
     def test_FloatEditor(self):
         editor = self.editors.FloatEditor(parent=None, 
                                           prefix='prefix')
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -295,6 +311,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_IntegerEditor(self):
         editor = self.editors.IntegerEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0 )
         self.assertEqual( editor.get_value(), 0 )
@@ -330,6 +347,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_LanguageEditor(self):
         editor = self.editors.LanguageEditor(parent=None)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 'en_US' )
         self.grab_default_states( editor )
@@ -338,6 +356,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_Many2OneEditor(self):
         editor = self.editors.Many2OneEditor(parent=None)
+        self.assert_vertical_size( editor )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, lambda:object )
         
@@ -352,6 +371,7 @@ class EditorsTest(ModelThreadTestCase):
     def test_TimeEditor(self):
         import datetime
         editor = self.editors.TimeEditor(parent=None, editable=True)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( datetime.time(21, 5, 0) )
         self.grab_default_states( editor )
@@ -368,6 +388,7 @@ class EditorsTest(ModelThreadTestCase):
         
     def test_VirtualAddressEditor(self):
         editor = self.editors.VirtualAddressEditor(parent=None)
+        self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( ('im','test') )
         self.grab_default_states( editor )
@@ -376,6 +397,7 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_MonthsEditor(self):
         editor = self.editors.MonthsEditor(parent=None)
+        self.assert_vertical_size( editor )
         self.assertEqual(editor.get_value(), self.ValueLoading)
         editor.set_value(12)
         self.grab_default_states( editor )

@@ -1,7 +1,7 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
-#  www.conceptive.be / project-camelot@conceptive.be
+#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / info@conceptive.be
 #
 #  This file is part of the Camelot Library.
 #
@@ -12,13 +12,13 @@
 #  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact project-camelot@conceptive.be
+#  visit www.python-camelot.com or contact info@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #  For use of this library in commercial applications, please contact
-#  project-camelot@conceptive.be
+#  info@conceptive.be
 #
 #  ============================================================================
 
@@ -193,7 +193,7 @@ and above the text.
         """
         assert object_thread( self )
         current_index = self.currentIndex()
-        if not current_index:
+        if not current_index.isValid():
             return
         self.closePersistentEditor( current_index )
                 
@@ -677,13 +677,14 @@ class TableView( AbstractView  ):
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
         actions_widget = self.findChild(ActionsBox, 'actions')
-        if filters_widget:
-            filters_widget.filters_changed_signal.disconnect( self.rebuild_query )
-            self.filters_layout.removeWidget(filters_widget)
-            filters_widget.deleteLater()
-        if actions_widget:
-            self.filters_layout.removeWidget(actions_widget)
-            actions_widget.deleteLater()
+        
+        while True:
+            item = self.filters_layout.takeAt( 0 )
+            if item == None:
+                break
+            widget = item.widget()
+            if widget != None:
+                widget.deleteLater()            
         if filters:
             splitter = self.findChild( QtGui.QWidget, 'splitter' )
             filters_widget = FilterList( filters, parent=splitter )
@@ -694,6 +695,7 @@ class TableView( AbstractView  ):
         # filters might have default values, so we can only build the queries now
         #
         self.rebuild_query()
+        self.filters_layout.addStretch(1)
         if actions:
             actions_widget = ActionsBox( parent = self,
                                          gui_context = self.gui_context )
@@ -707,4 +709,5 @@ class TableView( AbstractView  ):
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
+
 

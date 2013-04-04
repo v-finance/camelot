@@ -1,5 +1,5 @@
-Master
-------
+Development
+-----------
 
  * Uses SQLAlchemy 0.8.0
  
@@ -39,6 +39,11 @@ Master
  * The frozen columns feature has been removed in favor of the column groups
  
  * The embedded form has been removed in favour of :meth:`camelot.admin.object_admin.ObjectAdmin.get_compounding_objects`
+ 
+ * Unittests cover 80% of the code
+ 
+ * See :ref:`migrate-latest` for documentation on how to upgrade an 
+   existing Camelot project to the latest version. 
 
 Release 12.06.29
 ----------------
@@ -266,8 +271,6 @@ Release 10.11.27
    choices, prefix, suffix, arrow
 
  * Document merge wizard
- 
-   .. image:: _static/mergedocumentwizard/wizard_widget.png
    
  * Support for SQLAlchemy 0.6.x
  
@@ -333,11 +336,7 @@ Release 09.12.07
    
  * Generic import wizard
  
-   .. image:: _static/importwizard/csv_wizard.png
- 
  * The busy indicator in the status bar
- 
-   .. image:: _static/controls/status_bar.png
  
  * Support for lazy translations
  

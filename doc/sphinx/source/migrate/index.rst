@@ -7,3 +7,4 @@
 .. toctree::
 
    11-12-30.rst
+   latest.rst
