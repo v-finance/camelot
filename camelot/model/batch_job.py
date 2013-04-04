@@ -45,9 +45,10 @@ from . import type_and_status
 
 #
 # Run batch jobs in separate session to get out of band writing
-# to the database
+# to the database, the session is scoped per thread to prevent the
+# session from being garbage collected when the context manager ends
 #
-BatchSession = orm.sessionmaker( autoflush = False )
+BatchSession = orm.scoped_session( orm.sessionmaker( autoflush = False ) )
 
 batch_job_statusses = [ (-2, 'planned'), 
                         (-1, 'running'), 
