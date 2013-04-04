@@ -28,6 +28,7 @@ These classes provide the means to store the result of batch jobs to enable the
 user to review or plan them.
 """
 
+import logging
 import sys
 
 import sqlalchemy.types
@@ -42,6 +43,8 @@ from camelot.core.document import documented_entity
 import camelot.types
 
 from . import type_and_status
+
+LOGGER = logging.getLogger('batch_job')
 
 #
 # Run batch jobs in separate session to get out of band writing
@@ -184,6 +187,8 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         if exc_type != None:
             self.add_exception_to_message( exc_type, exc_val, exc_tb )
             self.change_status( 'errors' )
+            LOGGER.info( 'batch job closed with exception', 
+                         exc_info = (exc_type, exc_val, exc_tb) )
         elif self.current_status == 'running':
             self.change_status( 'success' )
         orm.object_session( self ).commit()
