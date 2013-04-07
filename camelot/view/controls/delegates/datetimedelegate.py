@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from customdelegate import CustomDelegate, DocumentationMetaclass, ValueLoading
+from .customdelegate import CustomDelegate, DocumentationMetaclass, ValueLoading
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 

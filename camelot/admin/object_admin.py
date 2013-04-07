@@ -33,7 +33,7 @@ from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from validator.object_validator import ObjectValidator
+from .validator.object_validator import ObjectValidator
 from PyQt4 import QtCore
 
 class FieldAttributesList(list):
@@ -498,7 +498,7 @@ be specified using the verbose_name attribute.
                     return_value = None
                     try:
                         return_value = value(obj)
-                    except (ValueError, Exception, RuntimeError, TypeError, NameError), exc:
+                    except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
                     finally:
                         dynamic_field_attributes[name] = return_value
@@ -750,7 +750,7 @@ be specified using the verbose_name attribute.
                 )
                 try:
                     setattr(object_instance, field, default_value)
-                except AttributeError, exc:
+                except AttributeError as exc:
                     logger.error(
                         'Programming Error : could not set'
                         ' attribute %s to %s on %s' % (

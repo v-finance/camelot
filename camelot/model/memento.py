@@ -44,7 +44,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters
 from camelot.view.controls import delegates
 
-from authentication import AuthenticationMechanism
+from .authentication import AuthenticationMechanism
 
 class PreviousAttribute( object ):
     """Helper class to display previous attributes"""

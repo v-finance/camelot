@@ -28,6 +28,8 @@ are more complex.
 
 """
 
+import six
+
 class ColumnGroup( object ):
     """
     A group of columns to be displayed in a table view.  By building a Table
@@ -79,7 +81,7 @@ class Table( object ):
         """
         fields = []
         for column in self.columns:
-            if isinstance( column, basestring ):
+            if isinstance( column, six.string_types ):
                 fields.append( column )
             else:
                 fields.extend( column.get_fields() )

@@ -24,7 +24,7 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls.editors.smileyeditor import SmileyEditor, default_icons
 
 class SmileyDelegate(CustomDelegate):

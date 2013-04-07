@@ -25,7 +25,7 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _

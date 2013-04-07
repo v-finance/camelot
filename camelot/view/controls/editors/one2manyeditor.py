@@ -28,8 +28,8 @@ LOGGER = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
-from wideeditor import WideEditor
-from customeditor import CustomEditor
+from .wideeditor import WideEditor
+from .customeditor import CustomEditor
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import object_thread, post

@@ -37,7 +37,7 @@ from camelot.core.utils import ugettext as _
 from camelot.core.utils import variant_to_pyobject
 from camelot.core.utils import create_constant_function
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')

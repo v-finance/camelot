@@ -66,7 +66,6 @@ class ComboBoxInputDialog(QDialog):
     def _combobox_activated(self, index):
         if self._autoaccept:
             self.accept()
-        print index
         
     def set_label_text(self, text):
         label = self.findChild( QtGui.QWidget, 'label' )

@@ -37,6 +37,8 @@ from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.admin.validator.entity_validator import EntityValidator
 
+import six
+
 from sqlalchemy import orm, schema
 from sqlalchemy.orm.attributes import instance_state
 
@@ -133,7 +135,7 @@ It has additional class attributes that customise its behaviour.
         from sqlalchemy.orm.mapper import _mapper_registry
         try:
             self.mapper = orm.class_mapper(self.entity)
-        except UnmappedClassError, exception:
+        except UnmappedClassError as exception:
             mapped_entities = [unicode(m) for m in _mapper_registry.keys()]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
@@ -252,7 +254,7 @@ It has additional class attributes that customise its behaviour.
                 """A class or name of the class representing the other
                 side of a relation.  Use the name of the class to avoid
                 circular dependencies"""
-                if isinstance(target, basestring):
+                if isinstance(target, six.string_types):
                     for mapped_class in _mapper_registry.keys():
                         if mapped_class.class_.__name__ == target:
                             return mapped_class.class_
@@ -596,7 +598,7 @@ It has additional class attributes that customise its behaviour.
                     modifications = {}
                     try:
                         modifications = self.get_modifications( obj_to_flush )
-                    except Exception, e:
+                    except Exception as e:
                         # todo : there seems to be a bug in sqlalchemy that causes the
                         #        get history to fail in some cases
                         logger.error( 'could not get modifications from object', exc_info = e )

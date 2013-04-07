@@ -22,20 +22,20 @@
 #
 #  ============================================================================
 
-from backup import SelectBackup, SelectRestore
-from change_object import ChangeField, ChangeObject, ChangeObjects
-from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
+from .backup import SelectBackup, SelectRestore
+from .change_object import ChangeField, ChangeObject, ChangeObjects
+from .gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
                   ShowPixmap )
-from item_view import Sort
-from open_file import ( OpenFile, OpenStream, 
+from .item_view import Sort
+from .open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
-from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from print_preview import ( PrintChart, PrintHtml, PrintPreview, 
+from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
+from .print_preview import ( PrintChart, PrintHtml, PrintPreview, 
                             PrintJinjaTemplate )
-from select_file import SelectFile
-from select_object import SelectObject
-from text_edit import EditTextDocument
-from update_progress import UpdateProgress
+from .select_file import SelectFile
+from .select_object import SelectObject
+from .text_edit import EditTextDocument
+from .update_progress import UpdateProgress
 
 __all__ = [
     ChangeField.__name__,

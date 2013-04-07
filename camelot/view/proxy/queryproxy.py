@@ -28,7 +28,7 @@ import functools
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from collection_proxy import CollectionProxy, strip_data_from_object
+from .collection_proxy import CollectionProxy, strip_data_from_object
 from camelot.view.model_thread import model_function, object_thread, post
 
 class QueryTableProxy(CollectionProxy):

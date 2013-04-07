@@ -24,7 +24,7 @@
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import ColorScheme
-from customeditor import AbstractCustomEditor
+from .customeditor import AbstractCustomEditor
 
 class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
     """An editor that behaves like a note, the editor hides itself when

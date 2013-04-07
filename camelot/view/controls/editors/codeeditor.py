@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.model_thread import object_thread
 
-from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
+from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 import re
 
 class PartEditor(QtGui.QLineEdit):

@@ -90,7 +90,7 @@ class Pixmap(object):
             #  so they see no splash screen, tant pis
             r = resource_string(self._module_name, p)
             qpm.loadFromData(r)
-        except Exception, e:
+        except Exception as e:
             logger.warn(u'Could not load pixmap "%s" from module: %s, encountered exception' % (p, self._module_name), exc_info=e)
         self._cached_pixmap = qpm
         return qpm

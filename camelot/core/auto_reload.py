@@ -78,7 +78,6 @@ class AutoReload( QtCore.QFileSystemWatcher ):
                 continue
             if not name.startswith( 'camelot' ):
                 continue
-            print name
             reload( module )
         self.reload.emit()
         

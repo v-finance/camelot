@@ -107,7 +107,7 @@ class Task(QtCore.QObject):
         #
         except StopIteration:
             self.finished.emit( StopIteration() )
-        except Exception, e:
+        except Exception as e:
             exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
             self.exception.emit( exc_info )
             # the stack might contain references to QT objects which could be kept alive this way
@@ -198,7 +198,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         self._thread_busy(True)
         try:
             self._setup_thread()
-        except Exception, e:
+        except Exception as e:
             exc_info = register_exception(logger, 'Exception when setting up the SignalSlotModelThread', e)
             self.setup_exception_signal.emit( exc_info )
         self._thread_busy(False)

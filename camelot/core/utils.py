@@ -30,6 +30,8 @@ from PyQt4 import QtCore
 import datetime
 import logging
 
+import six 
+
 logger = logging.getLogger('camelot.core.utils')
 
 def is_deleted_pyqt( qobj ):
@@ -204,9 +206,9 @@ def _qtranslate(string_to_translate):
     :param string_to_translate: a unicode string
     :return: the translated unicode string if it was possible to translate
     """
-    return unicode(QtCore.QCoreApplication.translate('', 
-                                                     string_to_translate.encode('utf-8'), 
-                                                     encoding=_encoding))
+    return six.text_type(QtCore.QCoreApplication.translate('', 
+                                                           string_to_translate.encode('utf-8'), 
+                                                           encoding=_encoding))
     
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
@@ -214,7 +216,7 @@ def ugettext(string_to_translate):
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
     tries to get the translation from the .qm files)"""
-    assert isinstance(string_to_translate, basestring)
+    assert isinstance(string_to_translate, six.string_types)
     result = _translations_.get(string_to_translate, None)
     if not result:
         result = _qtranslate( string_to_translate )
@@ -231,7 +233,7 @@ def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
     """
-    assert isinstance(message, basestring)
+    assert isinstance(message, six.string_types)
     from camelot.model.i18n import Translation
     from sqlalchemy import sql
     query = sql.select( [Translation.value],
@@ -248,7 +250,7 @@ class ugettext_lazy(object):
     """
 
     def __init__(self, string_to_translate):
-        assert isinstance(string_to_translate, basestring)
+        assert isinstance(string_to_translate, six.string_types)
         self._string_to_translate = string_to_translate
 
     def __str__(self):
@@ -258,7 +260,7 @@ class ugettext_lazy(object):
         return ugettext(self._string_to_translate)
     
     def __eq__(self, other_string):
-        if isinstance(other_string, basestring):
+        if isinstance(other_string, six.string_types):
             return other_string == self._string_to_translate
         if isinstance(other_string, ugettext_lazy):
             return other_string._string_to_translate == self._string_to_translate

@@ -22,17 +22,19 @@
 #
 #  ============================================================================
 
+from math import floor
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from math import floor
-from camelot.view.art import Icon
+import six
 
+from camelot.view.art import Icon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
 class IntegerEditor(CustomEditor):
@@ -186,7 +188,7 @@ an unneeded update of the db.
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(six.text_type)
     def calculation_finished(self, value):
         self.spinBox.setValue(floor(float(unicode(value))))
         self.editingFinished.emit()

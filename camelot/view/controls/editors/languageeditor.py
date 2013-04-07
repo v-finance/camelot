@@ -24,7 +24,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from customeditor import AbstractCustomEditor
+from .customeditor import AbstractCustomEditor
 
 class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     """A ComboBox that shows a list of languages, the editor takes

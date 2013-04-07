@@ -21,37 +21,37 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from delegatemanager import DelegateManager
-from booldelegate import BoolDelegate, TextBoolDelegate
-from chartdelegate import ChartDelegate
-from codedelegate import CodeDelegate
-from colordelegate import ColorDelegate
-from coloredfloatdelegate import ColoredFloatDelegate
-from comboboxdelegate import ComboBoxDelegate
-from currencydelegate import CurrencyDelegate
-from customdelegate import CustomDelegate
-from datedelegate import DateDelegate
-from datetimedelegate import DateTimeDelegate
-from filedelegate import FileDelegate
-from floatdelegate import FloatDelegate
-from imagedelegate import ImageDelegate
-from integerdelegate import IntegerDelegate
-from intervalsdelegate import IntervalsDelegate
-from languagedelegate import LanguageDelegate
-from localfiledelegate import LocalFileDelegate
-from many2onedelegate import Many2OneDelegate
-from one2manydelegate import One2ManyDelegate
-from manytoonechoicesdelegate import ManyToOneChoicesDelegate
-from plaintextdelegate import PlainTextDelegate
-from richtextdelegate import RichTextDelegate
-from stardelegate import StarDelegate
-from texteditdelegate import TextEditDelegate
-from timedelegate import TimeDelegate
-from virtualaddressdelegate import VirtualAddressDelegate
-from smileydelegate import SmileyDelegate
-from notedelegate import NoteDelegate
-from labeldelegate import LabelDelegate
-from monthsdelegate import MonthsDelegate
+from .delegatemanager import DelegateManager
+from .booldelegate import BoolDelegate, TextBoolDelegate
+from .chartdelegate import ChartDelegate
+from .codedelegate import CodeDelegate
+from .colordelegate import ColorDelegate
+from .coloredfloatdelegate import ColoredFloatDelegate
+from .comboboxdelegate import ComboBoxDelegate
+from .currencydelegate import CurrencyDelegate
+from .customdelegate import CustomDelegate
+from .datedelegate import DateDelegate
+from .datetimedelegate import DateTimeDelegate
+from .filedelegate import FileDelegate
+from .floatdelegate import FloatDelegate
+from .imagedelegate import ImageDelegate
+from .integerdelegate import IntegerDelegate
+from .intervalsdelegate import IntervalsDelegate
+from .languagedelegate import LanguageDelegate
+from .localfiledelegate import LocalFileDelegate
+from .many2onedelegate import Many2OneDelegate
+from .one2manydelegate import One2ManyDelegate
+from .manytoonechoicesdelegate import ManyToOneChoicesDelegate
+from .plaintextdelegate import PlainTextDelegate
+from .richtextdelegate import RichTextDelegate
+from .stardelegate import StarDelegate
+from .texteditdelegate import TextEditDelegate
+from .timedelegate import TimeDelegate
+from .virtualaddressdelegate import VirtualAddressDelegate
+from .smileydelegate import SmileyDelegate
+from .notedelegate import NoteDelegate
+from .labeldelegate import LabelDelegate
+from .monthsdelegate import MonthsDelegate
 
 __all__ = [
     DelegateManager.__name__,

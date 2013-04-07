@@ -27,8 +27,10 @@ import datetime
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
-from dateeditor import DateEditor
+import six
+
+from .customeditor import CustomEditor, set_background_color_palette
+from .dateeditor import DateEditor
 from camelot.view.proxy import ValueLoading
 
 class TimeValidator(QtGui.QValidator):
@@ -96,7 +98,7 @@ class DateTimeEditor(CustomEditor):
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(six.text_type)
     @QtCore.pyqtSlot(int)
     @QtCore.pyqtSlot()
     def editing_finished(self, _arg=None):

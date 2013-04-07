@@ -423,6 +423,8 @@ ManyToMany_ relationships.
 
 import logging
 
+import six
+
 from sqlalchemy import schema, sql
 from sqlalchemy.orm import relationship, backref, class_mapper
 
@@ -452,7 +454,7 @@ class Relationship( DeferredProperty ):
     @property
     def target( self ):
         if not self._target:
-            if isinstance( self.of_kind, basestring ):
+            if isinstance( self.of_kind, six.string_types ):
                 try:
                     # for Elixir compatibility, support full class names,
                     # including the modules, but only use the last part

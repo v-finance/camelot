@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from fileeditor import FileEditor
+from .fileeditor import FileEditor
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _

@@ -23,7 +23,7 @@
 #  ============================================================================
 from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import ugettext, variant_to_pyobject

@@ -31,7 +31,7 @@ from sqlalchemy.sql.operators import between_op
 import datetime
 import operator
 
-from controls import delegates
+from .controls import delegates
 from camelot.core import constants
 from camelot.view.utils import (
     bool_from_string,

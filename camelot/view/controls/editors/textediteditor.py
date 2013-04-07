@@ -23,8 +23,8 @@
 #  ============================================================================
 from PyQt4 import QtCore
 
-from wideeditor import WideEditor
-from customeditor import AbstractCustomEditor, QtGui
+from .wideeditor import WideEditor
+from .customeditor import AbstractCustomEditor, QtGui
 
 class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 

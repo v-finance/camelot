@@ -28,9 +28,9 @@ from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
-from application_action import ( ApplicationActionGuiContext,
+from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-import list_action
+from . import list_action
 
 class FormActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -266,7 +266,7 @@ def structure_to_form_actions( structure ):
     object is a tuple, a CallMethod is constructed with this tuple as arguments.  If
     the python object is an instance of as Action, it is kept as is.
     """
-    from list_action import CallMethod
+    from .list_action import CallMethod
     
     def object_to_action( o ):
         if isinstance( o, Action ):

@@ -27,7 +27,7 @@ from PyQt4.QtCore import Qt
 from camelot.core.utils import ugettext as _
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from user_translatable_label import UserTranslatableLabel
+from .user_translatable_label import UserTranslatableLabel
 
 class Attribute(object):
     """Helper class representing a field attribute's name and its value"""

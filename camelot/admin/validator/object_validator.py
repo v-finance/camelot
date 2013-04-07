@@ -162,7 +162,7 @@ class ObjectValidator(QtCore.QObject):
             if entity_instance != None:
                 messages = self.objectValidity(entity_instance)
                 self.message_cache.add_data(row, entity_instance, messages)
-        except Exception, e:
+        except Exception as e:
             logger.error(
                 'programming error while validating object',
                 exc_info=e

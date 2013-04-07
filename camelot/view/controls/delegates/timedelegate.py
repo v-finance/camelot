@@ -26,7 +26,7 @@ import datetime
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.utils import create_constant_function, variant_to_pyobject
 from camelot.view.proxy import ValueLoading

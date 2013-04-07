@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 from camelot.view.model_thread import post
-from choiceseditor import ChoicesEditor
+from .choiceseditor import ChoicesEditor
 
 no_choice = [(None, '')]
 

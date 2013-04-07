@@ -154,7 +154,7 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
             if remove:
                 try:
                     os.remove( filename )
-                except Exception, e:
+                except Exception as e:
                     LOGGER.warn('could not remove file', exc_info=e)
             return lambda:on_finish(new_path)
 

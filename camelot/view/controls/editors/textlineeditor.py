@@ -23,7 +23,7 @@
 #  ============================================================================
 
 from PyQt4 import QtGui
-from customeditor import AbstractCustomEditor, draw_tooltip_visualization
+from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):

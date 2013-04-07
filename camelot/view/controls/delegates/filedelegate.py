@@ -24,7 +24,7 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass, not_editable_background, not_editable_foreground
+from .customdelegate import CustomDelegate, DocumentationMetaclass, not_editable_background, not_editable_foreground
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading

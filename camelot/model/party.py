@@ -47,7 +47,7 @@ import camelot.types
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
 
-from authentication import end_of_times
+from .authentication import end_of_times
 
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""

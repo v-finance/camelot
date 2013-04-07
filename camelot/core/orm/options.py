@@ -115,7 +115,7 @@ options_defaults = dict(
     table_options={},
 )
 
-valid_options = options_defaults.keys() + [
+valid_options = list( options_defaults.keys() ) + [
     'metadata',
     'session',
 ]

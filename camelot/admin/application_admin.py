@@ -34,7 +34,7 @@ from PyQt4 import QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
-from camelot.view import database_selection
+from camelot.view.database_selection import ProfileWizard
 from camelot.view.model_thread import model_function
 
 _application_admin_ = []
@@ -100,7 +100,7 @@ When the same action is returned in the :meth:`get_toolbar_actions` and
 shortcut confusion and reduce the number of status updates.
     """
 
-    database_profile_wizard = database_selection.ProfileWizard
+    database_profile_wizard = ProfileWizard
 
     name = 'Camelot'
     application_url = None

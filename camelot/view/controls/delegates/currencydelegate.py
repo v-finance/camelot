@@ -21,7 +21,7 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from floatdelegate import FloatDelegate
+from .floatdelegate import FloatDelegate
 
 class CurrencyDelegate(FloatDelegate):
     """Custom delegate for currency values

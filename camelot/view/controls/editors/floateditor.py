@@ -26,7 +26,9 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
+import six
+
+from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 from camelot.view.art import Icon
 from camelot.core import constants
 
@@ -192,7 +194,7 @@ class FloatEditor(CustomEditor):
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(six.text_type)
     def calculation_finished(self, value):
         self.spinBox.setValue(float(unicode(value)))
         self.editingFinished.emit()

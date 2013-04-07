@@ -25,7 +25,7 @@
 
 from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject, create_constant_function
 from camelot.view.proxy import ValueLoading

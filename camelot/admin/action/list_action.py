@@ -27,7 +27,7 @@ import datetime
 import logging
 
 from .base import Action
-from application_action import ( ApplicationActionGuiContext,
+from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _

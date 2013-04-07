@@ -25,7 +25,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.core.utils import variant_to_pyobject
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.art import Icon
 

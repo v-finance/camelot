@@ -131,7 +131,7 @@ class SqlMemento( object ):
             clause = table.insert( creation_date = func.current_timestamp() )
             try:
                 clause.execute( rows )
-            except exc.DatabaseError, e:
+            except exc.DatabaseError as e:
                 LOGGER.error( 'Programming Error, could not flush history', exc_info = e )                
     
     def get_changes( self, 

@@ -63,7 +63,7 @@ def model_function(original_function):
 
     def in_model_thread():
         """return wether current thread is model thread"""
-        from no_thread_model_thread import NoThreadModelThread
+        from .no_thread_model_thread import NoThreadModelThread
         current_thread = QtCore.QThread.currentThread()
         model_thread = get_model_thread()
         return (current_thread==model_thread) or isinstance(
@@ -158,7 +158,7 @@ class AbstractModelThread(QtCore.QThread):
         return True
 
 def construct_model_thread(*args, **kwargs):
-    from signal_slot_model_thread import SignalSlotModelThread
+    from .signal_slot_model_thread import SignalSlotModelThread
     _model_thread_.insert(0, SignalSlotModelThread(*args, **kwargs))
 
 def has_model_thread():

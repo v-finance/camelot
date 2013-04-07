@@ -28,7 +28,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError

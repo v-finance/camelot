@@ -47,7 +47,7 @@ class MainWindow(QtGui.QMainWindow):
     """
 
     def __init__(self, gui_context, parent=None):
-        from workspace import DesktopWorkspace
+        from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 

@@ -160,7 +160,7 @@ def fetch_profiles(from_file=None):
             info['proxy_password'] = _decode_setting(settings.value('proxy_password', QtCore.QVariant('')).toString())
             profiles[profilename] = info
         settings.endArray()
-    except Exception, e:
+    except Exception as e:
         logger.warn('Could not read existing profiles, proceed with what was available', exc_info=e)
     return profiles
 

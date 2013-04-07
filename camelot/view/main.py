@@ -228,7 +228,7 @@ class Application( QtCore.QObject ):
             main_window.splash_screen = splash_window
             main_window.show()
             return self.start_event_loop(app)
-        except Exception, e:
+        except Exception as e:
             from camelot.view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
             self.initialization_exception( exc_info )

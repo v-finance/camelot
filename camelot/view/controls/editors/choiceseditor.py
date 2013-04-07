@@ -28,7 +28,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.view.proxy import ValueLoading
-from customeditor import AbstractCustomEditor
+from .customeditor import AbstractCustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
 

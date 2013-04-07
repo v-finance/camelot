@@ -79,7 +79,7 @@ class DelayedProxy( object ):
             try:
                return u','.join(list(unicode(o) or '' for o,_i in zip(collection,
                                                                       range(3))))
-            except TypeError, e:
+            except TypeError as e:
                logger.error( 'could not convert object to unicode', exc_info=e )
         return u''
 
@@ -107,7 +107,7 @@ def strip_data_from_object( obj, columns ):
                                             field_attributes['admin'].get_columns )
             else:
                 field_value = getter( obj )
-        except (Exception, RuntimeError, TypeError, NameError), e:
+        except (Exception, RuntimeError, TypeError, NameError) as e:
             message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
             log_programming_error( logger, 
                                    message,
@@ -149,7 +149,7 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
                 unicode_data = field_data.checkout_thumbnail(100, 100)
             elif field_data != None:
                 unicode_data = unicode( field_data )
-        except (Exception, RuntimeError, TypeError, NameError), e:
+        except (Exception, RuntimeError, TypeError, NameError) as e:
             log_programming_error( logger,
                                    "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
                                                                                                         obj.__class__.__name__),
@@ -547,7 +547,7 @@ position in the query.
             self.logger.debug( 'creating delegate for %s' % field_name )
             try:
                 delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
-            except Exception, e:
+            except Exception as e:
                 log_programming_error( logger, 
                                        'Could not create delegate for field %s'%field_name,
                                        exc_info = e )
@@ -642,11 +642,11 @@ position in the query.
                     key_1, key_2 = None, None
                     try:
                         key_1 = getattr( line_1[1], field_name )
-                    except Exception, e:
+                    except Exception as e:
                         logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
                     try:
                         key_2 = getattr( line_2[1], field_name )
-                    except Exception, e:
+                    except Exception as e:
                         logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
                     if key_1 == None and key_2 == None:
                         return 0
@@ -810,7 +810,7 @@ position in the query.
                         # that was not returned before
                         #
                         self.admin.set_defaults( o, include_nullable_fields=False )
-                    except AttributeError, e:
+                    except AttributeError as e:
                         self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
                     except TypeError:
                         # type error can be raised in case we try to set to a collection
@@ -821,7 +821,7 @@ position in the query.
                     # save the state before the update
                     try:
                         self.admin.flush( o )
-                    except DatabaseError, e:
+                    except DatabaseError as e:
                         #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
                         self.logger.error( 'Programming Error, could not flush object', exc_info = e )
                     locker.relock()
@@ -977,7 +977,7 @@ position in the query.
                     if rows_to_get[i-offset] != i:
                         break
                 limit = i - offset + 1
-        except IndexError, e:
+        except IndexError as e:
             logger.error('index error with rows_to_get %s'%unicode(rows_to_get), exc_info=e)
             raise e
         return (offset, limit)

@@ -22,14 +22,14 @@
 #
 #  ============================================================================
 
-from application_action import ( ApplicationActionGuiContext,
+from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext,
                                  OpenNewView, OpenTableView)
-from base import Action, ActionStep, GuiContext, Mode, State
-from document_action import ( DocumentActionGuiContext, 
+from .base import Action, ActionStep, GuiContext, Mode, State
+from .document_action import ( DocumentActionGuiContext, 
                               DocumentActionModelContext )
-from form_action import ( FormActionGuiContext, FormActionModelContext )
-from list_action import ( ListActionGuiContext, ListActionModelContext, 
+from .form_action import ( FormActionGuiContext, FormActionModelContext )
+from .list_action import ( ListActionGuiContext, ListActionModelContext, 
                           CallMethod, OpenFormView )
 
 __all__ = [

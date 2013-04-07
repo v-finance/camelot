@@ -42,7 +42,7 @@ from camelot.view.model_thread import object_thread
 from camelot.view.model_thread import model_function
 from camelot.view import register
 
-from search import SimpleSearchControl
+from .search import SimpleSearchControl
         
 class ColumnGroupsWidget( QtGui.QTabBar ):
     """A tabbar the user can use to select a group of columns within an
@@ -515,7 +515,7 @@ class TableView( AbstractView  ):
     def setSubclassTree( self, subclasses ):
         assert object_thread( self )
         if len( subclasses ) > 0:
-            from inheritance import SubclassTree
+            from .inheritance import SubclassTree
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
             class_tree = SubclassTree( self.admin, splitter )
             splitter.insertWidget( 0, class_tree )
@@ -633,7 +633,7 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot()
     def rebuild_query( self ):
         """resets the table model query"""
-        from filterlist import FilterList
+        from .filterlist import FilterList
 
         def rebuild_query():
             query = self.admin.get_query()

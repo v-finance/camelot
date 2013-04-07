@@ -25,8 +25,8 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-from wideeditor import WideEditor
-from customeditor import CustomEditor
+from .wideeditor import WideEditor
+from .customeditor import CustomEditor
 from camelot.view.art import Icon
 
 class CustomTextEdit(QtGui.QTextEdit):

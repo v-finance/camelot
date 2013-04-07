@@ -25,7 +25,7 @@ import datetime
 
 from PyQt4 import QtGui
 
-from customeditor import AbstractCustomEditor, set_background_color_palette, draw_tooltip_visualization
+from .customeditor import AbstractCustomEditor, set_background_color_palette, draw_tooltip_visualization
 from camelot.core import constants
 
 class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):

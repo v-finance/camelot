@@ -24,7 +24,7 @@
 from PyQt4.QtCore import Qt
 
 from camelot.view.controls import editors
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core.utils import variant_to_pyobject
 
 import logging

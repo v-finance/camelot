@@ -24,7 +24,7 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-from customdelegate import DocumentationMetaclass, CustomDelegate
+from .customdelegate import DocumentationMetaclass, CustomDelegate
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 

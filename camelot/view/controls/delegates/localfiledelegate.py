@@ -27,8 +27,8 @@ logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
 from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate
-from customdelegate import DocumentationMetaclass
+from .customdelegate import CustomDelegate
+from .customdelegate import DocumentationMetaclass
 
 from camelot.core.utils import variant_to_pyobject
 

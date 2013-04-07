@@ -383,7 +383,7 @@ allow all languages
             cursor.close()
             connection.close()
             self._connection_valid = True
-        except Exception, e:
+        except Exception as e:
             self._connection_valid = False
             raise UserException( _('Could not connect to database, please check host and port'),
                                  resolution = _('Verify driver, host and port or contact your system administrator'),

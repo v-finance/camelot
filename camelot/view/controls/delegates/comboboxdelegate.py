@@ -25,7 +25,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from PyQt4.QtCore import Qt
 
 from camelot.view.controls import editors

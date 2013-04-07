@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
 class LabelDelegate(CustomDelegate):

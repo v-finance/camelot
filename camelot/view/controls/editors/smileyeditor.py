@@ -25,7 +25,7 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from .customeditor import CustomEditor
 from camelot.view.art import Icon
 
 default_icon_names = [

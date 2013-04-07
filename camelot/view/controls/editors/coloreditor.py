@@ -26,7 +26,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from .customeditor import CustomEditor
 
 
 class ColorEditor(CustomEditor):

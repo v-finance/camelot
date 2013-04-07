@@ -124,10 +124,10 @@ class ActionRunner( QtCore.QEventLoop ):
                 else:
                     LOGGER.debug( 'move iterator forward' )
                     result = self._generator.next()
-        except CancelRequest, e:
+        except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
-        except StopIteration, e:
+        except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
             return e
 
@@ -189,12 +189,12 @@ class ActionRunner( QtCore.QEventLoop ):
                       self.next, 
                       self.exception, 
                       args = ( self._generator.send, to_send,) )
-            except CancelRequest, exc:
+            except CancelRequest as exc:
                 post( self._iterate_until_blocking,
                       self.next,
                       self.exception,
                       args = ( self._generator.throw, exc,) )
-            except Exception, exc:
+            except Exception as exc:
                 LOGGER.error( 'gui exception while executing action', 
                               exc_info=exc)
                 #

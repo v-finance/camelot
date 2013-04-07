@@ -31,6 +31,8 @@ These classes can be reused if a custom base class is needed.
 
 import sys
 
+import six
+
 from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
@@ -45,13 +47,13 @@ class EntityDescriptor(object):
     EntityDescriptor holds information about the Entity before it is
     passed to Declarative.  It is used to search for inverse relations
     defined on an Entity before the relation is passed to Declarative.
-    
+
     :param entity_base: The Declarative base class used to subclass the
         entity
     """
 
     global_counter = 0
-    
+
     def __init__( self, entity_base ):
         self.entity_base = entity_base
         self.parent = None
@@ -67,7 +69,7 @@ class EntityDescriptor(object):
             if isinstance( value, dict ):
                 value = value.copy()
             setattr( self, key, value )        
-        
+
     def set_entity( self, entity ):
         self.entity = entity
         self.module = sys.modules.get( entity.__module__ )
@@ -86,22 +88,22 @@ class EntityDescriptor(object):
                 value.name = key
         # execute the builders in the order they were created
         self.builders.sort( key = lambda b:b.counter )
-        
+
     @property
     def primary_keys( self ):
         return self.entity.__table__.primary_key
-    
+
     @property
     def table_fullname( self ):
         return self.entity.__tablename__
-    
+
     @property
     def metadata( self ):
         return self.entity.__table__.metadata
-    
+
     def create_non_pk_cols(self):
         self.call_builders( 'create_non_pk_cols' )
-        
+
     def create_pk_cols( self ):
         """
         Create primary_key columns. That is, call the 'create_pk_cols'
@@ -117,7 +119,7 @@ class EntityDescriptor(object):
             return
 
         self.call_builders( 'create_pk_cols' )
-	base_descriptor = getattr( self.entity_base, '_descriptor', None )
+        base_descriptor = getattr( self.entity_base, '_descriptor', None )
 
         if not self.has_pk and base_descriptor == None:
             colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
@@ -127,32 +129,32 @@ class EntityDescriptor(object):
                 schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
                                primary_key = True ) )
         self._pk_col_done = True
-        
+
     def create_properties(self):
         self.call_builders( 'create_properties' )        
 
     def create_tables(self):
         self.call_builders( 'create_tables' )
-	
+
     def finalize(self):
         self.call_builders( 'finalize' )
-	if self.order_by:
-	    mapper = orm.class_mapper( self.entity )
-	    mapper.order_by = self.translate_order_by( self.order_by )
-        
+        if self.order_by:
+            mapper = orm.class_mapper( self.entity )
+            mapper.order_by = self.translate_order_by( self.order_by )
+
     def add_column( self, key, col ):
         setattr( self.entity, key, col )
         if hasattr( col, 'primary_key' ) and col.primary_key:
             self.has_pk = True   
-            
+
     def add_constraint( self, constraint ):
         self.constraints.append( constraint )            
-    
+
     def append_constraints( self ): 
         table = orm.class_mapper( self.entity ).local_table
         for constraint in self.constraints:
             table.append_constraint( constraint )
-            
+
     def get_inverse_relation( self, rel, check_reverse=True ):
         '''
         Return the inverse relation of rel, if any, None otherwise.
@@ -164,11 +166,11 @@ class EntityDescriptor(object):
                     matching_rel = other_rel
                 else:
                     raise Exception(
-                            "Several relations match as inverse of the '%s' "
-                            "relation in entity '%s'. You should specify "
-                            "inverse relations manually by using the inverse "
-                            "keyword."
-                            % (rel.name, rel.entity.__name__))
+                        "Several relations match as inverse of the '%s' "
+                        "relation in entity '%s'. You should specify "
+                        "inverse relations manually by using the inverse "
+                        "keyword."
+                        % (rel.name, rel.entity.__name__))
         # When a matching inverse is found, we check that it has only
         # one relation matching as its own inverse. We don't need the result
         # of the method though. But we do need to be careful not to start an
@@ -177,16 +179,16 @@ class EntityDescriptor(object):
             rel.entity._descriptor.get_inverse_relation(matching_rel, False)
 
         return matching_rel
-        
+
     def add_property( self, name, prop ):
         mapper = orm.class_mapper( self.entity )
         mapper.add_property( name, property )
-    
+
     def call_builders(self, what):
         for builder in self.builders:
             if hasattr(builder, what):
                 getattr(builder, what)()
-                
+
     def find_relationship(self, name):
         for rel in self.relationships:
             if rel.name == name:
@@ -195,27 +197,27 @@ class EntityDescriptor(object):
             return self.parent._descriptor.find_relationship(name)
         else:
             return None    
-        
+
     def translate_order_by( self, order_by ):
-        if isinstance( order_by, basestring ):
+        if isinstance( order_by, six.string_types ):
             order_by = [order_by]
 
         order = []
-        
-	mapper = orm.class_mapper( self.entity )
-	for colname in order_by:
-	    prop = mapper.columns[ colname.strip('-') ]
-	    if colname.startswith('-'):
-	        prop = sql.desc( prop )
-	    order.append( prop )
-	
+
+        mapper = orm.class_mapper( self.entity )
+        for colname in order_by:
+            prop = mapper.columns[ colname.strip('-') ]
+            if colname.startswith('-'):
+                prop = sql.desc( prop )
+            order.append( prop )
+
         return order        
-        
+
 class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
     metaclass processes the Property and ClassMutator objects.
     """
-    
+
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -241,9 +243,9 @@ class EntityMeta( DeclarativeMeta ):
             if '__mapper_args__' not in dict_:
                 dict_['__mapper_args__'] = dict()
 
-             
+
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
-    
+
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
@@ -286,11 +288,11 @@ def update_or_create_entity( cls, data, surrogate = True ):
             raise Exception("cannot create non surrogate without pk")
     dict_to_entity( record, data )
     return record
-        
+
 def dict_to_entity( entity, data ):
     """Update a mapped object with data from a JSON-style nested dict/list
     structure.
-    
+
     :param entity: the Entity object into which to store the data
     :param data: a `dict` with data to store into the entity
     """
@@ -321,24 +323,24 @@ def dict_to_entity( entity, data ):
             for row in value:
                 if not isinstance(row, dict):
                     raise Exception(
-                            'Cannot send mixed (dict/non dict) data '
-                            'to list relationships in from_dict data.')
+                        'Cannot send mixed (dict/non dict) data '
+                        'to list relationships in from_dict data.')
                 record = update_or_create_entity( rel_class, row)
                 new_attr_value.append(record)
             setattr(entity, key, new_attr_value)
         else:
             setattr(entity, key, value)
-    
+
 def entity_to_dict( entity, deep = {}, exclude = []  ):
     """Generate a JSON-style nested dict/list structure from an object."""
-    
+
     mapper = orm.object_mapper( entity )
-    
+
     col_prop_names = [p.key for p in mapper.iterate_properties \
-                                  if isinstance(p, orm.properties.ColumnProperty)]
+                      if isinstance(p, orm.properties.ColumnProperty)]
     data = dict([(name, getattr(entity, name))
                  for name in col_prop_names if name not in exclude])
-    
+
     for rname, rdeep in deep.iteritems():
         dbdata = getattr(entity, rname)
         prop = mapper.get_property( rname )
@@ -351,25 +353,25 @@ def entity_to_dict( entity, deep = {}, exclude = []  ):
             data[rname] = [ entity_to_dict( o, rdeep, remote_exclude ) for o in dbdata ]
         else:
             data[rname] = entity_to_dict( dbdata, rdeep, remote_exclude )
-    
+
     return data    
 
 class EntityBase( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
-    
+
     def __init__( self, *args, **kwargs ): 
         _declarative_constructor( self, *args, **kwargs )
-	# due to cascading rules and a constructor argument, the object might
-	# allready be in a session
-	if orm.object_session( self ) == None:
-	    Session().add( self ) 
-                                    
+        # due to cascading rules and a constructor argument, the object might
+        # allready be in a session
+        if orm.object_session( self ) == None:
+            Session().add( self ) 
+
     #
     # methods below were copied from camelot.core.orm to mimic the Elixir Entity
     # behavior
     #
-    
+
     def set( self, **kwargs ):
         for key, value in kwargs.iteritems():
             setattr( self, key, value )
@@ -377,7 +379,7 @@ class EntityBase( object ):
     @classmethod
     def update_or_create( cls, data, surrogate = True ):
         return update_or_create_entity( cls, data, surrogate )
-    
+
     def from_dict( self, data ):
         """
         Update a mapped class with data from a JSON-style nested dict/list
@@ -404,11 +406,11 @@ class EntityBase( object ):
 
     def expunge(self, *args, **kwargs):
         return orm.object_session(self).expunge(self, *args, **kwargs)
-    
+
     @hybrid.hybrid_property
     def query( self ):
         return Session().query( self.__class__ )
-    
+
     @query.expression
     def query_expression( cls ):
         return Session().query( cls )
@@ -430,4 +432,3 @@ class EntityBase( object ):
         session.query(MyClass).get(...)
         """
         return Session().query( cls ).get(*args, **kwargs)
-

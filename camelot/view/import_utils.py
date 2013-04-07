@@ -219,7 +219,7 @@ class UnicodeReader( object ):
         try:
             row = self.reader.next()
             return [unicode(s, 'utf-8') for s in row]
-        except UnicodeError, exception:
+        except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
                                  detail = ugettext('Exception occured at line %s : ') % self.line + unicode( exception ) )
