@@ -27,6 +27,8 @@ import logging
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+import six
+
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -192,7 +194,7 @@ class ShowAbout( Action ):
         abtmsg = gui_context.admin.get_application_admin().get_about()
         QtGui.QMessageBox.about( gui_context.workspace, 
                                  ugettext('About'), 
-                                 unicode( abtmsg ) )
+                                 six.text_type( abtmsg ) )
         
 class Backup( Action ):
     """
@@ -381,7 +383,7 @@ class DumpState( Action ):
         dump_logger.warn( '======= begin item model dump =========' )
         for o in gc.get_objects():
             if isinstance(o, CollectionProxy):
-                dump_logger.warn( '%s is used by :'%unicode( o ) )
+                dump_logger.warn( '%s is used by :'%(six.text_type( o )) )
                 for r in gc.get_referrers(o):
                     dump_logger.warn( ' ' + type(r).__name__ )
                     for rr in gc.get_referrers(r):
@@ -421,7 +423,7 @@ class RuntimeInfo( Action ):
                                               jinja2.__version__,
                                               xlrd.__VERSION__,
                                               xlwt.__VERSION__,
-                                              unicode(sys.path))        
+                                              six.text_type(sys.path))        
         yield action_steps.PrintHtml( html )
         
 class SegmentationFault( Action ):

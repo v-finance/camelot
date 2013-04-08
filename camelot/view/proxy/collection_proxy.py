@@ -177,7 +177,7 @@ class SortingRowMapper( dict ):
         except KeyError:
             return row
 
-class CollectionProxy( QtGui.QProxyModel ):
+class CollectionProxy( QtGui.QIdentityProxyModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView
 

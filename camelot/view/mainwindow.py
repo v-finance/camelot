@@ -32,7 +32,7 @@ from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.model_thread import post
 
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import variant_to_pyobject, ugettext as _
 
 class MainWindow(QtGui.QMainWindow):
     """Main window of a Desktop Camelot application
@@ -144,7 +144,7 @@ class MainWindow(QtGui.QMainWindow):
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
         settings = QtCore.QSettings()
-        self.restoreGeometry(settings.value('geometry').toByteArray())
+        self.restoreGeometry( variant_to_pyobject( settings.value('geometry') ) )
 
     def write_settings(self):
         """Store the current geometry of the main window"""

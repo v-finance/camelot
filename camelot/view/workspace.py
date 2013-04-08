@@ -28,6 +28,8 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
+import six
+
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
@@ -195,11 +197,11 @@ class ActionButtonInfoWidget(QtGui.QWidget):
     def setInfoFromState(self, state):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
-            actionNameLabel.setText( unicode( state.verbose_name ) )
+            actionNameLabel.setText( six.text_type( state.verbose_name ) )
         
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
-            tooltip = unicode( state.tooltip or '' )
+            tooltip = six.text_type( state.tooltip or '' )
             actionDescriptionLabel.setText(tooltip)
             if tooltip:
                 # Do not use show() or hide() in this case, since it will
@@ -331,7 +333,7 @@ class DesktopWorkspace(QtGui.QWidget):
         
         return self._tab_widget.widget(i)
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(six.text_type)
     def change_title(self, new_title):
         """
         Slot to be called when the tile of a view needs to change.

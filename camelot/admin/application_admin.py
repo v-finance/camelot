@@ -31,6 +31,8 @@ logger = logging.getLogger('camelot.admin.application_admin')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore
 
+import six
+
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
@@ -371,7 +373,7 @@ shortcut confusion and reduce the number of status updates.
         """
         :return: the name of the application, by default this is the class
             attribute name"""
-        return unicode( self.name )
+        return six.text_type( self.name )
 
     def get_version(self):
         """:return: string representing version of the application, by default this
@@ -439,7 +441,7 @@ shortcut confusion and reduce the number of status updates.
             QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
         except:
             pass
-        return art.read('stylesheet/office2007_blue.qss')
+        return art.read('stylesheet/office2007_blue.qss').decode('utf-8')
 
     def _load_translator_from_file( self, 
                                     module_name, 

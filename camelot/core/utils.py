@@ -107,7 +107,7 @@ data types supported by QVariant, including GUI-related types:
  QVariant variant = color;
 """
 
-if pyqt:
+if pyqt and (six.PY3==False):
     
     def variant_to_pyobject(qvariant=None):
         """Try to convert a QVariant to a python object as good as possible"""
@@ -117,7 +117,7 @@ if pyqt:
             return None
         type = qvariant.type()
         if type == QtCore.QVariant.String:
-            value = unicode(qvariant.toString())
+            value = six.text_type(qvariant.toString())
         elif type == QtCore.QVariant.Date:
             value = qvariant.toDate()
             value = datetime.date( year=value.year(),
@@ -141,6 +141,8 @@ if pyqt:
             value = value.toPyDateTime()
         elif type == QtCore.QVariant.Color:
             value = QtGui.QColor(qvariant)
+        elif type == QtCore.QVariant.ByteArray:
+            value = qvariant.toByteArray()
         else:
             value = qvariant.toPyObject()
     
@@ -188,7 +190,7 @@ def set_translation(source, value):
 def load_translations():
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
-    language = unicode(QtCore.QLocale().name())
+    language = six.text_type(QtCore.QLocale().name())
     from sqlalchemy import sql
     from camelot.model.i18n import Translation
     # only load translations when the camelot model is active
@@ -274,5 +276,3 @@ class ugettext_lazy(object):
 
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
-
-

@@ -27,6 +27,8 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+import six
+
 from camelot.view.model_thread import post
 
 class AbstractView(QtGui.QWidget):
@@ -43,7 +45,7 @@ class AbstractView(QtGui.QWidget):
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.pyqtSignal(QtCore.QString)
+    title_changed_signal = QtCore.pyqtSignal(six.text_type)
     icon_changed_signal = QtCore.pyqtSignal(QtGui.QIcon)
 
     @QtCore.pyqtSlot()
@@ -56,7 +58,7 @@ class AbstractView(QtGui.QWidget):
         """Will emit the title_changed_signal"""
         #import sip
         #if not sip.isdeleted(self):
-        self.title_changed_signal.emit( unicode(new_title) )
+        self.title_changed_signal.emit( six.text_type(new_title) )
         
     @QtCore.pyqtSlot(object)
     def change_icon(self, new_icon):
@@ -97,5 +99,3 @@ class TabView(AbstractView):
     def set_views_and_titles(self, views_and_titles):
         for view, title in views_and_titles:
             self._tab_widget.addTab(view, title)
-
-

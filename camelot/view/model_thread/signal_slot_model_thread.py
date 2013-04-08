@@ -32,6 +32,8 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from PyQt4 import QtCore
 
+import six
+
 from camelot.core.utils import pyqt
 from camelot.core.threading import synchronized
 from camelot.view.model_thread import ( AbstractModelThread, object_thread, 
@@ -221,15 +223,13 @@ class SignalSlotModelThread( AbstractModelThread ):
             self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.QueuedConnection )
             self._connected = True
         # response should be a slot method of a QObject
-        if response:
-            name = '%s -> %s.%s'%(request.__name__, response.im_self.__class__.__name__, response.__name__)
-        else:
-            name = request.__name__
+        name = request.__name__
         task = Task( wrap_none( request ), name = name, args = args )
         # QObject::connect is a thread safe function
         if response:
-            assert response.im_self != None
-            assert isinstance(response.im_self, QtCore.QObject)
+            assert getattr( response, six._meth_self ) != None
+            assert isinstance( getattr( response, six._meth_self ), 
+                               QtCore.QObject )
             # verify if the response has been defined as a slot
             #assert hasattr(response, '__pyqtSignature__')
             task.finished.connect( unwrap_none( response ), 
