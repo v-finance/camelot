@@ -40,7 +40,7 @@ are installed and available in your **PYTHONPATH**.
 
 In addition to PyQt 4.8 and Qt 4.8, Camelot needs these libraries :
 
-.. include:: /../../../dependencies.txt
+.. include:: /../../../requirements.txt
                         
 **Releases**
 
