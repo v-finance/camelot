@@ -71,9 +71,9 @@ def update_last_login( initial_group_name = None,
         group
     """
     authentication = get_current_authentication()
-    authentication.last_login = datetime.datetime.now()
     session = orm.object_session( authentication )
     if session:
+        authentication.last_login = datetime.datetime.now()
         if initial_group_name:
             group_count = session.query( AuthenticationGroup ).count()
             if group_count == 0:
