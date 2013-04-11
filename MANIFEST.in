@@ -7,6 +7,9 @@ include authors.txt
 include thanks.txt
 include install.txt
 include todo.txt
+include requirements.txt
+include excludes.txt
+
 recursive-include camelot *.png *.doc *.qss *.html *.qm
 recursive-include camelot_example *.jpg *.png *.doc *.qss *.html *.qm
 recursive-include doc *.rst *.html *.png

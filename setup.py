@@ -44,7 +44,10 @@ setup(
                      'camelot_admin = camelot.bin.camelot_admin:main',
                      'camelot_example = camelot_example.main:main',
                      'camelot_mini_example = camelot_example.mini_main:main',
-                    ]
+                    ],
+                    'setuptools.installation':[
+                     'eggsecutable = camelot_example.main:main',
+                    ],                   
                     },
     classifiers=[
               'Development Status :: 5 - Production/Stable',
