@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 src_dir = os.path.dirname(__file__)
 README = os.path.join(src_dir, 'readme.txt')
 long_description = open(README).read() + '\n\n'
-dependencies = os.path.join(src_dir, 'dependencies.txt') 
+dependencies = os.path.join(src_dir, 'requirements.txt') 
 install_requires = open( dependencies ).read().splitlines()
 
 setup(
