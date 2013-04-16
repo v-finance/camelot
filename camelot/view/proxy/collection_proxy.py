@@ -421,7 +421,9 @@ position in the query.
 
     @model_function
     def get_collection( self ):
-        return self._collection_getter()
+        collection = self._collection_getter()
+        assert isinstance( collection, list )
+        return collection
 
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
