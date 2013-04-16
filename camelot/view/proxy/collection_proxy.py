@@ -1114,12 +1114,6 @@ position in the query.
         self._rows_inserted_signal.emit( row, row )
         return self._rows
 
-    @model_function
-    def getData( self ):
-        """Generator for all the data queried by this proxy"""
-        for _i, o in enumerate( self.get_collection() ):
-            yield strip_data_from_object( o, self._columns )
-
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin

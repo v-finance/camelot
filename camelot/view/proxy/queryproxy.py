@@ -215,13 +215,6 @@ class QueryTableProxy(CollectionProxy):
         self._rows = self._rows - 1
 
     @model_function
-    def getData(self):
-        """Generator for all the data queried by this proxy"""
-        if self._query_getter:
-            for _i,o in enumerate(self.get_query_getter()().all()):
-                yield strip_data_from_object(o, self._columns)
-
-    @model_function
     def _get_collection_range( self, offset, limit ):
         """Get the objects in a certain range of the collection
         :return: an iterator over the objects in the collection, starting at 
