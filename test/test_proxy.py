@@ -1,3 +1,5 @@
+import unittest
+
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore
 
@@ -10,6 +12,37 @@ from camelot.core.orm import Session
 from camelot.core.utils import variant_to_pyobject
 from camelot.test import ModelThreadTestCase
 
+class FifoCase( unittest.TestCase ):
+    
+    def setUp( self ):
+        from camelot.view.fifo import Fifo
+        self.fifo = Fifo(10)
+        
+    def test_add_data( self ):
+        # add some initial data to the cache
+        o = object()
+        changed_columns = self.fifo.add_data( 1, o, [ 0, 1, 2, 3, 4 ] )
+        self.assertEqual( changed_columns, set([ 0, 1, 2, 3, 4 ]) )
+        changed_columns = self.fifo.add_data( 1, o, [ 0, -1, 2, -1, 4 ] )
+        self.assertEqual( changed_columns, set([1,3]) )
+        
+class ProxySignalRegister( QtCore.QObject ):
+    """Helper class to register the signals the proxy emits and analyze
+    them"""
+    
+    def __init__( self, proxy ):
+        super( ProxySignalRegister, self ).__init__()
+        proxy.dataChanged.connect( self.register_data_change )
+        self.data_changes = []
+        
+    def clear( self ):
+        self.data_changes = []
+        
+    @QtCore.pyqtSlot(object, object)
+    def register_data_change( self, from_index, thru_index ):
+        self.data_changes.append( ((from_index.row(), from_index.column()),
+                                   (thru_index.row(), thru_index.column())) )
+    
 class ProxyCase( ModelThreadTestCase ):
 
     def setUp( self ):
@@ -47,6 +80,7 @@ class CollectionProxyCase( ProxyCase ):
         self.proxy = CollectionProxy( self.person_admin,
                                       collection_getter=lambda:self.collection,
                                       columns_getter=self.person_admin.get_columns )
+        self.signal_register = ProxySignalRegister( self.proxy )
         
     def test_modify_list_while_editing( self ):
         person1 = self.collection[0]
@@ -58,6 +92,31 @@ class CollectionProxyCase( ProxyCase ):
         self.collection[0:2] = [person2, person1]
         self._set_data( 0, 0, 'Foo' )
         self.assertEqual( person1.first_name, 'Foo' )
+        
+    def test_data_changed( self ):
+        # verify the data changed signal is only received for changed
+        # index ranges
+        self._load_data()
+        self.signal_register.clear()
+        self._set_data( 0, 0, 'Foo2' )
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        for changed_range in self.signal_register.data_changes:
+            for index in changed_range:
+                row, col = index
+                self.assertEqual( row, 0 )
+                self.assertEqual( col, 0 )
+                
+    def test_data_updated( self ):
+        self._load_data()
+        self.signal_register.clear()        
+        person1 = self.collection[0]
+        person1.first_name = 'Foo3'
+        person1.last_name = 'Bar3'
+        self.proxy.handle_entity_update( None, person1 )
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        self.assertEqual( self.signal_register.data_changes[0],
+                          ((0, 0), (0, 1)) )
+        
         
 class QueryProxyCase( ProxyCase ):
     """Test the functionality of the QueryProxy to perform CRUD operations on 

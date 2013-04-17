@@ -26,6 +26,10 @@
 the data that is passed between the model and the gui thread"""
 
 from copy import copy
+from itertools import izip_longest
+
+_fill = object()
+_no_data = (None,None)
 
 class Fifo(object):
     """Fifo, is the actual cache containing a limited set of copies of row data
@@ -73,19 +77,23 @@ class Fifo(object):
         
     def add_data(self, row, entity, value):
         """The entity might already be on another row, and this row
-        might already contain an entity"""
-#        try:
-#            previous_entity = self.get_entity_at_row(row)
-#            self.delete_by_entity(previous_entity)
-#        except KeyError:
-#            pass
-        self.delete_by_entity(entity)
+        might already contain an entity
+        
+        :return: a :class:`set` with all the changed columns in the row
+        
+        """
+        old_value = self.delete_by_entity(entity)[1]
         self.data_by_rows[row] = (entity, value)
         self.rows_by_entity[entity] = row
         self.entities.append(entity)
         if len(self.entities)>self.max_entries:
             entity = self.entities.pop(0)
             self.delete_by_entity(entity)
+        if old_value == None:
+            # there was no old data, so everything has changed
+            return set( range( len( value ) ) )
+        values = izip_longest( value, old_value or [], fillvalue = _fill )
+        return set( i for i,(new,old) in enumerate( values ) if new != old )
       
     def delete_by_row(self, row):
         """Remove the data and the reference to the object at row"""
@@ -98,9 +106,10 @@ class Fifo(object):
         """Remove everything in the cache related to an entity instance
         returns the row at which the data was stored if the data was in the
         cache, return None otherwise"""
-        row = None
+        row, data = None, _no_data
         try:
             row = self.rows_by_entity[entity]
+            data = self.data_by_rows.get( row, _no_data )
             del self.data_by_rows[row]
             del self.rows_by_entity[entity]      
         except KeyError:
@@ -109,7 +118,7 @@ class Fifo(object):
             self.entities.remove(entity)
         except ValueError:
             pass
-        return row    
+        return row, data[1] 
     
     def has_data_at_row(self, row):
         """:return: True if there is data in the cache for the row, False if 

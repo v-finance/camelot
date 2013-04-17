@@ -195,7 +195,7 @@ class CollectionProxy( QtGui.QProxyModel ):
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
     item_delegate_changed_signal = QtCore.pyqtSignal()
-    row_changed_signal = QtCore.pyqtSignal(int)
+    row_changed_signal = QtCore.pyqtSignal(int, int, int)
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
     
@@ -457,11 +457,10 @@ position in the query.
                 def entity_update():
                     columns = self._columns
                     self._add_data(columns, row, entity)
-                    return row
 
                 return entity_update
 
-            post(create_entity_update(row, entity), self._emit_changes)
+            post( create_entity_update(row, entity) )
         else:
             self.logger.debug( 'duplicate update' )
 
@@ -879,14 +878,12 @@ position in the query.
 
         return True
 
-    @QtCore.pyqtSlot(int)
-    def _emit_changes( self, row ):
+    @QtCore.pyqtSlot(int, int, int)
+    def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
-        if row!=None:
-            column_count = self.columnCount()
-            top_left = self.index( row, 0 )
-            bottom_right = self.index( row, column_count - 1 )
-            self.dataChanged.emit( top_left, bottom_right )
+        top_left = self.index( row, from_column )
+        bottom_right = self.index( row, thru_column )
+        self.dataChanged.emit( top_left, bottom_right )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
@@ -914,17 +911,34 @@ position in the query.
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
             static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
             unicode_row_data = [u''] * len(columns)
+        # keep track of the columns that changed, to limit the
+        # number of editors/cells that need to be updated
+        changed_columns = set()
         locker = QtCore.QMutexLocker( self._mutex )
-        self.edit_cache.add_data( row, obj, row_data )
-        self.display_cache.add_data( row, obj, unicode_row_data )
-        self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
+        changed_columns.update( self.edit_cache.add_data( row, obj, row_data ) )
+        changed_columns.update( self.display_cache.add_data( row, obj, unicode_row_data ) )
+        changed_columns.update( self.attributes_cache.add_data(row, obj, dynamic_field_attributes ) )
         locker.unlock()
         #
-        # it might be that the CollectionProxy is deleted on the QT side of
+        # it might be that the CollectionProxy is deleted on the Qt side of
         # the application
         #
-        if not is_deleted( self ):
-            self.row_changed_signal.emit( row )
+        if not is_deleted( self ) and row != None:
+            if len( changed_columns ) == len( columns ):
+                # this is new data or everything has changed, dont waste any
+                # time to fine grained updates
+                self.row_changed_signal.emit( row, 0, len( columns ) - 1 )
+            elif len( changed_columns ):
+                changed_columns = sorted( changed_columns )
+                next_changed_columns = changed_columns[1:] + [None]
+                from_column = changed_columns[0]
+                for changed_column, next_column in zip( changed_columns,
+                                                        next_changed_columns ):
+                    if next_column != changed_column + 1:
+                        self.row_changed_signal.emit( row, 
+                                                      from_column, 
+                                                      changed_column )
+                        from_column = next_column
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is already in the cache, but at a
