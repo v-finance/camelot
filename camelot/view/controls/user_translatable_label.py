@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
@@ -46,7 +48,7 @@ within by right clicking on it and selecting the appropriate submenu.
         """:param text: the text to be displayed within the label, this can
         be either a normal string or a ugettext_lazy string, only in the last
         case, the label will be translatable"""
-        super(UserTranslatableLabel, self).__init__(unicode(text), 
+        super(UserTranslatableLabel, self).__init__(six.text_type(text), 
                                                     parent)
         self.setContextMenuPolicy(Qt.ActionsContextMenu)
         if isinstance(text, (ugettext_lazy)):
@@ -64,18 +66,18 @@ within by right clicking on it and selecting the appropriate submenu.
                                                              _('Change translation'),
                                                              _('Translation'),
                                                              QtGui.QLineEdit.Normal,
-                                                             unicode(self._text))
+                                                             six.text_type(self._text))
             # when the user presses ok in a blank dialog, the labels
             # should not disappear
-            new_translation = unicode( new_translation ).strip()
+            new_translation = six.text_type( new_translation ).strip()
             if ok and new_translation:
                 from camelot.core.utils import set_translation
                 self.setText(new_translation)
                 set_translation(self._text._string_to_translate, new_translation)
                 from camelot.view.model_thread import post
                 post(self.create_update_translation_table(self._text._string_to_translate,
-                                                          unicode(QtCore.QLocale().name()),
-                                                          unicode(new_translation)))
+                                                          six.text_type(QtCore.QLocale().name()),
+                                                          six.text_type(new_translation)))
                 
     def create_update_translation_table(self, source, language, value):
         

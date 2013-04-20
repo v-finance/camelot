@@ -30,6 +30,8 @@ import logging
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
+import six
+
 from PyQt4 import QtGui, QtCore
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
@@ -51,7 +53,7 @@ to display a progress dialog until my_function has finished::
     
     def __init__(self, name, icon=progress_icon):
         QtGui.QProgressDialog.__init__( self, QtCore.QString(), _('Cancel'), 0, 0 )
-        label = QtGui.QLabel( unicode(name) )
+        label = QtGui.QLabel( six.text_type(name) )
         #label.setPixmap(icon.getQPixmap())
         self.setLabel( label )
         self.setWindowTitle( _('Please wait') )

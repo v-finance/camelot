@@ -133,14 +133,14 @@ an unneeded update of the db.
         self.set_enabled(editable)
         set_background_color_palette(self.spinBox.lineEdit(), background_color )
 
-        self.spinBox.setToolTip(unicode(tooltip or ''))
+        self.spinBox.setToolTip(six.text_type(tooltip or ''))
         
         if prefix:
-            self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
+            self.spinBox.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
         else:
             self.spinBox.setPrefix('')
         if suffix:
-            self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+            self.spinBox.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
         else:
             self.spinBox.setSuffix(u'')
         
@@ -190,7 +190,7 @@ an unneeded update of the db.
 
     @QtCore.pyqtSlot(six.text_type)
     def calculation_finished(self, value):
-        self.spinBox.setValue(floor(float(unicode(value))))
+        self.spinBox.setValue(floor(float(six.text_type(value))))
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()

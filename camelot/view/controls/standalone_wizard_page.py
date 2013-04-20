@@ -22,10 +22,12 @@
 #
 #  ============================================================================
 
+import six 
+
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
-    QWidget
+from PyQt4.QtGui import ( QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout,
+                          QWidget )
 
 from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
@@ -41,7 +43,7 @@ class StandaloneWizardPage(QDialog):
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
-        self.setWindowTitle( unicode(window_title or ' ') )
+        self.setWindowTitle( six.text_type(window_title or ' ') )
         self.set_layouts()
 
     def set_layouts(self):
@@ -110,12 +112,12 @@ class StandaloneWizardPage(QDialog):
         layout = QtGui.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         if accept != None:
-            ok_button = QtGui.QPushButton( unicode( accept ), self )
+            ok_button = QtGui.QPushButton( six.text_type( accept ), self )
             ok_button.setObjectName( 'accept' )            
             ok_button.pressed.connect( self.accept )   
             layout.addWidget( ok_button )
         if reject != None:
-            cancel_button = QtGui.QPushButton( unicode( reject ), self )
+            cancel_button = QtGui.QPushButton( six.text_type( reject ), self )
             cancel_button.setObjectName( 'reject' )
             cancel_button.pressed.connect( self.reject )
             layout.addWidget( cancel_button )

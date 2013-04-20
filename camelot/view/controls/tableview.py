@@ -27,6 +27,8 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -66,7 +68,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
         tab_index = 0
         for column in table.columns:
             if isinstance( column, ColumnGroup ):
-                self.addTab( unicode( column.verbose_name ) )
+                self.addTab( six.text_type( column.verbose_name ) )
                 previous_column_index = column_index
                 column_index = column_index + len( column.get_fields() )
                 self.groups[ tab_index ] = ( previous_column_index,
@@ -656,7 +658,7 @@ class TableView( AbstractView  ):
         assert object_thread( self )
         from camelot.view.search import create_entity_search_query_decorator
         logger.debug( 'search %s' % text )
-        self.search_filter = create_entity_search_query_decorator( self.admin, unicode(text) )
+        self.search_filter = create_entity_search_query_decorator( self.admin, six.text_type(text) )
         self.rebuild_query()
 
     @QtCore.pyqtSlot()

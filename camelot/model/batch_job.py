@@ -31,6 +31,8 @@ user to review or plan them.
 import logging
 import sys
 
+import six
+
 import sqlalchemy.types
 from sqlalchemy import orm, sql
 
@@ -84,7 +86,7 @@ class BatchJobType( Entity ):
         
 def hostname():
     import socket
-    return unicode( socket.gethostname() )
+    return six.text_type( socket.gethostname() )
 
 @documented_entity()
 class BatchJob( Entity, type_and_status.StatusMixin ):
@@ -154,7 +156,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
                                    sio )
         traceback_print = sio.getvalue()
         sio.close()
-        self.add_strings_to_message( [ unicode(exc_type or sys.exc_type) ], 
+        self.add_strings_to_message( [ six.text_type(exc_type or sys.exc_type) ], 
                                      color = 'red' )
         self.add_strings_to_message( traceback_print.split('\n'),
                                      color = 'grey' )

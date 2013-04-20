@@ -27,6 +27,8 @@ the data that is passed between the model and the gui thread"""
 
 from copy import copy
 
+import six
+
 class Fifo(object):
     """Fifo, is the actual cache containing a limited set of copies of row data
     so the data in Fifo, is always immediately accessible to the gui thread,
@@ -45,7 +47,7 @@ class Fifo(object):
         self.rows_by_entity = dict()
         
     def __unicode__(self):
-        return u','.join(unicode(e) for e in self.entities)
+        return u','.join(six.text_type(e) for e in self.entities)
     
     def __str__(self):
         return 'Fifo cache of %s rows'%(len(self.entities))

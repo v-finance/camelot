@@ -38,6 +38,8 @@ logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
+import six
+
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.view.art import Icon
@@ -77,7 +79,7 @@ class DelayedProxy( object ):
         collection = self._collection_getter()
         if collection:
             try:
-               return u','.join(list(unicode(o) or '' for o,_i in zip(collection,
+               return u','.join(list(six.text_type(o) or '' for o,_i in zip(collection,
                                                                       range(3))))
             except TypeError as e:
                logger.error( 'could not convert object to unicode', exc_info=e )
@@ -137,7 +139,7 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
                     if key == field_data:
                         unicode_data = value
             elif isinstance( field_data, list ):
-                unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
+                unicode_data = u'.'.join( [six.text_type( e ) for e in field_data] )
             elif isinstance( field_data, datetime.datetime ):
                 # datetime should come before date since datetime is a subtype of date
                 if field_data.year >= 1900:
@@ -148,7 +150,7 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             elif isinstance( field_data, StoredImage):
                 unicode_data = field_data.checkout_thumbnail(100, 100)
             elif field_data != None:
-                unicode_data = unicode( field_data )
+                unicode_data = six.text_type( field_data )
         except (Exception, RuntimeError, TypeError, NameError) as e:
             log_programming_error( logger,
                                    "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
@@ -353,7 +355,7 @@ position in the query.
     
     def dropMimeData( self, mime_data, action, row, column, parent ):
         assert object_thread( self )
-        #print mime_data, [unicode(f) for f in mime_data.formats()]
+        #print mime_data, [six.text_type(f) for f in mime_data.formats()]
         return True
     
     #
@@ -557,7 +559,7 @@ position in the query.
             # Set the header data
             #
             header_item = QtGui.QStandardItem()
-            header_item.setData( QtCore.QVariant( unicode(c[1]['name']) ),
+            header_item.setData( QtCore.QVariant( six.text_type(c[1]['name']) ),
                                  Qt.DisplayRole )
             if c[1].get( 'nullable', True ) == False:
                 header_item.setData( self._header_font_required,
@@ -567,7 +569,7 @@ position in the query.
                                      Qt.FontRole )
 
             settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
-            label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
+            label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, six.text_type(c[1]['name']) + u' ' )
             minimal_widths = [ label_size.width() + 10 ]
             if 'minimal_column_width' in c[1]:
                 minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
@@ -811,7 +813,7 @@ position in the query.
                         #
                         self.admin.set_defaults( o, include_nullable_fields=False )
                     except AttributeError as e:
-                        self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
+                        self.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
                     except TypeError:
                         # type error can be raised in case we try to set to a collection
                         pass
@@ -906,7 +908,7 @@ position in the query.
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
             static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
-            unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
+            unicode_row_data = stripped_data_to_unicode.text_type( row_data, obj, static_field_attributes, dynamic_field_attributes )
         else:
             row_data = [None] * len(columns)
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
@@ -978,7 +980,7 @@ position in the query.
                         break
                 limit = i - offset + 1
         except IndexError as e:
-            logger.error('index error with rows_to_get %s'%unicode(rows_to_get), exc_info=e)
+            logger.error('index error with rows_to_get %s'%six.text_type(rows_to_get), exc_info=e)
             raise e
         return (offset, limit)
 

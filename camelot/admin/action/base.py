@@ -26,6 +26,8 @@ import logging
 
 from PyQt4 import QtGui
 
+import six
+
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
 class ModelContext( object ):
@@ -187,7 +189,7 @@ the default mode.
         """
         action = QtGui.QAction( parent )
         action.setData( self.name )
-        action.setText( unicode(self.verbose_name) )
+        action.setText( six.text_type(self.verbose_name) )
         action.setIconVisibleInMenu( False )
         return action
         
@@ -357,7 +359,7 @@ direct manipulations of the user interface without a need to access the model.
             gui_context.progress_dialog = None
         if gui_context.progress_dialog == None:
             LOGGER.debug( 'create new progress dialog' )
-            progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
+            progress_dialog = ProgressDialog( six.text_type( self.verbose_name ) )
             gui_context.progress_dialog = progress_dialog
             #progress_dialog.show()
         super(Action, self).gui_run( gui_context )

@@ -21,6 +21,8 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -48,7 +50,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
             for language in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
                 if languages and (language not in languages):
                     continue
-                language_name = unicode( QtCore.QLocale.languageToString( language ))
+                language_name = six.text_type( QtCore.QLocale.languageToString( language ))
                 self.language_choices.append( (language, language_name ) )
             self.language_choices.sort(key=lambda x:x[1])
         for i, (language, language_name) in enumerate( self.language_choices ):
@@ -72,7 +74,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
         if current_index >= 0:
             language = variant_to_pyobject(self.itemData(self.currentIndex()))
             locale = QtCore.QLocale( language )
-            value = unicode( locale.name() )
+            value = six.text_type( locale.name() )
         else:
             value = None
         return AbstractCustomEditor.get_value(self) or value

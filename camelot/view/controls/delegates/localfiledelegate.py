@@ -59,7 +59,7 @@ class LocalFileDelegate( six.with_metaclass( DocumentationMetaclass,
         
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = unicode(value)
+            value_str = six.text_type(value)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

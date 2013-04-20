@@ -90,7 +90,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
         if not self._showing_background_text and not self.text() and self._background_text!=None:
             self._showing_background_text = True
             self._update_foreground_color()
-            self.setText(unicode(self._background_text))
+            self.setText(six.text_type(self._background_text))
 
     def _hide_background_text(self):
         if self._showing_background_text and self._background_text!=None:
@@ -134,7 +134,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     def user_input(self):
         if self._showing_background_text:
             return u''
-        return unicode(self.text())
+        return six.text_type(self.text())
     
     def set_user_input(self, text):
         if text!=None:

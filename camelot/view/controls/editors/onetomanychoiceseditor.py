@@ -21,6 +21,9 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+
+import six
+
 from camelot.view.model_thread import post
 from .choiceseditor import ChoicesEditor
 
@@ -42,7 +45,7 @@ class OneToManyChoicesEditor(ChoicesEditor):
         post(self.get_choices, self.set_choices)
 
     def get_choices(self):
-        choices = [(o, unicode(o)) for o in self._target.query.all()]
+        choices = [(o, six.text_type(o)) for o in self._target.query.all()]
         # even if the field is required, the editor should be able to 
         # handle None as a choice, for user convenience, None is put at
         # the end when required

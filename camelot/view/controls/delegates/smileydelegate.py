@@ -46,7 +46,7 @@ class SmileyDelegate( six.with_metaclass( DocumentationMetaclass,
         
     def paint(self, painter, option, index):
         painter.save()
-        icon_name = unicode(index.model().data(index, Qt.DisplayRole).toString())
+        icon_name = six.text_type(index.model().data(index, Qt.DisplayRole).toString())
         
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         

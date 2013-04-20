@@ -21,6 +21,9 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+
+import six
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
@@ -32,8 +35,8 @@ from .user_translatable_label import UserTranslatableLabel
 class Attribute(object):
     """Helper class representing a field attribute's name and its value"""
     def __init__(self, name, value):
-        self.name = unicode(name)
-        self.value = unicode(value)
+        self.name = six.text_type(name)
+        self.value = six.text_type(value)
                 
     class Admin(ObjectAdmin):
         list_display = ['name', 'value']
@@ -77,7 +80,7 @@ class FieldLabel(UserTranslatableLabel):
         def attribute_value_to_string(key, value):
             if inspect.isclass(value):
                 return value.__name__
-            return unicode(value)
+            return six.text_type(value)
         
         return [Attribute(key,attribute_value_to_string(key, value)) for key,value in self._field_attributes.items()]
     

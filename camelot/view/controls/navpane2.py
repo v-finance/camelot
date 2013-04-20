@@ -27,6 +27,8 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.navpane2')
 
+import six
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMenu
@@ -84,7 +86,7 @@ class PaneSection(QWidget):
                 label = item.get_verbose_name()
                 icon = item.get_icon()
                 model_item = ModelItem( parent, 
-                                        [unicode(label)],
+                                        [six.text_type(label)],
                                         item )
                 if icon:
                     model_item.set_icon(icon.getQIcon())
@@ -204,7 +206,7 @@ class NavigationPane(QDockWidget):
             
         for section in sections:
             # TODO: old navpane used translation here
-            name = unicode( section.get_verbose_name() )
+            name = six.text_type( section.get_verbose_name() )
             icon = section.get_icon().getQIcon()
             pwdg = PaneSection(toolbox, section, self._workspace)
             toolbox.addItem(pwdg, icon, name)

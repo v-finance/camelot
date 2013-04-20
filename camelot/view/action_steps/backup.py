@@ -27,6 +27,8 @@
 :class:`camelot.admin.action.application.Restore` action
 """
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -72,7 +74,7 @@ class LabelComboBox(QtGui.QComboBox):
         for i, stored_file in enumerate( stored_files):
             if i == 0:
                 self._file_name = stored_file.name
-            self.addItem( unicode( stored_file.verbose_name ), 
+            self.addItem( six.text_type( stored_file.verbose_name ), 
                           QtCore.QVariant( stored_file ) )            
         self.currentIndexChanged[int].connect(self._onCurrentIndexChanged)
 
@@ -213,7 +215,7 @@ class SelectBackupDialog( SelectDialog ):
             
     def _setPath(self, dir):
         path = QtGui.QFileDialog.getSaveFileName(
-                self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+                self, six.text_type(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
             )
         return path
 
@@ -261,7 +263,7 @@ class SelectRestoreDialog( SelectDialog ):
 
     def _setPath(self, dir):
         path = QtGui.QFileDialog.getOpenFileName(
-            self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+            self, six.text_type(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
         )
         return path
 
@@ -273,7 +275,7 @@ class SelectBackup( ActionStep ):
         formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
         # replace all non-ascii chars with underscores
         import string
-        formatted_date_time_str = unicode(formatted_date_time)
+        formatted_date_time_str = six.text_type(formatted_date_time)
         for c in formatted_date_time_str:
             if c not in string.ascii_letters and c not in string.digits:
                 formatted_date_time_str = formatted_date_time_str.replace(c, '_')                

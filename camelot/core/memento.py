@@ -34,6 +34,8 @@ import collections
 import datetime
 import logging
 
+import six
+
 from sqlalchemy import func, sql, orm, exc
 
 from camelot.core.utils import ugettext
@@ -70,7 +72,7 @@ class Change( object ):
         self.by = row.by
         self.changes = None
         if row.previous_attributes:
-            self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
+            self.changes = u', '.join( ugettext('%s was %s')%(k,six.text_type(v)) for k,v in row.previous_attributes.items() )
         self.memento_type = row.memento_type
         
 class SqlMemento( object ):

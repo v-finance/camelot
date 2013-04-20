@@ -301,7 +301,7 @@ def dict_to_entity( entity, data ):
 
     mapper = orm.object_mapper( entity )
 
-    for key, value in data.iteritems():
+    for key, value in data.items():
         if isinstance( value, dict ):
             dbvalue = getattr( entity, key )
             rel_class = mapper.get_property(key).mapper.class_

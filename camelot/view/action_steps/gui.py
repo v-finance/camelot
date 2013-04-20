@@ -28,6 +28,8 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 
 from PyQt4 import QtGui
 
+import six
+
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
@@ -150,8 +152,8 @@ class MessageBox( ActionStep ):
                   title = _('Message'), 
                   standard_buttons = default_buttons ):
         self.icon = icon
-        self.title = unicode( title )
-        self.text = unicode( text )
+        self.title = six.text_type( title )
+        self.text = six.text_type( text )
         self.standard_buttons = standard_buttons
         
     def render( self ):

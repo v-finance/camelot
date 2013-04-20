@@ -51,6 +51,6 @@ class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
         value = variant_to_pyobject(index.data(Qt.DisplayRole))
         if value in (None, ValueLoading):
             value = ''
-        self.paint_text(painter, option, index, unicode(value) )
+        self.paint_text(painter, option, index, six.text_type(value) )
         painter.restore()
 

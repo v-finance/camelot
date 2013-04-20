@@ -23,6 +23,8 @@
 #  ============================================================================
 import datetime
 
+import six
+
 from PyQt4 import QtGui
 
 from .customeditor import AbstractCustomEditor, set_background_color_palette, draw_tooltip_visualization
@@ -60,7 +62,7 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
                                    tooltip = None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.setToolTip(unicode(tooltip or ''))
+        self.setToolTip(six.text_type(tooltip or ''))
       
     def set_enabled(self, editable=True):
         self.setEnabled(editable)

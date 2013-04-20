@@ -33,6 +33,8 @@ the custom `ApplicationAdmin`.
 
 import datetime
 
+import six
+
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
@@ -51,7 +53,7 @@ class PreviousAttribute( object ):
     
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
-        self.previous_value = unicode( previous_value )
+        self.previous_value = six.text_type( previous_value )
         
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']

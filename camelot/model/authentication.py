@@ -28,6 +28,8 @@
 import datetime
 import threading
 
+import six
+
 from sqlalchemy.types import Date, Unicode, DateTime, Integer
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy import orm
@@ -52,7 +54,7 @@ def get_current_authentication( _obj = None ):
         or not _current_authentication_.mechanism \
         or not orm.object_session( _current_authentication_.mechanism ):
             import getpass
-            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
+            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( six.text_type( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
     return _current_authentication_.mechanism
 
 def clear_current_authentication():

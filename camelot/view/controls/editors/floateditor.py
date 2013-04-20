@@ -56,10 +56,10 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
             # Make sure that the Period key on the numpad is *always* 
             # represented by the systems locale decimal separator to 
             # facilitate user input.
-            if key_event.key() == Qt.Key_Period and decimal_point.unicode() != Qt.Key_Period:
+            if key_event.key() == Qt.Key_Period and decimal_point.six.text_type() != Qt.Key_Period:
                 # Dynamically build a 'new' event that holds this locales decimal separator
                 new_key_event = QtGui.QKeyEvent( key_event.type(),
-                                                 decimal_point.unicode(),
+                                                 decimal_point.six.text_type(),
                                                  key_event.modifiers(),
                                                  QtCore.QString(decimal_point) )
                 key_event.accept() # Block 'old' event
@@ -69,7 +69,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
                 super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
 
     def textFromValue(self, value):
-        text = unicode( self._locale.toString( float(value), 
+        text = six.text_type( self._locale.toString( float(value), 
                                                'f', 
                                                self.decimals() ) )
         return text
@@ -145,9 +145,9 @@ class FloatEditor(CustomEditor):
                                    single_step = 1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.spinBox.setToolTip(unicode(tooltip or ''))
-        self.spinBox.setPrefix(u'%s '%(unicode(prefix or '').lstrip()))
-        self.spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
+        self.spinBox.setToolTip(six.text_type(tooltip or ''))
+        self.spinBox.setPrefix(u'%s '%(six.text_type(prefix or '').lstrip()))
+        self.spinBox.setSuffix(u' %s'%(six.text_type(suffix or '').rstrip()))
         self.spinBox.setSingleStep(single_step)
         if self.spinBox.decimals() != precision:
             self.spinBox.setDecimals( precision )
@@ -196,7 +196,7 @@ class FloatEditor(CustomEditor):
 
     @QtCore.pyqtSlot(six.text_type)
     def calculation_finished(self, value):
-        self.spinBox.setValue(float(unicode(value)))
+        self.spinBox.setValue(float(six.text_type(value)))
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()

@@ -1,6 +1,7 @@
 import datetime
-import StringIO
 import os
+
+from six import StringIO
 
 def load_movie_fixtures():
 

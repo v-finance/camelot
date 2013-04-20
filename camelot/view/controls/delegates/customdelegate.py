@@ -22,12 +22,14 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QItemDelegate
-from camelot.core.utils import variant_to_pyobject
 
+from camelot.core.utils import variant_to_pyobject
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
@@ -171,7 +173,7 @@ class CustomDelegate(QItemDelegate):
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
-            editor.setToolTip( unicode( field_attributes.get('tooltip', '') ) )
+            editor.setToolTip( six.text_type( field_attributes.get('tooltip', '') ) )
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
@@ -195,7 +197,7 @@ class CustomDelegate(QItemDelegate):
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = unicode( value )
+            value_str = six.text_type( value )
 
         self.paint_text( painter, option, index, value_str )
         painter.restore()
@@ -248,9 +250,9 @@ class CustomDelegate(QItemDelegate):
             painter.drawPixmap(rect.x(), rect.y(), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
 
         if prefix:
-            text = '%s %s' % (unicode( prefix ).strip(), unicode( text ).strip() )
+            text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )
         if suffix:
-            text = '%s %s' % (unicode( text ).strip(), unicode( suffix ).strip() )
+            text = '%s %s' % (six.text_type( text ).strip(), six.text_type( suffix ).strip() )
 
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,

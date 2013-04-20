@@ -24,6 +24,8 @@
 
 import copy
 
+import six
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.field_attributes import order_operators
@@ -68,13 +70,13 @@ class FilterOperator( QtGui.QWidget ):
         default_index = 0
         self._choices = [(0, ugettext('All')), (1, ugettext('None'))]
         for i, operator in enumerate(self._operators):
-            self._choices.append( (i+2, unicode(operator_names[operator])) )
+            self._choices.append( (i+2, six.text_type(operator_names[operator])) )
             if operator == default_operator:
                 default_index = i + 2
         combobox = QtGui.QComboBox(self)
         layout.addWidget(combobox)
         for i, name in self._choices:
-            combobox.insertItem(i, unicode(name))
+            combobox.insertItem(i, six.text_type(name))
         combobox.setCurrentIndex( default_index )
         combobox.currentIndexChanged.connect( self.combobox_changed )
         delegate = self._field_attributes['delegate'](**self._field_attributes)

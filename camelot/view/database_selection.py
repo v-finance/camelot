@@ -27,7 +27,7 @@ import sys
 import logging
 import pkgutil
 
-# from collections import defaultdict
+import six
 
 from sqlalchemy import create_engine
 
@@ -93,7 +93,7 @@ def select_profile(profiles_dict):
 
     dialog_code = input_dialog.exec_()
     if dialog_code == QDialog.Accepted:
-        return unicode(input_dialog.get_text())
+        return six.text_type(input_dialog.get_text())
 
     return None
 
@@ -387,13 +387,13 @@ allow all languages
             self._connection_valid = False
             raise UserException( _('Could not connect to database, please check host and port'),
                                  resolution = _('Verify driver, host and port or contact your system administrator'),
-                                 detail = unicode(e) )
+                                 detail = six.text_type(e) )
 
     def toggle_ok_button(self, enabled):
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = unicode(self.profile_editor.currentText())
+        text = six.text_type(self.profile_editor.currentText())
         self.toggle_ok_button(bool(text))
         return text
     
@@ -482,7 +482,7 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = unicode(QFileDialog.getExistingDirectory(self, caption))
+        selected = six.text_type(QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return

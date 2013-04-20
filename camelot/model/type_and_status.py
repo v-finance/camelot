@@ -49,6 +49,8 @@ statuses as needed.
 """
 import datetime
 
+import six
+
 from sqlalchemy import orm, sql, schema, types
 from sqlalchemy.ext import hybrid
 
@@ -95,7 +97,7 @@ class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
 
     def __unicode__( self ):
-        return unicode(self.classified_by or u'')
+        return six.text_type(self.classified_by or u'')
 
 class Status( Property ):
     """Property that adds a related status table(s) to an `Entity`.

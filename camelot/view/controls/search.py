@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtCore, QtGui
 
 from camelot.view.art import Icon
@@ -109,7 +111,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer:
             timer.stop()
-        text = unicode(self.search_input.user_input())
+        text = six.text_type(self.search_input.user_input())
         self.search_signal.emit( text )
 
     @QtCore.pyqtSlot()

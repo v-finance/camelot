@@ -64,9 +64,9 @@ class PlainTextDelegate( six.with_metaclass( DocumentationMetaclass,
         value_str = u''
         if value not in (None, ValueLoading):
             if self._translate_content:
-                value_str = ugettext( unicode(value) )
+                value_str = ugettext( six.text_type(value) )
             else:
-                value_str = unicode(value)
+                value_str = six.text_type(value)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

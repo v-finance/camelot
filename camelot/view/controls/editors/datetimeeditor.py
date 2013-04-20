@@ -147,7 +147,7 @@ class DateTimeEditor(CustomEditor):
                                    tooltip = None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.dateedit.line_edit.setToolTip(unicode(tooltip or ''))
+        self.dateedit.line_edit.setToolTip(six.text_type(tooltip or ''))
 
     def set_background_color(self, background_color):
         self.dateedit.set_background_color( background_color )

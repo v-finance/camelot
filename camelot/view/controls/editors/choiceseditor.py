@@ -24,6 +24,8 @@
 
 import logging
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -65,13 +67,13 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         """
         current_index = self.currentIndex()
         if current_index >= 0:
-            current_name = unicode(self.itemText(current_index))
+            current_name = six.text_type(self.itemText(current_index))
         current_value = self.get_value()
         current_value_available = False
         for i in range(self.count(), 0, -1):
             self.removeItem(i-1)
         for i, (value, name) in enumerate(choices):
-            self.insertItem(i, unicode(name), QtCore.QVariant(value))
+            self.insertItem(i, six.text_type(name), QtCore.QVariant(value))
             if value == current_value:
                 current_value_available = True
         if not current_value_available and current_index > 0:
@@ -92,7 +94,7 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
     """
         from camelot.core.utils import variant_to_pyobject
         return [(variant_to_pyobject(self.itemData(i)),
-                 unicode(self.itemText(i))) for i in range(self.count())]
+                 six.text_type(self.itemText(i))) for i in range(self.count())]
 
     def set_value(self, value):
         """Set the current value of the combobox where value, the name displayed
@@ -110,8 +112,8 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
             # method has not happened yet or the choices don't contain the value
             # set
             self.setCurrentIndex( -1 )
-            LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( unicode( value ),
-                                                                                                           unicode( self.objectName() ) ) )
+            LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( six.text_type( value ),
+                                                                                                           six.text_type( self.objectName() ) ) )
 
     def get_value(self):
         """Get the current value of the combobox"""

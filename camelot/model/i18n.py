@@ -37,6 +37,8 @@ from camelot.view.art import Icon
 from camelot.view.utils import default_language
 import camelot.types
 
+import six
+
 from sqlalchemy import sql
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, INT
@@ -94,7 +96,7 @@ class Translation( Entity ):
             if key in cls._cache:
                 return cls._cache[key]
             query = Session().query( cls )
-            query = query.filter( sql.and_( cls.source == unicode( source ),
+            query = query.filter( sql.and_( cls.source == six.text_type( source ),
                                             cls.language == language,
                                             cls.uid != 0 ) )
             translation = query.first()
@@ -109,7 +111,7 @@ class Translation( Entity ):
         """Translate source to language, if no translation is found, register the
         source as to be translated and return the source"""
         if source:
-            source = unicode( source )
+            source = six.text_type( source )
             translation = cls.translate( source, language )
             if not translation:
                 session = Session()

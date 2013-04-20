@@ -30,6 +30,8 @@ These structures can be transformed to QT forms.
 import collections
 import datetime
 
+import six
+
 from PyQt4 import QtCore, QtGui
 from sqlalchemy import sql
 
@@ -153,7 +155,7 @@ class FilterWidget( QtGui.QGroupBox ):
     filter_changed_signal = QtCore.pyqtSignal()
     
     def __init__(self, filter_data, parent):
-        super( FilterWidget, self ).__init__( unicode( filter_data.name ), parent )
+        super( FilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
         layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
         self.setLayout( layout )
@@ -170,7 +172,7 @@ class FilterWidget( QtGui.QGroupBox ):
         button_layout = QtGui.QVBoxLayout()
         
         for i, choice in enumerate( filter_data.options ):
-            button = QtGui.QRadioButton( unicode( choice.name ), self)
+            button = QtGui.QRadioButton( six.text_type( choice.name ), self)
             button_layout.addWidget( button )
             self.group.addButton(button, i)
             if choice.value == filter_data.default:
@@ -198,7 +200,7 @@ class GroupBoxFilterWidget( QtGui.QGroupBox ):
     filter_changed_signal = QtCore.pyqtSignal()
     
     def __init__(self, filter_data, parent):
-        super( GroupBoxFilterWidget, self ).__init__( unicode( filter_data.name ), parent )
+        super( GroupBoxFilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
         self.filter_data = filter_data
@@ -207,7 +209,7 @@ class GroupBoxFilterWidget( QtGui.QGroupBox ):
         for i, choice in enumerate( filter_data.options ):
             if choice.value == filter_data.default:
                 self.current_index = i
-            combobox.insertItem(i, unicode( choice.name ) )
+            combobox.insertItem(i, six.text_type( choice.name ) )
         combobox.setCurrentIndex( self.current_index )
         layout.addWidget( combobox )
         self.setLayout(layout)
@@ -277,7 +279,7 @@ class DateFilterWidget( QtGui.QGroupBox ):
     filter_changed_signal = QtCore.pyqtSignal()
     
     def __init__( self, filter_data, parent ):
-        super( DateFilterWidget, self ).__init__( unicode( filter_data.name ), parent )
+        super( DateFilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
         self.date_editor = DateEditor(parent=self, nullable=True)

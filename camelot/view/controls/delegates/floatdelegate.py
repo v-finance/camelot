@@ -69,7 +69,7 @@ class FloatDelegate( six.with_metaclass( DocumentationMetaclass,
         elif self.unicode_format:
             value_str = self.unicode_format(value)
         else:
-            value_str = unicode( self._locale.toString( float(value), 
+            value_str = six.text_type( self._locale.toString( float(value), 
                                                         'f', 
                                                         precision ) )
 

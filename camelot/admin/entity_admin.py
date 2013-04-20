@@ -136,7 +136,7 @@ It has additional class attributes that customise its behaviour.
         try:
             self.mapper = orm.class_mapper(self.entity)
         except UnmappedClassError as exception:
-            mapped_entities = [unicode(m) for m in _mapper_registry.keys()]
+            mapped_entities = [six.text_type(m) for m in _mapper_registry.keys()]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
@@ -184,12 +184,12 @@ It has additional class attributes that customise its behaviour.
         if obj:
             primary_key = self.mapper.primary_key_from_instance(obj)
             if not None in primary_key:
-                primary_key_representation = u','.join([unicode(v) for v in primary_key])
+                primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
                     return u'%s %s : %s' % (
-                        unicode(self.get_verbose_name() or ''),
+                        six.text_type(self.get_verbose_name() or ''),
                         primary_key_representation,
-                        unicode(obj)
+                        six.text_type(obj)
                     )
                 else:
                     return u'%s %s' % (
@@ -546,7 +546,7 @@ It has additional class attributes that customise its behaviour.
                     memento = self.get_memento()
                     if memento != None:
                         modifications = entity_to_dict( entity_instance )
-                        change = memento_change( model = unicode( self.entity.__name__ ),
+                        change = memento_change( model = six.text_type( self.entity.__name__ ),
                                                  memento_type = 'before_delete',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
@@ -604,7 +604,7 @@ It has additional class attributes that customise its behaviour.
                         logger.error( 'could not get modifications from object', exc_info = e )
                     primary_key = self.primary_key( obj_to_flush )
                     if modifications and (None not in primary_key):
-                        change = memento_change( model = unicode( self.entity.__name__ ),
+                        change = memento_change( model = six.text_type( self.entity.__name__ ),
                                                  memento_type = 'before_update',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )

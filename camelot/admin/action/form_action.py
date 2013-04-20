@@ -24,6 +24,8 @@
 
 from PyQt4 import QtGui
 
+import six
+
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
@@ -164,7 +166,7 @@ class ShowHistory( Action ):
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
             if None not in primary_key:
-                changes = list( memento.get_changes( model = unicode( model_context.admin.entity.__name__ ),
+                changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
                                                      primary_key = primary_key,
                                                      current_attributes = {} ) )
                 admin = ChangeAdmin( model_context.admin, object )

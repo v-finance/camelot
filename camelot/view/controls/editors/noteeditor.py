@@ -21,6 +21,9 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+
+import six
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import ColorScheme
@@ -57,5 +60,5 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         value = super( NoteEditor, self ).set_value( value )
         self.setVisible( value != None )
         if value:
-            self.setText( unicode( value ) )
+            self.setText( six.text_type( value ) )
 

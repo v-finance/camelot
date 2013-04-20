@@ -94,7 +94,7 @@ class DesktopBackground(QtGui.QWidget):
         
         actionButtonsLayout = self.findChild(QtGui.QGridLayout, 'actionButtonsLayout')
         if actionButtonsLayout is not None:
-            for position in xrange(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
+            for position in range(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
                 action = actions[position]
                 actionButton = action.render( self.gui_context, self )
                 actionButton.entered.connect(self.onActionButtonEntered)
@@ -102,7 +102,7 @@ class DesktopBackground(QtGui.QWidget):
                 actionButton.setInteractive(True)
                 actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 0, position, Qt.AlignCenter)
 
-            for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
+            for position in range(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
                 action = actions[position]
                 actionButton = action.render( self.gui_context, self )
                 actionButton.entered.connect(self.onActionButtonEntered)

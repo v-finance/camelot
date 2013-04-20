@@ -31,10 +31,11 @@ by Len Silverston, Chapter 2
 
 import datetime
 
+import six
+
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
 from sqlalchemy.sql.expression import and_
-
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
@@ -447,7 +448,7 @@ class EmployerEmployee( PartyRelationship ):
         return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
 
     def __unicode__( self ):
-        return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
+        return u'%s %s %s' % ( six.text_type( self.established_to ), _('Employed by'),six.text_type( self.established_from ) )
 
     class Admin( PartyRelationship.Admin ):
         verbose_name = _('Employment relation')
@@ -638,7 +639,7 @@ class PartyAddress( Entity ):
     party_name = ColumnProperty( party_name, deferred = True )
 
     def __unicode__( self ):
-        return '%s : %s' % ( unicode( self.party ), unicode( self.address ) )
+        return '%s : %s' % ( six.text_type( self.party ), six.text_type( self.address ) )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -743,7 +744,7 @@ class PartyContactMechanism( Entity ):
     party_name = ColumnProperty( party_name, deferred = True )
 
     def __unicode__( self ):
-        return unicode( self.contact_mechanism )
+        return six.text_type( self.contact_mechanism )
 
     Admin = PartyContactMechanismAdmin
 

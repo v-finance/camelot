@@ -47,7 +47,7 @@ class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
           
         painter.save()
         self.drawBackground(painter, option, index)
-        value = unicode(index.model().data(index, Qt.EditRole).toString())
+        value = six.text_type(index.model().data(index, Qt.EditRole).toString())
 
         value_str = u''
         if value not in (None, ValueLoading):

@@ -30,6 +30,8 @@ from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
 from camelot.view.action import ActionFactory
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -89,7 +91,7 @@ class ImageEditor( FileEditor ):
         self.open_button = QtGui.QToolButton()
         self.open_button.setIcon(self.open_icon.getQIcon())
         self.open_button.setAutoRaise(True)
-        self.open_button.setToolTip(unicode(_('open image')))
+        self.open_button.setToolTip(six.text_type(_('open image')))
         self.open_button.clicked.connect(self.open_button_clicked)
 
         self.add_button = QtGui.QToolButton()
@@ -101,7 +103,7 @@ class ImageEditor( FileEditor ):
         
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setIcon(self.clear_icon.getQIcon())
-        self.clear_button.setToolTip(unicode(_('delete image')))
+        self.clear_button.setToolTip(six.text_type(_('delete image')))
         self.clear_button.setAutoRaise(True)
         self.clear_button.clicked.connect(self.clear_button_clicked)
         self.clear_button.setFocusPolicy(Qt.ClickFocus)

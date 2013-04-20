@@ -29,6 +29,7 @@ as /camelot.
 """
 
 import unittest
+import six
 
 has_programming_error = False
 
@@ -161,7 +162,7 @@ class ApplicationViewsTest(ModelThreadTestCase):
         nav_pane = navpane2.NavigationPane(app_admin, None, None)
         self.grab_widget(nav_pane, subdir='applicationviews')
         for i, section in enumerate(nav_pane.get_sections()):
-            nav_pane.change_current((i, unicode(section.get_verbose_name())))
+            nav_pane.change_current((i, six.text_type(section.get_verbose_name())))
             self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
       
     def test_main_window(self):

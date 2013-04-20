@@ -24,13 +24,13 @@
 
 """Utility functions"""
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 import datetime
 import logging
-
-import six 
 
 logger = logging.getLogger('camelot.core.utils')
 

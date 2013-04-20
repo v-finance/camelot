@@ -25,6 +25,8 @@
 import os
 import logging
 
+import six
+
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.exception import model_thread_exception_message_box
@@ -95,7 +97,7 @@ def save_stored_file(parent, stored_file):
     """Save a stored file as another file"""
     settings = QtCore.QSettings()
     default_dir = settings.value('datasource').toString()
-    proposal = os.path.join(unicode(default_dir), unicode(stored_file.verbose_name) )
+    proposal = os.path.join(six.text_type(default_dir), six.text_type(stored_file.verbose_name) )
 
     path = QtGui.QFileDialog.getSaveFileName(
         parent, _('Save as'), proposal
@@ -132,7 +134,7 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
             parent, 'Open file', dir, filter
         )
     if filename:
-        filename = unicode( filename )
+        filename = six.text_type( filename )
         remove = False
         if remove_original:
             reply = QtGui.QMessageBox(

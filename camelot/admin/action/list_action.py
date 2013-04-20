@@ -26,6 +26,8 @@ import copy
 import datetime
 import logging
 
+import six
+
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -570,13 +572,13 @@ class ExportSpreadsheet( ListContextAction ):
         #
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
-            verbose_name = unicode( field_attributes.get( 'name', name ) )
+            verbose_name = six.text_type( field_attributes.get( 'name', name ) )
             field_names.append( name )
             font_specs = dict( font_name = self.font_name, 
                                bold = True, 
                                height = 200 )
             border_specs = dict( top = 0x01 )
-            name = unicode( name )
+            name = six.text_type( name )
             if i == 0:
                 border_specs[ 'left' ] = 0x01                
             elif i == len( columns ) - 1:
@@ -610,7 +612,7 @@ class ExportSpreadsheet( ListContextAction ):
                             value = ugettext( value )
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
-                        value = separator.join([unicode(el) for el in value])
+                        value = separator.join([six.text_type(el) for el in value])
                     elif isinstance( value, float ):
                         precision = attributes.get( 'precision', 2 )
                         format_string = '0.' + '0'*precision
@@ -623,7 +625,7 @@ class ExportSpreadsheet( ListContextAction ):
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
                     else:
-                        value = unicode( value )
+                        value = six.text_type( value )
                 else:
                     # empty cells should be filled as well, to get the
                     # borders right
@@ -642,7 +644,7 @@ class ExportSpreadsheet( ListContextAction ):
                                    None, 
                                    format_string )
                 worksheet.write( row, i, value, style )
-                min_width = len( unicode( value ) ) * 300
+                min_width = len( six.text_type( value ) ) * 300
                 worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
         
         yield action_steps.UpdateProgress( text = _('Saving file') )

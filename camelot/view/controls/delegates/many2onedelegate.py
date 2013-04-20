@@ -64,7 +64,7 @@ class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
         painter.save()
         self.drawBackground(painter, option, index)
         value = index.data(Qt.DisplayRole).toString()
-        self.paint_text(painter, option, index, unicode(value) )
+        self.paint_text(painter, option, index, six.text_type(value) )
         painter.restore()
 
     def createEditor(self, parent, option, index):

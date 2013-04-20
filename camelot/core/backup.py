@@ -23,6 +23,7 @@
 #  ============================================================================
 import logging
 
+import six
 import sqlalchemy
 
 from camelot.core.utils import ugettext as _
@@ -50,7 +51,7 @@ class BackupMechanism(object):
         it is assumed that the file should be stored or retrieved from the local
         filesystem.
         """
-        self._filename = unicode(filename)
+        self._filename = six.text_type(filename)
         self._storage = storage
         
     @classmethod
@@ -76,7 +77,7 @@ class BackupMechanism(object):
         in the DataLocation as specified by the QDesktopServices
         """
         from PyQt4.QtGui import QDesktopServices
-        apps_folder = unicode(QDesktopServices.storageLocation(QDesktopServices.DataLocation))
+        apps_folder = six.text_type(QDesktopServices.storageLocation(QDesktopServices.DataLocation))
         
         from camelot.core.files.storage import Storage
         return Storage(upload_to='backups', root=apps_folder)

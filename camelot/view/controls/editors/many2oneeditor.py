@@ -24,6 +24,8 @@
 
 from functools import update_wrapper, partial
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -107,7 +109,7 @@ class Many2OneEditor( CustomEditor ):
         self.search_button.setIcon(
             Icon('tango/16x16/actions/edit-clear.png').getQIcon()
         )
-        self.search_button.setToolTip(unicode(_('clear')))
+        self.search_button.setToolTip(six.text_type(_('clear')))
 
         # Open button
         self.open_button = QtGui.QToolButton()
@@ -116,7 +118,7 @@ class Many2OneEditor( CustomEditor ):
         self.open_button.setFixedHeight(self.get_height())
         self.open_button.clicked.connect(self.openButtonClicked)
         self.open_button.setIcon( self.new_icon.getQIcon() )
-        self.open_button.setToolTip(unicode(_('new')))
+        self.open_button.setToolTip(six.text_type(_('new')))
 
         # Search input
         self.search_input = DecoratedLineEdit(self)
@@ -153,7 +155,7 @@ class Many2OneEditor( CustomEditor ):
                                    tooltip = None, **kwargs):
         self.set_editable(editable)
         set_background_color_palette( self.search_input, background_color )
-        self.search_input.setToolTip(unicode(tooltip or ''))
+        self.search_input.setToolTip(six.text_type(tooltip or ''))
 
     def set_editable(self, editable):
         self._editable = editable
@@ -171,7 +173,7 @@ class Many2OneEditor( CustomEditor ):
             return lambda: self.search_completions(text)
 
         post(
-            create_search_completion(unicode(text)),
+            create_search_completion(six.text_type(text)),
             self.display_search_completions
         )
         self.completer.complete()
@@ -187,7 +189,7 @@ class Many2OneEditor( CustomEditor ):
         )
         if search_decorator:
             sresult = [
-                (unicode(e), create_constant_function(e))
+                (six.text_type(e), create_constant_function(e))
                 for e in search_decorator(self.admin.entity.query).limit(20)
             ]
             return text, sresult
@@ -335,17 +337,17 @@ class Many2OneEditor( CustomEditor ):
             self.open_button.setIcon(
                 Icon('tango/16x16/places/folder.png').getQIcon()
             )
-            self.open_button.setToolTip(unicode(_('open')))
+            self.open_button.setToolTip(six.text_type(_('open')))
             self.open_button.setEnabled(True)
 
             self.search_button.setIcon(
                 Icon('tango/16x16/actions/edit-clear.png').getQIcon()
             )
-            self.search_button.setToolTip(unicode(_('clear')))
+            self.search_button.setToolTip(six.text_type(_('clear')))
             self.entity_set = True
         else:
             self.open_button.setIcon( self.new_icon.getQIcon() )
-            self.open_button.setToolTip(unicode(_('new')))
+            self.open_button.setToolTip(six.text_type(_('new')))
             self.open_button.setEnabled(self._editable)
 
             self.search_button.setIcon( self.search_icon.getQIcon() )
@@ -366,9 +368,9 @@ class Many2OneEditor( CustomEditor ):
             
             entity = entity_instance_getter()
             if entity and hasattr(entity, 'id'):
-                return ((unicode(entity), entity.id), propagate)
+                return ((six.text_type(entity), entity.id), propagate)
             elif entity:
-                return ((unicode(entity), False), propagate)
+                return ((six.text_type(entity), False), propagate)
             return ((None, False), propagate)
 
         post( update_wrapper( partial( get_instance_representation,

@@ -36,6 +36,8 @@ machine.
 import base64
 import logging
 
+import six
+
 from PyQt4 import QtCore
 
 from camelot.core.conf import settings
@@ -67,7 +69,7 @@ def get_countrycode(profile=None):
     return selected_profile_info()['locale_language'][2:]
 
 def _encode_setting(value):
-    return base64.b64encode( get_cipher().encrypt( unicode(value).encode('utf-8' ) ) )
+    return base64.b64encode( get_cipher().encrypt( six.text_type(value).encode('utf-8' ) ) )
 
 def _decode_setting(value):
     return get_cipher().decrypt( base64.b64decode( value ) ).decode('utf-8')
@@ -124,7 +126,7 @@ def stylesheet_from_profile():
 
 def last_used_profile():
     settings = QtCore.QSettings()
-    return unicode(settings.value('last_used_database_profile',
+    return six.text_type(settings.value('last_used_database_profile',
         QtCore.QVariant('')).toString(), 'utf-8')
 
 def fetch_profiles(from_file=None):
@@ -143,7 +145,7 @@ def fetch_profiles(from_file=None):
         for index in range(size):
             settings.setArrayIndex(index)
             info = {}
-            profilename = unicode(settings.value('profilename', QtCore.QVariant('')).toString(), 'utf-8')
+            profilename = six.text_type(settings.value('profilename', QtCore.QVariant('')).toString(), 'utf-8')
             if not profilename:
                 continue  # well we should not really be doing anything
             info['dialect'] = _decode_setting(settings.value('dialect', QtCore.QVariant('')).toString())
@@ -174,7 +176,7 @@ def store_profiles(profiles, to_file=None):
 
     for index, (profilename, info) in enumerate(profiles.items()):
         settings.setArrayIndex(index)
-        settings.setValue('profilename', QtCore.QVariant(unicode(profilename).encode('utf-8')))
+        settings.setValue('profilename', QtCore.QVariant(six.text_type(profilename).encode('utf-8')))
         settings.setValue('dialect', QtCore.QVariant(_encode_setting(info['dialect'])))
         settings.setValue('host', QtCore.QVariant(_encode_setting(info['host'])))
         settings.setValue('port', QtCore.QVariant(_encode_setting(info['port'])))
@@ -191,7 +193,7 @@ def store_profiles(profiles, to_file=None):
 
 def use_chosen_profile(profilename):
     settings = QtCore.QSettings()
-    settings.setValue('last_used_database_profile', unicode(profilename).encode('utf-8') )
+    settings.setValue('last_used_database_profile', six.text_type(profilename).encode('utf-8') )
 
 class EmptyProxy():
 

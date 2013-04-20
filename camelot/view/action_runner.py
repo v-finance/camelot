@@ -27,6 +27,8 @@ import logging
 
 from PyQt4 import QtCore, QtGui
 
+import six
+
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.model_thread import post
@@ -216,7 +218,7 @@ class ActionRunner( QtCore.QEventLoop ):
             self.exit()
         else:
             LOGGER.error( 'next call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( unicode( yielded ) )
+            LOGGER.error( six.text_type( yielded ) )
             raise Exception( 'this should not happen' )
 
 

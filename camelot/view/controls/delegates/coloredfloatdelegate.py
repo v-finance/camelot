@@ -105,10 +105,10 @@ class ColoredFloatDelegate( six.with_metaclass( DocumentationMetaclass,
             if self.unicode_format != None:
                 value_str = self.unicode_format(value)
             else:
-                value_str = unicode( self._locale.toString( float(value), 
+                value_str = six.text_type( self._locale.toString( float(value), 
                                                             'f', 
                                                             self.precision ) )
-        value_str = unicode(prefix) + u' ' + unicode(value_str) + u' ' + unicode(suffix)
+        value_str = six.text_type(prefix) + u' ' + six.text_type(value_str) + u' ' + six.text_type(suffix)
 
         fontColor = fontColor.darker()
         painter.setPen(fontColor.toRgb())

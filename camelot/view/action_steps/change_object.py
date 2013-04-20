@@ -24,6 +24,8 @@
 
 import functools
 
+import six
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.admin.action import ActionStep
@@ -64,8 +66,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         
         self.setWindowTitle( admin.get_verbose_name() )
         self.set_banner_logo_pixmap( icon.getQPixmap() )
-        self.set_banner_title( unicode(title) )
-        self.set_banner_subtitle( unicode(subtitle) )
+        self.set_banner_title( six.text_type(title) )
+        self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
         
         model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
@@ -299,9 +301,9 @@ class ChangeObjects( ActionStep ):
         the action step."""
         dialog = ChangeObjectsDialog( self.objects, 
                                       self.admin )
-        dialog.setWindowTitle( unicode( self.window_title ) )
-        dialog.set_banner_title( unicode( self.title ) )
-        dialog.set_banner_subtitle( unicode( self.subtitle ) )
+        dialog.setWindowTitle( six.text_type( self.window_title ) )
+        dialog.set_banner_title( six.text_type( self.title ) )
+        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
         dialog.set_banner_logo_pixmap( self.icon.getQPixmap() )
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
@@ -351,7 +353,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                 return False
             return True
         
-        choices = [(field, unicode(attributes['name'])) for field, attributes in field_attributes.items() if filter(attributes)]
+        choices = [(field, six.text_type(attributes['name'])) for field, attributes in field_attributes.items() if filter(attributes)]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
         editor.set_value( None )

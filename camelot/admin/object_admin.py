@@ -34,7 +34,10 @@ from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from .validator.object_validator import ObjectValidator
+
 from PyQt4 import QtCore
+
+import six
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -284,12 +287,12 @@ be specified using the verbose_name attribute.
 #                text = text[0].lower() + re.sub(r'([A-Z])', downcase, text[1:])
 #            return text 
 
-        return unicode(
+        return six.text_type(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
-        return unicode(
+        return six.text_type(
             self.verbose_name_plural
             or (self.get_verbose_name() + 's')
         )
@@ -303,7 +306,7 @@ be specified using the verbose_name attribute.
         for the user, eg : the primary key of an object.  This verbose identifier can
         be used to generate a title for a form view of an object.
         """
-        return u'%s : %s' % (self.get_verbose_name(), unicode(obj))
+        return u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
 
     def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
@@ -745,7 +748,7 @@ be specified using the verbose_name attribute.
                 logger.debug(
                     'set default for %s to %s' % (
                         field,
-                        unicode(default_value)
+                        six.text_type(default_value)
                     )
                 )
                 try:

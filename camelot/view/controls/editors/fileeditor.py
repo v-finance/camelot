@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
@@ -177,7 +179,7 @@ class FileEditor(CustomEditor):
         self.set_enabled(editable)
         if self.filename:
             set_background_color_palette( self.filename, background_color )
-            self.filename.setToolTip(unicode(tooltip or ''))
+            self.filename.setToolTip(six.text_type(tooltip or ''))
         self.remove_original = remove_original
 
     def set_enabled(self, editable=True):

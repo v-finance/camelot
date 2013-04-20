@@ -24,6 +24,8 @@
 
 import datetime
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -52,7 +54,7 @@ class DateEditor(CustomEditor):
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()
-        self.line_edit.set_minimum_width( unicode(QtCore.QDate(2000,12,22).toString(self.date_format)) )
+        self.line_edit.set_minimum_width( six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)) )
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
 
         # The order of creation of this widgets and their parenting
@@ -151,7 +153,7 @@ class DateEditor(CustomEditor):
                                    tooltip = None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.line_edit.setToolTip(unicode(tooltip or ''))
+        self.line_edit.setToolTip(six.text_type(tooltip or ''))
 
     def set_background_color(self, background_color):
         set_background_color_palette( self.line_edit, background_color )

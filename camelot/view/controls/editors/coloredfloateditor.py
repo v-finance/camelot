@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -127,9 +129,9 @@ class ColoredFloatEditor(CustomEditor):
                                    single_step = 1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.setToolTip(unicode(tooltip or ''))
-        self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
-        self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        self.setToolTip(six.text_type(tooltip or ''))
+        self.spinBox.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
+        self.spinBox.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setSingleStep(single_step)
 
@@ -160,7 +162,7 @@ class ColoredFloatEditor(CustomEditor):
         calculator.exec_()
 
     def calculation_finished(self, value):
-        self.spinBox.setValue(float(unicode(value)))
+        self.spinBox.setValue(float(six.text_type(value)))
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()

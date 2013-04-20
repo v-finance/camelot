@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import six
+
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
@@ -76,6 +78,6 @@ updated.
             progress_dialog.setMaximum( self._maximum )
             progress_dialog.setValue( self._value )
             if self._text != None:
-                progress_dialog.setLabelText( unicode(self._text) )
+                progress_dialog.setLabelText( six.text_type(self._text) )
 
 
