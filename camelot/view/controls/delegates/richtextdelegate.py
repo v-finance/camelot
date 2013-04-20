@@ -23,15 +23,16 @@
 #  ============================================================================
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class RichTextDelegate(CustomDelegate):
+class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate ) ):
     """Custom delegate for rich text (HTML) string values
   """
-  
-    __metaclass__ = DocumentationMetaclass
     
     editor = editors.RichTextEditor
     

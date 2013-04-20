@@ -112,8 +112,7 @@ class Task(QtCore.QObject):
         except Exception as e:
             exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
             self.exception.emit( exc_info )
-            # the stack might contain references to QT objects which could be kept alive this way
-            sys.exc_clear()
+            self.clear_exception_info()
         except:
             logger.error( 'unhandled exception in model thread' )
             exc_info = ( 'Unhandled exception', 
@@ -122,6 +121,12 @@ class Task(QtCore.QObject):
                          'Please contact the application developer', '')
             # still emit the exception signal, to allow the gui to clean up things (such as closing dialogs)
             self.exception.emit( exc_info )
+            self.clear_exception_info()
+            
+    def clear_exception_info( self ):
+        # the exception info contains a stack that might contain references to 
+        # Qt objects which could be kept alive this way
+        if not six.PY3:
             sys.exc_clear()
 
 class TaskHandler(QtCore.QObject):

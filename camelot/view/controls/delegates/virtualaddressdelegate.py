@@ -24,17 +24,18 @@
 
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 # from camelot.view.art import Icon
 from camelot.core.utils import variant_to_pyobject
 
-class VirtualAddressDelegate(CustomDelegate):
+class VirtualAddressDelegate( six.with_metaclass( DocumentationMetaclass,
+                                                  CustomDelegate ) ):
     """
   """
-  
-    __metaclass__ = DocumentationMetaclass
   
     editor = editors.VirtualAddressEditor
   

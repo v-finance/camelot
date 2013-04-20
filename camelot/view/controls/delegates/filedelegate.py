@@ -24,17 +24,18 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass, not_editable_background, not_editable_foreground
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class FileDelegate(CustomDelegate):
+class FileDelegate( six.with_metaclass( DocumentationMetaclass,
+                                        CustomDelegate ) ):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """
-    
-    __metaclass__ = DocumentationMetaclass
     
     editor = editors.FileEditor
     

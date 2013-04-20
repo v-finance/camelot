@@ -24,16 +24,17 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import DocumentationMetaclass, CustomDelegate
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class IntervalsDelegate(CustomDelegate):
+class IntervalsDelegate( six.with_metaclass( DocumentationMetaclass,
+                                             CustomDelegate) ):
     """Custom delegate for visualizing camelot.container.IntervalsContainer
   data:
   """
-  
-    __metaclass__ = DocumentationMetaclass
       
     def paint(self, painter, option, index):
         painter.save()

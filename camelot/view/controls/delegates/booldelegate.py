@@ -25,15 +25,16 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.utils import ugettext as _, variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class BoolDelegate(CustomDelegate):
+class BoolDelegate( six.with_metaclass( DocumentationMetaclass,
+                                        CustomDelegate ) ):
     """Custom delegate for boolean values"""
-  
-    __metaclass__ = DocumentationMetaclass
     
     editor = editors.BoolEditor
   

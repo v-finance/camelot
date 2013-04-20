@@ -21,19 +21,21 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
+
+import six
 
 from camelot.core.utils import variant_to_pyobject
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.art import Icon
 
-class StarDelegate( CustomDelegate ):
+class StarDelegate( six.with_metaclass( DocumentationMetaclass, 
+                                        CustomDelegate ) ):
     """Delegate for integer values from ( default from 1 to 5)(Rating Delegate)  
     """
-  
-    __metaclass__ = DocumentationMetaclass
   
     editor = editors.StarEditor
     star_icon = Icon('tango/16x16/status/weather-clear.png')

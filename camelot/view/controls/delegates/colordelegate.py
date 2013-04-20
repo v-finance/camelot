@@ -24,14 +24,15 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class ColorDelegate(CustomDelegate):
-  
-    __metaclass__ = DocumentationMetaclass
+class ColorDelegate( six.with_metaclass( DocumentationMetaclass,
+                                         CustomDelegate ) ):
     
     editor = editors.ColorEditor
     

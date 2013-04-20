@@ -23,6 +23,8 @@
 #  ============================================================================
 from PyQt4.QtCore import Qt
 
+import six
+
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core.utils import variant_to_pyobject
@@ -30,13 +32,12 @@ from camelot.core.utils import variant_to_pyobject
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 
-class One2ManyDelegate( CustomDelegate ):
+class One2ManyDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate ) ):
     """Custom delegate for many 2 one relations
   
   .. image:: /_static/onetomany.png
   """
-
-    __metaclass__ = DocumentationMetaclass
 
     def __init__( self, parent = None, **kwargs ):
         super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )

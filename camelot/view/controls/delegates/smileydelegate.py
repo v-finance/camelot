@@ -24,14 +24,15 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls.editors.smileyeditor import SmileyEditor, default_icons
 
-class SmileyDelegate(CustomDelegate):
+class SmileyDelegate( six.with_metaclass( DocumentationMetaclass,
+                                          CustomDelegate ) ):
     """Delegate for Smiley's
   """
-  
-    __metaclass__ = DocumentationMetaclass
     
     editor = SmileyEditor
   

@@ -27,6 +27,8 @@ logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
 
@@ -38,10 +40,9 @@ from camelot.view.proxy import ValueLoading
 
 DEFAULT_COLUMN_WIDTH = 20
 
-class PlainTextDelegate( CustomDelegate ):
+class PlainTextDelegate( six.with_metaclass( DocumentationMetaclass,
+                                             CustomDelegate ) ):
     """Custom delegate for simple string values"""
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.TextLineEditor
 

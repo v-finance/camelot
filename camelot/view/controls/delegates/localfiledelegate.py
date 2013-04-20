@@ -27,6 +27,8 @@ logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
 
@@ -35,12 +37,11 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class LocalFileDelegate(CustomDelegate):
+class LocalFileDelegate( six.with_metaclass( DocumentationMetaclass,
+                                             CustomDelegate ) ):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.LocalFileEditor
 

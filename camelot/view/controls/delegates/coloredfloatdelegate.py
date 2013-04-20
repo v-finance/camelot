@@ -25,6 +25,8 @@
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.proxy import ValueLoading
 
@@ -32,14 +34,12 @@ from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 
-
-class ColoredFloatDelegate(CustomDelegate):
+class ColoredFloatDelegate( six.with_metaclass( DocumentationMetaclass,
+                                                CustomDelegate ) ):
     """Custom delegate for float values.
 
   The class attribute icons is used to customize the icons displayed.
   """
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.ColoredFloatEditor
     icons = {

@@ -52,6 +52,9 @@ Here is a quick example of how to use ``has_property``.
                      lambda c: column_property(
                          (c.quantity * c.unit_price).label('price')))
 """
+
+import six
+
 from sqlalchemy import orm
 
 from . statements import ClassMutator
@@ -114,14 +117,12 @@ class CounterMeta(type):
         CounterMeta.counter += 1
         return instance
     
-class Property( EntityBuilder ):
+class Property( six.with_metaclass( CounterMeta, EntityBuilder ) ):
     """
     Abstract base class for all properties of an Entity that are not handled
     by Declarative but should be handled by EntityMeta before a new Entity
     subclass is constructed
     """
-
-    __metaclass__ = CounterMeta
 
     def __init__(self, *args, **kwargs):
         self.entity = None

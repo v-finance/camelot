@@ -23,15 +23,16 @@
 #  ============================================================================
 from PyQt4.QtCore import Qt
 
+import six
+
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import ugettext, variant_to_pyobject
 
-class TextEditDelegate(CustomDelegate):
+class TextEditDelegate( six.with_metaclass( DocumentationMetaclass, 
+                                            CustomDelegate) ):
     """Custom delegate for simple string values"""
-  
-    __metaclass__ = DocumentationMetaclass
   
     editor = editors.TextEditEditor
       

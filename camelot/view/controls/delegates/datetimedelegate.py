@@ -29,9 +29,10 @@ from camelot.core.utils import variant_to_pyobject
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-class DateTimeDelegate(CustomDelegate):
-  
-    __metaclass__ = DocumentationMetaclass
+import six
+
+class DateTimeDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate) ):
     
     editor = editors.DateTimeEditor
     
