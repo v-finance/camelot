@@ -23,6 +23,7 @@
 #  ============================================================================
 
 import contextlib
+import functools
 import logging
 
 from PyQt4 import QtCore, QtGui
@@ -125,7 +126,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     result = self._generator.throw( CancelRequest() )
                 else:
                     LOGGER.debug( 'move iterator forward' )
-                    result = self._generator.next()
+                    result = six.advance_iterator( self._generator )
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
@@ -161,7 +162,8 @@ class ActionRunner( QtCore.QEventLoop ):
             post( self._iterate_until_blocking, 
                   self.next, 
                   self.exception,
-                  args = ( self._generator.next, ) )
+                  args = ( functools.partial( six.advance_iterator,
+                                              self._generator ), ) )
         else:
             self.exit()
         

@@ -52,7 +52,7 @@ to display a progress dialog until my_function has finished::
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')
     
     def __init__(self, name, icon=progress_icon):
-        QtGui.QProgressDialog.__init__( self, QtCore.QString(), _('Cancel'), 0, 0 )
+        QtGui.QProgressDialog.__init__( self, ' ', _('Cancel'), 0, 0 )
         label = QtGui.QLabel( six.text_type(name) )
         #label.setPixmap(icon.getQPixmap())
         self.setLabel( label )
