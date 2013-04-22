@@ -341,7 +341,7 @@ def entity_to_dict( entity, deep = {}, exclude = []  ):
     data = dict([(name, getattr(entity, name))
                  for name in col_prop_names if name not in exclude])
 
-    for rname, rdeep in deep.iteritems():
+    for rname, rdeep in deep.items():
         dbdata = getattr(entity, rname)
         prop = mapper.get_property( rname )
         fks = prop.remote_side
@@ -373,7 +373,7 @@ class EntityBase( object ):
     #
 
     def set( self, **kwargs ):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             setattr( self, key, value )
 
     @classmethod
