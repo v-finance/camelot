@@ -54,7 +54,11 @@ def get_current_authentication( _obj = None ):
         or not _current_authentication_.mechanism \
         or not orm.object_session( _current_authentication_.mechanism ):
             import getpass
-            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( six.text_type( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
+            if six.PY3:
+                user = getpass.getuser()
+            else:
+                user = six.text_type( getpass.getuser(), encoding='utf-8', errors='ignore' )
+            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( user )
     return _current_authentication_.mechanism
 
 def clear_current_authentication():

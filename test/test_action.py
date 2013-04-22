@@ -1,12 +1,13 @@
 import datetime
 import logging
 import os
-import StringIO
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from sqlalchemy import orm
+
+import six
 
 from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import ( list_action, application_action, 
@@ -230,7 +231,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.grab_widget( dialog )
         
     def test_open_file( self ):
-        stream = StringIO.StringIO('1, 2, 3, 4')
+        stream = six.StringIO('1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
         self.assertTrue( unicode( open_stream ) )
         action_steps.OpenString( '1, 2, 3, 4' )

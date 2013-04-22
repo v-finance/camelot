@@ -48,7 +48,7 @@ def get_application():
             from camelot.view import art
             QApplication.setStyle('cleanlooks')
             application = QApplication(sys.argv)
-            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
+            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
             from PyQt4 import QtCore
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
             #try:
