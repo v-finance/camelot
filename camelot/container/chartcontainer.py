@@ -76,7 +76,7 @@ class AxesContainer( Container ):
     """A container that is able to generate a plot on a matplotlib axes.  Methods
     can be called on this class as if it were a matplotlib Axes class.  All method
     calls will be recorded.  Of course the methods won't return matplotlib objects.
-    The set_auto_legend method can be used to turn legens on without the need for
+    The set_auto_legend method can be used to turn legends on without the need for
     matplotlib objects.
     """
 
