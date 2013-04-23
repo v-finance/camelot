@@ -181,7 +181,7 @@ class FloatEditor(CustomEditor):
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable and self._calculator)
+        self.calculatorButton.setVisible(editable and self._calculator)
         if editable:
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         else:

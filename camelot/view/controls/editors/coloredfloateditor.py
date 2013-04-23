@@ -138,7 +138,7 @@ class ColoredFloatEditor(CustomEditor):
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable)
+        self.calculatorButton.setVisible(editable)
         if editable:
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         else:
@@ -147,7 +147,8 @@ class ColoredFloatEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0.0
         self.spinBox.setValue(value)
-        self.arrow.setPixmap( self.icons[cmp(value,0)].getQPixmap() )
+        # the cmp functionn has been removed in PY3
+        self.arrow.setPixmap( self.icons[(value>0)-(value<0)].getQPixmap() )
 
     def get_value(self):
         self.spinBox.interpretText()

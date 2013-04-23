@@ -24,7 +24,7 @@
 import six
 
 from .customeditor import AbstractCustomEditor
-from ....core.qt import QtGui, QtCore, py_to_variant
+from ....core.qt import QtGui, QtCore, py_to_variant, variant_to_py
 
 class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     """A ComboBox that shows a list of languages, the editor takes
@@ -67,7 +67,6 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
             self.setCurrentIndex( self.index_by_language[locale.language()] )
             
     def get_value(self):
-        from camelot.core.utils import variant_to_py
         current_index = self.currentIndex()
         if current_index >= 0:
             language = variant_to_py(self.itemData(self.currentIndex()))
