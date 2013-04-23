@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from camelot.core.qt import QtGui
 
 from camelot.view import forms
 from camelot.admin.entity_admin import EntityAdmin

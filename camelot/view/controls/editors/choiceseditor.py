@@ -26,9 +26,7 @@ import logging
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
+from ....core.qt import QtGui, QtCore, py_to_variant, variant_to_py
 from camelot.view.proxy import ValueLoading
 from .customeditor import AbstractCustomEditor
 
@@ -54,7 +52,7 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
 
     @QtCore.pyqtSlot(int)
     def _activated(self, _index):
-        self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
+        self.setProperty( 'value', py_to_variant( self.get_value() ) )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -73,11 +71,11 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         for i in range(self.count(), 0, -1):
             self.removeItem(i-1)
         for i, (value, name) in enumerate(choices):
-            self.insertItem(i, six.text_type(name), QtCore.QVariant(value))
+            self.insertItem(i, six.text_type(name), py_to_variant(value))
             if value == current_value:
                 current_value_available = True
         if not current_value_available and current_index > 0:
-            self.insertItem(i+1, current_name, QtCore.QVariant(current_value))
+            self.insertItem(i+1, current_name, py_to_variant(current_value))
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
         if current_value != ValueLoading:
@@ -92,20 +90,18 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         """
     :rtype: a list of (value,name) tuples
     """
-        from camelot.core.utils import variant_to_pyobject
-        return [(variant_to_pyobject(self.itemData(i)),
+        return [(variant_to_py(self.itemData(i)),
                  six.text_type(self.itemText(i))) for i in range(self.count())]
 
     def set_value(self, value):
         """Set the current value of the combobox where value, the name displayed
         is the one that matches the value in the list set with set_choices"""
-        from camelot.core.utils import variant_to_pyobject
         value = AbstractCustomEditor.set_value(self, value)
-        self.setProperty( 'value', QtCore.QVariant(value) )
+        self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
         if not self._value_loading and value != NotImplemented:
             for i in range(self.count()):
-                if value == variant_to_pyobject(self.itemData(i)):
+                if value == variant_to_py(self.itemData(i)):
                     self.setCurrentIndex(i)
                     return
             # it might happen, that when we set the editor data, the set_choices
@@ -117,10 +113,9 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
 
     def get_value(self):
         """Get the current value of the combobox"""
-        from camelot.core.utils import variant_to_pyobject
         current_index = self.currentIndex()
         if current_index >= 0:
-            value = variant_to_pyobject(self.itemData(self.currentIndex()))
+            value = variant_to_py(self.itemData(self.currentIndex()))
         else:
             value = ValueLoading
         return AbstractCustomEditor.get_value(self) or value

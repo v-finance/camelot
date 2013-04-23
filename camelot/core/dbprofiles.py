@@ -38,7 +38,7 @@ import logging
 
 import six
 
-from PyQt4 import QtCore
+from .qt import QtCore, py_to_variant
 
 from camelot.core.conf import settings
 
@@ -127,7 +127,7 @@ def stylesheet_from_profile():
 def last_used_profile():
     settings = QtCore.QSettings()
     return six.text_type(settings.value('last_used_database_profile',
-        QtCore.QVariant('')).toString(), 'utf-8')
+        py_to_variant('')).toString(), 'utf-8')
 
 def fetch_profiles(from_file=None):
     profiles = {}
@@ -145,21 +145,21 @@ def fetch_profiles(from_file=None):
         for index in range(size):
             settings.setArrayIndex(index)
             info = {}
-            profilename = six.text_type(settings.value('profilename', QtCore.QVariant('')).toString(), 'utf-8')
+            profilename = six.text_type(settings.value('profilename', py_to_variant('')).toString(), 'utf-8')
             if not profilename:
                 continue  # well we should not really be doing anything
-            info['dialect'] = _decode_setting(settings.value('dialect', QtCore.QVariant('')).toString())
-            info['host'] = _decode_setting(settings.value('host', QtCore.QVariant('')).toString())
-            info['port'] = _decode_setting(settings.value('port', QtCore.QVariant('')).toString())
-            info['database'] = _decode_setting(settings.value('database', QtCore.QVariant('')).toString())
-            info['user'] = _decode_setting(settings.value('user', QtCore.QVariant('')).toString())
-            info['pass'] = _decode_setting(settings.value('pass', QtCore.QVariant('')).toString())
-            info['media_location'] = _decode_setting(settings.value('media_location', QtCore.QVariant('')).toString())
-            info['locale_language'] = _decode_setting(settings.value('locale_language', QtCore.QVariant('')).toString())
-            info['proxy_host'] = _decode_setting(settings.value('proxy_host', QtCore.QVariant('')).toString())
-            info['proxy_port'] = _decode_setting(settings.value('proxy_port', QtCore.QVariant('')).toString())
-            info['proxy_username'] = _decode_setting(settings.value('proxy_username', QtCore.QVariant('')).toString())
-            info['proxy_password'] = _decode_setting(settings.value('proxy_password', QtCore.QVariant('')).toString())
+            info['dialect'] = _decode_setting(settings.value('dialect', py_to_variant('')).toString())
+            info['host'] = _decode_setting(settings.value('host', py_to_variant('')).toString())
+            info['port'] = _decode_setting(settings.value('port', py_to_variant('')).toString())
+            info['database'] = _decode_setting(settings.value('database', py_to_variant('')).toString())
+            info['user'] = _decode_setting(settings.value('user', py_to_variant('')).toString())
+            info['pass'] = _decode_setting(settings.value('pass', py_to_variant('')).toString())
+            info['media_location'] = _decode_setting(settings.value('media_location', py_to_variant('')).toString())
+            info['locale_language'] = _decode_setting(settings.value('locale_language', py_to_variant('')).toString())
+            info['proxy_host'] = _decode_setting(settings.value('proxy_host', py_to_variant('')).toString())
+            info['proxy_port'] = _decode_setting(settings.value('proxy_port', py_to_variant('')).toString())
+            info['proxy_username'] = _decode_setting(settings.value('proxy_username', py_to_variant('')).toString())
+            info['proxy_password'] = _decode_setting(settings.value('proxy_password', py_to_variant('')).toString())
             profiles[profilename] = info
         settings.endArray()
     except Exception as e:
@@ -176,19 +176,19 @@ def store_profiles(profiles, to_file=None):
 
     for index, (profilename, info) in enumerate(profiles.items()):
         settings.setArrayIndex(index)
-        settings.setValue('profilename', QtCore.QVariant(six.text_type(profilename).encode('utf-8')))
-        settings.setValue('dialect', QtCore.QVariant(_encode_setting(info['dialect'])))
-        settings.setValue('host', QtCore.QVariant(_encode_setting(info['host'])))
-        settings.setValue('port', QtCore.QVariant(_encode_setting(info['port'])))
-        settings.setValue('database', QtCore.QVariant(_encode_setting(info['database'])))
-        settings.setValue('user', QtCore.QVariant(_encode_setting(info['user'])))
-        settings.setValue('pass', QtCore.QVariant(_encode_setting(info['pass'])))
-        settings.setValue('media_location', QtCore.QVariant(_encode_setting(info['media_location'])))
-        settings.setValue('locale_language', QtCore.QVariant(_encode_setting(info['locale_language'])))
-        settings.setValue('proxy_host', QtCore.QVariant(_encode_setting(info['proxy_host'])))
-        settings.setValue('proxy_port', QtCore.QVariant(_encode_setting(info['proxy_port'])))
-        settings.setValue('proxy_username', QtCore.QVariant(_encode_setting(info['proxy_username'])))
-        settings.setValue('proxy_password', QtCore.QVariant(_encode_setting(info['proxy_password'])))
+        settings.setValue('profilename', py_to_variant(six.text_type(profilename).encode('utf-8')))
+        settings.setValue('dialect', py_to_variant(_encode_setting(info['dialect'])))
+        settings.setValue('host', py_to_variant(_encode_setting(info['host'])))
+        settings.setValue('port', py_to_variant(_encode_setting(info['port'])))
+        settings.setValue('database', py_to_variant(_encode_setting(info['database'])))
+        settings.setValue('user', py_to_variant(_encode_setting(info['user'])))
+        settings.setValue('pass', py_to_variant(_encode_setting(info['pass'])))
+        settings.setValue('media_location', py_to_variant(_encode_setting(info['media_location'])))
+        settings.setValue('locale_language', py_to_variant(_encode_setting(info['locale_language'])))
+        settings.setValue('proxy_host', py_to_variant(_encode_setting(info['proxy_host'])))
+        settings.setValue('proxy_port', py_to_variant(_encode_setting(info['proxy_port'])))
+        settings.setValue('proxy_username', py_to_variant(_encode_setting(info['proxy_username'])))
+        settings.setValue('proxy_password', py_to_variant(_encode_setting(info['proxy_password'])))
     settings.endArray()
 
 def use_chosen_profile(profilename):

@@ -1,4 +1,4 @@
-from PyQt4 import QtCore
+from camelot.core.qt import QtCore
 
 from camelot.view import forms
 from camelot.view.controls import delegates

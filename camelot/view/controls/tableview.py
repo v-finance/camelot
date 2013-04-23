@@ -29,13 +29,9 @@ logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QSizePolicy
-
+from ...core.qt import variant_to_py, Qt, QtCore, QtGui
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.core.utils import variant_to_pyobject, ugettext as _
+from camelot.core.utils import ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
@@ -122,7 +118,8 @@ and above the text.
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
                               QtGui.QAbstractItemView.DoubleClicked |
                               QtGui.QAbstractItemView.CurrentChanged )
-        self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        self.setSizePolicy( QtGui.QSizePolicy.Expanding, 
+                            QtGui.QSizePolicy.Expanding )
         self.horizontalHeader().setClickable( True )
         self._header_font_required = QtGui.QApplication.font()
         self._header_font_required.setBold( True )
@@ -144,7 +141,7 @@ and above the text.
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0
                 continue
-            old_size = variant_to_pyobject( self.model().headerData( logical_index, 
+            old_size = variant_to_py( self.model().headerData( logical_index, 
                                                                      Qt.Horizontal, 
                                                                      Qt.SizeHintRole ) )
             # when the size is different from the one from the model, the
@@ -326,7 +323,8 @@ class HeaderWidget( QtGui.QWidget ):
         self._expanded_search.hide()
         layout.addWidget( self._expanded_search, 1 )
         self.setLayout( layout )
-        self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
+        self.setSizePolicy( QtGui.QSizePolicy.Minimum, 
+                            QtGui.QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
         self.search = search
 

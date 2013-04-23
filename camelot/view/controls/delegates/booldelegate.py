@@ -22,14 +22,12 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
 import six
 
+from ....core.qt import variant_to_py, QtGui, QtCore, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import ugettext as _, variant_to_pyobject
+from camelot.core.utils import ugettext as _
 from camelot.view.proxy import ValueLoading
 
 class BoolDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -82,7 +80,7 @@ class TextBoolDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         editable, background_color = True, None
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )

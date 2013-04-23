@@ -21,13 +21,11 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
 
 import six
 
+from ....core.qt import variant_to_py, Qt, QtGui
 from .customdelegate import DocumentationMetaclass, CustomDelegate
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
 class IntervalsDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -39,8 +37,8 @@ class IntervalsDelegate( six.with_metaclass( DocumentationMetaclass,
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        intervals_container = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        intervals_container = variant_to_py(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         # background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         # editable is defaulted to False, because there is no editor, no need for one currently
         editable, color, background_color = False, None, None

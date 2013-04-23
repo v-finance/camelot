@@ -22,16 +22,13 @@
 #
 #  ============================================================================
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
-
 import six
 
+from ....core.qt import variant_to_py, Qt, QtCore, QtGui
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.proxy import ValueLoading
 
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 
 class ColoredFloatDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -65,8 +62,8 @@ class ColoredFloatDelegate( six.with_metaclass( DocumentationMetaclass,
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        value = variant_to_py( index.model().data(index, Qt.EditRole) )
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         fontColor = QtGui.QColor()
         editable, prefix, suffix, background_color, arrow = True, '', '', None, None
 

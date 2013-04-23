@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui
+
+import six
 
 import logging
 import unittest
 import os
 import time
 
+from camelot.core.qt import QtGui, QtCore, py_to_variant
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 from camelot.test import ModelThreadTestCase, EntityViewsTest
 from camelot.view.art import ColorScheme
-
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 
 logger = logging.getLogger('view.unittests')
 
@@ -447,7 +445,7 @@ class FormTest(ModelThreadTestCase):
                 entities.remove(e)
 
     def test_form(self):
-        from snippet.form.simple_form import Movie
+        from .snippet.form.simple_form import Movie
         self.grab_widget(Movie.Admin.form_display.render(self.widgets))
         form = forms.Form( ['title', 'short_description',
                             'director', 'releasedate'] )
@@ -456,7 +454,7 @@ class FormTest(ModelThreadTestCase):
         form.add_field( 'tags' )
         form.add_field( forms.Break() )
         form.add_field( forms.Label('End') )
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
@@ -466,7 +464,7 @@ class FormTest(ModelThreadTestCase):
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
@@ -478,34 +476,34 @@ class FormTest(ModelThreadTestCase):
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         form.replace_field( 'releasedate', 'rating' )        
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
-        from snippet.form.nested_form import Admin
+        from .snippet.form.nested_form import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         self.grab_widget( person_admin.create_new_view() )
 
     def test_inherited_form(self):
-        from snippet.form.inherited_form import InheritedAdmin
+        from .snippet.form.inherited_form import InheritedAdmin
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         self.grab_widget( person_admin.create_new_view() )
 
     def test_custom_layout(self):
-        from snippet.form.custom_layout import Admin
+        from .snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         self.grab_widget( person_admin.create_new_view() )
 
@@ -535,9 +533,9 @@ class DelegateTest(ModelThreadTestCase):
 
         model = QStandardItemModel(1, 1)
         index = model.index(0, 0, QModelIndex())
-        model.setData( index, QtCore.QVariant( data ) )
-        model.setData( index, QtCore.QVariant( QtGui.QColor('white') ), Qt.BackgroundRole )
-        model.setData( index, QtCore.QVariant( dict(editable=True) ), Qt.UserRole )
+        model.setData( index, py_to_variant( data ) )
+        model.setData( index, py_to_variant( QtGui.QColor('white') ), Qt.BackgroundRole )
+        model.setData( index, py_to_variant( dict(editable=True) ), Qt.UserRole )
 
         option = QtGui.QStyleOptionViewItem()
 
@@ -1081,7 +1079,7 @@ class ControlsTest(ModelThreadTestCase):
             raise UserException( text = "Could not burn movie to non empty DVD",
                                  resolution = "Insert an empty DVD and retry" )
             #end user_exception
-        except Exception, e:
+        except Exception:
             pass
 
         exc_info = register_exception(logger, 'unit test', e)
@@ -1103,7 +1101,7 @@ class SnippetsTest(ModelThreadTestCase):
         self.app_admin = ApplicationAdmin()
         
     def test_simple_plot(self):
-        from snippet.chart.simple_plot import Wave
+        from .snippet.chart.simple_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
         wave = Wave()
         admin = Wave.Admin( self.app_admin, Wave )
@@ -1113,7 +1111,7 @@ class SnippetsTest(ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_advanced_plot(self):
-        from snippet.chart.advanced_plot import Wave
+        from .snippet.chart.advanced_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
         wave = Wave()
         #wave.phase = '2.89'
@@ -1124,7 +1122,7 @@ class SnippetsTest(ModelThreadTestCase):
         self.grab_widget(form)
         
     def test_fields_with_actions(self):
-        from snippet.fields_with_actions import Coordinate
+        from .snippet.fields_with_actions import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
@@ -1133,7 +1131,7 @@ class SnippetsTest(ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
-        from snippet.fields_with_tooltips import Coordinate
+        from .snippet.fields_with_tooltips import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
@@ -1144,7 +1142,7 @@ class SnippetsTest(ModelThreadTestCase):
     def test_entity_validator(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.party import Person
-        from snippet.entity_validator import PersonValidator, Admin
+        from .snippet.entity_validator import PersonValidator, Admin
         person_admin = Admin( self.app_admin, Person)
         proxy = CollectionProxy(person_admin, lambda:[Person()], person_admin.get_columns)
         validator = PersonValidator(person_admin, proxy)
@@ -1156,7 +1154,7 @@ class SnippetsTest(ModelThreadTestCase):
     def test_background_color(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.party import Person
-        from snippet.background_color import Admin
+        from .snippet.background_color import Admin
         person_admin = Admin( self.app_admin, Person )
         proxy = CollectionProxy(person_admin, lambda:[Person(first_name='John', last_name='Cleese'),
                                                       Person(first_name='eric', last_name='Idle')],

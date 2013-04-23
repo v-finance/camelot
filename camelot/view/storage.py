@@ -27,12 +27,10 @@ import logging
 
 import six
 
+from ..core.qt import QtGui, QtCore, py_to_variant
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.exception import model_thread_exception_message_box
-
-from PyQt4 import QtGui
-from PyQt4 import QtCore
 
 LOGGER = logging.getLogger('camelot.view.storage')
 
@@ -148,7 +146,7 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
             if reply == QtGui.QMessageBox.Yes:
                 remove = True
         # save it back
-        settings.setValue('lastpath', QtCore.QVariant( os.path.dirname( filename ) ) )
+        settings.setValue('lastpath', py_to_variant( os.path.dirname( filename ) ) )
         progress = SaveFileProgressDialog()
 
         def checkin():

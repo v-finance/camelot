@@ -24,13 +24,11 @@
 
 """Utility functions"""
 
+import logging
+
 import six
 
-from PyQt4 import QtGui
 from PyQt4 import QtCore
-
-import datetime
-import logging
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -86,90 +84,6 @@ class CollectionGetterFromObjectGetter(object):
         if not self._collection:
             self._collection = [self._object_getter()]
         return self._collection
-
-
-"""
-A Note on GUI Types
-
-Because QVariant is part of the QtCore library, it cannot provide conversion
-functions to data types defined in QtGui, such as QColor, QImage, and QPixmap.
-In other words, there is no toColor() function. Instead, you can use the
-QVariant.value() or the qVariantValue() template function. For example:
-
- QVariant variant;
- ...
- QColor color = variant.value<QColor>();
-
-The inverse conversion (e.g., from QColor to QVariant) is automatic for all
-data types supported by QVariant, including GUI-related types:
-
- QColor color = palette().background().color();
- QVariant variant = color;
-"""
-
-if pyqt and (six.PY3==False):
-    
-    def variant_to_pyobject(qvariant=None):
-        """Try to convert a QVariant to a python object as good as possible"""
-        if not qvariant:
-            return None
-        if qvariant.isNull():
-            return None
-        type = qvariant.type()
-        if type == QtCore.QVariant.String:
-            value = six.text_type(qvariant.toString())
-        elif type == QtCore.QVariant.Date:
-            value = qvariant.toDate()
-            value = datetime.date( year=value.year(),
-                                   month=value.month(),
-                                   day=value.day() )
-        elif type == QtCore.QVariant.Int:
-            value = int(qvariant.toInt()[0])
-        elif type == QtCore.QVariant.LongLong:
-            value = int(qvariant.toLongLong()[0])
-        elif type == QtCore.QVariant.Double:
-            value = float(qvariant.toDouble()[0])
-        elif type == QtCore.QVariant.Bool:
-            value = bool(qvariant.toBool())
-        elif type == QtCore.QVariant.Time:
-            value = qvariant.toTime()
-            value = datetime.time( hour = value.hour(),
-                                   minute = value.minute(),
-                                   second = value.second() )        
-        elif type == QtCore.QVariant.DateTime:
-            value = qvariant.toDateTime()
-            value = value.toPyDateTime()
-        elif type == QtCore.QVariant.Color:
-            value = QtGui.QColor(qvariant)
-        elif type == QtCore.QVariant.ByteArray:
-            value = qvariant.toByteArray()
-        else:
-            value = qvariant.toPyObject()
-    
-        return value
-
-else:
-    
-    def variant_to_pyobject( value ):
-        if isinstance( value, QtCore.QDate ):
-            value = datetime.date( year = value.year(),
-                                   month = value.month(),
-                                   day = value.day() )
-        elif isinstance( value, QtCore.QTime ):
-            value = datetime.time( hour = value.hour(),
-                                   minute = value.minute(),
-                                   second = value.second() )        
-        elif isinstance( value, QtCore.QDateTime ):
-            date = value.date()
-            time = value.time()
-            value = datetime.datetime( year = date.year(),
-                                       month = date.month(),
-                                       day = date.day(),
-                                       hour = time.hour(),
-                                       minute = time.minute(),
-                                       second = time.second()                                   
-                                       )
-        return value
 
 #
 # Global dictionary containing all user defined translations in the

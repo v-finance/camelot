@@ -26,17 +26,13 @@ from functools import update_wrapper, partial
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-
 from camelot.core.utils import ugettext as _
-from camelot.core.utils import variant_to_pyobject
 from camelot.core.utils import create_constant_function
 
 from .customeditor import CustomEditor, set_background_color_palette
@@ -65,10 +61,10 @@ class Many2OneEditor( CustomEditor ):
 
         def data(self, index, role):
             if role == Qt.DisplayRole:
-                return QtCore.QVariant(self._completions[index.row()][0])
+                return py_to_variant(self._completions[index.row()][0])
             elif role == Qt.EditRole:
-                return QtCore.QVariant(self._completions[index.row()][1])
-            return QtCore.QVariant()
+                return py_to_variant(self._completions[index.row()][1])
+            return py_to_variant()
 
         def rowCount(self, index=None):
             return len(self._completions)
@@ -204,11 +200,11 @@ class Many2OneEditor( CustomEditor ):
 
     def completionActivated(self, index):
         object_getter = index.data(Qt.EditRole)
-        self.setEntity(variant_to_pyobject(object_getter))
+        self.setEntity(variant_to_py(object_getter))
 
     def completion_highlighted(self, index ):
         object_getter = index.data(Qt.EditRole)
-        pyob = variant_to_pyobject(object_getter)
+        pyob = variant_to_py(object_getter)
         self._last_highlighted_entity_getter = pyob
 
     def openButtonClicked(self):
@@ -306,7 +302,7 @@ class Many2OneEditor( CustomEditor ):
             elif not self.entity_set and self.completions_model.rowCount()==1:
                 # There is only one possible option
                 index = self.completions_model.index(0,0)
-                entity_getter = variant_to_pyobject(index.data(Qt.EditRole))
+                entity_getter = variant_to_py(index.data(Qt.EditRole))
                 self.setEntity(entity_getter)
         self.search_input.set_user_input(self._entity_representation)
 

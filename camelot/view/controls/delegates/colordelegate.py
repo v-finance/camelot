@@ -21,14 +21,12 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 
 import six
 
+from ....core.qt import variant_to_py, QtCore, QtGui, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
 class ColorDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -39,8 +37,8 @@ class ColorDelegate( six.with_metaclass( DocumentationMetaclass,
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
-        color = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
+        color = variant_to_py( index.model().data( index, Qt.EditRole ) )
         editable = True
         background_color = None
         if field_attributes != ValueLoading:

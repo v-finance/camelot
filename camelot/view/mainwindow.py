@@ -25,14 +25,13 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
+from ..core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.model_thread import post
 
-from camelot.core.utils import variant_to_pyobject, ugettext as _
+from camelot.core.utils import ugettext as _
 
 class MainWindow(QtGui.QMainWindow):
     """Main window of a Desktop Camelot application
@@ -144,13 +143,13 @@ class MainWindow(QtGui.QMainWindow):
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
         settings = QtCore.QSettings()
-        self.restoreGeometry( variant_to_pyobject( settings.value('geometry') ) )
+        self.restoreGeometry( variant_to_py( settings.value('geometry') ) )
 
     def write_settings(self):
         """Store the current geometry of the main window"""
         logger.debug('writing application settings')
         settings = QtCore.QSettings()
-        settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
+        settings.setValue('geometry', py_to_variant(self.saveGeometry()))
         logger.debug('settings written')
 
     @QtCore.pyqtSlot( object )

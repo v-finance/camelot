@@ -24,12 +24,8 @@
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QItemDelegate
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 
-from camelot.core.utils import variant_to_pyobject
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
@@ -108,7 +104,7 @@ def DocumentationMetaclass(name, bases, dct):
     return type(name, bases, dct)
 
 
-class CustomDelegate(QItemDelegate):
+class CustomDelegate(QtGui.QItemDelegate):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -125,7 +121,7 @@ class CustomDelegate(QItemDelegate):
         is editable
 
         """
-        QItemDelegate.__init__(self, parent)
+        super( CustomDelegate, self ).__init__(parent)
         self.editable = editable
         self.kwargs = kwargs
         self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
@@ -165,8 +161,8 @@ class CustomDelegate(QItemDelegate):
     def setEditorData(self, editor, index):
         if not index.model():
             return
-        value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole)) or dict()
+        value = variant_to_py(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ToolTipRole
         # but i wonder if we should make the detour by Qt.ToolTipRole or just
@@ -184,7 +180,7 @@ class CustomDelegate(QItemDelegate):
 
     def setModelData(self, editor, model, index):
         if isinstance(model, QtGui.QStandardItemModel):
-            val = QtCore.QVariant(editor.get_value())
+            val = py_to_variant(editor.get_value())
         else:
             val = create_constant_function(editor.get_value())
         model.setData(index, val)
@@ -192,7 +188,7 @@ class CustomDelegate(QItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
+        value = variant_to_py(index.model().data(index, Qt.DisplayRole))
 
         if value in (None, ValueLoading):
             value_str = ''
@@ -224,7 +220,7 @@ class CustomDelegate(QItemDelegate):
         if rect.height() > 2 * self._height:
             vertical_align = Qt.AlignTop
 
-        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
+        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
         tooltip = None
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )

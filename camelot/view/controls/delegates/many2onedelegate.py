@@ -22,14 +22,12 @@
 #
 #  ============================================================================
 
-
-from PyQt4.QtCore import Qt
-
 import six
 
+from ....core.qt import variant_to_py, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject, create_constant_function
+from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
 import logging
@@ -78,9 +76,9 @@ class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
         return editor
 
     def setEditorData(self, editor, index):
-        value = variant_to_pyobject(index.data(Qt.EditRole))
+        value = variant_to_py(index.data(Qt.EditRole))
         if value != ValueLoading:
-            field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+            field_attributes = variant_to_py(index.data(Qt.UserRole))
             editor.set_value(create_constant_function(value))
             editor.set_field_attributes(**field_attributes)
         else:

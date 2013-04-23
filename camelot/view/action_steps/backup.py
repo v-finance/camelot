@@ -29,13 +29,12 @@
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from ...core.qt import QtGui, QtCore, py_to_variant, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext, variant_to_pyobject
+from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.art import Icon
@@ -75,11 +74,11 @@ class LabelComboBox(QtGui.QComboBox):
             if i == 0:
                 self._file_name = stored_file.name
             self.addItem( six.text_type( stored_file.verbose_name ), 
-                          QtCore.QVariant( stored_file ) )            
+                          py_to_variant( stored_file ) )            
         self.currentIndexChanged[int].connect(self._onCurrentIndexChanged)
 
     def _onCurrentIndexChanged( self, index ):
-        self._file_name = variant_to_pyobject( self.itemData(index) ).name
+        self._file_name = variant_to_py( self.itemData(index) ).name
 
     def filename( self ):
         return self._file_name

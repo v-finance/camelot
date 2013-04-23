@@ -35,13 +35,11 @@ import logging
 
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
-from PyQt4.QtCore import Qt, QThread
-from PyQt4 import QtGui, QtCore
-
 import six
 
+from ...core.qt import QtCore, QtGui, Qt, py_to_variant, variant_to_py
 from camelot.core.exception import log_programming_error
-from camelot.core.utils import is_deleted, variant_to_pyobject
+from camelot.core.utils import is_deleted
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
@@ -242,7 +240,7 @@ position in the query.
         # objects in the collection.
         #
         self.source_model = QtGui.QStandardItemModel()
-        self.setModel( self.source_model )
+        self.setSourceModel( self.source_model )
         
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
@@ -256,9 +254,9 @@ position in the query.
         self.iconSize = QtCore.QSize( vertical_header_font_height,
                                       vertical_header_font_height )
         if self.header_icon:
-            self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
+            self.form_icon = py_to_variant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
         else:
-            self.form_icon = QtCore.QVariant()
+            self.form_icon = py_to_variant()
         self.validator = admin.get_validator( self )
         self._collection_getter = collection_getter
         self.flush_changes = flush_changes
@@ -559,7 +557,7 @@ position in the query.
             # Set the header data
             #
             header_item = QtGui.QStandardItem()
-            header_item.setData( QtCore.QVariant( six.text_type(c[1]['name']) ),
+            header_item.setData( py_to_variant( six.text_type(c[1]['name']) ),
                                  Qt.DisplayRole )
             if c[1].get( 'nullable', True ) == False:
                 header_item.setData( self._header_font_required,
@@ -568,7 +566,7 @@ position in the query.
                 header_item.setData( self._header_font,
                                      Qt.FontRole )
 
-            settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
+            settings_width = int( variant_to_py( self.settings.value( field_name, 0 ) ) )
             label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, six.text_type(c[1]['name']) + u' ' )
             minimal_widths = [ label_size.width() + 10 ]
             if 'minimal_column_width' in c[1]:
@@ -579,10 +577,10 @@ position in the query.
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
             if settings_width:
-                header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
+                header_item.setData( py_to_variant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
                                      Qt.SizeHintRole )
             else:
-                header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                header_item.setData( py_to_variant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
                                      Qt.SizeHintRole )
              
             self.source_model.setHorizontalHeaderItem( i, header_item )
@@ -617,16 +615,16 @@ position in the query.
         if orientation == Qt.Vertical:
             if role == Qt.SizeHintRole:
                 if self.header_icon != None:
-                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10,
+                    return py_to_variant( QtCore.QSize( self.iconSize.width() + 10,
                                                           self._vertical_header_height ) )
                 else:
                     # if there is no icon, the line numbers will be displayed, so create some space for those
-                    return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, self._vertical_header_height ) )
+                    return py_to_variant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, self._vertical_header_height ) )
             if role == Qt.DecorationRole:
                 return self.form_icon
             elif role == Qt.DisplayRole:
                 if self.header_icon != None:
-                    return QtCore.QVariant( '' )
+                    return py_to_variant( '' )
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
@@ -685,7 +683,7 @@ position in the query.
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
            not ( 0 <= index.column() <= self.columnCount() ):
-            return QtCore.QVariant()
+            return py_to_variant()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -706,23 +704,23 @@ position in the query.
                     value = QtCore.QDateTime(value.year, value.month,
                                              value.day, value.hour,
                                              value.minute, value.second)
-            return QtCore.QVariant( value )
+            return py_to_variant( value )
         elif role == Qt.ToolTipRole:
-            return QtCore.QVariant(self._get_field_attribute_value(index, 'tooltip'))
+            return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))
         elif role == Qt.BackgroundRole:
-            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtCore.QVariant())
+            return py_to_variant(self._get_field_attribute_value(index, 'background_color') or py_to_variant())
         elif role == Qt.UserRole:
             field_attributes = ProxyDict(self._static_field_attributes[index.column()])
             dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
             if dynamic_field_attributes != ValueLoading:
                 field_attributes.update( dynamic_field_attributes )
-            return QtCore.QVariant(field_attributes)
+            return py_to_variant(field_attributes)
         elif role == Qt.UserRole + 1:
             try:
-                return QtCore.QVariant( self.edit_cache.get_entity_at_row( index.row() ) )
+                return py_to_variant( self.edit_cache.get_entity_at_row( index.row() ) )
             except KeyError:
-                return QtCore.QVariant( ValueLoading )
-        return QtCore.QVariant()
+                return py_to_variant( ValueLoading )
+        return py_to_variant()
 
     def _get_field_attribute_value(self, index, field_attribute):
         """Get the values for the static and the dynamic field attributes at once
@@ -746,7 +744,7 @@ position in the query.
         while previous_length != len(self._update_requests):
             previous_length = len(self._update_requests)
             locker.unlock()
-            QThread.msleep(5)
+            QtCore.QThread.msleep(5)
             locker.relock()
         #
         # Copy the update requests and clear the list of requests
@@ -951,7 +949,7 @@ position in the query.
         while previous_length != len(self.rows_under_request):
             previous_length = len(self.rows_under_request)
             locker.unlock()
-            QThread.msleep(5)
+            QtCore.QThread.msleep(5)
             locker.relock()
         #
         # now filter out all rows that have been put in the cache

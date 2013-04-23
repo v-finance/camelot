@@ -21,14 +21,14 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4.QtCore import Qt
 
 import six
 
+from ....core.qt import variant_to_py, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
-from camelot.core.utils import ugettext, variant_to_pyobject
+from camelot.core.utils import ugettext
 
 class TextEditDelegate( six.with_metaclass( DocumentationMetaclass, 
                                             CustomDelegate) ):
@@ -44,7 +44,7 @@ class TextEditDelegate( six.with_metaclass( DocumentationMetaclass,
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
         
         value_str = u''
         if value not in (None, ValueLoading):

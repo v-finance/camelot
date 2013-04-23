@@ -24,7 +24,7 @@
 
 import six
 
-from PyQt4 import QtGui, QtCore
+from ...core.qt import QtGui, QtCore, py_to_variant
   
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
@@ -91,7 +91,7 @@ class SelectFile( ActionStep ):
                 raise CancelRequest()
             file_names = [six.text_type(fn) for fn in dialog.selectedFiles()]
             if file_names:
-                settings.setValue( 'datasource', QtCore.QVariant( file_names[0] ) )
+                settings.setValue( 'datasource', py_to_variant( file_names[0] ) )
             return file_names
 
 

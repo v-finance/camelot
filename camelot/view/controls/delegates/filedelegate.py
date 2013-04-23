@@ -21,14 +21,12 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
 
 import six
 
+from ....core.qt import variant_to_py, QtGui, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass, not_editable_background, not_editable_foreground
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
 class FileDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -50,7 +48,7 @@ class FileDelegate( six.with_metaclass( DocumentationMetaclass,
             painter.setPen(QtGui.QColor(not_editable_foreground))
         else:
             painter.fillRect(option.rect, background_color)
-        value =  variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        value =  variant_to_py(index.model().data(index, Qt.EditRole))
         if value not in (None, ValueLoading):
           
             painter.drawText(option.rect.x()+2,
