@@ -143,7 +143,9 @@ class MainWindow(QtGui.QMainWindow):
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
         settings = QtCore.QSettings()
-        self.restoreGeometry( variant_to_py( settings.value('geometry') ) )
+        geometry = variant_to_py( settings.value('geometry') )
+        if geometry:
+            self.restoreGeometry( geometry )
 
     def write_settings(self):
         """Store the current geometry of the main window"""

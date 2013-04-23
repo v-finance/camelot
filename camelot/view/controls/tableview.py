@@ -595,7 +595,8 @@ class TableView( AbstractView  ):
         if item_delegate:
             self.table.setItemDelegate( item_delegate )
         for i in range( model.columnCount() ):
-            self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
+            size = variant_to_py( model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ) )
+            self.table.setColumnWidth( i, size.width() )
 
     def closeEvent( self, event ):
         """reimplements close event"""

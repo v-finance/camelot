@@ -29,7 +29,7 @@ logger = logging.getLogger('camelot.view.controls.navpane2')
 
 import six
 
-from ....core.qt import variant_to_py, QtCore, QtGui, Qt
+from ...core.qt import variant_to_py, QtCore, QtGui, Qt
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.section import Section, SectionItem
 from camelot.view.model_thread import post

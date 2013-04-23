@@ -7,7 +7,7 @@ import unittest
 import os
 import time
 
-from camelot.core.qt import QtGui, QtCore, py_to_variant
+from camelot.core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 from camelot.test import ModelThreadTestCase, EntityViewsTest
@@ -529,10 +529,9 @@ class DelegateTest(ModelThreadTestCase):
     def grab_delegate(self, delegate, data, suffix='editable'):
         import sys
         from camelot.view.controls.tableview import TableWidget
-        from PyQt4.QtCore import Qt
 
-        model = QStandardItemModel(1, 1)
-        index = model.index(0, 0, QModelIndex())
+        model = QtGui.QStandardItemModel(1, 1)
+        index = model.index(0, 0, QtCore.QModelIndex())
         model.setData( index, py_to_variant( data ) )
         model.setData( index, py_to_variant( QtGui.QColor('white') ), Qt.BackgroundRole )
         model.setData( index, py_to_variant( dict(editable=True) ), Qt.UserRole )
@@ -549,18 +548,19 @@ class DelegateTest(ModelThreadTestCase):
         test_case_name = sys._getframe(1).f_code.co_name[4:]
 
         for state_name, state in zip(('selected', 'unselected'),
-                                     (QStyle.State_Selected, QStyle.State_None)):
+                                     (QtGui.QStyle.State_Selected, 
+                                      QtGui.QStyle.State_None)):
             tableview.adjustSize()
 
-            if state == QStyle.State_Selected:
-                tableview.selectionModel().select(index, QItemSelectionModel.Select)
+            if state == QtGui.QStyle.State_Selected:
+                tableview.selectionModel().select(index, QtGui.QItemSelectionModel.Select)
             else:
-                tableview.selectionModel().select(index, QItemSelectionModel.Clear)
+                tableview.selectionModel().select(index, QtGui.QItemSelectionModel.Clear)
 
             cell_size = tableview.visualRect(index).size()
 
-            headers_size = QSize(tableview.verticalHeader().width(),
-                                 tableview.horizontalHeader().height())
+            headers_size = QtCore.QSize(tableview.verticalHeader().width(),
+                                        tableview.horizontalHeader().height())
 
             tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
             tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
@@ -571,7 +571,7 @@ class DelegateTest(ModelThreadTestCase):
             delegate_images_path = os.path.join(static_images_path, 'delegates')
             if not os.path.exists(delegate_images_path):
                 os.makedirs(delegate_images_path)
-            pixmap = QPixmap.grabWidget(tableview)
+            pixmap = QtGui.QPixmap.grabWidget(tableview)
             pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
                         'PNG')
 
@@ -927,8 +927,8 @@ class ControlsTest(ModelThreadTestCase):
         model = widget.table.model()
         header = widget.table.horizontalHeader()
 
-        first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-        suffix_width = model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
         
         self.assertTrue( first_name_width > suffix_width )
         
@@ -951,8 +951,8 @@ class ControlsTest(ModelThreadTestCase):
         model = widget.table.model()
         header = widget.table.horizontalHeader()
 
-        first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-        suffix_width = model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
         
         self.assertEqual( first_name_width, suffix_width )
         
@@ -1072,6 +1072,7 @@ class ControlsTest(ModelThreadTestCase):
         
     def test_user_exception(self):
         from camelot.view.controls.exception import register_exception, ExceptionDialog
+        exc = None
         try:
             #begin user_exception
             from camelot.core.exception import UserException
@@ -1079,10 +1080,10 @@ class ControlsTest(ModelThreadTestCase):
             raise UserException( text = "Could not burn movie to non empty DVD",
                                  resolution = "Insert an empty DVD and retry" )
             #end user_exception
-        except Exception:
-            pass
+        except Exception as e:
+            exc = e
 
-        exc_info = register_exception(logger, 'unit test', e)
+        exc_info = register_exception(logger, 'unit test', exc)
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )   
 
