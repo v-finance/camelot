@@ -104,7 +104,7 @@ to display a progress dialog until my_function has finished::
         """Clear the detail text"""
         details = self.findChild( QtGui.QListView, 'details' )
         if details != None:
-            details.clear()
+            details.model().clear()
             
     def set_ok_hidden( self, hidden = True ):
         ok_button = self.findChild( QtGui.QPushButton, 'ok' )
