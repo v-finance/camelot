@@ -30,6 +30,7 @@ from PyQt4 import QtCore, QtGui
 import six
 
 from datetime import datetime, time, date
+import decimal
 import re
 import logging
 import operator
@@ -194,6 +195,10 @@ def float_from_string(s):
     if not ok:
         raise ParsingError()
     return f
+
+def decimal_from_string(s):
+    # direct conversion not possible, due to locale
+    return decimal.Decimal( float_from_string( s ) )
 
 def pyvalue_from_string(pytype, s):
     if pytype is str:

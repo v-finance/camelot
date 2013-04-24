@@ -29,14 +29,16 @@ for i, (name, definition) in enumerate( sqlalchemy.types.__dict__.items() ):
 
 class T( Entity ):
     """An entity with for each column type a column"""
-    for (i,name), definition in types_to_test.items():
-        has_field( name, definition )
+    pass
+
+for (i,name), definition in types_to_test.items():
+    setattr( T, name, sqlalchemy.Column( definition ) )
         
 class TAdmin( object ):
     search_all_fields = True
     list_search = []
     entity = T
-    
+
 class SearchCase( unittest.TestCase ):
     """Test the creation of search queries"""
     
@@ -57,11 +59,11 @@ class SearchCase( unittest.TestCase ):
     def value_for_type( self, definition, i ):
         value = i        
         if issubclass( definition, sqlalchemy.types.DateTime ):
-            value = datetime.datetime( year = 2000, month = 1, day = 1, hour = 1, minute = i )       
+            value = datetime.datetime( year = 2000, month = 1, day = 1, hour = 1, minute = 1+i%59 )       
         elif issubclass( definition, sqlalchemy.types.Date ):
-            value = datetime.date( year = 2000, month = 1, day = i%31 )                  
+            value = datetime.date( year = 2000, month = 1, day = 1 + i%30 )                  
         elif issubclass( definition, sqlalchemy.types.Time ):
-            value = datetime.time( hour = 1, minute = i )
+            value = datetime.time( hour = 1, minute = 1+i%59 )
         elif issubclass( definition, sqlalchemy.types.String ):
             value = str( i )
         elif issubclass( definition, sqlalchemy.types.Boolean ):
@@ -87,8 +89,6 @@ class SearchCase( unittest.TestCase ):
                                                                      string_value )
             query = self.session.query( T )
             query = search_decorator( query )
-            
-            #print query
             
             self.assertTrue( query.count() > 0 )
             

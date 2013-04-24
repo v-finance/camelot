@@ -4,7 +4,7 @@
 import unittest
 import gc
 
-from PyQt4 import QtGui, QtCore
+from camelot.core.qt import variant_to_py, QtGui, QtCore
 
 #
 # some helper classes to create all kinds of weird object structures
@@ -63,7 +63,7 @@ class ModelViewRegister(QtCore.QObject):
         
     @QtCore.pyqtSlot(QtCore.QObject)
     def _registered_object_destroyed(self, qobject):
-        key, _success = qobject.property('registered_key').toLongLong()
+        key = variant_to_py( qobject.property('registered_key') )
         del self.model_by_view[key]
 
 class TableViewCases(unittest.TestCase):
@@ -249,7 +249,6 @@ class SignalSlotCase( unittest.TestCase ):
             @QtCore.pyqtSlot(object)
             def my_slot(self, obj):
                 child = self.findChild(QtCore.QObject, 'child')
-                print child.objectName()
         
         class ReceiverParent(QtGui.QTabWidget):
             
