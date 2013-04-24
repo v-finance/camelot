@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 import camelot
 from setuptools import setup, find_packages
 
@@ -8,6 +9,8 @@ README = os.path.join(src_dir, 'readme.txt')
 long_description = open(README).read() + '\n\n'
 dependencies = os.path.join(src_dir, 'requirements.txt') 
 install_requires = open( dependencies ).read().splitlines()
+if sys.platform.startswith('win'):
+    install_requires.append('winpaths')
 
 setup(
     name = 'Camelot',

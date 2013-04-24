@@ -840,5 +840,7 @@ class RemoveSelection( DeleteSelection ):
             
     def handle_object( self, model_context, obj ):
         model_context._model.remove( obj )
-        raise StopIteration
+        # no StopIteration, since the supergenerator needs to
+        # continue to flush the session
+        yield None
 
