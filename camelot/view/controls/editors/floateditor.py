@@ -34,9 +34,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
     
     def __init__(self, option = None, parent = None):
-        super(CustomDoubleSpinBox, self).__init__(parent)
         self._option = option
-        self._locale = QtCore.QLocale()
+        self._locale = QtCore.QLocale()        
+        super(CustomDoubleSpinBox, self).__init__(parent)
     
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()

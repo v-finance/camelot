@@ -35,7 +35,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     
     Use the user_input method to get the text that was entered by the user. 
     
-    Note : since QT 4.7 the background text could be replaced with the
+    Note : since Qt 4.7 the background text could be replaced with the
     setPlaceholderText on a QLineEdit
     """
       
@@ -43,14 +43,14 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     _font_metrics = None
       
     def __init__(self, parent = None):
-        QtGui.QLineEdit.__init__(self, parent)
-        self._foreground_color = self.palette().color(self.foregroundRole())
-        self._background_color = self.palette().color(self.backgroundRole())
         self._showing_background_text = False
         self._background_text = None
         self._valid = True
         if self._font_metrics == None:
             self._font_metrics = QtGui.QFontMetrics( QtGui.QApplication.font() )
+        super( DecoratedLineEdit, self ).__init__( parent = parent )
+        self._foreground_color = self.palette().color(self.foregroundRole())
+        self._background_color = self.palette().color(self.backgroundRole())
 
     def set_minimum_width(self, width):
         """Set the minimum width of the line edit, measured in number of 
