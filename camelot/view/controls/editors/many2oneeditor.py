@@ -120,7 +120,7 @@ class Many2OneEditor( CustomEditor ):
 
         # Search input
         self.search_input = DecoratedLineEdit(self)
-        self.search_input.set_background_text(_('Search...'))
+        self.search_input.setPlaceholderText(_('Search...'))
         self.search_input.textEdited.connect(self.textEdited)
         self.search_input.set_minimum_width( 20 )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
@@ -165,7 +165,7 @@ class Many2OneEditor( CustomEditor ):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
-        text = self.search_input.user_input()
+        text = unicode( self.search_input.text() )
 
         def create_search_completion(text):
             return lambda: self.search_completions(text)
@@ -306,7 +306,7 @@ class Many2OneEditor( CustomEditor ):
                 index = self.completions_model.index(0,0)
                 entity_getter = variant_to_pyobject(index.data(Qt.EditRole))
                 self.setEntity(entity_getter)
-        self.search_input.set_user_input(self._entity_representation)
+        self.search_input.setText(self._entity_representation)
 
     def set_value(self, value):
         """:param value: either ValueLoading, or a function that returns None
@@ -329,7 +329,7 @@ class Many2OneEditor( CustomEditor ):
         """Update the gui"""
         ((desc, pk), propagate) = representation_and_propagate
         self._entity_representation = desc
-        self.search_input.set_user_input(desc)
+        self.search_input.setText(desc)
 
         if pk != False:
             self.open_button.setIcon(
