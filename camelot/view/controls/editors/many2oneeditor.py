@@ -306,7 +306,7 @@ class Many2OneEditor( CustomEditor ):
                 index = self.completions_model.index(0,0)
                 entity_getter = variant_to_pyobject(index.data(Qt.EditRole))
                 self.setEntity(entity_getter)
-        self.search_input.setText(self._entity_representation)
+        self.search_input.setText(self._entity_representation or u'')
 
     def set_value(self, value):
         """:param value: either ValueLoading, or a function that returns None
