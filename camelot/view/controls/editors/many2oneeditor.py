@@ -329,7 +329,7 @@ class Many2OneEditor( CustomEditor ):
         """Update the gui"""
         ((desc, pk), propagate) = representation_and_propagate
         self._entity_representation = desc
-        self.search_input.setText(desc)
+        self.search_input.setText(desc or u'')
 
         if pk != False:
             self.open_button.setIcon(
