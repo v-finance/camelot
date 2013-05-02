@@ -906,7 +906,7 @@ position in the query.
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
             static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
-            unicode_row_data = stripped_data_to_unicode.text_type( row_data, obj, static_field_attributes, dynamic_field_attributes )
+            unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
         else:
             row_data = [None] * len(columns)
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
