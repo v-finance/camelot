@@ -1,3 +1,5 @@
+from PyQt4 import QtCore
+
 from ...admin.action.base import ActionStep
 
 class MainWindow( ActionStep ):
@@ -24,3 +26,25 @@ class MainWindow( ActionStep ):
         main_window = self.render( gui_context )
         register( main_window, main_window )
         main_window.show()
+        
+class InstallTranslator( ActionStep ):
+    """
+    Install a translator in the application
+    
+    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
+        object
+
+    """
+    
+    def __init__( self,
+                  admin ):
+        self.admin = admin
+        
+    def gui_run( self, gui_context ):
+        app = QtCore.QCoreApplication.instance()
+        translator = self.admin.get_translator()
+        if isinstance(translator, list):
+            for t in translator:
+                app.installTranslator( t )
+        else:
+            app.installTranslator( translator )        

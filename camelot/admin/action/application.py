@@ -63,49 +63,6 @@ class Application( Action ):
                 sys.exit( app.exec_() )
             else:
                 sys.exit( self.return_code )
-            
-
-            #app.processEvents()
-            #
-            #self.pre_initialization()
-            #app.processEvents()
-            ## regularly call processEvents to keep the splash alive
-            #self.show_splash_message(splash_window, _('Setup database'))
-            #app.processEvents()
-            #self.start_model_thread()
-            #app.processEvents()
-            ##
-            ## WEIRD, if we put this code in a method, the translations
-            ## don't work
-            ##
-            #from camelot.core.utils import load_translations
-            #from camelot.view.model_thread import post
-            #self.show_splash_message(splash_window, _('Load translations'))
-            #app.processEvents()
-            #post(load_translations)
-            #self.show_splash_message(splash_window, _('Create translator'))
-            #app.processEvents()
-            #translator = self.application_admin.get_translator()
-            #self.show_splash_message(splash_window, _('Install translator'))
-            #if isinstance(translator, list):
-                #for t in translator:
-                    #app.installTranslator( t )
-            #else:
-                #app.installTranslator( translator )
-            #app.processEvents()
-            ## Set the style sheet
-            #self.show_splash_message(splash_window, _('Create main window'))
-            #app.processEvents()
-            #stylesheet = self.application_admin.get_stylesheet()
-            #if stylesheet:
-                #app.setStyleSheet(stylesheet)
-            #app.processEvents()
-            #self.initialization()
-            #app.processEvents()
-            #main_window = self.create_main_window()
-            #main_window.splash_screen = splash_window
-            #main_window.show()
-            #return self.start_event_loop(app)
         except Exception, e:
             from ...view.controls import exception, ExceptionDialog
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
@@ -130,7 +87,6 @@ class Application( Action ):
     def show_splash_message(self, splash_window, message):
         """:param message: displays a message on the splash screen, informing
         the user of the status of the application"""
-        from PyQt4 import QtCore
         msgalign = QtCore.Qt.AlignTop #| QtCore.Qt.AlignRight
         msgcolor = QtCore.Qt.white
         splash_window.showMessage(message, msgalign, msgcolor)
@@ -176,18 +132,13 @@ class Application( Action ):
         mt = get_model_thread()
         mt.start()
 
-    def load_translations(self, application):
-        """Fill the QApplication with the needed translations
-        :param application: the QApplication on which to install the translator
-        """
-        from camelot.core.utils import load_translations
-        from camelot.view.model_thread import get_model_thread
-        get_model_thread().post(load_translations)
-        for translator in self.application_admin.get_translator():
-            application.installTranslator(translator)
-
     def model_run( self, model_context ):
+        from ...core.conf import settings
+        from ...core.utils import load_translations
         from ...view import action_steps
+        #
+        # log the libraries in use
+        #
         if hasattr( QtCore, 'QT_MAJOR_VERSION'):
             QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
             logger.debug('qt version %s, pyqt version %s' %
@@ -195,5 +146,15 @@ class Application( Action ):
             logger.debug('qt major version %f' % QT_MAJOR_VERSION)
         import sqlalchemy
         logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
+        #
+        # setup the database model
+        #
+        yield action_steps.UpdateProgress( 0, 0, _('Setup database') )
+        settings.setup_model()
+        yield action_steps.UpdateProgress( 0, 0, _('Load translations') )
+        load_translations()
+        yield action_steps.UpdateProgress( 0, 0, _('Install translator') )
+        yield action_steps.InstallTranslator( model_context.admin ) 
+        yield action_steps.UpdateProgress( 0, 0, _('Create main window') )
         yield action_steps.MainWindow( self.application_admin )
         

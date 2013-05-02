@@ -34,8 +34,7 @@ from PyQt4 import QtCore
 
 from camelot.core.utils import pyqt
 from camelot.core.threading import synchronized
-from camelot.view.model_thread import ( AbstractModelThread, object_thread, 
-                                        setup_model )
+from camelot.view.model_thread import AbstractModelThread, object_thread
 from camelot.view.controls.exception import register_exception
 
 #
@@ -178,13 +177,13 @@ class SignalSlotModelThread( AbstractModelThread ):
 
     task_available = QtCore.pyqtSignal()
 
-    def __init__( self, setup_thread = setup_model ):
+    def __init__( self ):
         """
         @param setup_thread: function to be called at startup of the thread to initialize
         everything, by default this will setup the model.  set to None if nothing should
         be done.
         """
-        super(SignalSlotModelThread, self).__init__( setup_thread )
+        super(SignalSlotModelThread, self).__init__()
         self._task_handler = None
         self._mutex = QtCore.QMutex()
         self._request_queue = []
@@ -195,14 +194,6 @@ class SignalSlotModelThread( AbstractModelThread ):
         self.logger.debug( 'model thread started' )
         self._task_handler = TaskHandler(self)
         self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
-        self._thread_busy(True)
-        try:
-            self._setup_thread()
-        except Exception, e:
-            exc_info = register_exception(logger, 'Exception when setting up the SignalSlotModelThread', e)
-            self.setup_exception_signal.emit( exc_info )
-        self._thread_busy(False)
-        self.logger.debug('thread setup finished')
         # Some tasks might have been posted before the signals were connected to the task handler,
         # so once force the handling of tasks
         self._task_handler.handle_task()
