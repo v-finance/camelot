@@ -250,20 +250,6 @@ shortcut confusion and reduce the number of status updates.
                 self._object_admin_cache[admin_class] = admin
                 return admin
 
-    def create_main_window(self):
-        """Create the main window that will be shown when the application
-        starts up.  By default, returns an instance of 
-         :class:`camelot.view.mainwindow.MainWindow`
-         
-        :return: a :class:`PyQt4.QtGui.QWidget`
-        """
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
-        from camelot.view.mainwindow import MainWindow
-        gui_context = ApplicationActionGuiContext()
-        gui_context.admin = self
-        mainwindow = MainWindow( gui_context )
-        return mainwindow
-
     def get_actions(self):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
