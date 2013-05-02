@@ -422,10 +422,10 @@ be specified using the verbose_name attribute.
                     subclass_admin.get_subclass_tree()
                 ))
 
-        def sort_admins(a1, a2):
-            return cmp(a1[0].get_verbose_name_plural(), a2[0].get_verbose_name_plural())
+        def admin_key(admin):
+            return admin.get_verbose_name_plural()
 
-        subclasses.sort(cmp=sort_admins)
+        subclasses.sort(key=admin_key)
         return subclasses
 
     def get_related_admin(self, cls):
