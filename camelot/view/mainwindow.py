@@ -57,7 +57,7 @@ class MainWindow(QtGui.QMainWindow):
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
-        self.gui_context = gui_context.copy()
+        self.gui_context = gui_context
         self.workspace = DesktopWorkspace( self.app_admin, self )
         self.gui_context.workspace = self.workspace
 
