@@ -71,7 +71,26 @@ class Refresh( ActionStep ):
         if gui_context.workspace:
             gui_context.workspace.refresh()
 
-
+class SelectItem( ActionStep ):
+    """This action step pops up a single combobox dialog in which the user can
+    select one item from a list of items.
+    
+    :param items: a list of tuples with values and the visible name of the items
+       from which the user can select, such as `[(1, 'first'), (2,'second')]
+    :param value: the value that should be selected when the dialog pops up
+    :param autoaccept: if `True` the dialog closes immediately after the user
+       selected an option.  When this is `False`, the user should press
+       :guilabel:`OK` first.
+    """
+    
+    def __init__( self, items, value=None, autoaccept=True ):
+        self.items = items
+        self.value = value
+        self.autoaccept = autoaccept
+        
+    def render( self, gui_context ):
+        pass
+    
 class ShowChart( ActionStep ):
     """Show a full screen chart.
     

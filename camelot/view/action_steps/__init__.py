@@ -25,8 +25,8 @@
 from application import MainWindow, InstallTranslator
 from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
-from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
-                  ShowPixmap )
+from gui import ( CloseView, MessageBox, OpenFormView, Refresh, Select,
+                  ShowChart, ShowPixmap )
 from item_view import Sort
 from open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -62,6 +62,7 @@ __all__ = [
     Refresh.__name__,
     SelectBackup.__name__,
     SelectFile.__name__,
+    SelectItem.__name__,
     SelectObject.__name__,
     SelectRestore.__name__,
     ShowChart.__name__,
