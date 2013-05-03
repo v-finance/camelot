@@ -157,4 +157,3 @@ class Application( Action ):
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 0, 0, _('Create main window') )
         yield action_steps.MainWindow( self.application_admin )
-        

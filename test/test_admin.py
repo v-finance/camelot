@@ -18,7 +18,6 @@ class ApplicationAdminCase( ModelThreadTestCase ):
     def test_application_admin( self ):
         app_admin = ApplicationAdmin()
         self.assertTrue( app_admin.get_sections() )
-        self.assertTrue( app_admin.create_main_window() )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'manytomany' ) )
         self.assertTrue( app_admin.get_version() )
