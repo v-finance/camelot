@@ -304,7 +304,14 @@ class OpenNewView( EditAction ):
     
     def gui_run( self, gui_context ):
         from camelot.view.workspace import show_top_level
+        from camelot.view.controls.inheritance import SubclassDialog
         admin = gui_context.admin
+        # todo : subclass selection should be model thread driven
+        if len(admin.get_subclass_tree()):
+            dialog = SubclassDialog( admin=admin, parent=None )
+            if dialog.exec_() == QtGui.QDialog.Rejected:
+                return
+            admin = dialog.selected_subclass
         model = gui_context.item_view.model()
         form = admin.create_new_view( related_collection_proxy=model,
                                       parent = None )

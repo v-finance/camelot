@@ -69,4 +69,3 @@ class SelectObject( ActionStep ):
             if select_dialog.object_getter:
                 return select_dialog.object_getter
             raise CancelRequest()
-
