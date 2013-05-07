@@ -25,7 +25,7 @@
 from application import MainWindow, InstallTranslator
 from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
-from gui import ( CloseView, MessageBox, OpenFormView, Refresh, Select,
+from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
                   ShowChart, ShowPixmap )
 from item_view import Sort
 from open_file import ( OpenFile, OpenStream, 
