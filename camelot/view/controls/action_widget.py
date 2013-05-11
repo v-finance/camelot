@@ -32,6 +32,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.core.utils import is_deleted
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
@@ -60,7 +61,10 @@ class AbstractActionWidget( object ):
               args = (self.gui_context.create_model_context(),) )
         
     def data_changed( self, index1, index2 ):
-        self.current_row_changed( index1.row() )
+        # the model might emit a dataChanged signal, while the widget mapper
+        # has been deleted
+        if not is_deleted(self.gui_context.widget_mapper):
+            self.current_row_changed( index1.row() )
         
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
