@@ -9,13 +9,12 @@ from .base import Action
 logger = logging.getLogger('camelot.admin.action.application')
 
 class Application( Action ):
-    """The camelot application.  This class will take care of the order of
-    initialization of various stuff needed to get the application up and
-    running, each of its methods will be called in subsequent order,
-    overwrite any of them to customize its behaviour.
-
-    This class will create the QApplication and call its processEvents
-    method regulary while starting up the application.
+    """An action to be used as the entry point of the application.  This
+    action will pop up a splash window, set the application attributes, 
+    initialize the database, install translators and construct a main window.
+    
+    Subclass this class and overwirthe the :meth:`model_run` method to customize
+    the application initialization process
     """
 
     def __init__(self, application_admin):
@@ -38,8 +37,7 @@ class Application( Action ):
             gui_context.progress_dialog = SplashProgress( pixmap )
             gui_context.progress_dialog.show()
             gui_context.progress_dialog.setLabelText( _('Initialize application') )
-            self.set_application_attributes()            
-            self.start_model_thread()
+            self.set_application_attributes()
             gui_context.admin = self.application_admin
             super( Application, self ).gui_run( gui_context )
             gui_context.progress_dialog.close()
@@ -84,15 +82,6 @@ class Application( Action ):
                 QtCore.QCoreApplication.instance().installTranslator( camelot_translator )
             from camelot.view.database_selection import select_database
             select_database(self.application_admin)
-
-    def start_model_thread(self):
-        """Launch the second thread where the model lives"""
-        from camelot.view.model_thread import get_model_thread, construct_model_thread
-        from camelot.view.remote_signals import construct_signal_handler
-        construct_model_thread()
-        construct_signal_handler()
-        mt = get_model_thread()
-        mt.start()
 
     def model_run( self, model_context ):
         from ...core.conf import settings

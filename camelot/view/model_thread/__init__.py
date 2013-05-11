@@ -148,15 +148,17 @@ class AbstractModelThread(QtCore.QThread):
         """
         return True
 
-def construct_model_thread(*args, **kwargs):
-    from signal_slot_model_thread import SignalSlotModelThread
-    _model_thread_.insert(0, SignalSlotModelThread(*args, **kwargs))
-
 def has_model_thread():
     return len(_model_thread_) > 0
 
 def get_model_thread():
-    return _model_thread_[0]
+    try:
+        return _model_thread_[0]
+    except IndexError:
+        from signal_slot_model_thread import SignalSlotModelThread
+        _model_thread_.insert(0, SignalSlotModelThread())
+        _model_thread_[0].start()
+        return _model_thread_[0]
 
 def post(request, response=None, exception=None, args=()):
     """Post a request and a response to the default model thread"""
