@@ -291,53 +291,41 @@ It has additional class attributes that customise its behaviour.
                     target = forced_attributes.get( 'target', 
                                                     property.mapper.class_ )
                     
-                    #
-                    # _foreign_keys is for sqla pre 0.6.4
-                    # 
-                    if hasattr(property, '_foreign_keys'):
-                        foreign_keys = list(property._foreign_keys)
-                    else:
-                        foreign_keys = list( property._user_defined_foreign_keys )
-                        foreign_keys.extend( list(property._calculated_foreign_keys) )
+                    attributes.update( target = target,
+                                       admin = get_entity_admin(target),
+                                       editable = property.viewonly==False,
+                                       nullable = True)
+                    foreign_keys = list( property._user_defined_foreign_keys )
+                    foreign_keys.extend( list(property._calculated_foreign_keys) )
                         
                     if property.direction == orm.interfaces.ONETOMANY:
-                        attributes.update(
-                            python_type = list,
-                            editable = True,
-                            nullable = True,
-                            delegate = delegates.One2ManyDelegate,
-                            target = target,
-                            create_inline = False,
-                            direction = 'onetomany',
-                            admin = get_entity_admin(target)
-                        )
+                        attributes.update( direction = 'onetomany' )
                     elif property.direction == orm.interfaces.MANYTOONE:
                         attributes.update(
-                            python_type = str,
-                            editable = True,
-                            delegate = delegates.Many2OneDelegate,
-                            target = target,
                             #
                             # @todo: take into account all foreign keys instead
                             # of only the first one
                             #
                             nullable = foreign_keys[0].nullable,
                             direction = 'manytoone',
-                            admin = get_entity_admin(target)
                         )
                     elif property.direction == orm.interfaces.MANYTOMANY:
-                        attributes.update(
-                            python_type = list,
-                            editable = True,
-                            target = target,
-                            nullable = True,
-                            create_inline = False,
-                            direction = 'manytomany',
-                            delegate = delegates.One2ManyDelegate,
-                            admin = get_entity_admin(target)
-                        )
+                        attributes.update( direction = 'manytomany' )
                     else:
                         raise Exception('PropertyLoader has unknown direction')
+                    
+                    if property.uselist == True:
+                        attributes.update(
+                            delegate = delegates.One2ManyDelegate,
+                            python_type = list,
+                            create_inline = False,
+                        )
+                    else:
+                        attributes.update(
+                            delegate = delegates.Many2OneDelegate,
+                            python_type = str,
+                        )
+                        
             except InvalidRequestError:
                 #
                 # If the field name is not a property of the mapper, then use
