@@ -31,15 +31,30 @@ from ..admin.action.application import Application
 
 def main(application_admin):
     """shortcut main function, call this function to start the GUI interface 
-    with minimal hassle and without the need to construct a 
-    :class:`camelot.admin.action.application.Application` object.  
+    with minimal hassle and without the need to construct a main action object.  
     
-    If you need to customize the initialization process, construct an 
-    `Application` subclass and call its `gui_run` method to start the 
-    application.
+    If you need to customize the initialization process, use the 
+    :func:`main_action` function an supply the custom action object.
 
-    :param application_admin: a :class:`camelot.admin.application_admin.ApplicationAdmin` object
+    :param application_admin: a 
+        :class:`camelot.admin.application_admin.ApplicationAdmin` object
         that specifies the look of the GUI interface
     """
     app = Application(application_admin)
-    app.gui_run()
+    main_action(app)
+    
+def main_action(action):
+    """
+    Construct a :class:`QtGui.QApplication`, start the event loop and run a
+    :class:`camelot.admin.action.base.Action` object.
+    
+    Use this function for complete customization of a Camelot application.  The
+    typical use case is to call this function with a subclass of
+    :class:`camelot.admin.action.application.Application`.  But it can be
+    used with any action object.
+    """
+    import sys
+    from PyQt4 import QtGui, QtCore
+    app = QtGui.QApplication([a for a in sys.argv if a])
+    QtCore.QTimer.singleShot( 0, action.gui_run )
+    sys.exit( app.exec_() )

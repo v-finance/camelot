@@ -128,5 +128,35 @@ to display a progress dialog until my_function has finished::
         LOGGER.info( 'exit application with code %s'%return_code )
         QtGui.QApplication.exit( int( return_code ) ) 
 
-
-
+class SplashProgress( QtGui.QSplashScreen ):
+    """
+    Wrapper around :class:`QtGui.QSplashScreen` to make it behave as if
+    it were a progress dialog, this allows reuse of the progress related
+    action steps within a splash screen.
+    """
+    # don't let splash screen stay on top, this might hinder
+    # registration wizards or others that wait for user input
+    # while camelot is starting up  
+    
+    def __init__( self, pixmap ):
+        super( SplashProgress, self ).__init__( pixmap )
+        # support transparency
+        if pixmap.mask(): self.setMask(pixmap.mask()) 
+        
+    def setMaximum( self, _maximum ):
+        pass
+    
+    def setValue( self, _value ):
+        pass
+    
+    def setLabelText( self, text ):
+        self.showMessage( text, QtCore.Qt.AlignTop, QtCore.Qt.white )
+        
+    def wasCanceled( self ):
+        return False
+        
+    def clear_details( self ):
+        pass
+    
+    def add_detail( self ):
+        pass   

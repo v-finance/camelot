@@ -1,7 +1,6 @@
 import logging
-import sys
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtCore
 
 from ...core.utils import ugettext as _
 from .application_action import ApplicationActionGuiContext
@@ -24,80 +23,43 @@ class Application( Action ):
         customized to your app"""
         super(Application, self).__init__()
         self.application_admin = application_admin
-        self._splashscreen = None
-        self.return_code = None
-
-    def exit( self, return_code ):
-        """Set the return_code of the application.  If this is set before the
-        main event loop has started, the main event loop will not start, and
-        the application will exit with this code"""
-        self.return_code = return_code
         
     def gui_run(self, gui_context = ApplicationActionGuiContext() ):
         """The main entry point of the application, method will show the splash,
         start the event loop, start the model thread and pass control asap to 
         the model thread"""
+        from ...view.controls.progress_dialog import SplashProgress
         try:
             #
             # before anything else happens or is imported, the splash screen should be there
             #
-            app = QtGui.QApplication([a for a in sys.argv if a])
-            splash_window = self.show_splashscreen()
-            self.show_splash_message(splash_window, _('Initialize application'))
-            # regularly call processEvents to keep the splash alive
-            app.processEvents()
-            self.set_application_attributes(app)            
-            app.processEvents()
-            self.start_model_thread()
-            app.processEvents()
-            gui_context.admin = self.application_admin
-            app.processEvents()
-            stylesheet = self.application_admin.get_stylesheet()
-            if stylesheet:
-                app.setStyleSheet(stylesheet)
-            super( Application, self ).gui_run( gui_context )
-            splash_window.close()
-            # to be able to exit the application before the event loop
-            # has started
-            if self.return_code == None:
-                sys.exit( app.exec_() )
-            else:
-                sys.exit( self.return_code )
-        except Exception, e:
-            from ...view.controls import exception, ExceptionDialog
-            exc_info = exception.register_exception( logger, 'exception in initialization', e )
-            dialog = ExceptionDialog(exc_info)
-            dialog._exec()
             
-    def show_splashscreen(self):
-        """:return: the splash window"""
-        from PyQt4 import QtGui
-        pixmap = self.application_admin.get_splashscreen()
-        # don't let splash screen stay on top, this might hinder
-        # registration wizards or others that wait for user input
-        # while camelot is starting up
-        # flag = QtCore.Qt.WindowStaysOnTopHint
-        splashscreen = QtGui.QSplashScreen(pixmap) #, flag)
-        # transparency support
-        if pixmap.mask(): splashscreen.setMask(pixmap.mask()) 
-        self._splashscreen = splashscreen
-        splashscreen.show()
-        return splashscreen
+            pixmap = self.application_admin.get_splashscreen()
+            gui_context.progress_dialog = SplashProgress( pixmap )
+            gui_context.progress_dialog.show()
+            gui_context.progress_dialog.setLabelText( _('Initialize application') )
+            self.set_application_attributes()            
+            self.start_model_thread()
+            gui_context.admin = self.application_admin
+            super( Application, self ).gui_run( gui_context )
+            gui_context.progress_dialog.close()
+        except Exception, e:
+            from ...view.controls import exception
+            exc_info = exception.register_exception( logger, 'exception in initialization', e )
+            dialog = exception.ExceptionDialog(exc_info)
+            dialog.exec_()
 
-    def show_splash_message(self, splash_window, message):
-        """:param message: displays a message on the splash screen, informing
-        the user of the status of the application"""
-        msgalign = QtCore.Qt.AlignTop #| QtCore.Qt.AlignRight
-        msgcolor = QtCore.Qt.white
-        splash_window.showMessage(message, msgalign, msgcolor)
-
-    def set_application_attributes(self, application):
+    def set_application_attributes(self):
         """Sets the attributes of the QApplication object
         :param application: the QApplication object"""
+        application = QtCore.QCoreApplication.instance()
         application.setOrganizationName(self.application_admin.get_organization_name())
         application.setOrganizationDomain(self.application_admin.get_organization_domain())
         application.setApplicationName(self.application_admin.get_name())
         application.setWindowIcon(self.application_admin.get_icon())
+        stylesheet = self.application_admin.get_stylesheet()
+        if stylesheet:
+            application.setStyleSheet(stylesheet)        
 
     def pre_initialization(self):
         """Method that is called before the model thread is started, while the app is still
@@ -152,7 +114,7 @@ class Application( Action ):
         yield action_steps.UpdateProgress( 0, 0, _('Setup database') )
         settings.setup_model()
         yield action_steps.UpdateProgress( 0, 0, _('Load translations') )
-        load_translations()
+        load_translations
         yield action_steps.UpdateProgress( 0, 0, _('Install translator') )
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 0, 0, _('Create main window') )
