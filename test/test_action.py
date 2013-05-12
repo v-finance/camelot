@@ -21,9 +21,9 @@ from camelot.test.action import MockModelContext
 from camelot.view import action_steps
 from camelot.view.controls import tableview
 
-from test_view import static_images_path
-import test_proxy
-import test_model
+from . import test_view
+from . import test_proxy
+from . import test_model
 
 class ActionBaseCase( ModelThreadTestCase ):
 
@@ -49,7 +49,7 @@ class ActionWidgetsCase( ModelThreadTestCase ):
     """Test widgets related to actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp(self):
         from camelot.admin.action import ApplicationActionGuiContext, State
@@ -103,7 +103,7 @@ class ActionStepsCase( ModelThreadTestCase ):
     action.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
     
     def setUp(self):
         ModelThreadTestCase.setUp(self)
@@ -338,7 +338,7 @@ class ListActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp( self ):
         super( ListActionsCase, self ).setUp()
@@ -541,7 +541,7 @@ class FormActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp( self ):
         super( FormActionsCase, self ).setUp()
@@ -587,7 +587,7 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
     
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
@@ -691,7 +691,7 @@ class DocumentActionsCase( ModelThreadTestCase ):
     """Test the standard document actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp( self ):
         ModelThreadTestCase.setUp(self)

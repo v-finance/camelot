@@ -7,7 +7,7 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.orm import Session
-from camelot.core.utils import variant_to_pyobject
+from camelot.core.qt import variant_to_py
 from camelot.test import ModelThreadTestCase
 
 class ProxyCase( ModelThreadTestCase ):
@@ -31,7 +31,7 @@ class ProxyCase( ModelThreadTestCase ):
         if proxy == None:
             proxy = self.proxy
         index = proxy.index( row, column )
-        return variant_to_pyobject( proxy.data( index ) )
+        return variant_to_py( proxy.data( index ) )
     
     def _set_data( self, row, column, value ):
         """Set data to the proxy"""

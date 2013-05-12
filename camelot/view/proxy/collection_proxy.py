@@ -37,6 +37,8 @@ logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
 import six
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from ...core.qt import QtCore, QtGui, Qt, py_to_variant, variant_to_py
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted
@@ -48,6 +50,7 @@ from camelot.view.model_thread import object_thread, \
                                       model_function, post
 
 from camelot.core.files.storage import StoredImage
+
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the QVariant object and prevent
@@ -188,10 +191,6 @@ class CollectionProxy( QtGui.QIdentityProxyModel ):
 
     """
 
-    _header_font = QtGui.QApplication.font()
-    _header_font_required = QtGui.QApplication.font()
-    _header_font_required.setBold( True )
-
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
     item_delegate_changed_signal = QtCore.pyqtSignal()
@@ -304,6 +303,17 @@ position in the query.
         else:
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
+
+    
+    @hybrid_property
+    def _header_font( cls ):
+        return QtGui.QApplication.font()
+    
+    @hybrid_property
+    def _header_font_required( cls ):
+        font = QtGui.QApplication.font()
+        font.setBold( True )
+        return font
 
     #
     # Reimplementation of methods of QProxyModel, because for now, we only

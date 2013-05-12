@@ -1,4 +1,5 @@
 import logging
+import faulthandler
 import warnings
 
 #warnings.filterwarnings( 'error' )
@@ -7,6 +8,8 @@ from camelot.core.conf import settings
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] - %(message)s')
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+
+faulthandler.enable()
 
 class TestSettings( object ):
     

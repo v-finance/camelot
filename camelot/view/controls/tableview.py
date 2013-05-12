@@ -27,6 +27,8 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 import six
 
 from ...core.qt import variant_to_py, Qt, QtCore, QtGui
@@ -275,12 +277,14 @@ class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
     in the table view"""
 
-    _number_of_rows_font = QtGui.QApplication.font()
-
     def __init__( self, parent ):
         QtGui.QLabel.__init__( self, parent )
         assert object_thread( self )
         self.setFont( self._number_of_rows_font )
+        
+    @hybrid_property
+    def _number_of_rows_font(cls):
+        return QtGui.QApplication.font()
 
     def setNumberOfRows( self, rows ):
         assert object_thread( self )
@@ -294,9 +298,6 @@ class HeaderWidget( QtGui.QWidget ):
     rows_widget = RowsWidget
 
     filters_changed_signal = QtCore.pyqtSignal()
-
-    _title_font = QtGui.QApplication.font()
-    _title_font.setBold( True )
 
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
@@ -328,6 +329,12 @@ class HeaderWidget( QtGui.QWidget ):
         self.setNumberOfRows( 0 )
         self.search = search
 
+    @hybrid_property
+    def _title_font(cls):
+        font = QtGui.QApplication.font()
+        font.setBold( True )
+        return font
+    
     def _fill_expanded_search_options(self, columns):
         """Given the columns in the table view, present the user
         with more options to filter rows in the table
