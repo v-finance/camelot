@@ -147,8 +147,8 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         :param exc_val: value of the exception, such as in `sys.exc_value`
         :param exc_tb: a traceback object, such as in `sys.exc_traceback`
         """
-        import traceback, cStringIO
-        sio = cStringIO.StringIO()
+        import traceback
+        sio = six.StringIO()
         traceback.print_exception( exc_type or sys.exc_type, 
                                    exc_val or sys.exc_value,
                                    exc_tb or sys.exc_traceback,

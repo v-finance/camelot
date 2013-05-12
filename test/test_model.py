@@ -1,6 +1,8 @@
 import datetime
 import os
 
+import six
+
 from sqlalchemy import orm
 from sqlalchemy import schema, types
 
@@ -65,7 +67,7 @@ class ModelCase( ExampleModelCase ):
         model_context.obj = translation
         try:
             generator = export_action.model_run( model_context )
-            file_step = generator.next()
+            file_step = six.advance_iterator( generator )
             generator.send( ['/tmp/test.po'] )
         except StopIteration:
             pass
@@ -83,7 +85,7 @@ class ModelCase( ExampleModelCase ):
     def test_batch_job( self ):
         from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( unicode( batch_job_type ) )
+        self.assertTrue( six.text_type( batch_job_type ) )
         batch_job = BatchJob.create( batch_job_type )
         self.assertTrue( orm.object_session( batch_job ) )
         self.assertFalse( batch_job.is_canceled() )
@@ -110,7 +112,7 @@ class ModelCase( ExampleModelCase ):
         orm.object_session( authentication ).expunge_all()
         authentication = get_current_authentication()
         self.assertTrue( authentication.username )
-        self.assertTrue( unicode( authentication ) )
+        self.assertTrue( six.text_type( authentication ) )
         
     def test_authentication_group( self ):
         # begin roles definition
@@ -147,7 +149,7 @@ class PartyCase( ExampleModelCase ):
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )
-        self.assertTrue( unicode( belgium ) )
+        self.assertTrue( six.text_type( belgium ) )
         city = party.City.get_or_create( country = belgium,
                                          code = '1000',
                                          name = 'Brussels' )
@@ -158,7 +160,7 @@ class PartyCase( ExampleModelCase ):
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
                                                city = city )
-        self.assertTrue( unicode( address ) )
+        self.assertTrue( six.text_type( address ) )
         return address
     
     def test_party_address( self ):
@@ -185,7 +187,7 @@ class PartyCase( ExampleModelCase ):
         self.assertEqual( org.street1, 'Avenue Louise 5' )
         self.assertEqual( org.street2, 'Boite 4' )
         self.assertEqual( org.city, city )        
-        self.assertTrue( unicode( party_address ) )
+        self.assertTrue( six.text_type( party_address ) )
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
         self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
@@ -257,7 +259,7 @@ class PartyCase( ExampleModelCase ):
         
     def test_contact_mechanism( self ):
         contact_mechanism = party.ContactMechanism( mechanism = (u'email', u'info@test.be') )
-        self.assertTrue( unicode( contact_mechanism ) )
+        self.assertTrue( six.text_type( contact_mechanism ) )
         
     def test_person_contact_mechanism( self ):
         # create a new person
@@ -314,7 +316,7 @@ class PartyCase( ExampleModelCase ):
         org.phone = ('phone', '1234')
         org.fax = ('fax', '4567')
         self.organization_admin.flush( org )
-        self.assertTrue( unicode( org ) )
+        self.assertTrue( six.text_type( org ) )
         self.assertEqual( org.number_of_shares_issued, 0 )
         query = orm.object_session( org ).query( party.Organization )
         self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
@@ -327,7 +329,7 @@ class PartyCase( ExampleModelCase ):
         org = self.test_organization()
         employee = party.EmployerEmployee( established_from = org,
                                            established_to = person )
-        self.assertTrue( unicode( employee ) )
+        self.assertTrue( six.text_type( employee ) )
         
     def test_party_contact_mechanism( self ):
         person = self.test_person()
@@ -340,7 +342,7 @@ class PartyCase( ExampleModelCase ):
         self.person_admin.flush( person )
         self.assertFalse( party_contact_mechanism in self.session.new )
         self.assertFalse( party_contact_mechanism.contact_mechanism in self.session.new )        
-        self.assertTrue( unicode( party_contact_mechanism ) )
+        self.assertTrue( six.text_type( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
         # party contact mechanism is only valid when contact mechanism is
@@ -364,7 +366,7 @@ class PartyCase( ExampleModelCase ):
         category.parties.append( org )
         self.session.flush()
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
-        self.assertTrue( unicode( category ) )
+        self.assertTrue( six.text_type( category ) )
 
 class FixtureCase( ExampleModelCase ):
     """Test the build in camelot model for fixtures"""
@@ -462,7 +464,7 @@ class StatusCase( TestMetaData ):
         ready = Invoice._status_type( code = 'READY' )
         session.flush()
         #end status types definition
-        self.assertTrue( unicode( ready ) )
+        self.assertTrue( six.text_type( ready ) )
         #begin status type use
         invoice = Invoice( book_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, None )
@@ -472,7 +474,7 @@ class StatusCase( TestMetaData ):
         self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
         self.assertTrue( len( invoice.status ) )
         for history in invoice.status:
-            self.assertTrue( unicode( history ) )
+            self.assertTrue( six.text_type( history ) )
         
     def test_status_enumeration( self ):
         Entity, session = self.Entity, self.session

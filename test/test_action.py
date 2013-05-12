@@ -123,7 +123,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         # create an import action
         action = ImportCovers()
         generator = action.model_run( None )
-        select_file = generator.next()
+        select_file = six.advance_iterator( generator )
         self.assertFalse( select_file.single )
         # pretend the user selected a file
         generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ] )
@@ -325,7 +325,7 @@ class ActionStepsCase( ModelThreadTestCase ):
     def test_update_progress( self ):
         from camelot.view.controls.progress_dialog import ProgressDialog
         update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
-        self.assertTrue( unicode( update_progress ) )
+        self.assertTrue( six.text_type( update_progress ) )
         # give the gui context a progress dialog, so it can be updated
         self.gui_context.progress_dialog = ProgressDialog('Progress')
         update_progress.gui_run( self.gui_context )

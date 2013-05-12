@@ -34,6 +34,7 @@ import string
 import re
 
 import six
+from six import moves
 
 from camelot.view import forms
 from camelot.view.controls import delegates
@@ -92,8 +93,8 @@ class ColumnMapping( object ):
         for i in range( self.columns ):
             setattr( self, 'column_%i_field'%i, None )
         self.show_row = 0
-        for i, field in itertools.izip( range( self.columns ),
-                                        default_fields ):
+        for i, field in moves.zip( range( self.columns ),
+                                   default_fields ):
             setattr( self, 'column_%i_field'%i, field )
 
     def __setattr__( self, attr, value ):
@@ -229,7 +230,7 @@ class UnicodeReader( object ):
     def __iter__( self ):
         return self
     
-class XlsReader( object ):
+class XlsReader( six.Iterator ):
     """Read an XLS/XLSX file and iterator over its lines.
     
     The iterator returns each line of the excel as a list of strings.
@@ -270,7 +271,7 @@ class XlsReader( object ):
         f = self.format_map[ xf.format_key ]
         return f.format_str
         
-    def next( self ):
+    def __next__( self ):
         import xlrd
         if self.current_row < self.rows:
             vector = []    

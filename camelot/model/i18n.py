@@ -59,8 +59,8 @@ class ExportAsPO( Action ):
         for filename in filenames:
             file = open(filename, 'w')
             for translation in model_context.get_collection():
-                file.write( (u'msgid  "%s"\n'%translation.source).encode('utf-8') )
-                file.write( (u'msgstr "%s"\n\n'%translation.value).encode('utf-8') )
+                file.write( u'msgid  "%s"\n'%translation.source )
+                file.write( u'msgstr "%s"\n\n'%translation.value )
                 
         
 class Translation( Entity ):
