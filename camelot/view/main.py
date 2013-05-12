@@ -24,10 +24,13 @@
 
 """Main function, to be called to start the GUI interface"""
 
+import functools
+
 from camelot.art import resources # Required for tooltip visualization
 resources.__name__ # Dodge PyFlakes' attack
 
 from ..admin.action.application import Application
+from ..admin.action.application_action import ApplicationActionGuiContext
 
 def main(application_admin):
     """shortcut main function, call this function to start the GUI interface 
@@ -56,5 +59,7 @@ def main_action(action):
     import sys
     from PyQt4 import QtGui, QtCore
     app = QtGui.QApplication([a for a in sys.argv if a])
-    QtCore.QTimer.singleShot( 0, action.gui_run )
+    gui_context = ApplicationActionGuiContext()
+    QtCore.QTimer.singleShot( 0, functools.partial( action.gui_run, 
+                                                    gui_context ) )
     sys.exit( app.exec_() )

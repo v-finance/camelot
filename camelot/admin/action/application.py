@@ -3,7 +3,6 @@ import logging
 from PyQt4 import QtCore
 
 from ...core.utils import ugettext as _
-from .application_action import ApplicationActionGuiContext
 from .base import Action
 
 logger = logging.getLogger('camelot.admin.action.application')
@@ -23,7 +22,7 @@ class Application( Action ):
         super(Application, self).__init__()
         self.application_admin = application_admin
         
-    def gui_run(self, gui_context = ApplicationActionGuiContext() ):
+    def gui_run(self, gui_context ):
         """The main entry point of the application, method will show the splash,
         start the event loop, start the model thread and pass control asap to 
         the model thread"""
