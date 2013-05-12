@@ -403,7 +403,6 @@ be specified using the verbose_name attribute.
         """
         return []
 
-    @model_function
     def get_subclass_tree( self ):
         """Get a tree of admin classes representing the subclasses of the class
         represented by this admin class
@@ -832,7 +831,7 @@ be specified using the verbose_name attribute.
                     admin.add( self._new_object )
                     admin.set_defaults(self._new_object)
                     if self._related_collection_proxy:
-                        self._related_collection_proxy.append_object( self._new_object )
+                        self._related_collection_proxy.append_object( self._new_object, flush=False )
                 return self._new_object
                 
             def get_collection(self):
