@@ -207,9 +207,15 @@ class MainWindow(QtGui.QMainWindow):
             for action in toolbar_actions:
                 qaction = qactions.get( action, None )
                 if qaction == None:
-                    qaction = action.render( self.gui_context, toolbar )
-                    qaction.triggered.connect( self.action_triggered )
-                toolbar.addAction( qaction )
+                    rendered = action.render( self.gui_context, toolbar )
+                    # both QWidgets and QActions can be put in a toolbar
+                    if isinstance(rendered, QtGui.QWidget):
+                        qaction = toolbar.addWidget(rendered)
+                    elif isinstance(rendered, QtGui.QAction):
+                        qaction = rendered
+                        qaction.triggered.connect( self.action_triggered )
+                if qaction==rendered:
+                    toolbar.addAction( qaction )
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
                 
