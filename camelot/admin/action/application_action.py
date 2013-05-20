@@ -96,6 +96,39 @@ class ApplicationActionGuiContext( GuiContext ):
         new_context.admin = self.admin
         return new_context
         
+class SelectProfile( Action ):
+    """Select the application profile to use
+    """
+    
+    def model_run( self, model_context ):
+        from camelot.core.dbprofiles import ProfileStore
+        from camelot.view import action_steps
+        
+        store = ProfileStore()
+        profiles = store.read_profiles()
+        
+        selected_profile = None
+        if len(profiles):
+            profiles.sort( key=lambda p:p.name )
+            last_profile = store.get_last_profile()
+            select_profile = action_steps.SelectItem( [(None,'')] + [(p,p.name) for p in profiles] )
+            select_profile.value = last_profile
+            while selected_profile==None:
+                selected_profile = yield select_profile
+            
+        
+        NEW_PROFILE_LABEL = _('new/edit profile')
+
+        #if not profiles_dict:
+            #create_new_profile(app_admin, profiles_dict)
+                                 
+        #if selected in profiles_dict:
+            #use_chosen_profile(selected)
+        #elif selected == NEW_PROFILE_LABEL:
+            #create_new_profile(app_admin, profiles_dict)
+        #else:
+            #sys.exit(0)        
+
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
 

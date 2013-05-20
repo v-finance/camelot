@@ -34,7 +34,6 @@ from PyQt4 import QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
-from camelot.view import database_selection
 from camelot.view.model_thread import model_function
 
 _application_admin_ = []
@@ -85,11 +84,6 @@ methods :
     
     A string with the version of the application
     
-.. attribute:: database_profile_wizard
-    
-    The wizard that should be used to create new database profiles. Defaults
-    to :class:`camelot.view.database_selection.ProfileWizard`
-    
 .. attribute:: database_selection
 
     if this is set to True, present the user with a database selection
@@ -99,8 +93,6 @@ When the same action is returned in the :meth:`get_toolbar_actions` and
 :meth:`get_main_menu` method, it should be exactly the same object, to avoid
 shortcut confusion and reduce the number of status updates.
     """
-
-    database_profile_wizard = database_selection.ProfileWizard
 
     name = 'Camelot'
     application_url = None

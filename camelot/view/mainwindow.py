@@ -206,16 +206,17 @@ class MainWindow(QtGui.QMainWindow):
             toolbar.setFloatable( False )
             for action in toolbar_actions:
                 qaction = qactions.get( action, None )
+                if qaction != None:
+                    # the action already exists in the menu
+                    toolbar.addAction( qaction )
                 if qaction == None:
                     rendered = action.render( self.gui_context, toolbar )
                     # both QWidgets and QActions can be put in a toolbar
                     if isinstance(rendered, QtGui.QWidget):
-                        qaction = toolbar.addWidget(rendered)
+                        toolbar.addWidget(rendered)
                     elif isinstance(rendered, QtGui.QAction):
-                        qaction = rendered
-                        qaction.triggered.connect( self.action_triggered )
-                if qaction==rendered:
-                    toolbar.addAction( qaction )
+                        rendered.triggered.connect( self.action_triggered )
+                        toolbar.addAction( rendered )
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
                 

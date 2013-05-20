@@ -83,6 +83,7 @@ class Application( Action ):
             select_database(self.application_admin)
 
     def model_run( self, model_context ):
+        from .application_action import SelectProfile
         from ...core.conf import settings
         from ...core.utils import load_translations
         from ...view import action_steps
@@ -96,6 +97,13 @@ class Application( Action ):
             logger.debug('qt major version %f' % QT_MAJOR_VERSION)
         import sqlalchemy
         logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
+        #
+        # select the database
+        #
+        if model_context.admin.database_selection:
+            select_profile = SelectProfile()
+            for step in select_profile.model_run(model_context):
+                yield step
         #
         # setup the database model
         #

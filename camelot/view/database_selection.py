@@ -52,21 +52,6 @@ from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
 
 logger = logging.getLogger('camelot.view.database_selection')
 
-NEW_PROFILE_LABEL = _('new/edit profile')
-
-def select_database(app_admin):
-    profiles_dict = fetch_profiles()
-    if not profiles_dict:
-        create_new_profile(app_admin, profiles_dict)
-
-    selected = select_profile(profiles_dict)
-    if selected in profiles_dict:
-        use_chosen_profile(selected)
-    elif selected == NEW_PROFILE_LABEL:
-        create_new_profile(app_admin, profiles_dict)
-    else:
-        sys.exit(0)
-
 def select_profile(profiles_dict):
     title = _('Profile Selection')
     input_label = _('Select a stored profile:')
