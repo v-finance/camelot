@@ -125,7 +125,7 @@ class EntityDescriptor(object):
             self.add_column(
                 colname,
                 schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
-                               primary_key = True ) )
+                               **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS ) )
         self._pk_col_done = True
         
     def create_properties(self):
