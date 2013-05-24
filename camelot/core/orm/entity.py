@@ -37,7 +37,7 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
 from sqlalchemy.ext import hybrid
 
 from . statements import MUTATORS
-from . properties import EntityBuilder, Property
+from . properties import EntityBuilder
 from . import Session, options
 
 class EntityDescriptor(object):
@@ -81,7 +81,6 @@ class EntityDescriptor(object):
                     self.has_pk = True
             if isinstance( value, EntityBuilder ):
                 self.builders.append( value )
-            if isinstance( value, Property ):
                 value.entity = entity
                 value.name = key
         # execute the builders in the order they were created
@@ -247,12 +246,12 @@ class EntityMeta( DeclarativeMeta ):
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
-        from . properties import Property
+        from . properties import EntityBuilder
         if '_descriptor' in dict_:
             descriptor = dict_['_descriptor']
             descriptor.set_entity( cls )
             for key, value in dict_.items():
-                if isinstance( value, Property ):
+                if isinstance( value, EntityBuilder ):
                     value.attach( cls, key )
             cls._descriptor.create_pk_cols()
         #
@@ -263,6 +262,15 @@ class EntityMeta( DeclarativeMeta ):
 
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
+	    
+    def __setattr__(cls, key, value):
+	if isinstance( value, EntityBuilder ):
+	    if '__mapper__' in cls.__dict__:
+		print 'add after mapper', key, value
+		value.attach( cls, key )
+		value.create_pk_cols()
+	else:
+	    super(EntityMeta,cls).__setattr__(key,value)
 
 #
 # Keep these functions separated from EntityBase to be able
