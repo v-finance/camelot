@@ -88,6 +88,9 @@ class EntityBuilder( object ):
         self.entity = None
         self.name = None
 
+    def __lt__(self, builder):
+        return self.counter < builder.counter
+    
     def attach( self, entity, name ):
         """Attach this property to its entity, using 'name' as name.
 

@@ -29,6 +29,7 @@ blocks for creating the :class:`camelot.core.orm.Entity`.
 These classes can be reused if a custom base class is needed.
 """
 
+import bisect
 import sys
 
 from sqlalchemy import orm, schema, sql
@@ -79,13 +80,14 @@ class EntityDescriptor(object):
             if isinstance( value, schema.Column ):
                 if value.primary_key:
                     self.has_pk = True
-            if isinstance( value, EntityBuilder ):
-                self.builders.append( value )
-                value.entity = entity
-                value.name = key
-        # execute the builders in the order they were created
-        self.builders.sort( key = lambda b:b.counter )
         
+    def add_builder( self, builder ):
+	"""Add an `EntityBuilder`
+	"""
+	# builders have to be executed in the order they were
+	# created
+	bisect.insort( self.builders, builder )
+	
     @property
     def primary_keys( self ):
         return self.entity.__table__.primary_key
@@ -252,7 +254,8 @@ class EntityMeta( DeclarativeMeta ):
             descriptor.set_entity( cls )
             for key, value in dict_.items():
                 if isinstance( value, EntityBuilder ):
-                    value.attach( cls, key )
+		    value.attach( cls, key )
+		    descriptor.add_builder(value)
             cls._descriptor.create_pk_cols()
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
@@ -266,8 +269,8 @@ class EntityMeta( DeclarativeMeta ):
     def __setattr__(cls, key, value):
 	if isinstance( value, EntityBuilder ):
 	    if '__mapper__' in cls.__dict__:
-		print 'add after mapper', key, value
 		value.attach( cls, key )
+		cls._descriptor.add_builder(value)
 		value.create_pk_cols()
 	else:
 	    super(EntityMeta,cls).__setattr__(key,value)

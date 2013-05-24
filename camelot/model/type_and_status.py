@@ -56,7 +56,7 @@ from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
-from camelot.core.orm.properties import Property
+from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
@@ -97,8 +97,8 @@ class StatusHistoryAdmin( EntityAdmin ):
     def __unicode__( self ):
 	return unicode(self.classified_by or u'')
 
-class Status( Property ):
-    """Property that adds a related status table(s) to an `Entity`.
+class Status( EntityBuilder ):
+    """EntityBuilder that adds a related status table(s) to an `Entity`.
     
     These additional entities are created :
     
