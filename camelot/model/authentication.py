@@ -197,10 +197,10 @@ class AuthenticationGroupRole( Entity ):
     
     __tablename__ = 'authentication_group_role'
     
-    role_id = Column( Integer(), 
+    role_id = Column( camelot.types.PrimaryKey(), 
                       nullable = False,
                       primary_key = True)
-    group_id = Column( Integer(), 
+    group_id = Column( camelot.types.PrimaryKey(), 
                        ForeignKey( 'authentication_group.id',
                                    onupdate = 'cascade',
                                    ondelete = 'cascade' ),
