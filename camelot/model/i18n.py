@@ -96,7 +96,8 @@ class Translation( Entity ):
             query = Session().query( cls )
             query = query.filter( sql.and_( cls.source == unicode( source ),
                                             cls.language == language,
-                                            cls.uid != 0 ) )
+                                            cls.value != None,
+                                            cls.value != '' ) )
             translation = query.first()
             if translation:
                 cls._cache[key] = translation.value

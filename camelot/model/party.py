@@ -615,7 +615,7 @@ class Addressable(object):
     def city_setter( self, value ):
         return self._set_address_field( u'city', value )
     
-class PartyAddress( Entity ):
+class PartyAddress( Entity, Addressable ):
     using_options( tablename = 'party_address' )
     party = ManyToOne( Party, 
                        required = True, 
@@ -651,7 +651,7 @@ class PartyAddress( Entity ):
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
         
         def get_compounding_objects( self, party_address ):
-            if party_address.address:
+            if party_address.address!=None:
                 yield party_address.address        
 
 class AddressAdmin( PartyAddress.Admin ):
