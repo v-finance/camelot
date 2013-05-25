@@ -69,7 +69,7 @@ class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
     using_options( tablename = 'geographic_boundary_country' )
-    geographicboundary_id = Field( Integer, 
+    geographicboundary_id = Field( camelot.types.PrimaryKey(), 
                                    ForeignKey('geographic_boundary.id'), 
                                    primary_key = True )
 
@@ -96,7 +96,7 @@ class City( GeographicBoundary ):
     and the Country of a city"""
     using_options( tablename = 'geographic_boundary_city' )
     country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    geographicboundary_id = Field( Integer, 
+    geographicboundary_id = Field( camelot.types.PrimaryKey(), 
                                    ForeignKey('geographic_boundary.id'), 
                                    primary_key = True )
 
@@ -574,22 +574,8 @@ class SharedShareholder( PartyRelationship ):
         form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
         form_size = (500, 300)
 
-class PartyAddress( Entity ):
-    using_options( tablename = 'party_address' )
-    party = ManyToOne( Party, 
-                       required = True, 
-                       ondelete = 'cascade', 
-                       onupdate = 'cascade',
-                       lazy = 'subquery')
-    address = ManyToOne( Address, 
-                         required = True, 
-                         ondelete = 'cascade', 
-                         onupdate = 'cascade',
-                         lazy = 'subquery' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( Unicode( 256 ) )
-
+class Addressable(object):
+    
     def _get_address_field( self, name ):
         if self.address:
             return getattr( self.address, name )
@@ -630,6 +616,22 @@ class PartyAddress( Entity ):
     @city.setter
     def city_setter( self, value ):
         return self._set_address_field( u'city', value )
+    
+class PartyAddress( Entity ):
+    using_options( tablename = 'party_address' )
+    party = ManyToOne( Party, 
+                       required = True, 
+                       ondelete = 'cascade', 
+                       onupdate = 'cascade',
+                       lazy = 'subquery')
+    address = ManyToOne( Address, 
+                         required = True, 
+                         ondelete = 'cascade', 
+                         onupdate = 'cascade',
+                         lazy = 'subquery' )
+    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
+    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
+    comment = Field( Unicode( 256 ) )
 
     def party_name( self ):
         return sql.select( [sql.func.coalesce(Party.full_name, '')],
