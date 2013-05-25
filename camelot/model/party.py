@@ -386,8 +386,6 @@ class Person( Party ):
     social_security_number = Field( Unicode( 12 ) )
     passport_number = Field( Unicode( 20 ) )
     passport_expiry_date = Field( Date() )
-    is_staff = Field( Boolean, default = False, index = True )
-    is_superuser = Field( Boolean, default = False, index = True )
     picture = Field( camelot.types.Image( upload_to = 'person-pictures' ), deferred = True )
     comment = Field( camelot.types.RichText() )
     employers = OneToMany( 'EmployerEmployee', inverse = 'established_to', cascade='all, delete, delete-orphan' )
