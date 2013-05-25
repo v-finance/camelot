@@ -200,7 +200,6 @@ class Party( Entity ):
                                     cascade='all, delete, delete-orphan' )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
-    status = Status()
     categories = ManyToMany( 'PartyCategory', 
                              tablename='party_category_party', 
                              remote_colname='party_category_id',
