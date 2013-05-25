@@ -200,10 +200,6 @@ class Party( Entity ):
                                     cascade='all, delete, delete-orphan' )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
-    categories = ManyToMany( 'PartyCategory', 
-                             tablename='party_category_party', 
-                             remote_colname='party_category_id',
-                             local_colname='party_id')
     
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
