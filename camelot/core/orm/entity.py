@@ -382,11 +382,14 @@ class EntityBase( object ):
     available in Elixir"""
     
     def __init__( self, *args, **kwargs ): 
+	session = kwargs.pop('_session', None)
         _declarative_constructor( self, *args, **kwargs )
 	# due to cascading rules and a constructor argument, the object might
 	# allready be in a session
 	if orm.object_session( self ) == None:
-	    Session().add( self ) 
+	    if session==None:
+		session=Session()
+	    session.add( self ) 
                                     
     #
     # methods below were copied from camelot.core.orm to mimic the Elixir Entity
