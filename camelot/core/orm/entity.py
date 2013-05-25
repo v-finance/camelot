@@ -38,9 +38,21 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
 from sqlalchemy.ext import hybrid
 
 from . statements import MUTATORS
-from . properties import EntityBuilder
+from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
 
+class PrimaryKeyColumn(schema.Column):
+    """Column that gets its attributes from 
+    `options.DEFAULT_AUTO_PRIMARYKEY_KWARGS`, this allows the deferred setting
+    of attributes for the primary key column.
+    """
+    
+    def __getattribute__(self, key):
+	try:
+	    return options.DEFAULT_AUTO_PRIMARYKEY_KWARGS[key]
+	except KeyError:
+	    return super(PrimaryKeyColumn,self).__getattribute__(key)
+	
 class EntityDescriptor(object):
     """
     EntityDescriptor holds information about the Entity before it is
@@ -114,19 +126,20 @@ class EntityDescriptor(object):
         create_pk_cols on their target. It shouldn't be possible to have an
         infinite loop since a loop of primary_keys is not a valid situation.
         """
-        if self._pk_col_done:
-            return
-
         self.call_builders( 'create_pk_cols' )
+	
+	if self._pk_col_done:
+	    return
+	
 	base_descriptor = getattr( self.entity_base, '_descriptor', None )
 
         if not self.has_pk and base_descriptor == None:
-            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+	    colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+	    builder = PrimaryKeyProperty()
+	    builder.attach( self.entity, colname )
+	    self.add_builder(builder)
+	    builder.create_pk_cols()	    
 
-            self.add_column(
-                colname,
-                schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
-                               **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS ) )
         self._pk_col_done = True
         
     def create_properties(self):
@@ -248,7 +261,6 @@ class EntityMeta( DeclarativeMeta ):
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
-        from . properties import EntityBuilder
         if '_descriptor' in dict_:
             descriptor = dict_['_descriptor']
             descriptor.set_entity( cls )

@@ -23,7 +23,6 @@
 #  ============================================================================
 from sqlalchemy import schema, orm
 
-from . options import PrimaryKey
 from . properties import EntityBuilder
 from . statements import ClassMutator
 
@@ -161,8 +160,6 @@ class Field(EntityBuilder):
     def create_col( self ):
         if self.column_created:
             return
-        if isinstance(self.type, PrimaryKey):
-            self.type = self.type()
         self.column = schema.Column( self.colname, self.type, *self.args, **self.kwargs )
         self.column_created = True
         if self.deferred:

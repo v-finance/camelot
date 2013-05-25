@@ -52,9 +52,10 @@ Here is a quick example of how to use ``has_property``.
                      lambda c: column_property(
                          (c.quantity * c.unit_price).label('price')))
 """
-from sqlalchemy import orm
+from sqlalchemy import orm, schema
 
 from . statements import ClassMutator
+from . import options
 
 class CounterMeta(type):
     '''
@@ -133,6 +134,15 @@ class EntityBuilder( object ):
 
     def finalize(self):
         pass
+    
+class PrimaryKeyProperty( EntityBuilder ):
+    
+    def create_pk_cols(self):
+        from camelot.types import PrimaryKey
+        setattr( self.entity,
+                 self.name,
+                 schema.Column( self.name, PrimaryKey(), 
+                                **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS) )
     
 class DeferredProperty( EntityBuilder ):
     """Abstract base class for all properties of an Entity that are not 

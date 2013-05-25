@@ -343,7 +343,7 @@ class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
     using_options( tablename = 'organization' )
-    party_id = Field( Integer, 
+    party_id = Field( camelot.types.PrimaryKey(), 
                       ForeignKey('party.id'), 
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'organization'}
@@ -370,7 +370,7 @@ class Person( Party ):
     """Person represents natural persons
     """
     using_options( tablename = 'person' )
-    party_id = Field( Integer, 
+    party_id = Field( camelot.types.PrimaryKey(), 
                       ForeignKey('party.id'), 
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'person'}
