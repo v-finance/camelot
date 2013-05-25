@@ -257,7 +257,7 @@ class Party( Entity ):
     
     @email.expression
     def email_expression( self ):
-        return Email.mechanism
+        return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
     def phone( self ):
@@ -269,7 +269,7 @@ class Party( Entity ):
     
     @phone.expression
     def phone_expression( self ):
-        return Phone.mechanism
+        return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
     def fax( self ):
@@ -281,7 +281,7 @@ class Party( Entity ):
     
     @fax.expression
     def fax_expression( self ):
-        return Fax.mechanism 
+        return orm.aliased( ContactMechanism ).mechanism 
 
     def _get_address_field( self, name ):
         for party_address in self.addresses:
@@ -780,9 +780,9 @@ class PartyCategory( Entity ):
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
 
-Phone = orm.aliased( ContactMechanism )
-Email = orm.aliased( ContactMechanism )
-Fax = orm.aliased( ContactMechanism )
+#Phone = orm.aliased( ContactMechanism )
+#Email = orm.aliased( ContactMechanism )
+#Fax = orm.aliased( ContactMechanism )
 
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')
@@ -875,7 +875,7 @@ class OrganizationAdmin( Party.Admin ):
     def get_query( self ):
         query = super( OrganizationAdmin, self ).get_query()
         query = query.options( orm.joinedload('contact_mechanisms') )
-        return query    
+        return query
 
 Organization.Admin = OrganizationAdmin
 

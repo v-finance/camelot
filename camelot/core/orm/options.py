@@ -121,6 +121,16 @@ valid_options = options_defaults.keys() + [
     'session',
 ]
 
+class PrimaryKey(object):
+    """Calleable that can be used as the column type for a primary key, within
+    a `Field`.  The `Field` entity builder will only call this calleable at the
+    end of the construction process, thus defererring the definition of the
+    type of primary key.
+    """
+    
+    def __call__(self):
+        return DEFAULT_AUTO_PRIMARYKEY_TYPE
+    
 class using_options( ClassMutator ):
     """This statement its sole reason of existence is to keep existing Elixir
     model definitions working.  Do not use it when writing new code, instead

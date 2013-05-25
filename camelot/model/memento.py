@@ -39,7 +39,7 @@ from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity, ManyToOne, Field, PrimaryKey
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters
 from camelot.view.controls import delegates
@@ -56,6 +56,7 @@ class PreviousAttribute( object ):
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']
         
+
 class Memento( Entity ):
     """Keeps information on the previous state of objects, to keep track
     of changes and enable restore to that previous state"""
@@ -63,7 +64,7 @@ class Memento( Entity ):
     __tablename__ = 'memento'
     
     model = schema.Column( Unicode( 256 ), index = True, nullable = False )
-    primary_key = schema.Column( Integer(), index = True, nullable = False )
+    primary_key = Field(PrimaryKey(), index=True, required=True)
     creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
     authentication = ManyToOne( AuthenticationMechanism,
                                 required = True,
