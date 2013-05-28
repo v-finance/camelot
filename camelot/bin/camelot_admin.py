@@ -77,8 +77,6 @@ The available commands are :
 """
         command_help += '\n\n'.join(['%s\n%s\n%s'%(command,'-'*len(command), desc) for command,desc in command_description])
         command_help += """
-        
-For the management of deployed Camelot applications, see camelot_manage
 
 """
         return OptionParser.format_help(self) + ''.join(command_help)
