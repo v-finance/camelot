@@ -38,7 +38,6 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.document import documented_entity
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
 from camelot.core.utils import ugettext_lazy as _
@@ -89,8 +88,6 @@ class Country( GeographicBoundary ):
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
-Country = documented_entity()(Country)
-
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
@@ -116,8 +113,6 @@ class City( GeographicBoundary ):
         form_size = ( 700, 150 )
         list_display = ['code', 'name', 'country']
 
-City = documented_entity()(City)
-
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
@@ -128,7 +123,6 @@ class Address( Entity ):
                       ondelete = 'cascade', 
                       onupdate = 'cascade',
                       lazy = 'subquery' )
-    party_addresses = OneToMany( 'PartyAddress' )
                          
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
@@ -159,8 +153,6 @@ class Address( Entity ):
                 yield party_address
                 if party_address.party != None:
                     yield party_address.party
-            
-Address = documented_entity()( Address )
 
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
@@ -193,13 +185,6 @@ class Party( Entity ):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
-
-    addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
-    contact_mechanisms = OneToMany( 'PartyContactMechanism', 
-                                    lazy = 'select', 
-                                    cascade='all, delete, delete-orphan' )
-    shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
-    directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
@@ -345,11 +330,6 @@ class Organization( Party ):
     name = Field( Unicode( 50 ), required = True, index = True )
     logo = Field( camelot.types.Image( upload_to = 'organization-logo' ), deferred = True )
     tax_id = Field( Unicode( 20 ) )
-    directors = OneToMany( 'DirectedDirector', inverse = 'established_from', cascade='all, delete, delete-orphan' )
-    employees = OneToMany( 'EmployerEmployee', inverse = 'established_from', cascade='all, delete, delete-orphan' )
-    suppliers = OneToMany( 'SupplierCustomer', inverse = 'established_to', cascade='all, delete, delete-orphan' )
-    customers = OneToMany( 'SupplierCustomer', inverse = 'established_from', cascade='all, delete, delete-orphan' )
-    shareholders = OneToMany( 'SharedShareholder', inverse = 'established_from', cascade='all, delete, delete-orphan' )
 
     def __unicode__( self ):
         return self.name or ''
@@ -358,14 +338,12 @@ class Organization( Party ):
     def number_of_shares_issued( self ):
         return sum( ( shareholder.shares for shareholder in self.shareholders ), 0 )
 
-Organization = documented_entity()( Organization )
-
 # begin short person definition
 class Person( Party ):
     """Person represents natural persons
     """
     using_options( tablename = 'person' )
-    party_id = Field( camelot.types.PrimaryKey(), 
+    party_id = Field( camelot.types.PrimaryKey(),
                       ForeignKey('party.id'), 
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'person'}
@@ -400,8 +378,6 @@ class Person( Party ):
     def __unicode__( self ):
         return self.name or ''
 
-Person = documented_entity()( Person )
-
 class PartyRelationship( Entity ):
     using_options( tablename = 'party_relationship' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
@@ -419,7 +395,8 @@ class PartyRelationship( Entity ):
 class EmployerEmployee( PartyRelationship ):
     """Relation from employer to employee"""
     using_options( tablename = 'party_relationship_empl' )
-    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade' )    # the employer
+    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  backref=orm.backref('employees', cascade='all, delete, delete-orphan' ) )    # the employer
     established_to = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade' )            # the employee
     partyrelationship_id = Field( Integer,
                                   ForeignKey('party_relationship.id'), 
@@ -463,8 +440,10 @@ class EmployerEmployee( PartyRelationship ):
 class DirectedDirector( PartyRelationship ):
     """Relation from a directed organization to a director"""
     using_options( tablename = 'party_relationship_dir' )
-    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  backref=orm.backref('directors', cascade='all, delete, delete-orphan' ))
+    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                backref=orm.backref('directed_organizations', cascade='all, delete, delete-orphan' ))
     title = Field( Unicode( 256 ) )
     represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
 
@@ -510,8 +489,10 @@ class RepresentedRepresentor( Entity ):
 class SupplierCustomer( PartyRelationship ):
     """Relation from supplier to customer"""
     using_options( tablename = 'party_relationship_suppl' )
-    established_from = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_from = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  backref=orm.backref('customers', cascade='all, delete, delete-orphan' ))
+    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                backref=orm.backref('suppliers', cascade='all, delete, delete-orphan' ))
     partyrelationship_id = Field( Integer,
                                   ForeignKey('party_relationship.id'), 
                                   primary_key = True )
@@ -537,8 +518,10 @@ class SupplierCustomer( PartyRelationship ):
 class SharedShareholder( PartyRelationship ):
     """Relation from a shared organization to a shareholder"""
     using_options( tablename = 'party_relationship_shares' )
-    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  backref=orm.backref('shareholders', cascade='all, delete, delete-orphan' ))
+    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                backref=orm.backref('shares', cascade='all, delete, delete-orphan' ) )
     shares = Field( Integer() )
     partyrelationship_id = Field( Integer,
                                   ForeignKey('party_relationship.id'), 
@@ -616,9 +599,12 @@ class PartyAddress( Entity, Addressable ):
                        required = True, 
                        ondelete = 'cascade', 
                        onupdate = 'cascade',
-                       lazy = 'subquery')
+                       lazy = 'subquery',
+                       backref = orm.backref('addresses', lazy = True, 
+                                             cascade='all, delete, delete-orphan'))
     address = ManyToOne( Address, 
                          required = True, 
+                         backref = 'party_addresses',
                          ondelete = 'cascade', 
                          onupdate = 'cascade',
                          lazy = 'subquery' )
@@ -703,12 +689,13 @@ class ContactMechanism( Entity ):
                 if party:
                     yield party
 
-ContactMechanism = documented_entity()( ContactMechanism )
-
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
-    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                       backref = orm.backref('contact_mechanisms', lazy = 'select', 
+                                             cascade='all, delete, delete-orphan' )
+                       )
     contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, index = True )

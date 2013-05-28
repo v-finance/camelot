@@ -39,7 +39,6 @@ from camelot.core.orm import Entity, Field, ManyToOne, using_options
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters, forms
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.document import documented_entity
 import camelot.types
 
 from . import type_and_status
@@ -59,7 +58,7 @@ batch_job_statusses = [ (-2, 'planned'),
                         (1,  'warnings'), 
                         (2,  'errors'),
                         (3,  'canceled') ]
-@documented_entity()
+
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
@@ -86,7 +85,6 @@ def hostname():
     import socket
     return unicode( socket.gethostname() )
 
-@documented_entity()
 class BatchJob( Entity, type_and_status.StatusMixin ):
     """A batch job is a long running task that is scheduled by
     the user or started periodically.  The BatchJob objects can be used

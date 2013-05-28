@@ -155,6 +155,8 @@ It has additional class attributes that customise its behaviour.
         sql_attributes = dict()
         for column in columns:
             column_type = column.type
+            sql_attributes['python_type'] = ''
+            sql_attributes['doc'] = ''
             for base_class in inspect.getmro( type( column_type ) ):
                 fa = _sqlalchemy_to_python_type_.get( base_class, 
                                                       None )
@@ -164,6 +166,7 @@ It has additional class attributes that customise its behaviour.
             if isinstance( column, (schema.Column) ):
                 sql_attributes['nullable'] = column.nullable
                 sql_attributes['default'] = column.default
+                sql_attributes['doc'] = column.doc or ''
                 if column.primary_key:
                     sql_attributes['editable'] = False
             break

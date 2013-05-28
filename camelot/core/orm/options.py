@@ -87,7 +87,7 @@ from sqlalchemy import types
 from . statements import ClassMutator
 
 DEFAULT_AUTO_PRIMARYKEY_NAME = "id"
-DEFAULT_AUTO_PRIMARYKEY_KWARGS = dict(primary_key=True)
+DEFAULT_AUTO_PRIMARYKEY_KWARGS = dict(primary_key=True, doc='The primary key')
 DEFAULT_AUTO_PRIMARYKEY_TYPE = types.Integer
 
 OLD_M2MCOL_NAMEFORMAT = lambda data:"%(tablename)s_%(key)s%(numifself)s"%data
