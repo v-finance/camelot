@@ -849,7 +849,6 @@ class OrganizationAdmin( Party.Admin ):
                             ( _('Suppliers'), Form( ['suppliers'] ) ),
                             ( _('Corporate'), Form( ['directors', 'shareholders', 'shares'] ) ),
                             ( _('Branding'), Form( ['logo'] ) ),
-                            ( _('Category and Status'), Form( ['categories', 'status'] ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
     
@@ -880,7 +879,6 @@ class PersonAdmin( Party.Admin ):
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                             ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
-                            ( _('Category'), Form( ['categories',] ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
     field_attributes['note'] = {'delegate':delegates.NoteDelegate}
