@@ -44,7 +44,7 @@ from camelot.core.conf import settings
 logger = logging.getLogger('camelot.core.dbprofiles')
 
 profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
-                   'media_location', 'locale_language', 'proxy_host',
+                   'port', 'media_location', 'locale_language', 'proxy_host',
                    'proxy_port', 'proxy_username', 'proxy_password' ]
 
 class Profile(object):
@@ -77,6 +77,17 @@ class Profile(object):
         connection_string = connection_string + '/%s'%self.database
         return connection_string
     
+    def create_engine( self, **kwargs ):
+        """
+        create a SQLAlchemy Engine from the selected profile, all arguments
+        are passed to the `create_engine` function.
+        """
+        from sqlalchemy import create_engine
+        kwargs.setdefault( 'pool_recycle', 600 )
+        if self.dialect == 'mysql':
+            kwargs.setdefault( 'connect_args', dict(charset='utf8') )
+        return create_engine( self.get_connection_string(), **kwargs )
+
     def get_language_code(self):
         """
         :return: two-letter ISO 639 language code
@@ -219,18 +230,6 @@ class ProfileStore(object):
         """
         self.settings.setValue('last_used_database_profile', 
                                profile.name.encode('utf-8') )
-
-def engine_from_profile():
-    """
-    Create a SQLAlchemy Engine from the selected profile
-    """
-    from sqlalchemy import create_engine
-    profile = selected_profile_info()
-    connect_args = dict()
-    if profile['dialect'] == 'mysql':
-        connect_args['charset'] = 'utf8'
-    connection_string = connection_string_from_profile( profile )
-    return create_engine(connection_string, pool_recycle=True, connect_args=connect_args)
 
 class EmptyProxy():
 
