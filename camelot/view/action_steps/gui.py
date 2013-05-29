@@ -143,7 +143,8 @@ class SelectItem( ActionStep ):
     
     def gui_run(self, gui_context):
         dialog = self.render()
-        if dialog.exec_() == QtGui.QDialog.Rejected:
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
             raise CancelRequest()
         return dialog.get_value()
     
