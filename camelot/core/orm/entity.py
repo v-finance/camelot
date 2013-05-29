@@ -29,6 +29,7 @@ blocks for creating the :class:`camelot.core.orm.Entity`.
 These classes can be reused if a custom base class is needed.
 """
 
+import bisect
 import sys
 
 from sqlalchemy import orm, schema, sql
@@ -37,9 +38,21 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
 from sqlalchemy.ext import hybrid
 
 from . statements import MUTATORS
-from . properties import EntityBuilder, Property
+from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
 
+class PrimaryKeyColumn(schema.Column):
+    """Column that gets its attributes from 
+    `options.DEFAULT_AUTO_PRIMARYKEY_KWARGS`, this allows the deferred setting
+    of attributes for the primary key column.
+    """
+    
+    def __getattribute__(self, key):
+	try:
+	    return options.DEFAULT_AUTO_PRIMARYKEY_KWARGS[key]
+	except KeyError:
+	    return super(PrimaryKeyColumn,self).__getattribute__(key)
+	
 class EntityDescriptor(object):
     """
     EntityDescriptor holds information about the Entity before it is
@@ -79,14 +92,14 @@ class EntityDescriptor(object):
             if isinstance( value, schema.Column ):
                 if value.primary_key:
                     self.has_pk = True
-            if isinstance( value, EntityBuilder ):
-                self.builders.append( value )
-            if isinstance( value, Property ):
-                value.entity = entity
-                value.name = key
-        # execute the builders in the order they were created
-        self.builders.sort( key = lambda b:b.counter )
         
+    def add_builder( self, builder ):
+	"""Add an `EntityBuilder`
+	"""
+	# builders have to be executed in the order they were
+	# created
+	bisect.insort( self.builders, builder )
+	
     @property
     def primary_keys( self ):
         return self.entity.__table__.primary_key
@@ -113,19 +126,20 @@ class EntityDescriptor(object):
         create_pk_cols on their target. It shouldn't be possible to have an
         infinite loop since a loop of primary_keys is not a valid situation.
         """
-        if self._pk_col_done:
-            return
-
         self.call_builders( 'create_pk_cols' )
+	
+	if self._pk_col_done:
+	    return
+	
 	base_descriptor = getattr( self.entity_base, '_descriptor', None )
 
         if not self.has_pk and base_descriptor == None:
-            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+	    colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+	    builder = PrimaryKeyProperty()
+	    builder.attach( self.entity, colname )
+	    self.add_builder(builder)
+	    builder.create_pk_cols()	    
 
-            self.add_column(
-                colname,
-                schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
-                               **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS ) )
         self._pk_col_done = True
         
     def create_properties(self):
@@ -247,13 +261,13 @@ class EntityMeta( DeclarativeMeta ):
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
-        from . properties import Property
         if '_descriptor' in dict_:
             descriptor = dict_['_descriptor']
             descriptor.set_entity( cls )
             for key, value in dict_.items():
-                if isinstance( value, Property ):
-                    value.attach( cls, key )
+                if isinstance( value, EntityBuilder ):
+		    value.attach( cls, key )
+		    descriptor.add_builder(value)
             cls._descriptor.create_pk_cols()
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
@@ -263,6 +277,15 @@ class EntityMeta( DeclarativeMeta ):
 
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
+	    
+    def __setattr__(cls, key, value):
+	if isinstance( value, EntityBuilder ):
+	    if '__mapper__' in cls.__dict__:
+		value.attach( cls, key )
+		cls._descriptor.add_builder(value)
+		value.create_pk_cols()
+	else:
+	    super(EntityMeta,cls).__setattr__(key,value)
 
 #
 # Keep these functions separated from EntityBase to be able
@@ -359,11 +382,14 @@ class EntityBase( object ):
     available in Elixir"""
     
     def __init__( self, *args, **kwargs ): 
+	session = kwargs.pop('_session', None)
         _declarative_constructor( self, *args, **kwargs )
 	# due to cascading rules and a constructor argument, the object might
 	# allready be in a session
 	if orm.object_session( self ) == None:
-	    Session().add( self ) 
+	    if session==None:
+		session=Session()
+	    session.add( self ) 
                                     
     #
     # methods below were copied from camelot.core.orm to mimic the Elixir Entity

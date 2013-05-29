@@ -61,7 +61,7 @@ class ModelCase( ExampleModelCase ):
         Translation._cache.clear()
         # fill the cache again
         translation = Translation( language = 'nl_BE', source = 'bucket',
-                                   value = 'emmer', uid=1 )
+                                   value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
         export_action = ExportAsPO()

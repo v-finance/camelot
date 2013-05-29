@@ -35,8 +35,22 @@ logger = logging.getLogger('camelot.types')
 
 from sqlalchemy import types
 
+from camelot.core.orm import options
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 
+class PrimaryKey(types.TypeDecorator):
+    """Special type that can be used as the column type for a primary key.  This
+    type defererring the definition of the actual type of primary key to
+    compilation time.  This allows the changing of the primary key type through
+    the whole model by changing the `options.DEFAULT_AUTO_PRIMARYKEY_TYPE`
+    """
+    
+    impl = types.TypeEngine
+    _type_affinity = types.Integer
+    
+    def load_dialect_impl(self, dialect):
+        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
+    
 class VirtualAddress(types.TypeDecorator):
     """A single field that can be used to enter phone numbers, fax numbers, email
     addresses, im addresses.  The editor provides soft validation of the data

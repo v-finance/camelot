@@ -33,7 +33,7 @@ from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy import orm
 
 import camelot.types
-from camelot.core.document import documented_entity
+from camelot.core.document import document_classes
 from camelot.core.orm import Entity, Session, ManyToMany
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
@@ -88,7 +88,6 @@ def update_last_login( initial_group_name = None,
 #
 roles = []
 
-@documented_entity()
 class AuthenticationMechanism( Entity ):
     
     __tablename__ = 'authentication_mechanism'
@@ -133,7 +132,6 @@ class AuthenticationMechanism( Entity ):
         verbose_name = _('Authentication mechanism')
         list_display = ['authentication_type', 'username', 'from_date', 'thru_date', 'last_login']
 
-@documented_entity()
 class AuthenticationGroup( Entity ):
     """A group of users (defined by their :class:`AuthenticationMechanism`).
     Different roles can be assigned to a group.
@@ -197,10 +195,10 @@ class AuthenticationGroupRole( Entity ):
     
     __tablename__ = 'authentication_group_role'
     
-    role_id = Column( Integer(), 
+    role_id = Column( camelot.types.PrimaryKey(), 
                       nullable = False,
                       primary_key = True)
-    group_id = Column( Integer(), 
+    group_id = Column( camelot.types.PrimaryKey(), 
                        ForeignKey( 'authentication_group.id',
                                    onupdate = 'cascade',
                                    ondelete = 'cascade' ),
@@ -209,3 +207,6 @@ class AuthenticationGroupRole( Entity ):
 
 AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
                                               cascade = 'all, delete, delete-orphan')
+
+document_classes([AuthenticationGroup,
+                  AuthenticationMechanism])

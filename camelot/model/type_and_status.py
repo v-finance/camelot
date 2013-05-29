@@ -55,8 +55,8 @@ from sqlalchemy.ext import hybrid
 from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.types import Enumeration
-from camelot.core.orm.properties import Property
+from camelot.types import Enumeration, PrimaryKey
+from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
@@ -97,8 +97,8 @@ class StatusHistoryAdmin( EntityAdmin ):
     def __unicode__( self ):
 	return unicode(self.classified_by or u'')
 
-class Status( Property ):
-    """Property that adds a related status table(s) to an `Entity`.
+class Status( EntityBuilder ):
+    """EntityBuilder that adds a related status table(s) to an `Entity`.
     
     These additional entities are created :
     
@@ -155,7 +155,7 @@ class Status( Property ):
 	    status_history = type( entity.__name__ + 'StatusHistory',
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
 	                           {'__tablename__':status_name,
-	                            'classified_by_id':schema.Column( types.Integer(), 
+	                            'classified_by_id':schema.Column( PrimaryKey(), 
 				                                      foreign_key, 
 				                                      nullable = False ),
 				    'classified_by':orm.relationship( status_type ),
@@ -184,7 +184,7 @@ class Status( Property ):
 		constraint = schema.ForeignKey( col,
 		                                ondelete = 'cascade', 
 		                                onupdate = 'cascade')
-		column = schema.Column( types.Integer(), constraint, nullable = False )
+		column = schema.Column( PrimaryKey(), constraint, nullable = False )
 	        setattr( self.status_history, col_name, column )
 	    
     def create_properties( self ):
