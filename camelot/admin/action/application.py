@@ -97,20 +97,10 @@ class Application( Action ):
             logger.debug('qt major version %f' % QT_MAJOR_VERSION)
         import sqlalchemy
         logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
-        #
-        # select the database
-        #
-        if model_context.admin.database_selection:
-            select_profile = SelectProfile()
-            for step in select_profile.model_run(model_context):
-                yield step
-        #
-        # setup the database model
-        #
         yield action_steps.UpdateProgress( 0, 0, _('Setup database') )
         settings.setup_model()
         yield action_steps.UpdateProgress( 0, 0, _('Load translations') )
-        load_translations
+        load_translations()
         yield action_steps.UpdateProgress( 0, 0, _('Install translator') )
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 0, 0, _('Create main window') )

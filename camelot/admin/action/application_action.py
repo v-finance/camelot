@@ -98,25 +98,35 @@ class ApplicationActionGuiContext( GuiContext ):
         
 class SelectProfile( Action ):
     """Select the application profile to use
+    
+    :param profile_store: an object of type 
+        :class:`camelot.core.dbprofiles.ProfileStore`
     """
     
-    def model_run( self, model_context ):
+    def __init__( self, profile_store ):
         from camelot.core.dbprofiles import ProfileStore
+        if profile_store==None:
+            profile_store=ProfileStore()
+        self.profile_store = profile_store
+        
+    def model_run( self, model_context ):
         from camelot.view import action_steps
-        
-        store = ProfileStore()
-        profiles = store.read_profiles()
-        
+
+        profiles = self.profile_store.read_profiles()        
         selected_profile = None
         if len(profiles):
             profiles.sort( key=lambda p:p.name )
-            last_profile = store.get_last_profile()
-            select_profile = action_steps.SelectItem( [(None,'')] + [(p,p.name) for p in profiles] )
-            select_profile.value = last_profile
+            last_profile = self.profile_store.get_last_profile()
+            items = [(None,'')] + [(p,p.name) for p in profiles]
+            select_profile = action_steps.SelectItem( items )
+            if last_profile in profiles:
+                select_profile.value = last_profile
+            else:
+                select_profile.value = None
             while selected_profile==None:
                 selected_profile = yield select_profile
+            self.profile_store.set_last_profile( selected_profile )
             
-        
         NEW_PROFILE_LABEL = _('new/edit profile')
 
         #if not profiles_dict:
