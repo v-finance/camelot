@@ -199,6 +199,15 @@ class ProfileStore(object):
         self.settings.endArray()
         return profiles
     
+    def read_profile(self, name):
+        """
+        :return: the profile object with the requested name, 
+            `None` if there is no such profile
+        """
+        for profile in self.read_profiles():
+            if profile.name==name:
+                return profile
+            
     def write_profiles(self, profiles):
         """
         :param profiles: a list of profiles
@@ -209,6 +218,18 @@ class ProfileStore(object):
             for key, value in profile.__getstate__().iteritems():
                 self.settings.setValue(key, QtCore.QVariant(value))
         self.settings.endArray()
+        
+    def write_profile(self, profile):
+        """
+        :param profile: a :class:`Profile` object
+        """
+        profiles = self.read_profiles()
+        for existing_profile in profiles:
+            if existing_profile.name == profile.name:
+                profiles.remove(existing_profile)
+                break
+        profiles.append(profile)
+        self.write_profiles(profiles)
     
     def get_last_profile(self):
         """
