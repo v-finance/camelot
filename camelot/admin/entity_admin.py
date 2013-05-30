@@ -199,7 +199,6 @@ It has additional class attributes that customise its behaviour.
                     )
         return self.get_verbose_name()
     
-    @model_function
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name
         :param field_name: the name of the field
@@ -635,7 +634,6 @@ It has additional class attributes that customise its behaviour.
             return True
         return False
     
-    @model_function
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent

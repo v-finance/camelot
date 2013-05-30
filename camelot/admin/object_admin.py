@@ -385,7 +385,6 @@ be specified using the verbose_name attribute.
         """
         return []
     
-    @model_function
     def get_compounding_objects(self, obj):
         """Overwrite this function to generate a list of objects out of which
         `obj` is build.  These objects will be validated if `obj` is 
@@ -634,7 +633,6 @@ be specified using the verbose_name attribute.
                                model = model, 
                                initial_validation = initial_validation )
 
-    @model_function
     def get_fields(self):
         fields = self.get_form_display().get_fields()
         fields_and_attributes =  [
@@ -661,7 +659,6 @@ be specified using the verbose_name attribute.
         fields.update(dict(self.get_fields()))
         return fields
 
-    @model_function
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
