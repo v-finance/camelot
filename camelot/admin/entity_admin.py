@@ -169,6 +169,7 @@ It has additional class attributes that customise its behaviour.
                 sql_attributes['doc'] = column.doc or ''
                 if column.primary_key:
                     sql_attributes['editable'] = False
+                sql_attributes.update(column.info)
             break
         return sql_attributes
     
