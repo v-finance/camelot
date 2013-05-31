@@ -169,7 +169,6 @@ It has additional class attributes that customise its behaviour.
                 sql_attributes['doc'] = column.doc or ''
                 if column.primary_key:
                     sql_attributes['editable'] = False
-                sql_attributes.update(column.info)
             field_admin = getattr(column, '_field_admin', None)
             if field_admin != None:
                 sql_attributes.update(field_admin.get_field_attributes())
