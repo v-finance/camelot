@@ -641,7 +641,7 @@ class ManyToOne( Relationship ):
     def __init__(self, of_kind,
                  column_kwargs=None,
                  colname=None, required=None, primary_key=None,
-                 field=None,
+                 field=None, nullable=None,
                  constraint_kwargs=None,
                  use_alter=None, ondelete=None, onupdate=None,
                  target_column=None,
@@ -661,8 +661,12 @@ class ManyToOne( Relationship ):
         column_kwargs = column_kwargs or {}
         # kwargs go by default to the relation(), so we need to manually
         # extract those targeting the Column
+        assert (nullable is None or required is None), \
+               "Either specify required or nullable, but not both"
         if required is not None:
             column_kwargs['nullable'] = not required
+        if nullable is not None:
+            column_kwargs['nullable'] = nullable
         if primary_key is not None:
             column_kwargs['primary_key'] = primary_key
         # by default, created columns will have an index.
