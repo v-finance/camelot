@@ -361,7 +361,6 @@ class Person( Party ):
     passport_expiry_date = Field( Date() )
     picture = Field( camelot.types.Image( upload_to = 'person-pictures' ), deferred = True )
     comment = Field( camelot.types.RichText() )
-    employers = OneToMany( 'EmployerEmployee', inverse = 'established_to', cascade='all, delete, delete-orphan' )
 
     @property
     def note(self):
@@ -378,177 +377,178 @@ class Person( Party ):
     def __unicode__( self ):
         return self.name or ''
 
-class PartyRelationship( Entity ):
-    using_options( tablename = 'party_relationship' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( camelot.types.RichText() )
+#class PartyRelationship( Entity ):
+    #using_options( tablename = 'party_relationship' )
+    #from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
+    #thru_date = Field( Date(), default = end_of_times, required = True, index = True )
+    #comment = Field( camelot.types.RichText() )
     
-    row_type = schema.Column( Unicode(40), nullable = False )
-    __mapper_args__ = { 'polymorphic_on' : row_type }
+    #row_type = schema.Column( Unicode(40), nullable = False )
+    #__mapper_args__ = { 'polymorphic_on' : row_type }
 
-    class Admin( EntityAdmin ):
-        verbose_name = _('Relationship')
-        verbose_name_plural = _('Relationships')
-        list_display = ['from_date', 'thru_date']
+    #class Admin( EntityAdmin ):
+        #verbose_name = _('Relationship')
+        #verbose_name_plural = _('Relationships')
+        #list_display = ['from_date', 'thru_date']
 
-class EmployerEmployee( PartyRelationship ):
-    """Relation from employer to employee"""
-    using_options( tablename = 'party_relationship_empl' )
-    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                  backref=orm.backref('employees', cascade='all, delete, delete-orphan' ) )    # the employer
-    established_to = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade' )            # the employee
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
+#class EmployerEmployee( PartyRelationship ):
+    #"""Relation from employer to employee"""
+    #using_options( tablename = 'party_relationship_empl' )
+    #established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  #backref=orm.backref('employees', cascade='all, delete, delete-orphan' ) )    # the employer
+    #established_to = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade'
+    #                            backref=orm.backref('employers', cascade='all, delete, delete-orphan' ))            # the employee
+    #partyrelationship_id = Field( Integer,
+                                  #ForeignKey('party_relationship.id'), 
+                                  #primary_key = True )
 
-    __mapper_args__ = {'polymorphic_identity': 'employeremployee'}
+    #__mapper_args__ = {'polymorphic_identity': 'employeremployee'}
 
-    @ColumnProperty
-    def first_name( self ):
-        return sql.select( [Person.first_name], Person.party_id == self.established_to_party_id )
+    #@ColumnProperty
+    #def first_name( self ):
+        #return sql.select( [Person.first_name], Person.party_id == self.established_to_party_id )
 
-    @ColumnProperty
-    def last_name( self ):
-        return sql.select( [Person.last_name], Person.party_id == self.established_to_party_id )
+    #@ColumnProperty
+    #def last_name( self ):
+        #return sql.select( [Person.last_name], Person.party_id == self.established_to_party_id )
 
-    @ColumnProperty
-    def social_security_number( self ):
-        return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
+    #@ColumnProperty
+    #def social_security_number( self ):
+        #return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
 
-    def __unicode__( self ):
-        return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
+    #def __unicode__( self ):
+        #return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
 
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Employment relation')
-        verbose_name_plural = _('Employment relations')
-        list_filter = ['established_from.name']
-        list_search = ['established_from.name', 'established_to.first_name', 'established_to.last_name']
+    #class Admin( PartyRelationship.Admin ):
+        #verbose_name = _('Employment relation')
+        #verbose_name_plural = _('Employment relations')
+        #list_filter = ['established_from.name']
+        #list_search = ['established_from.name', 'established_to.first_name', 'established_to.last_name']
 
-    class EmployeeAdmin( EntityAdmin ):
-        verbose_name = _('Employee')
-        list_display = ['established_to', 'from_date', 'thru_date']
-        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_to':{'name':_( 'Name' )}}
+    #class EmployeeAdmin( EntityAdmin ):
+        #verbose_name = _('Employee')
+        #list_display = ['established_to', 'from_date', 'thru_date']
+        #form_display = ['established_to', 'comment', 'from_date', 'thru_date']
+        #field_attributes = {'established_to':{'name':_( 'Name' )}}
 
-    class EmployerAdmin( EntityAdmin ):
-        verbose_name = _('Employer')
-        list_display = ['established_from', 'from_date', 'thru_date']
-        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
+    #class EmployerAdmin( EntityAdmin ):
+        #verbose_name = _('Employer')
+        #list_display = ['established_from', 'from_date', 'thru_date']
+        #form_display = ['established_from', 'comment', 'from_date', 'thru_date']
+        #field_attributes = {'established_from':{'name':_( 'Name' )}}
 
-class DirectedDirector( PartyRelationship ):
-    """Relation from a directed organization to a director"""
-    using_options( tablename = 'party_relationship_dir' )
-    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                  backref=orm.backref('directors', cascade='all, delete, delete-orphan' ))
-    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                backref=orm.backref('directed_organizations', cascade='all, delete, delete-orphan' ))
-    title = Field( Unicode( 256 ) )
-    represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
+#class DirectedDirector( PartyRelationship ):
+    #"""Relation from a directed organization to a director"""
+    #using_options( tablename = 'party_relationship_dir' )
+    #established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  #backref=orm.backref('directors', cascade='all, delete, delete-orphan' ))
+    #established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                #backref=orm.backref('directed_organizations', cascade='all, delete, delete-orphan' ))
+    #title = Field( Unicode( 256 ) )
+    #represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
 
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
+    #partyrelationship_id = Field( Integer,
+                                  #ForeignKey('party_relationship.id'), 
+                                  #primary_key = True )
 
-    __mapper_args__ = {'polymorphic_identity': 'directeddirector'}
+    #__mapper_args__ = {'polymorphic_identity': 'directeddirector'}
 
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Direction structure')
-        verbose_name_plural = _('Direction structures')
-        list_display = ['established_from', 'established_to', 'title', 'represented_by']
-        list_search = ['established_from.full_name', 'established_to.full_name']
-        field_attributes = {'established_from':{'name':_('Organization')},
-                            'established_to':{'name':_('Director')}}
+    #class Admin( PartyRelationship.Admin ):
+        #verbose_name = _('Direction structure')
+        #verbose_name_plural = _('Direction structures')
+        #list_display = ['established_from', 'established_to', 'title', 'represented_by']
+        #list_search = ['established_from.full_name', 'established_to.full_name']
+        #field_attributes = {'established_from':{'name':_('Organization')},
+                            #'established_to':{'name':_('Director')}}
 
-    class DirectorAdmin( Admin ):
-        verbose_name = _('Director')
-        list_display = ['established_to', 'title', 'from_date', 'thru_date']
-        form_display = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
+    #class DirectorAdmin( Admin ):
+        #verbose_name = _('Director')
+        #list_display = ['established_to', 'title', 'from_date', 'thru_date']
+        #form_display = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
 
-    class DirectedAdmin( Admin ):
-        verbose_name = _('Directed organization')
-        list_display = ['established_from', 'title', 'from_date', 'thru_date']
-        form_display = ['established_from', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
+    #class DirectedAdmin( Admin ):
+        #verbose_name = _('Directed organization')
+        #list_display = ['established_from', 'title', 'from_date', 'thru_date']
+        #form_display = ['established_from', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
 
-class RepresentedRepresentor( Entity ):
-    """Relation from a representing party to the person representing the party"""
-    using_options( tablename = 'party_representor' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( camelot.types.RichText() )
-    established_from = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( DirectedDirector, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+#class RepresentedRepresentor( Entity ):
+    #"""Relation from a representing party to the person representing the party"""
+    #using_options( tablename = 'party_representor' )
+    #from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
+    #thru_date = Field( Date(), default = end_of_times, required = True, index = True )
+    #comment = Field( camelot.types.RichText() )
+    #established_from = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    #established_to = ManyToOne( DirectedDirector, required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
-    class Admin( EntityAdmin ):
-        verbose_name = _('Represented by')
-        list_display = ['established_from', 'from_date', 'thru_date']
-        form_display = ['established_from', 'from_date', 'thru_date', 'comment']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
+    #class Admin( EntityAdmin ):
+        #verbose_name = _('Represented by')
+        #list_display = ['established_from', 'from_date', 'thru_date']
+        #form_display = ['established_from', 'from_date', 'thru_date', 'comment']
+        #field_attributes = {'established_from':{'name':_( 'Name' )}}
 
-class SupplierCustomer( PartyRelationship ):
-    """Relation from supplier to customer"""
-    using_options( tablename = 'party_relationship_suppl' )
-    established_from = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                  backref=orm.backref('customers', cascade='all, delete, delete-orphan' ))
-    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                backref=orm.backref('suppliers', cascade='all, delete, delete-orphan' ))
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
+#class SupplierCustomer( PartyRelationship ):
+    #"""Relation from supplier to customer"""
+    #using_options( tablename = 'party_relationship_suppl' )
+    #established_from = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  #backref=orm.backref('customers', cascade='all, delete, delete-orphan' ))
+    #established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                #backref=orm.backref('suppliers', cascade='all, delete, delete-orphan' ))
+    #partyrelationship_id = Field( Integer,
+                                  #ForeignKey('party_relationship.id'), 
+                                  #primary_key = True )
 
-    __mapper_args__ = {'polymorphic_identity': 'suppliercustomer'}
+    #__mapper_args__ = {'polymorphic_identity': 'suppliercustomer'}
 
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Supplier - Customer')
-        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+    #class Admin( PartyRelationship.Admin ):
+        #verbose_name = _('Supplier - Customer')
+        #list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
-    class CustomerAdmin( EntityAdmin ):
-        verbose_name = _('Customer')
-        list_display = ['established_to', ]
-        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_to':{'name':_( 'Name' )}}
+    #class CustomerAdmin( EntityAdmin ):
+        #verbose_name = _('Customer')
+        #list_display = ['established_to', ]
+        #form_display = ['established_to', 'comment', 'from_date', 'thru_date']
+        #field_attributes = {'established_to':{'name':_( 'Name' )}}
 
-    class SupplierAdmin( EntityAdmin ):
-        verbose_name = _('Supplier')
-        list_display = ['established_from', ]
-        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
+    #class SupplierAdmin( EntityAdmin ):
+        #verbose_name = _('Supplier')
+        #list_display = ['established_from', ]
+        #form_display = ['established_from', 'comment', 'from_date', 'thru_date']
+        #field_attributes = {'established_from':{'name':_( 'Name' )}}
 
-class SharedShareholder( PartyRelationship ):
-    """Relation from a shared organization to a shareholder"""
-    using_options( tablename = 'party_relationship_shares' )
-    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                  backref=orm.backref('shareholders', cascade='all, delete, delete-orphan' ))
-    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                                backref=orm.backref('shares', cascade='all, delete, delete-orphan' ) )
-    shares = Field( Integer() )
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
+#class SharedShareholder( PartyRelationship ):
+    #"""Relation from a shared organization to a shareholder"""
+    #using_options( tablename = 'party_relationship_shares' )
+    #established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                  #backref=orm.backref('shareholders', cascade='all, delete, delete-orphan' ))
+    #established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                #backref=orm.backref('shares', cascade='all, delete, delete-orphan' ) )
+    #shares = Field( Integer() )
+    #partyrelationship_id = Field( Integer,
+                                  #ForeignKey('party_relationship.id'), 
+                                  #primary_key = True )
 
-    __mapper_args__ = {'polymorphic_identity': 'sharedshareholder'}
+    #__mapper_args__ = {'polymorphic_identity': 'sharedshareholder'}
 
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Shareholder structure')
-        verbose_name_plural = _('Shareholder structures')
-        list_display = ['established_from', 'established_to', 'shares',]
-        list_search = ['established_from.full_name', 'established_to.full_name']
-        field_attributes = {'established_from':{'name':_('Organization')},
-                            'established_to':{'name':_('Shareholder')}}
+    #class Admin( PartyRelationship.Admin ):
+        #verbose_name = _('Shareholder structure')
+        #verbose_name_plural = _('Shareholder structures')
+        #list_display = ['established_from', 'established_to', 'shares',]
+        #list_search = ['established_from.full_name', 'established_to.full_name']
+        #field_attributes = {'established_from':{'name':_('Organization')},
+                            #'established_to':{'name':_('Shareholder')}}
 
-    class ShareholderAdmin( Admin ):
-        verbose_name = _('Shareholder')
-        list_display = ['established_to', 'shares', 'from_date', 'thru_date']
-        form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
-        form_size = (500, 300)
+    #class ShareholderAdmin( Admin ):
+        #verbose_name = _('Shareholder')
+        #list_display = ['established_to', 'shares', 'from_date', 'thru_date']
+        #form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
+        #form_size = (500, 300)
 
-    class SharedAdmin( Admin ):
-        verbose_name = _('Shares')
-        verbose_name_plural = _('Shares')
-        list_display = ['established_from', 'shares', 'from_date', 'thru_date']
-        form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
-        form_size = (500, 300)
+    #class SharedAdmin( Admin ):
+        #verbose_name = _('Shares')
+        #verbose_name_plural = _('Shares')
+        #list_display = ['established_from', 'shares', 'from_date', 'thru_date']
+        #form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
+        #form_size = (500, 300)
 
 class Addressable(object):
     
@@ -775,14 +775,14 @@ class PartyAdmin( EntityAdmin ):
     form_size = (700, 700)
     field_attributes = dict(addresses = {'admin':AddressAdmin},
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
-                            suppliers = {'admin':SupplierCustomer.SupplierAdmin},
-                            customers = {'admin':SupplierCustomer.CustomerAdmin},
-                            employers = {'admin':EmployerEmployee.EmployerAdmin},
-                            employees = {'admin':EmployerEmployee.EmployeeAdmin},
-                            directed_organizations = {'admin':DirectedDirector.DirectedAdmin},
-                            directors = {'admin':DirectedDirector.DirectorAdmin},
-                            shares = {'admin':SharedShareholder.SharedAdmin},
-                            shareholders = {'admin':SharedShareholder.ShareholderAdmin},
+                            #suppliers = {'admin':SupplierCustomer.SupplierAdmin},
+                            #customers = {'admin':SupplierCustomer.CustomerAdmin},
+                            #employers = {'admin':EmployerEmployee.EmployerAdmin},
+                            #employees = {'admin':EmployerEmployee.EmployeeAdmin},
+                            #directed_organizations = {'admin':DirectedDirector.DirectedAdmin},
+                            #directors = {'admin':DirectedDirector.DirectorAdmin},
+                            #shares = {'admin':SharedShareholder.SharedAdmin},
+                            #shareholders = {'admin':SharedShareholder.ShareholderAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
                             name = dict( minimal_column_width = 50 ),
                             street1 = dict( editable = True, 
@@ -844,10 +844,6 @@ class OrganizationAdmin( Party.Admin ):
                                                    'street2',
                                                    'city',
                                                    'addresses', 'contact_mechanisms'] ) ),
-                            ( _('Employment'), Form( ['employees'] ) ),
-                            ( _('Customers'), Form( ['customers'] ) ),
-                            ( _('Suppliers'), Form( ['suppliers'] ) ),
-                            ( _('Corporate'), Form( ['directors', 'shareholders', 'shares'] ) ),
                             ( _('Branding'), Form( ['logo'] ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
@@ -878,7 +874,6 @@ class PersonAdmin( Party.Admin ):
                                                      'comment', ], scrollbars = False ) ),
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
-                            ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
     field_attributes['note'] = {'delegate':delegates.NoteDelegate}
