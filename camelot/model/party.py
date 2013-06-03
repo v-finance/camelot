@@ -335,8 +335,13 @@ class Organization( Party ):
         return self.name or ''
 
     @property
-    def number_of_shares_issued( self ):
-        return sum( ( shareholder.shares for shareholder in self.shareholders ), 0 )
+    def note(self):
+        session = orm.object_session(self)
+        if session is not None:
+            cls = self.__class__
+            if session.query(cls).filter( sql.and_( cls.name == self.name,
+                                                    cls.id != self.id ) ).count():
+                return _('An organization with the same name already exists')
 
 # begin short person definition
 class Person( Party ):
@@ -593,6 +598,32 @@ class Addressable(object):
     def city_setter( self, value ):
         return self._set_address_field( u'city', value )
     
+    class Admin(object):
+        field_attributes = dict(
+            street1 = dict( editable = True, 
+                            minimal_column_width = 50 ),
+            street2 = dict( editable = True, 
+                            minimal_column_width = 50 ),
+            city = dict( editable = True, 
+                         delegate = delegates.Many2OneDelegate,
+                         target = City ), 
+            email = dict( editable = True, 
+                          minimal_column_width = 20,
+                          address_type = 'email',
+                          from_string = lambda s:('email', s),
+                          delegate = delegates.VirtualAddressDelegate),
+            phone = dict( editable = True, 
+                          minimal_column_width = 20,
+                          address_type = 'phone',
+                          from_string = lambda s:('phone', s),
+                          delegate = delegates.VirtualAddressDelegate ),
+            fax = dict( editable = True, 
+                        minimal_column_width = 20,
+                        address_type = 'fax',
+                        from_string = lambda s:('fax', s),
+                        delegate = delegates.VirtualAddressDelegate ), )
+        
+    
 class PartyAddress( Entity, Addressable ):
     using_options( tablename = 'party_address' )
     party = ManyToOne( Party, 
@@ -785,30 +816,9 @@ class PartyAdmin( EntityAdmin ):
                             #shareholders = {'admin':SharedShareholder.ShareholderAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
                             name = dict( minimal_column_width = 50 ),
-                            street1 = dict( editable = True, 
-                                            minimal_column_width = 50 ),
-                            street2 = dict( editable = True, 
-                                            minimal_column_width = 50 ),
-                            city = dict( editable = True, 
-                                         delegate = delegates.Many2OneDelegate,
-                                         target = City ), 
-                            email = dict( editable = True, 
-                                          minimal_column_width = 20,
-                                          address_type = 'email',
-                                          from_string = lambda s:('email', s),
-                                          delegate = delegates.VirtualAddressDelegate),
-                            phone = dict( editable = True, 
-                                          minimal_column_width = 20,
-                                          address_type = 'phone',
-                                          from_string = lambda s:('phone', s),
-                                          delegate = delegates.VirtualAddressDelegate ),
-                            fax = dict( editable = True, 
-                                        minimal_column_width = 20,
-                                        address_type = 'fax',
-                                        from_string = lambda s:('fax', s),
-                                        delegate = delegates.VirtualAddressDelegate ),                            
-
+                            note = dict( delegate = delegates.NoteDelegate ),
                             )
+    field_attributes.update( Addressable.Admin.field_attributes )
 
     def get_compounding_objects( self, party ):
         for party_contact_mechanism in party.contact_mechanisms:
@@ -837,7 +847,7 @@ class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
     list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
-    form_display = TabForm( [( _('Basic'), Form( [ 'name', 'email', 
+    form_display = TabForm( [( _('Basic'), Form( [ 'note', 'name', 'email', 
                                                    'phone', 
                                                    'fax', 'tax_id', 
                                                    'street1',
@@ -875,8 +885,6 @@ class PersonAdmin( Party.Admin ):
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                             ] )
-    field_attributes = dict( Party.Admin.field_attributes )
-    field_attributes['note'] = {'delegate':delegates.NoteDelegate}
     
     def get_query( self ):
         query = super( PersonAdmin, self ).get_query()
