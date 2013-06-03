@@ -236,13 +236,19 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_choices( choices1 )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 2 )
-        self.assertEqual(editor.get_choices(), choices1 )
+        self.assertEqual(editor.get_choices(), choices1 + [(None,'')] )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 2 )
-        # now change the choices
+        # None is not in the list of choices, but we should still be able
+        # to set it's value to it
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        # now change the choices, while the current value is not in the
+        # list of new choices
+        editor.set_value( 2 )
         choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
         editor.set_choices( choices2 )
-        self.assertEqual( editor.get_choices(), choices2 + [(2,u'B')] )
+        self.assertEqual( editor.get_choices(), choices2 + [(2,u'B')] + [(None,'')])
         # set a value that is not in the list, the value should become
         # ValueLoading, to prevent damage to the actual data
         editor.set_value( 33 )
