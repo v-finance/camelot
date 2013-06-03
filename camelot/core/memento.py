@@ -120,7 +120,7 @@ class SqlMemento( object ):
         from camelot.model.memento import Memento
         authentication_id = self._get_authentication_id()
         connection = Session().connection(mapper=orm.class_mapper( Memento ))
-        session = orm.Session(bind=connection)
+        session = orm.Session(bind=connection, autocommit=True)
         mementos = []
         for m in memento_changes:
             if len( m.primary_key ) == 1:
