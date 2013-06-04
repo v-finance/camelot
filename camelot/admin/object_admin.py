@@ -528,16 +528,11 @@ be specified using the verbose_name attribute.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-
-            def create_default_getter(field_name):
-                return lambda o:getattr(o, field_name)
-
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
             #
             attributes = dict(
-                getter=create_default_getter(field_name),
                 to_string = to_string,
                 field_name=field_name,
                 python_type=str,
@@ -717,7 +712,7 @@ be specified using the verbose_name attribute.
                 # prevent the setting of a default value when one has been
                 # set already
                 #
-                value = attributes['getter'](object_instance)
+                value = getattr(object_instance, field)
                 if value not in (None, []):
                     # False is a legitimate value for Booleans, but a 
                     # one-to-many field might have a default value as well
