@@ -483,7 +483,7 @@ be specified using the verbose_name attribute.
         """
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
-            dynamic_field_attributes = {}
+            dynamic_field_attributes = {'obj':obj}
             for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
