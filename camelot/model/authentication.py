@@ -40,8 +40,10 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.view import forms
 from camelot.view.controls import delegates
 
+END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
+
 def end_of_times():
-    return datetime.date( year = 2400, month = 12, day = 31 )
+    return END_OF_TIMES
 
 _current_authentication_ = threading.local()
 
