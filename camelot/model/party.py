@@ -807,7 +807,7 @@ class PartyAdmin( EntityAdmin ):
     verbose_name_plural = _('Parties')
     list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
     list_search = ['full_name']
-    form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
+    form_display = ['addresses', 'contact_mechanisms']
     form_size = (700, 700)
     field_attributes = dict(addresses = {'admin':AddressAdmin},
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
