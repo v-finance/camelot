@@ -218,10 +218,6 @@ It has additional class attributes that customise its behaviour.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-
-            def create_default_getter(field_name):
-                return lambda o:getattr(o, field_name)
-
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
@@ -230,7 +226,6 @@ It has additional class attributes that customise its behaviour.
                 python_type = str,
                 to_string = to_string,
                 field_name = field_name,
-                getter = create_default_getter(field_name),
                 length = None,
                 tooltip = None,
                 background_color = None,

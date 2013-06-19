@@ -100,13 +100,12 @@ def strip_data_from_object( obj, columns ):
         field_attributes = col[1]
         field_value = None
         try:
-            getter = field_attributes['getter']
             if field_attributes['python_type'] == list:
                 field_value = DelayedProxy( field_attributes['admin'],
                                             create_collection_getter( obj, col[0] ),
                                             field_attributes['admin'].get_columns )
             else:
-                field_value = getter( obj )
+                field_value = getattr( obj, col[0] )
         except (Exception, RuntimeError, TypeError, NameError), e:
             message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
             log_programming_error( logger, 

@@ -66,7 +66,7 @@ class FormEditors( object ):
         
     def create_editor( self, field_name, parent ):
         """
-        :return: a :class:`QtGuiQWidget` or None if field_name is unknown
+        :return: a :class:`QtGui.QWidget` or `None` if field_name is unknown
         """
         index = self._index[field_name]
         model = self._widget_mapper.model()

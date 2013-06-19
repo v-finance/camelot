@@ -605,9 +605,9 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            for i, ((_name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
+            for i, ((name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
                 attributes.update( delta_attributes )
-                value = attributes['getter']( obj )
+                value = getattr( obj, name )
                 format_string = '0'
                 if value != None:
                     if isinstance( value, Decimal ):
@@ -670,11 +670,11 @@ class PrintPreview( ListContextAction ):
         columns = model_context.admin.get_columns()
         
         table = []
-        getters = [field_attributes['getter'] for _field, field_attributes in columns]
+        fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
         column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getters[i]( obj ) ) for i in column_range] )
+            table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
           'title': model_context.admin.get_verbose_name_plural(),
           'table': table,
