@@ -279,6 +279,8 @@ position in the query.
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
+        self.vertical_header_size =  QtCore.QSize( 16 + 10,
+                                                   self._vertical_header_height )
         self.iconSize = QtCore.QSize( vertical_header_font_height,
                                       vertical_header_font_height )
         if self.header_icon:
@@ -647,30 +649,27 @@ position in the query.
         """
         assert object_thread( self )
         if orientation == Qt.Vertical:
+            if role == Qt.SizeHintRole:
+                #
+                # sizehint role is requested, for every row, so we have to
+                # return a fixed value
+                #
+                return QtCore.QVariant(self.vertical_header_size)
             #
             # get icon from action state
             #
             action_state = self._get_row_data( section, self.action_state_cache )[0]
             if action_state not in (None, ValueLoading):
                 icon = action_state.icon
-            else:
-                icon = None
-            #
-            # return data depending on role
-            #
-            if role == Qt.SizeHintRole:
-                if icon != None:
-                    width = icon.getQPixmap().size().width()
-                    return QtCore.QVariant( QtCore.QSize( width + 10,
-                                                          self._vertical_header_height ) )
-                else:
-                    # if there is no icon, the line numbers will be displayed, so create some space for those
-                    return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, self._vertical_header_height ) )
-            if role == Qt.DecorationRole and icon is not None:
-                return icon.getQPixmap()
-            elif role == Qt.DisplayRole:
-                if self.header_icon != None:
-                    return QtCore.QVariant( '' )
+                if icon is not None:
+                    if role == Qt.DecorationRole:
+                        return icon.getQPixmap()
+                    elif role == Qt.DisplayRole:
+                        return QtCore.QVariant('')
+                tooltip = action_state.tooltip
+                if tooltip is not None:
+                    if role == Qt.ToolTipRole:
+                        return QtCore.QVariant(unicode(tooltip))
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
@@ -927,7 +926,7 @@ position in the query.
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
         self.headerDataChanged.emit(Qt.Vertical, row, row)
-        if thru_column > from_column:
+        if thru_column >= from_column:
             top_left = self.index( row, from_column )
             bottom_right = self.index( row, thru_column )
             self.dataChanged.emit( top_left, bottom_right )
@@ -1122,11 +1121,11 @@ position in the query.
                 raise KeyError
             return data
         except KeyError:
-            if row not in self.rows_under_request:
-                locker = QtCore.QMutexLocker(self._mutex)
+            locker = QtCore.QMutexLocker(self._mutex)
+            if row not in self.rows_under_request:    
                 self.rows_under_request.add( row )
-                locker.unlock()
                 post( self._extend_cache, self._cache_extended )
+            locker.unlock()
             return empty_row_data
 
     @model_function
