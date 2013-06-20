@@ -209,7 +209,7 @@ class CollectionProxy( QtGui.QProxyModel ):
                   columns_getter,
                   max_number_of_rows = 10, 
                   flush_changes = True,
-                  cache_collection_proxy = None
+                  cache_collection_proxy = None,
                   ):
         """
 :param admin: the admin interface for the items in the collection

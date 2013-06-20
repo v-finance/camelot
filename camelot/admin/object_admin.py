@@ -27,6 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
@@ -121,6 +122,13 @@ be specified using the verbose_name attribute.
 
 **Behaviour**
 
+.. attribute:: list_action
+
+   The :class:`camelot.admin.action.base.Action` that will be triggered when the
+   user selects an item in a list of objects.  This defaults to 
+   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
+   for the current object.
+   
 .. attribute:: form_close_action
 
     The action triggered when the form window is closed by the operating system or the window manager.  By default this is the
@@ -223,6 +231,7 @@ be specified using the verbose_name attribute.
     form_display = []
     form_close_action = CloseForm()
     list_filter = []
+    list_action = OpenFormView()
     list_actions = []
     list_size = (600, 600)
     form_size = (700, 500)
@@ -373,6 +382,14 @@ be specified using the verbose_name attribute.
     @model_function
     def get_list_actions(self):
         return self.list_actions
+    
+    def get_list_action(self):
+        """Get the action that should be triggered when an object is selected
+        in a table of objects.
+        
+        :return: by default returns the `list_action` attribute
+        """
+        return self.list_action
 
     @model_function
     def get_depending_objects(self, obj):

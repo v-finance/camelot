@@ -27,7 +27,6 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function
 from camelot.view.utils import to_string
@@ -46,15 +45,6 @@ This allows for much more introspection than the standard
 :class:`camelot.admin.object_admin.ObjectAdmin`.
     
 It has additional class attributes that customise its behaviour.
-
-**Basic**
-
-.. attribute:: list_action
-
-   The :class:`camelot.admin.action.base.Action` that will be triggered when the
-   user selects an item in a list of objects.  This defaults to 
-   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
-   for the current object.
    
 **Filtering**
 
@@ -119,7 +109,6 @@ It has additional class attributes that customise its behaviour.
  
     """
 
-    list_action = OpenFormView()
     list_search = []
     expanded_list_search = None
     copy_deep = {}
