@@ -38,6 +38,7 @@ logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
+from camelot.admin.action.list_action import ListActionModelContext
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.view.art import Icon
@@ -176,6 +177,31 @@ class SortingRowMapper( dict ):
         except KeyError:
             return row
 
+class RowModelContext(ListActionModelContext):
+    """A list action model context for a single row.  This context is used
+    to get the state of the list action on a row
+    """
+    
+    def __init__( self ):
+        super( RowModelContext, self ).__init__()
+        self.model = None
+        self.admin = None
+        self.current_row = None
+        self.selection_count = 0
+        self.collection_count = 0
+        self.selected_rows = []
+        self.field_attributes = dict()
+        self.obj = None
+        
+    def get_selection( self, yield_per = None ):
+        return []
+    
+    def get_collection( self, yield_per = None ):
+        return []
+            
+    def get_object( self ):
+        return self.obj
+
 class CollectionProxy( QtGui.QProxyModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView
@@ -246,6 +272,8 @@ position in the query.
         self._mutex = QtCore.QMutex()
         self.admin = admin
         self.list_action = admin.list_action
+        self.row_model_context = RowModelContext()
+        self.row_model_context.admin = admin
         self.settings = self.admin.get_settings()
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
@@ -927,7 +955,9 @@ position in the query.
             static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
             unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
             if self.list_action:
-                action_state = self.list_action.get_state(None)
+                self.row_model_context.obj = obj
+                self.row_model_context.current_row = row
+                action_state = self.list_action.get_state(self.row_model_context)
         else:
             row_data = [None] * len(columns)
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
