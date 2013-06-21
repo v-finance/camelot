@@ -28,6 +28,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -124,7 +125,12 @@ class SelectProfile( Action ):
             else:
                 select_profile.value = None
             while selected_profile==None:
-                selected_profile = yield select_profile
+                try:
+                    selected_profile = yield select_profile
+                except CancelRequest:
+                    # explicit handling of exit when cancel button is pressed,
+                    # to avoid the use of subgenerators in the main action
+                    yield Exit()
             self.profile_store.set_last_profile( selected_profile )
             
         NEW_PROFILE_LABEL = _('new/edit profile')
