@@ -59,11 +59,10 @@ class MetaCamelotAdmin( ApplicationAdmin ):
 
 def launch_meta_camelot():
     import sys
-    from camelot.view.model_thread import construct_model_thread, get_model_thread
+    from camelot.view.model_thread import get_model_thread
     from camelot.admin.action import GuiContext
     from PyQt4 import QtGui
     app = QtGui.QApplication([a for a in sys.argv if a])
-    construct_model_thread()
     mt = get_model_thread()
     mt.start()
     settings.append( MetaSettings() )

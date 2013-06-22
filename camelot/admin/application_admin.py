@@ -344,7 +344,7 @@ shortcut confusion and reduce the number of status updates.
         if toolbar_area == Qt.TopToolBarArea:
             return self.edit_actions + self.change_row_actions + \
                    self.export_actions + self.help_actions
-    
+        
     def get_name(self):
         """
         :return: the name of the application, by default this is the class

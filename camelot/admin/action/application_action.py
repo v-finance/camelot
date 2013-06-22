@@ -492,6 +492,37 @@ class SegmentationFault( Action ):
             import faulthandler
             faulthandler._read_null()        
         
+class Authentication( Action ):
+    """This action provides information of the currently active authentication
+    mechanism, in other words, it displays the active user and his permissions.
+    
+    Add this action to a toolbar if you want to show the authentication
+    information to the user.
+    """
+    
+    icon = Icon('tango/16x16/emotes/face-smile.png')
+    
+    def render( self, gui_context, parent ):
+        from camelot.view.controls.action_widget import AuthenticationWidget
+        return AuthenticationWidget(self, gui_context, parent)
+    
+    def get_state(self, model_context):
+        from camelot.model.authentication import get_current_authentication
+        state = super(Authentication, self).get_state(model_context)
+        authentication = get_current_authentication()
+        state.verbose_name = authentication.username
+        state.tooltip = ', '.join([g.name for g in authentication.groups])
+        return state
+    
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        from camelot.view.controls.editors.imageeditor import ImageEditor
+        select_file = yield action_steps.SelectFile(file_name_filter=ImageEditor.filter)
+        filenames = yield select_file
+        for filename in filenames:
+            pass
+            
+
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 

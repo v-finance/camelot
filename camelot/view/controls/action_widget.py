@@ -32,7 +32,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.core.utils import is_deleted
+from camelot.core.utils import is_deleted, ugettext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
@@ -412,6 +412,48 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         else:
             self.setIcon( QtGui.QIcon() )
         self.set_menu( state )
-
-
-
+        
+class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
+    """Widget that displays information on the active user"""
+    
+    def __init__(self, action, gui_context, parent):
+        QtGui.QFrame.__init__(self, parent)
+        AbstractActionWidget.__init__(self, action, gui_context)
+        layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        face = QtGui.QToolButton()
+        face.setObjectName('face')
+        face.setAutoRaise(True)
+        face.clicked.connect(self.face_clicked)
+        face.setToolTip(ugettext('Change avatar'))
+        layout.addWidget(face)
+        info_layout = QtGui.QVBoxLayout()
+        user_name = QtGui.QLabel()
+        font = user_name.font()
+        font.setBold(True)
+        font.setPointSize(10)
+        user_name.setFont(font)
+        user_name.setObjectName('user_name')
+        info_layout.addWidget(user_name)
+        groups = QtGui.QLabel()
+        font = groups.font()
+        font.setPointSize(8)
+        groups.setFont(font)
+        groups.setObjectName('groups')
+        info_layout.addWidget(groups)
+        info_layout.setSpacing(0)
+        info_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(info_layout)
+        self.setLayout(layout)
+        
+    @QtCore.pyqtSlot(bool)
+    def face_clicked(self, state):
+        self.run_action()
+        
+    def set_state(self, state):
+        user_name = self.findChild(QtGui.QLabel, 'user_name')
+        user_name.setText(state.verbose_name)
+        groups = self.findChild(QtGui.QLabel, 'groups')
+        groups.setText(state.tooltip)
+        face = self.findChild(QtGui.QToolButton, 'face')
+        face.setIcon(state.icon.getQIcon())
