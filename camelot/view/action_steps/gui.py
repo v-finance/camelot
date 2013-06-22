@@ -160,7 +160,7 @@ class ShowChart( ActionStep ):
         
     def gui_run( self, gui_context ):
         from camelot.view.controls.editors import ChartEditor
-        ChartEditor.show_fullscreen_chart( self._chart, 
+        ChartEditor.show_fullscreen_chart( self.chart, 
                                            gui_context.workspace )
 
     

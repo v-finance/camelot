@@ -38,6 +38,7 @@ logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
+from camelot.admin.action.list_action import ListActionModelContext
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.view.art import Icon
@@ -100,13 +101,12 @@ def strip_data_from_object( obj, columns ):
         field_attributes = col[1]
         field_value = None
         try:
-            getter = field_attributes['getter']
             if field_attributes['python_type'] == list:
                 field_value = DelayedProxy( field_attributes['admin'],
                                             create_collection_getter( obj, col[0] ),
                                             field_attributes['admin'].get_columns )
             else:
-                field_value = getter( obj )
+                field_value = getattr( obj, col[0] )
         except (Exception, RuntimeError, TypeError, NameError), e:
             message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
             log_programming_error( logger, 
@@ -177,6 +177,31 @@ class SortingRowMapper( dict ):
         except KeyError:
             return row
 
+class RowModelContext(ListActionModelContext):
+    """A list action model context for a single row.  This context is used
+    to get the state of the list action on a row
+    """
+    
+    def __init__( self ):
+        super( RowModelContext, self ).__init__()
+        self.model = None
+        self.admin = None
+        self.current_row = None
+        self.selection_count = 0
+        self.collection_count = 0
+        self.selected_rows = []
+        self.field_attributes = dict()
+        self.obj = None
+        
+    def get_selection( self, yield_per = None ):
+        return []
+    
+    def get_collection( self, yield_per = None ):
+        return []
+            
+    def get_object( self ):
+        return self.obj
+
 class CollectionProxy( QtGui.QProxyModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView
@@ -210,7 +235,7 @@ class CollectionProxy( QtGui.QProxyModel ):
                   columns_getter,
                   max_number_of_rows = 10, 
                   flush_changes = True,
-                  cache_collection_proxy = None
+                  cache_collection_proxy = None,
                   ):
         """
 :param admin: the admin interface for the items in the collection
@@ -246,11 +271,16 @@ position in the query.
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         self._mutex = QtCore.QMutex()
         self.admin = admin
+        self.list_action = admin.list_action
+        self.row_model_context = RowModelContext()
+        self.row_model_context.admin = admin
         self.settings = self.admin.get_settings()
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
+        self.vertical_header_size =  QtCore.QSize( 16 + 10,
+                                                   self._vertical_header_height )
         self.iconSize = QtCore.QSize( vertical_header_font_height,
                                       vertical_header_font_height )
         if self.header_icon:
@@ -274,10 +304,12 @@ position in the query.
             self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
             self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
             self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
+            self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
         else:        
             self.display_cache = Fifo( max_cache )
             self.edit_cache = Fifo( max_cache )
             self.attributes_cache = Fifo( max_cache )
+            self.action_state_cache = Fifo( max_cache )
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self._update_requests = list()
@@ -407,6 +439,7 @@ position in the query.
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
         self.edit_cache = Fifo( 10 * self.max_number_of_rows )
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
+        self.action_state_cache = Fifo( 10 * self.max_number_of_rows )
         self.rows_under_request = set()
         self.unflushed_rows = set()
         # once the cache has been cleared, no updates ought to be accepted
@@ -431,6 +464,7 @@ position in the query.
         self.display_cache.delete_by_row( row )
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
+        self.action_state_cache.delete_by_row( row )
         self.dataChanged.emit( self.index( row, 0 ),
                                self.index( row, self.columnCount() - 1 ) )
 
@@ -482,6 +516,7 @@ position in the query.
                 self.display_cache.delete_by_entity( obj )
                 self.attributes_cache.delete_by_entity( obj )
                 self.edit_cache.delete_by_entity( obj )
+                self.action_state_cache.delete_by_entity( obj )
                 return self._rows
 
             post( entity_remove, self._refresh_content, args=(obj,) )
@@ -615,17 +650,26 @@ position in the query.
         assert object_thread( self )
         if orientation == Qt.Vertical:
             if role == Qt.SizeHintRole:
-                if self.header_icon != None:
-                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10,
-                                                          self._vertical_header_height ) )
-                else:
-                    # if there is no icon, the line numbers will be displayed, so create some space for those
-                    return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, self._vertical_header_height ) )
-            if role == Qt.DecorationRole:
-                return self.form_icon
-            elif role == Qt.DisplayRole:
-                if self.header_icon != None:
-                    return QtCore.QVariant( '' )
+                #
+                # sizehint role is requested, for every row, so we have to
+                # return a fixed value
+                #
+                return QtCore.QVariant(self.vertical_header_size)
+            #
+            # get icon from action state
+            #
+            action_state = self._get_row_data( section, self.action_state_cache )[0]
+            if action_state not in (None, ValueLoading):
+                icon = action_state.icon
+                if icon is not None:
+                    if role == Qt.DecorationRole:
+                        return icon.getQPixmap()
+                    elif role == Qt.DisplayRole:
+                        return QtCore.QVariant('')
+                tooltip = action_state.tooltip
+                if tooltip is not None:
+                    if role == Qt.ToolTipRole:
+                        return QtCore.QVariant(unicode(tooltip))
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
@@ -881,9 +925,11 @@ position in the query.
     @QtCore.pyqtSlot(int, int, int)
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
-        top_left = self.index( row, from_column )
-        bottom_right = self.index( row, thru_column )
-        self.dataChanged.emit( top_left, bottom_right )
+        self.headerDataChanged.emit(Qt.Vertical, row, row)
+        if thru_column >= from_column:
+            top_left = self.index( row, from_column )
+            bottom_right = self.index( row, thru_column )
+            self.dataChanged.emit( top_left, bottom_right )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
@@ -901,11 +947,16 @@ position in the query.
         :param row: the row in the cache into which to add data
         :param obj: the object from which to strip the data
         """
+        action_state = None
         if not self.admin.is_deleted( obj ):
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
             static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
             unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
+            if self.list_action:
+                self.row_model_context.obj = obj
+                self.row_model_context.current_row = row
+                action_state = self.list_action.get_state(self.row_model_context)
         else:
             row_data = [None] * len(columns)
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
@@ -918,6 +969,7 @@ position in the query.
         changed_columns.update( self.edit_cache.add_data( row, obj, row_data ) )
         changed_columns.update( self.display_cache.add_data( row, obj, unicode_row_data ) )
         changed_columns.update( self.attributes_cache.add_data(row, obj, dynamic_field_attributes ) )
+        self.action_state_cache.add_data(row, obj, [action_state] )
         locker.unlock()
         #
         # it might be that the CollectionProxy is deleted on the Qt side of
@@ -939,6 +991,9 @@ position in the query.
                                                       from_column, 
                                                       changed_column )
                         from_column = next_column
+            else:
+                # only the header changed
+                self.row_changed_signal.emit( row, 1, 0 )
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is already in the cache, but at a
@@ -1066,11 +1121,11 @@ position in the query.
                 raise KeyError
             return data
         except KeyError:
-            if row not in self.rows_under_request:
-                locker = QtCore.QMutexLocker(self._mutex)
+            locker = QtCore.QMutexLocker(self._mutex)
+            if row not in self.rows_under_request:    
                 self.rows_under_request.add( row )
-                locker.unlock()
                 post( self._extend_cache, self._cache_extended )
+            locker.unlock()
             return empty_row_data
 
     @model_function

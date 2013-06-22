@@ -2,6 +2,17 @@ from PyQt4 import QtCore
 
 from ...admin.action.base import ActionStep
 
+class Exit( ActionStep ):
+    """
+    Stop the event loop, and exit the application
+    """
+    
+    def __init__( self, return_code=0 ):
+        self.return_code = return_code
+        
+    def gui_run( self, gui_context ):
+        QtCore.QCoreApplication.exit(self.return_code)
+        
 class MainWindow( ActionStep ):
     """
     Open a top level application window

@@ -389,7 +389,7 @@ class RowDataAdmin(object):
     def get_dynamic_field_attributes(self, obj, field_names):
         for field_name in field_names:
             attributes = self.get_field_attributes(field_name)
-            string_value = attributes['getter'](obj)
+            string_value = getattr(obj, field_name)
             valid = True
             value = None
             if 'from_string' in attributes:
@@ -408,15 +408,11 @@ class RowDataAdmin(object):
     def new_field_attributes(self, i, original_field):
         from camelot.view.controls import delegates
 
-        def create_getter(i):
-            return lambda o:getattr(o, 'column_%i'%i)
-
         original_field_attributes = self.admin.get_field_attributes( original_field )
         attributes = dict(original_field_attributes)
         attributes['delegate'] = delegates.PlainTextDelegate
         attributes['python_type'] = str
         attributes['original_field'] = original_field
-        attributes['getter'] = create_getter(i)
 
         # remove some attributes that might disturb the import wizard
         for attribute in ['background_color', 'tooltip']:
