@@ -24,11 +24,11 @@
 
 """Set of classes to store authentication and permissions
 """
-
+import base64
 import datetime
 import threading
 
-from sqlalchemy.types import Date, Unicode, DateTime, Integer
+from sqlalchemy import types
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy import orm
 
@@ -41,6 +41,12 @@ from camelot.view import forms
 from camelot.view.controls import delegates
 
 END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
+
+#
+# Enumeration of the types of authentication supported
+#
+authentication_types = [ (1, 'operating_system'),
+                         (2, 'database') ]
 
 def end_of_times():
     return END_OF_TIMES
@@ -94,16 +100,16 @@ class AuthenticationMechanism( Entity ):
     
     __tablename__ = 'authentication_mechanism'
     
-    authentication_type = Column( camelot.types.Enumeration( [ (1, 'operating_system'),
-                                                               (2, 'database') ] ),
+    authentication_type = Column( camelot.types.Enumeration(authentication_types),
                                   nullable = False, 
                                   index = True , 
-                                  default = 'operating_system' )
-    username = Column( Unicode( 40 ), nullable = False, index = True, unique = True )
-    password = Column( Unicode( 200 ), nullable = True, index = False, default = None )
-    from_date = Column( Date(), default = datetime.date.today, nullable = False, index = True )
-    thru_date = Column( Date(), default = end_of_times, nullable = False, index = True )
-    last_login = Column( DateTime() )
+                                  default = authentication_types[0][1] )
+    username = Column( types.Unicode( 40 ), nullable = False, index = True, unique = True )
+    password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
+    from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
+    thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
+    last_login = Column( types.DateTime() )
+    representation = Column( types.Text(), nullable=True )
 
     @classmethod
     def get_or_create( cls, username ):
@@ -115,6 +121,29 @@ class AuthenticationMechanism( Entity ):
             session.flush()
         return authentication
 
+    def get_representation(self):
+        """
+        :return: a :class:`QtGui.QImage` object with the avatar of the user,
+            or `None`.
+        """
+        from PyQt4 import QtGui
+        if self.representation is None:
+            return self.representation
+        return QtGui.QImage.fromData(base64.b64decode(self.representation))
+    
+    def set_representation(self, image):
+        """
+        :param image: a :class:`QtGui.QImage` object with the avatar of the user,
+            or `None`.
+        """
+        from PyQt4 import QtCore
+        if image is None:
+            self.representation=None
+        qbyte_array = QtCore.QByteArray()
+        qbuffer = QtCore.QBuffer( qbyte_array )
+        image.save( qbuffer, 'PNG' )
+        self.representation=base64.b64encode(qbyte_array.data())
+        
     def has_role( self, role_name ):
         """
         :param role_name: a string with the name of the role
@@ -141,7 +170,7 @@ class AuthenticationGroup( Entity ):
     
     __tablename__ = 'authentication_group'
     
-    name = Column( Unicode(256), nullable=False )
+    name = Column( types.Unicode(256), nullable=False )
     members = ManyToMany( AuthenticationMechanism, 
                           tablename = 'authentication_group_member',
                           backref = 'groups' )

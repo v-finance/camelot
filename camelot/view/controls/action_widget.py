@@ -22,12 +22,6 @@
 #
 #  ============================================================================
 
-'''
-Created on May 22, 2010
-
-@author: tw55413
-'''
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -417,6 +411,7 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
     """Widget that displays information on the active user"""
     
     def __init__(self, action, gui_context, parent):
+        from ..remote_signals import get_signal_handler
         QtGui.QFrame.__init__(self, parent)
         AbstractActionWidget.__init__(self, action, gui_context)
         layout = QtGui.QHBoxLayout()
@@ -445,6 +440,14 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         info_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(info_layout)
         self.setLayout(layout)
+        signal_handler = get_signal_handler()
+        signal_handler.entity_update_signal.connect(self.entity_update)
+        
+    @QtCore.pyqtSlot(object, object)
+    def entity_update(self, sender, entity):
+        from ...model.authentication import AuthenticationMechanism
+        if isinstance(entity, AuthenticationMechanism):
+            self.current_row_changed(0)
         
     @QtCore.pyqtSlot(bool)
     def face_clicked(self, state):

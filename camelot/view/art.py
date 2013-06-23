@@ -102,6 +102,18 @@ class Icon(Pixmap):
         """QPixmaps can only be used in the gui thread"""
         from PyQt4.QtGui import QIcon
         return QIcon(self.getQPixmap())
+    
+class IconFromImage(object):
+    """:class:`QtGui.QImage` based icon
+    
+    :param image: a :class:`QtGui.QImage` object
+    """
+    
+    def __init__(self, image):
+        self.image = image
+        
+    def getQIcon(self):
+        return QtGui.QIcon(QtGui.QPixmap.fromImage(self.image))
 
 class ColorScheme(object):
     """The default color scheme for camelot, based on the Tango icon set
