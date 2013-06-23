@@ -90,7 +90,7 @@ an unneeded update of the db.
         self.setFocusPolicy(Qt.StrongFocus)
         
         self.spinBox = CustomDoubleSpinBox(option, parent)
-        self.spinBox.setRange(minimum, maximum)
+        self.spinBox.setRange(minimum-1, maximum)
         self.spinBox.setDecimals(0)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.addAction(action)
@@ -148,21 +148,18 @@ an unneeded update of the db.
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value is None:
-            self.spinBox.lineEdit().setText('')
+            self.spinBox.setValue(self.spinBox.minimum())
         else:
-            value = str(value).replace(',', '.')
-            self.spinBox.setValue(eval(value))
+            self.spinBox.setValue(value)
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading
-
-        if self.spinBox.text()=='':
-            return None
-        
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
+        if value==self.spinBox.minimum():
+            return None
         return value
 
     def set_enabled(self, editable=True):
