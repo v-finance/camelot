@@ -207,6 +207,14 @@ single_step
 The size of a single step when the up and down arrows are used in 
 on a float or an integer field.
   
+.. _field-attribute-stretch:
+
+stretch
+-------
+
+Relative size of the editor with respect to the other editors in the same
+layout.  This should be an integer number.
+
 .. _field-attribute-suffix:
 
 suffix

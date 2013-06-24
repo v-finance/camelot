@@ -78,6 +78,8 @@ class FormEditors( object ):
             model_index
         )
         widget_editor.setObjectName('%s_editor'%field_name)
+        stretch = self._field_attributes[field_name].get('stretch', 1)
+        widget_editor.setProperty('stretch', QtCore.QVariant(stretch))
         delegate.setEditorData( widget_editor, model_index )
         self._widget_mapper.addMapping( widget_editor, index )
         return widget_editor

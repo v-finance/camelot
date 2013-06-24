@@ -32,7 +32,8 @@ logger = logging.getLogger( 'camelot.view.forms' )
 
 from PyQt4 import QtCore, QtGui
 
-from camelot.core.exception import log_programming_error
+from ..core.utils import variant_to_pyobject
+from ..core.exception import log_programming_error
 
 class Form( list ):
     """Base Form class to put fields on a form.  The base class of a form is
@@ -196,6 +197,9 @@ and takes these parameters :
                             form_layout.addWidget( label, c.row, c.col, row_span, col_span )
                             c.next_row()
                         form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
+                        stretch = variant_to_pyobject( editor.property('stretch') )
+                        if stretch is not None:
+                            form_layout.setRowStretch(c.row, stretch)
                         c.next_row()
                     else:
                         col_span = 1
