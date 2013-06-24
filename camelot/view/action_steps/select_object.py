@@ -23,6 +23,7 @@
 #  ============================================================================
 
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -37,6 +38,7 @@ class SelectDialog( QtGui.QDialog ):
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
         self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
+        self.setSizeGripEnabled(True)
         select = admin.create_select_view(
             query,
             parent = self,
@@ -46,6 +48,7 @@ class SelectDialog( QtGui.QDialog ):
         self.setLayout( layout )
         self.object_getter = None
         select.entity_selected_signal.connect( self.object_selected )
+        self.setWindowState(Qt.WindowMaximized)
         
     @QtCore.pyqtSlot(object)
     def object_selected( self, object_getter ):
