@@ -634,8 +634,6 @@ position in the query.
             elif role == Qt.DisplayRole:
                 if self.header_icon != None:
                     return py_to_variant( '' )
-        print 'get header data', section
-        #data = super( CollectionProxy, self )..headerIt
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
