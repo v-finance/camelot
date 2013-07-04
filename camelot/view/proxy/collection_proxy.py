@@ -31,6 +31,7 @@ returned and an update signal is emitted when the correct data is available.
 
 import collections
 import datetime
+import functools
 import logging
 
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
@@ -545,11 +546,14 @@ position in the query.
         option = QtGui.QStyleOptionViewItem()
         self.settings.beginGroup( 'column_width' )
         self.settings.beginGroup( '0' )
-
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
+        source_model = self.sourceModel()
         for i, c in enumerate( columns ):
+            set_header_data = functools.partial(source_model.setHeaderData,
+                                                i,
+                                                Qt.Horizontal)
             #
             # Construct the delegate
             #
@@ -566,15 +570,12 @@ position in the query.
             #
             # Set the header data
             #
-            header_item = QtGui.QStandardItem()
-            header_item.setData( py_to_variant( six.text_type(c[1]['name']) ),
-                                 Qt.DisplayRole )
+            set_header_data(py_to_variant( six.text_type(c[1]['name']) ),
+                            Qt.DisplayRole)
             if c[1].get( 'nullable', True ) == False:
-                header_item.setData( self._header_font_required,
-                                     Qt.FontRole )
+                set_header_data(self._header_font_required, Qt.FontRole)
             else:
-                header_item.setData( self._header_font,
-                                     Qt.FontRole )
+                set_header_data(self._header_font, Qt.FontRole)
 
             settings_width = int( variant_to_py( self.settings.value( field_name, 0 ) ) )
             label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, six.text_type(c[1]['name']) + u' ' )
@@ -587,13 +588,11 @@ position in the query.
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
             if settings_width:
-                header_item.setData( py_to_variant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
-                                     Qt.SizeHintRole )
+                set_header_data( py_to_variant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
+                                 Qt.SizeHintRole )
             else:
-                header_item.setData( py_to_variant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
-                                     Qt.SizeHintRole )
-             
-            self.source_model.setHorizontalHeaderItem( i, header_item )
+                set_header_data( py_to_variant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                                 Qt.SizeHintRole )
         
         self.settings.endGroup()
         self.settings.endGroup()
@@ -635,6 +634,8 @@ position in the query.
             elif role == Qt.DisplayRole:
                 if self.header_icon != None:
                     return py_to_variant( '' )
+        print 'get header data', section
+        #data = super( CollectionProxy, self )..headerIt
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
