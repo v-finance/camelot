@@ -104,19 +104,21 @@ class ModelCase( ExampleModelCase ):
         self.assertEqual( batch_job.current_status, 'errors' )
     
     def test_current_authentication( self ):
-        from camelot.model.authentication import get_current_authentication
-        authentication = get_current_authentication()
+        from camelot.model import authentication
+        authentication.clear_current_authentication()
+        mechanism = authentication.get_current_authentication()
         # current authentication cache should survive 
         # a session expire + expunge
-        orm.object_session( authentication ).expire_all()
-        orm.object_session( authentication ).expunge_all()
-        authentication = get_current_authentication()
-        self.assertTrue( authentication.username )
-        self.assertTrue( six.text_type( authentication ) )
+        orm.object_session( mechanism ).expire_all()
+        orm.object_session( mechanism ).expunge_all()
+        mechanism = authentication.get_current_authentication()
+        self.assertTrue( mechanism.username )
+        self.assertTrue( six.text_type( mechanism ) )
         
     def test_authentication_group( self ):
         # begin roles definition
         from camelot.model import authentication
+        authentication.clear_current_authentication()
         authentication.roles.extend( [ (1, 'administrator'),
                                        (2, 'movie_editor') ] )
         # end roles definition
