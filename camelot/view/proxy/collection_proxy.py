@@ -240,7 +240,7 @@ position in the query.
         # objects in the collection.
         #
         self.source_model = QtGui.QStandardItemModel()
-        self.setSourceModel( self.source_model )
+        self.setSourceModel(self.source_model)
         
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
@@ -364,7 +364,6 @@ position in the query.
     
     def dropMimeData( self, mime_data, action, row, column, parent ):
         assert object_thread( self )
-        #print mime_data, [six.text_type(f) for f in mime_data.formats()]
         return True
     
     #
@@ -550,6 +549,7 @@ position in the query.
         # this loop can take a while to complete, so processEvents is called regulary
         #
         source_model = self.sourceModel()
+        source_model.setColumnCount(len(columns))
         for i, c in enumerate( columns ):
             set_header_data = functools.partial(source_model.setHeaderData,
                                                 i,
@@ -634,7 +634,9 @@ position in the query.
             elif role == Qt.DisplayRole:
                 if self.header_icon != None:
                     return py_to_variant( '' )
-        return super( CollectionProxy, self ).headerData( section, orientation, role )
+        # super.headerData seems not to work as expected, so use source
+        # model directly
+        return self.sourceModel().headerData(section, orientation, role)
 
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
