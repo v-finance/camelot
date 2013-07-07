@@ -245,7 +245,6 @@ class FixtureVersion( Entity ):
         :param fixture_version: the version number to which to set the fixture 
         version
         """
-        from sqlalchemy.orm.session import Session
         obj = Session().query( cls ).filter_by( fixture_class = fixture_class ).first()
         if not obj:
             obj = FixtureVersion( fixture_class = fixture_class )
