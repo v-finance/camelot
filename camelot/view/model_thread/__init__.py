@@ -77,11 +77,6 @@ def model_function(original_function):
 
     return wrapper
 
-def setup_model():
-    """Call the setup_model function in the settings"""
-    from camelot.core.conf import settings
-    settings.setup_model()
-
 class AbstractModelThread(QtCore.QThread):
     """Abstract implementation of a model thread class
     Thread in which the model runs, all requests to the model should be
@@ -107,13 +102,9 @@ class AbstractModelThread(QtCore.QThread):
     thread_busy_signal = QtCore.pyqtSignal(bool)
     setup_exception_signal = QtCore.pyqtSignal(object)
 
-    def __init__(self, setup_thread=setup_model):
-        """:param setup_thread: function to be called at startup of the thread
-        to initialize everything, by default this will setup the model. Set to
-        None if nothing should be done."""
+    def __init__(self):
         super(AbstractModelThread, self).__init__()
         self.logger = logging.getLogger(logger.name + '.%s' % id(self))
-        self._setup_thread = setup_thread
         self._exit = False
         self._traceback = ''
         self.logger.debug('model thread constructed')
@@ -157,15 +148,17 @@ class AbstractModelThread(QtCore.QThread):
         """
         return True
 
-def construct_model_thread(*args, **kwargs):
-    from .signal_slot_model_thread import SignalSlotModelThread
-    _model_thread_.insert(0, SignalSlotModelThread(*args, **kwargs))
-
 def has_model_thread():
     return len(_model_thread_) > 0
 
 def get_model_thread():
-    return _model_thread_[0]
+    try:
+        return _model_thread_[0]
+    except IndexError:
+        from signal_slot_model_thread import SignalSlotModelThread
+        _model_thread_.insert(0, SignalSlotModelThread())
+        _model_thread_[0].start()
+        return _model_thread_[0]
 
 def post(request, response=None, exception=None, args=()):
     """Post a request and a response to the default model thread"""

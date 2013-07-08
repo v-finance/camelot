@@ -21,18 +21,7 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-
-"""
-Classes to connect the QT event loop with a messaging
-server.  To enable multiple clients to push model updates
-to each other or messages for the users.
-
-As a messaging server, Apache active MQ was tested in combination
-with the stomp library (http://docs.codehaus.org/display/STOMP/Python)
-"""
-
 import logging
-import re
 
 LOGGER = logging.getLogger('remote_signals')
 
@@ -42,29 +31,16 @@ class SignalHandler(QtCore.QObject):
     """The signal handler connects multiple collection proxy classes to
     inform each other when they have changed an object.
     
-    If the object is persistent (eg mapped by SQLAlchemy), the signal hanler
-    can inform other signal handlers on the network of the change.
-    
-    A couple of the methods of this thread are protected by a QMutex through
-    the synchronized decorator.  It appears that python/qt deadlocks when the
-    entity_update_signal is connected to and emitted at the same time.  This
-    can happen when the user closes a window that is still building up (the
-    CollectionProxies are being constructed and they connect to the signal
-    handler).
-    
-    These deadlock issues are resolved in recent PyQt, so comment out the 
-    mutex stuff. (2011-08-12)
+    If the object is persistent (eg mapped by SQLAlchemy), the signal handler
+    could be used to inform other signal handlers on the network of the change.
      """
 
     entity_update_signal = QtCore.pyqtSignal(object, object)
     entity_delete_signal = QtCore.pyqtSignal(object, object)
     entity_create_signal = QtCore.pyqtSignal(object, object)
     
-    entity_update_pattern = r'^/topic/Camelot.Entity.(?P<entity>.*).update$' 
-    
     def __init__(self):
         super(SignalHandler, self).__init__()
-        self.update_expression = re.compile(self.entity_update_pattern)
             
     def connect_signals(self, obj):
         """Connect the SignalHandlers its signals to the slots of obj, while
@@ -81,7 +57,6 @@ class SignalHandler(QtCore.QObject):
     def sendEntityUpdate(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity has 
         changed"""
-        # deprecated
         self.entity_update_signal.emit( sender, entity )
         
     def sendEntityDelete(self, sender, entity, scope='local'):

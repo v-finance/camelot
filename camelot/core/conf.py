@@ -108,22 +108,22 @@ class SimpleSettings( object ):
         self.data = data
         if ('win' in sys.platform) and ('darwin' not in sys.platform):
             import winpaths
-            self._local_folder = os.path.join( winpaths.get_local_appdata(), 
+            self.data_folder = os.path.join( winpaths.get_local_appdata(), 
                                                author, 
                                                name )
         else:
-            self._local_folder = os.path.join( os.path.expanduser('~'), 
+            self.data_folder = os.path.join( os.path.expanduser('~'), 
                                                u'.%s'%author, name )
-        if not os.path.exists( self._local_folder ):
-            os.makedirs( self._local_folder )
+        if not os.path.exists( self.data_folder ):
+            os.makedirs( self.data_folder )
             
-        LOGGER.info( u'store database and media in %s'%self._local_folder )
+        LOGGER.info( u'store database and media in %s'%self.data_folder )
             
     def CAMELOT_MEDIA_ROOT(self):
-        return os.path.join( self._local_folder, 'media' )
+        return os.path.join( self.data_folder, 'media' )
     
     def ENGINE( self ):
         from sqlalchemy import create_engine
-        return create_engine(u'sqlite:///%s/%s'%( self._local_folder,
+        return create_engine(u'sqlite:///%s/%s'%( self.data_folder,
                                                   self.data ) )
 

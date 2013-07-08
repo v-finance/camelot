@@ -150,6 +150,26 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog = select_file.render()
         self.grab_widget( dialog )
         
+    def test_select_item( self ):
+        from camelot.view.action_steps import SelectItem
+        
+        # begin select item
+        class SendDocumentAction( Action ):
+            
+            def model_run( self, model_context ):
+                methods = [ ('email', 'By E-mail'),
+                            ('fax',   'By Fax'),
+                            ('post',  'By postal mail') ]
+                method = yield SelectItem( methods, value='email' )
+                # handle sending of the document
+                
+        # end select item
+        
+        action = SendDocumentAction()
+        for step in action.model_run( self.context ):
+            dialog = step.render()
+            self.grab_widget( dialog )
+            
     def test_text_document( self ):
         # begin text document
         class EditDocumentAction( Action ):

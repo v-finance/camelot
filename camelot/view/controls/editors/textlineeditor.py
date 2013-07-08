@@ -35,9 +35,9 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
                  length = 20, 
                  field_name = 'text_line',
                  **kwargs):
+        AbstractCustomEditor.__init__(self)
         QtGui.QLineEdit.__init__(self, parent)
         self.setObjectName( field_name )
-        AbstractCustomEditor.__init__(self)
         if length:
             self.setMaxLength(length)
 

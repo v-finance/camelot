@@ -30,6 +30,7 @@ from PyQt4.QtCore import Qt
 import six
 
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -98,6 +99,54 @@ class ApplicationActionGuiContext( GuiContext ):
         new_context.admin = self.admin
         return new_context
         
+class SelectProfile( Action ):
+    """Select the application profile to use
+    
+    :param profile_store: an object of type 
+        :class:`camelot.core.dbprofiles.ProfileStore`
+    """
+    
+    def __init__( self, profile_store ):
+        from camelot.core.dbprofiles import ProfileStore
+        if profile_store==None:
+            profile_store=ProfileStore()
+        self.profile_store = profile_store
+        
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+
+        profiles = self.profile_store.read_profiles()        
+        selected_profile = None
+        if len(profiles):
+            profiles.sort( key=lambda p:p.name )
+            last_profile = self.profile_store.get_last_profile()
+            items = [(None,'')] + [(p,p.name) for p in profiles]
+            select_profile = action_steps.SelectItem( items )
+            if last_profile in profiles:
+                select_profile.value = last_profile
+            else:
+                select_profile.value = None
+            while selected_profile==None:
+                try:
+                    selected_profile = yield select_profile
+                except CancelRequest:
+                    # explicit handling of exit when cancel button is pressed,
+                    # to avoid the use of subgenerators in the main action
+                    yield Exit()
+            self.profile_store.set_last_profile( selected_profile )
+            
+        NEW_PROFILE_LABEL = _('new/edit profile')
+
+        #if not profiles_dict:
+            #create_new_profile(app_admin, profiles_dict)
+                                 
+        #if selected in profiles_dict:
+            #use_chosen_profile(selected)
+        #elif selected == NEW_PROFILE_LABEL:
+            #create_new_profile(app_admin, profiles_dict)
+        #else:
+            #sys.exit(0)        
+
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
 
@@ -307,8 +356,11 @@ class Exit( Action ):
     def gui_run( self, gui_context ):
         from camelot.view.model_thread import get_model_thread
         model_thread = get_model_thread()
-        gui_context.workspace.close_all_views()
-        model_thread.stop()
+        # we might exit the application when the workspace is not even there
+        if gui_context.workspace != None:
+            gui_context.workspace.close_all_views()
+        if model_thread != None:
+            model_thread.stop()
         QtCore.QCoreApplication.exit(0)
         
 #
@@ -442,6 +494,49 @@ class SegmentationFault( Action ):
             import faulthandler
             faulthandler._read_null()        
         
+class Authentication( Action ):
+    """This action provides information of the currently active authentication
+    mechanism, in other words, it displays the active user and his permissions.
+    
+    Add this action to a toolbar if you want to show the authentication
+    information to the user.
+    """
+    
+    icon = Icon('tango/16x16/emotes/face-smile.png')
+    image_size = 32
+    
+    def render( self, gui_context, parent ):
+        from camelot.view.controls.action_widget import AuthenticationWidget
+        return AuthenticationWidget(self, gui_context, parent)
+    
+    def get_state(self, model_context):
+        from camelot.model.authentication import get_current_authentication
+        from camelot.view import art
+        state = super(Authentication, self).get_state(model_context)
+        authentication = get_current_authentication()
+        state.verbose_name = authentication.username
+        state.tooltip = ', '.join([g.name for g in authentication.groups])
+        representation = authentication.get_representation()
+        if representation is not None:
+            state.icon = art.IconFromImage(representation)
+        return state
+    
+    def model_run(self, model_context):
+        from camelot.model.authentication import get_current_authentication
+        from camelot.view import action_steps
+        from camelot.view.controls.editors.imageeditor import ImageEditor
+        select_file = action_steps.SelectFile(file_name_filter=ImageEditor.filter)
+        filenames = yield select_file
+        for filename in filenames:
+            yield action_steps.UpdateProgress(ugettext('Scale image'))
+            image = QtGui.QImage(filename)
+            image = image.scaled(self.image_size, 
+                                 self.image_size, 
+                                 Qt.KeepAspectRatio)
+            authentication = get_current_authentication()
+            authentication.set_representation(image)
+            yield action_steps.FlushSession(model_context.session)
+
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 

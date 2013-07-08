@@ -34,9 +34,10 @@ import collections
 import datetime
 import logging
 
+from sqlalchemy import sql, orm, exc
+
 import six
 
-from sqlalchemy import func, sql, orm, exc
 
 from camelot.core.utils import ugettext
 
@@ -118,21 +119,23 @@ class SqlMemento( object ):
         :param memento_changes: an iterator over `memento_change` tuples that 
         need to be stored in the memento table.
         """
-        rows = list()
+        from camelot.core.orm import Session
+        from camelot.model.memento import Memento
         authentication_id = self._get_authentication_id()
+        connection = Session().connection(mapper=orm.class_mapper( Memento ))
+        session = orm.Session(bind=connection, autocommit=True)
+        mementos = []
         for m in memento_changes:
             if len( m.primary_key ) == 1:
-                rows.append( { 'model':m.model,
-                               'primary_key':m.primary_key[0],
-                               'previous_attributes':m.previous_attributes,
-                               'memento_type':self.memento_id_by_type.get(m.memento_type, None),
-                               'authentication_id':authentication_id,
-                                } )
-        if len( rows ):
-            table = self._get_memento_table()
-            clause = table.insert( creation_date = func.current_timestamp() )
+                mementos.append( Memento( model=m.model,
+                                          primary_key=m.primary_key[0],
+                                          previous_attributes=m.previous_attributes,
+                                          memento_type=self.memento_id_by_type.get(m.memento_type, None),
+                                          authentication_id=authentication_id,
+                                          _session=session ) )
+        if len( mementos ):
             try:
-                clause.execute( rows )
+                session.flush()
             except exc.DatabaseError as e:
                 LOGGER.error( 'Programming Error, could not flush history', exc_info = e )                
     

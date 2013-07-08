@@ -26,13 +26,15 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
 import six
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view.controls import editors
+from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way
@@ -73,7 +75,81 @@ class Refresh( ActionStep ):
         if gui_context.workspace:
             gui_context.workspace.refresh()
 
+class ItemSelectionDialog(StandaloneWizardPage):
 
+    def __init__( self, 
+                  window_title=None,
+                  autoaccept=False,
+                  parent=None):
+        """
+        :param autoaccept: if True, the value of the ComboBox is immediately
+        accepted after selecting it.
+        """
+        super(ItemSelectionDialog, self).__init__( window_title = window_title, 
+                                                   parent = parent ) 
+        self.autoaccept = autoaccept
+        self.set_default_buttons()
+        layout = QtGui.QVBoxLayout()
+        combobox = editors.ChoicesEditor()
+        combobox.setObjectName( 'combobox' )
+        combobox.activated.connect( self._combobox_activated )
+        layout.addWidget( combobox )
+        self.main_widget().setLayout(layout)
+
+    @QtCore.pyqtSlot(int)
+    def _combobox_activated(self, index):
+        if self.autoaccept:
+            self.accept()
+
+    def set_choices(self, choices):
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            combobox.set_choices(choices)
+            
+    def get_value(self):
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            return combobox.get_value()            
+
+    def set_value(self, value):
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            return combobox.set_value(value)
+    
+class SelectItem( ActionStep ):
+    """This action step pops up a single combobox dialog in which the user can
+    select one item from a list of items.
+    
+    :param items: a list of tuples with values and the visible name of the items
+       from which the user can select, such as `[(1, 'first'), (2,'second')]
+    :param value: the value that should be selected when the dialog pops up
+    :param autoaccept: if `True` the dialog closes immediately after the user
+       selected an option.  When this is `False`, the user should press
+       :guilabel:`OK` first.
+    """
+    
+    def __init__( self, items, value=None ):
+        self.items = items
+        self.value = value
+        self.autoaccept = True
+        self.title =  _('Please select')
+        self.subtitle = _('Make a selection and press the OK button')
+        
+    def render(self):
+        dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
+        dialog.set_choices(self.items)
+        dialog.set_value(self.value)
+        dialog.setWindowTitle( unicode( self.title ) )
+        dialog.set_banner_subtitle( unicode( self.subtitle ) )
+        return dialog
+    
+    def gui_run(self, gui_context):
+        dialog = self.render()
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
+            raise CancelRequest()
+        return dialog.get_value()
+    
 class ShowChart( ActionStep ):
     """Show a full screen chart.
     
@@ -86,7 +162,7 @@ class ShowChart( ActionStep ):
         
     def gui_run( self, gui_context ):
         from camelot.view.controls.editors import ChartEditor
-        ChartEditor.show_fullscreen_chart( self._chart, 
+        ChartEditor.show_fullscreen_chart( self.chart, 
                                            gui_context.workspace )
 
     

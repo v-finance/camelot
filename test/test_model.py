@@ -25,11 +25,15 @@ class ExampleModelCase( ModelThreadTestCase ):
         super( ExampleModelCase, self ).setUp()
         from camelot.model import ( authentication, batch_job, fixture,
                                     party, i18n, memento )
-        metadata.bind = settings.ENGINE()
+        self.engine = settings.ENGINE()
+        metadata.bind = self.engine
         metadata.create_all()
+        self.session = Session()
+        self.session.expunge_all()
         
     def tearDown( self ):
         metadata.drop_all()
+        self.session.expunge_all()
         
 class ModelCase( ExampleModelCase ):
     """Test the build in camelot model"""
@@ -59,7 +63,7 @@ class ModelCase( ExampleModelCase ):
         Translation._cache.clear()
         # fill the cache again
         translation = Translation( language = 'nl_BE', source = 'bucket',
-                                   value = 'emmer', uid=1 )
+                                   value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
         export_action = ExportAsPO()
@@ -407,9 +411,11 @@ class FixtureCase( ExampleModelCase ):
     def test_fixture_version( self ):
         from camelot.model.party import Person
         from camelot.model.fixture import FixtureVersion
+        session = self.session
         self.assertEqual( FixtureVersion.get_current_version( u'unexisting' ),
                           0 )        
         FixtureVersion.set_current_version( u'demo_data', 0 )
+        session.flush()
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           0 )
         example_file = os.path.join( os.path.dirname(__file__), 
@@ -424,7 +430,7 @@ class FixtureCase( ExampleModelCase ):
             for line in reader:
                 Person( first_name = line[0], last_name = line[1] )
             FixtureVersion.set_current_version( u'demo_data', 1 )
-            Person.query.session.flush()
+            session.flush()
         # end load csv if fixture version
         self.assertTrue( Person.query.count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),

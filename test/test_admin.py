@@ -4,6 +4,7 @@ Tests for the Admin classes
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
@@ -13,12 +14,13 @@ from PyQt4.QtCore import Qt
 
 from sqlalchemy import schema, types
 
+from .test_orm import TestMetaData
+
 class ApplicationAdminCase( ModelThreadTestCase ):
     
     def test_application_admin( self ):
         app_admin = ApplicationAdmin()
         self.assertTrue( app_admin.get_sections() )
-        self.assertTrue( app_admin.create_main_window() )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'manytomany' ) )
         self.assertTrue( app_admin.get_version() )
@@ -111,7 +113,7 @@ class ObjectAdminCase( ModelThreadTestCase ):
         a_admin.is_persistent( a )
         a_admin.copy( a )
         
-class EntityAdminCase( ModelThreadTestCase ):
+class EntityAdminCase( TestMetaData ):
     """Test the EntityAdmin
     """
 
@@ -144,3 +146,60 @@ class EntityAdminCase( ModelThreadTestCase ):
         fa_3 = EntityAdmin.get_sql_field_attributes( [column_3] )
         self.assertTrue( fa_3['default'] )
         self.assertEqual( fa_3['delegate'], delegates.IntegerDelegate )
+
+    def test_field_admin( self ):
+
+        class A(self.Entity):
+            a = schema.Column( types.Integer(), FieldAdmin(editable=False,
+                                                            maximum=10) )
+            
+            class Admin(EntityAdmin):
+                pass
+
+        self.create_all()
+        admin = self.app_admin.get_related_admin( A )
+        
+        fa = admin.get_field_attributes('a')
+        self.assertEqual( fa['editable'], False )
+        self.assertEqual( fa['maximum'], 10 )
+        
+    def test_relational_field_attributes( self ):
+        from camelot.core.orm import (Entity, OneToMany, ManyToMany, ManyToOne,
+                                      OneToOne)
+        
+        class A(self.Entity):
+            b = ManyToOne('B')
+            c = OneToOne('C')
+            d = OneToMany('D')
+            e = ManyToMany('E')
+            
+            class Admin(EntityAdmin):
+                pass
+            
+        class B(self.Entity):
+            a = OneToMany('A')
+          
+        class C(self.Entity):
+            a = ManyToOne('A')
+            
+        class D(self.Entity):
+            a = ManyToOne('A')
+            
+        class E(self.Entity):
+            a = ManyToMany('A')
+            
+        self.create_all()
+        admin = self.app_admin.get_related_admin( A )
+        
+        b_fa = admin.get_field_attributes('b')
+        self.assertEqual( b_fa['delegate'], delegates.Many2OneDelegate )
+        
+        c_fa = admin.get_field_attributes('c')
+        self.assertEqual( c_fa['delegate'], delegates.Many2OneDelegate )
+        
+        d_fa = admin.get_field_attributes('d')
+        self.assertEqual( d_fa['delegate'], delegates.One2ManyDelegate )
+        
+        e_fa = admin.get_field_attributes('e')
+        self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate ) 
+        

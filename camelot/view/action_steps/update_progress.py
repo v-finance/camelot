@@ -45,21 +45,24 @@ updated.
     appended to the text already there
 :param clear_details: clear the details text already there before putting 
     the new detail text.
+:param blocking: wait until the user presses `OK`, for example to review the
+    details.
 """
-    blocking = False
     
     def __init__( self,
                   value=0, 
                   maximum=0, 
                   text=None, 
                   detail=None, 
-                  clear_details=False ):
+                  clear_details=False,
+                  blocking=False ):
         super(UpdateProgress, self).__init__()
         self._value = value
         self._maximum = maximum
         self._text = text
         self._detail = detail
         self._clear_details = clear_details
+        self.blocking = blocking
         
     def __unicode__( self ):
         return u'Update Progress {0._value:03d}/{0._maximum:03d} {0._text}'.format( self )
@@ -72,12 +75,18 @@ updated.
         """
         progress_dialog = gui_context.progress_dialog
         if progress_dialog:
-            if progress_dialog.wasCanceled():
-                progress_dialog.reset()
-                raise CancelRequest()
             progress_dialog.setMaximum( self._maximum )
             progress_dialog.setValue( self._value )
             if self._text != None:
                 progress_dialog.setLabelText( six.text_type(self._text) )
-
-
+            if self._clear_details == True:
+                progress_dialog.clear_details()
+            if self._detail != None:
+                progress_dialog.add_detail( self._detail )
+            if self.blocking:
+                progress_dialog.set_ok_hidden( False )
+                progress_dialog.exec_()
+                progress_dialog.set_ok_hidden( True )
+            if progress_dialog.wasCanceled():
+                progress_dialog.reset()
+                raise CancelRequest()                

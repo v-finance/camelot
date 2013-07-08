@@ -34,6 +34,7 @@ machine.
 """
 
 import base64
+import copy
 import logging
 
 import six
@@ -44,156 +45,214 @@ from camelot.core.conf import settings
 
 logger = logging.getLogger('camelot.core.dbprofiles')
 
-def get_cipher():
-    from Crypto.Cipher import ARC4
-    if hasattr( settings, 'CAMELOT_DBPROFILES_CIPHER' ):
-        key = getattr( settings, 'CAMELOT_DBPROFILES_CIPHER' )
-    else:
-        key = 'The Knights Who Say Ni'
-    return ARC4.new( key )
+profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
+                   'port', 'media_location', 'locale_language', 'proxy_host',
+                   'proxy_port', 'proxy_username', 'proxy_password' ]
 
-def get_languagecode(profile=None):
+class Profile(object):
+    """This class holds the local configuration of the application, such as
+    the location of the database.  It provides some convenience functions to
+    store and retrieve this information to :class:`QtCore.QSettings`
+    
+    :param name: the name of the profile
     """
-    :return: two-letter ISO 639 language code
+    
+    def __init__( self, name, **kwargs ):
+        kwargs['name'] = name
+        for profile_field in profile_fields:
+            kwargs.setdefault( profile_field, '' )
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value )
+    
+    def get_connection_string( self ):
+        """The database connection string according to SQLAlchemy conventions,
+        as specified by this profile.
+        """
+        connection_string = '%s://'%self.dialect
+        if self.user or self.password:
+            connection_string = connection_string + '%s:%s@'%( self.user, 
+                                                               self.password )
+        if self.host:
+            connection_string = connection_string + self.host
+        if self.port:
+            connection_string = connection_string + ':%s'%self.port
+        connection_string = connection_string + '/%s'%self.database
+        return connection_string
+    
+    def create_engine( self, **kwargs ):
+        """
+        create a SQLAlchemy Engine from the selected profile, all arguments
+        are passed to the `create_engine` function.
+        """
+        from sqlalchemy import create_engine
+        kwargs.setdefault( 'pool_recycle', 600 )
+        if self.dialect == 'mysql':
+            kwargs.setdefault( 'connect_args', dict(charset='utf8') )
+        return create_engine( self.get_connection_string(), **kwargs )
+
+    def get_language_code(self):
+        """
+        :return: two-letter ISO 639 language code
+        """
+        return self.locale_language[:2]
+    
+    def get_country_code(self):
+        """
+        :return: two-letter ISO 3166 country code
+        """
+        return self.locale_language[2:]
+        
+    def __getstate__( self ):
+        """Retrieve the state of a profile object into a dictionary
+        
+        :return: a `dict` with the profile information, in encrypted and 
+            encoded form
+        """
+        state = dict()
+        for key, value in self.__dict__.iteritems():
+            # flip 'pass' and 'password' for backward compatibility
+            if key=='password':
+                key='pass'
+            elif key=='name':
+                key='profilename'
+            if key != 'profilename':
+                state[key] = self._encode(value)
+            else:
+                state[key] = (value or '').encode('utf-8')
+        return state
+    
+    def __setstate__( self, state ):
+        """Restore the state of a profile object.from a dictionary.
+        
+        :param state: a `dict` with the profile information in encrypted and
+            encoded form, as created by `__getstate__`.
+        """
+        for key, value in state.iteritems():
+            if key=='pass':
+                key='password'
+            if key=='profilename':
+                key='name'
+            if key != 'name':
+                value = self._decode(value)
+            else:
+                value = value.decode('utf-8')
+            setattr(self, key, value)
+
+    def _cipher( self ):
+        """:return: the :class:`Crypto.Cipher` object used for encryption and
+        decryption in :meth:`_encode` and :meth:`_decode`.
+        """
+        from Crypto.Cipher import ARC4
+        key = settings.get('CAMELOT_DBPROFILES_CIPHER', 
+                           'The Knights Who Say Ni')
+        return ARC4.new( key )
+    
+    def _encode( self, value ):
+        """Encrypt and encode a single value, this method is used in 
+        `__getstate_`"""
+        cipher = self._cipher()
+        return base64.b64encode( cipher.encrypt( unicode(value).encode('utf-8' ) ) )
+            
+    def _decode( self, value ):
+        """Decrypt and decode a single value, this method is used in 
+        `__setstate__`
+        """
+        cipher = self._cipher()
+        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')    
+
+class ProfileStore(object):
+    """Class that reads/writes profiles, either to a file or to the local
+    application settings.
+    
+    :param filename: the name of the file to read/write profiles from, if 
+        left to `None`, the application settings are used.
+       
+    :param profile_class: a serializeable class that can be used to create
+        new profile objects.
     """
-    if not profile:
-        profile = selected_profile_info()
-    return selected_profile_info()['locale_language'][:2]
-
-def get_countrycode(profile=None):
-    """
-    :return: two-letter ISO 3166 country code
-    """
-    if not profile:
-        profile = selected_profile_info()
-    return selected_profile_info()['locale_language'][2:]
-
-def _encode_setting(value):
-    return base64.b64encode( get_cipher().encrypt( six.text_type(value).encode('utf-8' ) ) )
-
-def _decode_setting(value):
-    return get_cipher().decrypt( base64.b64decode( value ) ).decode('utf-8')
-
-def selected_profile_info():
-    """
-    :return: a dict with the info of the selected profile
-    """
-    profiles = fetch_profiles()
-    profilename = last_used_profile()
-    try:
-        return profiles[profilename]
-    except KeyError:
-        logger.error( u'no profile named %s, available profiles are '%profilename )
-        for key in profiles.keys():
-            logger.error( u' - %s'%key )
-        raise
-
-def connection_string_from_profile( profile ):
-    connection_string = '%s://'%profile['dialect']
-    if profile['user'] or profile['pass']:
-        connection_string = connection_string + '%s:%s@'%( profile['user'], 
-                                                           profile['pass'] )
-    if profile['host']:
-        connection_string = connection_string + profile['host']
-    if profile['port']:
-        connection_string = connection_string + ':%s'%profile['port']
-    connection_string = connection_string + '/%s'%profile['database']
-    return connection_string
-
-def engine_from_profile():
-    """
-    Create a SQLAlchemy Engine from the selected profile
-    """
-    from sqlalchemy import create_engine
-    profile = selected_profile_info()
-    connect_args = dict()
-    if profile['dialect'] == 'mysql':
-        connect_args['charset'] = 'utf8'
-    connection_string = connection_string_from_profile( profile )
-    return create_engine(connection_string, pool_recycle=True, connect_args=connect_args)
-
-def media_root_from_profile():
-    """
-    Return the media root from the selected profile
-    """    
-    profile = selected_profile_info()
-    return profile['media_location']
-
-def stylesheet_from_profile():
-    profile = selected_profile_info()
-    from camelot.view import art
-    return art.read( 'stylesheet/office2007_' + profile.get('stylesheet', 'blue') + '.qss' )
-
-def last_used_profile():
-    settings = QtCore.QSettings()
-    return six.text_type(settings.value('last_used_database_profile',
-        py_to_variant('')).toString(), 'utf-8')
-
-def fetch_profiles(from_file=None):
-    profiles = {}
-    try:
-        if from_file is None:
-            settings = QtCore.QSettings()
+    
+    def __init__( self, filename=None, profile_class=Profile ):
+        self.profile_class = profile_class
+        if filename is None:
+            self.settings = QtCore.QSettings()
         else:
-            settings = QtCore.QSettings(from_file, QtCore.QSettings.IniFormat)
+            self.settings = QtCore.QSettings(filename, 
+                                             QtCore.QSettings.IniFormat)
 
-        size = settings.beginReadArray('database_profiles')
-
+    def read_profiles(self):
+        """
+        :return: a list of profiles read
+        """
+        profiles = []
+        size = self.settings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
-
+        empty = QtCore.QVariant('')
         for index in range(size):
-            settings.setArrayIndex(index)
-            info = {}
-            profilename = six.text_type(settings.value('profilename', py_to_variant('')).toString(), 'utf-8')
-            if not profilename:
-                continue  # well we should not really be doing anything
-            info['dialect'] = _decode_setting(settings.value('dialect', py_to_variant('')).toString())
-            info['host'] = _decode_setting(settings.value('host', py_to_variant('')).toString())
-            info['port'] = _decode_setting(settings.value('port', py_to_variant('')).toString())
-            info['database'] = _decode_setting(settings.value('database', py_to_variant('')).toString())
-            info['user'] = _decode_setting(settings.value('user', py_to_variant('')).toString())
-            info['pass'] = _decode_setting(settings.value('pass', py_to_variant('')).toString())
-            info['media_location'] = _decode_setting(settings.value('media_location', py_to_variant('')).toString())
-            info['locale_language'] = _decode_setting(settings.value('locale_language', py_to_variant('')).toString())
-            info['proxy_host'] = _decode_setting(settings.value('proxy_host', py_to_variant('')).toString())
-            info['proxy_port'] = _decode_setting(settings.value('proxy_port', py_to_variant('')).toString())
-            info['proxy_username'] = _decode_setting(settings.value('proxy_username', py_to_variant('')).toString())
-            info['proxy_password'] = _decode_setting(settings.value('proxy_password', py_to_variant('')).toString())
-            profiles[profilename] = info
-        settings.endArray()
-    except Exception as e:
-        logger.warn('Could not read existing profiles, proceed with what was available', exc_info=e)
-    return profiles
-
-def store_profiles(profiles, to_file=None):
-    if to_file is None:
-        settings = QtCore.QSettings()
-    else:
-        settings = QtCore.QSettings(to_file, QtCore.QSettings.IniFormat)
-
-    settings.beginWriteArray('database_profiles')
-
-    for index, (profilename, info) in enumerate(profiles.items()):
-        settings.setArrayIndex(index)
-        settings.setValue('profilename', py_to_variant(six.text_type(profilename).encode('utf-8')))
-        settings.setValue('dialect', py_to_variant(_encode_setting(info['dialect'])))
-        settings.setValue('host', py_to_variant(_encode_setting(info['host'])))
-        settings.setValue('port', py_to_variant(_encode_setting(info['port'])))
-        settings.setValue('database', py_to_variant(_encode_setting(info['database'])))
-        settings.setValue('user', py_to_variant(_encode_setting(info['user'])))
-        settings.setValue('pass', py_to_variant(_encode_setting(info['pass'])))
-        settings.setValue('media_location', py_to_variant(_encode_setting(info['media_location'])))
-        settings.setValue('locale_language', py_to_variant(_encode_setting(info['locale_language'])))
-        settings.setValue('proxy_host', py_to_variant(_encode_setting(info['proxy_host'])))
-        settings.setValue('proxy_port', py_to_variant(_encode_setting(info['proxy_port'])))
-        settings.setValue('proxy_username', py_to_variant(_encode_setting(info['proxy_username'])))
-        settings.setValue('proxy_password', py_to_variant(_encode_setting(info['proxy_password'])))
-    settings.endArray()
-
-def use_chosen_profile(profilename):
-    settings = QtCore.QSettings()
-    settings.setValue('last_used_database_profile', six.text_type(profilename).encode('utf-8') )
+            self.settings.setArrayIndex(index)
+            profile = self.profile_class(name=None)
+            state = profile.__getstate__()
+            for key in state.keys():
+                state[key] = str( self.settings.value(key, empty).toString() )
+            profile.__setstate__(state)
+            # only profiles with a name can be selected and handled
+            if profile.name:
+                profiles.append(profile)
+        self.settings.endArray()
+        return profiles
+    
+    def read_profile(self, name):
+        """
+        :return: the profile object with the requested name, 
+            `None` if there is no such profile
+        """
+        for profile in self.read_profiles():
+            if profile.name==name:
+                return profile
+            
+    def write_profiles(self, profiles):
+        """
+        :param profiles: a list of profiles
+        """    
+        self.settings.beginWriteArray('database_profiles')
+        for index, profile in enumerate(profiles):
+            self.settings.setArrayIndex(index)
+            for key, value in profile.__getstate__().iteritems():
+                self.settings.setValue(key, QtCore.QVariant(value))
+        self.settings.endArray()
+        
+    def write_profile(self, profile):
+        """
+        :param profile: a :class:`Profile` object
+        """
+        profiles = self.read_profiles()
+        for existing_profile in profiles:
+            if existing_profile.name == profile.name:
+                profiles.remove(existing_profile)
+                break
+        profiles.append(profile)
+        self.write_profiles(profiles)
+    
+    def get_last_profile(self):
+        """
+        :return: the last used profile, or `None` of no profile has been used
+            yet or the profile information is not available.
+        """
+        profiles = self.read_profiles()
+        name = unicode(self.settings.value('last_used_database_profile',
+                                           QtCore.QVariant('')).toString(), 
+                       'utf-8')
+        for profile in profiles:
+            if profile.name == name:
+                return profile
+            
+    def set_last_profile(self, profile):
+        """
+        :param profile: a profile that has been written to or is available in
+            the store
+        """
+        self.settings.setValue('last_used_database_profile', 
+                               profile.name.encode('utf-8') )
 
 class EmptyProxy():
 
@@ -234,5 +293,3 @@ def get_network_proxy():
         #return EmptyProxy()
 
     #return proxy
-
-

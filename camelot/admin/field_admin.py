@@ -22,12 +22,21 @@
 #
 #  ============================================================================
 
-"""Camelot is a python GUI framework on top of Elixir / Sqlalchemy inspired by
-the Django admin interface.  Start building applications at warp speed, simply
-by adding some additional information to you Elixir model."""
+from sqlalchemy import schema
 
-__version__ = '13.04.13'
+class FieldAdmin(schema.SchemaItem):
+    """Admin class to assign specific field attributes to SQLAlchemy columns
+    within the column definition ::
+    
+        rating = schema.Column(types.Integer(), FieldAdmin(maximum=10))
 
+    """
+    
+    def __init__( self, **field_attributes ):
+        self.fa = field_attributes
+        
+    def _set_parent(self, parent):
+        setattr(parent, '_field_admin', self)
 
-
-
+    def get_field_attributes(self):
+        return self.fa

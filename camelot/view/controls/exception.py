@@ -93,7 +93,3 @@ def model_thread_exception_message_box(exception_info):
     """
     dialog = ExceptionDialog( exception_info )
     dialog.exec_()
-
-
-
-

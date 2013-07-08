@@ -85,6 +85,67 @@ class CollectionGetterFromObjectGetter(object):
             self._collection = [self._object_getter()]
         return self._collection
 
+def variant_to_pyobject_1(qvariant=None):
+    """Try to convert a QVariant to a python object as good as possible"""
+    if not qvariant:
+        return None
+    if qvariant.isNull():
+        return None
+    type = qvariant.type()
+    if type == QtCore.QVariant.String:
+        value = unicode(qvariant.toString())
+    elif type == QtCore.QVariant.Date:
+        value = qvariant.toDate()
+        value = datetime.date( year=value.year(),
+                               month=value.month(),
+                               day=value.day() )
+    elif type == QtCore.QVariant.Int:
+        value = int(qvariant.toInt()[0])
+    elif type == QtCore.QVariant.LongLong:
+        value = int(qvariant.toLongLong()[0])
+    elif type == QtCore.QVariant.Double:
+        value = float(qvariant.toDouble()[0])
+    elif type == QtCore.QVariant.Bool:
+        value = bool(qvariant.toBool())
+    elif type == QtCore.QVariant.Time:
+        value = qvariant.toTime()
+        value = datetime.time( hour = value.hour(),
+                               minute = value.minute(),
+                               second = value.second() )        
+    elif type == QtCore.QVariant.DateTime:
+        value = qvariant.toDateTime()
+        value = value.toPyDateTime()
+    elif type == QtCore.QVariant.Color:
+        value = QtGui.QColor(qvariant)
+    else:
+        value = qvariant.toPyObject()
+
+    return value
+def variant_to_pyobject_2( value ):
+    if isinstance( value, QtCore.QDate ):
+        value = datetime.date( year = value.year(),
+                               month = value.month(),
+                               day = value.day() )
+    elif isinstance( value, QtCore.QTime ):
+        value = datetime.time( hour = value.hour(),
+                               minute = value.minute(),
+                               second = value.second() )        
+    elif isinstance( value, QtCore.QDateTime ):
+        date = value.date()
+        time = value.time()
+        value = datetime.datetime( year = date.year(),
+                                   month = date.month(),
+                                   day = date.day(),
+                                   hour = time.hour(),
+                                   minute = time.minute(),
+                                   second = time.second()                                   
+                                   )
+    return value
+
+if pyqt:
+    variant_to_pyobject = variant_to_pyobject_1
+else:
+    variant_to_pyobject = variant_to_pyobject_2
 #
 # Global dictionary containing all user defined translations in the
 # current locale

@@ -66,7 +66,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         # Search input
         from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
         self.search_input = DecoratedLineEdit(self)
-        self.search_input.set_background_text(_('Search...'))
+        self.search_input.setPlaceholderText(_('Search...'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
         self.search_input.returnPressed.connect( self.emit_search )
         self.search_input.textEdited.connect( self._start_search_timer )
@@ -111,7 +111,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer:
             timer.stop()
-        text = six.text_type(self.search_input.user_input())
+        text = six.text_type(self.search_input.text())
         self.search_signal.emit( text )
 
     @QtCore.pyqtSlot()

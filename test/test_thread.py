@@ -37,5 +37,5 @@ class ModelThreadCase( unittest.TestCase ):
         self.assertEqual( len( queue ), 0 )
         
     def test_model_thread( self ):
-        mt = signal_slot_model_thread.SignalSlotModelThread( lambda:None )
+        mt = signal_slot_model_thread.SignalSlotModelThread()
         mt.post( lambda:None )

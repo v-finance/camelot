@@ -22,10 +22,11 @@
 #
 #  ============================================================================
 
-from .backup import SelectBackup, SelectRestore
+from application import MainWindow, InstallTranslator, Exit
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
-                  ShowPixmap )
+from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
+                  ShowChart, ShowPixmap )
 from .item_view import Sort
 from .open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -45,7 +46,10 @@ __all__ = [
     CreateObject.__name__,
     DeleteObject.__name__,
     EditTextDocument.__name__,
+    Exit.__name__,
     FlushSession.__name__,
+    InstallTranslator.__name__,
+    MainWindow.__name__,
     MessageBox.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
@@ -59,6 +63,7 @@ __all__ = [
     Refresh.__name__,
     SelectBackup.__name__,
     SelectFile.__name__,
+    SelectItem.__name__,
     SelectObject.__name__,
     SelectRestore.__name__,
     ShowChart.__name__,

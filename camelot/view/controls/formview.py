@@ -66,7 +66,7 @@ class FormEditors( object ):
         
     def create_editor( self, field_name, parent ):
         """
-        :return: a :class:`QtGuiQWidget` or None if field_name is unknown
+        :return: a :class:`QtGui.QWidget` or `None` if field_name is unknown
         """
         index = self._index[field_name]
         model = self._widget_mapper.model()
@@ -78,6 +78,8 @@ class FormEditors( object ):
             model_index
         )
         widget_editor.setObjectName('%s_editor'%field_name)
+        stretch = self._field_attributes[field_name].get('stretch', 1)
+        widget_editor.setProperty('stretch', QtCore.QVariant(stretch))
         delegate.setEditorData( widget_editor, model_index )
         self._widget_mapper.addMapping( widget_editor, index )
         return widget_editor

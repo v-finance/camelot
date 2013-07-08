@@ -22,12 +22,24 @@
 #
 #  ============================================================================
 
-"""Camelot is a python GUI framework on top of Elixir / Sqlalchemy inspired by
-the Django admin interface.  Start building applications at warp speed, simply
-by adding some additional information to you Elixir model."""
+"""ModelContext, GuiContext and Actions that are used in the context of
+editing a single field on a form or in a table.
+"""
 
-__version__ = '13.04.13'
+from .application_action import ApplicationActionModelContext
 
+class FieldActionModelContext( ApplicationActionModelContext ):
+    """The context for a :class:`Action` on a field.  On top of the attributes of the 
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+    this context contains :
 
+    .. attribute:: obj
 
-
+       the object of which the field displays a field
+       
+    .. attribute:: field
+    
+       the name of the field that is being displayed
+       
+    """
+    pass

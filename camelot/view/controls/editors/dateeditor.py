@@ -53,7 +53,7 @@ class DateEditor(CustomEditor):
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()
         self.line_edit.set_minimum_width( six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)) )
-        self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
+        self.line_edit.setPlaceholderText( QtCore.QDate(2000,1,1).toString(self.date_format) )
 
         # The order of creation of this widgets and their parenting
         # seems very sensitive under windows and creates system crashes
@@ -125,15 +125,15 @@ class DateEditor(CustomEditor):
         if value:
             qdate = QtCore.QDate(value)
             formatted_date = qdate.toString(self.date_format)
-            self.line_edit.set_user_input(formatted_date)
+            self.line_edit.setText(formatted_date)
             self.calendar_widget.setSelectedDate(qdate)
         else:
-            self.line_edit.set_user_input('')
+            self.line_edit.setText('')
         self.valueChanged.emit()
 
     def text_edited(self, text ):
         try:
-            date_from_string( self.line_edit.user_input() )
+            date_from_string( unicode( self.line_edit.text() ) )
             self.line_edit.set_valid(True)
             self.valueChanged.emit()
         except ParsingError:
@@ -141,7 +141,7 @@ class DateEditor(CustomEditor):
 
     def get_value(self):
         try:
-            value = date_from_string( self.line_edit.user_input() )
+            value = date_from_string( unicode( self.line_edit.text() ) )
         except ParsingError:
             value = None
         return CustomEditor.get_value(self) or value

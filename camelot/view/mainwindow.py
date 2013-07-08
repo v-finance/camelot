@@ -56,8 +56,8 @@ class MainWindow(QtGui.QMainWindow):
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
-        self.workspace = DesktopWorkspace( self.app_admin, self )
         self.gui_context = gui_context
+        self.workspace = DesktopWorkspace( self.app_admin, self )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')
@@ -207,10 +207,17 @@ class MainWindow(QtGui.QMainWindow):
             toolbar.setFloatable( False )
             for action in toolbar_actions:
                 qaction = qactions.get( action, None )
+                if qaction != None:
+                    # the action already exists in the menu
+                    toolbar.addAction( qaction )
                 if qaction == None:
-                    qaction = action.render( self.gui_context, toolbar )
-                    qaction.triggered.connect( self.action_triggered )
-                toolbar.addAction( qaction )
+                    rendered = action.render( self.gui_context, toolbar )
+                    # both QWidgets and QActions can be put in a toolbar
+                    if isinstance(rendered, QtGui.QWidget):
+                        toolbar.addWidget(rendered)
+                    elif isinstance(rendered, QtGui.QAction):
+                        rendered.triggered.connect( self.action_triggered )
+                        toolbar.addAction( rendered )
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
                 

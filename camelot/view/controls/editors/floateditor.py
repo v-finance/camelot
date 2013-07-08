@@ -36,9 +36,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
     
     def __init__(self, option = None, parent = None):
-        super(CustomDoubleSpinBox, self).__init__(parent)
         self._option = option
-        self._locale = QtCore.QLocale()
+        self._locale = QtCore.QLocale()        
+        super(CustomDoubleSpinBox, self).__init__(parent)
     
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
@@ -69,10 +69,21 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
                 super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
 
     def textFromValue(self, value):
-        text = six.text_type( self._locale.toString( float(value), 
+        if value==self.minimum():
+            return ''
                                                'f', 
                                                self.decimals() ) )
         return text
+    
+    def validate(self, input, pos):
+        if len(unicode(input).strip())==0:
+            return (QtGui.QValidator.Acceptable, pos)
+        return super(CustomDoubleSpinBox, self).validate(input, pos)
+    
+    def valueFromText(self, text):
+        if len(unicode(text).strip())==0:
+            return self.minimum()
+        return super(CustomDoubleSpinBox, self).valueFromText(text)
         
     def paintEvent(self, event):
         super(CustomDoubleSpinBox, self).paintEvent(event)
@@ -106,7 +117,7 @@ class FloatEditor(CustomEditor):
         self.setFocusPolicy(Qt.StrongFocus)
         self.spinBox = CustomDoubleSpinBox(option, parent)
 
-        self.spinBox.setRange(minimum, maximum)
+        self.spinBox.setRange(minimum-1, maximum)
         self.spinBox.setDecimals(2)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
@@ -154,28 +165,23 @@ class FloatEditor(CustomEditor):
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        if value:
-            self.spinBox.setValue( float(value) )
-        elif value == None:
-            self.spinBox.lineEdit().setText('')
+        if value is None:
+            self.spinBox.setValue(self.spinBox.minimum())
         else:
-            self.spinBox.setValue(0.0)
+            self.spinBox.setValue(float(value))
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading
 
-        if self.spinBox.text()=='':
-            return None
-        
         self.spinBox.interpretText()
         value = self.spinBox.value()
-
-        if self._decimal:
+        if value==self.spinBox.minimum():
+            return None
+        elif self._decimal:
             import decimal
-            value = decimal.Decimal('%.*f' % (self.spinBox.decimals(), value))
-
+            return decimal.Decimal('%.*f' % (self.spinBox.decimals(), value))
         return value
 
     def set_enabled(self, editable=True):

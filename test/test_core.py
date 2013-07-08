@@ -1,6 +1,9 @@
+import os
+import tempfile
 import unittest
 
 from camelot.core.memento import memento_change, memento_types
+from camelot.core.dbprofiles import Profile, ProfileStore
 from camelot.test import ModelThreadTestCase
 
 memento_id_counter = 0
@@ -58,7 +61,45 @@ class MementoCase( ModelThreadTestCase ):
                                                   [self.id_counter],
                                                   {} ) )
         self.assertEqual( len(changes), 1 )
-                        
+       
+class ProfileCase(unittest.TestCase):
+    """Test the save/restore and selection functions of the database profile
+    """
+    
+    def test_profile_state( self ):
+        name, host, password = 'profile_test', '192.168.1.1', 'top-secret'
+        profile = Profile( name=name, host=host, password=password )
+        state = profile.__getstate__()
+        # name should not be encrypted, others should
+        self.assertEqual( state['profilename'], name )
+        self.assertNotEqual( state['host'], host )
+        self.assertNotEqual( state['pass'], password )
+        new_profile = Profile(name=None)
+        new_profile.__setstate__( state )
+        self.assertEqual( new_profile.name, name )
+        self.assertEqual( new_profile.host, host )
+        self.assertEqual( new_profile.password, password )
+        
+    def test_profile_store( self ):
+        handle, filename = tempfile.mkstemp()
+        os.close(handle)
+        # test with a profile store from file, to avoid test inference
+        store = ProfileStore(filename)
+        self.assertEqual( store.read_profiles(), [] )
+        self.assertEqual( store.get_last_profile(), None )
+        profile_1 = Profile('profile_1')
+        profile_2 = Profile('profile_2')
+        store.write_profiles( [profile_1, profile_2] )
+        self.assertEqual( len(store.read_profiles()), 2 )
+        store.set_last_profile( profile_1 )
+        self.assertTrue( store.get_last_profile().name, 'profile_1' )
+        store.set_last_profile( profile_2 )
+        self.assertTrue( store.get_last_profile().name, 'profile_2' )
+        os.remove(filename)
+        # construct a profile store from application settings
+        store = ProfileStore()
+        store.read_profiles()
+
 class ConfCase(unittest.TestCase):
     """Test the global configuration"""
     

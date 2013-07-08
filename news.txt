@@ -1,6 +1,12 @@
 Development
 -----------
 
+ * Introduction of the :class:`camelot.admin.field_admin.FieldAdmin` class to
+   allow definition of the field attributes within the entity class.
+ 
+Release 13.04.13
+----------------
+
  * Uses SQLAlchemy 0.8.0
  
  * All default models migrated from Elixir to Declarative

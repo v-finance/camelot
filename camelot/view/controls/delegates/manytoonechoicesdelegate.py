@@ -25,8 +25,9 @@ from .customdelegate import CustomDelegate
 from camelot.view.controls import editors
 
 class ManyToOneChoicesDelegate( CustomDelegate ):
-    """Display a ManyToOne field as a ComboBox, filling the list of choices with
-  the objects of the target class. 
+    """Display a ManyToOne or a relationship field as a ComboBox, filling the 
+  list of choices with the objects of the target class.   This delegate will
+  not work on non relationship fields.
   
   .. image:: /_static/enumeration.png
   

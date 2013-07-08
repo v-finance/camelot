@@ -306,7 +306,14 @@ class OpenNewView( EditAction ):
     
     def gui_run( self, gui_context ):
         from camelot.view.workspace import show_top_level
+        from camelot.view.controls.inheritance import SubclassDialog
         admin = gui_context.admin
+        # todo : subclass selection should be model thread driven
+        if len(admin.get_subclass_tree()):
+            dialog = SubclassDialog( admin=admin, parent=None )
+            if dialog.exec_() == QtGui.QDialog.Rejected:
+                return
+            admin = dialog.selected_subclass
         model = gui_context.item_view.model()
         form = admin.create_new_view( related_collection_proxy=model,
                                       parent = None )
@@ -600,9 +607,9 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            for i, ((_name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
+            for i, ((name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
                 attributes.update( delta_attributes )
-                value = attributes['getter']( obj )
+                value = getattr( obj, name )
                 format_string = '0'
                 if value != None:
                     if isinstance( value, Decimal ):
@@ -665,11 +672,11 @@ class PrintPreview( ListContextAction ):
         columns = model_context.admin.get_columns()
         
         table = []
-        getters = [field_attributes['getter'] for _field, field_attributes in columns]
+        fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
         column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getters[i]( obj ) ) for i in column_range] )
+            table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
           'title': model_context.admin.get_verbose_name_plural(),
           'table': table,
@@ -842,5 +849,7 @@ class RemoveSelection( DeleteSelection ):
             
     def handle_object( self, model_context, obj ):
         model_context._model.remove( obj )
-        raise StopIteration
+        # no StopIteration, since the supergenerator needs to
+        # continue to flush the session
+        yield None
 

@@ -61,21 +61,29 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
     :param choices: a list of (value,name) tuples.  name will be displayed in the combobox,
     while value will be used within get_value and set_value.  This method changes the items
     in the combo box while preserving the current value, even if this value is not in the
-    new list of choices.
+    new list of choices.  If there is no item with value `None` in the list of choices,
+    this will be added.
         """
         current_index = self.currentIndex()
         if current_index >= 0:
             current_name = six.text_type(self.itemText(current_index))
         current_value = self.get_value()
         current_value_available = False
+        none_available = False
         for i in range(self.count(), 0, -1):
             self.removeItem(i-1)
         for i, (value, name) in enumerate(choices):
             self.insertItem(i, six.text_type(name), py_to_variant(value))
             if value == current_value:
                 current_value_available = True
+            if value == None:
+                none_available = True
         if not current_value_available and current_index > 0:
-            self.insertItem(i+1, current_name, py_to_variant(current_value))
+            i = i+1
+            self.insertItem(i, current_name, QtCore.QVariant(current_value))
+        if not none_available and current_value!=None:
+            i = i+1
+            self.insertItem(i, '', QtCore.QVariant(None))
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
         if current_value != ValueLoading:

@@ -60,6 +60,10 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     def _activated(self, _index):
         self.editingFinished.emit()
             
+    def set_field_attributes(self, editable=True, **kwargs):
+        super(LanguageEditor, self).set_field_attributes(editable=editable, **kwargs)
+        self.setEnabled(editable!=False)
+        
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value:

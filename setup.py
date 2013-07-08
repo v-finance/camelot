@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 import os
+import sys
 import camelot
 from setuptools import setup, find_packages
 
 src_dir = os.path.dirname(__file__)
 README = os.path.join(src_dir, 'readme.txt')
 long_description = open(README).read() + '\n\n'
-dependencies = os.path.join(src_dir, 'dependencies.txt') 
+dependencies = os.path.join(src_dir, 'requirements.txt') 
 install_requires = open( dependencies ).read().splitlines()
+if sys.platform.startswith('win'):
+    install_requires.append('winpaths')
 
 setup(
     name = 'Camelot',
@@ -44,7 +47,10 @@ setup(
                      'camelot_admin = camelot.bin.camelot_admin:main',
                      'camelot_example = camelot_example.main:main',
                      'camelot_mini_example = camelot_example.mini_main:main',
-                    ]
+                    ],
+                    'setuptools.installation':[
+                     'eggsecutable = camelot_example.main:main',
+                    ],                   
                     },
     classifiers=[
               'Development Status :: 5 - Production/Stable',

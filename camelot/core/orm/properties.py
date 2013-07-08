@@ -52,13 +52,27 @@ Here is a quick example of how to use ``has_property``.
                      lambda c: column_property(
                          (c.quantity * c.unit_price).label('price')))
 """
-
+from sqlalchemy import orm, schema
 import six
 
-from sqlalchemy import orm
 
 from . statements import ClassMutator
+from . import options
 
+class CounterMeta(type):
+    '''
+    A simple meta class which adds a ``_counter`` attribute to the instances of
+    the classes it is used on. This counter is simply incremented for each new
+    instance.
+    '''
+    counter = 0
+
+    def __call__(self, *args, **kwargs):
+        instance = type.__call__(self, *args, **kwargs)
+        instance.counter = CounterMeta.counter
+        CounterMeta.counter += 1
+        return instance
+    
 class EntityBuilder( object ):
     """
     Abstract base class for all entity builders. An Entity builder is a class
@@ -70,6 +84,26 @@ class EntityBuilder( object ):
     in the correct order (for example, that the table is fully created before
     the mapper that use it is defined).
     """
+    
+    __metaclass__ = CounterMeta
+
+    def __init__(self, *args, **kwargs):
+        self.entity = None
+        self.name = None
+
+    def __lt__(self, builder):
+        return self.counter < builder.counter
+    
+    def attach( self, entity, name ):
+        """Attach this property to its entity, using 'name' as name.
+
+        Properties will be attached in the order they were declared.
+        """
+        self.entity = entity
+        self.name = name
+
+    def __repr__(self):
+        return "EntityBuilder(%s, %s)" % (self.name, self.entity)
     
     def create_pk_cols(self):
         pass
@@ -102,44 +136,17 @@ class EntityBuilder( object ):
 
     def finalize(self):
         pass
-        
-class CounterMeta(type):
-    '''
-    A simple meta class which adds a ``_counter`` attribute to the instances of
-    the classes it is used on. This counter is simply incremented for each new
-    instance.
-    '''
-    counter = 0
-
-    def __call__(self, *args, **kwargs):
-        instance = type.__call__(self, *args, **kwargs)
-        instance.counter = CounterMeta.counter
-        CounterMeta.counter += 1
-        return instance
     
-class Property( six.with_metaclass( CounterMeta, EntityBuilder ) ):
-    """
-    Abstract base class for all properties of an Entity that are not handled
-    by Declarative but should be handled by EntityMeta before a new Entity
-    subclass is constructed
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.entity = None
-        self.name = None
-
-    def attach( self, entity, name ):
-        """Attach this property to its entity, using 'name' as name.
-
-        Properties will be attached in the order they were declared.
-        """
-        self.entity = entity
-        self.name = name
-
-    def __repr__(self):
-        return "Property(%s, %s)" % (self.name, self.entity)
-
-class DeferredProperty( Property ):
+class PrimaryKeyProperty( EntityBuilder ):
+    
+    def create_pk_cols(self):
+        from camelot.types import PrimaryKey
+        setattr( self.entity,
+                 self.name,
+                 schema.Column( self.name, PrimaryKey(), 
+                                **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS) )
+    
+class DeferredProperty( EntityBuilder ):
     """Abstract base class for all properties of an Entity that are not 
     handled by Declarative but should be handled after a mapper was
     configured"""

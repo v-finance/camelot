@@ -27,6 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
@@ -124,6 +125,13 @@ be specified using the verbose_name attribute.
 
 **Behaviour**
 
+.. attribute:: list_action
+
+   The :class:`camelot.admin.action.base.Action` that will be triggered when the
+   user selects an item in a list of objects.  This defaults to 
+   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
+   for the current object.
+   
 .. attribute:: form_close_action
 
     The action triggered when the form window is closed by the operating system or the window manager.  By default this is the
@@ -226,6 +234,7 @@ be specified using the verbose_name attribute.
     form_display = []
     form_close_action = CloseForm()
     list_filter = []
+    list_action = OpenFormView()
     list_actions = []
     list_size = (600, 600)
     form_size = (700, 500)
@@ -376,6 +385,14 @@ be specified using the verbose_name attribute.
     @model_function
     def get_list_actions(self):
         return self.list_actions
+    
+    def get_list_action(self):
+        """Get the action that should be triggered when an object is selected
+        in a table of objects.
+        
+        :return: by default returns the `list_action` attribute
+        """
+        return self.list_action
 
     @model_function
     def get_depending_objects(self, obj):
@@ -388,7 +405,6 @@ be specified using the verbose_name attribute.
         """
         return []
     
-    @model_function
     def get_compounding_objects(self, obj):
         """Overwrite this function to generate a list of objects out of which
         `obj` is build.  These objects will be validated if `obj` is 
@@ -406,7 +422,6 @@ be specified using the verbose_name attribute.
         """
         return []
 
-    @model_function
     def get_subclass_tree( self ):
         """Get a tree of admin classes representing the subclasses of the class
         represented by this admin class
@@ -488,7 +503,7 @@ be specified using the verbose_name attribute.
         """
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
-            dynamic_field_attributes = {}
+            dynamic_field_attributes = {'obj':obj}
             for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
@@ -533,16 +548,11 @@ be specified using the verbose_name attribute.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-
-            def create_default_getter(field_name):
-                return lambda o:getattr(o, field_name)
-
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
             #
             attributes = dict(
-                getter=create_default_getter(field_name),
                 to_string = to_string,
                 field_name=field_name,
                 python_type=str,
@@ -638,7 +648,6 @@ be specified using the verbose_name attribute.
                                model = model, 
                                initial_validation = initial_validation )
 
-    @model_function
     def get_fields(self):
         fields = self.get_form_display().get_fields()
         fields_and_attributes =  [
@@ -665,7 +674,6 @@ be specified using the verbose_name attribute.
         fields.update(dict(self.get_fields()))
         return fields
 
-    @model_function
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
@@ -724,7 +732,7 @@ be specified using the verbose_name attribute.
                 # prevent the setting of a default value when one has been
                 # set already
                 #
-                value = attributes['getter'](object_instance)
+                value = getattr(object_instance, field)
                 if value not in (None, []):
                     # False is a legitimate value for Booleans, but a 
                     # one-to-many field might have a default value as well
@@ -835,7 +843,7 @@ be specified using the verbose_name attribute.
                     admin.add( self._new_object )
                     admin.set_defaults(self._new_object)
                     if self._related_collection_proxy:
-                        self._related_collection_proxy.append_object( self._new_object )
+                        self._related_collection_proxy.append_object( self._new_object, flush=False )
                 return self._new_object
                 
             def get_collection(self):
