@@ -28,6 +28,8 @@ import base64
 import datetime
 import threading
 
+import six
+
 from sqlalchemy import types
 
 from sqlalchemy.schema import Column, ForeignKey

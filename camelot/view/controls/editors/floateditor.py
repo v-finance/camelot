@@ -71,17 +71,18 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-                                               'f', 
-                                               self.decimals() ) )
+        text = six.text_type( self._locale.toString( float(value),
+                                                     'f', 
+                                                     self.decimals() ) )
         return text
     
     def validate(self, input, pos):
-        if len(unicode(input).strip())==0:
+        if len(six.text_type(input).strip())==0:
             return (QtGui.QValidator.Acceptable, pos)
         return super(CustomDoubleSpinBox, self).validate(input, pos)
     
     def valueFromText(self, text):
-        if len(unicode(text).strip())==0:
+        if len(six.text_type(text).strip())==0:
             return self.minimum()
         return super(CustomDoubleSpinBox, self).valueFromText(text)
         

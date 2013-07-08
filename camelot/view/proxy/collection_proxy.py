@@ -679,7 +679,7 @@ position in the query.
                 if tooltip is not None:
                     if role == Qt.ToolTipRole:
                         return py_to_variant(six.text_type(tooltip))
-         return self.sourceModel().headerData(section, orientation, role)
+        return self.sourceModel().headerData(section, orientation, role)
 
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""

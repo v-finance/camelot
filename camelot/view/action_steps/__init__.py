@@ -22,17 +22,17 @@
 #
 #  ============================================================================
 
-from application import MainWindow, InstallTranslator, Exit
+from .application import MainWindow, InstallTranslator, Exit
+from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
-from .gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
-from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
-                  ShowChart, ShowPixmap )
+from .gui import (CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
+                  ShowChart, ShowPixmap)
 from .item_view import Sort
-from .open_file import ( OpenFile, OpenStream, 
-                        OpenString, OpenJinjaTemplate, WordJinjaTemplate )
+from .open_file import (OpenFile, OpenStream, 
+                        OpenString, OpenJinjaTemplate, WordJinjaTemplate)
 from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from .print_preview import ( PrintChart, PrintHtml, PrintPreview, 
-                            PrintJinjaTemplate )
+from .print_preview import (PrintChart, PrintHtml, PrintPreview, 
+                            PrintJinjaTemplate)
 from .select_file import SelectFile
 from .select_object import SelectObject
 from .text_edit import EditTextDocument
@@ -73,5 +73,3 @@ __all__ = [
     UpdateProgress.__name__,
     WordJinjaTemplate.__name__,
     ]
-
-
