@@ -105,7 +105,7 @@ def apidoc(source, destination):
             if dirname == source:
                 title = '%s API'%(dirname.capitalize())
             ifn = os.path.join( targetdir, 'index.rst' )
-            module_name = dirname.replace('/', '.')
+            module_name = dirname.replace(os.path.sep, '.')
             with open( ifn, 'w' ) as index:
                lines = [ '=' * len(title),
                          title,
