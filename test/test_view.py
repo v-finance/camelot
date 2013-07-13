@@ -51,6 +51,14 @@ class EditorsTest(ModelThreadTestCase):
     from camelot.view.controls import editors
     from camelot.view.proxy import ValueLoading
 
+    def setUp(self):
+        super(EditorsTest, self).setUp()
+        self.option = QtGui.QStyleOptionViewItem()
+        # set version to 5 to indicate the widget will appear on a
+        # a form view and not on a table view, so it should not
+        # set its background
+        self.option.version = 5
+        
     def assert_valid_editor( self, editor, value ):
         """Test the basic functions of an editor that are needed to integrate
         well with Camelot and Qt
@@ -288,7 +296,8 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
         editor = self.editors.FloatEditor(parent=None,  
-                                          suffix='suffix')
+                                          suffix='suffix',
+                                          option=self.option)
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -297,8 +306,15 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 5.45 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
+        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        spinbox.keyPressEvent(up)
+        self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor.spinBox.setValue( 0.0 )
+        editor = self.editors.FloatEditor(parent=None, 
+                                          prefix='prefix') 
+        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
         # verify if the calculator button is turned off
         editor = self.editors.FloatEditor(parent=None, 
