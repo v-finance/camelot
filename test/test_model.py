@@ -319,19 +319,11 @@ class PartyCase( ExampleModelCase ):
         org.fax = ('fax', '4567')
         self.organization_admin.flush( org )
         self.assertTrue( unicode( org ) )
-        self.assertEqual( org.number_of_shares_issued, 0 )
         query = orm.object_session( org ).query( party.Organization )
         self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
         self.assertTrue( query.filter( party.Organization.phone == ('phone', '1234') ).first() )
         self.assertTrue( query.filter( party.Organization.fax == ('fax', '4567') ).first() )
         return org
-    
-    def test_party_relationship( self ):
-        person = self.test_person()
-        org = self.test_organization()
-        employee = party.EmployerEmployee( established_from = org,
-                                           established_to = person )
-        self.assertTrue( unicode( employee ) )
         
     def test_party_contact_mechanism( self ):
         person = self.test_person()
