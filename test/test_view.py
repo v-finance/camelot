@@ -732,13 +732,14 @@ class DelegateTest(ModelThreadTestCase):
         delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
+        # the spinbox supports one less then minfloat to hold None
+        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat-1)
         self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 3.145)
         delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
+        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat-1)
         self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 0, 'disabled')
 
