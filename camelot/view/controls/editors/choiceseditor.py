@@ -70,6 +70,8 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         current_value = self.get_value()
         current_value_available = False
         none_available = False
+        # set i to -1 to handle case of no available choices
+        i = -1
         for i in range(self.count(), 0, -1):
             self.removeItem(i-1)
         for i, (value, name) in enumerate(choices):

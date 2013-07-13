@@ -1133,8 +1133,13 @@ position in the query.
             locker = QtCore.QMutexLocker(self._mutex)
             if row not in self.rows_under_request:    
                 self.rows_under_request.add( row )
+                #
+                # unlock before posting to model thread, since in the
+                # single threaded mode, the model thread function needs to
+                # acquire the lock
+                #
+                locker.unlock()
                 post( self._extend_cache, self._cache_extended )
-            locker.unlock()
             return empty_row_data
 
     @model_function

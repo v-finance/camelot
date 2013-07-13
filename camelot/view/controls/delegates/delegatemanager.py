@@ -52,7 +52,6 @@ class DelegateManager(QtGui.QItemDelegate):
 
     def insertColumnDelegate(self, column, delegate):
         """Inserts a custom column delegate"""
-        logger.debug('inserting delegate for column %s' % column)
         assert delegate != None
         delegate.setParent(self)
         self.delegates[column] = delegate
