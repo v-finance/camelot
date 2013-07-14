@@ -286,8 +286,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
 
     def test_FloatEditor(self):
-        editor = self.editors.FloatEditor(parent=None, 
-                                          prefix='prefix')
+        editor = self.editors.FloatEditor(parent=None)
+        editor.set_field_attributes(prefix='prefix')
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
@@ -295,9 +295,8 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor = self.editors.FloatEditor(parent=None,  
-                                          suffix='suffix',
-                                          option=self.option)
+        editor = self.editors.FloatEditor(parent=None, option=self.option)
+        editor.set_field_attributes(suffix='suffix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -311,11 +310,13 @@ class EditorsTest(ModelThreadTestCase):
         spinbox.keyPressEvent(up)
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor = self.editors.FloatEditor(parent=None, 
-                                          prefix='prefix') 
+        editor = self.editors.FloatEditor(parent=None)
+        editor.set_field_attributes(prefix='prefix', suffix='suffix')
         spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
+        self.assertEqual(spinbox.validate(QtCore.QString('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(QtCore.QString('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
         editor = self.editors.FloatEditor(parent=None, 
                                           calculator=False)

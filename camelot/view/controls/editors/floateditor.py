@@ -83,13 +83,35 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
                                                self.decimals() ) )
         return text
     
-    def validate(self, input, pos):
-        if len(unicode(input).strip())==0:
-            return (QtGui.QValidator.Acceptable, pos)
-        return super(CustomDoubleSpinBox, self).validate(input, pos)
+    def stripped(self, qinput):
+        """Strip a string from its prefix, suffix and spaces
+        
+        :param qinput: a :class:`QtCore.QString`
+        """
+        # this code is based on QAbstractSpinBoxPrivate::stripped
+        copy_from = 0
+        copy_to = -1
+        if self.prefix().size() and qinput.startsWith(self.prefix()):
+            copy_from += self.prefix().size()
+        if self.suffix().size() and qinput.endsWith(self.suffix()):
+            copy_to = -1*self.suffix().size()
+        partial_input = unicode(qinput)[copy_from:copy_to]
+        return partial_input.strip()
+    
+    def validate(self, qinput, pos):
+        """Method overwritten from :class:`QtGui.QDoubleSpinBox` to handle
+        an empty string as a special value for `None`.
+        """
+        valid, new_pos = super(CustomDoubleSpinBox, self).validate(qinput, pos)
+        if valid!=QtGui.QValidator.Acceptable:
+            # this code is based on QSpinBoxPrivate::validateAndInterpret
+            if len(self.stripped(qinput))==0:
+                valid = QtGui.QValidator.Acceptable
+        return valid, new_pos
     
     def valueFromText(self, text):
-        if len(unicode(text).strip())==0:
+        # this code is based on QSpinBoxPrivate::validateAndInterpret
+        if len(self.stripped(text))==0:
             return self.minimum()
         return super(CustomDoubleSpinBox, self).valueFromText(text)
         
