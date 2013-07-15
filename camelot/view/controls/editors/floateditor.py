@@ -216,7 +216,7 @@ class FloatEditor(CustomEditor):
             return None
         elif self._decimal:
             import decimal
-            return decimal.Decimal('%.*f' % (self.spinBox.decimals(), value))
+            return decimal.Decimal('%.*f' % (spinBox.decimals(), value))
         return value
 
     def set_enabled(self, editable=True):
