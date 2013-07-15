@@ -116,7 +116,7 @@ class SelectProfile( Action ):
         profiles = self.profile_store.read_profiles()        
         selected_profile = None
         if len(profiles):
-            profiles.sort( key=lambda p:p.name )
+            profiles.sort()
             last_profile = self.profile_store.get_last_profile()
             items = [(None,'')] + [(p,p.name) for p in profiles]
             select_profile = action_steps.SelectItem( items )

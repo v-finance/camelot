@@ -35,6 +35,7 @@ machine.
 
 import base64
 import copy
+import functools
 import logging
 
 from PyQt4 import QtCore
@@ -47,12 +48,16 @@ profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
                    'port', 'media_location', 'locale_language', 'proxy_host',
                    'proxy_port', 'proxy_username', 'proxy_password' ]
 
+@functools.total_ordering
 class Profile(object):
     """This class holds the local configuration of the application, such as
     the location of the database.  It provides some convenience functions to
     store and retrieve this information to :class:`QtCore.QSettings`
     
     :param name: the name of the profile
+    
+    The Profile class has ordering methods based on the name of the profile
+    object.
     """
     
     def __init__( self, name, **kwargs ):
@@ -136,6 +141,19 @@ class Profile(object):
                 value = value.decode('utf-8')
             setattr(self, key, value)
 
+    def __lt__(self, other):
+        if isinstance(other, Profile):
+            return self.name.__lt__(other.name)
+        return id(self) < id(other)
+    
+    def __eq__(self, other):
+        if isinstance(other, Profile):
+            return self.name.__eq__(other.name)
+        return False
+    
+    def __hash__(self):
+        return hash(self.name)
+    
     def _cipher( self ):
         """:return: the :class:`Crypto.Cipher` object used for encryption and
         decryption in :meth:`_encode` and :meth:`_decode`.
