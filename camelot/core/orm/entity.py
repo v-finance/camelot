@@ -40,18 +40,6 @@ from sqlalchemy.ext import hybrid
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
-
-class PrimaryKeyColumn(schema.Column):
-    """Column that gets its attributes from 
-    `options.DEFAULT_AUTO_PRIMARYKEY_KWARGS`, this allows the deferred setting
-    of attributes for the primary key column.
-    """
-    
-    def __getattribute__(self, key):
-	try:
-	    return options.DEFAULT_AUTO_PRIMARYKEY_KWARGS[key]
-	except KeyError:
-	    return super(PrimaryKeyColumn,self).__getattribute__(key)
 	
 class EntityDescriptor(object):
     """
@@ -352,8 +340,12 @@ def dict_to_entity( entity, data ):
         else:
             setattr(entity, key, value)
     
-def entity_to_dict( entity, deep = {}, exclude = []  ):
-    """Generate a JSON-style nested dict/list structure from an object."""
+def entity_to_dict( entity, deep = {}, exclude = [], deep_primary_key=False ):
+    """Generate a JSON-style nested dict/list structure from an object.
+    
+    :param deep_primary_key: when related objects are generated, preserve
+        the primary key of those related objects
+    """
     
     mapper = orm.object_mapper( entity )
     
@@ -361,19 +353,20 @@ def entity_to_dict( entity, deep = {}, exclude = []  ):
                                   if isinstance(p, orm.properties.ColumnProperty)]
     data = dict([(name, getattr(entity, name))
                  for name in col_prop_names if name not in exclude])
-    
     for rname, rdeep in deep.iteritems():
         dbdata = getattr(entity, rname)
         prop = mapper.get_property( rname )
         fks = prop.remote_side
         #FIXME: use attribute names (ie coltoprop) instead of column names
-        remote_exclude = exclude + [ c.name for c in fks ]        
+	remote_exclude = exclude + [ c.name for c in fks ]
+	if prop.direction==orm.interfaces.MANYTOONE and deep_primary_key:
+	    remote_exclude = exclude
         if dbdata is None:
             data[rname] = None            
         elif isinstance(dbdata, list):            
-            data[rname] = [ entity_to_dict( o, rdeep, remote_exclude ) for o in dbdata ]
+            data[rname] = [ entity_to_dict( o, rdeep, remote_exclude, deep_primary_key ) for o in dbdata ]
         else:
-            data[rname] = entity_to_dict( dbdata, rdeep, remote_exclude )
+            data[rname] = entity_to_dict( dbdata, rdeep, remote_exclude, deep_primary_key )
     
     return data    
 
@@ -411,9 +404,9 @@ class EntityBase( object ):
         """
         return dict_to_entity( self, data )
 
-    def to_dict( self, deep = {}, exclude = [] ):
+    def to_dict( self, deep = {}, exclude = [], deep_primary_key=False ):
         """Generate a JSON-style nested dict/list structure from an object."""
-        return entity_to_dict( self, deep, exclude )
+        return entity_to_dict( self, deep, exclude, deep_primary_key )
 
     # session methods
     def flush(self, *args, **kwargs):

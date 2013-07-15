@@ -115,6 +115,15 @@ class TestDeepSet( TestMetaData ):
         self.assertEqual( t2.to_dict(deep={'tbl1': {}}),
                           {'t2id': 1, 'name': 'test2', 'tbl1_t1id': 1,
                            'tbl1': {'name': 'test1'}} )
+        
+    def test_to_deep_primary_key_m2o(self):
+        with self.session.begin():
+            t1 = self.Table1(t1id=1, name='test1')
+            t2 = self.Table2(t2id=1, name='test2', tbl1=t1)
+
+        self.assertEqual( t2.to_dict(deep={'tbl1': {}}, deep_primary_key=True),
+                          {'t2id': 1, 'name': 'test2', 'tbl1_t1id': 1,
+                           'tbl1': {'name': 'test1', 't1id': 1}} )
 
     def test_to_deep_m2o_none(self):
         with self.session.begin():
