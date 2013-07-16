@@ -120,8 +120,9 @@ class EntityDescriptor(object):
 	    return
 	
 	base_descriptor = getattr( self.entity_base, '_descriptor', None )
+	has_table = hasattr(self.entity, '__table__')
 
-        if not self.has_pk and base_descriptor == None:
+        if not self.has_pk and base_descriptor == None and not has_table:
 	    colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
 	    builder = PrimaryKeyProperty()
 	    builder.attach( self.entity, colname )
