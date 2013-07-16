@@ -286,6 +286,7 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
 
     def test_FloatEditor(self):
+        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
         editor = self.editors.FloatEditor(parent=None)
         editor.set_field_attributes(prefix='prefix')
         self.assert_vertical_size( editor )
@@ -307,6 +308,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), None )
         up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
         spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        self.assertEqual(spinbox.minimum(), camelot_minfloat-1)
+        self.assertEqual(spinbox.maximum(), camelot_maxfloat)        
         spinbox.keyPressEvent(up)
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
@@ -745,19 +748,13 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, intervals, 'disabled')
 
     def testFloatDelegate(self):
-        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
         delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        # the spinbox supports one less then minfloat to hold None
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat-1)
-        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 3.145)
         delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat-1)
-        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 0, 'disabled')
 
     def testColoredFloatDelegate(self):

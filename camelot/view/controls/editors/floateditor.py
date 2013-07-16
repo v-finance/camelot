@@ -90,7 +90,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         """
         # this code is based on QAbstractSpinBoxPrivate::stripped
         copy_from = 0
-        copy_to = -1
+        copy_to = qinput.size()
         if self.prefix().size() and qinput.startsWith(self.prefix()):
             copy_from += self.prefix().size()
         if self.suffix().size() and qinput.endsWith(self.suffix()):

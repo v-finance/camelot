@@ -37,39 +37,7 @@ from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
 class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator
-
-Special use cases of the IntegerEditor :
-
-case 1
-------
-
-we have a required integer field without a default.
-
-so the model will do set_value( None )
-
-since this is a required field, the user should be able
-to enter a value, 0 is a legitimate value.
-
-when get_value is called, 0 should be returned if the
-user has set the editor to 0, and None if the user didn't
-touch the editor.
-
-so the editor should make a visual difference between
-None and 0, so the user can see he didn't enter something
-yet
-
-case 2
-------
-
-we have a non required integer field without a default
-
-the model will do set_value( None )
-
-the get_value() should return None and not 0.  because
-in case it returns 0, 0 will be written to the db, causing
-an unneeded update of the db.
-
-"""
+    """
 
     calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
     
@@ -94,7 +62,6 @@ an unneeded update of the db.
         self.spinBox.setDecimals(0)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.addAction(action)
-        self.spinBox.lineEdit().setText('')
         
         self.calculatorButton = QtGui.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
@@ -158,7 +125,7 @@ an unneeded update of the db.
             return value_loading
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
-        if value==self.spinBox.minimum():
+        if value==int(self.spinBox.minimum()):
             return None
         return value
 
@@ -191,6 +158,3 @@ an unneeded update of the db.
     @QtCore.pyqtSlot()
     def spinbox_editing_finished(self):
         self.editingFinished.emit()
-
-
-
