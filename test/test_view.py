@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtGui
 
+import datetime
 import logging
-import unittest
 import os
 import time
 
@@ -105,7 +105,6 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, plot )
         
     def test_DateEditor(self):
-        import datetime
         editor = self.editors.DateEditor()
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -276,7 +275,18 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
 
     def test_DateTimeEditor(self):
-        import datetime
+        from camelot.view.controls.editors.datetimeeditor import TimeValidator
+        validator = TimeValidator()
+        self.assertEqual(validator.validate('22', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('59', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('22:', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate(':17', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('22:7', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('22:17', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('1:17', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('22:7:', 0), (QtGui.QValidator.Invalid, 0))
+        self.assertEqual(validator.validate('61', 0), (QtGui.QValidator.Invalid, 0))
+        self.assertEqual(validator.validate('611', 0), (QtGui.QValidator.Invalid, 0))
         editor = self.editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -284,6 +294,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+        editor.set_value(None)
+        self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
         from camelot.core.constants import camelot_minfloat, camelot_maxfloat
@@ -395,6 +407,7 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, u'<h1>Rich Text Editor</h1>' )
 
     def test_TimeEditor(self):
+        
         import datetime
         editor = self.editors.TimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
