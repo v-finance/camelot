@@ -26,9 +26,11 @@ import logging
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
 
 from camelot.view.proxy import ValueLoading
-from customeditor import AbstractCustomEditor
+from ...art import Icon
+from .customeditor import AbstractCustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
 
@@ -56,13 +58,35 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         self.valueChanged.emit()
         self.editingFinished.emit()
 
+    @staticmethod
+    def append_item( model, data ):
+        """Append an item in a combobox model
+        :param data: a dictionary mapping roles to values
+        """
+        model.insertRow(model.rowCount())
+        
+        for role, value in data.iteritems():
+            index = model.index(model.rowCount()-1, 0)
+            if isinstance(value, Icon):
+                value = value.getQIcon()
+            model.setData(index, QtCore.QVariant(value), role)
+        
     def set_choices( self, choices ):
         """
-    :param choices: a list of (value,name) tuples.  name will be displayed in the combobox,
-    while value will be used within get_value and set_value.  This method changes the items
-    in the combo box while preserving the current value, even if this value is not in the
-    new list of choices.  If there is no item with value `None` in the list of choices,
-    this will be added.
+    :param choices: a list of (value,name) tuples or a list of dicts.
+    
+        In case a list of tuples is used, name will be displayed in the combobox,
+        while value will be used within :meth:`get_value` and :meth:`set_value`.  
+        
+        In case a list of dicts is used, the keys of the dict are used as the
+        roles, and the values as the value for that role, where `Qt.UserRole`
+        is the value that is passed through :meth:`get_value`, 
+        eg : `{Qt.DisplayRole: "Hello", Qt.UserRole: 1}`
+        
+        This method changes the items in the combo box while preserving the 
+        current value, even if this value is not in the new list of choices.  
+        If there is no item with value `None` in the list of choices, this will 
+        be added.
         """
         current_index = self.currentIndex()
         if current_index >= 0:
@@ -74,18 +98,25 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         i = -1
         for i in range(self.count(), 0, -1):
             self.removeItem(i-1)
-        for i, (value, name) in enumerate(choices):
-            self.insertItem(i, unicode(name), QtCore.QVariant(value))
+        model = self.model()
+        for choice in choices:
+            if not isinstance(choice, dict):
+                (value, name) = choice
+                font = QtGui.QFont()
+                font.setItalic(True)
+                choice = {Qt.DisplayRole: unicode(name),
+                          Qt.UserRole: value}                
+            self.append_item(model, choice)
             if value == current_value:
                 current_value_available = True
             if value == None:
                 none_available = True
         if not current_value_available and current_index > 0:
-            i = i+1
-            self.insertItem(i, current_name, QtCore.QVariant(current_value))
+            self.append_item(model, {Qt.DisplayRole: current_name,
+                                     Qt.UserRole: value})
         if not none_available and current_value!=None:
-            i = i+1
-            self.insertItem(i, '', QtCore.QVariant(None))
+            self.append_item(model, {Qt.DisplayRole: '',
+                                     Qt.UserRole: None})
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
         if current_value != ValueLoading:
