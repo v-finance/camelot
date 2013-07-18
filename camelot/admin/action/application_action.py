@@ -105,7 +105,9 @@ class SelectProfile( Action ):
     """
     
     new_icon = Icon('tango/16x16/actions/document-new.png')
-    
+    save_icon = Icon('tango/16x16/actions/document-save.png')
+    load_icon = Icon('tango/16x16/actions/document-open.png')
+    file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store ):
         from camelot.core.dbprofiles import ProfileStore
@@ -118,65 +120,84 @@ class SelectProfile( Action ):
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
 
-        profiles = self.profile_store.read_profiles()
-        selected_profile = None
-        new_profile = object()
-        if len(profiles):
-            profiles.sort()
-            last_profile = self.profile_store.get_last_profile()
-            items = [(None,'')] + [(p,p.name) for p in profiles]
-            font = QtGui.QFont()
-            font.setItalic(True)
-            items.append({Qt.UserRole: new_profile,
-                          Qt.DisplayRole: ugettext('new/edit profile'),
-                          Qt.FontRole: font,
-                          Qt.DecorationRole: self.new_icon
-                          })
-            select_profile = action_steps.SelectItem( items )
-            select_profile.title = ugettext('Profile Selection')
-            select_profile.subtitle = ugettext('Select a stored profile:')
-            if last_profile in profiles:
-                select_profile.value = last_profile
-            else:
-                select_profile.value = None
-            try:
-                while selected_profile==None:
+        # dummy profiles
+        new_profile, save_profiles, load_profiles = object(), object(), object()
+        selected_profile = new_profile
+        try:
+            while selected_profile in (None, new_profile, 
+                                       save_profiles, load_profiles):
+                profiles = self.profile_store.read_profiles()
+                profiles.sort()
+                if len(profiles):
+                    items = [(None,'')] + [(p,p.name) for p in profiles]
+                    font = QtGui.QFont()
+                    font.setItalic(True)
+                    items.append({Qt.UserRole: new_profile, Qt.FontRole: font,
+                                  Qt.DisplayRole: ugettext('new/edit profile'),
+                                  Qt.DecorationRole: self.new_icon
+                                  })
+                    items.append({Qt.UserRole: save_profiles, Qt.FontRole: font,
+                                  Qt.DisplayRole: ugettext('save profiles'),
+                                  Qt.DecorationRole: self.save_icon
+                                  })
+                    items.append({Qt.UserRole: load_profiles, Qt.FontRole: font,
+                                  Qt.DisplayRole: ugettext('load profiles'),
+                                  Qt.DecorationRole: self.load_icon
+                                  })
+                    select_profile = action_steps.SelectItem( items )
+                    last_profile = self.profile_store.get_last_profile()
+                    select_profile.title = ugettext('Profile Selection')
+                    select_profile.subtitle = ugettext('Select a stored profile:')
+                    if last_profile in profiles:
+                        select_profile.value = last_profile
+                    else:
+                        select_profile.value = None                    
                     selected_profile = yield select_profile
-                    if selected_profile is new_profile:
-                        edit_profile_name = ''
-                        while selected_profile is new_profile:
-                            profile_info = yield EditProfiles(profiles, edit_profile_name)
-                            profile = self.profile_store.read_profile(profile_info['name'])
-                            if profile is None:
-                                profile = self.profile_store.profile_class(**profile_info)
-                            else:
-                                profile.__dict__.update(profile_info)
-                            yield action_steps.UpdateProgress(ugettext('Verifying database settings'))
-                            engine = profile.create_engine()
-                            try:
-                                connection = engine.raw_connection()
-                                cursor = connection.cursor()
-                                cursor.close()
-                                connection.close()
-                            except Exception, e:
-                                exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
-                                                                         text = _('Verify driver, host and port or contact your system administrator'),
-                                                                         standard_buttons = QtGui.QMessageBox.Ok )
-                                exception_box.informative_text = unicode(e)
-                                yield exception_box
-                                edit_profile_name = profile.name
-                                if profile in profiles:
-                                    profiles.remove(profile)
-                                profiles.append(profile)
-                                profiles.sort()
-                                continue
-                            self.profile_store.write_profile(profile)
-                            selected_profile = profile
-            except CancelRequest:
-                # explicit handling of exit when cancel button is pressed,
-                # to avoid the use of subgenerators in the main action
-                yield Exit()
-            self.profile_store.set_last_profile( selected_profile )
+                if selected_profile is new_profile:
+                    edit_profile_name = ''
+                    while selected_profile is new_profile:
+                        profile_info = yield EditProfiles(profiles, edit_profile_name)
+                        profile = self.profile_store.read_profile(profile_info['name'])
+                        if profile is None:
+                            profile = self.profile_store.profile_class(**profile_info)
+                        else:
+                            profile.__dict__.update(profile_info)
+                        yield action_steps.UpdateProgress(ugettext('Verifying database settings'))
+                        engine = profile.create_engine()
+                        try:
+                            connection = engine.raw_connection()
+                            cursor = connection.cursor()
+                            cursor.close()
+                            connection.close()
+                        except Exception, e:
+                            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
+                                                                     text = _('Verify driver, host and port or contact your system administrator'),
+                                                                     standard_buttons = QtGui.QMessageBox.Ok )
+                            exception_box.informative_text = unicode(e)
+                            yield exception_box
+                            edit_profile_name = profile.name
+                            if profile in profiles:
+                                profiles.remove(profile)
+                            profiles.append(profile)
+                            profiles.sort()
+                            continue
+                        self.profile_store.write_profile(profile)
+                        selected_profile = profile
+                elif selected_profile is save_profiles:
+                    select_file = action_steps.SelectFile(file_name_filter=self.file_name_filter)
+                    select_file.existing=False
+                    file_names =  yield select_file
+                    for file_name in file_names:
+                        self.profile_store.write_to_file(file_name)
+                elif selected_profile is load_profiles:
+                    file_names =  yield action_steps.SelectFile(file_name_filter=self.file_name_filter)
+                    for file_name in file_names:
+                        self.profile_store.read_from_file(file_name)
+        except CancelRequest:
+            # explicit handling of exit when cancel button is pressed,
+            # to avoid the use of subgenerators in the main action
+            yield Exit()
+        self.profile_store.set_last_profile( selected_profile )
 
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""

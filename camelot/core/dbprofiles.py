@@ -195,6 +195,14 @@ class ProfileStore(object):
             self.settings = QtCore.QSettings(filename, 
                                              QtCore.QSettings.IniFormat)
 
+    def write_to_file(self, filename):
+        file_store = ProfileStore(filename)
+        file_store.write_profiles(self.read_profiles())
+        
+    def read_from_file(self, filename):
+        file_store = ProfileStore(filename)
+        self.write_profiles(file_store.read_profiles())
+        
     def read_profiles(self):
         """
         :return: a list of profiles read
@@ -236,6 +244,7 @@ class ProfileStore(object):
             for key, value in profile.__getstate__().iteritems():
                 self.settings.setValue(key, QtCore.QVariant(value))
         self.settings.endArray()
+        self.settings.sync()
         
     def write_profile(self, profile):
         """

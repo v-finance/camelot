@@ -228,9 +228,6 @@ allow all languages
         self.dialect_editor.currentIndexChanged.connect(self.toggle_ok_button)
     
     def create_buttons(self):
-        self.more_button = QPushButton(_('More'))
-        self.more_button.setCheckable(True)
-        self.more_button.setAutoDefault(False)
         self.cancel_button = QPushButton(_('Cancel'))
         self.ok_button = QPushButton(_('OK'))
 
@@ -240,35 +237,11 @@ allow all languages
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.ok_button)
         layout.addStretch()
-        layout.addWidget(self.more_button)
 
         self.buttons_widget().setLayout(layout)
 
         self.browse_button = QPushButton(_('Browse'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
-
-        self.setup_extension()
-
-    def setup_extension(self):
-        self.extension = QWidget()
-
-        self.load_button = QPushButton(_('Load profiles'))
-        self.save_button = QPushButton(_('Save profiles'))
-
-        extension_buttons_layout = QHBoxLayout()
-        extension_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        extension_buttons_layout.addWidget(self.load_button)
-        extension_buttons_layout.addWidget(self.save_button)
-        extension_buttons_layout.addStretch()
-
-        extension_layout = QVBoxLayout()
-        extension_layout.setContentsMargins(0, 0, 0, 0)
-        extension_layout.addWidget(HSeparator())
-        extension_layout.addLayout(extension_buttons_layout)
-
-        self.extension.setLayout(extension_layout)
-        self.main_widget().layout().addWidget(self.extension, 15, 0, 1, 5)
-        self.extension.hide()
 
     def set_tab_order(self):
         all_widgets = [self.profile_editor, self.dialect_editor,
@@ -289,9 +262,6 @@ allow all languages
         self.cancel_button.pressed.connect(self.reject)
         self.ok_button.pressed.connect(self.accept)
         self.browse_button.pressed.connect(self.fill_media_location)
-        self.more_button.toggled.connect(self.extension.setVisible)
-        self.save_button.pressed.connect(self.save_profiles_to_file)
-        self.load_button.pressed.connect(self.load_profiles_from_file)
 
     @QtCore.pyqtSlot()
     def toggle_ok_button(self):
@@ -399,28 +369,6 @@ allow all languages
             return
 
         self.media_location_editor.setText(selected)
-
-
-    def save_profiles_to_file(self):
-        caption = _('Save Profiles To a File')
-        filters = _('Profiles file (*.ini)')
-        path = QFileDialog.getSaveFileName(self, caption, 'profiles', filters)
-        if not path:
-            logger.debug('Could not save profiles to file; no path.')
-            return
-        store_profiles(self.profiles, to_file=path)
-
-    def load_profiles_from_file(self):
-        caption = _('Load Profiles From a File')
-        filters = _('Profiles file (*.ini)')
-        path = QFileDialog.getOpenFileName(self, caption, 'profiles', filters)
-        if not path:
-            logger.debug('Could not load profiles from file; no path.')
-            return
-        self.profiles = fetch_profiles(from_file=path)
-        if self.profiles:
-            store_profiles(self.profiles)
-            os.execv(sys.executable, [sys.executable] + sys.argv)
 
 class EditProfiles(ActionStep):
     

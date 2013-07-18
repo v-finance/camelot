@@ -57,7 +57,7 @@ class SelectFile( ActionStep ):
     """
     
     def __init__( self, file_name_filter = '' ):
-        self.file_name_filter = file_name_filter
+        self.file_name_filter = unicode(file_name_filter)
         self.single = True
         self.existing = True
     
