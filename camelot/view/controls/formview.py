@@ -126,7 +126,6 @@ class FormWidget(QtGui.QWidget):
         self._model = None
         self._form = None
         self._columns = None
-        self._delegate = None
         self.setLayout(widget_layout)      
 
     def get_model(self):
@@ -168,14 +167,19 @@ class FormWidget(QtGui.QWidget):
             widget_mapper.revert()
             self.changed_signal.emit( widget_mapper.currentIndex() )
 
+    def set_delegate(self, delegate):
+        """Takes ownership of the delegate"""
+        delegate.setObjectName('delegate')
+        delegate.setParent(self)
+        
     @QtCore.pyqtSlot()
     def _item_delegate_changed(self):
         from camelot.view.controls.delegates.delegatemanager import \
             DelegateManager
-        self._delegate = self._model.getItemDelegate()
-        self._delegate.setObjectName('delegate')
-        assert self._delegate != None
-        assert isinstance(self._delegate, DelegateManager)
+        delegate = self._model.getItemDelegate()
+        self.set_delegate(delegate)
+        assert delegate is not None
+        assert isinstance(delegate, DelegateManager)
         self._create_widgets()
 
     @QtCore.pyqtSlot(int)
@@ -211,22 +215,24 @@ class FormWidget(QtGui.QWidget):
         # so we get it and are sure it will be there if we are running without
         # threads
         #
-        if not self._delegate:
-            self._delegate = self._model.getItemDelegate()
+        delegate = self.findChild(QtCore.QObject, 'delegate')
+        if delegate is None:
+            delegate = self._model.getItemDelegate()
+            self.set_delegate(delegate)
         #
         # end of dirty trick
         #
         # only if all information is available, we can start building the form
-        if not (self._form and self._columns and self._delegate):
+        if not (self._form and self._columns):
             return
         
         widgets = {}
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if not widget_mapper:
+        if widget_mapper is None:
             return
         LOGGER.debug( 'begin creating widgets' )
-        widget_mapper.setItemDelegate(self._delegate)
-        widgets = FormEditors( self._columns, widget_mapper, self._delegate, self._admin )
+        widget_mapper.setItemDelegate(delegate)
+        widgets = FormEditors( self._columns, widget_mapper, delegate, self._admin )
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, self._form.render( widgets, self, True) )
