@@ -5,9 +5,11 @@ import unittest
 
 import sqlalchemy.types
 
+from . import test_orm
+
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.conf import settings
-from camelot.core.orm import Entity, Session, has_field
-from camelot.core.sql import metadata
+from camelot.core.orm import has_field
 
 #
 # build a list of the various column types for which the search functions
@@ -26,34 +28,10 @@ for i, (name, definition) in enumerate( sqlalchemy.types.__dict__.items() ):
                                          sqlalchemy.types._Binary,
                                          sqlalchemy.types.Enum ) ):
             types_to_test[(i, '%s_%i'%(name, i))] = definition
-
-class T( Entity ):
-    """An entity with for each column type a column"""
-    for (i,name), definition in types_to_test.items():
-        has_field( name, definition )
-        
-class TAdmin( object ):
-    search_all_fields = True
-    list_search = []
-    entity = T
     
-class SearchCase( unittest.TestCase ):
+class SearchCase( test_orm.TestMetaData ):
     """Test the creation of search queries"""
-    
-    def setUp( self ):
-        metadata.bind = settings.ENGINE()
-        metadata.create_all()
-        self.session = Session()
-        #
-        # insert the value of i in each column of T, that can be searched for
-        #
-        for (i,name), definition in types_to_test.items():
-            value = self.value_for_type( definition, i )
-            t = T()
-            setattr( t, name, value )
-        self.session.flush()
-        self.admin = TAdmin()
-        
+     
     def value_for_type( self, definition, i ):
         value = i        
         if issubclass( definition, sqlalchemy.types.DateTime ):
@@ -71,6 +49,28 @@ class SearchCase( unittest.TestCase ):
     def test_search_decorator( self ):
         """Verify it search works for most common types"""
         from camelot.view.search import create_entity_search_query_decorator
+        
+        class T( self.Entity ):
+            """An entity with for each column type a column"""
+            for (i,name), definition in types_to_test.items():
+                has_field( name, definition )
+                
+        class TAdmin( object ):
+            search_all_fields = True
+            list_search = []
+            entity = T
+
+        self.create_all()
+        #
+        # insert the value of i in each column of T, that can be searched for
+        #
+        for (i,name), definition in types_to_test.items():
+            value = self.value_for_type( definition, i )
+            t = T()
+            setattr( t, name, value )
+        self.session.flush()
+        admin = TAdmin()
+        
         for (i,name), definition in types_to_test.items():
             value = self.value_for_type( definition, i )
             #
@@ -83,7 +83,7 @@ class SearchCase( unittest.TestCase ):
                 continue
             string_value = str( value )
             
-            search_decorator = create_entity_search_query_decorator( self.admin,
+            search_decorator = create_entity_search_query_decorator( admin,
                                                                      string_value )
             query = self.session.query( T )
             query = search_decorator( query )

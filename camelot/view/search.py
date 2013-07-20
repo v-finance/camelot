@@ -76,7 +76,8 @@ def create_entity_search_query_decorator( admin, text ):
                     arg = (c==utils.date_from_string(text))
                 except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(c.type.__class__, sqlalchemy.types.Float):
+            elif issubclass(c.type.__class__, (sqlalchemy.types.Float,
+                                               sqlalchemy.types.Numeric)):
                 try:
                     float_value = utils.float_from_string(text)
                     precision = c.type.precision
