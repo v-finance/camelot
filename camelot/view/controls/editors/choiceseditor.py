@@ -105,7 +105,9 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
                 font = QtGui.QFont()
                 font.setItalic(True)
                 choice = {Qt.DisplayRole: unicode(name),
-                          Qt.UserRole: value}                
+                          Qt.UserRole: value}
+            else:
+                value = choice[Qt.UserRole]
             self.append_item(model, choice)
             if value == current_value:
                 current_value_available = True
@@ -113,7 +115,7 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
                 none_available = True
         if not current_value_available and current_index > 0:
             self.append_item(model, {Qt.DisplayRole: current_name,
-                                     Qt.UserRole: value})
+                                     Qt.UserRole: current_value})
         if not none_available and current_value!=None:
             self.append_item(model, {Qt.DisplayRole: '',
                                      Qt.UserRole: None})
