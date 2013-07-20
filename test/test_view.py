@@ -1122,8 +1122,6 @@ class ControlsTest(ModelThreadTestCase):
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )   
 
-import wingdbstub
-
 class CamelotEntityViewsTest(EntityViewsTest):
     """Test the views of all the Entity subclasses"""
 

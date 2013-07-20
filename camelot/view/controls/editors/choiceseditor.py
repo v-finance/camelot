@@ -142,7 +142,7 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         value = AbstractCustomEditor.set_value(self, value)
         self.setProperty( 'value', QtCore.QVariant(value) )
         self.valueChanged.emit()
-        if not self._value_loading and value != NotImplemented:
+        if not self.property('value_loading').toBool() and value != NotImplemented:
             for i in range(self.count()):
                 if value == variant_to_pyobject(self.itemData(i)):
                     self.setCurrentIndex(i)

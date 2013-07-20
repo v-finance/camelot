@@ -33,8 +33,8 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
                  length = 20, 
                  field_name = 'text_line',
                  **kwargs):
-        AbstractCustomEditor.__init__(self)
         QtGui.QLineEdit.__init__(self, parent)
+        AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
         if length:
             self.setMaxLength(length)
@@ -53,7 +53,7 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
             return value_loading
 
         value = unicode(self.text())
-        if self.value_is_none and not value:
+        if len(value)==0 and self.value_is_none:
             return None
 
         return value

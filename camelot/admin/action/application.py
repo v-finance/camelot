@@ -84,7 +84,6 @@ class Application( Action ):
             #select_database(self.application_admin)
 
     def model_run( self, model_context ):
-        from .application_action import SelectProfile
         from ...core.conf import settings
         from ...core.utils import load_translations
         from ...view import action_steps

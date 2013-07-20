@@ -22,31 +22,21 @@
 #
 #  ============================================================================
 
-import os
-import sys
 import logging
 import pkgutil
 
-# from collections import defaultdict
-
-from sqlalchemy import create_engine
-
-from PyQt4 import QtCore, QtGui
-from PyQt4 import QtNetwork
+from PyQt4 import QtCore, QtGui, QtNetwork
 from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QFileInfo
-from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
-    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox, QWidget, QVBoxLayout
+from PyQt4.QtGui import QBoxLayout, QGridLayout, QHBoxLayout, \
+    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
+from camelot.core.utils import ugettext as _
 from camelot.view import art
-from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
-
-from camelot.core.exception import UserException
-from camelot.core.utils import ugettext as _
 
 logger = logging.getLogger('camelot.view.action_steps.profile')
 

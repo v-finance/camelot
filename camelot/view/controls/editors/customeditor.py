@@ -82,15 +82,15 @@ class AbstractCustomEditor(object):
     """
 
     def __init__(self):
-        self._value_loading = True
+        self.setProperty('value_loading', True)
         self.value_is_none = False
 
     def set_value(self, value):
         if value == ValueLoading:
-            self._value_loading = True
+            self.setProperty('value_loading', True)
             return None
         else:
-            self._value_loading = False
+            self.setProperty('value_loading', False)
             if value is None:
                 self.value_is_none = True
             else:
@@ -98,7 +98,7 @@ class AbstractCustomEditor(object):
             return value
 
     def get_value(self):
-        if self._value_loading:
+        if self.property('value_loading').toBool():
             return ValueLoading
         return None
 

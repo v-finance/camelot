@@ -116,7 +116,6 @@ class SelectProfile( Action ):
         self.profile_store = profile_store
         
     def model_run( self, model_context ):
-        from sqlalchemy.exc import DatabaseError
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
 

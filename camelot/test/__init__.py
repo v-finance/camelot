@@ -99,7 +99,6 @@ class ModelThreadTestCase(unittest.TestCase):
         self.process()
         QtGui.QApplication.flush()
         inner_pixmap = QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
-        inner_image = inner_pixmap.toImage()
         # add a border to the image
         border = 4
         outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)

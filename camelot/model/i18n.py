@@ -39,7 +39,7 @@ import camelot.types
 
 from sqlalchemy import sql
 from sqlalchemy.schema import Column
-from sqlalchemy.types import Unicode, INT
+from sqlalchemy.types import Unicode
 
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )

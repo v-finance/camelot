@@ -34,7 +34,6 @@ machine.
 """
 
 import base64
-import copy
 import functools
 import logging
 

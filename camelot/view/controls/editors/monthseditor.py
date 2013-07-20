@@ -97,7 +97,7 @@ class MonthsEditor(CustomEditor):
         CustomEditor.set_value(self, value)
 
         # TODO: might be better to have accessors for these
-        if self._value_loading:
+        if value is ValueLoading:
             return
 
         if self.value_is_none:
