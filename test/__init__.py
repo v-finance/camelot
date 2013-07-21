@@ -6,7 +6,7 @@ import warnings
 from camelot.core.conf import settings
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] - %(message)s')
-logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 class TestSettings( object ):
     

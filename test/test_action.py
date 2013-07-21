@@ -602,6 +602,20 @@ class FormActionsCase( test_model.ExampleModelCase ):
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )        
 
+class ApplicationCase( test_model.ExampleModelCase ):
+
+    def setUp(self):
+        super( ApplicationCase, self ).setUp()
+        from camelot.admin.application_admin import ApplicationAdmin
+        self.app_admin = ApplicationAdmin()
+        self.context = MockModelContext()
+        self.context.admin = self.app_admin
+        
+    def test_application(self):
+        from camelot.admin.action.application import Application
+        app = Application(self.app_admin)
+        list(app.model_run(self.context))
+        
 class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.
     """
