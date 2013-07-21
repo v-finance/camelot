@@ -81,9 +81,12 @@ class ProfileCase(unittest.TestCase):
         self.assertEqual( new_profile.password, password )
         
     def test_profile_store( self ):
+        # construct a profile store from application settings
+        store = ProfileStore()
+        store.read_profiles()
+        # continue test with a profile store from file, to avoid test inference
         handle, filename = tempfile.mkstemp()
         os.close(handle)
-        # test with a profile store from file, to avoid test inference
         store = ProfileStore(filename)
         self.assertEqual( store.read_profiles(), [] )
         self.assertEqual( store.get_last_profile(), None )
@@ -95,10 +98,9 @@ class ProfileCase(unittest.TestCase):
         self.assertTrue( store.get_last_profile().name, 'profile_1' )
         store.set_last_profile( profile_2 )
         self.assertTrue( store.get_last_profile().name, 'profile_2' )
-        os.remove(filename)
-        # construct a profile store from application settings
-        store = ProfileStore()
-        store.read_profiles()
+        # os.remove(filename)
+
+        return store
 
 class ConfCase(unittest.TestCase):
     """Test the global configuration"""

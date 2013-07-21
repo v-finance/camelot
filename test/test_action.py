@@ -674,6 +674,17 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         list( refresh_action.model_run( self.context ) )
         self.assertEqual( p2.last_name, u'dirty' )
         
+    def test_select_profile(self):
+        from . import test_core
+        profile_case = test_core.ProfileCase('setUp')
+        profile_case.setUp()
+        profile_store = profile_case.test_profile_store()
+        action = application_action.SelectProfile(profile_store)
+        generator = action.model_run(self.context)
+        for step in generator:
+            if isinstance(step, action_steps.SelectItem):
+                generator.send(profile_store.get_last_profile())
+        
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()
         generator = backup_action.model_run( self.context )
