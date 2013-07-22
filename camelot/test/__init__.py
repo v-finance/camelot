@@ -96,7 +96,7 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        self.process()
+        #self.process()
         QtGui.QApplication.flush()
         inner_pixmap = QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
         # add a border to the image
