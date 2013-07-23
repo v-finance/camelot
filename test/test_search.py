@@ -1,5 +1,7 @@
+import collections
 import datetime
 import inspect
+import itertools
 import types
 import unittest
 
@@ -10,25 +12,33 @@ from . import test_orm
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.conf import settings
 from camelot.core.orm import has_field
+import camelot.types
 
 #
 # build a list of the various column types for which the search functions
 # should be tested
 #
-types_to_test = dict()
-for i, (name, definition) in enumerate( sqlalchemy.types.__dict__.items() ):
+possible_types = itertools.chain( sqlalchemy.types.__dict__.iteritems(),
+                                  camelot.types.__dict__.iteritems() )
+types_to_test = collections.OrderedDict()
+for i, (name, definition) in enumerate(possible_types):
     if not inspect.isclass( definition ):
         continue
-    if definition == sqlalchemy.types.TypeEngine:
+    if definition in (sqlalchemy.types.TypeEngine,
+                      sqlalchemy.types.TypeDecorator,
+                      sqlalchemy.types.Variant):
         continue
-    if issubclass( definition, sqlalchemy.types.TypeEngine ):
-        if not issubclass( definition, ( sqlalchemy.types.TypeDecorator,
-                                         sqlalchemy.types.UserDefinedType,
+    if issubclass( definition, (sqlalchemy.types.TypeEngine,
+                                sqlalchemy.types.TypeDecorator) ):
+        if not issubclass( definition, ( sqlalchemy.types.UserDefinedType,
                                          sqlalchemy.types.NullType,
                                          sqlalchemy.types._Binary,
-                                         sqlalchemy.types.Enum ) ):
+                                         sqlalchemy.types.Enum,
+                                         sqlalchemy.types.PickleType,
+                                         camelot.types.File,
+                                         camelot.types.Enumeration) ):
             types_to_test[(i, '%s_%i'%(name, i))] = definition
-    
+
 class SearchCase( test_orm.TestMetaData ):
     """Test the creation of search queries"""
      
@@ -44,6 +54,14 @@ class SearchCase( test_orm.TestMetaData ):
             value = str( i )
         elif issubclass( definition, sqlalchemy.types.Boolean ):
             value = True
+        elif issubclass( definition, sqlalchemy.types.Interval ):
+            value = datetime.timedelta(days=i)
+        elif issubclass( definition, camelot.types.Code ):
+            value =(str(i),)
+        elif issubclass( definition, camelot.types.VirtualAddress ):
+            value =('email', str(i))
+        elif issubclass( definition, camelot.types.Color ):
+            value =(i, i, i, i)            
         return value
             
     def test_search_decorator( self ):
@@ -64,11 +82,10 @@ class SearchCase( test_orm.TestMetaData ):
         #
         # insert the value of i in each column of T, that can be searched for
         #
+        insert = T.__table__.insert()
         for (i,name), definition in types_to_test.items():
-            value = self.value_for_type( definition, i )
-            t = T()
-            setattr( t, name, value )
-        self.session.flush()
+            self.session.execute(insert,
+                                 {name:self.value_for_type( definition, i )})
         admin = TAdmin()
         
         for (i,name), definition in types_to_test.items():
@@ -79,9 +96,9 @@ class SearchCase( test_orm.TestMetaData ):
             #         convoluted, this should work through a to_string field
             #         attribute.
             #
-            if isinstance( value, ( datetime.date, datetime.time, bool) ):
+            if isinstance( value, ( datetime.date, datetime.time, bool, tuple) ):
                 continue
-            string_value = str( value )
+            string_value = str( i )
             
             search_decorator = create_entity_search_query_decorator( admin,
                                                                      string_value )
