@@ -67,6 +67,8 @@ def create_entity_search_query_decorator( admin, text ):
                 pass
             elif issubclass(c.type.__class__, camelot.types.File):
                 pass
+            elif issubclass(c.type.__class__, camelot.types.Enumeration):
+                pass
             elif issubclass(c.type.__class__, camelot.types.Code):
                 codes = [u'%%%s%%'%s for s in text.split(c.type.separator)]
                 codes = codes + ['%']*(len(c.type.parts) - len(codes))
@@ -75,6 +77,11 @@ def create_entity_search_query_decorator( admin, text ):
                 arg = c.like(virtual_address('%', '%'+text+'%'))
             elif issubclass(c.type.__class__, camelot.types.Image):
                 pass
+            elif issubclass(python_type, bool):
+                try:
+                    arg = (c==utils.bool_from_string(text))
+                except ( Exception, utils.ParsingError ):
+                    pass
             elif issubclass(python_type, int):
                 try:
                     arg = (c==utils.int_from_string(text))
