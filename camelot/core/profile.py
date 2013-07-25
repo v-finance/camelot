@@ -163,12 +163,10 @@ class ProfileStore(object):
     """
     
     def __init__( self, filename=None, profile_class=Profile, cipher_key=None):
-        from Crypto.Cipher import ARC4
         if cipher_key is None:
             cipher_key = settings.get('CAMELOT_DBPROFILES_CIPHER', 
                                       'The Knights Who Say Ni')
         self.cipher_key = cipher_key
-        self._cipher = ARC4.new( cipher_key )
         self.profile_class = profile_class
         if filename is None:
             self.settings = QtCore.QSettings()
@@ -176,18 +174,25 @@ class ProfileStore(object):
             self.settings = QtCore.QSettings(filename, 
                                              QtCore.QSettings.IniFormat)
 
+    def _cipher( self ):
+        """:return: the :class:`Crypto.Cipher` object used for encryption and
+        decryption in :meth:`_encode` and :meth:`_decode`.
+        """
+        from Crypto.Cipher import ARC4
+        return ARC4.new( self.cipher_key )
+
     def _encode( self, value ):
         """Encrypt and encode a single value, this method is used to 
         write profiles."""
-        encrypt = self._cipher.encrypt
-        return base64.b64encode( encrypt( unicode(value).encode('utf-8' ) ) )
+        cipher = self._cipher()
+        return base64.b64encode( cipher.encrypt( unicode(value).encode('utf-8' ) ) )
             
     def _decode( self, value ):
         """Decrypt and decode a single value, this method is used to
         read profiles.
         """
-        decrypt = self._cipher.decrypt
-        return decrypt( base64.b64decode( value ) ).decode('utf-8')
+        cipher = self._cipher()
+        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8') 
     
     def write_to_file(self, filename):
         file_store = ProfileStore(filename, cipher_key=self.cipher_key)

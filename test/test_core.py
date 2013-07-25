@@ -91,13 +91,17 @@ class ProfileCase(unittest.TestCase):
         self.assertEqual( store.read_profiles(), [] )
         self.assertEqual( store.get_last_profile(), None )
         profile_1 = Profile('profile_1')
+        profile_1.dialect = 'sqlite'
         profile_2 = Profile('profile_2')
+        profile_2.dialect = 'mysql'
         store.write_profiles( [profile_1, profile_2] )
         self.assertEqual( len(store.read_profiles()), 2 )
         store.set_last_profile( profile_1 )
         self.assertTrue( store.get_last_profile().name, 'profile_1' )
+        self.assertTrue( store.get_last_profile().dialect, 'sqlite' )
         store.set_last_profile( profile_2 )
         self.assertTrue( store.get_last_profile().name, 'profile_2' )
+        self.assertTrue( store.get_last_profile().dialect, 'mysql' )
         # os.remove(filename)
 
         return store
