@@ -214,7 +214,7 @@ class EntityViewsTest(ModelThreadTestCase):
                 raise Exception()
             
         app_admin = self.get_application_admin()
-        return [app_admin.get_entity_admin(c) for c in classes if app_admin.get_entity_admin(c)]
+        return [app_admin.get_related_admin(c) for c in classes if app_admin.get_related_admin(c)]
 
     def test_select_view(self):
         for admin in self.get_admins():

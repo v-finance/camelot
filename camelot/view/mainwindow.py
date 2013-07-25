@@ -98,7 +98,6 @@ class MainWindow(QtGui.QMainWindow):
         windowtitle = self.app_admin.get_name()
         logger.debug( u'setting up window title: %s'%windowtitle )
         self.setWindowTitle( windowtitle )
-        self.app_admin.title_changed_signal.connect( self.setWindowTitle )
 
         logger.debug('initialization complete')
 

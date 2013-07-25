@@ -131,6 +131,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        editor.set_value( '' )
+        self.assertEqual( editor.get_value(), '' )
         # pretend the user has entered some text
         editor.setText( u'foo' )
         self.assertTrue( editor.get_value() != None )
@@ -1010,12 +1012,12 @@ class ControlsTest(ModelThreadTestCase):
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
         
-    def test_navigation_pane(self):
-        from camelot.view.controls import navpane2
+    def test_section_widget(self):
+        from camelot.view.controls import section_widget
         self.wait_for_animation()
-        widget = navpane2.NavigationPane( self.app_admin,
-                                          workspace = None,
-                                          parent = None )
+        widget = section_widget.NavigationPane( self.app_admin,
+                                                workspace = None,
+                                                parent = None )
         widget.set_sections( self.app_admin.get_sections() )
         self.grab_widget(widget)
 
