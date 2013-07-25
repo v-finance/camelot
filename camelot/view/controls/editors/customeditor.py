@@ -83,7 +83,6 @@ class AbstractCustomEditor(object):
 
     def __init__(self):
         self.setProperty('value_loading', True)
-        self.value_is_none = False
 
     def set_value(self, value):
         if value == ValueLoading:
@@ -91,10 +90,6 @@ class AbstractCustomEditor(object):
             return None
         else:
             self.setProperty('value_loading', False)
-            if value is None:
-                self.value_is_none = True
-            else:
-                self.value_is_none = False
             return value
 
     def get_value(self):
