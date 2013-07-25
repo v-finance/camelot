@@ -117,10 +117,7 @@ class Profile(object):
                 key='pass'
             elif key=='name':
                 key='profilename'
-            if key != 'profilename':
-                state[key] = self._encode(value)
-            else:
-                state[key] = (value or '').encode('utf-8')
+            state[key] = value
         return state
     
     def __setstate__( self, state ):
@@ -134,10 +131,6 @@ class Profile(object):
                 key='password'
             if key=='profilename':
                 key='name'
-            if key != 'name':
-                value = self._decode(value)
-            else:
-                value = value.decode('utf-8')
             setattr(self, key, value)
 
     def __lt__(self, other):
@@ -152,28 +145,7 @@ class Profile(object):
     
     def __hash__(self):
         return hash(self.name)
-    
-    def _cipher( self ):
-        """:return: the :class:`Crypto.Cipher` object used for encryption and
-        decryption in :meth:`_encode` and :meth:`_decode`.
-        """
-        from Crypto.Cipher import ARC4
-        key = settings.get('CAMELOT_DBPROFILES_CIPHER', 
-                           'The Knights Who Say Ni')
-        return ARC4.new( key )
-    
-    def _encode( self, value ):
-        """Encrypt and encode a single value, this method is used in 
-        `__getstate_`"""
-        cipher = self._cipher()
-        return base64.b64encode( cipher.encrypt( unicode(value).encode('utf-8' ) ) )
-            
-    def _decode( self, value ):
-        """Decrypt and decode a single value, this method is used in 
-        `__setstate__`
-        """
-        cipher = self._cipher()
-        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')    
+
 
 class ProfileStore(object):
     """Class that reads/writes profiles, either to a file or to the local
@@ -184,9 +156,19 @@ class ProfileStore(object):
        
     :param profile_class: a serializeable class that can be used to create
         new profile objects.
+        
+    :param cipher_key: cipher key used to encrypt profile information to make
+        it only readeable to the application itself.  If left to `None`,
+        `camelot.core.conf.settings.CAMELOT_DBPROFILES_CIPHER is used.
     """
     
-    def __init__( self, filename=None, profile_class=Profile ):
+    def __init__( self, filename=None, profile_class=Profile, cipher_key=None):
+        from Crypto.Cipher import ARC4
+        if cipher_key is None:
+            cipher_key = settings.get('CAMELOT_DBPROFILES_CIPHER', 
+                                      'The Knights Who Say Ni')
+        self.cipher_key = cipher_key
+        self._cipher = ARC4.new( cipher_key )
         self.profile_class = profile_class
         if filename is None:
             self.settings = QtCore.QSettings()
@@ -194,12 +176,25 @@ class ProfileStore(object):
             self.settings = QtCore.QSettings(filename, 
                                              QtCore.QSettings.IniFormat)
 
+    def _encode( self, value ):
+        """Encrypt and encode a single value, this method is used to 
+        write profiles."""
+        encrypt = self._cipher.encrypt
+        return base64.b64encode( encrypt( unicode(value).encode('utf-8' ) ) )
+            
+    def _decode( self, value ):
+        """Decrypt and decode a single value, this method is used to
+        read profiles.
+        """
+        decrypt = self._cipher.decrypt
+        return decrypt( base64.b64decode( value ) ).decode('utf-8')
+    
     def write_to_file(self, filename):
-        file_store = ProfileStore(filename)
+        file_store = ProfileStore(filename, cipher_key=self.cipher_key)
         file_store.write_profiles(self.read_profiles())
         
     def read_from_file(self, filename):
-        file_store = ProfileStore(filename)
+        file_store = ProfileStore(filename, cipher_key=self.cipher_key)
         self.write_profiles(file_store.read_profiles())
         
     def read_profiles(self):
@@ -216,7 +211,12 @@ class ProfileStore(object):
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             for key in state.keys():
-                state[key] = str( self.settings.value(key, empty).toString() )
+                value = str( self.settings.value(key, empty).toString() )
+                if key != 'profilename':
+                    value = self._decode(value)
+                else:
+                    value = value.decode('utf-8')
+                state[key] = value
             profile.__setstate__(state)
             # only profiles with a name can be selected and handled
             if profile.name:
@@ -241,6 +241,10 @@ class ProfileStore(object):
         for index, profile in enumerate(profiles):
             self.settings.setArrayIndex(index)
             for key, value in profile.__getstate__().iteritems():
+                if key != 'profilename':
+                    value = self._encode(value)
+                else:
+                    value = (value or '').encode('utf-8')
                 self.settings.setValue(key, QtCore.QVariant(value))
         self.settings.endArray()
         self.settings.sync()

@@ -101,7 +101,7 @@ class SelectProfile( Action ):
     """Select the application profile to use
     
     :param profile_store: an object of type 
-        :class:`camelot.core.dbprofiles.ProfileStore`
+        :class:`camelot.core.profile.ProfileStore`
     """
     
     new_icon = Icon('tango/16x16/actions/document-new.png')
@@ -110,7 +110,7 @@ class SelectProfile( Action ):
     file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store ):
-        from camelot.core.dbprofiles import ProfileStore
+        from camelot.core.profile import ProfileStore
         if profile_store==None:
             profile_store=ProfileStore()
         self.profile_store = profile_store
@@ -127,31 +127,38 @@ class SelectProfile( Action ):
                                        save_profiles, load_profiles):
                 profiles = self.profile_store.read_profiles()
                 profiles.sort()
+                items = [(None,'')] + [(p,p.name) for p in profiles]
+                font = QtGui.QFont()
+                font.setItalic(True)
+                items.append({Qt.UserRole: new_profile, Qt.FontRole: font,
+                              Qt.DisplayRole: ugettext('new/edit profile'),
+                              Qt.DecorationRole: self.new_icon
+                              })
                 if len(profiles):
-                    items = [(None,'')] + [(p,p.name) for p in profiles]
-                    font = QtGui.QFont()
-                    font.setItalic(True)
-                    items.append({Qt.UserRole: new_profile, Qt.FontRole: font,
-                                  Qt.DisplayRole: ugettext('new/edit profile'),
-                                  Qt.DecorationRole: self.new_icon
-                                  })
                     items.append({Qt.UserRole: save_profiles, Qt.FontRole: font,
                                   Qt.DisplayRole: ugettext('save profiles'),
                                   Qt.DecorationRole: self.save_icon
                                   })
-                    items.append({Qt.UserRole: load_profiles, Qt.FontRole: font,
-                                  Qt.DisplayRole: ugettext('load profiles'),
-                                  Qt.DecorationRole: self.load_icon
-                                  })
-                    select_profile = action_steps.SelectItem( items )
-                    last_profile = self.profile_store.get_last_profile()
-                    select_profile.title = ugettext('Profile Selection')
-                    select_profile.subtitle = ugettext('Select a stored profile:')
-                    if last_profile in profiles:
-                        select_profile.value = last_profile
-                    else:
-                        select_profile.value = None                    
-                    selected_profile = yield select_profile
+                items.append({Qt.UserRole: load_profiles, Qt.FontRole: font,
+                              Qt.DisplayRole: ugettext('load profiles'),
+                              Qt.DecorationRole: self.load_icon
+                              })
+                select_profile = action_steps.SelectItem( items )
+                last_profile = self.profile_store.get_last_profile()
+                select_profile.title = ugettext('Profile Selection')
+                if len(profiles):
+                    subtitle = ugettext('Select a stored profile:')
+                else:
+                    subtitle = ugettext('''Load profiles from file or'''
+                                        ''' create a new profile''')
+                select_profile.subtitle = subtitle
+                if last_profile in profiles:
+                    select_profile.value = last_profile
+                if len(profiles):
+                    select_profile.value = None
+                else:
+                    select_profile.value = load_profiles
+                selected_profile = yield select_profile
                 if selected_profile is new_profile:
                     edit_profile_name = ''
                     while selected_profile is new_profile:

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from camelot.core.memento import memento_change, memento_types
-from camelot.core.dbprofiles import Profile, ProfileStore
+from camelot.core.profile import Profile, ProfileStore
 from camelot.test import ModelThreadTestCase
 
 memento_id_counter = 0
@@ -72,8 +72,8 @@ class ProfileCase(unittest.TestCase):
         state = profile.__getstate__()
         # name should not be encrypted, others should
         self.assertEqual( state['profilename'], name )
-        self.assertNotEqual( state['host'], host )
-        self.assertNotEqual( state['pass'], password )
+        self.assertEqual( state['host'], host )
+        self.assertEqual( state['pass'], password )
         new_profile = Profile(name=None)
         new_profile.__setstate__( state )
         self.assertEqual( new_profile.name, name )
