@@ -69,7 +69,7 @@ class SelectFile( ActionStep ):
             use the default
         """
         dialog = QtGui.QFileDialog( filter = self.file_name_filter,
-                                    directory = (None or '') )
+                                    directory = (directory or '') )
         if self.existing == False:
             file_mode = QtGui.QFileDialog.AnyFile
         else:
