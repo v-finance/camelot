@@ -113,11 +113,12 @@ an unneeded update of the db.
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self.spinBox)
-        layout.addWidget(self.calculatorButton)
+        self._calculator = calculator
+        if calculator==True:
+            layout.addWidget(self.calculatorButton)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
         self._nullable = True
-        self._calculator = calculator
         
         self.option = option
 
