@@ -143,7 +143,8 @@ class SelectItem( ActionStep ):
     
     def gui_run(self, gui_context):
         dialog = self.render()
-        if dialog.exec_() == QtGui.QDialog.Rejected:
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
             raise CancelRequest()
         return dialog.get_value()
     
@@ -159,7 +160,7 @@ class ShowChart( ActionStep ):
         
     def gui_run( self, gui_context ):
         from camelot.view.controls.editors import ChartEditor
-        ChartEditor.show_fullscreen_chart( self._chart, 
+        ChartEditor.show_fullscreen_chart( self.chart, 
                                            gui_context.workspace )
 
     
@@ -196,7 +197,7 @@ class CloseView( ActionStep ):
         view = gui_context.view
         if view != None:
             view.close_view( self.accept )
-
+        
 class MessageBox( ActionStep ):
     """
     Popup a :class:`QtGui.QMessageBox` and send it result back.  The arguments
@@ -228,14 +229,19 @@ class MessageBox( ActionStep ):
         self.title = unicode( title )
         self.text = unicode( text )
         self.standard_buttons = standard_buttons
+        self.informative_text = ''
+        self.detailed_text = ''
         
     def render( self ):
         """create the message box. this method is used to unit test
         the action step."""
-        return QtGui.QMessageBox( self.icon,
-                                  self.title,
-                                  self.text,
-                                  self.standard_buttons )
+        message_box =  QtGui.QMessageBox( self.icon,
+                                          self.title,
+                                          self.text,
+                                          self.standard_buttons )
+        message_box.setInformativeText(unicode(self.informative_text))
+        message_box.setDetailedText(unicode(self.detailed_text))
+        return message_box
         
     def gui_run( self, gui_context ):
         message_box = self.render()

@@ -23,6 +23,7 @@
 #  ============================================================================
 
 from camelot.core.orm import Entity, Session
+from camelot.types import PrimaryKey
 
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, Integer
@@ -47,7 +48,8 @@ class Fixture( Entity ):
     __tablename__ = 'fixture'
     
     model = Column( Unicode( 256 ), index = True, nullable=False )
-    primary_key = Column( Integer, index = True, nullable=False )
+    primary_key = Column( PrimaryKey(), 
+                          index = True, nullable=False )
     fixture_key = Column( Unicode( 256 ), index = True, nullable=False )
     fixture_class = Column( Unicode( 256 ), index = True, nullable=True )
 
@@ -247,5 +249,4 @@ class FixtureVersion( Entity ):
         if not obj:
             obj = FixtureVersion( fixture_class = fixture_class )
         obj.fixture_version = fixture_version
-        Session.object_session( obj ).flush()    
-
+        Session.object_session( obj ).flush()

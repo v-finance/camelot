@@ -43,6 +43,7 @@ from camelot.core.orm import Entity, ManyToOne
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters
 from camelot.view.controls import delegates
+from camelot.types import PrimaryKey
 
 from authentication import AuthenticationMechanism
 
@@ -56,6 +57,7 @@ class PreviousAttribute( object ):
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']
         
+
 class Memento( Entity ):
     """Keeps information on the previous state of objects, to keep track
     of changes and enable restore to that previous state"""
@@ -63,7 +65,7 @@ class Memento( Entity ):
     __tablename__ = 'memento'
     
     model = schema.Column( Unicode( 256 ), index = True, nullable = False )
-    primary_key = schema.Column( Integer(), index = True, nullable = False )
+    primary_key = schema.Column(PrimaryKey(), index=True, nullable=False)
     creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
     authentication = ManyToOne( AuthenticationMechanism,
                                 required = True,

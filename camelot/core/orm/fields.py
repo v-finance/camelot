@@ -23,7 +23,7 @@
 #  ============================================================================
 from sqlalchemy import schema, orm
 
-from . properties import Property
+from . properties import EntityBuilder
 from . statements import ClassMutator
 
 """
@@ -118,7 +118,7 @@ Here is a quick example of how to use ``has_field``.
         has_field('name', String(50))
 """
 
-class Field(Property):
+class Field(EntityBuilder):
     '''
     Represents the definition of a 'field' on an entity.
 

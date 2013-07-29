@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from application import MainWindow, InstallTranslator
+from application import MainWindow, InstallTranslator, Exit
 from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
 from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
@@ -46,6 +46,7 @@ __all__ = [
     CreateObject.__name__,
     DeleteObject.__name__,
     EditTextDocument.__name__,
+    Exit.__name__,
     FlushSession.__name__,
     InstallTranslator.__name__,
     MainWindow.__name__,

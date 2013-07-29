@@ -25,11 +25,14 @@
 """
 Helper functions to search through a collection of entities
 """
+import datetime
+import decimal
 import logging
 
 LOGGER = logging.getLogger('camelot.view.search')
 
 import sqlalchemy.types
+from camelot.types import virtual_address
 from sqlalchemy import sql, orm, schema
 
 import camelot.types
@@ -54,29 +57,48 @@ def create_entity_search_query_decorator( admin, text ):
             """add column c to the where clause using a clause that
             is relevant for that type of column"""
             arg = None
+            try:
+                python_type = c.type.python_type
+            except NotImplementedError:
+                return
+            # @todo : this should use the from_string field attribute, without
+            #         looking at the sql code
             if issubclass(c.type.__class__, camelot.types.Color):
                 pass
             elif issubclass(c.type.__class__, camelot.types.File):
+                pass
+            elif issubclass(c.type.__class__, camelot.types.Enumeration):
                 pass
             elif issubclass(c.type.__class__, camelot.types.Code):
                 codes = [u'%%%s%%'%s for s in text.split(c.type.separator)]
                 codes = codes + ['%']*(len(c.type.parts) - len(codes))
                 arg = c.like( codes )
-            elif issubclass(c.type.__class__, camelot.types.VirtualAddress):
-                arg = c.like(('%', '%'+text+'%'))
+            elif issubclass(python_type, virtual_address):
+                arg = c.like(virtual_address('%', '%'+text+'%'))
             elif issubclass(c.type.__class__, camelot.types.Image):
                 pass
-            elif issubclass(c.type.__class__, sqlalchemy.types.Integer):
+            elif issubclass(python_type, bool):
+                try:
+                    arg = (c==utils.bool_from_string(text))
+                except ( Exception, utils.ParsingError ):
+                    pass
+            elif issubclass(python_type, int):
                 try:
                     arg = (c==utils.int_from_string(text))
                 except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(c.type.__class__, sqlalchemy.types.Date):
+            elif issubclass(python_type, datetime.date):
                 try:
                     arg = (c==utils.date_from_string(text))
                 except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(c.type.__class__, sqlalchemy.types.Float):
+            elif issubclass(python_type, datetime.timedelta):
+                try:
+                    days = utils.int_from_string(text)
+                    arg = (c==datetime.timedelta(days=days))
+                except ( Exception, utils.ParsingError ):
+                    pass
+            elif issubclass(python_type, (float, decimal.Decimal)):
                 try:
                     float_value = utils.float_from_string(text)
                     precision = c.type.precision
@@ -86,10 +108,7 @@ def create_entity_search_query_decorator( admin, text ):
                     arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
                 except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(c.type.__class__, (sqlalchemy.types.String, )) or \
-                            (hasattr(c.type, 'impl') and \
-                             issubclass(c.type.impl.__class__, (sqlalchemy.types.String, ))):
-                LOGGER.debug('look in column : %s'%c.name)
+            elif issubclass(python_type, (str, unicode)):
                 arg = sql.operators.ilike_op(c, '%'+text+'%')
 
             if arg is not None:

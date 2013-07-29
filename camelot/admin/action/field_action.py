@@ -21,20 +21,25 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from customdelegate import CustomDelegate
-from camelot.view.controls import editors
 
-class ManyToOneChoicesDelegate( CustomDelegate ):
-    """Display a ManyToOne or a relationship field as a ComboBox, filling the 
-  list of choices with the objects of the target class.   This delegate will
-  not work on non relationship fields.
-  
-  .. image:: /_static/enumeration.png
-  
-  The items in the ComboBox are the unicode representation of the related objects.
-  So these classes need an implementation of their __unicode__ method to show
-  up in a human readable way in the ComboBox.
-  """
-  
-    editor = editors.OneToManyChoicesEditor
+"""ModelContext, GuiContext and Actions that are used in the context of
+editing a single field on a form or in a table.
+"""
 
+from .application_action import ApplicationActionModelContext
+
+class FieldActionModelContext( ApplicationActionModelContext ):
+    """The context for a :class:`Action` on a field.  On top of the attributes of the 
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+    this context contains :
+
+    .. attribute:: obj
+
+       the object of which the field displays a field
+       
+    .. attribute:: field
+    
+       the name of the field that is being displayed
+       
+    """
+    pass

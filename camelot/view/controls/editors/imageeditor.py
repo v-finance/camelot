@@ -40,8 +40,8 @@ class ImageEditor( FileEditor ):
     """Editor to view and edit image files, this is a customized
     implementation of a FileEditor"""
 
-    filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm
-*.tiff *.xbm *.xpm) All files (*)"""
+    filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
+All files (*)"""
 
     def __init__( self,
                   parent=None,

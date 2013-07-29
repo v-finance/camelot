@@ -29,28 +29,14 @@ could be the start of MetaCamelot
 import os
 import logging
 
-from camelot.core.conf import settings
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.action import Action
 from camelot.view.controls import delegates
-
-from camelot.view.main import Application
+from camelot.view.main import main_action
 
 LOGGER = logging.getLogger( 'camelot.bin.meta' )
-
-class MetaSettings(object):
-    """settings target to be used within MetaCamelot, when no real
-    settings are available yet"""
-
-    CAMELOT_MEDIA_ROOT = '.'
-    
-    def ENGINE(self):
-        return 'sqlite:///'
-        
-    def setup_model(self):
-        pass
 
 class MetaCamelotAdmin( ApplicationAdmin ):
     """ApplicationAdmin class to be used within meta camelot"""
@@ -58,31 +44,8 @@ class MetaCamelotAdmin( ApplicationAdmin ):
     name = 'Meta Camelot'
 
 def launch_meta_camelot():
-    import sys
-    from camelot.view.model_thread import construct_model_thread, get_model_thread
-    from camelot.admin.action import GuiContext
-    from PyQt4 import QtGui
-    app = QtGui.QApplication([a for a in sys.argv if a])
-    construct_model_thread()
-    mt = get_model_thread()
-    mt.start()
-    settings.append( MetaSettings() )
-    new_project = CreateNewProject()
-    gui_context = GuiContext()
-    admin = MetaCamelotAdmin()
-    admin.get_stylesheet()
-    gui_context.admin = admin
-    new_project.gui_run( gui_context )
-    # keep app alive during running of app
-    return app
-    
-class MetaCamelotApplication( Application ):
-    """A Camelot application to build new Camelot
-    projects."""
-    
-    def initialization(self):
-        new_project = CreateNewProject('New Camelot Project')
-        new_project.run()
+    action = CreateNewProject()
+    main_action(action)
 
 #
 # The various features that can be set when creating a new Camelot project
@@ -318,13 +281,14 @@ class CreateNewProject( Action ):
     """Action to create a new project, based on a form with
     options the user fills in."""
             
-    def model_run(self, context = None):
+    def model_run(self, model_context):
         # begin change object
         from PyQt4 import QtGui
         from camelot.view import action_steps
+        app_admin = MetaCamelotAdmin()
         options = NewProjectOptions()
         yield action_steps.UpdateProgress( text = 'Request information' )
-        yield action_steps.ChangeObject( options )
+        yield action_steps.ChangeObject( options, app_admin.get_related_admin(NewProjectOptions) )
         # end change object
         yield action_steps.UpdateProgress( text = 'Creating new project' )
         self.start_project( options )

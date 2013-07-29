@@ -77,8 +77,6 @@ The available commands are :
 """
         command_help += '\n\n'.join(['%s\n%s\n%s'%(command,'-'*len(command), desc) for command,desc in command_description])
         command_help += """
-        
-For the management of deployed Camelot applications, see camelot_manage
 
 """
         return OptionParser.format_help(self) + ''.join(command_help)
@@ -107,7 +105,7 @@ def apidoc(source, destination):
             if dirname == source:
                 title = '%s API'%(dirname.capitalize())
             ifn = os.path.join( targetdir, 'index.rst' )
-            module_name = dirname.replace('/', '.')
+            module_name = dirname.replace(os.path.sep, '.')
             with open( ifn, 'w' ) as index:
                lines = [ '=' * len(title),
                          title,

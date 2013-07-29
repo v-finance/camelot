@@ -31,6 +31,7 @@ from camelot.core.utils import ugettext
 from camelot.view.art import Icon
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -139,7 +140,11 @@ class SplashProgress( QtGui.QSplashScreen ):
     # while camelot is starting up  
     
     def __init__( self, pixmap ):
-        super( SplashProgress, self ).__init__( pixmap )
+        super( SplashProgress, self ).__init__(pixmap)
+        # allow the splash screen to keep the application alive, even
+        # if the last dialog was closed
+        self.setAttribute(Qt.WA_QuitOnClose)
+        self.setWindowTitle(' ')
         # support transparency
         if pixmap.mask(): self.setMask(pixmap.mask()) 
         
@@ -150,6 +155,7 @@ class SplashProgress( QtGui.QSplashScreen ):
         pass
     
     def setLabelText( self, text ):
+        return
         self.showMessage( text, QtCore.Qt.AlignTop, QtCore.Qt.white )
         
     def wasCanceled( self ):

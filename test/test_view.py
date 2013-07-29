@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtGui
 
+import datetime
 import logging
-import unittest
 import os
 import time
 
@@ -51,6 +51,14 @@ class EditorsTest(ModelThreadTestCase):
     from camelot.view.controls import editors
     from camelot.view.proxy import ValueLoading
 
+    def setUp(self):
+        super(EditorsTest, self).setUp()
+        self.option = QtGui.QStyleOptionViewItem()
+        # set version to 5 to indicate the widget will appear on a
+        # a form view and not on a table view, so it should not
+        # set its background
+        self.option.version = 5
+        
     def assert_valid_editor( self, editor, value ):
         """Test the basic functions of an editor that are needed to integrate
         well with Camelot and Qt
@@ -97,7 +105,6 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, plot )
         
     def test_DateEditor(self):
-        import datetime
         editor = self.editors.DateEditor()
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -124,6 +131,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        editor.set_value( '' )
+        self.assertEqual( editor.get_value(), '' )
         # pretend the user has entered some text
         editor.setText( u'foo' )
         self.assertTrue( editor.get_value() != None )
@@ -236,13 +245,19 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_choices( choices1 )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 2 )
-        self.assertEqual(editor.get_choices(), choices1 )
+        self.assertEqual(editor.get_choices(), choices1 + [(None,'')] )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 2 )
-        # now change the choices
+        # None is not in the list of choices, but we should still be able
+        # to set it's value to it
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        # now change the choices, while the current value is not in the
+        # list of new choices
+        editor.set_value( 2 )
         choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
         editor.set_choices( choices2 )
-        self.assertEqual( editor.get_choices(), choices2 + [(2,u'B')] )
+        self.assertEqual( editor.get_choices(), choices2 + [(2,u'B')] + [(None,'')])
         # set a value that is not in the list, the value should become
         # ValueLoading, to prevent damage to the actual data
         editor.set_value( 33 )
@@ -262,7 +277,18 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
 
     def test_DateTimeEditor(self):
-        import datetime
+        from camelot.view.controls.editors.datetimeeditor import TimeValidator
+        validator = TimeValidator()
+        self.assertEqual(validator.validate('22', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('59', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('22:', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate(':17', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('22:7', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('22:17', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('1:17', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('22:7:', 0), (QtGui.QValidator.Invalid, 0))
+        self.assertEqual(validator.validate('61', 0), (QtGui.QValidator.Invalid, 0))
+        self.assertEqual(validator.validate('611', 0), (QtGui.QValidator.Invalid, 0))
         editor = self.editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -270,10 +296,13 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+        editor.set_value(None)
+        self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
-        editor = self.editors.FloatEditor(parent=None, 
-                                          prefix='prefix')
+        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
+        editor = self.editors.FloatEditor(parent=None)
+        editor.set_field_attributes(prefix='prefix')
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
@@ -281,8 +310,8 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor = self.editors.FloatEditor(parent=None,  
-                                          suffix='suffix')
+        editor = self.editors.FloatEditor(parent=None, option=self.option)
+        editor.set_field_attributes(suffix='suffix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -291,9 +320,20 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 5.45 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
+        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        self.assertEqual(spinbox.minimum(), camelot_minfloat-1)
+        self.assertEqual(spinbox.maximum(), camelot_maxfloat)        
+        spinbox.keyPressEvent(up)
+        self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor.spinBox.setValue( 0.0 )
+        editor = self.editors.FloatEditor(parent=None)
+        editor.set_field_attributes(prefix='prefix', suffix='suffix')
+        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
+        self.assertEqual(spinbox.validate(QtCore.QString('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(QtCore.QString('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
         editor = self.editors.FloatEditor(parent=None, 
                                           calculator=False)
@@ -369,6 +409,7 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, u'<h1>Rich Text Editor</h1>' )
 
     def test_TimeEditor(self):
+        
         import datetime
         editor = self.editors.TimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
@@ -722,18 +763,13 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, intervals, 'disabled')
 
     def testFloatDelegate(self):
-        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
         delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
-        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 3.145)
         delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
-        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 0, 'disabled')
 
     def testColoredFloatDelegate(self):
@@ -976,12 +1012,12 @@ class ControlsTest(ModelThreadTestCase):
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
         
-    def test_navigation_pane(self):
-        from camelot.view.controls import navpane2
+    def test_section_widget(self):
+        from camelot.view.controls import section_widget
         self.wait_for_animation()
-        widget = navpane2.NavigationPane( self.app_admin,
-                                          workspace = None,
-                                          parent = None )
+        widget = section_widget.NavigationPane( self.app_admin,
+                                                workspace = None,
+                                                parent = None )
         widget.set_sections( self.app_admin.get_sections() )
         self.grab_widget(widget)
 

@@ -21,20 +21,22 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from customdelegate import CustomDelegate
-from camelot.view.controls import editors
 
-class ManyToOneChoicesDelegate( CustomDelegate ):
-    """Display a ManyToOne or a relationship field as a ComboBox, filling the 
-  list of choices with the objects of the target class.   This delegate will
-  not work on non relationship fields.
-  
-  .. image:: /_static/enumeration.png
-  
-  The items in the ComboBox are the unicode representation of the related objects.
-  So these classes need an implementation of their __unicode__ method to show
-  up in a human readable way in the ComboBox.
-  """
-  
-    editor = editors.OneToManyChoicesEditor
+from sqlalchemy import schema
 
+class FieldAdmin(schema.SchemaItem):
+    """Admin class to assign specific field attributes to SQLAlchemy columns
+    within the column definition ::
+    
+        rating = schema.Column(types.Integer(), FieldAdmin(maximum=10))
+
+    """
+    
+    def __init__( self, **field_attributes ):
+        self.fa = field_attributes
+        
+    def _set_parent(self, parent):
+        setattr(parent, '_field_admin', self)
+
+    def get_field_attributes(self):
+        return self.fa

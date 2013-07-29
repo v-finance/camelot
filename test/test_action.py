@@ -24,6 +24,8 @@ from test_view import static_images_path
 import test_proxy
 import test_model
 
+test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
+
 class ActionBaseCase( ModelThreadTestCase ):
 
     def setUp(self):
@@ -125,7 +127,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         select_file = generator.next()
         self.assertFalse( select_file.single )
         # pretend the user selected a file
-        generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ] )
+        generator.send(test_images)
         # continue the action till the end
         list( generator )
         # a movie should be inserted
@@ -602,6 +604,20 @@ class FormActionsCase( test_model.ExampleModelCase ):
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )        
 
+class ApplicationCase( test_model.ExampleModelCase ):
+
+    def setUp(self):
+        super( ApplicationCase, self ).setUp()
+        from camelot.admin.application_admin import ApplicationAdmin
+        self.app_admin = ApplicationAdmin()
+        self.context = MockModelContext()
+        self.context.admin = self.app_admin
+        
+    def test_application(self):
+        from camelot.admin.action.application import Application
+        app = Application(self.app_admin)
+        list(app.model_run(self.context))
+        
 class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.
     """
@@ -614,12 +630,20 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         from camelot.core.files.storage import Storage
         from camelot.view.workspace import DesktopWorkspace
         self.app_admin = ApplicationAdmin()
-        self.context = MockModelContext()
+        self.context = MockModelContext(session=self.session)
         self.storage = Storage()
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
         self.gui_context.workspace = DesktopWorkspace( self.app_admin, None )
 
+    def test_authentication(self):
+        action = application_action.Authentication()
+        self.assertTrue( action.get_state(self.context) )
+        generator = action.model_run(self.context)
+        for step in generator:
+            if isinstance(step, action_steps.SelectFile):
+                generator.send(test_images)
+        
     def test_refresh( self ):
         from camelot.core.orm import Session
         from camelot.model.party import Person
@@ -649,6 +673,17 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         #
         list( refresh_action.model_run( self.context ) )
         self.assertEqual( p2.last_name, u'dirty' )
+        
+    def test_select_profile(self):
+        from . import test_core
+        profile_case = test_core.ProfileCase('setUp')
+        profile_case.setUp()
+        profile_store = profile_case.test_profile_store()
+        action = application_action.SelectProfile(profile_store)
+        generator = action.model_run(self.context)
+        for step in generator:
+            if isinstance(step, action_steps.SelectItem):
+                generator.send(profile_store.get_last_profile())
         
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()

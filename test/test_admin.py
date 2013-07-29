@@ -4,6 +4,7 @@ Tests for the Admin classes
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
@@ -145,6 +146,22 @@ class EntityAdminCase( TestMetaData ):
         fa_3 = EntityAdmin.get_sql_field_attributes( [column_3] )
         self.assertTrue( fa_3['default'] )
         self.assertEqual( fa_3['delegate'], delegates.IntegerDelegate )
+
+    def test_field_admin( self ):
+
+        class A(self.Entity):
+            a = schema.Column( types.Integer(), FieldAdmin(editable=False,
+                                                            maximum=10) )
+            
+            class Admin(EntityAdmin):
+                pass
+
+        self.create_all()
+        admin = self.app_admin.get_related_admin( A )
+        
+        fa = admin.get_field_attributes('a')
+        self.assertEqual( fa['editable'], False )
+        self.assertEqual( fa['maximum'], 10 )
         
     def test_relational_field_attributes( self ):
         from camelot.core.orm import (Entity, OneToMany, ManyToMany, ManyToOne,

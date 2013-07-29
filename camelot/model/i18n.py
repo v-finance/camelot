@@ -39,7 +39,7 @@ import camelot.types
 
 from sqlalchemy import sql
 from sqlalchemy.schema import Column
-from sqlalchemy.types import Unicode, INT
+from sqlalchemy.types import Unicode
 
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )
@@ -72,8 +72,8 @@ class Translation( Entity ):
     # value needs to be indexed as well, because when starting up we
     # want to load only the translations that have a value specified
     value = Column( Unicode( 500 ), index = True )
-    cid = Column( INT(), default = 0, index = True )
-    uid = Column( INT(), default = 0, index = True )
+    #cid = Column( INT(), default = 0, index = True )
+    #uid = Column( INT(), default = 0, index = True )
 
     # cache, to prevent too much of the same sql queries
     _cache = dict()
@@ -81,7 +81,7 @@ class Translation( Entity ):
     class Admin( EntityAdmin ):
         verbose_name_plural = _( 'Translations' )
         form_size = ( 700, 150 )
-        list_display = ['source', 'language', 'value', 'uid']
+        list_display = ['source', 'language', 'value']#, 'uid']
         list_filter = ['language']
         list_actions = [ExportAsPO()]
         field_attributes = { 'language':{ 'default':default_language } }
@@ -96,7 +96,8 @@ class Translation( Entity ):
             query = Session().query( cls )
             query = query.filter( sql.and_( cls.source == unicode( source ),
                                             cls.language == language,
-                                            cls.uid != 0 ) )
+                                            cls.value != None,
+                                            cls.value != '' ) )
             translation = query.first()
             if translation:
                 cls._cache[key] = translation.value

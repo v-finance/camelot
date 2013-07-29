@@ -276,7 +276,6 @@ class DesktopWorkspace(QtGui.QWidget):
         
         # Setup the background widget
         self._background_widget = DesktopBackground( self.gui_context, self )
-        self._app_admin.actions_changed_signal.connect(self.reload_background_widget)
         self._tab_widget.addTab(self._background_widget,
                                 Icon('tango/16x16/actions/go-home.png').getQIcon(),
                                 _('Home'))

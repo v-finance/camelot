@@ -79,8 +79,8 @@ entities = EntityCollection()
 # * ClassMutator : DSL like statements that modify the Entity at definition
 #   time
 #
-# * Property : modify an Entity at construction time, in several phases, before
-#   and after mapper and table creation.
+# * EntityBuilder : modify an Entity at construction time, in several phases, 
+#   before and after mapper and table creation.
 #
 
 from . entity import EntityBase, EntityMeta

@@ -69,13 +69,14 @@ class ModelThreadTestCase(unittest.TestCase):
     :param widget: the widget to take a screenshot of
     :param suffix: string to add to the default filename of the image
     :param subdir: subdirectory of images_path in which to put the image file, defaults to
-    the name of the test class
+        the name of the test class
     - the name of the png file is the name of the test case, without 'test_'
     - it is stored in the directory with the same name as the class, without 'test'
         """
         import sys
         import os
-        from PyQt4 import QtGui
+        from PyQt4 import QtGui, QtCore
+        from PyQt4.QtCore import Qt
         from PyQt4.QtGui import QPixmap
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
@@ -95,25 +96,20 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        self.process()
+        #self.process()
         QtGui.QApplication.flush()
-        inner_pixmap = QPixmap.grabWidget(widget)        
-        #
-        # we'll create a label that contains a screenshot of our widget and
-        # take a screenshot of that label, for the sole purpose of adding a border
-        #
-        parent_widget = QtGui.QLabel()
-        parent_widget.setPixmap(inner_pixmap)
-        parent_widget.setFrameStyle(QtGui.QFrame.Panel | QtGui.QFrame.Plain)
-        parent_widget.setObjectName('grab_widget_parent')
-        parent_widget.setLineWidth(2)
-        parent_widget.setStyleSheet("""
-        #grab_widget_parent {
-        border: 2px solid gray;
-        }""")
-        parent_widget.adjustSize()
-        outer_pixmap = QPixmap.grabWidget(parent_widget)
-        outer_pixmap.save(os.path.join(images_path, image_name), 'PNG')
+        inner_pixmap = QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
+        # add a border to the image
+        border = 4
+        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
+        outer_image.fill(Qt.gray)
+        painter = QtGui.QPainter()
+        painter.begin(outer_image)
+        painter.drawPixmap(QtCore.QRectF(border, border, inner_pixmap.width(), inner_pixmap.height()), 
+                          inner_pixmap,
+                          QtCore.QRectF(0, 0, inner_pixmap.width(), inner_pixmap.height()))
+        painter.end()
+        outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
     def process(self):
         """Wait until all events are processed and the queues of the model thread are empty"""
@@ -218,7 +214,7 @@ class EntityViewsTest(ModelThreadTestCase):
                 raise Exception()
             
         app_admin = self.get_application_admin()
-        return [app_admin.get_entity_admin(c) for c in classes if app_admin.get_entity_admin(c)]
+        return [app_admin.get_related_admin(c) for c in classes if app_admin.get_related_admin(c)]
 
     def test_select_view(self):
         for admin in self.get_admins():
@@ -237,6 +233,9 @@ class EntityViewsTest(ModelThreadTestCase):
     def test_new_view(self):
         for admin in self.get_admins():
             widget = admin.create_new_view()
+            if admin.form_state != None:
+                # virtually maximize the widget
+                widget.setMinimumSize(1200, 800)
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             self.assertFalse( has_programming_error )
 

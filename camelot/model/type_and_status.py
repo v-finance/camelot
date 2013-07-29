@@ -55,8 +55,8 @@ from sqlalchemy.ext import hybrid
 from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.types import Enumeration
-from camelot.core.orm.properties import Property
+from camelot.types import Enumeration, PrimaryKey
+from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
@@ -97,8 +97,8 @@ class StatusHistoryAdmin( EntityAdmin ):
     def __unicode__( self ):
 	return unicode(self.classified_by or u'')
 
-class Status( Property ):
-    """Property that adds a related status table(s) to an `Entity`.
+class Status( EntityBuilder ):
+    """EntityBuilder that adds a related status table(s) to an `Entity`.
     
     These additional entities are created :
     
@@ -114,19 +114,29 @@ class Status( Property ):
 	be a list of all possible statuses the entity can have ::
 	
 	    enumeration = [(1, 'draft'), (2,'ready')]
+	    
+    :param status_history_table: the tablename to use to store the status
+        history
+	
+    :param status_type_table: the tablename to use to starte the status types
     """
     
-    def __init__( self, enumeration = None ):
+    def __init__( self, enumeration = None, 
+                  status_history_table = None, status_type_table=None ):
 	super( Status, self ).__init__()
 	self.property = None
 	self.enumeration = enumeration
+	self.status_history_table = status_history_table
+	self.status_type_table = status_type_table
 	    
     def attach( self, entity, name ):
 	super( Status, self ).attach( entity, name )
 	assert entity != Entity
 	
-	status_name = entity.__name__.lower() + '_status'
-	status_type_name = entity.__name__.lower() + '_status_type'
+	if self.status_history_table==None:
+	    self.status_history_table = entity.__name__.lower() + '_status'
+	if self.status_type_table==None:
+	    self.status_type_table = entity.__name__.lower() + '_status_type'
 	
 	status_history_admin = type( entity.__name__ + 'StatusHistoryAdmin',
                                      ( StatusHistoryAdmin, ),
@@ -145,7 +155,7 @@ class Status( Property ):
 	    
 	    status_type = type( entity.__name__ + 'StatusType', 
 	                        (StatusType, entity._descriptor.entity_base,),
-	                        { '__tablename__':status_type_name,
+	                        { '__tablename__':self.status_type_table,
 	                          'Admin':status_type_admin } )	 
 
 	    foreign_key = schema.ForeignKey( status_type.id,
@@ -154,8 +164,8 @@ class Status( Property ):
 	                              
 	    status_history = type( entity.__name__ + 'StatusHistory',
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
-	                           {'__tablename__':status_name,
-	                            'classified_by_id':schema.Column( types.Integer(), 
+	                           {'__tablename__':self.status_history_table,
+	                            'classified_by_id':schema.Column( PrimaryKey(), 
 				                                      foreign_key, 
 				                                      nullable = False ),
 				    'classified_by':orm.relationship( status_type ),
@@ -168,7 +178,7 @@ class Status( Property ):
 	    
 	    status_history = type( entity.__name__ + 'StatusHistory',
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
-	                           {'__tablename__':status_name,
+	                           {'__tablename__':self.status_history_table,
 	                            'classified_by':schema.Column( Enumeration( self.enumeration ), 
 	                                                              nullable=False, index=True ),
 	                            'Admin':status_history_admin,} )
@@ -184,7 +194,7 @@ class Status( Property ):
 		constraint = schema.ForeignKey( col,
 		                                ondelete = 'cascade', 
 		                                onupdate = 'cascade')
-		column = schema.Column( types.Integer(), constraint, nullable = False )
+		column = schema.Column( PrimaryKey(), constraint, nullable = False )
 	        setattr( self.status_history, col_name, column )
 	    
     def create_properties( self ):

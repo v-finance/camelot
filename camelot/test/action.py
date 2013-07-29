@@ -32,15 +32,19 @@ from camelot.admin.action.list_action import ListActionGuiContext
 
 class MockModelContext( object ):
     """Model Context to be used in unit tests
+    
+    :param session: the session attributed to this model context, if `None` is
+        given, the session of the object is used.
     """
     
-    def __init__( self ):
+    def __init__( self, session=None ):
         self._model = []
         self.obj = None
         self.admin = None
         self.mode_name = None
         self.collection_count = 1
         self.selection_count = 1
+        self._session = session
         
     def get_object( self ):
         return self.obj
@@ -53,7 +57,7 @@ class MockModelContext( object ):
 
     @property
     def session( self ):
-        return orm.object_session( self.obj )
+        return self._session or orm.object_session( self.obj )
 
 class MockListActionGuiContext( ListActionGuiContext ):
     

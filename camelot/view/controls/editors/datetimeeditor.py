@@ -33,27 +33,37 @@ from camelot.view.proxy import ValueLoading
 
 class TimeValidator(QtGui.QValidator):
     
-    def __init__(self, parent, nullable):
+    def __init__(self, parent=None):
         QtGui.QValidator.__init__(self, parent)
-        self._nullable = nullable
         
     def validate(self, input, pos):
-        parts = str(input).split(':')
-        if len(parts)!=2:
-            return (QtGui.QValidator.Invalid, pos)
-        if str(input)=='--:--' and self._nullable:
+        input = str(input).strip()
+        # allow None
+        if len(input)==0:
             return (QtGui.QValidator.Acceptable, pos)
-        for part in parts:
+        parts = input.split(':')
+        if len(parts)>2:
+            return (QtGui.QValidator.Invalid, pos)        
+        # validate individual parts
+        for i, part in enumerate(parts):
+            if len(part)==0:
+                return (QtGui.QValidator.Intermediate, pos)
+            if len(part)<1:
+                return (QtGui.QValidator.Intermediate, pos)
+            if len(part)>2:
+                return (QtGui.QValidator.Invalid, pos)            
             if not part.isdigit():
                 return (QtGui.QValidator.Invalid, pos)
-            if len(part) not in (1,2):
-                return (QtGui.QValidator.Intermediate, pos)
-        if not int(parts[0]) in range(0,24):
-            return (QtGui.QValidator.Invalid, pos)
-        if not int(parts[1]) in range(0,60):
-            return (QtGui.QValidator.Invalid, pos)
+            if i==1 or (i==0 and len(parts)==1):
+                if int(part) > 59:
+                    return (QtGui.QValidator.Invalid, pos)
+            elif int(part) > 23:
+                return (QtGui.QValidator.Invalid, pos)
+        # validate the number of parts
+        if len(parts)<2:
+            return (QtGui.QValidator.Intermediate, pos)
         return (QtGui.QValidator.Acceptable, pos)
-            
+    
 class DateTimeEditor(CustomEditor):
     """Widget for editing date and time separated and with popups"""
   
@@ -84,9 +94,10 @@ class DateTimeEditor(CustomEditor):
                         for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i)
                         for i in range(0,24)))]
         self.timeedit.addItems(time_entries)
-        self.timeedit.setValidator(TimeValidator(self, nullable))
+        self.timeedit.setValidator(TimeValidator(self))
         self.timeedit.activated.connect( self.editing_finished )
         self.timeedit.lineEdit().editingFinished.connect( self.editing_finished )
+        self.timeedit.lineEdit().setPlaceholderText('--:--')
         self.timeedit.setFocusPolicy( Qt.StrongFocus )
 
         layout.addWidget(self.timeedit, 1)
@@ -124,14 +135,14 @@ class DateTimeEditor(CustomEditor):
             self.timeedit.lineEdit().setText('%02i:%02i'%(value.hour, value.minute))
         else:
             self.dateedit.set_value(None)
-            self.timeedit.lineEdit().setText('--:--')
+            self.timeedit.lineEdit().setText('')
       
     def date(self):
         return self.dateedit.get_value()
     
     def time(self):
         text = str(self.timeedit.currentText())
-        if text=='--:--':
+        if not len(text):
             return None
         parts = text.split(':')
         return QtCore.QTime(int(parts[0]), int(parts[1]))

@@ -34,7 +34,6 @@ from PyQt4 import QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
-from camelot.view import database_selection
 from camelot.view.model_thread import model_function
 
 _application_admin_ = []
@@ -50,7 +49,7 @@ def get_application_admin():
         raise Exception('No application admin class has been constructed yet')
     return _application_admin_[0]
 
-class ApplicationAdmin(QtCore.QObject):
+class ApplicationAdmin(object):
     """The ApplicationAdmin class defines how the application should look
 like, it also ties Python classes to their associated 
 :class:`camelot.admin.object_admin.ObjectAdmin` class or subclass.  It's
@@ -85,11 +84,6 @@ methods :
     
     A string with the version of the application
     
-.. attribute:: database_profile_wizard
-    
-    The wizard that should be used to create new database profiles. Defaults
-    to :class:`camelot.view.database_selection.ProfileWizard`
-    
 .. attribute:: database_selection
 
     if this is set to True, present the user with a database selection
@@ -100,8 +94,6 @@ When the same action is returned in the :meth:`get_toolbar_actions` and
 shortcut confusion and reduce the number of status updates.
     """
 
-    database_profile_wizard = database_selection.ProfileWizard
-
     name = 'Camelot'
     application_url = None
     help_url = 'http://www.python-camelot.com/docs.html'
@@ -110,17 +102,6 @@ shortcut confusion and reduce the number of status updates.
 
     version = '1.0'
     admins = {}
-
-    # This signal is emitted whenever the sections are changed, and the views
-    # should be updated
-    sections_changed_signal = QtCore.pyqtSignal()
-    # This signal is emitted whenever the tile of the main window needs to
-    # be changed.
-    title_changed_signal = QtCore.pyqtSignal(str)
-    # Emitted whenever the application actions need to be changed
-    actions_changed_signal = QtCore.pyqtSignal()
-
-    database_selection = False
 
     #
     # actions that will be shared between the toolbar and the main menu
@@ -148,7 +129,6 @@ shortcut confusion and reduce the number of status updates.
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
         prefered ApplicationAdmin to use througout the application"""
-        QtCore.QObject.__init__(self)
         _application_admin_.append(self)
         #
         # Cache created ObjectAdmin objects
@@ -352,7 +332,7 @@ shortcut confusion and reduce the number of status updates.
         if toolbar_area == Qt.TopToolBarArea:
             return self.edit_actions + self.change_row_actions + \
                    self.export_actions + self.help_actions
-    
+        
     def get_name(self):
         """
         :return: the name of the application, by default this is the class

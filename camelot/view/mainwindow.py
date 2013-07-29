@@ -29,7 +29,7 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view.controls.navpane2 import NavigationPane
+from camelot.view.controls.section_widget import NavigationPane
 from camelot.view.model_thread import post
 
 from camelot.core.utils import ugettext as _
@@ -98,7 +98,6 @@ class MainWindow(QtGui.QMainWindow):
         windowtitle = self.app_admin.get_name()
         logger.debug( u'setting up window title: %s'%windowtitle )
         self.setWindowTitle( windowtitle )
-        self.app_admin.title_changed_signal.connect( self.setWindowTitle )
 
         logger.debug('initialization complete')
 
@@ -206,16 +205,17 @@ class MainWindow(QtGui.QMainWindow):
             toolbar.setFloatable( False )
             for action in toolbar_actions:
                 qaction = qactions.get( action, None )
+                if qaction != None:
+                    # the action already exists in the menu
+                    toolbar.addAction( qaction )
                 if qaction == None:
                     rendered = action.render( self.gui_context, toolbar )
                     # both QWidgets and QActions can be put in a toolbar
                     if isinstance(rendered, QtGui.QWidget):
-                        qaction = toolbar.addWidget(rendered)
+                        toolbar.addWidget(rendered)
                     elif isinstance(rendered, QtGui.QAction):
-                        qaction = rendered
-                        qaction.triggered.connect( self.action_triggered )
-                if qaction==rendered:
-                    toolbar.addAction( qaction )
+                        rendered.triggered.connect( self.action_triggered )
+                        toolbar.addAction( rendered )
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
                 

@@ -27,7 +27,6 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function
 from camelot.view.utils import to_string
@@ -46,15 +45,6 @@ This allows for much more introspection than the standard
 :class:`camelot.admin.object_admin.ObjectAdmin`.
     
 It has additional class attributes that customise its behaviour.
-
-**Basic**
-
-.. attribute:: list_action
-
-   The :class:`camelot.admin.action.base.Action` that will be triggered when the
-   user selects an item in a list of objects.  This defaults to 
-   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
-   for the current object.
    
 **Filtering**
 
@@ -119,7 +109,6 @@ It has additional class attributes that customise its behaviour.
  
     """
 
-    list_action = OpenFormView()
     list_search = []
     expanded_list_search = None
     copy_deep = {}
@@ -155,6 +144,8 @@ It has additional class attributes that customise its behaviour.
         sql_attributes = dict()
         for column in columns:
             column_type = column.type
+            sql_attributes['python_type'] = ''
+            sql_attributes['doc'] = ''
             for base_class in inspect.getmro( type( column_type ) ):
                 fa = _sqlalchemy_to_python_type_.get( base_class, 
                                                       None )
@@ -164,8 +155,12 @@ It has additional class attributes that customise its behaviour.
             if isinstance( column, (schema.Column) ):
                 sql_attributes['nullable'] = column.nullable
                 sql_attributes['default'] = column.default
+                sql_attributes['doc'] = column.doc or ''
                 if column.primary_key:
                     sql_attributes['editable'] = False
+            field_admin = getattr(column, '_field_admin', None)
+            if field_admin != None:
+                sql_attributes.update(field_admin.get_field_attributes())
             break
         return sql_attributes
     
@@ -196,7 +191,6 @@ It has additional class attributes that customise its behaviour.
                     )
         return self.get_verbose_name()
     
-    @model_function
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name
         :param field_name: the name of the field
@@ -213,10 +207,6 @@ It has additional class attributes that customise its behaviour.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-
-            def create_default_getter(field_name):
-                return lambda o:getattr(o, field_name)
-
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
@@ -225,7 +215,6 @@ It has additional class attributes that customise its behaviour.
                 python_type = str,
                 to_string = to_string,
                 field_name = field_name,
-                getter = create_default_getter(field_name),
                 length = None,
                 tooltip = None,
                 background_color = None,
@@ -401,9 +390,23 @@ It has additional class attributes that customise its behaviour.
         from camelot.view.art import Icon
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from PyQt4 import QtCore, QtGui
+        from PyQt4.QtCore import Qt
 
+        header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
+        header_width = header_icon.getQPixmap().size().width()
+        
         class SelectQueryTableProxy(QueryTableProxy):
-            header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
+            
+            def headerData( self, section, orientation, role ):
+                if orientation == Qt.Vertical:
+                    if role == Qt.SizeHintRole:
+                            return QtCore.QVariant( QtCore.QSize( header_width + 10,
+                                                                  self._vertical_header_height ) )
+                    if role == Qt.DecorationRole:
+                        return header_icon.getQPixmap()
+                    elif role == Qt.DisplayRole:
+                        return QtCore.QVariant( '' )
+                return super( SelectQueryTableProxy, self ).headerData( section, orientation, role )
 
         class SelectView(admin.TableView):
             table_model = SelectQueryTableProxy
@@ -632,7 +635,6 @@ It has additional class attributes that customise its behaviour.
             return True
         return False
     
-    @model_function
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent
