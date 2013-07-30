@@ -31,7 +31,6 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.search')
 
-import sqlalchemy.types
 from camelot.types import virtual_address
 from sqlalchemy import sql, orm, schema
 
