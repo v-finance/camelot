@@ -143,19 +143,28 @@ class SplashProgress( QtGui.QSplashScreen ):
         super( SplashProgress, self ).__init__(pixmap)
         # allow the splash screen to keep the application alive, even
         # if the last dialog was closed
+        layout = QtGui.QVBoxLayout()
+        progress_bar = QtGui.QProgressBar(parent=self)
+        progress_bar.setObjectName('progress_bar')
+        layout.addStretch(1)
+        layout.addWidget(progress_bar)
         self.setAttribute(Qt.WA_QuitOnClose)
         self.setWindowTitle(' ')
         # support transparency
-        if pixmap.mask(): self.setMask(pixmap.mask()) 
+        if pixmap.mask(): self.setMask(pixmap.mask())
+        self.setLayout(layout)
         
-    def setMaximum( self, _maximum ):
-        pass
+    def setMaximum( self, maximum ):
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar.setMaximum(maximum)
     
-    def setValue( self, _value ):
-        pass
+    def setValue( self, value ):
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar.setValue(value)
     
     def setLabelText( self, text ):
-        self.showMessage( text, QtCore.Qt.AlignTop, QtCore.Qt.white )
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar.setFormat(text)
         
     def wasCanceled( self ):
         return False
