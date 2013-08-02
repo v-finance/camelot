@@ -222,7 +222,7 @@ class FixtureVersion( Entity ):
     
     fixture_version = Column( Integer, index = True, nullable=False, default=0 )
     fixture_class = Column( Unicode( 256 ), index = True, nullable=True,
-                            unique=True )
+                            primary_key=True )
     
     @classmethod
     def get_current_version( cls, fixture_class = None, session = None):
