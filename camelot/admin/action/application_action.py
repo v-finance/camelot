@@ -154,7 +154,7 @@ class SelectProfile( Action ):
                 select_profile.subtitle = subtitle
                 if last_profile in profiles:
                     select_profile.value = last_profile
-                if len(profiles):
+                elif len(profiles):
                     select_profile.value = None
                 else:
                     select_profile.value = load_profiles
