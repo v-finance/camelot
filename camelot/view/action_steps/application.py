@@ -44,7 +44,10 @@ class MainWindow( ActionStep ):
         """create the main window. this method is used to unit test
         the action step."""
         from ..mainwindow import MainWindow
-        main_window = MainWindow( gui_context=gui_context )
+        main_window_context = gui_context.copy()
+        main_window_context.progress_dialog = None
+        main_window = MainWindow( gui_context=main_window_context )
+        gui_context.workspace = main_window_context.workspace
         main_window.setWindowTitle( self.window_title )
         main_window.set_sections(self.sections)
         main_window.set_main_menu(self.main_menu)
