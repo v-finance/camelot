@@ -45,6 +45,14 @@ logger = logging.getLogger('camelot.view.utils')
 _local_date_format = None
 _local_datetime_format = None
 _local_time_format = None
+_locale = None
+
+def locale():
+    """Get the default locale and cache it for reuse"""
+    global _locale
+    if _locale is None:
+        _locale = QtCore.QLocale()
+    return _locale
 
 def local_date_format():
     """Get the local data format and cache it for reuse"""
@@ -116,7 +124,7 @@ def date_from_string(s):
             dt = QDate.fromString(s, f)
     if not dt.isValid():
         #
-	# try alternative separators
+        # try alternative separators
         #
         separators = u''.join([c for c in f if c not in string.ascii_letters])
         if separators:
@@ -177,15 +185,15 @@ def code_from_string(s, separator):
 def int_from_string(s):
     value = float_from_string(s)
     if value != None:
-	value = int( value )
+        value = int( value )
     return value
 
 def float_from_string(s):
     if s == None:
-	return None
+        return None
     s = s.strip()
     if len(s) == 0:
-	return None
+        return None
     locale = QtCore.QLocale()
     # floats in python are implemented as double in C
     f, ok = locale.toDouble(s)
@@ -213,7 +221,7 @@ def pyvalue_from_string(pytype, s):
 
 def to_string( value ):
     if value == None:
-	return u''
+        return u''
     return unicode( value )
 
 def enumeration_to_string(value):
@@ -238,7 +246,7 @@ def text_from_richtext( unstripped_text ):
     """
     strings = ['']
     if not unstripped_text:
-	    return strings
+        return strings
 
     class HtmlToTextParser(HTMLParser):
         def handle_endtag(self, tag):
@@ -258,7 +266,7 @@ def text_from_richtext( unstripped_text ):
 
 def resize_widget_to_screen( widget, fraction = 0.75 ):
     """Resize a widget to fill a certain fraction of the screen
-    
+
     :param widget: the widget to resize
     :param fraction: the fraction of the screen to fill after the resize
     """

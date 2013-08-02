@@ -28,6 +28,7 @@ from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 from camelot.view.art import Icon
+from camelot.view.utils import locale
 from camelot.core import constants
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
@@ -35,7 +36,6 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     
     def __init__(self, option = None, parent = None):
         self._option = option
-        self._locale = QtCore.QLocale()        
         super(CustomDoubleSpinBox, self).__init__(parent)
     
     def wheelEvent(self, wheel_event):
@@ -78,9 +78,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = unicode( self._locale.toString( float(value), 
-                                               'f', 
-                                               self.decimals() ) )
+        text = unicode( locale().toString( float(value), 
+                                           'f', 
+                                           self.decimals() ) )
         return text
     
     def stripped(self, qinput):
