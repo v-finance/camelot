@@ -107,7 +107,7 @@ class VirtualAddress(types.TypeDecorator):
             if value:
                 split = value.split('://')
                 if len(split)>1:
-                    return virtual_address(split)
+                    return virtual_address(*split)
             return virtual_address(u'phone',u'')
             
         return processor  
