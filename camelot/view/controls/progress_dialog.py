@@ -155,7 +155,6 @@ class SplashProgress( QtGui.QSplashScreen ):
         pass
     
     def setLabelText( self, text ):
-        return
         self.showMessage( text, QtCore.Qt.AlignTop, QtCore.Qt.white )
         
     def wasCanceled( self ):
