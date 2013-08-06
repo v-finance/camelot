@@ -87,11 +87,11 @@ class Application( Action ):
         from ...core.conf import settings
         from ...core.utils import load_translations
         from ...view import action_steps
-        yield action_steps.UpdateProgress( 0, 0, _('Setup database') )
+        yield action_steps.UpdateProgress( 1, 5, _('Setup database') )
         settings.setup_model()
-        yield action_steps.UpdateProgress( 0, 0, _('Load translations') )
+        yield action_steps.UpdateProgress( 2, 5, _('Load translations') )
         load_translations()
-        yield action_steps.UpdateProgress( 0, 0, _('Install translator') )
+        yield action_steps.UpdateProgress( 3, 5, _('Install translator') )
         yield action_steps.InstallTranslator( model_context.admin ) 
-        yield action_steps.UpdateProgress( 0, 0, _('Create main window') )
+        yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
         yield action_steps.MainWindow( self.application_admin )
