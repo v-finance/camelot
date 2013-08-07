@@ -96,6 +96,10 @@ class StatusHistoryAdmin( EntityAdmin ):
 
     def __unicode__( self ):
         return unicode(self.classified_by or u'')
+    
+    def get_depending_objects(self, obj):
+        if obj.status_for is not None:
+            yield obj.status_for
 
 class Status( EntityBuilder ):
     """EntityBuilder that adds a related status table(s) to an `Entity`.
@@ -141,7 +145,7 @@ class Status( EntityBuilder ):
         status_history_admin = type( entity.__name__ + 'StatusHistoryAdmin',
                                      ( StatusHistoryAdmin, ),
                                      { 'verbose_name':_(entity.__name__ + ' Status'),
-                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )	
+                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
 
         # use `type` instead of `class`, to give status type and history
         # classes a specific name, so these classes can be used whithin the
@@ -160,7 +164,7 @@ class Status( EntityBuilder ):
 
             foreign_key = schema.ForeignKey( status_type.id,
                                              ondelete = 'cascade', 
-                                             onupdate = 'cascade')	    
+                                             onupdate = 'cascade')
 
             status_history = type( entity.__name__ + 'StatusHistory',
                                    ( StatusHistory, entity._descriptor.entity_base, ),
@@ -182,6 +186,7 @@ class Status( EntityBuilder ):
                                     'classified_by':schema.Column( Enumeration( self.enumeration ), 
                                                                    nullable=False, index=True ),
                                     'Admin':status_history_admin,} )
+            setattr( entity, '_%s_enumeration'%name, self.enumeration )
 
         self.status_history = status_history
         setattr( entity, '_%s_history'%name, self.status_history )
@@ -227,7 +232,7 @@ class StatusMixin( object ):
         if status_date == None:
             status_date = datetime.date.today()
         for status_history in self.status:
-            if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
+            if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:
                 return status_history	
 
     @staticmethod
@@ -282,7 +287,7 @@ class ChangeStatus( Action ):
     :param verbose_name: the name of the action
     :return: a :class:`camelot.admin.action.Action` object that changes
     the status of a selection to the new status
-    """	
+    """
 
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)
