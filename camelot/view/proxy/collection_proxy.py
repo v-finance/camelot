@@ -846,20 +846,35 @@ position in the query.
                 direction = field_attributes.get( 'direction', None )
                 if direction in ( 'manytomany', 'onetomany' ):
                     value_changed = True
-                if value_changed:
-                    # update the model
-                    try:
-                        setattr( o, attribute, new_value )
-                        #
-                        # setting this attribute, might trigger a default function to return a value,
-                        # that was not returned before
-                        #
-                        self.admin.set_defaults( o, include_nullable_fields=False )
-                    except AttributeError, e:
-                        self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
-                    except TypeError:
-                        # type error can be raised in case we try to set to a collection
-                        pass
+                if value_changed is not True:
+                    continue
+                #
+                # now check if this column is editable, since editable might be
+                # dynamic and change after every change of the object
+                #
+                fields = [attribute]
+                for fa in self.admin.get_dynamic_field_attributes(o, fields):
+                    # if editable is not in the field_attributes dict, it wasn't
+                    # dynamic but static, so earlier checks should have 
+                    # intercepted this change
+                    if fa.get('editable', True) == True:
+                        # interrupt inner loop, so outer loop can be continued
+                        break
+                else:
+                    continue
+                # update the model
+                try:
+                    setattr( o, attribute, new_value )
+                    #
+                    # setting this attribute, might trigger a default function to return a value,
+                    # that was not returned before
+                    #
+                    self.admin.set_defaults( o, include_nullable_fields=False )
+                except AttributeError, e:
+                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
+                except TypeError:
+                    # type error can be raised in case we try to set to a collection
+                    pass
                 changed = value_changed or changed
             if changed:
                 if self.flush_changes and self.validator.isValid( row ):
