@@ -147,7 +147,7 @@ and above the text.
                                                                      Qt.SizeHintRole ) )
             # when the size is different from the one from the model, the
             # user changed it
-            if old_size.width() != new_width:
+            if (old_size is not None) and (old_size.width() != new_width):
                 new_size = QtCore.QSize( new_width, old_size.height() )
                 self.model().setHeaderData( logical_index, 
                                             Qt.Horizontal,
