@@ -937,6 +937,9 @@ position in the query.
 
         return True
 
+    # @todo : it seems Qt regulary crashes when dataChanged is emitted
+    #         don't do the emit inside a slot, but rework the CollectionProxy
+    #         to behave as an action that yields all it's updates
     @QtCore.pyqtSlot(int, int, int)
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
