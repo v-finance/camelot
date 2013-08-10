@@ -234,7 +234,7 @@ be specified using the verbose_name attribute.
     list_action = OpenFormView()
     list_actions = []
     list_size = (600, 600)
-    form_size = (700, 500)
+    form_size = None
     form_actions = []
     related_toolbar_actions = []
     field_attributes = {}
