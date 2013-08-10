@@ -689,23 +689,6 @@ be specified using the verbose_name attribute.
                 widget.setWindowState(QtCore.Qt.WindowMaximized)
             if self.form_state == constants.MINIMIZED:
                 widget.setWindowState(QtCore.Qt.WindowMinimized)
-        
-    def create_form_view(self, title, model, index, parent=None):
-        """Creates a Qt widget containing a form view, for a specific index in
-        a model.  Use this method to create a form view for a collection of objects,
-        the user will be able to use :kbd:`PgUp`/:kbd:`PgDown` to move to 
-        the next object.
-
-        :param title: the title of the form view
-        :param model: the data model to be used to fill the form view
-        :param index: which row in the data model to display
-        :param parent: the parent widget for the form
-        """
-        logger.debug('creating form view for index %s' % index)
-        from camelot.view.controls.formview import FormView
-        form = FormView(title, self, model, index)
-        self._apply_form_state( form )
-        return form
 
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object

@@ -26,7 +26,8 @@
 editing a single field on a form or in a table.
 """
 
-from .application_action import ApplicationActionModelContext
+from .application_action import (ApplicationActionModelContext,
+                                 ApplicationActionGuiContext)
 
 class FieldActionModelContext( ApplicationActionModelContext ):
     """The context for a :class:`Action` on a field.  On top of the attributes of the 
@@ -41,5 +42,40 @@ class FieldActionModelContext( ApplicationActionModelContext ):
     
        the name of the field that is being displayed
        
+       attribute:: value
+       
+       the value of the field as it is displayed in the editor
     """
-    pass
+    
+    def __init__(self):
+        super( FieldActionModelContext, self ).__init__()
+        self.obj = None
+        self.field = None
+        self.value = None
+
+class FieldActionGuiContext( ApplicationActionGuiContext ):
+    """The context for an :class:`Action` on a field.  On top of the attributes of the 
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+    this context contains :
+
+    .. attribute:: editor
+
+       the editor through which the field is edited.
+       
+    """
+        
+    model_context = FieldActionModelContext
+    
+    def __init__( self ):
+        super( FieldActionGuiContext, self ).__init__()
+        self.editor = None
+
+    def create_model_context( self ):
+        context = super( FieldActionGuiContext, self ).create_model_context()
+        context.value = self.editor.get_value()
+        return context
+        
+    def copy( self, base_class = None ):
+        new_context = super( FieldActionGuiContext, self ).copy( base_class )
+        new_context.editor = self.editor
+        return new_context

@@ -28,9 +28,11 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
+from camelot.admin.action import FieldActionGuiContext, Action
 from camelot.view.art import Icon
 from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
+from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 from camelot.core.utils import ugettext as _
@@ -42,6 +44,14 @@ from customeditor import CustomEditor, set_background_color_palette
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
+class OpenObject(Action):
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        obj = model_context.value()
+        if obj is not None:
+            admin = model_context.admin.get_related_admin(obj.__class__)
+            yield action_steps.OpenFormView([obj], admin)
 
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
@@ -88,6 +98,9 @@ class Many2OneEditor( CustomEditor ):
                             QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
+        self.gui_context = FieldActionGuiContext()
+        self.gui_context.editor = self
+        self.gui_context.admin = admin
         self.entity_set = False
         self._editable = editable
         self._entity_representation = ''
@@ -147,6 +160,7 @@ class Many2OneEditor( CustomEditor ):
         self.layout.addWidget(self.search_button)
         self.layout.addWidget(self.open_button)
         self.setLayout(self.layout)
+        get_signal_handler().connect_signals(self)
 
     def set_field_attributes(self, editable = True, 
                                    background_color = None,
@@ -261,37 +275,24 @@ class Many2OneEditor( CustomEditor ):
             show_top_level( form, self )
 
     def createFormView(self):
-        if self.entity_instance_getter:
-
-            def get_admin_and_title():
-                obj = self.entity_instance_getter()
-                admin = self.admin.get_related_admin(obj.__class__)
-                return admin, ''
-
-            post(get_admin_and_title, self.show_form_view)
-
-    def show_form_view(self, admin_and_title):
-        from camelot.view.workspace import show_top_level
-        admin, title = admin_and_title
-
-        def create_collection_getter(instance_getter):
-            return lambda:[instance_getter()]
-
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-
-        model = CollectionProxy(
-            admin,
-            create_collection_getter(self.entity_instance_getter),
-            admin.get_fields
-        )
-        model.dataChanged.connect(self.dataChanged)
-        form = admin.create_form_view(title, model, 0)
-        # @todo : dirty trick to keep reference
-        #self.__form = form
-        show_top_level( form, self )
+        action = OpenObject()
+        action.gui_run(self.gui_context)
 
     def dataChanged(self, index1, index2):
         self.setEntity(self.entity_instance_getter, False)
+
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_update( self, sender, entity ):
+        if entity is self.get_value()():
+            self.setEntity(self.entity_instance_getter, False)
+
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_delete( self, sender, entity ):
+        pass
+
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_create( self, sender, entity ):
+        pass
 
     def search_input_editing_finished(self):
         if not self.entity_set:

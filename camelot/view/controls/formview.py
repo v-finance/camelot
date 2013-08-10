@@ -24,7 +24,6 @@
 
 """form view"""
 
-import functools
 import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
@@ -287,18 +286,6 @@ class FormView(AbstractView):
 
         self.accept_close_event = False
 
-        get_actions = admin.get_form_actions
-        post( functools.update_wrapper( functools.partial( get_actions, 
-                                                           None ),
-                                        get_actions ),
-              self.set_actions )
-
-        get_toolbar_actions = admin.get_form_toolbar_actions
-        post( functools.update_wrapper( functools.partial( get_toolbar_actions, 
-                                                           Qt.TopToolBarArea ),
-                                        get_toolbar_actions ),
-              self.set_toolbar_actions )
-                
     @QtCore.pyqtSlot()
     def refresh(self):
         """Refresh the data in the current view"""

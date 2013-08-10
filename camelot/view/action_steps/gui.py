@@ -27,6 +27,7 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
@@ -35,9 +36,29 @@ from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
 class OpenFormView( ActionStep ):
-    """Open the form view for a list of objects, in a non blocking way
-    :param objects: the list of objects to display in the form view
-    :param admin: the admin class to use to display the form    
+    """Open the form view for a list of objects, in a non blocking way.
+    
+    :param objects: the list of objects to display in the form view, if objects
+        is set to `None`, the model of the item view of the gui context is
+        reused
+    :param admin: the admin class to use to display the form
+    
+    .. attribute:: row
+
+        Which object to display when opening the form, defaults to the first
+        object, so row is 0 by default
+        
+    .. attribute:: actions
+    
+        A list of `camelot.admin.action.base.Action` objects to be displayed
+        at the side of the form, this defaults to the ones returned by the
+        admin
+        
+    .. attribute:: top_toolbar_actions
+    
+        A list of `camelot.admin.action.base.Action` objects to be displayed
+        at the top toolbar of the form, this defaults to the ones returned by the
+        admin
     """
     
     blocking = False
@@ -45,25 +66,63 @@ class OpenFormView( ActionStep ):
     def __init__( self, objects, admin ):
         self.objects = objects
         self.admin = admin
-        
+        self.row = 0
+        self.actions = admin.get_form_actions(None)
+        get_form_toolbar_actions = admin.get_form_toolbar_actions
+        self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
+        self.title = u' '
+    
+    def render(self, model, row):
+        from camelot.view.controls.formview import FormView
+        form = FormView(title=self.title, admin=self.admin, model=model,
+                        index=row)
+        form.set_actions(self.actions)
+        form.set_toolbar_actions(self.top_toolbar_actions)
+        self.admin._apply_form_state( form )
+        return form
+    
     def gui_run( self, gui_context ):
+        from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.workspace import show_top_level
 
-        def create_collection_getter( objects ):
-            return lambda:objects
-        
-        model = CollectionProxy(
-            self.admin,
-            create_collection_getter(self.objects),
-            self.admin.get_fields,
-            max_number_of_rows=10
-        )
-        title = ''
-        formview = self.admin.create_form_view(
-            title, model, 0
-        )
-        show_top_level( formview, gui_context.workspace )    
+        if self.objects is None:
+            related_model = gui_context.item_view.model()
+            #
+            # depending on the type of related model, create a new model
+            #
+            row = gui_context.item_view.currentIndex().row()
+            if isinstance( related_model, QueryTableProxy ):
+                model = QueryTableProxy(
+                    gui_context.admin,
+                    related_model.get_query_getter(),
+                    gui_context.admin.get_fields,
+                    max_number_of_rows = 1,
+                    cache_collection_proxy = related_model,
+                ) 
+            else:
+                # no cache or sorting information is transferred
+                model = CollectionProxy( 
+                    gui_context.admin,
+                    related_model.get_collection,
+                    gui_context.admin.get_fields,
+                    max_number_of_rows = 1,
+                )
+                # get the unsorted row
+                row = related_model.map_to_source( row )
+        else:
+            row = self.row
+            def create_collection_getter( objects ):
+                return lambda:objects
+            
+            model = CollectionProxy(
+                self.admin,
+                create_collection_getter(self.objects),
+                self.admin.get_fields,
+                max_number_of_rows=10
+            )
+        formview = self.render(model, row)
+        show_top_level( formview, gui_context.workspace )
     
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries

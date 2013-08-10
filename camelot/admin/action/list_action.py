@@ -258,40 +258,10 @@ class OpenFormView( ListContextAction ):
     icon = Icon('tango/16x16/places/folder.png')
     tooltip = _('Open')
     verbose_name = _('Open')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.workspace import show_top_level
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-        related_model = gui_context.item_view.model()
-        #
-        # depending on the type of related model, create a new model
-        #
-        row = gui_context.item_view.currentIndex().row()
-        if isinstance( related_model, QueryTableProxy ):
-            model = QueryTableProxy(
-                gui_context.admin,
-                related_model.get_query_getter(),
-                gui_context.admin.get_fields,
-                max_number_of_rows = 1,
-                cache_collection_proxy = related_model,
-            ) 
-        else:
-            # no cache or sorting information is transferred
-            model = CollectionProxy( 
-                gui_context.admin,
-                related_model.get_collection,
-                gui_context.admin.get_fields,
-                max_number_of_rows = 1,
-            )
-            # get the unsorted row
-            row = related_model.map_to_source( row )
-        formview = gui_context.admin.create_form_view(
-            u' ', 
-            model, 
-            row, 
-        )
-        show_top_level( formview, gui_context.item_view )
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
         
 class OpenNewView( EditAction ):
     """Opens a new view of an Entity related to a table view.
