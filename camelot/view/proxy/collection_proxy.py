@@ -879,6 +879,7 @@ position in the query.
             if changed:
                 if self.flush_changes and self.validator.isValid( row ):
                     # save the state before the update
+                    was_persistent = self.admin.is_persistent(o)
                     try:
                         self.admin.flush( o )
                     except DatabaseError, e:
@@ -890,6 +891,8 @@ position in the query.
                     except KeyError:
                         pass
                     locker.unlock()
+                    if was_persistent is False:
+                        self.rsh.sendEntityCreate(self, o)
                 # update the cache
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
