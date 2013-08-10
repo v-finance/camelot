@@ -69,10 +69,13 @@ class OpenFormView( ActionStep ):
         get_form_toolbar_actions = admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
         self.title = u' '
+        self._columns = admin.get_fields()
+        self._form_display = admin.get_form_display()
     
     def render(self, model, row):
         from camelot.view.controls.formview import FormView
         form = FormView(title=self.title, admin=self.admin, model=model,
+                        columns=self._columns, form_display=self._form_display,
                         index=row)
         form.set_actions(self.actions)
         form.set_toolbar_actions(self.top_toolbar_actions)
@@ -136,7 +139,7 @@ class OpenNewView(ActionStep):
         if len(self.subclass_tree):
             select_subclass = SubclassDialog(admin=self.admin, parent=None)
             select_subclass.setWindowTitle(ugettext('select'))
-            selected = select_subclass.exec_()
+            select_subclass.exec_()
             new_gui_context.admin = select_subclass.selected_subclass
         else:
             new_gui_context.admin = self.admin

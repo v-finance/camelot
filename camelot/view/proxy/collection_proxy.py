@@ -559,36 +559,21 @@ position in the query.
         returned by the getColumns method of the ElixirAdmin class
         """
         assert object_thread( self )
+        self.beginResetModel()
         self.logger.debug( 'setColumns' )
         self._columns = columns
 
-        delegate_manager = delegates.DelegateManager()
-        delegate_manager.set_columns_desc( columns )
+        delegate_manager = delegates.DelegateManager(columns)
 
-        # set a delegate for the vertical header
-        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
         index = QtCore.QModelIndex()
         option = QtGui.QStyleOptionViewItem()
         self.settings.beginGroup( 'column_width' )
         self.settings.beginGroup( '0' )
-
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
         for i, c in enumerate( columns ):
-            #
-            # Construct the delegate
-            #
             field_name = c[0]
-            self.logger.debug( 'creating delegate for %s' % field_name )
-            try:
-                delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
-            except Exception, e:
-                log_programming_error( logger, 
-                                       'Could not create delegate for field %s'%field_name,
-                                       exc_info = e )
-                delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
-            delegate_manager.insertColumnDelegate( i, delegate )
             #
             # Set the header data
             #
@@ -607,6 +592,7 @@ position in the query.
             minimal_widths = [ label_size.width() + 10 ]
             if 'minimal_column_width' in c[1]:
                 minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
+            delegate = delegate_manager.get_column_delegate(i)
             if c[1].get('editable', True) != False:
                 minimal_widths.append( delegate.sizeHint( option, index ).width() )
             column_width = c[1].get( 'column_width', None )
@@ -626,6 +612,7 @@ position in the query.
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
+        self.endResetModel()
             
     def setHeaderData( self, section, orientation, value, role ):
         assert object_thread( self )
@@ -728,6 +715,8 @@ position in the query.
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
            not ( 0 <= index.column() <= self.columnCount() ):
+            if role == Qt.UserRole:
+                return QtCore.QVariant({})
             return QtCore.QVariant()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:

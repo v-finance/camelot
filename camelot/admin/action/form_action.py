@@ -193,8 +193,9 @@ class CloseForm( Action ):
         validator = model_context.admin.get_validator()
         obj = model_context.get_object()
         admin  = model_context.admin
-        if obj == None:
+        if obj is None:
             yield action_steps.CloseView()
+            raise StopIteration
         #
         # validate the object, and if the object is valid, simply close
         # the view

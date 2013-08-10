@@ -28,17 +28,23 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+from .plaintextdelegate import PlainTextDelegate
+
 class DelegateManager(QtGui.QItemDelegate):
     """Manages custom delegates, should not be used by the application
   developer
   """
 
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, columns, parent=None):
         QtGui.QItemDelegate.__init__(self, parent)
         self.delegates = {}
-
-    def set_columns_desc(self, columnsdesc):
-        self.columnsdesc = columnsdesc
+        # set a delegate for the vertical header
+        self.insertColumnDelegate(-1, PlainTextDelegate(parent=self))
+        for i, c in enumerate(columns):
+            field_name = c[0]
+            logger.debug( 'creating delegate for %s' % field_name )
+            delegate = c[1]['delegate'](parent = self, **c[1])
+            self.insertColumnDelegate( i, delegate )
 
     def get_column_delegate(self, column):
         try:
@@ -62,12 +68,6 @@ class DelegateManager(QtGui.QItemDelegate):
     @QtCore.pyqtSlot( QtGui.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
-
-    def removeColumnDelegate(self, column):
-        """Removes custom column delegate"""
-        logger.debug('removing a custom column delegate')
-        if column in self.delegates:
-            del self.delegates[column]
 
     def paint(self, painter, option, index):
         """Use a custom delegate paint method if it exists"""

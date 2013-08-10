@@ -60,7 +60,7 @@ class OpenOrNewObject(Action):
         obj = model_context.value()
         if obj is not None:
             admin = model_context.admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView([obj], model_context.admin)
+            yield action_steps.OpenFormView([obj], admin)
         else:
             new_object = yield action_steps.OpenNewView(model_context.admin)
             yield UpdateEditor('new_value', new_object)

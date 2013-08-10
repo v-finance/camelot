@@ -53,6 +53,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
     def __init__( self, 
                   obj, 
                   admin,
+                  form_display,
+                  columns,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
@@ -72,10 +74,13 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         validator = model.get_validator()
         layout = QtGui.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
-        form_widget = FormWidget( parent=self, admin=admin )
+        form_widget = FormWidget(admin=admin,
+                                 model=model,
+                                 form_display=form_display,
+                                 columns=columns,
+                                 parent=self)
         layout.addWidget( form_widget )
         validator.validity_changed_signal.connect( self._validity_changed )
-        form_widget.set_model( model )
         form_widget.setObjectName( 'form' )
         if hasattr(admin, 'form_size') and admin.form_size:
             form_widget.setMinimumSize(admin.form_size[0], admin.form_size[1])          
@@ -223,8 +228,8 @@ class ChangeObject( ActionStep ):
     """
         
     def __init__( self, obj, admin=None ):
-        self._obj = obj
-        self._admin = admin
+        self.obj = obj
+        self.admin = admin
         
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -236,18 +241,25 @@ class ChangeObject( ActionStep ):
     def render( self, gui_context ):
         """create the dialog. this method is used to unit test
         the action step."""
-        cls = self._obj.__class__
-        admin = self._admin or gui_context.admin.get_related_admin( cls )
-        dialog = ChangeObjectDialog( self._obj, admin )
+        super(ChangeObject, self).gui_run(gui_context)
+        dialog = ChangeObjectDialog(self.obj, self.admin, self.form_display,
+                                    self.columns)
         return dialog
-        
+
     def gui_run( self, gui_context ):
+        
         dialog = self.render( gui_context )
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtGui.QDialog.Rejected:
                 raise CancelRequest()
             return self._obj
+        
+    def model_run(self, model_context):
+        cls = self.obj.__class__
+        self.admin = self.admin or model_context.admin.get_related_admin( cls )
+        self.form_display = self.admin.get_form_display()
+        self.columns = self.get_fields()
 
 class ChangeObjects( ActionStep ):
     """
