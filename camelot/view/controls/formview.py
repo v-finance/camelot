@@ -185,6 +185,15 @@ class FormWidget(QtGui.QWidget):
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, form_display.render( widgets, self, True) )
+        # give focus to the first editor in the form that can receive focus
+        for i in range(10):
+            first_widget = widget_mapper.mappedWidgetAt(i)
+            if first_widget is None:
+                break
+            if first_widget.focusPolicy() != Qt.NoFocus:
+                print 'focus to', first_widget, first_widget.focusPolicy()
+                first_widget.setFocus(Qt.PopupFocusReason)
+                break
         LOGGER.debug( 'done' )
 
 class FormView(AbstractView):
