@@ -191,7 +191,6 @@ class FormWidget(QtGui.QWidget):
             if first_widget is None:
                 break
             if first_widget.focusPolicy() != Qt.NoFocus:
-                print 'focus to', first_widget, first_widget.focusPolicy()
                 first_widget.setFocus(Qt.PopupFocusReason)
                 break
         LOGGER.debug( 'done' )
