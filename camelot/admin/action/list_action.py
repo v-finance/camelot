@@ -272,20 +272,10 @@ class OpenNewView( EditAction ):
     tooltip = _('New')
     verbose_name = _('New')
     
-    def gui_run( self, gui_context ):
-        from camelot.view.workspace import show_top_level
-        from camelot.view.controls.inheritance import SubclassDialog
-        admin = gui_context.admin
-        # todo : subclass selection should be model thread driven
-        if len(admin.get_subclass_tree()):
-            dialog = SubclassDialog( admin=admin, parent=None )
-            if dialog.exec_() == QtGui.QDialog.Rejected:
-                return
-            admin = dialog.selected_subclass
-        model = gui_context.item_view.model()
-        form = admin.create_new_view( related_collection_proxy=model,
-                                      parent = None )
-        show_top_level( form, gui_context.item_view )
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        new_object = yield action_steps.OpenNewView(model_context.admin)
+        model_context._model.append_object(new_object, flush=False )
     
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""

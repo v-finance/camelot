@@ -263,12 +263,11 @@ class OpenNewView( EntityAction ):
         state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
         state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
         return state
-        
-    def gui_run( self, gui_context ):
+    
+    def model_run( self, model_context ):
         """:return: a new view"""
-        from camelot.view.workspace import show_top_level
-        form = self._entity_admin.create_new_view(parent=None)
-        show_top_level( form, gui_context.workspace )
+        from camelot.view import action_steps
+        yield action_steps.OpenNewView(self._entity_admin)
         
 class ShowHelp( Action ):
     """Open the help"""

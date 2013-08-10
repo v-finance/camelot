@@ -28,7 +28,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from camelot.admin.action import FieldActionGuiContext, Action
+from camelot.admin.action import FieldActionGuiContext, Action, ActionStep
 from camelot.view.art import Icon
 from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
@@ -44,14 +44,26 @@ from customeditor import CustomEditor, set_background_color_palette
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
-class OpenObject(Action):
+class UpdateEditor(ActionStep):
+    
+    def __init__(self, attribute, value):
+        self.attribute = attribute
+        self.value = value
+
+    def gui_run(self, gui_context):
+        setattr(gui_context.editor, self.attribute, self.value)
+
+class OpenOrNewObject(Action):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
         obj = model_context.value()
         if obj is not None:
             admin = model_context.admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView([obj], admin)
+            yield action_steps.OpenFormView([obj], model_context.admin)
+        else:
+            new_object = yield action_steps.OpenNewView(model_context.admin)
+            yield UpdateEditor('new_value', new_object)
 
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
@@ -101,6 +113,7 @@ class Many2OneEditor( CustomEditor ):
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self
         self.gui_context.admin = admin
+        self.new_value = None
         self.entity_set = False
         self._editable = editable
         self._entity_representation = ''
@@ -224,10 +237,8 @@ class Many2OneEditor( CustomEditor ):
         self._last_highlighted_entity_getter = pyob
 
     def openButtonClicked(self):
-        if self.entity_set:
-            return self.createFormView()
-        else:
-            return self.createNew()
+        action = OpenOrNewObject()
+        action.gui_run(self.gui_context)
 
     def createSelectView(self):
         from camelot.view.action_steps.select_object import SelectDialog
@@ -249,38 +260,6 @@ class Many2OneEditor( CustomEditor ):
     def trashButtonClicked(self):
         self.setEntity(lambda:None)
 
-    def createNew(self):
-        assert object_thread( self )
-
-        @model_function
-        def get_has_subclasses():
-            return len(self.admin.get_subclass_tree())
-
-        post(get_has_subclasses, self.show_new_view)
-
-    def show_new_view(self, has_subclasses):
-        assert object_thread( self )
-        from camelot.view.workspace import show_top_level
-        selected = QtGui.QDialog.Accepted
-        admin = self.admin
-        if has_subclasses:
-            from camelot.view.controls.inheritance import SubclassDialog
-            select_subclass = SubclassDialog(self, self.admin)
-            select_subclass.setWindowTitle(_('select'))
-            selected = select_subclass.exec_()
-            admin = select_subclass.selected_subclass
-        if selected:
-            form = admin.create_new_view()
-            form.entity_created_signal.connect( self.select_object )
-            show_top_level( form, self )
-
-    def createFormView(self):
-        action = OpenObject()
-        action.gui_run(self.gui_context)
-
-    def dataChanged(self, index1, index2):
-        self.setEntity(self.entity_instance_getter, False)
-
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
         if entity is self.get_value()():
@@ -292,7 +271,9 @@ class Many2OneEditor( CustomEditor ):
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):
-        pass
+        if entity is self.new_value:
+            self.new_value = None
+            self.select_object(lambda:entity)
 
     def search_input_editing_finished(self):
         if not self.entity_set:
@@ -313,6 +294,7 @@ class Many2OneEditor( CustomEditor ):
         """:param value: either ValueLoading, or a function that returns None
         or the entity to be shown in the editor"""
         self._last_highlighted_entity_getter = None
+        self.new_value = None
         value = CustomEditor.set_value(self, value)
         if value:
             self.setEntity(value, propagate = False)
@@ -380,4 +362,3 @@ class Many2OneEditor( CustomEditor ):
 
     def select_object( self, entity_instance_getter ):
         self.setEntity(entity_instance_getter)
-

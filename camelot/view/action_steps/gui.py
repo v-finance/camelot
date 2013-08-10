@@ -31,7 +31,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
@@ -60,8 +60,6 @@ class OpenFormView( ActionStep ):
         at the top toolbar of the form, this defaults to the ones returned by the
         admin
     """
-    
-    blocking = False
     
     def __init__( self, objects, admin ):
         self.objects = objects
@@ -123,7 +121,35 @@ class OpenFormView( ActionStep ):
             )
         formview = self.render(model, row)
         show_top_level( formview, gui_context.workspace )
+
+class OpenNewView(ActionStep):
+    """Return the new object"""
     
+    def __init__(self, admin):
+        self.admin = admin
+        self.subclass_tree = admin.get_subclass_tree()
+        self.new_object = None
+
+    def gui_run(self, gui_context):
+        new_gui_context = gui_context.copy()
+        from camelot.view.controls.inheritance import SubclassDialog
+        if len(self.subclass_tree):
+            select_subclass = SubclassDialog(admin=self.admin, parent=None)
+            select_subclass.setWindowTitle(ugettext('select'))
+            selected = select_subclass.exec_()
+            new_gui_context.admin = select_subclass.selected_subclass
+        else:
+            new_gui_context.admin = self.admin
+        super(OpenNewView, self).gui_run(new_gui_context)
+        return self.new_object
+
+    def model_run(self, model_context):
+        self.new_object = model_context.admin.entity()
+        # Give the default fields their value
+        model_context.admin.add(self.new_object)
+        model_context.admin.set_defaults(self.new_object)
+        yield OpenFormView([self.new_object], model_context.admin)
+
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
