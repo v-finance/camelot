@@ -340,11 +340,12 @@ be specified using the verbose_name attribute.
         return _('Are you sure you want to delete this')
 
     @model_function
-    def get_form_actions( self, obj ):
+    def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.
         
-        :param obj: the object displayed in the form
+        :param obj: the object displayed in the form (Deprecated, use action
+            states to make the appearance of actions dynamic on a form)
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
@@ -770,38 +771,6 @@ be specified using the verbose_name attribute.
                     )
         for compounding_object in self.get_compounding_objects( object_instance ):
             self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
-
-    def create_object_form_view(self, title, object_getter, parent=None):
-        """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
-        will do nothing.
-
-        :param title: the title of the form view
-        :param object_getter: a function taking no arguments, and returning the object
-        :param parent: the parent widget for the form
-        """
-
-        def create_collection_getter( object_getter, object_cache ):
-            """Transform an object_getter into a collection_getter which
-            returns a collection with only the object returned by object
-            getter.
-
-            :param object_getter: a function that returns the object that 
-                should be in the collection
-            :param object_cache: a list that will be used to store the result
-                of object_getter, to prevent multiple calls of object_getter
-            """
-
-            def collection_getter():
-                if not object_cache:
-                    object_cache.append( object_getter() )
-                return object_cache
-
-            return collection_getter
-
-        model = self.model( self,
-                            create_collection_getter( object_getter, [] ),
-                            self.get_fields )
-        return self.create_form_view(title, model, 0, parent)
 
     def create_new_view(admin, related_collection_proxy=None, parent=None):
         """Create a Qt widget containing a form to create a new instance of the
