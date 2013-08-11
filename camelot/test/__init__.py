@@ -238,7 +238,10 @@ class EntityViewsTest(ModelThreadTestCase):
             # create an object or take one from the db
             obj = None
             if isinstance(admin, EntityAdmin):
-                obj = admin.get_query().first()
+                try:
+                    obj = admin.get_query().first()
+                except:
+                    pass
             obj = admin.entity()
             # create a model
             model = CollectionProxy(admin, lambda:[obj], admin.get_fields)

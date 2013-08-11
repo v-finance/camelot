@@ -355,7 +355,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.gui_context.progress_dialog.cancel()
         with self.assertRaises( CancelRequest ):
             update_progress.gui_run( self.gui_context )
-import wingdbstub
+
 class ListActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
