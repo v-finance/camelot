@@ -787,7 +787,7 @@ class AddNewObject( OpenNewView ):
     
     def gui_run( self, gui_context ):
         create_inline = gui_context.field_attributes.get( 'create_inline',
-                                                          False )                                                            
+                                                          False )
         if create_inline == True:
             super( OpenNewView, self ).gui_run( gui_context )
         else:

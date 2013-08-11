@@ -142,7 +142,8 @@ class ActionStepsCase( ModelThreadTestCase ):
         options.name = 'Videostore'
         options.module = 'videostore'
         options.domain = 'example.com'
-        dialog = ChangeObjectDialog( options, admin )
+        dialog = ChangeObjectDialog( options, admin, admin.get_form_display(),
+                                     admin.get_fields())
         self.grab_widget( dialog )
         
     def test_select_file( self ):
@@ -354,7 +355,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.gui_context.progress_dialog.cancel()
         with self.assertRaises( CancelRequest ):
             update_progress.gui_run( self.gui_context )
-
+import wingdbstub
 class ListActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
@@ -365,14 +366,14 @@ class ListActionsCase( test_model.ExampleModelCase ):
         super( ListActionsCase, self ).setUp()
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
-        self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
-        self.query_proxy_case.setUp()        
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
         self.context.admin = self.app_admin.get_related_admin( Movie )
         self.gui_context = list_action.ListActionGuiContext()
         self.gui_context.admin = self.app_admin.get_related_admin( Movie )
+        self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
+        self.query_proxy_case.setUp(self.gui_context.admin)
         table_widget = tableview.AdminTableWidget( self.gui_context.admin )
         table_widget.setModel( self.query_proxy_case.proxy )
         self.gui_context.item_view = table_widget

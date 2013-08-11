@@ -155,11 +155,13 @@ class QueryProxyCase( ProxyCase ):
     """Test the functionality of the QueryProxy to perform CRUD operations on 
     stand alone data"""
   
-    def setUp(self):
+    def setUp(self, admin = None):
         super( QueryProxyCase, self ).setUp()
-        self.proxy = QueryTableProxy( self.person_admin, 
-                                             query_getter = lambda:Person.query, 
-                                             columns_getter = self.person_admin.get_columns )
+        if admin is None:
+            admin = self.person_admin
+        self.proxy = QueryTableProxy(admin, 
+                                     query_getter = admin.get_query, 
+                                     columns_getter = admin.get_columns )
 
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy

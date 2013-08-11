@@ -139,6 +139,11 @@ class FormWidget(QtGui.QWidget):
             if widget_mapper is not None:
                 widget_mapper.setModel( model )
                 register.register( model, widget_mapper )
+                
+    def get_model(self):
+        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        if widget_mapper is not None:
+            return widget_mapper.model()
 
     def clear_mapping(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')

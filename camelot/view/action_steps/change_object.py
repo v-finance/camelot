@@ -236,7 +236,7 @@ class ChangeObject( ActionStep ):
         
         :return: the object to change
         """
-        return self._obj
+        return self.obj
 
     def render( self, gui_context ):
         """create the dialog. this method is used to unit test
@@ -247,7 +247,6 @@ class ChangeObject( ActionStep ):
         return dialog
 
     def gui_run( self, gui_context ):
-        
         dialog = self.render( gui_context )
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
@@ -259,7 +258,7 @@ class ChangeObject( ActionStep ):
         cls = self.obj.__class__
         self.admin = self.admin or model_context.admin.get_related_admin( cls )
         self.form_display = self.admin.get_form_display()
-        self.columns = self.get_fields()
+        self.columns = self.admin.get_fields()
 
 class ChangeObjects( ActionStep ):
     """
