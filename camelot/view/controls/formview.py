@@ -127,15 +127,21 @@ class FormWidget(QtGui.QWidget):
         self._form = None
         self._columns = None
         self.setLayout(widget_layout)
-        model.dataChanged.connect( self._data_changed )
-        model.layoutChanged.connect( self._layout_changed )
-        model.modelReset.connect(self._model_reset)
-        widget_mapper.setModel( model )
-        register.register( model, widget_mapper )
+        self.set_model(model)
         self.create_widgets(widget_mapper, columns, form_display, admin)
 
+    def set_model(self, model):
+        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        if model is not None:
+            model.dataChanged.connect(self._data_changed)
+            model.layoutChanged.connect(self._layout_changed)
+            model.modelReset.connect(self._model_reset)
+            if widget_mapper is not None:
+                widget_mapper.setModel( model )
+                register.register( model, widget_mapper )
+
     def clear_mapping(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
+        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
         if widget_mapper:
             widget_mapper.clearMapping()
 

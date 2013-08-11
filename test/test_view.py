@@ -472,7 +472,6 @@ class FormTest(ModelThreadTestCase):
         widget_mapper.setItemDelegate( self.movie_model.getItemDelegate() )
         self.widgets = FormEditors( self.movie_admin.get_fields(),
                                     widget_mapper,
-                                    self.movie_model.getItemDelegate(),
                                     self.movie_admin )
         
         self.person_entity = Person
@@ -536,19 +535,25 @@ class FormTest(ModelThreadTestCase):
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
+        from camelot.view.action_steps import OpenFormView
         from snippet.form.nested_form import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
-        self.grab_widget( person_admin.create_new_view() )
+        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
 
     def test_inherited_form(self):
+        from camelot.view.action_steps import OpenFormView
         from snippet.form.inherited_form import InheritedAdmin
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-        self.grab_widget( person_admin.create_new_view() )
+        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
 
     def test_custom_layout(self):
+        from camelot.view.action_steps import OpenFormView
         from snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
-        self.grab_widget( person_admin.create_new_view() )
+        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
 
 class DelegateTest(ModelThreadTestCase):
     """Test the basic functionallity of the delegates :
@@ -1141,40 +1146,48 @@ class SnippetsTest(ModelThreadTestCase):
     def test_simple_plot(self):
         from snippet.chart.simple_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         wave = Wave()
         admin = Wave.Admin( self.app_admin, Wave )
         proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
-        form = admin.create_form_view('Wave', proxy, 0, None)
+        open_form_view = OpenFormView([wave], admin)
+        form = open_form_view.render(proxy, 0)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
 
     def test_advanced_plot(self):
         from snippet.chart.advanced_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         wave = Wave()
         #wave.phase = '2.89'
         admin = Wave.Admin( self.app_admin, Wave )
         proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
-        form = admin.create_form_view('Wave', proxy, 0, None)
+        open_form_view = OpenFormView([wave], admin)
+        form = open_form_view.render(proxy, 0)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
         
     def test_fields_with_actions(self):
         from snippet.fields_with_actions import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
-        form = admin.create_form_view('Coordinate', proxy, 0, None)
+        open_form_view = OpenFormView([coordinate], admin)
+        form = open_form_view.render(proxy, 0)
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         from snippet.fields_with_tooltips import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
-        form = admin.create_form_view('Coordinate', proxy, 0, None)
+        open_form_view = OpenFormView([coordinate], admin)
+        form = open_form_view.render(proxy, 0)
         self.grab_widget(form)
 
     def test_entity_validator(self):
