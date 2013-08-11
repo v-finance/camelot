@@ -588,7 +588,7 @@ class Authentication( Action ):
         select_file = action_steps.SelectFile(file_name_filter=ImageEditor.filter)
         filenames = yield select_file
         for filename in filenames:
-            yield action_steps.UpdateProgress(ugettext('Scale image'))
+            yield action_steps.UpdateProgress(text=ugettext('Scale image'))
             image = QtGui.QImage(filename)
             image = image.scaled(self.image_size, 
                                  self.image_size, 
