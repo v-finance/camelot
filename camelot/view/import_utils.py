@@ -59,6 +59,7 @@ class RowData(object):
 
     def __init__(self, row_number, row_data):
         self.id = row_number + 1
+        i = 0
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i' % i, data)
         self.columns = i + 1

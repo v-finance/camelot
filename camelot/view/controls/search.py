@@ -23,7 +23,6 @@
 #  ============================================================================
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _

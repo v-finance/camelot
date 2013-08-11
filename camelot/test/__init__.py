@@ -231,9 +231,20 @@ class EntityViewsTest(ModelThreadTestCase):
             self.assertFalse( has_programming_error )
 
     def test_new_view(self):
-        from ..view.action_steps.gui import OpenNewView
+        from camelot.admin.entity_admin import EntityAdmin
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        from ..view.action_steps.gui import OpenFormView
         for admin in self.get_admins():
-            widget = admin.create_new_view()
+            # create an object or take one from the db
+            obj = None
+            if isinstance(admin, EntityAdmin):
+                obj = admin.get_query().first()
+            obj = admin.entity()
+            # create a model
+            model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
+            # create a form view
+            form_view_step = OpenFormView([obj], admin)
+            widget = form_view_step.render(model, 0)
             if admin.form_state != None:
                 # virtually maximize the widget
                 widget.setMinimumSize(1200, 800)
