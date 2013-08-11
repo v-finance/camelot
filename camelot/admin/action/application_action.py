@@ -243,6 +243,7 @@ class OpenTableView( EntityAction ):
             gui_context.workspace.add_view( table_view )
         else:
             gui_context.workspace.set_view( table_view )
+        table_view.setFocus(Qt.PopupFocusReason)
         
 class OpenNewView( EntityAction ):
     """An application action that opens a new view of an Entity

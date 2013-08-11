@@ -166,8 +166,8 @@ class ApplicationViewsTest(ModelThreadTestCase):
         from camelot.view.mainwindow import MainWindow
         from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)          
-        app_admin = self.get_application_admin()        
+        QtCore.QCoreApplication.installTranslator(translator)
+        app_admin = self.get_application_admin()
         widget = MainWindow(app_admin)
         self.grab_widget(widget, subdir='applicationviews')
         
@@ -231,6 +231,7 @@ class EntityViewsTest(ModelThreadTestCase):
             self.assertFalse( has_programming_error )
 
     def test_new_view(self):
+        from ..view.action_steps.gui import OpenNewView
         for admin in self.get_admins():
             widget = admin.create_new_view()
             if admin.form_state != None:

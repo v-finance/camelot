@@ -235,7 +235,6 @@ class FormView(AbstractView):
         self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper, 
                                                          'widget_mapper' )
         self.setLayout( layout )
-
         self.change_title(title)
 
         if hasattr(admin, 'form_size') and admin.form_size:
