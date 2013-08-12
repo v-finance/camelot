@@ -96,8 +96,8 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        #self.process()
         QtGui.QApplication.flush()
+        widget.repaint()
         inner_pixmap = QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
         # add a border to the image
         border = 4
@@ -231,8 +231,11 @@ class EntityViewsTest(ModelThreadTestCase):
             self.assertFalse( has_programming_error )
 
     def test_new_view(self):
+        from PyQt4 import QtGui, QtCore
+        from PyQt4.QtCore import Qt
         from camelot.admin.entity_admin import EntityAdmin
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.core.utils import variant_to_pyobject
         from ..view.action_steps.gui import OpenFormView
         for admin in self.get_admins():
             # create an object or take one from the db
@@ -242,12 +245,21 @@ class EntityViewsTest(ModelThreadTestCase):
                     obj = admin.get_query().first()
                 except:
                     pass
+                print 'test new view', admin.entity, obj
             obj = admin.entity()
             # create a model
             model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
+            model._add_data(admin.get_fields(), 0, obj)
+            for row in range(model.rowCount()):
+                for col in range(model.columnCount()):
+                    value = model.data(model.index(row, col), Qt.EditRole)
+                    print row, col, variant_to_pyobject(value)
             # create a form view
             form_view_step = OpenFormView([obj], admin)
             widget = form_view_step.render(model, 0)
+            mapper = widget.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+            mapper.revert()
+            self.process()
             if admin.form_state != None:
                 # virtually maximize the widget
                 widget.setMinimumSize(1200, 800)
