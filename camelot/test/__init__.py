@@ -241,19 +241,15 @@ class EntityViewsTest(ModelThreadTestCase):
             # create an object or take one from the db
             obj = None
             if isinstance(admin, EntityAdmin):
-                try:
-                    obj = admin.get_query().first()
-                except:
-                    pass
-                print 'test new view', admin.entity, obj
-            obj = admin.entity()
+                obj = admin.get_query().first()
+            if obj is None:
+                obj = admin.entity()
             # create a model
             model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
             model._add_data(admin.get_fields(), 0, obj)
             for row in range(model.rowCount()):
                 for col in range(model.columnCount()):
                     value = model.data(model.index(row, col), Qt.EditRole)
-                    print row, col, variant_to_pyobject(value)
             # create a form view
             form_view_step = OpenFormView([obj], admin)
             widget = form_view_step.render(model, 0)
@@ -265,5 +261,3 @@ class EntityViewsTest(ModelThreadTestCase):
                 widget.setMinimumSize(1200, 800)
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             self.assertFalse( has_programming_error )
-
-
