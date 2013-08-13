@@ -252,7 +252,7 @@ class ChangeObject( ActionStep ):
             result = dialog.exec_()
             if result == QtGui.QDialog.Rejected:
                 raise CancelRequest()
-            return self._obj
+            return self.obj
         
     def model_run(self, model_context):
         cls = self.obj.__class__
