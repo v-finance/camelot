@@ -30,6 +30,9 @@ as /camelot.
 
 import unittest
 
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
+
 has_programming_error = False
 
 _application_ = []
@@ -48,7 +51,6 @@ def get_application():
             QApplication.setStyle('cleanlooks')
             application = QApplication(sys.argv)
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
-            from PyQt4 import QtCore
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
             #try:
             #    from PyTitan import QtnOfficeStyle
@@ -75,8 +77,6 @@ class ModelThreadTestCase(unittest.TestCase):
         """
         import sys
         import os
-        from PyQt4 import QtGui, QtCore
-        from PyQt4.QtCore import Qt
         from PyQt4.QtGui import QPixmap
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
@@ -231,11 +231,8 @@ class EntityViewsTest(ModelThreadTestCase):
             self.assertFalse( has_programming_error )
 
     def test_new_view(self):
-        from PyQt4 import QtGui, QtCore
-        from PyQt4.QtCore import Qt
         from camelot.admin.entity_admin import EntityAdmin
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.core.utils import variant_to_pyobject
         from ..view.action_steps.gui import OpenFormView
         for admin in self.get_admins():
             # create an object or take one from the db
@@ -247,9 +244,6 @@ class EntityViewsTest(ModelThreadTestCase):
             # create a model
             model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
             model._add_data(admin.get_fields(), 0, obj)
-            for row in range(model.rowCount()):
-                for col in range(model.columnCount()):
-                    value = model.data(model.index(row, col), Qt.EditRole)
             # create a form view
             form_view_step = OpenFormView([obj], admin)
             widget = form_view_step.render(model, 0)
