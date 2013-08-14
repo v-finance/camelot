@@ -29,7 +29,6 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -306,7 +305,6 @@ be specified using the verbose_name attribute.
     def get_icon(self):
         return self.icon
 
-    @model_function
     def get_verbose_identifier(self, obj):
         """Create an identifier for an object that is interpretable
         for the user, eg : the primary key of an object.  This verbose identifier can
@@ -339,7 +337,6 @@ be specified using the verbose_name attribute.
     def get_delete_message(self, obj):
         return _('Are you sure you want to delete this')
 
-    @model_function
     def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.
@@ -352,7 +349,6 @@ be specified using the verbose_name attribute.
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
     
-    @model_function
     def get_form_toolbar_actions( self, toolbar_area ):
         """
         By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
@@ -380,7 +376,6 @@ be specified using the verbose_name attribute.
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
     
-    @model_function
     def get_list_actions(self):
         return self.list_actions
     
@@ -392,7 +387,6 @@ be specified using the verbose_name attribute.
         """
         return self.list_action
 
-    @model_function
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
         object.  When obj is modified by the user, this function will be called to determine
@@ -618,7 +612,6 @@ be specified using the verbose_name attribute.
         table = structure_to_table( self.list_display )
         return table
     
-    @model_function
     def get_columns(self):
         """
         The columns to be displayed in the list view, returns a list of pairs
@@ -661,8 +654,7 @@ be specified using the verbose_name attribute.
             object for the application.
         """
         return self.app_admin.get_application_admin()
-    
-    @model_function
+
     def get_all_fields_and_attributes(self):
         """A dictionary of (field_name:field_attributes) for all fields that can
         possibly appear in a list or a form or for which field attributes have
@@ -802,7 +794,6 @@ be specified using the verbose_name attribute.
         """:return: True if the object has a persisted state, False otherwise"""
         return False
     
-    @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
