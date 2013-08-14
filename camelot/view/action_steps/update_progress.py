@@ -87,4 +87,4 @@ updated.
                 progress_dialog.set_ok_hidden( True )
             if progress_dialog.wasCanceled():
                 progress_dialog.reset()
-                raise CancelRequest()                
+                raise CancelRequest()
