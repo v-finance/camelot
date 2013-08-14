@@ -56,6 +56,7 @@ to display a progress dialog until my_function has finished::
         progress_bar = QtGui.QProgressBar()
         progress_bar.setObjectName('progress_bar')
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        cancel_button.setObjectName( 'cancel' )
         ok_button = QtGui.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.clicked.connect( self.accept )
@@ -120,7 +121,12 @@ to display a progress dialog until my_function has finished::
         if ok_button:
             ok_button.setHidden( hidden )
             progress_bar.setHidden(not hidden)
-        
+
+    def set_cancel_hidden( self, hidden = True ):
+        cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
+        if cancel_button:
+            cancel_button.setHidden( hidden )
+
     @QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot()
     def finished(self, success=True):
@@ -182,4 +188,7 @@ class SplashProgress( QtGui.QSplashScreen ):
         pass
     
     def add_detail( self ):
-        pass   
+        pass
+    
+    def set_cancel_hidden( self, hidden = True ):
+        pass
