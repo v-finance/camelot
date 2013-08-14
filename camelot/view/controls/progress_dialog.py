@@ -78,13 +78,19 @@ to display a progress dialog until my_function has finished::
         button_layout.addWidget( cancel_button )
         button_layout.addStretch()
         layout.addLayout( button_layout )
-        layout.addWidget( details )        
+        layout.addWidget( details )
         self.setLayout( layout )
         # show immediately, to prevent a pop up before another window
         # opened in an action_step
         self.show() 
         #QtCore.QTimer.singleShot( 1000, self.show )
-            
+    
+    # This method is overwritten,to undo the overwrite of this method
+    # in QProgressDialog, as the QProgressDialot then manually relayouts
+    # the dialog instead of using the normal layouts
+    def resizeEvent(self, event):
+        return QtGui.QWidget.resizeEvent(self, event)
+    
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
         :param text: a string
