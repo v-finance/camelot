@@ -49,6 +49,8 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
+        # make sure None is in the list of choices
+        self.set_choices([(None, '')])
         self.activated.connect( self._activated )
         self._nullable = nullable 
 
@@ -111,12 +113,14 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
             self.append_item(model, choice)
             if value == current_value:
                 current_value_available = True
-            if value == None:
+            if value is None:
                 none_available = True
         if not current_value_available and current_index > 0:
+            if current_value is None:
+                none_available = True
             self.append_item(model, {Qt.DisplayRole: current_name,
                                      Qt.UserRole: current_value})
-        if not none_available and current_value!=None:
+        if not none_available:
             self.append_item(model, {Qt.DisplayRole: '',
                                      Qt.UserRole: None})
         # to prevent loops in the onetomanychoices editor, only set the value
