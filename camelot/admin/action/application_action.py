@@ -168,7 +168,7 @@ class SelectProfile( Action ):
                             profile = self.profile_store.profile_class(**profile_info)
                         else:
                             profile.__dict__.update(profile_info)
-                        yield action_steps.UpdateProgress(ugettext('Verifying database settings'))
+                        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
                         engine = profile.create_engine()
                         try:
                             connection = engine.raw_connection()

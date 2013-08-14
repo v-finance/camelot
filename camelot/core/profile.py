@@ -168,11 +168,7 @@ class ProfileStore(object):
                                       'The Knights Who Say Ni')
         self.cipher_key = cipher_key
         self.profile_class = profile_class
-        if filename is None:
-            self.settings = QtCore.QSettings()
-        else:
-            self.settings = QtCore.QSettings(filename, 
-                                             QtCore.QSettings.IniFormat)
+        self.filename = filename
 
     def _cipher( self ):
         """:return: the :class:`Crypto.Cipher` object used for encryption and
@@ -192,7 +188,16 @@ class ProfileStore(object):
         read profiles.
         """
         cipher = self._cipher()
-        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8') 
+        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')
+    
+    def _qsettings(self):
+        # recreate QSettings each time it's needed, to make sure we're at
+        # the same entry point
+        if self.filename is None:
+            return QtCore.QSettings()
+        else:
+            return QtCore.QSettings(self.filename, 
+                                    QtCore.QSettings.IniFormat)
     
     def write_to_file(self, filename):
         file_store = ProfileStore(filename, cipher_key=self.cipher_key)
@@ -207,16 +212,17 @@ class ProfileStore(object):
         :return: a list of profiles read
         """
         profiles = []
-        size = self.settings.beginReadArray('database_profiles')
+        qsettings = self._qsettings()
+        size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
         empty = QtCore.QVariant('')
         for index in range(size):
-            self.settings.setArrayIndex(index)
+            qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             for key in state.keys():
-                value = str( self.settings.value(key, empty).toString() )
+                value = str( qsettings.value(key, empty).toString() )
                 if key != 'profilename':
                     value = self._decode(value)
                 else:
@@ -226,7 +232,7 @@ class ProfileStore(object):
             # only profiles with a name can be selected and handled
             if profile.name:
                 profiles.append(profile)
-        self.settings.endArray()
+        qsettings.endArray()
         return profiles
     
     def read_profile(self, name):
@@ -241,18 +247,19 @@ class ProfileStore(object):
     def write_profiles(self, profiles):
         """
         :param profiles: a list of profiles
-        """    
-        self.settings.beginWriteArray('database_profiles')
+        """
+        qsettings = self._qsettings()
+        qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
-            self.settings.setArrayIndex(index)
+            qsettings.setArrayIndex(index)
             for key, value in profile.__getstate__().iteritems():
                 if key != 'profilename':
                     value = self._encode(value)
                 else:
                     value = (value or '').encode('utf-8')
-                self.settings.setValue(key, QtCore.QVariant(value))
-        self.settings.endArray()
-        self.settings.sync()
+                qsettings.setValue(key, QtCore.QVariant(value))
+        qsettings.endArray()
+        qsettings.sync()
         
     def write_profile(self, profile):
         """
@@ -272,8 +279,8 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = unicode(self.settings.value('last_used_database_profile',
-                                           QtCore.QVariant('')).toString(), 
+        name = unicode(self._qsettings().value('last_used_database_profile',
+                                               QtCore.QVariant('')).toString(), 
                        'utf-8')
         for profile in profiles:
             if profile.name == name:
@@ -284,5 +291,7 @@ class ProfileStore(object):
         :param profile: a profile that has been written to or is available in
             the store
         """
-        self.settings.setValue('last_used_database_profile', 
-                               profile.name.encode('utf-8') )
+        qsettings = self._qsettings()
+        qsettings.setValue('last_used_database_profile', 
+                                   profile.name.encode('utf-8') )
+        qsettings.sync()
