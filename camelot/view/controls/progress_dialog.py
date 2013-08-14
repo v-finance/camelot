@@ -54,6 +54,7 @@ to display a progress dialog until my_function has finished::
         QtGui.QProgressDialog.__init__( self, QtCore.QString(), QtCore.QString(), 0, 0 )
         label = QtGui.QLabel( unicode(name) )
         progress_bar = QtGui.QProgressBar()
+        progress_bar.setObjectName('progress_bar')
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
         ok_button = QtGui.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
@@ -77,8 +78,8 @@ to display a progress dialog until my_function has finished::
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
         button_layout.addStretch()
-        layout.addLayout( button_layout )
         layout.addWidget( details )
+        layout.addLayout( button_layout )
         self.setLayout( layout )
         # show immediately, to prevent a pop up before another window
         # opened in an action_step
@@ -115,8 +116,10 @@ to display a progress dialog until my_function has finished::
             
     def set_ok_hidden( self, hidden = True ):
         ok_button = self.findChild( QtGui.QPushButton, 'ok' )
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
         if ok_button:
             ok_button.setHidden( hidden )
+            progress_bar.setHidden(not hidden)
         
     @QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot()
