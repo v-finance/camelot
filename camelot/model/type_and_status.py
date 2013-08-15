@@ -204,7 +204,8 @@ class Status( EntityBuilder ):
 
     def create_properties( self ):
         if not self.property:
-            self.property = orm.relationship( self.entity, backref = self.name )
+            backref = orm.backref(self.name, cascade='all, delete, delete-orphan')
+            self.property = orm.relationship(self.entity, backref = backref)
             self.status_history.status_for = self.property
 
 class StatusMixin( object ):
