@@ -235,13 +235,11 @@ class CustomDelegate(QItemDelegate):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = option.palette.highlightedText().color()
         else:
+            painter.fillRect(rect, background_color or option.palette.base() )
             if editable:
-                painter.fillRect(rect, background_color or option.palette.base() )
-                fontColor = option.palette.windowText().color()
+                fontColor = option.palette.color(QtGui.QPalette.Inactive, QtGui.QPalette.Text)
             else:
-                painter.fillRect(rect, background_color or option.palette.window() )
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(130,130,130)
+                fontColor = option.palette.color(QtGui.QPalette.Disabled, QtGui.QPalette.Text)
         
         # The tooltip has to be drawn after the fillRect()'s of above.
         if tooltip:
