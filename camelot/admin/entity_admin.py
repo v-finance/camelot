@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.model_thread import post, model_function
+from camelot.view.model_thread import post
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy, ugettext
@@ -164,7 +164,6 @@ It has additional class attributes that customise its behaviour.
             break
         return sql_attributes
     
-    @model_function
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
@@ -172,7 +171,6 @@ It has additional class attributes that customise its behaviour.
         """
         return Session().query( self.entity )
 
-    @model_function
     def get_verbose_identifier(self, obj):
         if obj:
             primary_key = self.mapper.primary_key_from_instance(obj)
@@ -361,7 +359,6 @@ It has additional class attributes that customise its behaviour.
                     attributes['editable'] = False
             yield attributes
 
-    @model_function
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
@@ -507,7 +504,6 @@ It has additional class attributes that customise its behaviour.
                 modifications[ attr.key ] = old_value
         return modifications
         
-    @model_function
     def add( self, obj ):
         """Adds the entity instance to the default session, if it is not
         yet attached to a session"""
@@ -515,7 +511,6 @@ It has additional class attributes that customise its behaviour.
         if session == None:
             Session().add( obj )
     
-    @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
         session = Session.object_session( entity_instance )
@@ -543,7 +538,6 @@ It has additional class attributes that customise its behaviour.
                 session.delete( entity_instance )
                 self.flush( entity_instance )
 
-    @model_function
     def expunge(self, entity_instance):
         """Expunge the entity from the session"""
         session = orm.object_session( entity_instance )
@@ -569,8 +563,7 @@ It has additional class attributes that customise its behaviour.
                 for compounding_object in related_admin.get_compounding_objects( obj_to_flush ):
                     if compounding_object not in objs:
                         additional_objects.add( compounding_object )        
-                        
-    @model_function
+
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
@@ -606,7 +599,6 @@ It has additional class attributes that customise its behaviour.
             if changes and memento != None:
                 memento.register_changes( changes )
 
-    @model_function
     def refresh(self, entity_instance):
         """Undo the pending changes to the backend and restore the original
         state"""
@@ -622,7 +614,6 @@ It has additional class attributes that customise its behaviour.
                     else:
                         session.expunge( obj )
        
-    @model_function
     def is_persistent(self, obj):
         """:return: True if the object has a persisted state, False otherwise"""
         from sqlalchemy.orm.session import Session
@@ -644,7 +635,6 @@ It has additional class attributes that customise its behaviour.
             return True
         return False
     
-    @model_function
     def get_expanded_search_fields(self):
         """
         :return: a list of tuples of type [(field_name, field_attributes)]
@@ -668,7 +658,6 @@ It has additional class attributes that customise its behaviour.
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
         
-    @model_function
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new
         one will be created.  This function will be called every time the
