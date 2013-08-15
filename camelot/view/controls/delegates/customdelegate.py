@@ -105,6 +105,8 @@ def DocumentationMetaclass(name, bases, dct):
 
     return type(name, bases, dct)
 
+color_groups = {True: QtGui.QPalette.Inactive,
+                False: QtGui.QPalette.Disabled}
 
 class CustomDelegate(QItemDelegate):
     """Base class for implementing custom delegates.
@@ -235,11 +237,9 @@ class CustomDelegate(QItemDelegate):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = option.palette.highlightedText().color()
         else:
-            painter.fillRect(rect, background_color or option.palette.base() )
-            if editable:
-                fontColor = option.palette.color(QtGui.QPalette.Inactive, QtGui.QPalette.Text)
-            else:
-                fontColor = option.palette.color(QtGui.QPalette.Disabled, QtGui.QPalette.Text)
+            color_group = color_groups[editable]
+            painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.Base) )
+            fontColor = option.palette.color(color_group, QtGui.QPalette.Text)
         
         # The tooltip has to be drawn after the fillRect()'s of above.
         if tooltip:

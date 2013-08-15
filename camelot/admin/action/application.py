@@ -57,7 +57,7 @@ class Application( Action ):
         application.setWindowIcon(self.application_admin.get_icon())
         stylesheet = self.application_admin.get_stylesheet()
         if stylesheet:
-            application.setStyleSheet(stylesheet)        
+            application.setStyleSheet(stylesheet)
 
     #def pre_initialization(self):
         #"""Method that is called before the model thread is started, while the app is still
