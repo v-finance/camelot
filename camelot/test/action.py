@@ -44,6 +44,7 @@ class MockModelContext( object ):
         self.mode_name = None
         self.collection_count = 1
         self.selection_count = 1
+        self.field_attributes = {}
         self._session = session
         
     def get_object( self ):
