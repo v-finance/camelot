@@ -73,12 +73,16 @@ class ThreadedTimer( QtCore.QThread ):
         self._timer.start(self._interval)
         self.exec_()
 
-class ThreadedHttpHandler(handlers.HTTPHandler):
-    """An Http Logging handler that does the logging itself in a different 
-    thread, to prevent slow down of the main thread"""
+class ThreadedHandler(logging.Handler):
+    """A threaded Logging handler that does the logging itself in a different 
+    thread, to prevent slow down of the main thread.
+    
+    :param handler: the handler to send the logs to
+    """
 
-    def __init__(self, host, url, method='GET'):
-        handlers.HTTPHandler.__init__(self, host, url, method)
+    def __init__(self, handler):
+        super(ThreadedHandler, self).__init__()
+        self.handler = handler
         self._records_to_emit = []
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
@@ -87,7 +91,7 @@ class ThreadedHttpHandler(handlers.HTTPHandler):
     def timeout(self):
         while len(self._records_to_emit):
             record = self._records_to_emit.pop()
-            handlers.HTTPHandler.emit(self, record)
+            self.handler.emit(record)
 
     def emit(self, record):
         self._records_to_emit.append(record)
