@@ -264,12 +264,16 @@ class OpenNewView( EntityAction ):
         state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
         state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
         return state
-    
+
     def model_run( self, model_context ):
-        """:return: a new view"""
         from camelot.view import action_steps
-        yield action_steps.OpenNewView(self._entity_admin)
-        
+        admin = yield action_steps.SelectSubclass(self._entity_admin)
+        new_object = admin.entity()
+        # Give the default fields their value
+        admin.add(new_object)
+        admin.set_defaults(new_object)
+        yield action_steps.OpenFormView([new_object], admin)
+
 class ShowHelp( Action ):
     """Open the help"""
     
@@ -590,8 +594,8 @@ class Authentication( Action ):
         for filename in filenames:
             yield action_steps.UpdateProgress(text=ugettext('Scale image'))
             image = QtGui.QImage(filename)
-            image = image.scaled(self.image_size, 
-                                 self.image_size, 
+            image = image.scaled(self.image_size,
+                                 self.image_size,
                                  Qt.KeepAspectRatio)
             authentication = get_current_authentication()
             authentication.set_representation(image)

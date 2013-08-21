@@ -110,7 +110,7 @@ shortcut confusion and reduce the number of status updates.
                            list_action.ToPreviousRow(),
                            list_action.ToNextRow(),
                            list_action.ToLastRow(), ]
-    edit_actions = [ list_action.OpenNewView(),
+    edit_actions = [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),]
     help_actions = [ application_action.ShowHelp(), ]

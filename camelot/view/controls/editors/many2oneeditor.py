@@ -60,10 +60,14 @@ class OpenOrNewObject(Action):
         obj = model_context.value()
         if obj is not None:
             admin = model_context.admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView([obj], admin)
         else:
-            new_object = yield action_steps.OpenNewView(model_context.admin)
-            yield UpdateEditor('new_value', new_object)
+            admin = yield action_steps.SelectSubclass(model_context.admin)
+            obj = admin.entity()
+            # Give the default fields their value
+            admin.add(obj)
+            admin.set_defaults(obj)
+            yield UpdateEditor('new_value', obj)
+        yield action_steps.OpenFormView([obj], admin)
 
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""

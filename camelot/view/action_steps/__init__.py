@@ -26,7 +26,7 @@ from application import MainWindow, InstallTranslator, Exit
 from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
 from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
-                  ShowChart, ShowPixmap, OpenNewView)
+                  ShowChart, ShowPixmap, SelectSubclass)
 from item_view import Sort
 from open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -54,7 +54,6 @@ __all__ = [
     OpenFile.__name__,
     OpenFormView.__name__,
     OpenJinjaTemplate.__name__,
-    OpenNewView.__name__, 
     OpenStream.__name__,
     OpenString.__name__,
     PrintChart.__name__,
@@ -67,6 +66,7 @@ __all__ = [
     SelectItem.__name__,
     SelectObject.__name__,
     SelectRestore.__name__,
+    SelectSubclass.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,
     Sort.__name__,

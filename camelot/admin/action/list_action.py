@@ -262,20 +262,6 @@ class OpenFormView( ListContextAction ):
     def model_run(self, model_context):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
-        
-class OpenNewView( EditAction ):
-    """Opens a new view of an Entity related to a table view.
-    """
-    
-    shortcut = QtGui.QKeySequence.New
-    icon = Icon('tango/16x16/actions/document-new.png')
-    tooltip = _('New')
-    verbose_name = _('New')
-    
-    def model_run( self, model_context ):
-        from camelot.view import action_steps
-        new_object = yield action_steps.OpenNewView(model_context.admin)
-        model_context._model.append_object(new_object, flush=False )
     
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
@@ -781,22 +767,28 @@ class AddExistingObject( EditAction ):
             model_context._model.append_object( obj_to_add, flush = False )
             yield action_steps.FlushSession( object_session( obj_to_add ) )
         
-class AddNewObject( OpenNewView ):
+class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not"""
-    
-    def gui_run( self, gui_context ):
-        create_inline = gui_context.field_attributes.get( 'create_inline',
-                                                          False )
-        if create_inline == True:
-            super( OpenNewView, self ).gui_run( gui_context )
-        else:
-            super( AddNewObject, self ).gui_run( gui_context )
-        
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('tango/16x16/actions/document-new.png')
+    tooltip = _('New')
+    verbose_name = _('New')
+
     def model_run( self, model_context ):
-        admin = model_context.admin
-        model_context._model.append_object( admin.entity() )
-    
+        from camelot.view import action_steps
+        admin = yield action_steps.SelectSubclass(model_context.admin)
+        create_inline = model_context.field_attributes.get('create_inline',
+                                                           False)
+        new_object = admin.entity()
+        # Give the default fields their value
+        admin.add(new_object)
+        admin.set_defaults(new_object)
+        model_context._model.append_object(new_object)
+        if create_inline is False:
+            yield action_steps.OpenFormView([new_object], admin)
+
 class RemoveSelection( DeleteSelection ):
     """Remove the selected objects from a list without deleting them"""
     

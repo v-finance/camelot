@@ -523,10 +523,6 @@ class ListActionsCase( test_model.ExampleModelCase ):
         open_form_view_action = list_action.OpenFormView()
         open_form_view_action.gui_run( self.gui_context )
         
-    def test_open_new_view( self ):
-        open_new_view_action = list_action.OpenNewView()
-        open_new_view_action.gui_run( self.gui_context )
-        
     def test_duplicate_selection( self ):
         query = self.context.admin.entity.query
         pre_duplication = query.count()

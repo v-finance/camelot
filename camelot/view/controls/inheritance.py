@@ -51,21 +51,15 @@ class SubclassTree( ModelTree ):
 
     subclass_clicked_signal = QtCore.pyqtSignal(object)
     
-    def __init__(self, admin, parent):
+    def __init__(self, admin, subclasses, parent):
         header_labels = ['Types']
         ModelTree.__init__(self, header_labels, parent)
         self.admin = admin
-        self.subclasses = []
-        post(self.admin.get_subclass_tree, self.setSubclasses)
         self.setSizePolicy(
             QtGui.QSizePolicy.Minimum,
             QtGui.QSizePolicy.Expanding
         )
         self.clicked.connect( self.emit_subclass_clicked )
-
-    def setSubclasses(self, subclasses):
-        logger.debug('setting subclass tree')
-        self.subclasses = subclasses
 
         def append_subclasses(class_item, subclasses):
             for subclass_admin, subsubclasses in subclasses:
@@ -92,9 +86,9 @@ class SubclassTree( ModelTree ):
 class SubclassDialog(QtGui.QDialog):
     """A dialog requesting the user to select a subclass"""
     
-    def __init__(self, parent, admin):
+    def __init__(self, admin, subclass_tree, parent=None):
         QtGui.QDialog.__init__(self, parent)
-        subclass_tree = SubclassTree(admin, self)
+        subclass_tree = SubclassTree(admin, subclass_tree, self)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(subclass_tree)
