@@ -180,15 +180,21 @@ class SplashProgress( QtGui.QSplashScreen ):
     def setLabelText( self, text ):
         progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
         progress_bar.setFormat(text)
-        
+
     def wasCanceled( self ):
         return False
         
     def clear_details( self ):
         pass
     
-    def add_detail( self ):
-        pass
+    def add_detail( self, text ):
+        self.setLabelText(text)
     
     def set_cancel_hidden( self, hidden = True ):
+        pass
+    
+    def set_ok_hidden( self, hidden = True ):
+        pass
+    
+    def exec_(self):
         pass
