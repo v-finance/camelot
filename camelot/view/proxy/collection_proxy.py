@@ -56,34 +56,6 @@ class ProxyDict(dict):
     everything python"""
     pass
 
-class DelayedProxy( object ):
-    """A proxy object needs to be constructed within the GUI thread. Construct
-    a delayed proxy when the construction of a proxy is needed within the Model
-    thread.  On first occasion the delayed proxy will be converted to a real
-    proxy within the GUI thread
-    """
-
-    @model_function
-    def __init__( self, admin, collection_getter, columns_getter ):
-        self._admin = admin
-        self._collection_getter = collection_getter
-        self._columns_getter = columns_getter
-
-    def __call__( self ):
-        return CollectionProxy( self._admin,
-                                self._collection_getter,
-                                self._columns_getter )
-
-    def __unicode__(self):
-        collection = self._collection_getter()
-        if collection:
-            try:
-               return u','.join(list(unicode(o) or '' for o,_i in zip(collection,
-                                                                      range(3))))
-            except TypeError, e:
-               logger.error( 'could not convert object to unicode', exc_info=e )
-        return u''
-
 @model_function
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
@@ -98,15 +70,9 @@ def strip_data_from_object( obj, columns ):
         return lambda: getattr( o, attr )
 
     for _i, col in enumerate( columns ):
-        field_attributes = col[1]
         field_value = None
         try:
-            if field_attributes['python_type'] == list:
-                field_value = DelayedProxy( field_attributes['admin'],
-                                            create_collection_getter( obj, col[0] ),
-                                            field_attributes['admin'].get_columns )
-            else:
-                field_value = getattr( obj, col[0] )
+            field_value = getattr( obj, col[0] )
         except (Exception, RuntimeError, TypeError, NameError), e:
             message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
             log_programming_error( logger, 
@@ -323,11 +289,11 @@ position in the query.
         self.rsh.connect_signals( self )
 
         def get_columns():
-            self._columns = columns_getter()
-            self._static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
-            return self._columns
+            columns = columns_getter()
+            static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in columns]))
+            return columns, static_field_attributes
 
-        post( get_columns, self.setColumns )
+        post( get_columns, self.set_columns_and_static_field_attributes )
 #    # the initial collection might contain unflushed rows
         post( self._update_unflushed_rows )
 #    # in that way the number of rows is requested as well
@@ -552,7 +518,7 @@ position in the query.
         return self._columns
 
     @QtCore.pyqtSlot(object)
-    def setColumns( self, columns ):
+    def set_columns_and_static_field_attributes( self, columns_and_static_fa ):
         """Callback method to set the columns
 
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
@@ -561,9 +527,9 @@ position in the query.
         assert object_thread( self )
         self.beginResetModel()
         self.logger.debug( 'setColumns' )
-        self._columns = columns
+        self._columns, self._static_field_attributes = columns_and_static_fa
 
-        delegate_manager = delegates.DelegateManager(columns)
+        delegate_manager = delegates.DelegateManager(self._columns)
 
         index = QtCore.QModelIndex()
         option = QtGui.QStyleOptionViewItem()
@@ -572,7 +538,7 @@ position in the query.
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
-        for i, c in enumerate( columns ):
+        for i, c in enumerate( self._columns ):
             field_name = c[0]
             #
             # Set the header data
@@ -713,8 +679,8 @@ position in the query.
         """
         assert object_thread( self )
         if not index.isValid() or \
-           not ( 0 <= index.row() <= self.rowCount( index ) ) or \
-           not ( 0 <= index.column() <= self.columnCount() ):
+           not ( 0 <= index.row() < self.rowCount( index ) ) or \
+           not ( 0 <= index.column() < self.columnCount() ):
             if role == Qt.UserRole:
                 return QtCore.QVariant({})
             return QtCore.QVariant()
@@ -725,11 +691,6 @@ position in the query.
                 cache = self.display_cache
             data = self._get_row_data( index.row(), cache )
             value = data[index.column()]
-            if isinstance( value, DelayedProxy ):
-                value = value()
-                # store the created proxy, to prevent recreation of it
-                # afterwards.
-                data[index.column()] = value
             if isinstance( value, datetime.datetime ):
                 # Putting a python datetime into a QVariant and returning
                 # it to a PyObject seems to be buggy, therefore we chop the
@@ -763,7 +724,7 @@ position in the query.
             return self._static_field_attributes[index.column()][field_attribute]
         except KeyError:
             value = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-            if value == ValueLoading:
+            if value is ValueLoading:
                 return None
             return value.get(field_attribute, None)
 
@@ -944,6 +905,10 @@ position in the query.
     def flags( self, index ):
         """Returns the item flags for the given index"""
         assert object_thread( self )
+        if not index.isValid() or \
+           not ( 0 <= index.row() <= self.rowCount( index ) ) or \
+           not ( 0 <= index.column() <= self.columnCount() ):
+            return Qt.NoItemFlags
         flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self._get_field_attribute_value(index, 'editable'):
             flags = flags | Qt.ItemIsEditable
