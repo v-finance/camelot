@@ -512,7 +512,7 @@ class TableView( AbstractView  ):
         if len( subclasses ) > 0:
             from inheritance import SubclassTree
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
-            class_tree = SubclassTree( self.admin, splitter )
+            class_tree = SubclassTree( self.admin, subclasses, splitter )
             splitter.insertWidget( 0, class_tree )
             class_tree.subclass_clicked_signal.connect( self.set_admin )
 
