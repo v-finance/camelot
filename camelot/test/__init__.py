@@ -216,12 +216,6 @@ class EntityViewsTest(ModelThreadTestCase):
         app_admin = self.get_application_admin()
         return [app_admin.get_related_admin(c) for c in classes if app_admin.get_related_admin(c)]
 
-    def test_select_view(self):
-        for admin in self.get_admins():
-            widget = admin.create_select_view()
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
-            
     def test_table_view(self):
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()

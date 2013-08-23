@@ -34,7 +34,7 @@ from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
 from print_preview import ( PrintChart, PrintHtml, PrintPreview, 
                             PrintJinjaTemplate )
 from select_file import SelectFile
-from select_object import SelectObject
+from select_object import SelectObjects
 from text_edit import EditTextDocument
 from update_progress import UpdateProgress
 
@@ -64,7 +64,7 @@ __all__ = [
     SelectBackup.__name__,
     SelectFile.__name__,
     SelectItem.__name__,
-    SelectObject.__name__,
+    SelectObjects.__name__,
     SelectRestore.__name__,
     SelectSubclass.__name__,
     ShowChart.__name__,

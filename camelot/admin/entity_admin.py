@@ -28,10 +28,9 @@ import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.model_thread import post
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
-from camelot.core.utils import ugettext_lazy, ugettext
+from camelot.core.utils import ugettext_lazy
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -372,88 +371,6 @@ It has additional class attributes that customise its behaviour.
                 yield (filter, filter.get_filter_data(self))
 
         return list(filter_generator())
-
-    def create_select_view(admin, query=None, search_text=None, parent=None):
-        """Returns a Qt widget that can be used to select an element from a
-        query
-
-        :param query: sqlalchemy query object
-
-        :param parent: the widget that will contain this select view, the
-        returned widget has an entity_selected_signal signal that will be fired
-        when a entity has been selected.
-        """
-        from camelot.admin.action.base import GuiContext
-        from camelot.view.art import Icon
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from PyQt4 import QtCore, QtGui
-        from PyQt4.QtCore import Qt
-
-        header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
-        header_width = header_icon.getQPixmap().size().width()
-        
-        class SelectQueryTableProxy(QueryTableProxy):
-            
-            def headerData( self, section, orientation, role ):
-                if orientation == Qt.Vertical:
-                    if role == Qt.SizeHintRole:
-                            return QtCore.QVariant( QtCore.QSize( header_width + 10,
-                                                                  self._vertical_header_height ) )
-                    if role == Qt.DecorationRole:
-                        return header_icon.getQPixmap()
-                    elif role == Qt.DisplayRole:
-                        return QtCore.QVariant( '' )
-                return super( SelectQueryTableProxy, self ).headerData( section, orientation, role )
-
-        class SelectView(admin.TableView):
-            table_model = SelectQueryTableProxy
-            entity_selected_signal = QtCore.pyqtSignal(object)
-            title_format = ugettext('Select %s')
-
-            def __init__(self, admin, parent):
-                gui_context = GuiContext()
-                super(SelectView, self).__init__(
-                    gui_context,
-                    admin,
-                    search_text=search_text, parent=parent
-                )
-                self.row_selected_signal.connect( self.sectionClicked )
-                self.setUpdatesEnabled(True)
-
-                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
-                if table != None:
-                    table.keyboard_selection_signal.connect(self.on_keyboard_selection)
-                    table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-
-            def emit_entity_selected(self, instance_getter):
-                self.entity_selected_signal.emit( instance_getter )
-                
-            @QtCore.pyqtSlot()
-            def on_keyboard_selection(self):
-                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
-                if table != None:
-                    self.row_selected_signal.emit(table.currentIndex().row())
-
-            @QtCore.pyqtSlot(int)
-            def sectionClicked(self, index):
-                # table model will be set by the model thread, we can't
-                # decently select if it has not been set yet
-                if self.table.model():
-
-                    def create_constant_getter(cst):
-                        return lambda:cst
-
-                    def create_instance_getter():
-                        entity = self.table.model()._get_object(index)
-                        return create_constant_getter(entity)
-
-                    post(create_instance_getter, self.emit_entity_selected)
-
-        widget = SelectView(admin, parent)
-        widget.setUpdatesEnabled(True)
-        widget.setMinimumSize(admin.list_size[0], admin.list_size[1])
-        widget.update()
-        return widget
 
     def create_table_view( self, gui_context ):
         """Returns a :class:`QtGui.QWidget` containing a table view

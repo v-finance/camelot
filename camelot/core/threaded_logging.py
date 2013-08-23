@@ -52,7 +52,6 @@ from PyQt4 import QtCore
 
 import getpass
 import logging
-from logging import handlers
 import sys
 
 LOGGER = logging.getLogger('camelot.core.logging')

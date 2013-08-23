@@ -25,6 +25,65 @@
 from copy import copy
 from itertools import tee
 
+class AdminDecorator(object):
+    """Generic decorator for an instance of an Admin class"""
+
+    def __init__(self, original_admin):
+        self._original_admin = original_admin
+
+    def __getattr__(self, name):
+        return getattr( self._original_admin, name)
+
+class ReadOnlyAdminDecorator(AdminDecorator):
+    """Decorator to make an instance of an Admin class read only"""
+
+    def __init__(self, original_admin, editable_fields=[]):
+        super(ReadOnlyAdminDecorator, self).__init__(original_admin)
+        self._editable_fields = editable_fields
+        self._field_attributes = dict()
+        
+    def _process_field_attributes(self, field, attributes):
+        if not 'editable' in attributes:
+            return attributes
+        if attributes['editable']==False:
+            return attributes
+        if self._editable_fields and field in self._editable_fields:
+            return attributes
+        new_attributes = copy( attributes )
+        new_attributes['editable'] = False
+        return new_attributes
+    
+    def get_fields(self):
+        fields = self._original_admin.get_fields()
+        return [(field_name, self._process_field_attributes(field_name, _attrs)) for field_name,_attrs in fields]
+    
+    def get_field_attributes(self, field_name):
+        attributes = self._original_admin.get_field_attributes(field_name)
+        return self._process_field_attributes(field_name, attributes)
+    
+    def get_dynamic_field_attributes(self, obj, field_names):
+        fn1, fn2 = tee(field_names, 2)
+        dynamic_fa = self._original_admin.get_dynamic_field_attributes(obj, fn1)
+        return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, dynamic_fa)]
+        
+    def get_static_field_attributes(self, field_names):
+        fn1, fn2 = tee(field_names, 2)
+        static_fa = self._original_admin.get_static_field_attributes(fn1)
+        return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, static_fa)]
+        
+    def get_related_admin(self, entity):
+        return ReadOnlyAdminDecorator(self._original_admin.get_related_admin(entity), self._editable_fields)
+    
+    def get_form_actions(self, *a, **kwa):
+        return []
+    
+    def get_list_actions(self, *a, **kwa):
+        return []
+    
+    def get_columns(self): 
+        return [(field, self._process_field_attributes(field, attrs))
+                for field, attrs in self._original_admin.get_columns()]
+
 def not_editable_admin( original_admin, 
                         actions = False, 
                         editable_fields = [],
@@ -62,60 +121,7 @@ def not_editable_admin( original_admin,
             admin = super( NewAdmin, self ).get_related_admin( cls )
             if not deep:
                 return admin
-            
-            class AdminReadOnlyDecorator(object):
-
-                def __init__(self, original_admin, editable_fields):
-                    self._original_admin = original_admin
-                    self._editable_fields = editable_fields
-                    self._field_attributes = dict()
-                    
-                def _process_field_attributes(self, field, attributes):
-                    if not 'editable' in attributes:
-                        return attributes
-                    if attributes['editable']==False:
-                        return attributes
-                    if self._editable_fields and field in self._editable_fields:
-                        return attributes
-                    new_attributes = copy( attributes )
-                    new_attributes['editable'] = False
-                    return new_attributes
-                
-                def __getattr__(self, name):
-                    return getattr( self._original_admin, name)
-                
-                def get_fields(self):
-                    fields = self._original_admin.get_fields()
-                    return [(field_name, self._process_field_attributes(field_name, _attrs)) for field_name,_attrs in fields]
-                
-                def get_field_attributes(self, field_name):
-                    attributes = self._original_admin.get_field_attributes(field_name)
-                    return self._process_field_attributes(field_name, attributes)
-                
-                def get_dynamic_field_attributes(self, obj, field_names):
-                    fn1, fn2 = tee(field_names, 2)
-                    dynamic_fa = self._original_admin.get_dynamic_field_attributes(obj, fn1)
-                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, dynamic_fa)]
-                    
-                def get_static_field_attributes(self, field_names):
-                    fn1, fn2 = tee(field_names, 2)
-                    static_fa = self._original_admin.get_static_field_attributes(fn1)
-                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, static_fa)]
-                    
-                def get_related_admin(self, entity):
-                    return AdminReadOnlyDecorator(self._original_admin.get_related_admin(entity), self._editable_fields)
-                
-                def get_form_actions(self, *a, **kwa):
-                    return []
-                
-                def get_list_actions(self, *a, **kwa):
-                    return []
-                
-                def get_columns(self): 
-                    return [(field, self._process_field_attributes(field, attrs))
-                            for field, attrs in self._original_admin.get_columns()]       
-                     
-            return AdminReadOnlyDecorator(admin, editable_fields)
+            return ReadOnlyAdminDecorator(admin, editable_fields)
 
         def get_field_attributes( self, field_name ):
             attribs = super( NewAdmin, self ).get_field_attributes( field_name )

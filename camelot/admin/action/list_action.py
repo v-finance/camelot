@@ -241,7 +241,7 @@ class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable.
-    """    
+    """
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
@@ -758,14 +758,13 @@ class AddExistingObject( EditAction ):
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
-        obj_getter = yield action_steps.SelectObject( model_context.admin )
-        if obj_getter != None:
-            obj_to_add = obj_getter()
+        objs_to_add = yield action_steps.SelectObjects( model_context.admin )
+        for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
                 if obj_to_add == obj:
                     raise StopIteration()
             model_context._model.append_object( obj_to_add, flush = False )
-            yield action_steps.FlushSession( object_session( obj_to_add ) )
+        yield action_steps.FlushSession( object_session( obj_to_add ) )
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the

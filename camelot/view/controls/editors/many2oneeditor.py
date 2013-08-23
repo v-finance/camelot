@@ -69,6 +69,15 @@ class OpenOrNewObject(Action):
             yield UpdateEditor('new_value', obj)
         yield action_steps.OpenFormView([obj], admin)
 
+class SelectObject(Action):
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        selected_objects = yield action_steps.SelectObjects(model_context.admin)
+        for selected_object in selected_objects:
+            yield UpdateEditor('selected_object', lambda:selected_object)
+            break
+
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
 
@@ -245,11 +254,8 @@ class Many2OneEditor( CustomEditor ):
         action.gui_run(self.gui_context)
 
     def createSelectView(self):
-        from camelot.view.action_steps.select_object import SelectDialog
-        select_dialog = SelectDialog( self.admin, self )
-        select_dialog.exec_()
-        if select_dialog.object_getter != None:
-            self.select_object( select_dialog.object_getter )
+        action = SelectObject()
+        action.gui_run(self.gui_context)
             
     def returnPressed(self):
         if not self.entity_set:
@@ -364,5 +370,4 @@ class Many2OneEditor( CustomEditor ):
                               get_instance_representation ), 
               self.set_instance_representation)
 
-    def select_object( self, entity_instance_getter ):
-        self.setEntity(entity_instance_getter)
+    selected_object = property(fset=setEntity)

@@ -30,7 +30,6 @@ logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 
