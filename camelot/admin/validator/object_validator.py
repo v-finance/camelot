@@ -186,18 +186,3 @@ class ObjectValidator(QtCore.QObject):
                 'Programming error : isValid should be called '
                 'before calling validityMessage'
             )
-
-    def validityDialog(self, row, parent):
-        """Return a QDialog that asks the user to discard his changes or
-        continue to edit the row until it is valid.
-        """
-        from PyQt4 import QtGui
-        return QtGui.QMessageBox(
-            QtGui.QMessageBox.Warning,
-            _('Invalid form'),
-            '\n'.join(self.validityMessages(row)),
-            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
-            parent
-        )
-
-

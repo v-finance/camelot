@@ -1200,7 +1200,6 @@ class SnippetsTest(ModelThreadTestCase):
         self.mt.post(lambda:validator.isValid(0))
         self.process()
         self.assertEqual(len(validator.validityMessages(0)), 3)
-        self.grab_widget(validator.validityDialog(0, parent=None))
 
     def test_background_color(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
