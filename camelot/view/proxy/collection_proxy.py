@@ -1146,7 +1146,7 @@ position in the query.
         self.admin.set_defaults( obj )
         if flush:
             self.unflushed_rows.add( row )
-            if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
+            if self.flush_changes and not len( self.validator.validate_object( obj ) ):
                 self.admin.flush( obj )
                 try:
                     self.unflushed_rows.remove( row )

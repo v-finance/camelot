@@ -358,7 +358,7 @@ class RowDataAdmin(object):
 
         class NewObjectValidator(ObjectValidator):
 
-            def objectValidity(self, obj):
+            def validate_object(self, obj):
                 columns = self.admin.get_columns()
                 dynamic_attributes = self.admin.get_dynamic_field_attributes(
                     obj,

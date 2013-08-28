@@ -36,7 +36,7 @@ from camelot.core.utils import ugettext as _
 class ObjectValidator(QtCore.QObject):
     """A validator class for normal python objects.  By default this validator
     declares all objects valid.  Subclass this class and overwrite it's
-    objectValidity method to change it's behaviour.
+    `validate_object` method to change it's behaviour.
     """
 
     validity_changed_signal = QtCore.pyqtSignal(int)
@@ -44,7 +44,7 @@ class ObjectValidator(QtCore.QObject):
     def __init__(self, admin, model = None, initial_validation = False):
         """
         :param model: a collection proxy the validator should inspect, or None 
-            if only the objectValidity method is going to get used.
+            if only the `validate_object` method is going to get used.
         :param verifiy_initial_validity: do an inital check to see if all rows 
             in a model are valid, defaults to False,
             since this might take a lot of time on large collections.
@@ -100,11 +100,6 @@ class ObjectValidator(QtCore.QObject):
 
         post(create_validity_updater(from_index.row(), thru_index.row()))
 
-    def objectValidity(self, entity_instance):
-        """deprecated, use `validate_object` instead
-        """
-        return self.validate_object( entity_instance )
-    
     def validate_object( self, obj ):
         """:return: list of messages explaining invalid data
         empty list if object is valid

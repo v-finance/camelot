@@ -3,8 +3,8 @@ from camelot.admin.entity_admin import EntityAdmin
 
 class PersonValidator(EntityValidator):
 
-    def objectValidity(self, entity_instance):
-        messages = super(PersonValidator,self).objectValidity(entity_instance)
+    def validate_object(self, entity_instance):
+        messages = super(PersonValidator,self).validate_object(entity_instance)
         if (not entity_instance.first_name) or (len(entity_instance.first_name) < 3):
             messages.append("A person's first name should be at least 2 characters long")
         return messages

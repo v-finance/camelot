@@ -200,7 +200,7 @@ class CloseForm( Action ):
         # validate the object, and if the object is valid, simply close
         # the view
         #
-        messages = validator.objectValidity( obj )
+        messages = validator.validate_object( obj )
         valid = ( len( messages ) == 0 )
         if valid:
             yield action_steps.CloseView()
