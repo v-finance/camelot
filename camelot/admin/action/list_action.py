@@ -278,7 +278,7 @@ class DuplicateSelection( EditAction ):
                                                model_context.selection_count,
                                                self.verbose_name )
             new_object = model_context.admin.copy( obj )
-            model_context._model.append_object( new_object ) 
+            model_context._model.append_object( new_object )
         yield action_steps.FlushSession( model_context.session )
             
 class DeleteSelection( EditAction ):
@@ -763,12 +763,16 @@ class AddExistingObject( EditAction ):
             for obj in model_context.get_collection():
                 if obj_to_add == obj:
                     raise StopIteration()
-            model_context._model.append_object( obj_to_add, flush = False )
+            model_context._model.append_object( obj_to_add )
         yield action_steps.FlushSession( object_session( obj_to_add ) )
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
-    'create_inline' field attribute, a new form is opened or not"""
+    'create_inline' field attribute, a new form is opened or not.
+    
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
 
     shortcut = QtGui.QKeySequence.New
     icon = Icon('tango/16x16/actions/document-new.png')
@@ -781,10 +785,18 @@ class AddNewObject( EditAction ):
         create_inline = model_context.field_attributes.get('create_inline',
                                                            False)
         new_object = admin.entity()
-        # Give the default fields their value
         admin.add(new_object)
-        admin.set_defaults(new_object)
+        # defaults might depend on object being part of a collection
         model_context._model.append_object(new_object)
+        # Give the default fields their value
+        admin.set_defaults(new_object)
+        # if the object is valid, flush it
+        if not len(admin.get_validator().validate_object(new_object)):
+            yield action_steps.FlushSession(model_context.session)
+        # Even if the object was not flushed, it's now part of a collection,
+        # so it's dependent objects should be updated
+        for depending_obj in admin.get_depending_objects( new_object ):
+            yield action_steps.UpdateObject(depending_obj)
         if create_inline is False:
             yield action_steps.OpenFormView([new_object], admin)
 

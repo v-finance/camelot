@@ -1130,28 +1130,19 @@ position in the query.
         self.endInsertRows()
         
     @model_function
-    def append_object( self, obj, flush = True ):
-        """Append an object to this collection, set the possible defaults and flush
-        the object if possible/needed
+    def append_object(self, obj):
+        """Append an object to this collection
         
         :param obj: the object to be added to the collection
-        :param flush: if this object should be flushed or not
-        :return: the new number of rows in the collection
+        
         """
         rows = self._rows
         row = max( rows - 1, 0 )
         self._rows_about_to_be_inserted_signal.emit( row, row )
         self.append( obj )
         # defaults might depend on object being part of a collection
-        self.admin.set_defaults( obj )
-        if flush:
+        if not self.admin.is_persistent(obj):
             self.unflushed_rows.add( row )
-            if self.flush_changes and not len( self.validator.validate_object( obj ) ):
-                self.admin.flush( obj )
-                try:
-                    self.unflushed_rows.remove( row )
-                except KeyError:
-                    pass
         for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
         self._rows = rows + 1
