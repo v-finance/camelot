@@ -155,7 +155,7 @@ class ObjectValidator(QtCore.QObject):
         try:
             entity_instance = self.model._get_object(row)
             if entity_instance != None:
-                messages = self.objectValidity(entity_instance)
+                messages = self.validate_object(entity_instance)
                 self.message_cache.add_data(row, entity_instance, messages)
         except Exception, e:
             logger.error(
