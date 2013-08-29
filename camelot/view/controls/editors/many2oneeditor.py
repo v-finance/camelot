@@ -45,7 +45,7 @@ import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
 class UpdateEditor(ActionStep):
-    
+
     def __init__(self, attribute, value):
         self.attribute = attribute
         self.value = value
@@ -109,11 +109,11 @@ class Many2OneEditor( CustomEditor ):
         def columnCount(self, index=None):
             return 1
 
-    def __init__(self, 
-                 admin=None, 
-                 parent=None, 
-                 editable=True, 
-                 field_name='manytoone', 
+    def __init__(self,
+                 admin=None,
+                 parent=None,
+                 editable=True,
+                 field_name='manytoone',
                  **kwargs):
         """:param entity_admin : The Admin interface for the object on the one
         side of the relation
@@ -188,7 +188,7 @@ class Many2OneEditor( CustomEditor ):
         self.setLayout(self.layout)
         get_signal_handler().connect_signals(self)
 
-    def set_field_attributes(self, editable = True, 
+    def set_field_attributes(self, editable = True,
                                    background_color = None,
                                    tooltip = None, **kwargs):
         self.set_editable(editable)
@@ -256,7 +256,7 @@ class Many2OneEditor( CustomEditor ):
     def createSelectView(self):
         action = SelectObject()
         action.gui_run(self.gui_context)
-            
+
     def returnPressed(self):
         if not self.entity_set:
             self.createSelectView()
@@ -283,7 +283,7 @@ class Many2OneEditor( CustomEditor ):
     def handle_entity_create( self, sender, entity ):
         if entity is self.new_value:
             self.new_value = None
-            self.select_object(lambda:entity)
+            self.setEntity(lambda:entity)
 
     def search_input_editing_finished(self):
         if not self.entity_set:
@@ -350,13 +350,13 @@ class Many2OneEditor( CustomEditor ):
 
     def setEntity(self, entity_instance_getter, propagate=True):
         self.entity_instance_getter = entity_instance_getter
-        
+
         def get_instance_representation( entity_instance_getter, propagate ):
             """Get a representation of the instance
 
             :return: (unicode, pk) its unicode representation and its primary
             key or ('', False) if the instance was None"""
-            
+
             entity = entity_instance_getter()
             if entity and hasattr(entity, 'id'):
                 return ((unicode(entity), entity.id), propagate)
@@ -367,7 +367,7 @@ class Many2OneEditor( CustomEditor ):
         post( update_wrapper( partial( get_instance_representation,
                                        entity_instance_getter,
                                        propagate ),
-                              get_instance_representation ), 
+                              get_instance_representation ),
               self.set_instance_representation)
 
     selected_object = property(fset=setEntity)
