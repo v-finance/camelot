@@ -27,8 +27,6 @@ from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject, create_constant_function
-from camelot.view.proxy import ValueLoading
 
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
@@ -68,7 +66,7 @@ class Many2OneDelegate(CustomDelegate):
         painter.restore()
 
     def createEditor(self, parent, option, index):
-        editor = editors.Many2OneEditor( self.admin, 
+        editor = editors.Many2OneEditor( self.admin,
                                          parent,
                                          editable=self.editable,
                                          **self._kwargs )
@@ -76,19 +74,6 @@ class Many2OneDelegate(CustomDelegate):
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
-
-    def setEditorData(self, editor, index):
-        value = variant_to_pyobject(index.data(Qt.EditRole))
-        if value != ValueLoading:
-            field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
-            editor.set_value(create_constant_function(value))
-            editor.set_field_attributes(**field_attributes)
-        else:
-            editor.set_value(ValueLoading)
-
-    def setModelData(self, editor, model, index):
-        if editor.entity_instance_getter:
-            model.setData(index, editor.entity_instance_getter)
 
 #  def sizeHint(self, option, index):
 #    return self._dummy_editor.sizeHint()
