@@ -28,12 +28,13 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from camelot.admin.action import FieldActionGuiContext, Action, ActionStep
-from camelot.view.art import Icon
+from ....admin.action import field_action
+from camelot.admin.action import FieldActionGuiContext
 from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
+from ..action_widget import ActionToolbutton
 
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import variant_to_pyobject
@@ -44,45 +45,8 @@ from customeditor import CustomEditor, set_background_color_palette
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
-class UpdateEditor(ActionStep):
-    
-    def __init__(self, attribute, value):
-        self.attribute = attribute
-        self.value = value
-
-    def gui_run(self, gui_context):
-        setattr(gui_context.editor, self.attribute, self.value)
-
-class OpenOrNewObject(Action):
-
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        obj = model_context.value()
-        if obj is not None:
-            admin = model_context.admin.get_related_admin(obj.__class__)
-        else:
-            admin = yield action_steps.SelectSubclass(model_context.admin)
-            obj = admin.entity()
-            # Give the default fields their value
-            admin.add(obj)
-            admin.set_defaults(obj)
-            yield UpdateEditor('new_value', obj)
-        yield action_steps.OpenFormView([obj], admin)
-
-class SelectObject(Action):
-
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        selected_objects = yield action_steps.SelectObjects(model_context.admin)
-        for selected_object in selected_objects:
-            yield UpdateEditor('selected_object', lambda:selected_object)
-            break
-
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
-
-    new_icon = Icon('tango/16x16/actions/document-new.png')
-    search_icon = Icon('tango/16x16/actions/system-search.png')
 
     arrow_down_key_pressed = QtCore.pyqtSignal()
 
@@ -109,11 +73,15 @@ class Many2OneEditor( CustomEditor ):
         def columnCount(self, index=None):
             return 1
 
-    def __init__(self, 
-                 admin=None, 
-                 parent=None, 
-                 editable=True, 
-                 field_name='manytoone', 
+    def __init__(self,
+                 admin=None,
+                 parent=None,
+                 editable=True,
+                 field_name='manytoone',
+                 actions = [field_action.ClearObject(),
+                            field_action.SelectObject(),
+                            field_action.NewObject(),
+                            field_action.OpenObject()],
                  **kwargs):
         """:param entity_admin : The Admin interface for the object on the one
         side of the relation
@@ -128,34 +96,13 @@ class Many2OneEditor( CustomEditor ):
         self.gui_context.admin = admin
         self.new_value = None
         self.entity_set = False
-        self._editable = editable
         self._entity_representation = ''
-        self.entity_instance_getter = None
+        self.obj = None
         self._last_highlighted_entity_getter = None
 
         self.layout = QtGui.QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
-
-        # Search button
-        self.search_button = QtGui.QToolButton()
-        self.search_button.setAutoRaise(True)
-        self.search_button.setFocusPolicy(Qt.ClickFocus)
-        self.search_button.setFixedHeight(self.get_height())
-        self.search_button.clicked.connect(self.searchButtonClicked)
-        self.search_button.setIcon(
-            Icon('tango/16x16/actions/edit-clear.png').getQIcon()
-        )
-        self.search_button.setToolTip(unicode(_('clear')))
-
-        # Open button
-        self.open_button = QtGui.QToolButton()
-        self.open_button.setAutoRaise(True)
-        self.open_button.setFocusPolicy(Qt.ClickFocus)
-        self.open_button.setFixedHeight(self.get_height())
-        self.open_button.clicked.connect(self.openButtonClicked)
-        self.open_button.setIcon( self.new_icon.getQIcon() )
-        self.open_button.setToolTip(unicode(_('new')))
 
         # Search input
         self.search_input = DecoratedLineEdit(self)
@@ -183,22 +130,21 @@ class Many2OneEditor( CustomEditor ):
 
         # Setup layout
         self.layout.addWidget(self.search_input)
-        self.layout.addWidget(self.search_button)
-        self.layout.addWidget(self.open_button)
+        for action in actions:
+            action_widget = action.render(self.gui_context, self)
+            action_widget.setAutoRaise(True)
+            action_widget.setFocusPolicy(Qt.ClickFocus)
+            action_widget.setFixedHeight(self.get_height())
+            self.layout.addWidget(action_widget)
         self.setLayout(self.layout)
         get_signal_handler().connect_signals(self)
 
-    def set_field_attributes(self, editable = True, 
+    def set_field_attributes(self, editable = True,
                                    background_color = None,
                                    tooltip = None, **kwargs):
-        self.set_editable(editable)
         set_background_color_palette( self.search_input, background_color )
         self.search_input.setToolTip(unicode(tooltip or ''))
-
-    def set_editable(self, editable):
-        self._editable = editable
-        self.search_input.setEnabled(editable)
-        self.search_button.setEnabled(editable)
+        self.update_actions()
 
     def on_arrow_down_key_pressed(self):
         self.arrow_down_key_pressed.emit()
@@ -249,27 +195,6 @@ class Many2OneEditor( CustomEditor ):
         pyob = variant_to_pyobject(object_getter)
         self._last_highlighted_entity_getter = pyob
 
-    def openButtonClicked(self):
-        action = OpenOrNewObject()
-        action.gui_run(self.gui_context)
-
-    def createSelectView(self):
-        action = SelectObject()
-        action.gui_run(self.gui_context)
-            
-    def returnPressed(self):
-        if not self.entity_set:
-            self.createSelectView()
-
-    def searchButtonClicked(self):
-        if self.entity_set:
-            self.setEntity(lambda:None)
-        else:
-            self.createSelectView()
-
-    def trashButtonClicked(self):
-        self.setEntity(lambda:None)
-
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
         if entity is self.get_value()():
@@ -283,7 +208,7 @@ class Many2OneEditor( CustomEditor ):
     def handle_entity_create( self, sender, entity ):
         if entity is self.new_value:
             self.new_value = None
-            self.select_object(lambda:entity)
+            self.setEntity(lambda:entity)
 
     def search_input_editing_finished(self):
         if not self.entity_set:
@@ -306,16 +231,15 @@ class Many2OneEditor( CustomEditor ):
         self._last_highlighted_entity_getter = None
         self.new_value = None
         value = CustomEditor.set_value(self, value)
-        if value:
-            self.setEntity(value, propagate = False)
+        self.setEntity(value, propagate = False)
+        self.update_actions()
 
     def get_value(self):
         """:return: a function that returns the selected entity or ValueLoading
         or None"""
         value = CustomEditor.get_value(self)
-        if not value:
-            value = self.entity_instance_getter
-        return value
+        if value is None:
+            return self.obj
 
     @QtCore.pyqtSlot(tuple)
     def set_instance_representation(self, representation_and_propagate):
@@ -325,49 +249,38 @@ class Many2OneEditor( CustomEditor ):
         self.search_input.setText(desc or u'')
 
         if pk != False:
-            self.open_button.setIcon(
-                Icon('tango/16x16/places/folder.png').getQIcon()
-            )
-            self.open_button.setToolTip(unicode(_('open')))
-            self.open_button.setEnabled(True)
-
-            self.search_button.setIcon(
-                Icon('tango/16x16/actions/edit-clear.png').getQIcon()
-            )
-            self.search_button.setToolTip(unicode(_('clear')))
             self.entity_set = True
         else:
-            self.open_button.setIcon( self.new_icon.getQIcon() )
-            self.open_button.setToolTip(unicode(_('new')))
-            self.open_button.setEnabled(self._editable)
-
-            self.search_button.setIcon( self.search_icon.getQIcon() )
-            self.search_button.setToolTip(_('Search'))
             self.entity_set = False
 
         if propagate:
             self.editingFinished.emit()
 
-    def setEntity(self, entity_instance_getter, propagate=True):
-        self.entity_instance_getter = entity_instance_getter
-        
-        def get_instance_representation( entity_instance_getter, propagate ):
+    def setEntity(self, obj, propagate=True):
+        self.obj = obj
+
+        def get_instance_representation( obj, propagate ):
             """Get a representation of the instance
 
             :return: (unicode, pk) its unicode representation and its primary
             key or ('', False) if the instance was None"""
-            
-            entity = entity_instance_getter()
-            if entity and hasattr(entity, 'id'):
-                return ((unicode(entity), entity.id), propagate)
-            elif entity:
-                return ((unicode(entity), False), propagate)
+
+            if obj is not None:
+                return ((unicode(obj), obj.id), propagate)
+            elif obj:
+                return ((unicode(obj), False), propagate)
             return ((None, False), propagate)
 
         post( update_wrapper( partial( get_instance_representation,
-                                       entity_instance_getter,
+                                       obj,
                                        propagate ),
-                              get_instance_representation ), 
+                              get_instance_representation ),
               self.set_instance_representation)
+
+    def update_actions(self):
+        model_context = self.gui_context.create_model_context()
+        for action_action in self.findChildren(ActionToolbutton):
+            post(action_action.action.get_state, action_action.set_state,
+                 args=(model_context,))
 
     selected_object = property(fset=setEntity)
