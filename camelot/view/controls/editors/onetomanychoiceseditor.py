@@ -27,11 +27,11 @@ from choiceseditor import ChoicesEditor
 no_choice = [(None, '')]
 
 class OneToManyChoicesEditor(ChoicesEditor):
-  
-    def __init__(self, 
-                 parent, 
-                 target=None, 
-                 nullable=True, 
+
+    def __init__(self,
+                 parent,
+                 target=None,
+                 nullable=True,
                  field_name='onetomanychoices',
                  **kwargs):
         super(OneToManyChoicesEditor, self).__init__(parent, **kwargs)
@@ -43,19 +43,20 @@ class OneToManyChoicesEditor(ChoicesEditor):
 
     def get_choices(self):
         choices = [(o, unicode(o)) for o in self._target.query.all()]
-        # even if the field is required, the editor should be able to 
+        # even if the field is required, the editor should be able to
         # handle None as a choice, for user convenience, None is put at
         # the end when required
         if self._nullable:
             return no_choice + choices
         else:
             return choices + no_choice
-        
-    def set_field_attributes(self, editable=True, **kwargs):
+
+    def set_field_attributes(self, **fa):
         """Makes sure choices are not reset when changing the
         field attributes"""
-        self.setEnabled(editable!=False)
-        
+        fa['choices'] = None
+        super(OneToManyChoicesEditor, self).set_field_attributes(**fa)
+
     def set_value(self, value):
         # post to make sure the set value occurs after the set choices
         post( lambda:value, super( OneToManyChoicesEditor, self ).set_value )
