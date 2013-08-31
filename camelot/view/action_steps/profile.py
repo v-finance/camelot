@@ -71,7 +71,7 @@ allow all languages
         self.manager.finished.connect( self.update_network_status )
         #self.manager.networkAccessibleChanged.connect( self.network_accessible_changed )
         self.manager.proxyAuthenticationRequired.connect( self.proxy_authentication_required )
-        
+
         self.create_labels_and_widgets()
         self.create_buttons()
         self.set_tab_order()
@@ -81,7 +81,7 @@ allow all languages
         self.connect_widgets()
         self.connect_buttons()
         self.toggle_ok_button()
-        
+
         timer = QtCore.QTimer(self)
         timer.timeout.connect( self.new_network_request )
         timer.setInterval( 3000 )
@@ -189,15 +189,15 @@ allow all languages
         layout.addWidget(self.proxy_port_editor, 10, 4, 1, 1)
         layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
         layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
-        
+
         layout.addWidget(self.network_status_label, 13, 1, 1, 4)
-        
+
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
-        self.dialect_editor.clear()
         self.profile_editor.clear()
-        
+        self.dialect_editor.set_value(None)
+
         if self.dialects:
             dialects = self.dialects
         else:
@@ -215,8 +215,8 @@ allow all languages
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.toggle_ok_button)
         self.profile_editor.currentIndexChanged.connect(self.update_wizard_values)
-        self.dialect_editor.currentIndexChanged.connect(self.toggle_ok_button)
-    
+        self.dialect_editor.editingFinished.connect(self.toggle_ok_button)
+
     def create_buttons(self):
         self.cancel_button = QPushButton(_('Cancel'))
         self.ok_button = QPushButton(_('OK'))
@@ -255,25 +255,25 @@ allow all languages
 
     @QtCore.pyqtSlot()
     def toggle_ok_button(self):
-        enabled = bool(self.profile_editor.currentText()) and bool(self.dialect_editor.currentText())
+        enabled = bool(self.profile_editor.currentText()) and bool(self.dialect_editor.get_value())
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
         text = unicode(self.profile_editor.currentText())
         return text
-    
+
     def set_current_profile(self, profile_name):
         self.profile_editor.lineEdit().setText(profile_name)
         self.update_wizard_values()
-    
+
     def update_wizard_values(self):
         #network_proxy = get_network_proxy()
         # self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         # self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
-        # self.port_editor.setText(self.get_profile_value('port') or '3306')        
+        # self.port_editor.setText(self.get_profile_value('port') or '3306')
         self.dialect_editor.set_value(self.get_profile_value('dialect') or None)
         self.host_editor.setText(self.get_profile_value('host'))
-        self.port_editor.setText(self.get_profile_value('port'))        
+        self.port_editor.setText(self.get_profile_value('port'))
         # self.port_editor.setText(self.get_profile_value('port') or self._related_default_port(self.dialect_editor))
         self.database_name_editor.setText(self.get_profile_value('database'))
         self.username_editor.setText(self.get_profile_value('user'))
@@ -286,7 +286,7 @@ allow all languages
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password'))
         self.network_status_label.setText('')
         self.network_status_label.setStyleSheet('')
-        
+
     @QtCore.pyqtSlot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
     def proxy_authentication_required(self, proxy, authenticator):
         pass
@@ -301,14 +301,14 @@ allow all languages
                 return
         self.network_status_label.setText(_('Internet not available.\n%s.'%reply.errorString()))
         self.network_status_label.setStyleSheet('color: red')
-                
+
     @QtCore.pyqtSlot()
     def new_network_request(self):
         if self.network_reply and not self.network_reply.isFinished():
             self.network_reply.abort()
         if self.proxy_host_editor.text():
-            proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy, 
-                                             self.proxy_host_editor.text(), 
+            proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy,
+                                             self.proxy_host_editor.text(),
                                              int( str( self.proxy_port_editor.text() ) ) )#,
                                              #self.proxy_username_editor.text(),
                                              #self.proxy_password_editor.text() )
@@ -361,19 +361,19 @@ allow all languages
         self.media_location_editor.setText(selected)
 
 class EditProfiles(ActionStep):
-    
+
     def __init__(self, profiles, current_profile=''):
         self.profiles = profiles
         self.current_profile = current_profile
-        
+
     def render(self, gui_context):
         wizard = ProfileWizard(self.profiles)
         wizard.set_current_profile(self.current_profile)
         return wizard
-    
+
     def gui_run(self, gui_context):
         dialog = self.render(gui_context)
         result = dialog.exec_()
         if result == QtGui.QDialog.Rejected:
-            raise CancelRequest()        
+            raise CancelRequest()
         return dialog.get_profile_info()

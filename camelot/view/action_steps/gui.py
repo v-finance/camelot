@@ -195,12 +195,12 @@ class ItemSelectionDialog(StandaloneWizardPage):
         layout = QtGui.QVBoxLayout()
         combobox = editors.ChoicesEditor()
         combobox.setObjectName( 'combobox' )
-        combobox.activated.connect( self._combobox_activated )
+        combobox.editingFinished.connect( self._combobox_activated )
         layout.addWidget( combobox )
         self.main_widget().setLayout(layout)
 
-    @QtCore.pyqtSlot(int)
-    def _combobox_activated(self, index):
+    @QtCore.pyqtSlot()
+    def _combobox_activated(self):
         if self.autoaccept:
             self.accept()
 

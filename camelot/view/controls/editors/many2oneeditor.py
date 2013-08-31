@@ -29,16 +29,13 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from ....admin.action import field_action
-from camelot.admin.action import FieldActionGuiContext
 from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-from ..action_widget import ActionToolbutton
 
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import variant_to_pyobject
-from camelot.core.utils import create_constant_function
 
 from customeditor import CustomEditor, set_background_color_palette
 
@@ -91,9 +88,6 @@ class Many2OneEditor( CustomEditor ):
                             QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
-        self.gui_context = FieldActionGuiContext()
-        self.gui_context.editor = self
-        self.gui_context.admin = admin
         self.new_value = None
         self._entity_representation = ''
         self.obj = None
@@ -127,13 +121,8 @@ class Many2OneEditor( CustomEditor ):
 
         # Setup layout
         self.layout.addWidget(self.search_input)
-        for action in actions:
-            action_widget = action.render(self.gui_context, self)
-            action_widget.setAutoRaise(True)
-            action_widget.setFocusPolicy(Qt.ClickFocus)
-            action_widget.setFixedHeight(self.get_height())
-            self.layout.addWidget(action_widget)
         self.setLayout(self.layout)
+        self.add_actions(actions, self.layout)
         get_signal_handler().connect_signals(self)
 
     def set_field_attributes(self, **fa):
@@ -235,8 +224,9 @@ class Many2OneEditor( CustomEditor ):
         """:return: a function that returns the selected entity or ValueLoading
         or None"""
         value = CustomEditor.get_value(self)
-        if value is None:
-            return self.obj
+        if value is not None:
+            return value
+        return self.obj
 
     @QtCore.pyqtSlot(tuple)
     def set_instance_representation(self, representation_and_propagate):
@@ -262,11 +252,5 @@ class Many2OneEditor( CustomEditor ):
                                        propagate ),
                               get_instance_representation ),
               self.set_instance_representation)
-
-    def update_actions(self):
-        model_context = self.gui_context.create_model_context()
-        for action_action in self.findChildren(ActionToolbutton):
-            post(action_action.action.get_state, action_action.set_state,
-                 args=(model_context,))
 
     selected_object = property(fset=set_object)

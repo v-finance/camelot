@@ -24,8 +24,12 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
 
+from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
+from ...model_thread import post
+from ..action_widget import ActionToolbutton
 
 def set_background_color_palette(widget, background_color):
     """
@@ -135,6 +139,8 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.field_attributes = {}
+        self.gui_context = FieldActionGuiContext()
+        self.gui_context.editor = self
 
     def get_field_attributes(self):
         return self.field_attributes
@@ -144,4 +150,16 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
         if self.toolTip():
             draw_tooltip_visualization(self)
 
+    def add_actions(self, actions, layout):
+        for action in actions:
+            action_widget = action.render(self.gui_context, self)
+            action_widget.setAutoRaise(True)
+            action_widget.setFocusPolicy(Qt.ClickFocus)
+            action_widget.setFixedHeight(self.get_height())
+            layout.addWidget(action_widget)
 
+    def update_actions(self):
+        model_context = self.gui_context.create_model_context()
+        for action_action in self.findChildren(ActionToolbutton):
+            post(action_action.action.get_state, action_action.set_state,
+                 args=(model_context,))

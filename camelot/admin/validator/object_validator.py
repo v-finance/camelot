@@ -43,9 +43,9 @@ class ObjectValidator(QtCore.QObject):
 
     def __init__(self, admin, model = None, initial_validation = False):
         """
-        :param model: a collection proxy the validator should inspect, or None 
+        :param model: a collection proxy the validator should inspect, or None
             if only the `validate_object` method is going to get used.
-        :param verifiy_initial_validity: do an inital check to see if all rows 
+        :param verifiy_initial_validity: do an inital check to see if all rows
             in a model are valid, defaults to False,
             since this might take a lot of time on large collections.
         """
@@ -73,7 +73,7 @@ class ObjectValidator(QtCore.QObject):
             validator = self.admin.get_related_admin( cls ).get_validator()
             self._related_validators[cls] = validator
             return validator
-            
+
     def validate_all_rows(self):
         """Force validation of all rows in the model"""
         for row in range(self.model.getRowCount()):
@@ -154,7 +154,7 @@ class ObjectValidator(QtCore.QObject):
         logger.debug('isValid for row %s' % row)
         try:
             entity_instance = self.model._get_object(row)
-            if entity_instance != None:
+            if entity_instance is not None:
                 messages = self.validate_object(entity_instance)
                 self.message_cache.add_data(row, entity_instance, messages)
         except Exception, e:

@@ -110,7 +110,8 @@ class SelectObject(Action):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        selected_objects = yield action_steps.SelectObjects(model_context.admin)
+        admin = model_context.field_attributes['admin']
+        selected_objects = yield action_steps.SelectObjects(admin)
         for selected_object in selected_objects:
             yield action_steps.UpdateEditor('selected_object', selected_object)
             break
@@ -130,7 +131,8 @@ class NewObject(SelectObject):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        admin = yield action_steps.SelectSubclass(model_context.admin)
+        admin = model_context.field_attributes['admin']
+        admin = yield action_steps.SelectSubclass(admin)
         obj = admin.entity()
         # Give the default fields their value
         admin.add(obj)
@@ -148,13 +150,14 @@ class OpenObject(SelectObject):
         from camelot.view import action_steps
         obj = model_context.value
         if obj is not None:
-            admin = model_context.admin.get_related_admin(obj.__class__)
+            admin = model_context.field_attributes['admin']
+            admin = admin.get_related_admin(obj.__class__)
             yield action_steps.OpenFormView([obj], admin)
 
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)
         state.visible = (model_context.value is not None)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state.enabled = (model_context.value is not None)
         return state
 
 class ClearObject(OpenObject):
@@ -166,3 +169,8 @@ class ClearObject(OpenObject):
     def model_run(self, model_context):
         from camelot.view import action_steps
         yield action_steps.UpdateEditor('selected_object', None)
+
+    def get_state(self, model_context):
+        state = super(ClearObject, self).get_state(model_context)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        return state

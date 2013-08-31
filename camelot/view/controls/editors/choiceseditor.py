@@ -30,29 +30,39 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.proxy import ValueLoading
 from ...art import Icon
-from .customeditor import AbstractCustomEditor
+from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
 
-class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
+class ChoicesEditor(CustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
     keys and values"""
 
     editingFinished = QtCore.pyqtSignal()
     valueChanged = QtCore.pyqtSignal()
-    
-    def __init__( self, 
-                  parent = None, 
-                  nullable = True, 
-                  field_name = 'choices', 
+
+    def __init__( self,
+                  parent = None,
+                  nullable = True,
+                  field_name = 'choices',
+                  actions = [],
                   **kwargs ):
-        QtGui.QComboBox.__init__(self, parent)
-        AbstractCustomEditor.__init__(self)
+        super(ChoicesEditor, self).__init__(parent)
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        combobox = QtGui.QComboBox()
+        combobox.setObjectName('combobox')
+        combobox.activated.connect(self._activated)
+        layout.addWidget(combobox)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
         self.setObjectName( field_name )
         # make sure None is in the list of choices
         self.set_choices([(None, '')])
-        self.activated.connect( self._activated )
-        self._nullable = nullable 
+        self.setLayout(layout)
+        self.add_actions(actions, layout)
 
     @QtCore.pyqtSlot(int)
     def _activated(self, _index):
@@ -66,41 +76,42 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         :param data: a dictionary mapping roles to values
         """
         model.insertRow(model.rowCount())
-        
+
         for role, value in data.iteritems():
             index = model.index(model.rowCount()-1, 0)
             if isinstance(value, Icon):
                 value = value.getQIcon()
             model.setData(index, QtCore.QVariant(value), role)
-        
+
     def set_choices( self, choices ):
         """
     :param choices: a list of (value,name) tuples or a list of dicts.
-    
+
         In case a list of tuples is used, name will be displayed in the combobox,
-        while value will be used within :meth:`get_value` and :meth:`set_value`.  
-        
+        while value will be used within :meth:`get_value` and :meth:`set_value`.
+
         In case a list of dicts is used, the keys of the dict are used as the
         roles, and the values as the value for that role, where `Qt.UserRole`
-        is the value that is passed through :meth:`get_value`, 
+        is the value that is passed through :meth:`get_value`,
         eg : `{Qt.DisplayRole: "Hello", Qt.UserRole: 1}`
-        
-        This method changes the items in the combo box while preserving the 
-        current value, even if this value is not in the new list of choices.  
-        If there is no item with value `None` in the list of choices, this will 
+
+        This method changes the items in the combo box while preserving the
+        current value, even if this value is not in the new list of choices.
+        If there is no item with value `None` in the list of choices, this will
         be added.
         """
-        current_index = self.currentIndex()
+        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        current_index = combobox.currentIndex()
         if current_index >= 0:
-            current_name = unicode(self.itemText(current_index))
+            current_name = unicode(combobox.itemText(current_index))
         current_value = self.get_value()
         current_value_available = False
         none_available = False
         # set i to -1 to handle case of no available choices
         i = -1
-        for i in range(self.count(), 0, -1):
-            self.removeItem(i-1)
-        model = self.model()
+        for i in range(combobox.count(), 0, -1):
+            combobox.removeItem(i-1)
+        model = combobox.model()
         for choice in choices:
             if not isinstance(choice, dict):
                 (value, name) = choice
@@ -128,45 +139,50 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         if current_value != ValueLoading:
             self.set_value( current_value )
 
-    def set_field_attributes(self, editable=True, choices=None, **kwargs):
-        if choices != None:
-            self.set_choices(choices)
-        self.setEnabled(editable!=False)
+    def set_field_attributes(self, **fa):
+        self.field_attributes = fa
+        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        if fa.get('choices') is not None:
+            self.set_choices(fa['choices'])
+        combobox.setEnabled(fa.get('editable', True))
 
     def get_choices(self):
         """
     :rtype: a list of (value,name) tuples
     """
         from camelot.core.utils import variant_to_pyobject
-        return [(variant_to_pyobject(self.itemData(i)),
-                 unicode(self.itemText(i))) for i in range(self.count())]
+        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        return [(variant_to_pyobject(combobox.itemData(i)),
+                 unicode(combobox.itemText(i))) for i in range(combobox.count())]
 
     def set_value(self, value):
         """Set the current value of the combobox where value, the name displayed
         is the one that matches the value in the list set with set_choices"""
         from camelot.core.utils import variant_to_pyobject
-        value = AbstractCustomEditor.set_value(self, value)
+        value = super(ChoicesEditor, self).set_value(value)
         self.setProperty( 'value', QtCore.QVariant(value) )
         self.valueChanged.emit()
         if not self.property('value_loading').toBool() and value != NotImplemented:
-            for i in range(self.count()):
-                if value == variant_to_pyobject(self.itemData(i)):
-                    self.setCurrentIndex(i)
+            combobox = self.findChild(QtGui.QComboBox, 'combobox')
+            for i in range(combobox.count()):
+                if value == variant_to_pyobject(combobox.itemData(i)):
+                    combobox.setCurrentIndex(i)
                     return
             # it might happen, that when we set the editor data, the set_choices
             # method has not happened yet or the choices don't contain the value
             # set
-            self.setCurrentIndex( -1 )
+            combobox.setCurrentIndex( -1 )
             LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( unicode( value ),
                                                                                                            unicode( self.objectName() ) ) )
+        self.update_actions()
 
     def get_value(self):
         """Get the current value of the combobox"""
         from camelot.core.utils import variant_to_pyobject
-        current_index = self.currentIndex()
+        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        current_index = combobox.currentIndex()
         if current_index >= 0:
-            value = variant_to_pyobject(self.itemData(self.currentIndex()))
+            value = variant_to_pyobject(combobox.itemData(combobox.currentIndex()))
         else:
             value = ValueLoading
-        return AbstractCustomEditor.get_value(self) or value
-
+        return super(ChoicesEditor, self).get_value() or value
