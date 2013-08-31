@@ -95,7 +95,6 @@ class Many2OneEditor( CustomEditor ):
         self.gui_context.editor = self
         self.gui_context.admin = admin
         self.new_value = None
-        self.entity_set = False
         self._entity_representation = ''
         self.obj = None
         self._last_highlighted_entity_getter = None
@@ -140,10 +139,11 @@ class Many2OneEditor( CustomEditor ):
         get_signal_handler().connect_signals(self)
 
     def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
+                             background_color = None,
+                             tooltip = None, **kwargs):
         set_background_color_palette( self.search_input, background_color )
         self.search_input.setToolTip(unicode(tooltip or ''))
+        self.search_input.setEnabled(editable)
         self.update_actions()
 
     def on_arrow_down_key_pressed(self):
@@ -166,15 +166,15 @@ class Many2OneEditor( CustomEditor ):
     def search_completions(self, text):
         """Search for object that match text, to fill the list of completions
 
-        :return: a list of tuples of (object_representation, object_getter)
+        :return: a list of tuples of (object_representation, object)
         """
         search_decorator = create_entity_search_query_decorator(
             self.admin, text
         )
         if search_decorator:
             sresult = [
-                (unicode(e), create_constant_function(e))
-                for e in search_decorator(self.admin.entity.query).limit(20)
+                (unicode(e), e)
+                for e in search_decorator(self.admin.get_query()).limit(20)
             ]
             return text, sresult
         return text, []
@@ -187,42 +187,42 @@ class Many2OneEditor( CustomEditor ):
         self.completer.complete()
 
     def completionActivated(self, index):
-        object_getter = index.data(Qt.EditRole)
-        self.setEntity(variant_to_pyobject(object_getter))
+        obj = index.data(Qt.EditRole)
+        self.set_object(variant_to_pyobject(obj))
 
     def completion_highlighted(self, index ):
-        object_getter = index.data(Qt.EditRole)
-        pyob = variant_to_pyobject(object_getter)
-        self._last_highlighted_entity_getter = pyob
+        obj = index.data(Qt.EditRole)
+        self._last_highlighted_entity_getter = variant_to_pyobject(obj)
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
-        if entity is self.get_value()():
-            self.setEntity(self.entity_instance_getter, False)
+        if entity is self.get_value():
+            self.set_object(entity, False)
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_delete( self, sender, entity ):
-        pass
+        if entity is self.get_value():
+            self.set_object(None, False)
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):
         if entity is self.new_value:
             self.new_value = None
-            self.setEntity(lambda:entity)
+            self.set_object(entity)
 
     def search_input_editing_finished(self):
-        if not self.entity_set:
+        if self.obj is None:
             # Only try to 'guess' what the user meant when no entity is set
             # to avoid inappropriate removal of data, (eg when the user presses
             # Esc, editingfinished will be called as well, and we should not
             # overwrite the current entity set)
             if self._last_highlighted_entity_getter:
-                self.setEntity(self._last_highlighted_entity_getter)
-            elif not self.entity_set and self.completions_model.rowCount()==1:
+                self.set_object(self._last_highlighted_entity_getter)
+            elif self.completions_model.rowCount()==1:
                 # There is only one possible option
                 index = self.completions_model.index(0,0)
                 entity_getter = variant_to_pyobject(index.data(Qt.EditRole))
-                self.setEntity(entity_getter)
+                self.set_object(entity_getter)
         self.search_input.setText(self._entity_representation or u'')
 
     def set_value(self, value):
@@ -231,7 +231,7 @@ class Many2OneEditor( CustomEditor ):
         self._last_highlighted_entity_getter = None
         self.new_value = None
         value = CustomEditor.set_value(self, value)
-        self.setEntity(value, propagate = False)
+        self.set_object(value, propagate = False)
         self.update_actions()
 
     def get_value(self):
@@ -244,32 +244,21 @@ class Many2OneEditor( CustomEditor ):
     @QtCore.pyqtSlot(tuple)
     def set_instance_representation(self, representation_and_propagate):
         """Update the gui"""
-        ((desc, pk), propagate) = representation_and_propagate
+        (desc, propagate) = representation_and_propagate
         self._entity_representation = desc
         self.search_input.setText(desc or u'')
-
-        if pk != False:
-            self.entity_set = True
-        else:
-            self.entity_set = False
 
         if propagate:
             self.editingFinished.emit()
 
-    def setEntity(self, obj, propagate=True):
+    def set_object(self, obj, propagate=True):
         self.obj = obj
 
         def get_instance_representation( obj, propagate ):
-            """Get a representation of the instance
-
-            :return: (unicode, pk) its unicode representation and its primary
-            key or ('', False) if the instance was None"""
-
+            """Get a representation of the instance"""
             if obj is not None:
-                return ((unicode(obj), obj.id), propagate)
-            elif obj:
-                return ((unicode(obj), False), propagate)
-            return ((None, False), propagate)
+                return (unicode(obj), propagate)
+            return (None, propagate)
 
         post( update_wrapper( partial( get_instance_representation,
                                        obj,
@@ -283,4 +272,4 @@ class Many2OneEditor( CustomEditor ):
             post(action_action.action.get_state, action_action.set_state,
                  args=(model_context,))
 
-    selected_object = property(fset=setEntity)
+    selected_object = property(fset=set_object)
