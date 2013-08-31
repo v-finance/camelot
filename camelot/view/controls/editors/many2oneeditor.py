@@ -110,7 +110,7 @@ class Many2OneEditor( CustomEditor ):
         self.search_input.set_minimum_width( 20 )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
         # suppose garbage was entered, we need to refresh the content
-        self.search_input.editingFinished.connect( self.search_input_editing_finished )
+        self.search_input.editingFinished.connect(self.search_input_editing_finished)
         self.setFocusProxy(self.search_input)
 
         # Search Completer
@@ -121,8 +121,6 @@ class Many2OneEditor( CustomEditor ):
         self.completer.setCompletionMode(
             QtGui.QCompleter.UnfilteredPopupCompletion
         )
-        #self.completer.activated.connect(self.completionActivated)
-        #self.completer.highlighted.connect(self.completion_highlighted)
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
         self.search_input.setCompleter(self.completer)
@@ -138,12 +136,11 @@ class Many2OneEditor( CustomEditor ):
         self.setLayout(self.layout)
         get_signal_handler().connect_signals(self)
 
-    def set_field_attributes(self, editable = True,
-                             background_color = None,
-                             tooltip = None, **kwargs):
-        set_background_color_palette( self.search_input, background_color )
-        self.search_input.setToolTip(unicode(tooltip or ''))
-        self.search_input.setEnabled(editable)
+    def set_field_attributes(self, **fa):
+        self.field_attributes = fa
+        set_background_color_palette(self.search_input, fa.get('background_color'))
+        self.search_input.setToolTip(fa.get('tooltip', '') or '')
+        self.search_input.setEnabled(fa.get('editable', False))
         self.update_actions()
 
     def on_arrow_down_key_pressed(self):

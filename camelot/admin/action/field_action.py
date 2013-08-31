@@ -51,6 +51,12 @@ class FieldActionModelContext( ApplicationActionModelContext ):
        attribute:: value
 
        the value of the field as it is displayed in the editor
+
+    .. attribute:: field_attributes
+
+        A dictionary of field attributes of the field to which the context
+        relates.
+
     """
 
     def __init__(self):
@@ -58,6 +64,7 @@ class FieldActionModelContext( ApplicationActionModelContext ):
         self.obj = None
         self.field = None
         self.value = None
+        self.field_attributes = {}
 
 class FieldActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a field.  On top of the attributes of the
@@ -79,6 +86,7 @@ class FieldActionGuiContext( ApplicationActionGuiContext ):
     def create_model_context( self ):
         context = super( FieldActionGuiContext, self ).create_model_context()
         context.value = self.editor.get_value()
+        context.field_attributes = self.editor.get_field_attributes()
         return context
 
     def copy( self, base_class = None ):
@@ -110,6 +118,7 @@ class SelectObject(Action):
     def get_state(self, model_context):
         state = super(SelectObject, self).get_state(model_context)
         state.visible = (model_context.value is None)
+        state.enabled = model_context.field_attributes.get('editable', False)
         return state
 
 class NewObject(SelectObject):
@@ -145,6 +154,7 @@ class OpenObject(SelectObject):
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)
         state.visible = (model_context.value is not None)
+        state.enabled = model_context.field_attributes.get('editable', False)
         return state
 
 class ClearObject(OpenObject):

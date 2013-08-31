@@ -40,8 +40,8 @@ def set_background_color_palette(widget, background_color):
     if background_color not in (None, ValueLoading):
         palette = QtGui.QPalette( widget.palette() )
         for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
-            # 
-            # backgroundRole : role that is used to render the background, If role is QPalette.NoRole, 
+            #
+            # backgroundRole : role that is used to render the background, If role is QPalette.NoRole,
             #                  then the widget inherits its parent's background role
             # Window : general background color
             # Base : background color for text entry widgets
@@ -51,19 +51,19 @@ def set_background_color_palette(widget, background_color):
         widget.setPalette( palette )
     else:
         widget.setPalette( QtGui.QApplication.palette() )
-        
+
 def draw_tooltip_visualization(widget):
     """
     Draws a small visual indication in the top-left corner of a widget.
     :param widget: a QWidget
     """
     painter = QtGui.QPainter(widget)
-    painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))    
-        
+    painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
+
 class AbstractCustomEditor(object):
     """
     Helper class to be used to build custom editors.
-    This class provides functionality to store and retrieve 
+    This class provides functionality to store and retrieve
     `ValueLoading` as an editor's value.
 
     Guidelines for implementing CustomEditors :
@@ -71,14 +71,14 @@ class AbstractCustomEditor(object):
     * When an editor consists of multiple widgets, one widget must be the focusProxy
       of the editor, to have that widget immediately activated when the user single
       clicks in the table view.
-    
+
     * When an editor has widgets that should not get selected when the user tabs
       through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
       widgets.
-      
+
     * Editor should set their size policy, for most editor this means their
       vertical size policy should be  `QtGui.QSizePolicy.Fixed`
-      
+
     """
 
     def __init__(self):
@@ -123,7 +123,7 @@ class AbstractCustomEditor(object):
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     """
     Base class for implementing custom editor widgets.
-    This class provides dual state functionality.  Each 
+    This class provides dual state functionality.  Each
     editor should have the posibility to have `ValueLoading`
     as its value, specifying that no value has been set yet.
     """
@@ -134,9 +134,13 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        
+        self.field_attributes = {}
+
+    def get_field_attributes(self):
+        return self.field_attributes
+
     def paintEvent(self, event):
-        super(CustomEditor, self).paintEvent(event)        
+        super(CustomEditor, self).paintEvent(event)
         if self.toolTip():
             draw_tooltip_visualization(self)
 
