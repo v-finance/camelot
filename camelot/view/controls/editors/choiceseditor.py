@@ -167,6 +167,7 @@ class ChoicesEditor(CustomEditor):
             for i in range(combobox.count()):
                 if value == variant_to_pyobject(combobox.itemData(i)):
                     combobox.setCurrentIndex(i)
+                    self.update_actions()
                     return
             # it might happen, that when we set the editor data, the set_choices
             # method has not happened yet or the choices don't contain the value
