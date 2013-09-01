@@ -417,7 +417,7 @@ class ActionToolbutton(QtGui.QToolButton, AbstractActionWidget):
         self.clicked.connect(self.run_action)
 
     def set_state( self, state ):
-        super( ActionToolbutton, self ).set_state( state )
+        AbstractActionWidget.set_state(self, state)
         if state.verbose_name != None:
             self.setText( unicode( state.verbose_name ) )
         if state.icon != None:
