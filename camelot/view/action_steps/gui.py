@@ -317,7 +317,7 @@ class MessageBox( ActionStep ):
         default an :guilabel:`Ok` and a button :guilabel:`Cancel` will be shown.
 
     When the :guilabel:`Cancel` button is pressed, this action step will raise
-    a `CancelException`
+    a `CancelRequest`
 
     .. image:: /_static/listactions/import_from_file_confirmation.png
 
