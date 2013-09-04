@@ -495,9 +495,10 @@ class StatusCase( TestMetaData ):
         #begin status enumeration use
         invoice = Invoice( book_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, None )
-        invoice.change_status( 'DRAFT', status_from_date = datetime.date.today() )
+        invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1) )
+        session.flush()
         self.assertEqual( invoice.current_status, 'DRAFT' )
-        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date.today() )
+        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
         draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
         ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()        
         #end status enumeration use

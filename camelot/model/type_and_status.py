@@ -212,14 +212,14 @@ class StatusMixin( object ):
 
     def get_status_from_date( self, classified_by ):
         """
-        :param classified_by: the status for which to get the last from date
+        :param classified_by: the status for which to get the last `status_from_date`
         :return: the last date at which the status changed to `classified_by`, None if no such
             change occured yet
         """
         status_histories = [status_history for status_history in self.status if status_history.classified_by == classified_by]
         if len( status_histories ):
-            status_histories.sort( key = lambda status_history:status_history.from_date, reverse = True )
-            return status_histories[0].from_date
+            status_histories.sort( key = lambda status_history:status_history.status_from_date, reverse = True )
+            return status_histories[0].status_from_date
 
     def get_status_history_at( self, status_date = None ):
         """
