@@ -172,17 +172,16 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
-        model = CollectionProxy( admin, lambda:objects, admin.get_columns)
-        self.validator = model.get_validator()
-        self.validator.validity_changed_signal.connect( self.update_complete )
-        model.layoutChanged.connect( self.validate_all_rows )
-
         table_widget = editors.One2ManyEditor(
             admin = admin,
             parent = self,
             create_inline = True,
         )
-        table_widget.set_value( model )
+        model = table_widget.get_model()
+        self.validator = model.get_validator()
+        self.validator.validity_changed_signal.connect( self.update_complete )
+        model.layoutChanged.connect( self.validate_all_rows )
+        table_widget.set_value(objects)
         table_widget.setObjectName( 'table_widget' )
         note = editors.NoteEditor( parent=self )
         note.set_value(None)

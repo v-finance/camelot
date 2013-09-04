@@ -46,7 +46,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
-        
+
     def __init__( self,
                   admin = None,
                   parent = None,
@@ -87,7 +87,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = table
-        post(self.admin.get_related_toolbar_actions, 
+        post(self.admin.get_related_toolbar_actions,
              self.set_right_toolbar_actions,
              args = (Qt.RightToolBarArea, self.direction ) )
         post(self.get_columns_and_static_field_attributes,
@@ -115,7 +115,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def set_field_attributes( self, **kwargs ):
         self.gui_context.field_attributes = kwargs
         self.update_action_status()
-        
+
     def get_columns_and_static_field_attributes(self):
         columns = self.admin.get_columns()
         static_fa = list(self.admin.get_static_field_attributes([c[0] for c in columns]))
@@ -129,7 +129,15 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 post( qaction.action.get_state,
                       qaction.set_state,
                       args = ( model_context, ) )
-                
+
+    def get_model(self):
+        """
+        :return: a :class:`QtGui.QAbstractItemModel` or `None`
+        """
+        table = self.findChild(QtGui.QWidget, 'table')
+        if table is not None:
+            return table.model()
+
     @QtCore.pyqtSlot(object)
     def set_columns_and_static_field_attributes(self, columns_and_static_fa):
         from ..delegates.delegatemanager import DelegateManager
@@ -147,21 +155,19 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def set_value( self, collection ):
         collection = CustomEditor.set_value( self, collection )
-        table = self.findChild(QtGui.QWidget, 'table')
-        if table is not None:
-            model = table.model()
-            if model is not None:
-                if collection is None:
-                    model.set_collection_getter(lambda:[])
-                else:
-                    model.set_collection_getter(lambda:collection)
-                model_context = self.gui_context.create_model_context()
-                for toolbar in self.findChildren( QtGui.QToolBar ):
-                    for qaction in toolbar.actions():
-                        post( qaction.action.get_state,
-                              qaction.set_state,
-                              args = ( model_context, ) )
-                #post( model._extend_cache, self.update_delegates )
+        model = self.get_model()
+        if model is not None:
+            if collection is None:
+                model.set_collection_getter(lambda:[])
+            else:
+                model.set_collection_getter(lambda:collection)
+            model_context = self.gui_context.create_model_context()
+            for toolbar in self.findChildren( QtGui.QToolBar ):
+                for qaction in toolbar.actions():
+                    post( qaction.action.get_state,
+                          qaction.set_state,
+                          args = ( model_context, ) )
+            #post( model._extend_cache, self.update_delegates )
 
     def activate_editor( self, number_of_rows ):
         assert object_thread( self )
@@ -173,7 +179,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 # editor before setting a new model, but the code below
 # seems to have no effect.
         table = self.findChild(QtGui.QWidget, 'table')
-        if table:
+        if table is not None:
             index = table.model().index( max(0, number_of_rows-1), 0 )
             table.scrollToBottom()
             table.setCurrentIndex( index )
