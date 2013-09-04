@@ -169,7 +169,6 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   parent = None,
                   flags = QtCore.Qt.Window ):
         from camelot.view.controls import editors
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
