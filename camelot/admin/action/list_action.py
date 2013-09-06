@@ -309,10 +309,11 @@ class DeleteSelection( EditAction ):
             raise StopIteration
         admin = model_context.admin
         if model_context.admin.get_delete_mode() == 'on_confirm':
-            step = action_steps.MessageBox( _('Please confirm'),
-                                            admin.get_delete_message(None),
-                                            QtGui.QMessageBox.Yes,
-                                            QtGui.QMessageBox.No )
+            buttons = QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
+            message = admin.get_delete_message(None)
+            step = action_steps.MessageBox( title = _('Please confirm'),
+                                            text = message,
+                                            standard_buttons = buttons)
             response = yield step
             if response == QtGui.QMessageBox.No:
                 raise StopIteration
