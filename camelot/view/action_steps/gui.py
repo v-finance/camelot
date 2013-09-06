@@ -303,6 +303,26 @@ class CloseView( ActionStep ):
         if view != None:
             view.close_view( self.accept )
 
+class ToFirstForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toFirst()
+
+class ToNextForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toNext()
+        
+class ToLastForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toLast()
+        
+class ToPreviousForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toPrevious()
+
 class MessageBox( ActionStep ):
     """
     Popup a :class:`QtGui.QMessageBox` and send it result back.  The arguments
