@@ -205,6 +205,7 @@ It has additional class attributes that customise its behaviour.
             return self._field_attributes[field_name]
         except KeyError:
             from camelot.view.controls import delegates
+            from camelot.view.proxy.queryproxy import QueryTableProxy
             #
             # Default attributes for all fields
             #
@@ -286,6 +287,8 @@ It has additional class attributes that customise its behaviour.
 
                     if property.direction == orm.interfaces.ONETOMANY:
                         attributes.update( direction = 'onetomany' )
+                        if property.lazy == 'dynamic':
+                            attributes.update(proxy=QueryTableProxy)
                     elif property.direction == orm.interfaces.MANYTOONE:
                         attributes.update(
                             #

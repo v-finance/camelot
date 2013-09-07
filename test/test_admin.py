@@ -9,6 +9,7 @@ from camelot.admin.object_admin import ObjectAdmin
 from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
 from camelot.view.art import Icon
+from camelot.view.proxy.queryproxy import QueryTableProxy
 
 from PyQt4.QtCore import Qt
 
@@ -170,7 +171,7 @@ class EntityAdminCase( TestMetaData ):
         class A(self.Entity):
             b = ManyToOne('B')
             c = OneToOne('C')
-            d = OneToMany('D')
+            d = OneToMany('D', lazy='dynamic')
             e = ManyToMany('E')
             
             class Admin(EntityAdmin):
@@ -199,6 +200,7 @@ class EntityAdminCase( TestMetaData ):
         
         d_fa = admin.get_field_attributes('d')
         self.assertEqual( d_fa['delegate'], delegates.One2ManyDelegate )
+        self.assertEqual( d_fa['proxy'], QueryTableProxy )
         
         e_fa = admin.get_field_attributes('e')
         self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate ) 
