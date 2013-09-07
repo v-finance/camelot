@@ -67,7 +67,7 @@ def model_function(original_function):
         current_thread = QtCore.QThread.currentThread()
         model_thread = get_model_thread()
         return (current_thread==model_thread) or isinstance(
-            model_thread, (NoThreadModelThread,)
+            model_thread, NoThreadModelThread
         )
 
     @wraps(original_function)
@@ -155,7 +155,7 @@ def get_model_thread():
     try:
         return _model_thread_[0]
     except IndexError:
-        from signal_slot_model_thread import SignalSlotModelThread
+        from .signal_slot_model_thread import SignalSlotModelThread
         _model_thread_.insert(0, SignalSlotModelThread())
         _model_thread_[0].start()
         return _model_thread_[0]

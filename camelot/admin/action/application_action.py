@@ -177,7 +177,7 @@ class SelectProfile( Action ):
                             cursor = connection.cursor()
                             cursor.close()
                             connection.close()
-                        except Exception, e:
+                        except Exception as e:
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
                                                                      standard_buttons = QtGui.QMessageBox.Ok )

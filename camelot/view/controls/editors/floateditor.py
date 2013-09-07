@@ -28,9 +28,11 @@ from PyQt4.QtCore import Qt
 
 import six
 
-from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
-from camelot.view.art import Icon
-from camelot.core import constants
+from .customeditor import (CustomEditor, set_background_color_palette,
+                           draw_tooltip_visualization)
+from ...art import Icon
+from ...utils import locale
+from ....core import constants
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -79,9 +81,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = six.text_type( self._locale.toString( float(value),
-                                                     'f', 
-                                                     self.decimals() ) )
+        text = six.text_type( locale.toString( float(value),
+                                               'f', 
+                                               self.decimals() ) )
         return text
     
     def stripped(self, qinput):
