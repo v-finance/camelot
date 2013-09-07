@@ -254,7 +254,7 @@ position in the query.
         else:
             self.form_icon = QtCore.QVariant()
         self.validator = admin.get_validator( self )
-        self._collection_getter = collection_getter
+        self._collection_getter = collection_getter or (lambda:[])
         self.flush_changes = flush_changes
         self.delegate_manager = None
         self.mt = get_model_thread()
@@ -413,7 +413,19 @@ position in the query.
         locker.unlock()
         self.setRowCount( rows )
 
+    def set_value(self, collection):
+        """
+        :param collection: the list of objects to display
+        """
+        if collection is None:
+            self.set_collection_getter(lambda:[])
+        else:
+            self.set_collection_getter(lambda:collection)
+
     def set_collection_getter( self, collection_getter ):
+        """
+        deprecated: use `set_value` instead
+        """
         self.logger.debug('set collection getter')
         self._collection_getter = collection_getter
         self.refresh()

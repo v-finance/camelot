@@ -94,7 +94,16 @@ class QueryTableProxy(CollectionProxy):
         assert object_thread( self )
         self._query_getter = query_getter
         self.refresh()
-        
+
+    def set_value(self, query):
+        """
+        :param query: the `Query` to display
+        """
+        if query is None:
+            self.setQuery(None)
+        else:
+            self.setQuery(lambda:query)
+
     def get_collection(self):
         """In case the collection is requested of a QueryProxy, we will return
         a collection getter for a collection that reuses the data already queried by

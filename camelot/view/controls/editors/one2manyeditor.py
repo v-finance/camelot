@@ -42,6 +42,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     :param create_inline: if False, then a new entity will be created within a
     new window, if True, it will be created inline
+    
+    :param proxy: the proxy class to use to present the data in the list or
+        the query to the table view
 
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
@@ -53,6 +56,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                   create_inline = False,
                   direction = 'onetomany',
                   field_name = 'onetomany',
+                  proxy = None,
                   **kw ):
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
@@ -74,9 +78,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        proxy = CollectionProxy(admin, lambda:[], lambda:[])
-        table.setModel(proxy)
-        register.register(proxy, table)
+        model = (proxy or CollectionProxy)(admin, None, lambda:[])
+        table.setModel(model)
+        register.register(model, table)
         self.admin = admin
         self.direction = direction
         self.create_inline = create_inline
@@ -157,10 +161,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         collection = CustomEditor.set_value( self, collection )
         model = self.get_model()
         if model is not None:
-            if collection is None:
-                model.set_collection_getter(lambda:[])
-            else:
-                model.set_collection_getter(lambda:collection)
+            model.set_value(collection)
             model_context = self.gui_context.create_model_context()
             for toolbar in self.findChildren( QtGui.QToolBar ):
                 for qaction in toolbar.actions():
