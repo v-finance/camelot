@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from camelot.core.memento import memento_change, memento_types
-from camelot.core.dbprofiles import Profile, ProfileStore
+from camelot.core.profile import Profile, ProfileStore
 from camelot.test import ModelThreadTestCase
 
 memento_id_counter = 0
@@ -72,8 +72,8 @@ class ProfileCase(unittest.TestCase):
         state = profile.__getstate__()
         # name should not be encrypted, others should
         self.assertEqual( state['profilename'], name )
-        self.assertNotEqual( state['host'], host )
-        self.assertNotEqual( state['pass'], password )
+        self.assertEqual( state['host'], host )
+        self.assertEqual( state['pass'], password )
         new_profile = Profile(name=None)
         new_profile.__setstate__( state )
         self.assertEqual( new_profile.name, name )
@@ -81,24 +81,30 @@ class ProfileCase(unittest.TestCase):
         self.assertEqual( new_profile.password, password )
         
     def test_profile_store( self ):
+        # construct a profile store from application settings
+        store = ProfileStore()
+        store.read_profiles()
+        # continue test with a profile store from file, to avoid test inference
         handle, filename = tempfile.mkstemp()
         os.close(handle)
-        # test with a profile store from file, to avoid test inference
         store = ProfileStore(filename)
         self.assertEqual( store.read_profiles(), [] )
         self.assertEqual( store.get_last_profile(), None )
         profile_1 = Profile('profile_1')
+        profile_1.dialect = 'sqlite'
         profile_2 = Profile('profile_2')
+        profile_2.dialect = 'mysql'
         store.write_profiles( [profile_1, profile_2] )
         self.assertEqual( len(store.read_profiles()), 2 )
         store.set_last_profile( profile_1 )
         self.assertTrue( store.get_last_profile().name, 'profile_1' )
+        self.assertTrue( store.get_last_profile().dialect, 'sqlite' )
         store.set_last_profile( profile_2 )
         self.assertTrue( store.get_last_profile().name, 'profile_2' )
-        os.remove(filename)
-        # construct a profile store from application settings
-        store = ProfileStore()
-        store.read_profiles()
+        self.assertTrue( store.get_last_profile().dialect, 'mysql' )
+        # os.remove(filename)
+
+        return store
 
 class ConfCase(unittest.TestCase):
     """Test the global configuration"""

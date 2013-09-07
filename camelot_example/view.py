@@ -14,11 +14,17 @@ class VisitorsPerDirector(object):
 
 def setup_views():
     from sqlalchemy.sql import select, func, and_
-    from sqlalchemy.orm import mapper
+    from sqlalchemy.orm import mapper, class_mapper, exc
  
     from camelot.model.party import Person
     from camelot_example.model import Movie, VisitorReport
         
+    try:
+        class_mapper(VisitorReport)
+        return
+    except exc.UnmappedClassError:
+        pass
+    
     s = select([Person.party_id,
                 Person.first_name.label('first_name'),
                 Person.last_name.label('last_name'),

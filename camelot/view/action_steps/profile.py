@@ -22,78 +22,24 @@
 #
 #  ============================================================================
 
-import os
-import sys
 import logging
 import pkgutil
 
 import six
-
-from sqlalchemy import create_engine
-
-from PyQt4 import QtCore
-from PyQt4 import QtNetwork
+from PyQt4 import QtCore, QtGui, QtNetwork
 from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QFileInfo
-from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
-    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox, QWidget, QVBoxLayout
+from PyQt4.QtGui import QBoxLayout, QGridLayout, QHBoxLayout, \
+    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox
+
+from camelot.admin.action import ActionStep
+from camelot.core.exception import CancelRequest
+from camelot.core.utils import ugettext as _
 from camelot.view import art
-from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
-from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 
-from camelot.core.exception import UserException
-from camelot.core.utils import ugettext as _
-from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
-from camelot.view.model_thread import object_thread
-from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
-    store_profiles, get_network_proxy, last_used_profile, connection_string_from_profile
-
-logger = logging.getLogger('camelot.view.database_selection')
-
-def select_profile(profiles_dict):
-    title = _('Profile Selection')
-    input_label = _('Select a stored profile:')
-    ok_label = _('OK')
-    cancel_label = _('Quit')
-
-    input_dialog = ComboBoxInputDialog(autoaccept=True)
-    input_dialog.set_window_title(title)
-    input_dialog.set_label_text(input_label)
-    input_dialog.set_ok_button_text(ok_label)
-    input_dialog.set_cancel_button_text(cancel_label)
-    input_dialog.set_items(sorted(profiles_dict.keys()) + [NEW_PROFILE_LABEL])
-    _last_used_profile = last_used_profile()
-    if _last_used_profile:
-        input_dialog.set_choice_by_text(_last_used_profile)
-    input_dialog.set_ok_button_default()
-
-    last_index = input_dialog.count()-1
-    custom_font = QFont()
-    custom_font.setItalic(True)
-    icon = art.Icon('tango/16x16/actions/document-new.png').getQIcon()
-    input_dialog.set_data(last_index, custom_font, Qt.FontRole)
-    input_dialog.set_data(last_index, icon, Qt.DecorationRole)
-
-    dialog_code = input_dialog.exec_()
-    if dialog_code == QDialog.Accepted:
-        return six.text_type(input_dialog.get_text())
-
-    return None
-
-def new_profile_item_selected(input_dialog):
-    input_dialog.accept()
-
-def create_new_profile(app_admin, profiles):
-    wizard = app_admin.database_profile_wizard(profiles)
-    dialog_code = wizard.exec_()
-    if dialog_code == QDialog.Rejected:
-        # no profiles? exit
-        if not profiles:
-            sys.exit(0)
-        # one more time
-        select_database(app_admin)
+logger = logging.getLogger('camelot.view.action_steps.profile')
 
 class ProfileWizard(StandaloneWizardPage):
     """Wizard for the creation of a new database
@@ -114,7 +60,7 @@ allow all languages
 
         self._connection_valid = False
         self.network_reply = None
-        self.profiles = profiles
+        self.profiles = dict((profile.name,profile) for profile in profiles)
 
         self.setWindowTitle(_('Profile Wizard'))
         self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
@@ -126,7 +72,7 @@ allow all languages
         self.manager.finished.connect( self.update_network_status )
         #self.manager.networkAccessibleChanged.connect( self.network_accessible_changed )
         self.manager.proxyAuthenticationRequired.connect( self.proxy_authentication_required )
-        
+
         self.create_labels_and_widgets()
         self.create_buttons()
         self.set_tab_order()
@@ -135,7 +81,8 @@ allow all languages
         # and have default values
         self.connect_widgets()
         self.connect_buttons()
-        
+        self.toggle_ok_button()
+
         timer = QtCore.QTimer(self)
         timer.timeout.connect( self.new_network_request )
         timer.setInterval( 3000 )
@@ -143,7 +90,6 @@ allow all languages
         self.new_network_request()
 
     def create_labels_and_widgets(self):
-        assert object_thread( self )
         self.profile_label = QLabel(_('Profile Name:'))
         self.dialect_label = QLabel(_('Driver:'))
         self.host_label = QLabel(_('Server Host:'))
@@ -189,6 +135,7 @@ allow all languages
         # should be more than enough for folders
         # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
         self.dialect_editor = ChoicesEditor(parent=self)
+        self.dialect_editor.set_value(None)
         self.host_editor = TextLineEditor(self, length=32767)
         self.host_editor.set_value('')
         self.port_editor = TextLineEditor(self)
@@ -243,15 +190,15 @@ allow all languages
         layout.addWidget(self.proxy_port_editor, 10, 4, 1, 1)
         layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
         layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
-        
+
         layout.addWidget(self.network_status_label, 13, 1, 1, 4)
-        
+
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
-        self.dialect_editor.clear()
         self.profile_editor.clear()
-        
+        self.dialect_editor.set_value(None)
+
         if self.dialects:
             dialects = self.dialects
         else:
@@ -262,19 +209,16 @@ allow all languages
         self.dialect_editor.set_choices([(dialect, dialect.capitalize()) \
             for dialect in dialects])
 
-        self.profile_editor.insertItems(1, [''] + \
-            [item for item in fetch_profiles()])
+        self.profile_editor.insertItems(1, [''] + list(self.profiles.keys()))
         self.profile_editor.setFocus()
         self.update_wizard_values()
 
     def connect_widgets(self):
-        self.profile_editor.editTextChanged.connect(self.update_wizard_values)
-        # self.dialect_editor.currentIndexChanged.connect(self.update_wizard_values)    
-    
+        self.profile_editor.editTextChanged.connect(self.toggle_ok_button)
+        self.profile_editor.currentIndexChanged.connect(self.update_wizard_values)
+        self.dialect_editor.editingFinished.connect(self.toggle_ok_button)
+
     def create_buttons(self):
-        self.more_button = QPushButton(_('More'))
-        self.more_button.setCheckable(True)
-        self.more_button.setAutoDefault(False)
         self.cancel_button = QPushButton(_('Cancel'))
         self.ok_button = QPushButton(_('OK'))
 
@@ -284,35 +228,11 @@ allow all languages
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.ok_button)
         layout.addStretch()
-        layout.addWidget(self.more_button)
 
         self.buttons_widget().setLayout(layout)
 
         self.browse_button = QPushButton(_('Browse'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
-
-        self.setup_extension()
-
-    def setup_extension(self):
-        self.extension = QWidget()
-
-        self.load_button = QPushButton(_('Load profiles'))
-        self.save_button = QPushButton(_('Save profiles'))
-
-        extension_buttons_layout = QHBoxLayout()
-        extension_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        extension_buttons_layout.addWidget(self.load_button)
-        extension_buttons_layout.addWidget(self.save_button)
-        extension_buttons_layout.addStretch()
-
-        extension_layout = QVBoxLayout()
-        extension_layout.setContentsMargins(0, 0, 0, 0)
-        extension_layout.addWidget(HSeparator())
-        extension_layout.addLayout(extension_buttons_layout)
-
-        self.extension.setLayout(extension_layout)
-        self.main_widget().layout().addWidget(self.extension, 15, 0, 1, 5)
-        self.extension.hide()
 
     def set_tab_order(self):
         all_widgets = [self.profile_editor, self.dialect_editor,
@@ -331,86 +251,43 @@ allow all languages
 
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
-        self.ok_button.pressed.connect(self.proceed)
+        self.ok_button.pressed.connect(self.accept)
         self.browse_button.pressed.connect(self.fill_media_location)
-        self.more_button.toggled.connect(self.extension.setVisible)
-        self.save_button.pressed.connect(self.save_profiles_to_file)
-        self.load_button.pressed.connect(self.load_profiles_from_file)
 
-    def proceed(self):
-        if self.is_connection_valid():
-            profilename, info = self.collect_info()
-            if profilename in self.profiles:
-                self.profiles[profilename].update(info)
-            else:
-                self.profiles[profilename] = info
-            store_profiles(self.profiles)
-            use_chosen_profile(profilename)
-            self.accept()
-
-    def is_connection_valid(self):
-        profilename, info = self.collect_info()
-        mt = SignalSlotModelThread(lambda:None)
-        mt.start()
-        progress = ProgressDialog(_('Verifying database settings'))
-        mt.post(lambda:self.test_connection( info ),
-            progress.finished, progress.exception)
-        progress.exec_()
-        return self._connection_valid
-
-    def test_connection(self, profile):
-        self._connection_valid = False
-        connection_string = connection_string_from_profile( profile )
-        engine = create_engine(connection_string, pool_recycle=True)
-        try:
-            connection = engine.raw_connection()
-            cursor = connection.cursor()
-            cursor.close()
-            connection.close()
-            self._connection_valid = True
-        except Exception as e:
-            self._connection_valid = False
-            raise UserException( _('Could not connect to database, please check host and port'),
-                                 resolution = _('Verify driver, host and port or contact your system administrator'),
-                                 detail = six.text_type(e) )
-
-    def toggle_ok_button(self, enabled):
+    @QtCore.pyqtSlot()
+    def toggle_ok_button(self):
+        enabled = bool(self.profile_editor.currentText()) and bool(self.dialect_editor.get_value())
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
         text = six.text_type(self.profile_editor.currentText())
-        self.toggle_ok_button(bool(text))
         return text
-    
-    # FIXME can't get this to work properly (call in update_wizard_values(): port_editor )
-    # def _related_default_port(self, dialect_editor):
-    #     class Missing(defaultdict):
-    #         def __missing__(self, key):
-    #             return ''
-    #     ports = Missing(mysql='3306', postgresql='5432')
-    #     return ports[dialect_editor.get_value()]
-    
+
+    def set_current_profile(self, profile_name):
+        self.profile_editor.lineEdit().setText(profile_name)
+        self.update_wizard_values()
+
     def update_wizard_values(self):
-        network_proxy = get_network_proxy()
+        #network_proxy = get_network_proxy()
         # self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         # self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
-        # self.port_editor.setText(self.get_profile_value('port') or '3306')        
-        self.dialect_editor.set_value(self.get_profile_value('dialect') or 'postgresql')
-        self.host_editor.setText(self.get_profile_value('host') or self.host_editor.text())
-        self.port_editor.setText(self.get_profile_value('port') or self.port_editor.text())        
+        # self.port_editor.setText(self.get_profile_value('port') or '3306')
+        self.dialect_editor.set_value(self.get_profile_value('dialect') or None)
+        self.host_editor.setText(self.get_profile_value('host'))
+        self.port_editor.setText(self.get_profile_value('port'))
         # self.port_editor.setText(self.get_profile_value('port') or self._related_default_port(self.dialect_editor))
-        self.database_name_editor.setText(self.get_profile_value('database') or self.database_name_editor.text())
-        self.username_editor.setText(self.get_profile_value('user') or self.username_editor.text())
-        self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
-        self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
-        self.language_editor.set_value(self.get_profile_value('locale_language') or self.language_editor.get_value())
-        self.proxy_host_editor.setText(self.get_profile_value('proxy_host') or str(network_proxy.hostName()))
-        self.proxy_port_editor.setText(self.get_profile_value('proxy_port') or str(network_proxy.port()))
-        self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or str(network_proxy.user()))
-        self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or str(network_proxy.password()))
+        self.database_name_editor.setText(self.get_profile_value('database'))
+        self.username_editor.setText(self.get_profile_value('user'))
+        self.password_editor.setText(self.get_profile_value('password'))
+        self.media_location_editor.setText(self.get_profile_value('media_location'))
+        self.language_editor.set_value(self.get_profile_value('locale_language'))
+        self.proxy_host_editor.setText(self.get_profile_value('proxy_host'))
+        self.proxy_port_editor.setText(self.get_profile_value('proxy_port'))
+        self.proxy_username_editor.setText(self.get_profile_value('proxy_username'))
+        self.proxy_password_editor.setText(self.get_profile_value('proxy_password'))
         self.network_status_label.setText('')
         self.network_status_label.setStyleSheet('')
-        
+
     @QtCore.pyqtSlot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
     def proxy_authentication_required(self, proxy, authenticator):
         pass
@@ -425,14 +302,14 @@ allow all languages
                 return
         self.network_status_label.setText(_('Internet not available.\n%s.'%reply.errorString()))
         self.network_status_label.setStyleSheet('color: red')
-                
+
     @QtCore.pyqtSlot()
     def new_network_request(self):
         if self.network_reply and not self.network_reply.isFinished():
             self.network_reply.abort()
         if self.proxy_host_editor.text():
-            proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy, 
-                                             self.proxy_host_editor.text(), 
+            proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy,
+                                             self.proxy_host_editor.text(),
                                              int( str( self.proxy_port_editor.text() ) ) )#,
                                              #self.proxy_username_editor.text(),
                                              #self.proxy_password_editor.text() )
@@ -444,26 +321,26 @@ allow all languages
     def get_profile_value(self, key):
         current = self.current_profile()
         if current in self.profiles:
-            return self.profiles[current][key]
+            return getattr(self.profiles[current], key)
         return ''
 
-    def collect_info(self):
+    def get_profile_info(self):
         logger.info('collecting new database profile info')
         info = {}
-        profilename = self.current_profile()
+        info['name'] = self.current_profile()
         info['dialect'] = self.dialect_editor.get_value()
         info['host'] = self.host_editor.get_value()
         info['port'] = self.port_editor.text()
         info['database'] = self.database_name_editor.get_value()
         info['user'] = self.username_editor.get_value()
-        info['pass'] = self.password_editor.get_value()
+        info['password'] = self.password_editor.get_value()
         info['media_location'] = self.media_location_editor.get_value()
         info['locale_language'] = self.language_editor.get_value()
         info['proxy_host'] = self.proxy_host_editor.get_value()
         info['proxy_port'] = self.proxy_port_editor.get_value()
         info['proxy_username'] = self.proxy_username_editor.get_value()
         info['proxy_password'] = self.proxy_password_editor.get_value()
-        return profilename, info
+        return info
 
     def fill_media_location(self):
         caption = _('Select media location')
@@ -484,26 +361,20 @@ allow all languages
 
         self.media_location_editor.setText(selected)
 
+class EditProfiles(ActionStep):
 
-    def save_profiles_to_file(self):
-        caption = _('Save Profiles To a File')
-        filters = _('Profiles file (*.ini)')
-        path = QFileDialog.getSaveFileName(self, caption, 'profiles', filters)
-        if not path:
-            logger.debug('Could not save profiles to file; no path.')
-            return
-        store_profiles(self.profiles, to_file=path)
+    def __init__(self, profiles, current_profile=''):
+        self.profiles = profiles
+        self.current_profile = current_profile
 
-    def load_profiles_from_file(self):
-        caption = _('Load Profiles From a File')
-        filters = _('Profiles file (*.ini)')
-        path = QFileDialog.getOpenFileName(self, caption, 'profiles', filters)
-        if not path:
-            logger.debug('Could not load profiles from file; no path.')
-            return
-        self.profiles = fetch_profiles(from_file=path)
-        if self.profiles:
-            store_profiles(self.profiles)
-            os.execv(sys.executable, [sys.executable] + sys.argv)
+    def render(self, gui_context):
+        wizard = ProfileWizard(self.profiles)
+        wizard.set_current_profile(self.current_profile)
+        return wizard
 
-
+    def gui_run(self, gui_context):
+        dialog = self.render(gui_context)
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
+            raise CancelRequest()
+        return dialog.get_profile_info()

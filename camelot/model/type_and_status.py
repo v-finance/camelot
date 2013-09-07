@@ -98,6 +98,10 @@ class StatusHistoryAdmin( EntityAdmin ):
 
     def __unicode__( self ):
         return six.text_type(self.classified_by or u'')
+    
+    def get_depending_objects(self, obj):
+        if obj.status_for is not None:
+            yield obj.status_for
 
 class Status( EntityBuilder ):
     """EntityBuilder that adds a related status table(s) to an `Entity`.
@@ -116,10 +120,10 @@ class Status( EntityBuilder ):
     be a list of all possible statuses the entity can have ::
 
     enumeration = [(1, 'draft'), (2,'ready')]
-	    
+
     :param status_history_table: the tablename to use to store the status
         history
-	
+
     :param status_type_table: the tablename to use to starte the status types
     """
 
@@ -128,22 +132,22 @@ class Status( EntityBuilder ):
         super( Status, self ).__init__()
         self.property = None
         self.enumeration = enumeration
-	self.status_history_table = status_history_table
-	self.status_type_table = status_type_table
+        self.status_history_table = status_history_table
+        self.status_type_table = status_type_table
 
     def attach( self, entity, name ):
         super( Status, self ).attach( entity, name )
         assert entity != Entity
 
-	if self.status_history_table==None:
-	    self.status_history_table = entity.__name__.lower() + '_status'
-	if self.status_type_table==None:
-	    self.status_type_table = entity.__name__.lower() + '_status_type'
+        if self.status_history_table==None:
+            self.status_history_table = entity.__name__.lower() + '_status'
+        if self.status_type_table==None:
+            self.status_type_table = entity.__name__.lower() + '_status_type'
 
         status_history_admin = type( entity.__name__ + 'StatusHistoryAdmin',
                                      ( StatusHistoryAdmin, ),
                                      { 'verbose_name':_(entity.__name__ + ' Status'),
-                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )	
+                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
 
         # use `type` instead of `class`, to give status type and history
         # classes a specific name, so these classes can be used whithin the
@@ -157,17 +161,17 @@ class Status( EntityBuilder ):
 
             status_type = type( entity.__name__ + 'StatusType', 
                                 (StatusType, entity._descriptor.entity_base,),
-	                        { '__tablename__':self.status_type_table,
+                                { '__tablename__':self.status_type_table,
                                   'Admin':status_type_admin } )	 
 
             foreign_key = schema.ForeignKey( status_type.id,
                                              ondelete = 'cascade', 
-                                             onupdate = 'cascade')	    
+                                             onupdate = 'cascade')
 
             status_history = type( entity.__name__ + 'StatusHistory',
                                    ( StatusHistory, entity._descriptor.entity_base, ),
-	                           {'__tablename__':self.status_history_table,
-	                            'classified_by_id':schema.Column( PrimaryKey(), 
+                                   {'__tablename__':self.status_history_table,
+                                    'classified_by_id':schema.Column( PrimaryKey(), 
                                                                       foreign_key, 
                                                                       nullable = False ),
                                     'classified_by':orm.relationship( status_type ),
@@ -180,10 +184,11 @@ class Status( EntityBuilder ):
 
             status_history = type( entity.__name__ + 'StatusHistory',
                                    ( StatusHistory, entity._descriptor.entity_base, ),
-	                           {'__tablename__':self.status_history_table,
+                                   {'__tablename__':self.status_history_table,
                                     'classified_by':schema.Column( Enumeration( self.enumeration ), 
                                                                    nullable=False, index=True ),
                                     'Admin':status_history_admin,} )
+            setattr( entity, '_%s_enumeration'%name, self.enumeration )
 
         self.status_history = status_history
         setattr( entity, '_%s_history'%name, self.status_history )
@@ -196,26 +201,27 @@ class Status( EntityBuilder ):
                 constraint = schema.ForeignKey( col,
                                                 ondelete = 'cascade', 
                                                 onupdate = 'cascade')
-		column = schema.Column( PrimaryKey(), constraint, nullable = False )
+                column = schema.Column( PrimaryKey(), constraint, nullable = False )
                 setattr( self.status_history, col_name, column )
 
     def create_properties( self ):
         if not self.property:
-            self.property = orm.relationship( self.entity, backref = self.name )
+            backref = orm.backref(self.name, cascade='all, delete, delete-orphan')
+            self.property = orm.relationship(self.entity, backref = backref)
             self.status_history.status_for = self.property
 
 class StatusMixin( object ):
 
     def get_status_from_date( self, classified_by ):
         """
-        :param classified_by: the status for which to get the last from date
+        :param classified_by: the status for which to get the last `status_from_date`
         :return: the last date at which the status changed to `classified_by`, None if no such
             change occured yet
         """
         status_histories = [status_history for status_history in self.status if status_history.classified_by == classified_by]
         if len( status_histories ):
-            status_histories.sort( key = lambda status_history:status_history.from_date, reverse = True )
-            return status_histories[0].from_date
+            status_histories.sort( key = lambda status_history:status_history.status_from_date, reverse = True )
+            return status_histories[0].status_from_date
 
     def get_status_history_at( self, status_date = None ):
         """
@@ -229,7 +235,7 @@ class StatusMixin( object ):
         if status_date == None:
             status_date = datetime.date.today()
         for status_history in self.status:
-            if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
+            if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:
                 return status_history	
 
     @staticmethod
@@ -284,7 +290,7 @@ class ChangeStatus( Action ):
     :param verbose_name: the name of the action
     :return: a :class:`camelot.admin.action.Action` object that changes
     the status of a selection to the new status
-    """	
+    """
 
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)

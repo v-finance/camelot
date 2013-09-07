@@ -24,12 +24,17 @@
 
 """Functions and widget to represent exceptions to the user"""
 
+import collections
 from PyQt4 import QtGui
 
 import six
 
 from camelot.core.utils import ugettext as _
 from camelot.core.exception import UserException
+
+ExceptionInfo = collections.namedtuple( 'exception_info',
+                                        ['title', 'text', 'icon', 
+                                         'resolution', 'detail'] )
 
 def register_exception(logger, text, exception):
     """Log an exception and return a serialized form of the exception with 
@@ -44,11 +49,11 @@ def register_exception(logger, text, exception):
     if isinstance( exception, UserException ):
         # this exception is not supposed to generate any logging
         # or inform the developer about something
-        return (exception.title, 
-                exception.text, 
-                exception.icon, 
-                exception.resolution, 
-                exception.detail)
+        return ExceptionInfo(exception.title, 
+                             exception.text, 
+                             exception.icon, 
+                             exception.resolution, 
+                             exception.detail)
 
     logger.error( text, exc_info = exception )
     title = _('Exception')
@@ -62,7 +67,7 @@ def register_exception(logger, text, exception):
     traceback.print_exc(file=sio)
     detail = sio.getvalue()
     sio.close()
-    return (title, text, icon, resolution, detail)
+    return ExceptionInfo(title, text, icon, resolution, detail)
 
 class ExceptionDialog(QtGui.QMessageBox):
     """Dialog to display an exception to the user

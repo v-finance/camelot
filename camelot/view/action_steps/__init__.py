@@ -26,15 +26,17 @@ from .application import MainWindow, InstallTranslator, Exit
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .gui import (CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
-                  ShowChart, ShowPixmap)
+                  ShowChart, ShowPixmap, SelectSubclass,
+                  ToFirstForm, ToLastForm, ToNextForm, ToPreviousForm,
+                  UpdateEditor,)
 from .item_view import Sort
-from .open_file import (OpenFile, OpenStream, 
+from open_file import ( OpenFile, OpenStream,
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate)
 from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from .print_preview import (PrintChart, PrintHtml, PrintPreview, 
+from print_preview import ( PrintChart, PrintHtml, PrintPreview,
                             PrintJinjaTemplate)
 from .select_file import SelectFile
-from .select_object import SelectObject
+from select_object import SelectObjects
 from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
 
@@ -64,11 +66,17 @@ __all__ = [
     SelectBackup.__name__,
     SelectFile.__name__,
     SelectItem.__name__,
-    SelectObject.__name__,
+    SelectObjects.__name__,
     SelectRestore.__name__,
+    SelectSubclass.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,
     Sort.__name__,
+    ToFirstForm.__name__,
+    ToLastForm.__name__,
+    ToNextForm.__name__,
+    ToPreviousForm.__name__,
+    UpdateEditor.__name__,
     UpdateObject.__name__,
     UpdateProgress.__name__,
     WordJinjaTemplate.__name__,

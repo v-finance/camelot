@@ -24,8 +24,12 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
 
+from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
+from ...model_thread import post
+from ..action_widget import ActionToolbutton
 
 def set_background_color_palette(widget, background_color):
     """
@@ -40,8 +44,8 @@ def set_background_color_palette(widget, background_color):
     if background_color not in (None, ValueLoading):
         palette = QtGui.QPalette( widget.palette() )
         for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
-            # 
-            # backgroundRole : role that is used to render the background, If role is QPalette.NoRole, 
+            #
+            # backgroundRole : role that is used to render the background, If role is QPalette.NoRole,
             #                  then the widget inherits its parent's background role
             # Window : general background color
             # Base : background color for text entry widgets
@@ -51,19 +55,19 @@ def set_background_color_palette(widget, background_color):
         widget.setPalette( palette )
     else:
         widget.setPalette( QtGui.QApplication.palette() )
-        
+
 def draw_tooltip_visualization(widget):
     """
     Draws a small visual indication in the top-left corner of a widget.
     :param widget: a QWidget
     """
     painter = QtGui.QPainter(widget)
-    painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))    
-        
+    painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
+
 class AbstractCustomEditor(object):
     """
     Helper class to be used to build custom editors.
-    This class provides functionality to store and retrieve 
+    This class provides functionality to store and retrieve
     `ValueLoading` as an editor's value.
 
     Guidelines for implementing CustomEditors :
@@ -71,34 +75,29 @@ class AbstractCustomEditor(object):
     * When an editor consists of multiple widgets, one widget must be the focusProxy
       of the editor, to have that widget immediately activated when the user single
       clicks in the table view.
-    
+
     * When an editor has widgets that should not get selected when the user tabs
       through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
       widgets.
-      
+
     * Editor should set their size policy, for most editor this means their
       vertical size policy should be  `QtGui.QSizePolicy.Fixed`
-      
+
     """
 
     def __init__(self):
-        self._value_loading = True
-        self.value_is_none = False
+        self.setProperty('value_loading', True)
 
     def set_value(self, value):
-        if value == ValueLoading:
-            self._value_loading = True
+        if value is ValueLoading:
+            self.setProperty('value_loading', True)
             return None
         else:
-            self._value_loading = False
-            if value is None:
-                self.value_is_none = True
-            else:
-                self.value_is_none = False
+            self.setProperty('value_loading', False)
             return value
 
     def get_value(self):
-        if self._value_loading:
+        if self.property('value_loading').toBool():
             return ValueLoading
         return None
 
@@ -128,7 +127,7 @@ class AbstractCustomEditor(object):
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     """
     Base class for implementing custom editor widgets.
-    This class provides dual state functionality.  Each 
+    This class provides dual state functionality.  Each
     editor should have the posibility to have `ValueLoading`
     as its value, specifying that no value has been set yet.
     """
@@ -139,10 +138,28 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        
+        self.field_attributes = {}
+        self.gui_context = FieldActionGuiContext()
+        self.gui_context.editor = self
+
+    def get_field_attributes(self):
+        return self.field_attributes
+
     def paintEvent(self, event):
-        super(CustomEditor, self).paintEvent(event)        
+        super(CustomEditor, self).paintEvent(event)
         if self.toolTip():
             draw_tooltip_visualization(self)
 
+    def add_actions(self, actions, layout):
+        for action in actions:
+            action_widget = action.render(self.gui_context, self)
+            action_widget.setAutoRaise(True)
+            action_widget.setFocusPolicy(Qt.ClickFocus)
+            action_widget.setFixedHeight(self.get_height())
+            layout.addWidget(action_widget)
 
+    def update_actions(self):
+        model_context = self.gui_context.create_model_context()
+        for action_action in self.findChildren(ActionToolbutton):
+            post(action_action.action.get_state, action_action.set_state,
+                 args=(model_context,))

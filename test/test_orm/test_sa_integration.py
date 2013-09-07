@@ -45,6 +45,20 @@ class TestSQLAlchemyToCamelot( TestMetaData ):
         b = self.session.query(B).one()
         assert b.a.name == 'a1'
         
+    def test_existing_table( self ):
+        
+        a_table = schema.Table('a', self.metadata,
+            schema.Column('id', Integer, primary_key=True),
+            schema.Column('name', String(60)),
+        )
+        a_table.create()
+        
+        class A( self.Entity ):
+            __table__ = a_table
+            
+        with self.session.begin():
+            a = A(name='a1')
+        
     def test_single_table_inheritance( self ):
         
         class A( self.Entity ):

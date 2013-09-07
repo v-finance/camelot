@@ -71,8 +71,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.search_input.returnPressed.connect( self.emit_search )
         self.search_input.textEdited.connect( self._start_search_timer )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
-
-        self.setFocusProxy( self.search_input )
+        self.setFocusProxy(self.search_input)
 
         # Cancel button
         self.cancel_button = QtGui.QToolButton()

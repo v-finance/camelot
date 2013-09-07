@@ -77,6 +77,7 @@ updated.
         if progress_dialog:
             progress_dialog.setMaximum( self._maximum )
             progress_dialog.setValue( self._value )
+            progress_dialog.set_cancel_hidden(not self.cancelable)
             if self._text != None:
                 progress_dialog.setLabelText( six.text_type(self._text) )
             if self._clear_details == True:
@@ -89,4 +90,4 @@ updated.
                 progress_dialog.set_ok_hidden( True )
             if progress_dialog.wasCanceled():
                 progress_dialog.reset()
-                raise CancelRequest()                
+                raise CancelRequest()

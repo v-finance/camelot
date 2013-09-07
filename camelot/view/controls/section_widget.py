@@ -151,8 +151,6 @@ class NavigationPane(QtGui.QDockWidget):
         self.setTitleBarWidget(QtGui.QWidget())
         self.setWidget(tb)
         self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-
-        self.app_admin.sections_changed_signal.connect(self.update_sections)
         self.update_sections()
 
     def wheelEvent(self, wheel_event):

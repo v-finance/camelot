@@ -28,7 +28,6 @@ from PyQt4 import QtCore
 
 import csv
 import codecs
-import itertools
 import logging
 import string
 import re
@@ -62,6 +61,7 @@ class RowData(object):
 
     def __init__(self, row_number, row_data):
         self.id = row_number + 1
+        i = 0
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i' % i, data)
         self.columns = i + 1
@@ -360,7 +360,7 @@ class RowDataAdmin(object):
 
         class NewObjectValidator(ObjectValidator):
 
-            def objectValidity(self, obj):
+            def validate_object(self, obj):
                 columns = self.admin.get_columns()
                 dynamic_attributes = self.admin.get_dynamic_field_attributes(
                     obj,

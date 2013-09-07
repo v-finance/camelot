@@ -8,6 +8,7 @@ from camelot.model.party import Person
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.orm import Session
 from camelot.core.qt import variant_to_py
 from camelot.test import ModelThreadTestCase
@@ -61,15 +62,17 @@ class ProxyCase( ModelThreadTestCase ):
         
     def _data( self, row, column, proxy = None ):
         """Get data from the proxy"""
-        if proxy == None:
+        if proxy is None:
             proxy = self.proxy
         index = proxy.index( row, column )
-        return variant_to_py( proxy.data( index ) )
+        return variant_to_py( proxy.data( index, Qt.EditRole ) )
     
-    def _set_data( self, row, column, value ):
+    def _set_data( self, row, column, value, proxy = None ):
         """Set data to the proxy"""
-        index = self.proxy.index( row, column )
-        return self.proxy.setData( index, lambda:value )
+        if proxy is None:
+            proxy = self.proxy
+        index = proxy.index( row, column )
+        return proxy.setData( index, lambda:value )
     
 class CollectionProxyCase( ProxyCase ):
 
@@ -117,16 +120,48 @@ class CollectionProxyCase( ProxyCase ):
         self.assertEqual( self.signal_register.data_changes[0],
                           ((0, 0), (0, 1)) )
         
+    def test_dynamic_editable(self):
+        # If the editable field attribute of one field depends on the value
+        # of another field, 'editable' should be reevaluated after the
+        # other field is set
+        
+        class DynamicObject(object):
+        
+            def __init__(self):
+                self.field = True
+                self.field_editable = True
+                
+            class Admin(ObjectAdmin):
+                list_display = ['field']
+                field_attributes = {'field': {'editable': lambda o: o.field_editable},}
+        
+        obj = DynamicObject()
+        collection = [obj]
+        admin = self.app_admin.get_related_admin(DynamicObject)
+        proxy = CollectionProxy( admin,
+                                 collection_getter=lambda:collection,
+                                 columns_getter=admin.get_columns )
+        # get the data once, to fill the cached values of the field attributes
+        # so changes get passed the first check
+        self._data(0, 0, proxy)
+        # initialy, field is editable
+        self._set_data(0, 0, False, proxy)
+        self.assertEqual(obj.field, False)
+        obj.field_editable = False
+        self._set_data(0, 0, True, proxy)
+        self.assertEqual(obj.field, False)
         
 class QueryProxyCase( ProxyCase ):
     """Test the functionality of the QueryProxy to perform CRUD operations on 
     stand alone data"""
   
-    def setUp(self):
+    def setUp(self, admin = None):
         super( QueryProxyCase, self ).setUp()
-        self.proxy = QueryTableProxy( self.person_admin, 
-                                             query_getter = lambda:Person.query, 
-                                             columns_getter = self.person_admin.get_columns )
+        if admin is None:
+            admin = self.person_admin
+        self.proxy = QueryTableProxy(admin, 
+                                     query_getter = admin.get_query, 
+                                     columns_getter = admin.get_columns )
 
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy

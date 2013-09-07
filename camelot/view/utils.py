@@ -48,6 +48,14 @@ logger = logging.getLogger('camelot.view.utils')
 _local_date_format = None
 _local_datetime_format = None
 _local_time_format = None
+_locale = None
+
+def locale():
+    """Get the default locale and cache it for reuse"""
+    global _locale
+    if _locale is None:
+        _locale = QtCore.QLocale()
+    return _locale
 
 def local_date_format():
     """Get the local data format and cache it for reuse"""

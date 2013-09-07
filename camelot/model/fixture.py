@@ -224,31 +224,41 @@ class FixtureVersion( Entity ):
     
     fixture_version = Column( Integer, index = True, nullable=False, default=0 )
     fixture_class = Column( Unicode( 256 ), index = True, nullable=True,
-                           unique=True )    
+                            primary_key=True )
     
     @classmethod
-    def get_current_version( cls, fixture_class = None ):
+    def get_current_version( cls, fixture_class = None, session = None):
         """Get the current version of the fixtures in the database for a certain 
         fixture class.
         
         :param fixture_class: the fixture class for which to get the version
+        :param session: the session to use to query the database, if `None` is
+            given, the default Camelot session is used
         """
-        obj = Session().query( cls ).filter_by( fixture_class = fixture_class ).first()
+        if session is None:
+            session = Session()
+        obj = session.query( cls ).filter_by(fixture_class = fixture_class).first()
         if obj:
             return obj.fixture_version
         return 0
         
     @classmethod
-    def set_current_version( cls, fixture_class = None, fixture_version = 0 ):
+    def set_current_version( cls, fixture_class = None, fixture_version = 0,
+                             session = None):
         """Set the current version of the fixtures in the database for a certain 
         fixture class.
         
         :param fixture_class: the fixture class for which to get the version
         :param fixture_version: the version number to which to set the fixture 
-        version
+            version
+        :param session: the session to use to query the database, if `None` is
+            given, the default Camelot session is used
         """
-        obj = Session().query( cls ).filter_by( fixture_class = fixture_class ).first()
+        if session is None:
+            session = Session()
+        obj = session.query( cls ).filter_by(fixture_class = fixture_class).first()
         if not obj:
-            obj = FixtureVersion( fixture_class = fixture_class )
+            obj = FixtureVersion(fixture_class = fixture_class,
+                                 _session = session)
         obj.fixture_version = fixture_version
-        Session.object_session( obj ).flush()
+        session.flush()

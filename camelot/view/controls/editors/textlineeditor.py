@@ -35,14 +35,16 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
                  length = 20, 
                  field_name = 'text_line',
                  **kwargs):
-        AbstractCustomEditor.__init__(self)
         QtGui.QLineEdit.__init__(self, parent)
+        AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
+        self.setProperty('value', None)
         if length:
             self.setMaxLength(length)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
+        self.setProperty('value', value)
         if value is not None:
             self.setText(six.text_type(value))
         else:
@@ -55,7 +57,11 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
             return value_loading
 
         value = six.text_type(self.text())
-        if self.value_is_none and not value:
+        if len(value)==0:
+            if self.property('value').isNull():
+                return None
+            if self.property('value').toString().length() == 0:
+                return u''
             return None
 
         return value

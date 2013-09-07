@@ -47,10 +47,8 @@ class MonthsEditor(CustomEditor):
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
-        self.years_spinbox.setMinimum(0)
-        self.years_spinbox.setMaximum(10000)
-        self.months_spinbox.setMinimum(0)
-        self.months_spinbox.setMaximum(12)
+        self.years_spinbox.setRange(-1, 10000)
+        self.months_spinbox.setRange(-1, 12)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
         
@@ -92,32 +90,32 @@ class MonthsEditor(CustomEditor):
             self.months_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
         else:
             self.years_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)
-            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)            
+            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading
-        CustomEditor.set_value(self, value)
-
-        # TODO: might be better to have accessors for these
-        if self._value_loading:
-            return
-
-        if self.value_is_none:
-            value = 0
-
-        # value comes as a months total
-        years, months = divmod( value, 12 )
-        self.years_spinbox.setValue(years)
-        self.months_spinbox.setValue(months)
+        value = CustomEditor.set_value(self, value)
+        if value is None:
+            self.years_spinbox.setValue(self.years_spinbox.minimum())
+            self.months_spinbox.setValue(self.months_spinbox.minimum())
+        else:
+            # value comes as a months total
+            years, months = divmod( value, 12 )
+            self.years_spinbox.setValue(years)
+            self.months_spinbox.setValue(months)
 
     def get_value(self):
         if CustomEditor.get_value(self) is ValueLoading:
             return ValueLoading
-
         self.years_spinbox.interpretText()
         years = int(self.years_spinbox.value())
         self.months_spinbox.interpretText()
         months = int(self.months_spinbox.value())
+        if years == self.years_spinbox.minimum():
+            if months == self.months_spinbox.minimum():
+                return None
+            else:
+                years = 0
         value = (years * 12) + months
         return value
 

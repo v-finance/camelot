@@ -28,10 +28,9 @@ import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.model_thread import post, model_function
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
-from camelot.core.utils import ugettext_lazy, ugettext
+from camelot.core.utils import ugettext_lazy
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -43,11 +42,11 @@ from sqlalchemy.orm.attributes import instance_state
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
-This allows for much more introspection than the standard 
+This allows for much more introspection than the standard
 :class:`camelot.admin.object_admin.ObjectAdmin`.
-    
+
 It has additional class attributes that customise its behaviour.
-   
+
 **Filtering**
 
 .. attribute:: list_filter
@@ -59,7 +58,7 @@ It has additional class attributes that customise its behaviour.
         class Project( Entity ):
             oranization = OneToMany( 'Organization' )
             name = Column( Unicode(50) )
-    
+
           class Admin( EntityAdmin ):
               list_display = ['organization']
               list_filter = ['organization.name']
@@ -92,9 +91,9 @@ It has additional class attributes that customise its behaviour.
     A list of fields that should be searched when the user enters something in
     the search box in the table view.  By default all fields are
     searched for which Camelot can do a conversion of the entered string to the
-    datatype of the underlying column.  
+    datatype of the underlying column.
 
-    For use with one2many, many2one or many2many fields, the same rules as for the 
+    For use with one2many, many2one or many2many fields, the same rules as for the
     list_filter attribute apply
 
 .. attribute:: search_all_fields
@@ -105,10 +104,10 @@ It has additional class attributes that customise its behaviour.
 
 .. attribute:: expanded_list_search
 
-    A list of fields that will be searchable through the expanded search.  When set 
+    A list of fields that will be searchable through the expanded search.  When set
     to None, all the fields in list_display will be searchable.  Use this attribute
     to limit the number of search widgets.  Defaults to None.
- 
+
     """
 
     list_search = []
@@ -134,10 +133,10 @@ It has additional class attributes that customise its behaviour.
     def get_sql_field_attributes( cls, columns ):
         """Returns a set of default field attributes based on introspection
         of the SQLAlchemy columns that form a field
-        
+
         :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column` objects.
         :return: a dictionary with field attributes
-        
+
         By default this method looks at the first column that defines the
         field and derives a delegate and other field attributes that make
         sense.
@@ -149,7 +148,7 @@ It has additional class attributes that customise its behaviour.
             sql_attributes['python_type'] = ''
             sql_attributes['doc'] = ''
             for base_class in inspect.getmro( type( column_type ) ):
-                fa = _sqlalchemy_to_python_type_.get( base_class, 
+                fa = _sqlalchemy_to_python_type_.get( base_class,
                                                       None )
                 if fa != None:
                     sql_attributes.update( fa( column_type ) )
@@ -165,8 +164,7 @@ It has additional class attributes that customise its behaviour.
                 sql_attributes.update(field_admin.get_field_attributes())
             break
         return sql_attributes
-    
-    @model_function
+
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
@@ -174,7 +172,6 @@ It has additional class attributes that customise its behaviour.
         """
         return Session().query( self.entity )
 
-    @model_function
     def get_verbose_identifier(self, obj):
         if obj:
             primary_key = self.mapper.primary_key_from_instance(obj)
@@ -192,7 +189,7 @@ It has additional class attributes that customise its behaviour.
                         primary_key_representation
                     )
         return self.get_verbose_name()
-    
+
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name
         :param field_name: the name of the field
@@ -203,13 +200,14 @@ It has additional class attributes that customise its behaviour.
          * editable : bool specifying wether the user can edit this field
          * widget : which widget to be used to render the field
          * ...
-        """        
+        """
         from sqlalchemy.orm.mapper import _mapper_registry
-            
+
         try:
             return self._field_attributes[field_name]
         except KeyError:
             from camelot.view.controls import delegates
+            from camelot.view.proxy.queryproxy import QueryTableProxy
             #
             # Default attributes for all fields
             #
@@ -249,7 +247,7 @@ It has additional class attributes that customise its behaviour.
                             return mapped_class.class_
                     raise Exception('No mapped class found for target %s'%target)
                 return target
-                
+
             def get_entity_admin(target):
                 """Helper function that instantiated an Admin object for a
                 target entity class.
@@ -277,20 +275,22 @@ It has additional class attributes that customise its behaviour.
                 if isinstance(property, orm.properties.ColumnProperty):
                     columns = property.columns
                     sql_attributes = self.get_sql_field_attributes( columns )
-                    attributes.update( sql_attributes ) 
+                    attributes.update( sql_attributes )
                 elif isinstance(property, orm.properties.PropertyLoader):
-                    target = forced_attributes.get( 'target', 
+                    target = forced_attributes.get( 'target',
                                                     property.mapper.class_ )
-                    
+
                     attributes.update( target = target,
                                        admin = get_entity_admin(target),
                                        editable = property.viewonly==False,
                                        nullable = True)
                     foreign_keys = list( property._user_defined_foreign_keys )
                     foreign_keys.extend( list(property._calculated_foreign_keys) )
-                        
+
                     if property.direction == orm.interfaces.ONETOMANY:
                         attributes.update( direction = 'onetomany' )
+                        if property.lazy == 'dynamic':
+                            attributes.update(proxy=QueryTableProxy)
                     elif property.direction == orm.interfaces.MANYTOONE:
                         attributes.update(
                             #
@@ -304,7 +304,7 @@ It has additional class attributes that customise its behaviour.
                         attributes.update( direction = 'manytomany' )
                     else:
                         raise Exception('PropertyLoader has unknown direction')
-                    
+
                     if property.uselist == True:
                         attributes.update(
                             delegate = delegates.One2ManyDelegate,
@@ -316,7 +316,7 @@ It has additional class attributes that customise its behaviour.
                             delegate = delegates.Many2OneDelegate,
                             python_type = str,
                         )
-                        
+
             except InvalidRequestError:
                 #
                 # If the field name is not a property of the mapper, then use
@@ -343,7 +343,7 @@ It has additional class attributes that customise its behaviour.
             if 'target' in attributes:
                 attributes['target'] = resolve_target(attributes['target'])
                 attributes['admin'] = get_entity_admin(attributes['target'])
-            
+
             self._field_attributes[field_name] = attributes
             return attributes
 
@@ -363,7 +363,6 @@ It has additional class attributes that customise its behaviour.
                     attributes['editable'] = False
             yield attributes
 
-    @model_function
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
@@ -377,88 +376,6 @@ It has additional class attributes that customise its behaviour.
                 yield (filter, filter.get_filter_data(self))
 
         return list(filter_generator())
-
-    def create_select_view(admin, query=None, search_text=None, parent=None):
-        """Returns a Qt widget that can be used to select an element from a
-        query
-
-        :param query: sqlalchemy query object
-
-        :param parent: the widget that will contain this select view, the
-        returned widget has an entity_selected_signal signal that will be fired
-        when a entity has been selected.
-        """
-        from camelot.admin.action.base import GuiContext
-        from camelot.view.art import Icon
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from PyQt4 import QtCore, QtGui
-        from PyQt4.QtCore import Qt
-
-        header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
-        header_width = header_icon.getQPixmap().size().width()
-        
-        class SelectQueryTableProxy(QueryTableProxy):
-            
-            def headerData( self, section, orientation, role ):
-                if orientation == Qt.Vertical:
-                    if role == Qt.SizeHintRole:
-                            return QtCore.QVariant( QtCore.QSize( header_width + 10,
-                                                                  self._vertical_header_height ) )
-                    if role == Qt.DecorationRole:
-                        return header_icon.getQPixmap()
-                    elif role == Qt.DisplayRole:
-                        return QtCore.QVariant( '' )
-                return super( SelectQueryTableProxy, self ).headerData( section, orientation, role )
-
-        class SelectView(admin.TableView):
-            table_model = SelectQueryTableProxy
-            entity_selected_signal = QtCore.pyqtSignal(object)
-            title_format = ugettext('Select %s')
-
-            def __init__(self, admin, parent):
-                gui_context = GuiContext()
-                super(SelectView, self).__init__(
-                    gui_context,
-                    admin,
-                    search_text=search_text, parent=parent
-                )
-                self.row_selected_signal.connect( self.sectionClicked )
-                self.setUpdatesEnabled(True)
-
-                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
-                if table != None:
-                    table.keyboard_selection_signal.connect(self.on_keyboard_selection)
-                    table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-
-            def emit_entity_selected(self, instance_getter):
-                self.entity_selected_signal.emit( instance_getter )
-                
-            @QtCore.pyqtSlot()
-            def on_keyboard_selection(self):
-                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
-                if table != None:
-                    self.row_selected_signal.emit(table.currentIndex().row())
-
-            @QtCore.pyqtSlot(int)
-            def sectionClicked(self, index):
-                # table model will be set by the model thread, we can't
-                # decently select if it has not been set yet
-                if self.table.model():
-
-                    def create_constant_getter(cst):
-                        return lambda:cst
-
-                    def create_instance_getter():
-                        entity = self.table.model()._get_object(index)
-                        return create_constant_getter(entity)
-
-                    post(create_instance_getter, self.emit_entity_selected)
-
-        widget = SelectView(admin, parent)
-        widget.setUpdatesEnabled(True)
-        widget.setMinimumSize(admin.list_size[0], admin.list_size[1])
-        widget.update()
-        return widget
 
     def create_table_view( self, gui_context ):
         """Returns a :class:`QtGui.QWidget` containing a table view
@@ -476,7 +393,7 @@ It has additional class attributes that customise its behaviour.
         if not self.is_persistent( obj ):
             return None
         return self.mapper.primary_key_from_instance( obj )
-    
+
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
         :param obj: the object for which to get the modifications
@@ -508,16 +425,14 @@ It has additional class attributes that customise its behaviour.
                         pass
                 modifications[ attr.key ] = old_value
         return modifications
-        
-    @model_function
+
     def add( self, obj ):
         """Adds the entity instance to the default session, if it is not
         yet attached to a session"""
         session = Session.object_session( obj )
         if session == None:
             Session().add( obj )
-    
-    @model_function
+
     def delete(self, entity_instance):
         """Delete an entity instance"""
         session = Session.object_session( entity_instance )
@@ -543,9 +458,8 @@ It has additional class attributes that customise its behaviour.
                                                  previous_attributes = modifications )
                         memento.register_changes( [change] )
                 session.delete( entity_instance )
-                self.flush( entity_instance )
+                session.flush()
 
-    @model_function
     def expunge(self, entity_instance):
         """Expunge the entity from the session"""
         session = orm.object_session( entity_instance )
@@ -555,7 +469,7 @@ It has additional class attributes that customise its behaviour.
             for obj in objects_to_expunge:
                 if obj in session:
                     session.expunge( obj )
-        
+
     def _expand_compounding_objects( self, objs ):
         """
         Given a set of objects, expand this set with all compounding objects.
@@ -570,9 +484,8 @@ It has additional class attributes that customise its behaviour.
                 related_admin = self.get_related_admin( type(obj_to_flush ) )
                 for compounding_object in related_admin.get_compounding_objects( obj_to_flush ):
                     if compounding_object not in objs:
-                        additional_objects.add( compounding_object )        
-                        
-    @model_function
+                        additional_objects.add( compounding_object )
+
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
@@ -608,7 +521,6 @@ It has additional class attributes that customise its behaviour.
             if changes and memento != None:
                 memento.register_changes( changes )
 
-    @model_function
     def refresh(self, entity_instance):
         """Undo the pending changes to the backend and restore the original
         state"""
@@ -623,8 +535,7 @@ It has additional class attributes that customise its behaviour.
                         session.refresh( obj )
                     else:
                         session.expunge( obj )
-       
-    @model_function
+
     def is_persistent(self, obj):
         """:return: True if the object has a persisted state, False otherwise"""
         from sqlalchemy.orm.session import Session
@@ -636,7 +547,7 @@ It has additional class attributes that customise its behaviour.
                 return False
             return True
         return False
-    
+
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent
@@ -645,8 +556,7 @@ It has additional class attributes that customise its behaviour.
         if state != None and state.deleted:
             return True
         return False
-    
-    @model_function
+
     def get_expanded_search_fields(self):
         """
         :return: a list of tuples of type [(field_name, field_attributes)]
@@ -657,7 +567,7 @@ It has additional class attributes that customise its behaviour.
             field_list = self.expanded_list_search
         return [(field, self.get_field_attributes(field))
                 for field in field_list]
-    
+
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
         or through the field_attributes, this method returns all the fields
@@ -669,17 +579,16 @@ It has additional class attributes that customise its behaviour.
                 field_name = mapper_property.key
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
-        
-    @model_function
+
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new
         one will be created.  This function will be called every time the
         user presses a copy button.
-        
+
         :param obj: the object to be copied from
         :param new_obj: the object to be copied to, defaults to None
         :return: the new object
-        
+
         This function takes into account the deep_copy and the copy_exclude
         attributes.  It tries to recreate relations with a minimum of side
         effects.
@@ -717,7 +626,7 @@ It has additional class attributes that customise its behaviour.
         for property in self.mapper.iterate_properties:
             if isinstance(property, orm.properties.PropertyLoader):
                 if property.direction == orm.interfaces.MANYTOONE:
-                    setattr( new_obj, 
+                    setattr( new_obj,
                              property.key,
                              getattr( obj, property.key ) )
         return new_obj

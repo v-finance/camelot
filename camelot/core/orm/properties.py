@@ -53,7 +53,6 @@ Here is a quick example of how to use ``has_property``.
                          (c.quantity * c.unit_price).label('price')))
 """
 from sqlalchemy import orm, schema
-import six
 
 
 from . statements import ClassMutator

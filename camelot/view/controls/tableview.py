@@ -148,7 +148,7 @@ and above the text.
                                                                      Qt.SizeHintRole ) )
             # when the size is different from the one from the model, the
             # user changed it
-            if old_size.width() != new_width:
+            if (old_size is not None) and (old_size.width() != new_width):
                 new_size = QtCore.QSize( new_width, old_size.height() )
                 self.model().setHeaderData( logical_index, 
                                             Qt.Horizontal,
@@ -306,6 +306,7 @@ class HeaderWidget( QtGui.QWidget ):
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         search = self.search_widget( self )
+        self.setFocusProxy(search)
         search.expand_search_options_signal.connect(
             self.expand_search_options )
         title = UserTranslatableLabel( admin.get_verbose_name_plural(),
@@ -471,6 +472,7 @@ class TableView( AbstractView  ):
             self.header.search.on_arrow_down_signal.connect(self.focusTable)
             if search_text:
                 self.header.search.search( search_text )
+            self.setFocusProxy(self.header)
         else:
             self.header = None
         widget_layout.setSpacing( 0 )
@@ -500,13 +502,6 @@ class TableView( AbstractView  ):
         shortcut.activated.connect( self.activate_search )
         if self.header_widget:
             self.header.filters_changed_signal.connect( self.rebuild_query )
-        # give the table widget focus to prevent the header and its search control to
-        # receive default focus, as this would prevent the displaying of 'Search...' in the
-        # search control, but this conflicts with the MDI, resulting in the window not
-        # being active and the menus not to work properly
-        #table_widget.setFocus( QtCore.Qt.OtherFocusReason )
-        #self.setFocusProxy(table_widget)
-        #self.setFocus( QtCore.Qt.OtherFocusReason )
         post( self.admin.get_subclass_tree, self.setSubclassTree )
 
     @QtCore.pyqtSlot()
@@ -524,7 +519,7 @@ class TableView( AbstractView  ):
         if len( subclasses ) > 0:
             from .inheritance import SubclassTree
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
-            class_tree = SubclassTree( self.admin, splitter )
+            class_tree = SubclassTree( self.admin, subclasses, splitter )
             splitter.insertWidget( 0, class_tree )
             class_tree.subclass_clicked_signal.connect( self.set_admin )
 

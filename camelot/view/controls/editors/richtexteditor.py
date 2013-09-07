@@ -109,6 +109,10 @@ class RichTextEditor(CustomEditor, WideEditor):
             self.editingFinished.emit()
 
     def set_editable(self, editable):
+        toolbar = self.findChild( QtGui.QToolBar )
+        if toolbar:
+            toolbar.setEnabled(editable)
+        self.textedit.setEnabled(editable)
         self.textedit.setReadOnly( not editable )
 
     def set_field_attributes(self, editable=True, background_color=None, **kwargs):

@@ -34,7 +34,7 @@ import datetime
 import six
 
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Date, Unicode, Integer, Boolean
+from sqlalchemy.types import Date, Unicode
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
@@ -42,7 +42,6 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model.type_and_status import Status
 import camelot.types
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm

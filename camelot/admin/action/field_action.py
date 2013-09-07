@@ -26,20 +26,151 @@
 editing a single field on a form or in a table.
 """
 
-from .application_action import ApplicationActionModelContext
+from PyQt4.QtCore import Qt
+
+from ...core.utils import ugettext_lazy as _
+from ...view.art import Icon
+from .base import Action
+from .application_action import (ApplicationActionModelContext,
+                                 ApplicationActionGuiContext)
+
 
 class FieldActionModelContext( ApplicationActionModelContext ):
-    """The context for a :class:`Action` on a field.  On top of the attributes of the 
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+    """The context for a :class:`Action` on a field.  On top of the attributes of the
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
     this context contains :
 
     .. attribute:: obj
 
        the object of which the field displays a field
-       
+
     .. attribute:: field
-    
+
        the name of the field that is being displayed
-       
+
+       attribute:: value
+
+       the value of the field as it is displayed in the editor
+
+    .. attribute:: field_attributes
+
+        A dictionary of field attributes of the field to which the context
+        relates.
+
     """
-    pass
+
+    def __init__(self):
+        super( FieldActionModelContext, self ).__init__()
+        self.obj = None
+        self.field = None
+        self.value = None
+        self.field_attributes = {}
+
+class FieldActionGuiContext( ApplicationActionGuiContext ):
+    """The context for an :class:`Action` on a field.  On top of the attributes of the
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
+    this context contains :
+
+    .. attribute:: editor
+
+       the editor through which the field is edited.
+
+    """
+
+    model_context = FieldActionModelContext
+
+    def __init__( self ):
+        super( FieldActionGuiContext, self ).__init__()
+        self.editor = None
+
+    def create_model_context( self ):
+        context = super( FieldActionGuiContext, self ).create_model_context()
+        context.value = self.editor.get_value()
+        context.field_attributes = self.editor.get_field_attributes()
+        return context
+
+    def copy( self, base_class = None ):
+        new_context = super( FieldActionGuiContext, self ).copy( base_class )
+        new_context.editor = self.editor
+        return new_context
+
+class SelectObject(Action):
+    """Allows the user to select an object, and set the selected object as
+    the new value of the editor"""
+
+    icon = Icon('tango/16x16/actions/system-search.png')
+    tooltip = _('select existing')
+
+    def render( self, gui_context, parent ):
+        from ...view.controls.action_widget import ActionToolbutton
+        button = ActionToolbutton(self, gui_context, parent)
+        button.setAutoRaise(True)
+        button.setFocusPolicy(Qt.ClickFocus)
+        return button
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        admin = model_context.field_attributes['admin']
+        selected_objects = yield action_steps.SelectObjects(admin)
+        for selected_object in selected_objects:
+            yield action_steps.UpdateEditor('selected_object', selected_object)
+            break
+
+    def get_state(self, model_context):
+        state = super(SelectObject, self).get_state(model_context)
+        state.visible = (model_context.value is None)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        return state
+
+class NewObject(SelectObject):
+    """Open a form for the creation of a new object, and set this
+    object as the new value of the editor"""
+
+    icon = Icon('tango/16x16/actions/document-new.png')
+    tooltip = _('create new')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        admin = model_context.field_attributes['admin']
+        admin = yield action_steps.SelectSubclass(admin)
+        obj = admin.entity()
+        # Give the default fields their value
+        admin.add(obj)
+        admin.set_defaults(obj)
+        yield action_steps.UpdateEditor('new_value', obj)
+        yield action_steps.OpenFormView([obj], admin)
+
+class OpenObject(SelectObject):
+    """Open the value of an editor in a form view"""
+
+    icon = Icon('tango/16x16/places/folder.png')
+    tooltip = _('open')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        obj = model_context.value
+        if obj is not None:
+            admin = model_context.field_attributes['admin']
+            admin = admin.get_related_admin(obj.__class__)
+            yield action_steps.OpenFormView([obj], admin)
+
+    def get_state(self, model_context):
+        state = super(OpenObject, self).get_state(model_context)
+        state.visible = (model_context.value is not None)
+        state.enabled = (model_context.value is not None)
+        return state
+
+class ClearObject(OpenObject):
+    """Set the new value of the editor to `None`"""
+
+    icon = Icon('tango/16x16/actions/edit-clear.png')
+    tooltip = _('clear')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.UpdateEditor('selected_object', None)
+
+    def get_state(self, model_context):
+        state = super(ClearObject, self).get_state(model_context)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        return state

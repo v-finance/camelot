@@ -28,8 +28,7 @@ logger = logging.getLogger('camelot.view.mainwindow')
 from ..core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view.controls.navpane2 import NavigationPane
-from camelot.view.model_thread import post
+from camelot.view.controls.section_widget import NavigationPane
 
 from camelot.core.utils import ugettext as _
 
@@ -40,9 +39,6 @@ class MainWindow(QtGui.QMainWindow):
         object
     :param parent: a :class:`QtGui.QWidget` object or :class:`None` 
     
-    .. attribute:: splash_screen 
-        a :class:`QtGui.QWidget` that needs to be closed when
-        the main window is shown.
     """
 
     def __init__(self, gui_context, parent=None):
@@ -50,7 +46,6 @@ class MainWindow(QtGui.QMainWindow):
         logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 
-        self.splash_screen = None
         self.toolbars = []
         self.nav_pane = None
         self.app_admin = gui_context.admin.get_application_admin()
@@ -69,56 +64,10 @@ class MainWindow(QtGui.QMainWindow):
         self.workspace.last_view_closed_signal.connect( self.unmaximize_view )
         self.workspace.view_activated_signal.connect( self.view_activated )
 
-        logger.debug('creating navigation pane')
-        post( self.app_admin.get_sections, self.set_sections )
-        
-        logger.debug('creating the menus')
-        post( self.app_admin.get_main_menu, self.set_main_menu )
-
-        logger.debug('creating the toolbars')
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_left_toolbar_actions,
-              args = (Qt.LeftToolBarArea,) )
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_right_toolbar_actions,
-              args = (Qt.RightToolBarArea,) )
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_top_toolbar_actions,
-              args = (Qt.TopToolBarArea,) )
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_bottom_toolbar_actions,
-              args = (Qt.BottomToolBarArea,) )
-        post( self.app_admin.get_hidden_actions,
-              self.set_hidden_actions )
-
         logger.debug('reading saved settings')
         self.read_settings()
-        
-        windowtitle = self.app_admin.get_name()
-        logger.debug( u'setting up window title: %s'%windowtitle )
-        self.setWindowTitle( windowtitle )
-        self.app_admin.title_changed_signal.connect( self.setWindowTitle )
 
         logger.debug('initialization complete')
-
-    @QtCore.pyqtSlot()
-    def show( self ):
-        """This method wait until the main window is completely set up, and
-        only then shows it.  This is a workaround for a bug in Qt on OS X
-        
-        https://bugreports.qt.nokia.com/browse/QTBUG-18567
-        
-        """
-        post( lambda:None, self._delayed_show )
-        
-    @QtCore.pyqtSlot(object)
-    def _delayed_show( self, _o ):
-        """Call to the underlying :meth:`QMainWindow.show`, to be used in
-        :meth:`MainWindow.show`
-        """
-        super( MainWindow, self ).show()
-        if self.splash_screen:
-            self.splash_screen.close()
         
     @QtCore.pyqtSlot()
     def unmaximize_view( self ):
@@ -220,22 +169,6 @@ class MainWindow(QtGui.QMainWindow):
                         toolbar.addAction( rendered )
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
-                
-    @QtCore.pyqtSlot( object )
-    def set_left_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.LeftToolBarArea, toolbar_actions )
-    
-    @QtCore.pyqtSlot( object )
-    def set_right_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.RightToolBarArea, toolbar_actions )
-        
-    @QtCore.pyqtSlot( object )
-    def set_top_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.TopToolBarArea, toolbar_actions )
-        
-    @QtCore.pyqtSlot( object )
-    def set_bottom_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.BottomToolBarArea, toolbar_actions )
 
     @QtCore.pyqtSlot( object )
     def set_hidden_actions( self, hidden_actions ):
@@ -249,6 +182,7 @@ class MainWindow(QtGui.QMainWindow):
     def view_activated( self ):
         """Update the state of the actions when the active tab in the
         desktop widget has changed"""
+        from camelot.view.model_thread import post
         from camelot.view.controls.action_widget import ActionAction
         gui_context = self.get_gui_context()
         model_context = gui_context.create_model_context()
@@ -299,5 +233,3 @@ class MainWindow(QtGui.QMainWindow):
         model_thread.stop()
         super( MainWindow, self ).closeEvent( event )
         QtCore.QCoreApplication.exit(0)
-
-

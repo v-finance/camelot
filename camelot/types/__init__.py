@@ -29,8 +29,9 @@ care of the visualisation.
 
 Those fields are stored in the :mod:`camelot.types` module.
 """
-
+import collections
 import logging
+
 logger = logging.getLogger('camelot.types')
 
 from sqlalchemy import types
@@ -51,6 +52,13 @@ class PrimaryKey(types.TypeDecorator):
     def load_dialect_impl(self, dialect):
         return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
     
+    @property
+    def python_type(self):
+        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE().python_type
+    
+virtual_address = collections.namedtuple('virtual_address',
+                                        ['type', 'address'])
+
 class VirtualAddress(types.TypeDecorator):
     """A single field that can be used to enter phone numbers, fax numbers, email
     addresses, im addresses.  The editor provides soft validation of the data
@@ -68,6 +76,10 @@ class VirtualAddress(types.TypeDecorator):
     impl = types.Unicode
     virtual_address_types = ['phone', 'fax', 'mobile', 'email', 'im', 'pager',]
   
+    @property
+    def python_type(self):
+        return virtual_address
+    
     def bind_processor(self, dialect):
   
         impl_processor = self.impl.bind_processor(dialect)
@@ -95,8 +107,8 @@ class VirtualAddress(types.TypeDecorator):
             if value:
                 split = value.split('://')
                 if len(split)>1:
-                    return tuple(split)
-            return (u'phone',u'')
+                    return virtual_address(*split)
+            return virtual_address(u'phone',u'')
             
         return processor  
     
@@ -123,8 +135,12 @@ class Code(types.TypeDecorator):
     """
     
     impl = types.Unicode
-          
-    def __init__(self, parts, separator=u'.', length = None, **kwargs):
+       
+    @property
+    def python_type(self):
+        return tuple
+    
+    def __init__(self, parts=['AB'], separator=u'.', length = None, **kwargs):
         import string
         translator = string.maketrans('', '')
         self.parts = parts
@@ -160,6 +176,7 @@ class Code(types.TypeDecorator):
         return processor
     
 class IPAddress(Code):
+    
     def __init__(self, **kwargs):
         super(IPAddress, self).__init__(parts=['900','900','900','900'])
     
@@ -176,6 +193,10 @@ class Rating(types.TypeDecorator):
     
     impl = types.Integer
        
+    @property
+    def python_type(self):
+        return self.impl.python_type
+    
 class RichText(types.TypeDecorator):
     """RichText fields are unlimited text fields which contain html. The html will be
   rendered in a rich text editor.  
@@ -184,6 +205,10 @@ class RichText(types.TypeDecorator):
 """
     
     impl = types.UnicodeText
+    
+    @property
+    def python_type(self):
+        return self.impl.python_type
      
 class Language(types.TypeDecorator):
     """The languages are stored as a string in the database of 
@@ -201,6 +226,13 @@ used too much memory, so now it's implemented using QT.
     def __init__(self):
         types.TypeDecorator.__init__(self, length=20)
         
+    @property
+    def python_type(self):
+        return self.impl.python_type
+        
+color = collections.namedtuple('color',
+                               ('red', 'green', 'blue', 'alpha'))
+
 class Color(types.TypeDecorator):
     """The Color field returns and accepts tuples of the form (r,g,b,a) where
 r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
@@ -252,9 +284,13 @@ to convert a color tuple to a QColor.
         def processor(value):
     
             if value:
-                return (int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
+                return color(int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
               
         return processor
+    
+    @property
+    def python_type(self):
+        return color
         
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
@@ -324,6 +360,10 @@ class Enumeration(types.TypeDecorator):
                     raise
                 
         return processor
+    
+    @property
+    def python_type(self):
+        return str
     
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
@@ -397,6 +437,10 @@ class File(types.TypeDecorator):
               
         return processor
       
+    @property
+    def python_type(self):
+        return self.impl.python_type
+    
 class Image(File):
     """Sqlalchemy column type to store images
     

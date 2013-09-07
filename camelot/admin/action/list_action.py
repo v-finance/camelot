@@ -114,7 +114,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         """
         :return: the object displayed in the current row or None
         """
-        if self.current_row != None:
+        if self.current_row is not None:
             return self._model._get_object( self.current_row )
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
@@ -158,12 +158,14 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         collection_count = 0
         selection_count = 0
         selected_rows = []
-        if self.item_view != None:
-            current_row = self.item_view.currentIndex().row()
+        if self.item_view is not None:
+            current_index = self.item_view.currentIndex()
+            if current_index.isValid():
+                current_row = current_index.row()
             model = self.item_view.model()
-            if model != None:
+            if model is not None:
                 collection_count = model.rowCount()
-            if self.item_view.selectionModel() != None:
+            if self.item_view.selectionModel() is not None:
                 selection = self.item_view.selectionModel().selection()
                 for i in range( len( selection ) ):
                     selection_range = selection[i]
@@ -243,7 +245,7 @@ class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable.
-    """    
+    """
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
@@ -260,64 +262,10 @@ class OpenFormView( ListContextAction ):
     icon = Icon('tango/16x16/places/folder.png')
     tooltip = _('Open')
     verbose_name = _('Open')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.workspace import show_top_level
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-        related_model = gui_context.item_view.model()
-        #
-        # depending on the type of related model, create a new model
-        #
-        row = gui_context.item_view.currentIndex().row()
-        if isinstance( related_model, QueryTableProxy ):
-            model = QueryTableProxy(
-                gui_context.admin,
-                related_model.get_query_getter(),
-                gui_context.admin.get_fields,
-                max_number_of_rows = 1,
-                cache_collection_proxy = related_model,
-            ) 
-        else:
-            # no cache or sorting information is transferred
-            model = CollectionProxy( 
-                gui_context.admin,
-                related_model.get_collection,
-                gui_context.admin.get_fields,
-                max_number_of_rows = 1,
-            )
-            # get the unsorted row
-            row = related_model.map_to_source( row )
-        formview = gui_context.admin.create_form_view(
-            u' ', 
-            model, 
-            row, 
-        )
-        show_top_level( formview, gui_context.item_view )
-        
-class OpenNewView( EditAction ):
-    """Opens a new view of an Entity related to a table view.
-    """
-    
-    shortcut = QtGui.QKeySequence.New
-    icon = Icon('tango/16x16/actions/document-new.png')
-    tooltip = _('New')
-    verbose_name = _('New')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.workspace import show_top_level
-        from camelot.view.controls.inheritance import SubclassDialog
-        admin = gui_context.admin
-        # todo : subclass selection should be model thread driven
-        if len(admin.get_subclass_tree()):
-            dialog = SubclassDialog( admin=admin, parent=None )
-            if dialog.exec_() == QtGui.QDialog.Rejected:
-                return
-            admin = dialog.selected_subclass
-        model = gui_context.item_view.model()
-        form = admin.create_new_view( related_collection_proxy=model,
-                                      parent = None )
-        show_top_level( form, gui_context.item_view )
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
     
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
@@ -334,7 +282,7 @@ class DuplicateSelection( EditAction ):
                                                model_context.selection_count,
                                                self.verbose_name )
             new_object = model_context.admin.copy( obj )
-            model_context._model.append_object( new_object ) 
+            model_context._model.append_object( new_object )
         yield action_steps.FlushSession( model_context.session )
             
 class DeleteSelection( EditAction ):
@@ -363,10 +311,11 @@ class DeleteSelection( EditAction ):
             raise StopIteration
         admin = model_context.admin
         if model_context.admin.get_delete_mode() == 'on_confirm':
-            step = action_steps.MessageBox( _('Please confirm'),
-                                            admin.get_delete_message(None),
-                                            QtGui.QMessageBox.Yes,
-                                            QtGui.QMessageBox.No )
+            buttons = QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
+            message = admin.get_delete_message(None)
+            step = action_steps.MessageBox( title = _('Please confirm'),
+                                            text = message,
+                                            standard_buttons = buttons)
             response = yield step
             if response == QtGui.QMessageBox.No:
                 raise StopIteration
@@ -400,14 +349,15 @@ class DeleteSelection( EditAction ):
         from camelot.view import action_steps
         yield action_steps.DeleteObject( obj )
         model_context.admin.delete( obj )
-        
-class ToPreviousRow( ListContextAction ):
-    """Move to the previous row in a table"""
-    
+
+class AbstractToPrevious(object):
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
     icon = Icon('tango/16x16/actions/go-previous.png')
     tooltip = _('Previous')
     verbose_name = _('Previous')
+    
+class ToPreviousRow( AbstractToPrevious, ListContextAction ):
+    """Move to the previous row in a table"""
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
@@ -427,26 +377,28 @@ class ToPreviousRow( ListContextAction ):
         #if state.enabled:
         #    state.enabled = ( model_context.current_row > 0 )
         return state
-    
-class ToFirstRow( ToPreviousRow ):
-    """Move to the first row in a table"""
-    
+
+class AbstractToFirst(object):
     shortcut = QtGui.QKeySequence.MoveToStartOfDocument
     icon = Icon('tango/16x16/actions/go-first.png')
     tooltip = _('First')
     verbose_name = _('First')
-    
+
+class ToFirstRow( AbstractToFirst, ToPreviousRow ):
+    """Move to the first row in a table"""
+
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
 
-class ToNextRow( ListContextAction ):
-    """Move to the next row in a table"""
-    
+class AbstractToNext(object):
     shortcut = QtGui.QKeySequence.MoveToNextPage
     icon = Icon('tango/16x16/actions/go-next.png')
     tooltip = _('Next')
     verbose_name = _('Next')
-
+    
+class ToNextRow( AbstractToNext, ListContextAction ):
+    """Move to the next row in a table"""
+    
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         selection = item_view.selectedIndexes()
@@ -466,14 +418,15 @@ class ToNextRow( ListContextAction ):
         #    max_row = model_context.collection_count - 1
         #    state.enabled = ( model_context.current_row < max_row )
         return state
-    
-class ToLastRow( ToNextRow ):
-    """Move to the last row in a table"""
-    
+
+class AbstractToLast(object):
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
     icon = Icon('tango/16x16/actions/go-last.png')
     tooltip = _('Last')
     verbose_name = _('Last')
+    
+class ToLastRow( AbstractToLast, ToNextRow ):
+    """Move to the last row in a table"""
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
@@ -814,31 +767,48 @@ class AddExistingObject( EditAction ):
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
-        obj_getter = yield action_steps.SelectObject( model_context.admin )
-        if obj_getter != None:
-            obj_to_add = obj_getter()
+        objs_to_add = yield action_steps.SelectObjects( model_context.admin )
+        for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
                 if obj_to_add == obj:
                     raise StopIteration()
-            model_context._model.append_object( obj_to_add, flush = False )
-            yield action_steps.FlushSession( object_session( obj_to_add ) )
+            model_context._model.append_object( obj_to_add )
+        yield action_steps.FlushSession( object_session( obj_to_add ) )
         
-class AddNewObject( OpenNewView ):
+class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
-    'create_inline' field attribute, a new form is opened or not"""
+    'create_inline' field attribute, a new form is opened or not.
     
-    def gui_run( self, gui_context ):
-        create_inline = gui_context.field_attributes.get( 'create_inline',
-                                                          False )                                                            
-        if create_inline == True:
-            super( OpenNewView, self ).gui_run( gui_context )
-        else:
-            super( AddNewObject, self ).gui_run( gui_context )
-        
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('tango/16x16/actions/document-new.png')
+    tooltip = _('New')
+    verbose_name = _('New')
+
     def model_run( self, model_context ):
-        admin = model_context.admin
-        model_context._model.append_object( admin.entity() )
-    
+        from camelot.view import action_steps
+        admin = yield action_steps.SelectSubclass(model_context.admin)
+        create_inline = model_context.field_attributes.get('create_inline',
+                                                           False)
+        new_object = admin.entity()
+        admin.add(new_object)
+        # defaults might depend on object being part of a collection
+        model_context._model.append_object(new_object)
+        # Give the default fields their value
+        admin.set_defaults(new_object)
+        # if the object is valid, flush it
+        if not len(admin.get_validator().validate_object(new_object)):
+            yield action_steps.FlushSession(model_context.session)
+        # Even if the object was not flushed, it's now part of a collection,
+        # so it's dependent objects should be updated
+        for depending_obj in admin.get_depending_objects( new_object ):
+            yield action_steps.UpdateObject(depending_obj)
+        if create_inline is False:
+            yield action_steps.OpenFormView([new_object], admin)
+
 class RemoveSelection( DeleteSelection ):
     """Remove the selected objects from a list without deleting them"""
     

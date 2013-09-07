@@ -31,6 +31,8 @@ from .document_action import ( DocumentActionGuiContext,
 from .form_action import ( FormActionGuiContext, FormActionModelContext )
 from .list_action import ( ListActionGuiContext, ListActionModelContext, 
                           CallMethod, OpenFormView )
+from field_action import (FieldActionGuiContext,
+                          FieldActionModelContext)
 
 __all__ = [
     Action.__name__,
@@ -40,6 +42,8 @@ __all__ = [
     CallMethod.__name__,
     DocumentActionGuiContext.__name__,
     DocumentActionModelContext.__name__,
+    FieldActionGuiContext.__name__,
+    FieldActionModelContext.__name__, 
     FormActionGuiContext.__name__,
     FormActionModelContext.__name__,
     ListActionGuiContext.__init__,

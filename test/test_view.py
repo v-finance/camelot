@@ -2,15 +2,15 @@
 
 import six
 
+import datetime
 import logging
-import unittest
 import os
 import time
 
 from camelot.core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
-from camelot.test import ModelThreadTestCase, EntityViewsTest
+from camelot import test
 from camelot.view.art import ColorScheme
 
 logger = logging.getLogger('view.unittests')
@@ -26,16 +26,16 @@ def create_getter(getable):
     return getter
 
 class SignalCounter( QtCore.QObject ):
-    
+
     def __init__( self ):
         super( SignalCounter, self ).__init__()
         self.counter = 0
-        
+
     @QtCore.pyqtSlot()
     def signal_caught( self ):
         self.counter += 1
-        
-class EditorsTest(ModelThreadTestCase):
+
+class EditorsTest(test.ModelThreadTestCase):
     """
   Test the basic functionality of the editors :
 
@@ -48,6 +48,14 @@ class EditorsTest(ModelThreadTestCase):
 
     from camelot.view.controls import editors
     from camelot.view.proxy import ValueLoading
+
+    def setUp(self):
+        super(EditorsTest, self).setUp()
+        self.option = QtGui.QStyleOptionViewItem()
+        # set version to 5 to indicate the widget will appear on a
+        # a form view and not on a table view, so it should not
+        # set its background
+        self.option.version = 5
 
     def assert_valid_editor( self, editor, value ):
         """Test the basic functions of an editor that are needed to integrate
@@ -70,16 +78,16 @@ class EditorsTest(ModelThreadTestCase):
         # by the editor, to allow the table view to move to the row above or
         # below
         #
-        #up_event = QtGui.QKeyEvent( QtCore.QEvent.KeyPress, 
+        #up_event = QtGui.QKeyEvent( QtCore.QEvent.KeyPress,
         #                            Qt.Key_Up,
         #                            Qt.NoModifier )
         #editor.keyPressEvent( up_event )
         #self.assertFalse( up_event.isAccepted() )
-        
+
     def assert_vertical_size( self, editor ):
-        self.assertEqual( editor.sizePolicy().verticalPolicy(), 
+        self.assertEqual( editor.sizePolicy().verticalPolicy(),
                           QtGui.QSizePolicy.Fixed )
-        
+
     def test_ChartEditor(self):
         import math
         from camelot.container import chartcontainer
@@ -93,9 +101,8 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_field_attributes( editable=False )
         self.grab_widget( editor, 'disabled' )
         self.assert_valid_editor( editor, plot )
-        
+
     def test_DateEditor(self):
-        import datetime
         editor = self.editors.DateEditor()
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -122,15 +129,17 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        editor.set_value( '' )
+        self.assertEqual( editor.get_value(), '' )
         # pretend the user has entered some text
         editor.setText( u'foo' )
         self.assertTrue( editor.get_value() != None )
         self.assert_valid_editor( editor, u'za coś tam' )
-        
+
     def grab_default_states( self, editor ):
         editor.set_field_attributes( editable = True, background_color=ColorScheme.green )
         self.grab_widget( editor, 'editable_background_color')
-        
+
         editor.set_field_attributes( editable = False, tooltip = 'tooltip' )
         self.grab_widget( editor, 'disabled_tooltip')
 
@@ -154,7 +163,7 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
         self.assert_valid_editor( editor, '/home/lancelot/quests.txt' )
-        
+
     def test_StarEditor(self):
         editor = self.editors.StarEditor(parent=None, maximum=5)
         self.assert_vertical_size( editor )
@@ -172,7 +181,7 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'face-kiss' )
         self.assert_valid_editor( editor, 'face-kiss' )
-        
+
     def test_BoolEditor(self):
         editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
         self.assert_vertical_size( editor )
@@ -195,7 +204,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_field_attributes( editable = False )
         self.assertEqual( editor.get_value(), True )
         editor.set_field_attributes( editable = True )
-        self.assertEqual( editor.get_value(), True )        
+        self.assertEqual( editor.get_value(), True )
         self.assert_valid_editor( editor, True )
 
     def test_CodeEditor(self):
@@ -266,7 +275,18 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
 
     def test_DateTimeEditor(self):
-        import datetime
+        from camelot.view.controls.editors.datetimeeditor import TimeValidator
+        validator = TimeValidator()
+        self.assertEqual(validator.validate('22', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('59', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('22:', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate(':17', 0), (QtGui.QValidator.Intermediate, 0))
+        self.assertEqual(validator.validate('22:7', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('22:17', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('1:17', 0), (QtGui.QValidator.Acceptable, 0))
+        self.assertEqual(validator.validate('22:7:', 0), (QtGui.QValidator.Invalid, 0))
+        self.assertEqual(validator.validate('61', 0), (QtGui.QValidator.Invalid, 0))
+        self.assertEqual(validator.validate('611', 0), (QtGui.QValidator.Invalid, 0))
         editor = self.editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -274,10 +294,13 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+        editor.set_value(None)
+        self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
-        editor = self.editors.FloatEditor(parent=None, 
-                                          prefix='prefix')
+        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
+        editor = self.editors.FloatEditor(parent=None)
+        editor.set_field_attributes(prefix='prefix')
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
@@ -285,8 +308,8 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor = self.editors.FloatEditor(parent=None,  
-                                          suffix='suffix')
+        editor = self.editors.FloatEditor(parent=None, option=self.option)
+        editor.set_field_attributes(suffix='suffix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -295,18 +318,29 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 5.45 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
+        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        self.assertEqual(spinbox.minimum(), camelot_minfloat-1)
+        self.assertEqual(spinbox.maximum(), camelot_maxfloat)
+        spinbox.keyPressEvent(up)
+        self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor.spinBox.setValue( 0.0 )
+        editor = self.editors.FloatEditor(parent=None)
+        editor.set_field_attributes(prefix='prefix', suffix='suffix')
+        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
+        self.assertEqual(spinbox.validate(QtCore.QString('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(QtCore.QString('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
-        editor = self.editors.FloatEditor(parent=None, 
+        editor = self.editors.FloatEditor(parent=None,
                                           calculator=False)
         editor.set_field_attributes( editable=True )
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
         self.assert_valid_editor( editor, 3.14 )
-        
+
     def test_ImageEditor(self):
         editor = self.editors.ImageEditor(parent=None, editable=True)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -329,14 +363,14 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # turn off the calculator
-        editor = self.editors.IntegerEditor(parent=None, 
+        editor = self.editors.IntegerEditor(parent=None,
                                             calculator=False)
         editor.set_field_attributes( editable=True )
         editor.set_value( 3 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
         self.assert_valid_editor( editor, 3 )
-        
+
     def test_NoteEditor(self):
         editor = self.editors.NoteEditor(parent=None)
         editor.set_value('A person with this name already exists')
@@ -363,7 +397,7 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_vertical_size( editor )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, lambda:object )
-        
+
     def test_RichTextEditor(self):
         editor = self.editors.RichTextEditor(parent=None)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -373,6 +407,7 @@ class EditorsTest(ModelThreadTestCase):
         self.assert_valid_editor( editor, u'<h1>Rich Text Editor</h1>' )
 
     def test_TimeEditor(self):
+
         import datetime
         editor = self.editors.TimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
@@ -389,7 +424,7 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
         self.assert_valid_editor( editor, 'Plain text' )
-        
+
     def test_VirtualAddressEditor(self):
         editor = self.editors.VirtualAddressEditor(parent=None)
         self.assert_vertical_size( editor )
@@ -410,12 +445,12 @@ class EditorsTest(ModelThreadTestCase):
 
 from camelot.view import forms
 
-class FormTest(ModelThreadTestCase):
+class FormTest(test.ModelThreadTestCase):
 
     images_path = static_images_path
 
     def setUp(self):
-        ModelThreadTestCase.setUp(self)
+        test.ModelThreadTestCase.setUp(self)
         from camelot.view.controls.formview import FormEditors
         from camelot.core.orm import entities
         self.entities = [e for e in entities]
@@ -425,19 +460,18 @@ class FormTest(ModelThreadTestCase):
         from camelot_example.model import Movie
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
-        
-        self.movie_model = QueryTableProxy( self.movie_admin, 
+
+        self.movie_model = QueryTableProxy( self.movie_admin,
                                             lambda:Movie.query,
                                             self.movie_admin.get_fields )
-        
+
         widget_mapper = QtGui.QDataWidgetMapper()
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate( self.movie_model.getItemDelegate() )
         self.widgets = FormEditors( self.movie_admin.get_fields(),
                                     widget_mapper,
-                                    self.movie_model.getItemDelegate(),
                                     self.movie_admin )
-        
+
         self.person_entity = Person
         self.collection_getter = lambda:[Person()]
 
@@ -471,13 +505,13 @@ class FormTest(ModelThreadTestCase):
         form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
         self.assertTrue( six.text_type( form ) )
-        
+
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
         self.grab_widget(form.render(self.widgets))
 
     def test_grid_form(self):
-        form = forms.GridForm([['title',                      'short_description'], 
+        form = forms.GridForm([['title',                      'short_description'],
                                ['director',                   'releasedate'],
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
@@ -490,7 +524,7 @@ class FormTest(ModelThreadTestCase):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
         self.assertTrue( six.text_type( form ) )
-        form.replace_field( 'releasedate', 'rating' )        
+        form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
@@ -499,21 +533,24 @@ class FormTest(ModelThreadTestCase):
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
-        from .snippet.form.nested_form import Admin
+        from camelot.view.action_steps import OpenFormView
         person_admin = Admin(self.app_admin, self.person_entity)
-        self.grab_widget( person_admin.create_new_view() )
+        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
 
     def test_inherited_form(self):
-        from .snippet.form.inherited_form import InheritedAdmin
+        from camelot.view.action_steps import OpenFormView
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-        self.grab_widget( person_admin.create_new_view() )
+        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
 
     def test_custom_layout(self):
-        from .snippet.form.custom_layout import Admin
+        from camelot.view.action_steps import OpenFormView
         person_admin = Admin(self.app_admin, self.person_entity)
-        self.grab_widget( person_admin.create_new_view() )
+        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
 
-class DelegateTest(ModelThreadTestCase):
+class DelegateTest(test.ModelThreadTestCase):
     """Test the basic functionallity of the delegates :
   - createEditor
   - setEditorData
@@ -663,7 +700,7 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, '/home/lancelot/quests.txt')
         delegate = self.delegates.LocalFileDelegate(parent=None, editable=False)
         self.grab_delegate(delegate, '/home/lancelot/quests.txt', 'disabled')
-        
+
     def testLabelDelegate(self):
         delegate = self.delegates.LabelDelegate(parent=None)
         self.grab_delegate(delegate, 'dynamic label')
@@ -675,7 +712,7 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, 'important note')
         delegate = self.delegates.NoteDelegate(parent=None, editable=False)
         self.grab_delegate(delegate, 'important note', 'disabled')
-        
+
     def testMonthsDelegate(self):
         delegate = self.delegates.MonthsDelegate(parent=None)
         self.grab_delegate(delegate, 15)
@@ -687,13 +724,13 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, None)
         delegate = self.delegates.Many2OneDelegate(parent=None, editable=False, admin=object())
         self.grab_delegate(delegate, None, 'disabled')
-        
+
     def testOne2ManyDelegate(self):
         delegate = self.delegates.One2ManyDelegate(parent=None, admin=object())
         self.grab_delegate(delegate, [])
         delegate = self.delegates.One2ManyDelegate(parent=None, editable=False, admin=object())
         self.grab_delegate(delegate, [], 'disabled')
-        
+
     def testTimeDelegate(self):
         from datetime import time
         delegate = self.delegates.TimeDelegate(parent=None, editable=True)
@@ -726,18 +763,13 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, intervals, 'disabled')
 
     def testFloatDelegate(self):
-        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
         delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
-        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 3.145)
         delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
-        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
         self.grab_delegate(delegate, 0, 'disabled')
 
     def testColoredFloatDelegate(self):
@@ -847,7 +879,7 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, 12, 'disabled')
 
 
-class FilterTest(ModelThreadTestCase):
+class FilterTest(test.ModelThreadTestCase):
     """Test the filters in the table view"""
 
     images_path = static_images_path
@@ -890,7 +922,7 @@ class FilterTest(ModelThreadTestCase):
                   (self.combo_box_filter, self.test_data ) ]
         table_view.set_filters_and_actions( (items, None) )
 
-class ControlsTest(ModelThreadTestCase):
+class ControlsTest(test.ModelThreadTestCase):
     """Test some basic controls"""
 
     images_path = static_images_path
@@ -908,26 +940,26 @@ class ControlsTest(ModelThreadTestCase):
         for i in range(10):
             time.sleep(0.1)
             self.app.processEvents()
-        
+
     def test_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.party import Person
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
-        widget = TableView( gui_context, 
+        widget = TableView( gui_context,
                             self.app_admin.get_entity_admin(Person) )
         self.grab_widget(widget)
-        
+
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
         from camelot.view.controls.tableview import TableView
         from camelot.model.party import Person
-        
+
         class SmallColumnsAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
-            
+
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context, 
+        widget = TableView( self.gui_context,
                             admin )
         self.grab_widget( widget )
         model = widget.table.model()
@@ -935,23 +967,23 @@ class ControlsTest(ModelThreadTestCase):
 
         first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
         suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
-        
+
         self.assertTrue( first_name_width > suffix_width )
-        
+
     def test_column_width( self ):
         #create a table view for an Admin interface with small columns
         from camelot.view.controls.tableview import TableView
         from camelot.model.party import Person
-        
+
         class ColumnWidthAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
             # begin column width
             field_attributes = { 'first_name':{'column_width':8},
                                  'suffix':{'column_width':8},}
             # end column width
-            
+
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context, 
+        widget = TableView( self.gui_context,
                             admin )
         self.grab_widget( widget )
         model = widget.table.model()
@@ -959,9 +991,9 @@ class ControlsTest(ModelThreadTestCase):
 
         first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
         suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
-        
+
         self.assertEqual( first_name_width, suffix_width )
-        
+
     def test_column_group( self ):
         from camelot.admin.table import ColumnGroup
         from camelot.view.controls.tableview import TableView
@@ -973,28 +1005,28 @@ class ControlsTest(ModelThreadTestCase):
                              ColumnGroup( _('Official'), ['birthdate', 'social_security_number', 'passport_number'] ),
                              ]
             #end column group
-            
+
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context, 
+        widget = TableView( self.gui_context,
                             admin )
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
-        
-    def test_navigation_pane(self):
-        from camelot.view.controls import navpane2
+
+    def test_section_widget(self):
+        from camelot.view.controls import section_widget
         self.wait_for_animation()
-        widget = navpane2.NavigationPane( self.app_admin,
-                                          workspace = None,
-                                          parent = None )
+        widget = section_widget.NavigationPane( self.app_admin,
+                                                workspace = None,
+                                                parent = None )
         widget.set_sections( self.app_admin.get_sections() )
         self.grab_widget(widget)
 
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
-        widget = MainWindow( self.gui_context ) 
+        widget = MainWindow( self.gui_context )
         self.wait_for_animation()
         self.grab_widget(widget)
-        
+
     def test_reduced_main_window(self):
         from camelot.view.mainwindow import MainWindow
         from camelot_example.application_admin import MiniApplicationAdmin
@@ -1006,7 +1038,7 @@ class ControlsTest(ModelThreadTestCase):
         widget.setStyleSheet( app_admin.get_stylesheet() )
         widget.show()
         self.wait_for_animation()
-        self.grab_widget( widget )     
+        self.grab_widget( widget )
 
     def test_busy_widget(self):
         from camelot.view.controls.busy_widget import BusyWidget
@@ -1026,7 +1058,7 @@ class ControlsTest(ModelThreadTestCase):
         header = HeaderWidget(parent=None, admin=person_admin)
         header.expand_search_options()
         self.grab_widget(header)
-        
+
     def test_column_groups_widget(self):
         from camelot.view.controls.tableview import ColumnGroupsWidget
         from camelot_example.view import VisitorsPerDirector
@@ -1053,12 +1085,12 @@ class ControlsTest(ModelThreadTestCase):
         self.assertTrue( table_widget.isColumnHidden( 0 ) )
         self.assertFalse( table_widget.isColumnHidden( 3 ) )
         self.grab_widget( widget, 'second_tab' )
-        
+
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
         from camelot.admin.action import Action
         from camelot.view.art import Icon
-       
+
         action1 = Action()
         action1.icon=Icon('tango/32x32/places/network-server.png')
         action2 = Action()
@@ -1075,7 +1107,7 @@ class ControlsTest(ModelThreadTestCase):
         from camelot.view.controls.progress_dialog import ProgressDialog
         dialog = ProgressDialog( 'Import cover images' )
         self.grab_widget( dialog )
-        
+
     def test_user_exception(self):
         from camelot.view.controls.exception import register_exception, ExceptionDialog
         exc = None
@@ -1091,14 +1123,19 @@ class ControlsTest(ModelThreadTestCase):
 
         exc_info = register_exception(logger, 'unit test', exc)
         dialog = ExceptionDialog( exc_info )
-        self.grab_widget( dialog )   
+        self.grab_widget( dialog )
 
-class CamelotEntityViewsTest(EntityViewsTest):
+class CamelotEntityViewsTest(test.EntityViewsTest):
     """Test the views of all the Entity subclasses"""
 
     images_path = static_images_path
 
-class SnippetsTest(ModelThreadTestCase):
+    def get_admins(self):
+        for admin in super(CamelotEntityViewsTest, self).get_admins():
+            if admin.entity.__module__.startswith('camelot.model'):
+                yield admin
+
+class SnippetsTest(test.ModelThreadTestCase):
 
     images_path = static_images_path
 
@@ -1106,44 +1143,52 @@ class SnippetsTest(ModelThreadTestCase):
         super( SnippetsTest, self ).setUp()
         from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
-        
+
     def test_simple_plot(self):
         from .snippet.chart.simple_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         wave = Wave()
         admin = Wave.Admin( self.app_admin, Wave )
         proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
-        form = admin.create_form_view('Wave', proxy, 0, None)
+        open_form_view = OpenFormView([wave], admin)
+        form = open_form_view.render(proxy, 0)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
 
     def test_advanced_plot(self):
         from .snippet.chart.advanced_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         wave = Wave()
         #wave.phase = '2.89'
         admin = Wave.Admin( self.app_admin, Wave )
         proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
-        form = admin.create_form_view('Wave', proxy, 0, None)
+        open_form_view = OpenFormView([wave], admin)
+        form = open_form_view.render(proxy, 0)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
-        
+
     def test_fields_with_actions(self):
         from .snippet.fields_with_actions import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
-        form = admin.create_form_view('Coordinate', proxy, 0, None)
+        open_form_view = OpenFormView([coordinate], admin)
+        form = open_form_view.render(proxy, 0)
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         from .snippet.fields_with_tooltips import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
-        form = admin.create_form_view('Coordinate', proxy, 0, None)
+        open_form_view = OpenFormView([coordinate], admin)
+        form = open_form_view.render(proxy, 0)
         self.grab_widget(form)
 
     def test_entity_validator(self):
@@ -1156,7 +1201,6 @@ class SnippetsTest(ModelThreadTestCase):
         self.mt.post(lambda:validator.isValid(0))
         self.process()
         self.assertEqual(len(validator.validityMessages(0)), 3)
-        self.grab_widget(validator.validityDialog(0, parent=None))
 
     def test_background_color(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy

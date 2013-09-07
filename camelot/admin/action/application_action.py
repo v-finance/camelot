@@ -103,49 +103,111 @@ class SelectProfile( Action ):
     """Select the application profile to use
     
     :param profile_store: an object of type 
-        :class:`camelot.core.dbprofiles.ProfileStore`
+        :class:`camelot.core.profile.ProfileStore`
     """
     
+    new_icon = Icon('tango/16x16/actions/document-new.png')
+    save_icon = Icon('tango/16x16/actions/document-save.png')
+    load_icon = Icon('tango/16x16/actions/document-open.png')
+    file_name_filter = _('Profiles file (*.ini)')
+    
     def __init__( self, profile_store ):
-        from camelot.core.dbprofiles import ProfileStore
+        from camelot.core.profile import ProfileStore
         if profile_store==None:
             profile_store=ProfileStore()
         self.profile_store = profile_store
         
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        from camelot.view.action_steps.profile import EditProfiles
 
-        profiles = self.profile_store.read_profiles()        
-        selected_profile = None
-        if len(profiles):
-            profiles.sort( key=lambda p:p.name )
-            last_profile = self.profile_store.get_last_profile()
-            items = [(None,'')] + [(p,p.name) for p in profiles]
-            select_profile = action_steps.SelectItem( items )
-            if last_profile in profiles:
-                select_profile.value = last_profile
-            else:
-                select_profile.value = None
-            while selected_profile==None:
-                try:
-                    selected_profile = yield select_profile
-                except CancelRequest:
-                    # explicit handling of exit when cancel button is pressed,
-                    # to avoid the use of subgenerators in the main action
-                    yield Exit()
-            self.profile_store.set_last_profile( selected_profile )
-            
-        NEW_PROFILE_LABEL = _('new/edit profile')
-
-        #if not profiles_dict:
-            #create_new_profile(app_admin, profiles_dict)
-                                 
-        #if selected in profiles_dict:
-            #use_chosen_profile(selected)
-        #elif selected == NEW_PROFILE_LABEL:
-            #create_new_profile(app_admin, profiles_dict)
-        #else:
-            #sys.exit(0)        
+        # dummy profiles
+        new_profile, save_profiles, load_profiles = object(), object(), object()
+        selected_profile = new_profile
+        try:
+            while selected_profile in (None, new_profile, 
+                                       save_profiles, load_profiles):
+                profiles = self.profile_store.read_profiles()
+                profiles.sort()
+                items = [(None,'')] + [(p,p.name) for p in profiles]
+                font = QtGui.QFont()
+                font.setItalic(True)
+                items.append({Qt.UserRole: new_profile, Qt.FontRole: font,
+                              Qt.DisplayRole: ugettext('new/edit profile'),
+                              Qt.DecorationRole: self.new_icon
+                              })
+                if len(profiles):
+                    items.append({Qt.UserRole: save_profiles, Qt.FontRole: font,
+                                  Qt.DisplayRole: ugettext('save profiles'),
+                                  Qt.DecorationRole: self.save_icon
+                                  })
+                items.append({Qt.UserRole: load_profiles, Qt.FontRole: font,
+                              Qt.DisplayRole: ugettext('load profiles'),
+                              Qt.DecorationRole: self.load_icon
+                              })
+                select_profile = action_steps.SelectItem( items )
+                last_profile = self.profile_store.get_last_profile()
+                select_profile.title = ugettext('Profile Selection')
+                if len(profiles):
+                    subtitle = ugettext('Select a stored profile:')
+                else:
+                    subtitle = ugettext('''Load profiles from file or'''
+                                        ''' create a new profile''')
+                select_profile.subtitle = subtitle
+                if last_profile in profiles:
+                    select_profile.value = last_profile
+                elif len(profiles):
+                    select_profile.value = None
+                else:
+                    select_profile.value = load_profiles
+                selected_profile = yield select_profile
+                if selected_profile is new_profile:
+                    edit_profile_name = ''
+                    while selected_profile is new_profile:
+                        profile_info = yield EditProfiles(profiles, edit_profile_name)
+                        profile = self.profile_store.read_profile(profile_info['name'])
+                        if profile is None:
+                            profile = self.profile_store.profile_class(**profile_info)
+                        else:
+                            profile.__dict__.update(profile_info)
+                        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
+                        engine = profile.create_engine()
+                        try:
+                            connection = engine.raw_connection()
+                            cursor = connection.cursor()
+                            cursor.close()
+                            connection.close()
+                        except Exception, e:
+                            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
+                                                                     text = _('Verify driver, host and port or contact your system administrator'),
+                                                                     standard_buttons = QtGui.QMessageBox.Ok )
+                            exception_box.informative_text = unicode(e)
+                            yield exception_box
+                            edit_profile_name = profile.name
+                            if profile in profiles:
+                                profiles.remove(profile)
+                            profiles.append(profile)
+                            profiles.sort()
+                            continue
+                        self.profile_store.write_profile(profile)
+                        selected_profile = profile
+                elif selected_profile is save_profiles:
+                    select_file = action_steps.SelectFile(file_name_filter=self.file_name_filter)
+                    select_file.existing=False
+                    file_names =  yield select_file
+                    for file_name in file_names:
+                        self.profile_store.write_to_file(file_name)
+                elif selected_profile is load_profiles:
+                    file_names =  yield action_steps.SelectFile(file_name_filter=self.file_name_filter)
+                    for file_name in file_names:
+                        self.profile_store.read_from_file(file_name)
+        except CancelRequest:
+            # explicit handling of exit when cancel button is pressed,
+            # to avoid the use of subgenerators in the main action
+            yield Exit()
+        message = ugettext('Use {} profile'.format(selected_profile.name))
+        yield action_steps.UpdateProgress(text=message)
+        self.profile_store.set_last_profile( selected_profile )
 
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
@@ -183,6 +245,7 @@ class OpenTableView( EntityAction ):
             gui_context.workspace.add_view( table_view )
         else:
             gui_context.workspace.set_view( table_view )
+        table_view.setFocus(Qt.PopupFocusReason)
         
 class OpenNewView( EntityAction ):
     """An application action that opens a new view of an Entity
@@ -203,13 +266,16 @@ class OpenNewView( EntityAction ):
         state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
         state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
         return state
-        
-    def gui_run( self, gui_context ):
-        """:return: a new view"""
-        from camelot.view.workspace import show_top_level
-        form = self._entity_admin.create_new_view(parent=None)
-        show_top_level( form, gui_context.workspace )
-        
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        admin = yield action_steps.SelectSubclass(self._entity_admin)
+        new_object = admin.entity()
+        # Give the default fields their value
+        admin.add(new_object)
+        admin.set_defaults(new_object)
+        yield action_steps.OpenFormView([new_object], admin)
+
 class ShowHelp( Action ):
     """Open the help"""
     
@@ -528,10 +594,10 @@ class Authentication( Action ):
         select_file = action_steps.SelectFile(file_name_filter=ImageEditor.filter)
         filenames = yield select_file
         for filename in filenames:
-            yield action_steps.UpdateProgress(ugettext('Scale image'))
+            yield action_steps.UpdateProgress(text=ugettext('Scale image'))
             image = QtGui.QImage(filename)
-            image = image.scaled(self.image_size, 
-                                 self.image_size, 
+            image = image.scaled(self.image_size,
+                                 self.image_size,
                                  Qt.KeepAspectRatio)
             authentication = get_current_authentication()
             authentication.set_representation(image)

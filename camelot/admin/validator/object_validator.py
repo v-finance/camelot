@@ -36,16 +36,16 @@ from camelot.core.utils import ugettext as _
 class ObjectValidator(QtCore.QObject):
     """A validator class for normal python objects.  By default this validator
     declares all objects valid.  Subclass this class and overwrite it's
-    objectValidity method to change it's behaviour.
+    `validate_object` method to change it's behaviour.
     """
 
     validity_changed_signal = QtCore.pyqtSignal(int)
 
     def __init__(self, admin, model = None, initial_validation = False):
         """
-        :param model: a collection proxy the validator should inspect, or None 
-            if only the objectValidity method is going to get used.
-        :param verifiy_initial_validity: do an inital check to see if all rows 
+        :param model: a collection proxy the validator should inspect, or None
+            if only the `validate_object` method is going to get used.
+        :param verifiy_initial_validity: do an inital check to see if all rows
             in a model are valid, defaults to False,
             since this might take a lot of time on large collections.
         """
@@ -73,7 +73,7 @@ class ObjectValidator(QtCore.QObject):
             validator = self.admin.get_related_admin( cls ).get_validator()
             self._related_validators[cls] = validator
             return validator
-            
+
     def validate_all_rows(self):
         """Force validation of all rows in the model"""
         for row in range(self.model.getRowCount()):
@@ -100,11 +100,6 @@ class ObjectValidator(QtCore.QObject):
 
         post(create_validity_updater(from_index.row(), thru_index.row()))
 
-    def objectValidity(self, entity_instance):
-        """deprecated, use `validate_object` instead
-        """
-        return self.validate_object( entity_instance )
-    
     def validate_object( self, obj ):
         """:return: list of messages explaining invalid data
         empty list if object is valid
@@ -159,8 +154,8 @@ class ObjectValidator(QtCore.QObject):
         logger.debug('isValid for row %s' % row)
         try:
             entity_instance = self.model._get_object(row)
-            if entity_instance != None:
-                messages = self.objectValidity(entity_instance)
+            if entity_instance is not None:
+                messages = self.validate_object(entity_instance)
                 self.message_cache.add_data(row, entity_instance, messages)
         except Exception as e:
             logger.error(
@@ -186,18 +181,3 @@ class ObjectValidator(QtCore.QObject):
                 'Programming error : isValid should be called '
                 'before calling validityMessage'
             )
-
-    def validityDialog(self, row, parent):
-        """Return a QDialog that asks the user to discard his changes or
-        continue to edit the row until it is valid.
-        """
-        from PyQt4 import QtGui
-        return QtGui.QMessageBox(
-            QtGui.QMessageBox.Warning,
-            _('Invalid form'),
-            '\n'.join(self.validityMessages(row)),
-            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
-            parent
-        )
-
-

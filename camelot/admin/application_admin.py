@@ -51,7 +51,7 @@ def get_application_admin():
         raise Exception('No application admin class has been constructed yet')
     return _application_admin_[0]
 
-class ApplicationAdmin(QtCore.QObject):
+class ApplicationAdmin(object):
     """The ApplicationAdmin class defines how the application should look
 like, it also ties Python classes to their associated 
 :class:`camelot.admin.object_admin.ObjectAdmin` class or subclass.  It's
@@ -105,17 +105,6 @@ shortcut confusion and reduce the number of status updates.
     version = '1.0'
     admins = {}
 
-    # This signal is emitted whenever the sections are changed, and the views
-    # should be updated
-    sections_changed_signal = QtCore.pyqtSignal()
-    # This signal is emitted whenever the tile of the main window needs to
-    # be changed.
-    title_changed_signal = QtCore.pyqtSignal(str)
-    # Emitted whenever the application actions need to be changed
-    actions_changed_signal = QtCore.pyqtSignal()
-
-    database_selection = False
-
     #
     # actions that will be shared between the toolbar and the main menu
     #
@@ -123,7 +112,7 @@ shortcut confusion and reduce the number of status updates.
                            list_action.ToPreviousRow(),
                            list_action.ToNextRow(),
                            list_action.ToLastRow(), ]
-    edit_actions = [ list_action.OpenNewView(),
+    edit_actions = [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),]
     help_actions = [ application_action.ShowHelp(), ]
@@ -142,7 +131,6 @@ shortcut confusion and reduce the number of status updates.
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
         prefered ApplicationAdmin to use througout the application"""
-        QtCore.QObject.__init__(self)
         _application_admin_.append(self)
         #
         # Cache created ObjectAdmin objects

@@ -50,27 +50,27 @@ class AbstractActionWidget( object ):
         self.state = state
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
-        
+
     def current_row_changed( self, current_row ):
-        post( self.action.get_state, 
-              self.set_state, 
+        post( self.action.get_state,
+              self.set_state,
               args = (self.gui_context.create_model_context(),) )
-        
+
     def data_changed( self, index1, index2 ):
         # the model might emit a dataChanged signal, while the widget mapper
         # has been deleted
         if not is_deleted(self.gui_context.widget_mapper):
             self.current_row_changed( index1.row() )
-        
+
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
         gui_context.mode_name = mode
         self.action.gui_run( gui_context )
-        
+
     def set_menu( self, state ):
         """This method creates a menu for an object with as its menu items
         the different modes in which an action can be triggered.
-        
+
         :param state: a `camelot.admin.action.State` object
         """
         if state.modes:
@@ -79,30 +79,30 @@ class AbstractActionWidget( object ):
                 mode_action = mode.render( menu )
                 mode_action.triggered.connect( self.triggered )
                 menu.addAction( mode_action )
-            self.setMenu( menu )        
+            self.setMenu( menu )
 
 HOVER_ANIMATION_DISTANCE = 20
 NOTIFICATION_ANIMATION_DISTANCE = 8
 
 class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
-    
+
     entered = QtCore.pyqtSignal()
-    left = QtCore.pyqtSignal()    
-    
+    left = QtCore.pyqtSignal()
+
     """
-    A custom interactive desktop button for the desktop. Each 'button' is 
+    A custom interactive desktop button for the desktop. Each 'button' is
     actually an animated label.
     """
     def __init__( self, action, gui_context, parent ):
         QtGui.QLabel.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
-        
+
         self.setObjectName('ActionButton')
         self.setMouseTracking(True)
-        
+
         # This property holds if this button reacts to mouse events.
         self.interactive = False
-        
+
         # This property is used to store the original position of this label
         # so it can be visually reset when the user leaves before the ongoing
         # animation has finished.
@@ -110,49 +110,49 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
 
         # This property holds the state of the selection animation. Since this
         # animation is only created inside startSelectionAnimation() (to avoid
-        # the increasing amount of performAction() invocations), this variable is 
+        # the increasing amount of performAction() invocations), this variable is
         # used to continuously store the state of that animation.
         self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
         self.setMaximumHeight(160)
-        
+
         opacityEffect = QtGui.QGraphicsOpacityEffect(parent = self)
         opacityEffect.setOpacity(1.0)
         self.setGraphicsEffect(opacityEffect)
-    
+
         # Bounce animation #
         hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
         hoverAnimationPart1.setObjectName('hoverAnimationPart1')
         hoverAnimationPart1.setDuration(500)
         hoverAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-        
+
         hoverAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
         hoverAnimationPart2.setObjectName('hoverAnimationPart2')
         hoverAnimationPart2.setDuration(1500)
         hoverAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
-        
+
         hoverAnimation = QtCore.QSequentialAnimationGroup(parent = self)
         hoverAnimation.setObjectName('hoverAnimation')
         hoverAnimation.setLoopCount(-1) # Infinite
         hoverAnimation.addAnimation(hoverAnimationPart1)
         hoverAnimation.addAnimation(hoverAnimationPart2)
         ####################
-        
+
         # Selection animation #
         selectionAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
         selectionAnimationPart1.setObjectName('selectionAnimationPart1')
         selectionAnimationPart1.setDuration(200)
         selectionAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-        
+
         selectionAnimationPart2 = QtCore.QPropertyAnimation(self, 'size')
         selectionAnimationPart2.setObjectName('selectionAnimationPart2')
         selectionAnimationPart2.setDuration(200)
         selectionAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-        
+
         selectionAnimationPart3 = QtCore.QPropertyAnimation(self.graphicsEffect(), 'opacity')
         selectionAnimationPart3.setObjectName('selectionAnimationPart3')
         selectionAnimationPart3.setDuration(200)
         selectionAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
-        
+
         selectionAnimation = QtCore.QParallelAnimationGroup(parent = self)
         selectionAnimation.setObjectName('selectionAnimation')
         selectionAnimation.addAnimation(selectionAnimationPart1)
@@ -175,17 +175,17 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             notificationAnimationPart1.setObjectName('notificationAnimationPart1')
             notificationAnimationPart1.setDuration(50)
             notificationAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
+
             notificationAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
             notificationAnimationPart2.setObjectName('notificationAnimationPart2')
             notificationAnimationPart2.setDuration(50)
             notificationAnimationPart2.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
+
             notificationAnimationPart3 = QtCore.QPropertyAnimation(self, 'pos')
             notificationAnimationPart3.setObjectName('notificationAnimationPart3')
             notificationAnimationPart3.setDuration(50)
             notificationAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
+
             notificationAnimation = QtCore.QSequentialAnimationGroup(parent = self)
             notificationAnimation.setObjectName('notificationAnimation')
             notificationAnimation.setLoopCount(10)
@@ -201,18 +201,18 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             notificationAnimationTimer.timeout.connect(notificationAnimation.start)
             notificationAnimation.finished.connect( notificationAnimationTimer.start )
         self.resetLayout()
-        
+
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
         if hoverAnimationPart1 is not None:
             hoverAnimationPart1.setStartValue(self.originalPosition)
             hoverAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(0, -HOVER_ANIMATION_DISTANCE))
-    
+
         hoverAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart2')
         if hoverAnimationPart2 is not None:
             hoverAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(0, -HOVER_ANIMATION_DISTANCE))
             hoverAnimationPart2.setEndValue(self.originalPosition)
-        
+
         hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
         if hoverAnimation is not None:
             hoverAnimation.start()
@@ -223,12 +223,12 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             hoverAnimation.stop()
         if self.originalPosition is not None:
             self.move(self.originalPosition)
-            
+
         self.resetLayout()
 
     def startSelectionAnimation(self):
         if self.state.notification:
-            notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')            
+            notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
             if notificationAnimation is not None:
                 notificationAnimation.stop()
         else:
@@ -237,13 +237,13 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
                 hoverAnimation.stop()
 
         self.move(self.originalPosition)
-        
+
         # Selection animation when clicked #
         selectionAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart1')
         selectionAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart2')
         selectionAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart3')
         selectionAnimation = self.findChild(QtCore.QParallelAnimationGroup, 'selectionAnimation')
-        if None not in (selectionAnimationPart1, selectionAnimationPart2, 
+        if None not in (selectionAnimationPart1, selectionAnimationPart2,
                         selectionAnimationPart3, selectionAnimation):
             selectionAnimationPart1.setStartValue(self.originalPosition)
             selectionAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-HOVER_ANIMATION_DISTANCE, -HOVER_ANIMATION_DISTANCE))
@@ -253,14 +253,14 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
 
             selectionAnimationPart3.setStartValue(1.0)
             selectionAnimationPart3.setEndValue(0.1)
-        
+
             self.setScaledContents(True)
-            
+
             selectionAnimation.start()
 
     def updateSelectionAnimationState(self, newState, oldState):
         self.selectionAnimationState = newState
-        
+
         # Simulate finished signal (see comment in animation buildup code).
         if oldState == QtCore.QAbstractAnimation.Running and newState == QtCore.QAbstractAnimation.Stopped:
             self.run_action()
@@ -269,7 +269,7 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
     def resetLayout(self):
         if self.state.notification:
             self.stopNotificationAnimation()
-        
+
         if self.sender() and self.originalPosition:
             self.move(self.originalPosition)
 
@@ -277,15 +277,15 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         if self.pixmap():
             self.resize(self.pixmap().width(), self.pixmap().height())
         self.graphicsEffect().setOpacity(1.0)
-        
+
         if self.state.notification and self.originalPosition:
             self.startNotificationAnimation()
-        
+
     def setInteractive(self, interactive):
         self.interactive = interactive
-        
+
         self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
-        
+
         if self.state.notification:
             self.startNotificationAnimation()
 
@@ -293,20 +293,20 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         if self.interactive:
             if self.state.notification:
                 self.stopNotificationAnimation()
-                
+
             self.startHoverAnimation()
-            
+
             self.entered.emit()
 
         event.ignore()
-    
+
     def leaveEvent(self, event):
         if self.interactive:
             self.stopHoverAnimation()
-            
+
             if self.state.notification:
                 self.startNotificationAnimation()
-            
+
             self.left.emit()
 
         event.ignore()
@@ -317,7 +317,7 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             self.startSelectionAnimation()
 
         event.ignore()
-        
+
     def startNotificationAnimation(self):
         notificationAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart1')
         if notificationAnimationPart1 is not None:
@@ -328,12 +328,12 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         if notificationAnimationPart2 is not None:
             notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-NOTIFICATION_ANIMATION_DISTANCE, 0))
             notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, 0))
-        
+
         notificationAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart3')
         if notificationAnimationPart3 is not None:
             notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, 0))
             notificationAnimationPart3.setEndValue(self.originalPosition)
-        
+
         notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
         notificationAnimationTimer = self.findChild(QtCore.QTimer, 'notificationAnimationTimer')
         if notificationAnimation is not None and notificationAnimationTimer is not None:
@@ -343,19 +343,19 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
     def stopNotificationAnimation(self):
         notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
         notificationAnimationTimer = self.findChild(QtCore.QTimer, 'notificationAnimationTimer')
-        
+
         if notificationAnimation is not None and notificationAnimationTimer is not None:
             notificationAnimationTimer.stop()
             notificationAnimation.stop()
-        
+
 class ActionAction( QtGui.QAction, AbstractActionWidget ):
-    
+
     def __init__( self, action, gui_context, parent ):
         QtGui.QAction.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
-        
+
     @QtCore.pyqtSlot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
@@ -373,15 +373,15 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
         self.set_menu( state )
-        
+
 class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
-    
+
     def __init__( self, action, gui_context, parent ):
-        """A :class:`QtGui.QPushButton` that when pressed, will run an 
+        """A :class:`QtGui.QPushButton` that when pressed, will run an
         action.
-        
+
         .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
-        
+
         """
         QtGui.QPushButton.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
@@ -394,11 +394,11 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         if isinstance( sender, QtGui.QAction ):
             mode = six.text_type( sender.data().toString() )
         self.run_action( mode )
-        
+
     @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
     def data_changed( self, index1, index2 ):
         AbstractActionWidget.data_changed( self, index1, index2 )
-        
+
     def set_state( self, state ):
         super( ActionPushButton, self ).set_state( state )
         if state.verbose_name != None:
@@ -408,10 +408,33 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         else:
             self.setIcon( QtGui.QIcon() )
         self.set_menu( state )
-        
+
+class ActionToolbutton(QtGui.QToolButton, AbstractActionWidget):
+
+    def __init__( self, action, gui_context, parent ):
+        """A :class:`QtGui.QToolButton` that when pressed, will run an
+        action."""
+        QtGui.QToolButton.__init__( self, parent )
+        AbstractActionWidget.__init__( self, action, gui_context )
+        self.clicked.connect(self.run_action)
+
+    def set_state( self, state ):
+        AbstractActionWidget.set_state(self, state)
+        if state.verbose_name != None:
+            self.setText( unicode( state.verbose_name ) )
+        if state.icon != None:
+            self.setIcon( state.icon.getQIcon() )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state.tooltip != None:
+            self.setToolTip( unicode( state.tooltip ) )
+        else:
+            self.setToolTip( '' )
+        self.set_menu( state )
+
 class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
     """Widget that displays information on the active user"""
-    
+
     def __init__(self, action, gui_context, parent):
         from ..remote_signals import get_signal_handler
         QtGui.QFrame.__init__(self, parent)
@@ -444,17 +467,17 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         self.setLayout(layout)
         signal_handler = get_signal_handler()
         signal_handler.entity_update_signal.connect(self.entity_update)
-        
+
     @QtCore.pyqtSlot(object, object)
     def entity_update(self, sender, entity):
         from ...model.authentication import AuthenticationMechanism
         if isinstance(entity, AuthenticationMechanism):
             self.current_row_changed(0)
-        
+
     @QtCore.pyqtSlot(bool)
     def face_clicked(self, state):
         self.run_action()
-        
+
     def set_state(self, state):
         user_name = self.findChild(QtGui.QLabel, 'user_name')
         user_name.setText(state.verbose_name)

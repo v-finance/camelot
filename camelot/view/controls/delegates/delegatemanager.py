@@ -30,31 +30,31 @@ import six
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+from .plaintextdelegate import PlainTextDelegate
+
 class DelegateManager(QtGui.QItemDelegate):
     """Manages custom delegates, should not be used by the application
   developer
   """
 
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, columns, parent=None):
         QtGui.QItemDelegate.__init__(self, parent)
-        self.delegates = {}
-
-    def set_columns_desc(self, columnsdesc):
-        self.columnsdesc = columnsdesc
+        # set a delegate for the vertical header
+        self.insert_column_delegate(-1, PlainTextDelegate(parent=self))
+        self._columns = columns
 
     def get_column_delegate(self, column):
-        try:
-            return self.delegates[column]
-        except KeyError:
-            logger.error('Programming Error, no delegate available for column %s'%column)
-            logger.error('Available columns : %s'%six.text_type(self.delegates.keys()))
-            raise KeyError
+        delegate = self.findChild(QtGui.QAbstractItemDelegate, str(column))
+        if delegate is None:
+            field_name, field_attributes = self._columns[column]
+            delegate = field_attributes['delegate'](parent=self, **field_attributes)
+            self.insert_column_delegate(column, delegate)
+        return delegate
 
-    def insertColumnDelegate(self, column, delegate):
+    def insert_column_delegate(self, column, delegate):
         """Inserts a custom column delegate"""
         assert delegate != None
-        delegate.setParent(self)
-        self.delegates[column] = delegate
+        delegate.setObjectName(str(column))
         delegate.commitData.connect(self._commit_data)
         delegate.closeEditor.connect(self._close_editor)
 
@@ -64,12 +64,6 @@ class DelegateManager(QtGui.QItemDelegate):
     @QtCore.pyqtSlot( QtGui.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
-
-    def removeColumnDelegate(self, column):
-        """Removes custom column delegate"""
-        logger.debug('removing a custom column delegate')
-        if column in self.delegates:
-            del self.delegates[column]
 
     def paint(self, painter, option, index):
         """Use a custom delegate paint method if it exists"""

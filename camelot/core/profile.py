@@ -34,12 +34,12 @@ machine.
 """
 
 import base64
-import copy
+import functools
 import logging
 
 import six
 
-from .qt import QtCore, py_to_variant
+from .qt import QtCore
 
 from camelot.core.conf import settings
 
@@ -49,12 +49,16 @@ profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
                    'port', 'media_location', 'locale_language', 'proxy_host',
                    'proxy_port', 'proxy_username', 'proxy_password' ]
 
+@functools.total_ordering
 class Profile(object):
     """This class holds the local configuration of the application, such as
     the location of the database.  It provides some convenience functions to
     store and retrieve this information to :class:`QtCore.QSettings`
     
     :param name: the name of the profile
+    
+    The Profile class has ordering methods based on the name of the profile
+    object.
     """
     
     def __init__( self, name, **kwargs ):
@@ -115,10 +119,7 @@ class Profile(object):
                 key='pass'
             elif key=='name':
                 key='profilename'
-            if key != 'profilename':
-                state[key] = self._encode(value)
-            else:
-                state[key] = (value or '').encode('utf-8')
+            state[key] = value
         return state
     
     def __setstate__( self, state ):
@@ -132,33 +133,21 @@ class Profile(object):
                 key='password'
             if key=='profilename':
                 key='name'
-            if key != 'name':
-                value = self._decode(value)
-            else:
-                value = value.decode('utf-8')
             setattr(self, key, value)
 
-    def _cipher( self ):
-        """:return: the :class:`Crypto.Cipher` object used for encryption and
-        decryption in :meth:`_encode` and :meth:`_decode`.
-        """
-        from Crypto.Cipher import ARC4
-        key = settings.get('CAMELOT_DBPROFILES_CIPHER', 
-                           'The Knights Who Say Ni')
-        return ARC4.new( key )
+    def __lt__(self, other):
+        if isinstance(other, Profile):
+            return self.name.__lt__(other.name)
+        return id(self) < id(other)
     
-    def _encode( self, value ):
-        """Encrypt and encode a single value, this method is used in 
-        `__getstate_`"""
-        cipher = self._cipher()
-        return base64.b64encode( cipher.encrypt( unicode(value).encode('utf-8' ) ) )
-            
-    def _decode( self, value ):
-        """Decrypt and decode a single value, this method is used in 
-        `__setstate__`
-        """
-        cipher = self._cipher()
-        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')    
+    def __eq__(self, other):
+        if isinstance(other, Profile):
+            return self.name.__eq__(other.name)
+        return False
+    
+    def __hash__(self):
+        return hash(self.name)
+
 
 class ProfileStore(object):
     """Class that reads/writes profiles, either to a file or to the local
@@ -169,36 +158,83 @@ class ProfileStore(object):
        
     :param profile_class: a serializeable class that can be used to create
         new profile objects.
+        
+    :param cipher_key: cipher key used to encrypt profile information to make
+        it only readeable to the application itself.  If left to `None`,
+        `camelot.core.conf.settings.CAMELOT_DBPROFILES_CIPHER is used.
     """
     
-    def __init__( self, filename=None, profile_class=Profile ):
+    def __init__( self, filename=None, profile_class=Profile, cipher_key=None):
+        if cipher_key is None:
+            cipher_key = settings.get('CAMELOT_DBPROFILES_CIPHER', 
+                                      'The Knights Who Say Ni')
+        self.cipher_key = cipher_key
         self.profile_class = profile_class
-        if filename is None:
-            self.settings = QtCore.QSettings()
-        else:
-            self.settings = QtCore.QSettings(filename, 
-                                             QtCore.QSettings.IniFormat)
+        self.filename = filename
 
+    def _cipher( self ):
+        """:return: the :class:`Crypto.Cipher` object used for encryption and
+        decryption in :meth:`_encode` and :meth:`_decode`.
+        """
+        from Crypto.Cipher import ARC4
+        return ARC4.new( self.cipher_key )
+
+    def _encode( self, value ):
+        """Encrypt and encode a single value, this method is used to 
+        write profiles."""
+        cipher = self._cipher()
+        return base64.b64encode( cipher.encrypt( six.text_type(value).encode('utf-8' ) ) )
+            
+    def _decode( self, value ):
+        """Decrypt and decode a single value, this method is used to
+        read profiles.
+        """
+        cipher = self._cipher()
+        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')
+    
+    def _qsettings(self):
+        # recreate QSettings each time it's needed, to make sure we're at
+        # the same entry point
+        if self.filename is None:
+            return QtCore.QSettings()
+        else:
+            return QtCore.QSettings(self.filename, 
+                                    QtCore.QSettings.IniFormat)
+    
+    def write_to_file(self, filename):
+        file_store = ProfileStore(filename, cipher_key=self.cipher_key)
+        file_store.write_profiles(self.read_profiles())
+        
+    def read_from_file(self, filename):
+        file_store = ProfileStore(filename, cipher_key=self.cipher_key)
+        self.write_profiles(file_store.read_profiles())
+        
     def read_profiles(self):
         """
         :return: a list of profiles read
         """
         profiles = []
-        size = self.settings.beginReadArray('database_profiles')
+        qsettings = self._qsettings()
+        size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
         empty = QtCore.QVariant('')
         for index in range(size):
-            self.settings.setArrayIndex(index)
+            qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             for key in state.keys():
-                state[key] = str( self.settings.value(key, empty).toString() )
+                value = str( qsettings.value(key, empty).toString() )
+                if key != 'profilename':
+                    value = self._decode(value)
+                else:
+                    value = value.decode('utf-8')
+                state[key] = value
             profile.__setstate__(state)
             # only profiles with a name can be selected and handled
             if profile.name:
                 profiles.append(profile)
-        self.settings.endArray()
+        qsettings.endArray()
         return profiles
     
     def read_profile(self, name):
@@ -213,13 +249,19 @@ class ProfileStore(object):
     def write_profiles(self, profiles):
         """
         :param profiles: a list of profiles
-        """    
-        self.settings.beginWriteArray('database_profiles')
+        """
+        qsettings = self._qsettings()
+        qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
-            self.settings.setArrayIndex(index)
+            qsettings.setArrayIndex(index)
             for key, value in profile.__getstate__().iteritems():
-                self.settings.setValue(key, QtCore.QVariant(value))
-        self.settings.endArray()
+                if key != 'profilename':
+                    value = self._encode(value)
+                else:
+                    value = (value or '').encode('utf-8')
+                qsettings.setValue(key, QtCore.QVariant(value))
+        qsettings.endArray()
+        qsettings.sync()
         
     def write_profile(self, profile):
         """
@@ -239,8 +281,8 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = unicode(self.settings.value('last_used_database_profile',
-                                           QtCore.QVariant('')).toString(), 
+        name = unicode(self._qsettings().value('last_used_database_profile',
+                                               QtCore.QVariant('')).toString(), 
                        'utf-8')
         for profile in profiles:
             if profile.name == name:
@@ -251,45 +293,7 @@ class ProfileStore(object):
         :param profile: a profile that has been written to or is available in
             the store
         """
-        self.settings.setValue('last_used_database_profile', 
-                               profile.name.encode('utf-8') )
-
-class EmptyProxy():
-
-    @classmethod
-    def hostName(cls):
-        return ''
-
-    @classmethod
-    def user(cls):
-        return ''
-
-    @classmethod
-    def port(cls):
-        return ''
-
-    @classmethod
-    def password(cls):
-        return ''
-
-def get_network_proxy():
-    # turn this temporary off, because it freezes the app on winblows
-    return EmptyProxy()
-
-    #from PyQt4 import QtNetwork
-
-    #proxy = None
-    #query = QtNetwork.QNetworkProxyQuery(QtCore.QUrl('http://aws.amazon.com'))
-    ##proxies = QtNetwork.QNetworkProxyFactory.systemProxyForQuery(query)
-
-    #if proxies:
-        #logger.info('Proxy servers found: %s' % ['%s:%s' %
-            #(str(proxy.hostName()),str(proxy.port())) for proxy in proxies])
-        #if proxies[0].hostName():
-            #proxy = proxies[0]
-
-    ## we still need some empty values for the profile
-    #if proxy is None:
-        #return EmptyProxy()
-
-    #return proxy
+        qsettings = self._qsettings()
+        qsettings.setValue('last_used_database_profile', 
+                                   profile.name.encode('utf-8') )
+        qsettings.sync()

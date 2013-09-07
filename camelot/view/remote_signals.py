@@ -47,7 +47,7 @@ class SignalHandler(QtCore.QObject):
         the mutex is locked"""
         self.entity_update_signal.connect( obj.handle_entity_update, QtCore.Qt.QueuedConnection )
         self.entity_delete_signal.connect( obj.handle_entity_delete, QtCore.Qt.QueuedConnection )
-        self.entity_create_signal.connect( obj.handle_entity_create, QtCore.Qt.QueuedConnection )   
+        self.entity_create_signal.connect( obj.handle_entity_create, QtCore.Qt.QueuedConnection )
         
     def send_entity_update(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity has 

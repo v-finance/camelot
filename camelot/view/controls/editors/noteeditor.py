@@ -42,7 +42,7 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         QtGui.QLabel.__init__( self, parent )
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
-        self.setTextFormat( QtCore.Qt.RichText )  
+        self.setTextFormat( QtCore.Qt.RichText )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Minimum )
         style = """

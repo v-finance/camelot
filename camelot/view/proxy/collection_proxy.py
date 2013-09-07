@@ -60,34 +60,6 @@ class ProxyDict(dict):
     everything python"""
     pass
 
-class DelayedProxy( object ):
-    """A proxy object needs to be constructed within the GUI thread. Construct
-    a delayed proxy when the construction of a proxy is needed within the Model
-    thread.  On first occasion the delayed proxy will be converted to a real
-    proxy within the GUI thread
-    """
-
-    @model_function
-    def __init__( self, admin, collection_getter, columns_getter ):
-        self._admin = admin
-        self._collection_getter = collection_getter
-        self._columns_getter = columns_getter
-
-    def __call__( self ):
-        return CollectionProxy( self._admin,
-                                self._collection_getter,
-                                self._columns_getter )
-
-    def __unicode__(self):
-        collection = self._collection_getter()
-        if collection:
-            try:
-               return u','.join(list(six.text_type(o) or '' for o,_i in zip(collection,
-                                                                      range(3))))
-            except TypeError as e:
-               logger.error( 'could not convert object to unicode', exc_info=e )
-        return u''
-
 @model_function
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
@@ -102,15 +74,9 @@ def strip_data_from_object( obj, columns ):
         return lambda: getattr( o, attr )
 
     for _i, col in enumerate( columns ):
-        field_attributes = col[1]
         field_value = None
         try:
-            if field_attributes['python_type'] == list:
-                field_value = DelayedProxy( field_attributes['admin'],
-                                            create_collection_getter( obj, col[0] ),
-                                            field_attributes['admin'].get_columns )
-            else:
-                field_value = getattr( obj, col[0] )
+            field_value = getattr( obj, col[0] )
         except (Exception, RuntimeError, TypeError, NameError) as e:
             message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
             log_programming_error( logger, 
@@ -288,7 +254,7 @@ position in the query.
         else:
             self.form_icon = py_to_variant()
         self.validator = admin.get_validator( self )
-        self._collection_getter = collection_getter
+        self._collection_getter = collection_getter or (lambda:[])
         self.flush_changes = flush_changes
         self.delegate_manager = None
         self.mt = get_model_thread()
@@ -323,11 +289,11 @@ position in the query.
         self.rsh.connect_signals( self )
 
         def get_columns():
-            self._columns = columns_getter()
-            self._static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
-            return self._columns
+            columns = columns_getter()
+            static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in columns]))
+            return columns, static_field_attributes
 
-        post( get_columns, self.setColumns )
+        post( get_columns, self.set_columns_and_static_field_attributes )
 #    # the initial collection might contain unflushed rows
         post( self._update_unflushed_rows )
 #    # in that way the number of rows is requested as well
@@ -457,7 +423,19 @@ position in the query.
         locker.unlock()
         self.setRowCount( rows )
 
+    def set_value(self, collection):
+        """
+        :param collection: the list of objects to display
+        """
+        if collection is None:
+            self.set_collection_getter(lambda:[])
+        else:
+            self.set_collection_getter(lambda:collection)
+
     def set_collection_getter( self, collection_getter ):
+        """
+        deprecated: use `set_value` instead
+        """
         self.logger.debug('set collection getter')
         self._collection_getter = collection_getter
         self.refresh()
@@ -562,21 +540,19 @@ position in the query.
         return self._columns
 
     @QtCore.pyqtSlot(object)
-    def setColumns( self, columns ):
+    def set_columns_and_static_field_attributes( self, columns_and_static_fa ):
         """Callback method to set the columns
 
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
         returned by the getColumns method of the ElixirAdmin class
         """
         assert object_thread( self )
+        self.beginResetModel()
         self.logger.debug( 'setColumns' )
-        self._columns = columns
+        self._columns, self._static_field_attributes = columns_and_static_fa
 
-        delegate_manager = delegates.DelegateManager()
-        delegate_manager.set_columns_desc( columns )
+        delegate_manager = delegates.DelegateManager(self._columns)
 
-        # set a delegate for the vertical header
-        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
         index = QtCore.QModelIndex()
         option = QtGui.QStyleOptionViewItem()
         self.settings.beginGroup( 'column_width' )
@@ -585,24 +561,12 @@ position in the query.
         # this loop can take a while to complete, so processEvents is called regulary
         #
         source_model = self.sourceModel()
-        source_model.setColumnCount(len(columns))
-        for i, c in enumerate( columns ):
+        source_model.setColumnCount(len(self._columns))
+        for i, c in enumerate( self._columns ):
             set_header_data = functools.partial(source_model.setHeaderData,
                                                 i,
                                                 Qt.Horizontal)
-            #
-            # Construct the delegate
-            #
             field_name = c[0]
-            self.logger.debug( 'creating delegate for %s' % field_name )
-            try:
-                delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
-            except Exception as e:
-                log_programming_error( logger, 
-                                       'Could not create delegate for field %s'%field_name,
-                                       exc_info = e )
-                delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
-            delegate_manager.insertColumnDelegate( i, delegate )
             #
             # Set the header data
             #
@@ -618,6 +582,7 @@ position in the query.
             minimal_widths = [ label_size.width() + 10 ]
             if 'minimal_column_width' in c[1]:
                 minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
+            delegate = delegate_manager.get_column_delegate(i)
             if c[1].get('editable', True) != False:
                 minimal_widths.append( delegate.sizeHint( option, index ).width() )
             column_width = c[1].get( 'column_width', None )
@@ -635,6 +600,7 @@ position in the query.
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
+        self.endResetModel()
             
     def setHeaderData( self, section, orientation, value, role ):
         assert object_thread( self )
@@ -735,9 +701,10 @@ position in the query.
         """
         assert object_thread( self )
         if not index.isValid() or \
-           not ( 0 <= index.row() <= self.rowCount( index ) ) or \
-           not ( 0 <= index.column() <= self.columnCount() ):
-            return py_to_variant()
+           not ( 0 <= index.row() < self.rowCount( index ) ) or \
+           not ( 0 <= index.column() < self.columnCount() ):
+            if role == Qt.UserRole:
+                return QtCore.QVariant({})
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -745,11 +712,6 @@ position in the query.
                 cache = self.display_cache
             data = self._get_row_data( index.row(), cache )
             value = data[index.column()]
-            if isinstance( value, DelayedProxy ):
-                value = value()
-                # store the created proxy, to prevent recreation of it
-                # afterwards.
-                data[index.column()] = value
             if isinstance( value, datetime.datetime ):
                 # Putting a python datetime into a QVariant and returning
                 # it to a PyObject seems to be buggy, therefore we chop the
@@ -783,7 +745,7 @@ position in the query.
             return self._static_field_attributes[index.column()][field_attribute]
         except KeyError:
             value = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-            if value == ValueLoading:
+            if value is ValueLoading:
                 return None
             return value.get(field_attribute, None)
 
@@ -855,24 +817,40 @@ position in the query.
                 direction = field_attributes.get( 'direction', None )
                 if direction in ( 'manytomany', 'onetomany' ):
                     value_changed = True
-                if value_changed:
-                    # update the model
-                    try:
-                        setattr( o, attribute, new_value )
-                        #
-                        # setting this attribute, might trigger a default function to return a value,
-                        # that was not returned before
-                        #
-                        self.admin.set_defaults( o, include_nullable_fields=False )
-                    except AttributeError as e:
-                        self.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
-                    except TypeError:
-                        # type error can be raised in case we try to set to a collection
-                        pass
+                if value_changed is not True:
+                    continue
+                #
+                # now check if this column is editable, since editable might be
+                # dynamic and change after every change of the object
+                #
+                fields = [attribute]
+                for fa in self.admin.get_dynamic_field_attributes(o, fields):
+                    # if editable is not in the field_attributes dict, it wasn't
+                    # dynamic but static, so earlier checks should have 
+                    # intercepted this change
+                    if fa.get('editable', True) == True:
+                        # interrupt inner loop, so outer loop can be continued
+                        break
+                else:
+                    continue
+                # update the model
+                try:
+                    setattr( o, attribute, new_value )
+                    #
+                    # setting this attribute, might trigger a default function to return a value,
+                    # that was not returned before
+                    #
+                    self.admin.set_defaults( o, include_nullable_fields=False )
+                except AttributeError as e:
+                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
+                except TypeError:
+                    # type error can be raised in case we try to set to a collection
+                    pass
                 changed = value_changed or changed
             if changed:
                 if self.flush_changes and self.validator.isValid( row ):
                     # save the state before the update
+                    was_persistent = self.admin.is_persistent(o)
                     try:
                         self.admin.flush( o )
                     except DatabaseError as e:
@@ -884,6 +862,8 @@ position in the query.
                     except KeyError:
                         pass
                     locker.unlock()
+                    if was_persistent is False:
+                        self.rsh.sendEntityCreate(self, o)
                 # update the cache
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
@@ -931,6 +911,9 @@ position in the query.
 
         return True
 
+    # @todo : it seems Qt regulary crashes when dataChanged is emitted
+    #         don't do the emit inside a slot, but rework the CollectionProxy
+    #         to behave as an action that yields all it's updates
     @QtCore.pyqtSlot(int, int, int)
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
@@ -943,6 +926,10 @@ position in the query.
     def flags( self, index ):
         """Returns the item flags for the given index"""
         assert object_thread( self )
+        if not index.isValid() or \
+           not ( 0 <= index.row() <= self.rowCount( index ) ) or \
+           not ( 0 <= index.column() <= self.columnCount() ):
+            return Qt.NoItemFlags
         flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self._get_field_attribute_value(index, 'editable'):
             flags = flags | Qt.ItemIsEditable
@@ -1164,28 +1151,19 @@ position in the query.
         self.endInsertRows()
         
     @model_function
-    def append_object( self, obj, flush = True ):
-        """Append an object to this collection, set the possible defaults and flush
-        the object if possible/needed
+    def append_object(self, obj):
+        """Append an object to this collection
         
         :param obj: the object to be added to the collection
-        :param flush: if this object should be flushed or not
-        :return: the new number of rows in the collection
+        
         """
         rows = self._rows
         row = max( rows - 1, 0 )
         self._rows_about_to_be_inserted_signal.emit( row, row )
         self.append( obj )
         # defaults might depend on object being part of a collection
-        self.admin.set_defaults( obj )
-        if flush:
+        if not self.admin.is_persistent(obj):
             self.unflushed_rows.add( row )
-            if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
-                self.admin.flush( obj )
-                try:
-                    self.unflushed_rows.remove( row )
-                except KeyError:
-                    pass
         for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
         self._rows = rows + 1

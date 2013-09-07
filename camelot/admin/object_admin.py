@@ -29,7 +29,6 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -237,7 +236,7 @@ be specified using the verbose_name attribute.
     list_action = OpenFormView()
     list_actions = []
     list_size = (600, 600)
-    form_size = (700, 500)
+    form_size = None
     form_actions = []
     related_toolbar_actions = []
     field_attributes = {}
@@ -309,7 +308,6 @@ be specified using the verbose_name attribute.
     def get_icon(self):
         return self.icon
 
-    @model_function
     def get_verbose_identifier(self, obj):
         """Create an identifier for an object that is interpretable
         for the user, eg : the primary key of an object.  This verbose identifier can
@@ -342,19 +340,18 @@ be specified using the verbose_name attribute.
     def get_delete_message(self, obj):
         return _('Are you sure you want to delete this')
 
-    @model_function
-    def get_form_actions( self, obj ):
+    def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.
         
-        :param obj: the object displayed in the form
+        :param obj: the object displayed in the form (Deprecated, use action
+            states to make the appearance of actions dynamic on a form)
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
     
-    @model_function
     def get_form_toolbar_actions( self, toolbar_area ):
         """
         By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
@@ -382,7 +379,6 @@ be specified using the verbose_name attribute.
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
     
-    @model_function
     def get_list_actions(self):
         return self.list_actions
     
@@ -394,7 +390,6 @@ be specified using the verbose_name attribute.
         """
         return self.list_action
 
-    @model_function
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
         object.  When obj is modified by the user, this function will be called to determine
@@ -620,7 +615,6 @@ be specified using the verbose_name attribute.
         table = structure_to_table( self.list_display )
         return table
     
-    @model_function
     def get_columns(self):
         """
         The columns to be displayed in the list view, returns a list of pairs
@@ -663,8 +657,7 @@ be specified using the verbose_name attribute.
             object for the application.
         """
         return self.app_admin.get_application_admin()
-    
-    @model_function
+
     def get_all_fields_and_attributes(self):
         """A dictionary of (field_name:field_attributes) for all fields that can
         possibly appear in a list or a form or for which field attributes have
@@ -691,23 +684,6 @@ be specified using the verbose_name attribute.
                 widget.setWindowState(QtCore.Qt.WindowMaximized)
             if self.form_state == constants.MINIMIZED:
                 widget.setWindowState(QtCore.Qt.WindowMinimized)
-        
-    def create_form_view(self, title, model, index, parent=None):
-        """Creates a Qt widget containing a form view, for a specific index in
-        a model.  Use this method to create a form view for a collection of objects,
-        the user will be able to use :kbd:`PgUp`/:kbd:`PgDown` to move to 
-        the next object.
-
-        :param title: the title of the form view
-        :param model: the data model to be used to fill the form view
-        :param index: which row in the data model to display
-        :param parent: the parent widget for the form
-        """
-        logger.debug('creating form view for index %s' % index)
-        from camelot.view.controls.formview import FormView
-        form = FormView(title, self, model, index)
-        self._apply_form_state( form )
-        return form
 
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object
@@ -774,127 +750,6 @@ be specified using the verbose_name attribute.
         for compounding_object in self.get_compounding_objects( object_instance ):
             self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
 
-    def create_object_form_view(self, title, object_getter, parent=None):
-        """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
-        will do nothing.
-
-        :param title: the title of the form view
-        :param object_getter: a function taking no arguments, and returning the object
-        :param parent: the parent widget for the form
-        """
-
-        def create_collection_getter( object_getter, object_cache ):
-            """Transform an object_getter into a collection_getter which
-            returns a collection with only the object returned by object
-            getter.
-
-            :param object_getter: a function that returns the object that 
-                should be in the collection
-            :param object_cache: a list that will be used to store the result
-                of object_getter, to prevent multiple calls of object_getter
-            """
-
-            def collection_getter():
-                if not object_cache:
-                    object_cache.append( object_getter() )
-                return object_cache
-
-            return collection_getter
-
-        model = self.model( self,
-                            create_collection_getter( object_getter, [] ),
-                            self.get_fields )
-        return self.create_form_view(title, model, 0, parent)
-
-    def create_new_view(admin, related_collection_proxy=None, parent=None):
-        """Create a Qt widget containing a form to create a new instance of the
-        entity related to this admin class
-
-        The returned class has an 'entity_created_signal' that will be fired
-        when a valid new entity was created by the form
-
-        :param collection_proxy: if specified, the object will be appended to
-        its underlying collection upon creation and removed from it upon
-        discarding.
-        """
-        from PyQt4 import QtCore
-        from camelot.view.controls.formview import FormView
-        from camelot.view.model_thread import post
-
-        class NewObjectCollectionProxy( CollectionProxy ):
-            """A CollectionProxy for creating new objects, the underlying collection
-            will always be filled with a single object."""
-
-            def __init__(self, related_collection_proxy, *args, **kwargs):
-                # set attributes before initializing NewObjectCollectionProxy,
-                # because this one contains posts that need these attributes
-                self._new_object = None
-                self._related_collection_proxy = related_collection_proxy
-                super(NewObjectCollectionProxy, self).__init__(*args, **kwargs)
-            
-            @property
-            def max_number_of_rows(self):
-                return 1
-
-            def get_new_object(self):
-                if not self._new_object:
-                    self._new_object = admin.entity()
-                    # Give the default fields their value
-                    admin.add( self._new_object )
-                    admin.set_defaults(self._new_object)
-                    if self._related_collection_proxy:
-                        self._related_collection_proxy.append_object( self._new_object, flush=False )
-                return self._new_object
-                
-            def get_collection(self):
-                return [self.get_new_object()]
-
-        model = NewObjectCollectionProxy( related_collection_proxy,
-                                          admin,
-                                          None,
-                                          admin.get_fields,
-                                          max_number_of_rows=1 )
-
-        validator = admin.get_validator(model)
-
-        class NewView( FormView ):
-
-            entity_created_signal = QtCore.pyqtSignal(object)
-
-            def __init__(self, parent):
-                super( NewView, self).__init__( title = _('New'), 
-                                                admin = admin, 
-                                                model = model, 
-                                                index = 0)
-
-                #
-                # every time data has been changed, it could become valid,
-                # when this is the case, it should be propagated
-                #
-                model.dataChanged.connect( self.dataChanged )
-
-            def emit_if_valid(self, valid):
-                if valid:
-
-                    def create_instance_getter(new_object):
-                        return lambda:new_object[0]
-
-                    self.entity_created_signal.emit( model.get_new_object )
-
-            @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
-            def dataChanged(self, _index1, _index2):
-
-                def validate():
-                    return validator.isValid(0)
-
-                post(validate, self.emit_if_valid)
-
-        form = NewView( parent )
-        admin._apply_form_state( form )
-        if hasattr(admin, 'form_size'):
-            form.setMinimumSize(admin.form_size[0], admin.form_size[1])
-        return form
-
     def primary_key( self, obj ):
         """Get the primary key of an object
         :param obj: the object to get the primary key from
@@ -942,7 +797,6 @@ be specified using the verbose_name attribute.
         """:return: True if the object has a persisted state, False otherwise"""
         return False
     
-    @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()

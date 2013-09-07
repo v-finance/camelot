@@ -210,9 +210,16 @@ return immediately and the :meth:`model_run` will not be blocked.
 
     a :keyword:`boolean` indicating if the ActionStep is blocking, defaults
     to :const:`True`
+    
+.. attribute:: cancelable
+
+    a :keyword:`boolean` indicating if the ActionStep is allowed to raise
+    a `CancelRequest` exception when yielded, defaults to :const:`True`
+
     """
 
     blocking = True
+    cancelable = True
             
     def gui_run( self, gui_context ):
         """This method is called in the *GUI thread* upon execution of the

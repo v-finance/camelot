@@ -24,7 +24,6 @@
 
 """form view"""
 
-import functools
 import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
@@ -39,6 +38,7 @@ from camelot.view.model_thread import post
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view import register
+from .delegates.delegatemanager import DelegateManager
 
 class FormEditors( object ):
     """A class that holds the editors used on a form
@@ -47,7 +47,7 @@ class FormEditors( object ):
     option = None
     bold_font = None
     
-    def __init__( self, columns, widget_mapper, delegate, admin ):
+    def __init__( self, columns, widget_mapper, admin ):
         if self.option == None:
             self.option = QtGui.QStyleOptionViewItem()
             # set version to 5 to indicate the widget will appear on a
@@ -71,7 +71,7 @@ class FormEditors( object ):
         index = self._index[field_name]
         model = self._widget_mapper.model()
         delegate = self._widget_mapper.itemDelegate()
-        model_index = model.index( self._widget_mapper.currentIndex(), index )
+        model_index = model.createIndex(0, index, 0)
         widget_editor = delegate.createEditor(
             parent,
             self.option,
@@ -111,11 +111,12 @@ class FormWidget(QtGui.QWidget):
 
     changed_signal = QtCore.pyqtSignal( int )
 
-    def __init__(self, parent, admin):
+    def __init__(self, admin, model, form_display, columns, parent):
         QtGui.QWidget.__init__(self, parent)
         self._admin = admin
         widget_mapper = QtGui.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
+        widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )
         if self._admin.get_save_mode()=='on_leave':
             widget_mapper.setSubmitPolicy(QtGui.QDataWidgetMapper.ManualSubmit)
@@ -123,60 +124,50 @@ class FormWidget(QtGui.QWidget):
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
         self._index = 0
-        self._model = None
         self._form = None
         self._columns = None
-        self._delegate = None
-        self.setLayout(widget_layout)      
-
-    def get_model(self):
-        return self._model
+        self.setLayout(widget_layout)
+        self.set_model(model)
+        self.create_widgets(widget_mapper, columns, form_display, admin)
 
     def set_model(self, model):
-        self._model = model
-        self._model.dataChanged.connect( self._data_changed )
-        self._model.layoutChanged.connect( self._layout_changed )
-        self._model.item_delegate_changed_signal.connect( self._item_delegate_changed )
-        self._model.setObjectName( 'model' )
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
-            widget_mapper.setModel( model )
-            register.register( model, widget_mapper )
-
-        def get_columns_and_form():
-            return (self._model.getColumns(), self._admin.get_form_display())
-
-        post(get_columns_and_form, self._set_columns_and_form)
+        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        if model is not None:
+            model.dataChanged.connect(self._data_changed)
+            model.layoutChanged.connect(self._layout_changed)
+            model.modelReset.connect(self._model_reset)
+            if widget_mapper is not None:
+                widget_mapper.setModel( model )
+                register.register( model, widget_mapper )
+                
+    def get_model(self):
+        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        if widget_mapper is not None:
+            return widget_mapper.model()
 
     def clear_mapping(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
+        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
         if widget_mapper:
             widget_mapper.clearMapping()
 
+    @QtCore.pyqtSlot()
+    def _model_reset(self):
+        self._layout_changed()
+            
     @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex  )
     def _data_changed(self, index_from, index_to):
         #@TODO: only revert if this form is in the changed range
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
-            widget_mapper.revert()
-            self.changed_signal.emit( widget_mapper.currentIndex() )
+        self._layout_changed()
 
     @QtCore.pyqtSlot()
     def _layout_changed(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
+            # after a layout change, the row we want to display might be there
+            if widget_mapper.currentIndex() < 0:
+                widget_mapper.setCurrentIndex(self._index)
             widget_mapper.revert()
             self.changed_signal.emit( widget_mapper.currentIndex() )
-
-    @QtCore.pyqtSlot()
-    def _item_delegate_changed(self):
-        from camelot.view.controls.delegates.delegatemanager import \
-            DelegateManager
-        self._delegate = self._model.getItemDelegate()
-        self._delegate.setObjectName('delegate')
-        assert self._delegate != None
-        assert isinstance(self._delegate, DelegateManager)
-        self._create_widgets()
 
     @QtCore.pyqtSlot(int)
     def current_index_changed( self, index ):
@@ -197,42 +188,23 @@ class FormWidget(QtGui.QWidget):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.submit()
-        
-    @QtCore.pyqtSlot(tuple)
-    def _set_columns_and_form(self, columns_and_form ):
-        self._columns, self._form = columns_and_form
-        self._create_widgets()
 
-    def _create_widgets(self):
+    def create_widgets(self, widget_mapper, columns, form_display, admin):
         """Create value and label widgets"""
-        #
-        # Dirty trick to make form views work during unit tests, since unit
-        # tests have no event loop running, so the delegate will never be set,
-        # so we get it and are sure it will be there if we are running without
-        # threads
-        #
-        if not self._delegate:
-            self._delegate = self._model.getItemDelegate()
-        #
-        # end of dirty trick
-        #
-        # only if all information is available, we can start building the form
-        if not (self._form and self._columns and self._delegate):
-            return
-        
-        widgets = {}
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if not widget_mapper:
-            return
         LOGGER.debug( 'begin creating widgets' )
-        widget_mapper.setItemDelegate(self._delegate)
-        widgets = FormEditors( self._columns, widget_mapper, self._delegate, self._admin )
+        widgets = FormEditors( columns, widget_mapper, admin )
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
-        self.layout().insertWidget(0, self._form.render( widgets, self, True) )
+        self.layout().insertWidget(0, form_display.render( widgets, self, True) )
+        # give focus to the first editor in the form that can receive focus
+        for i in range(10):
+            first_widget = widget_mapper.mappedWidgetAt(i)
+            if first_widget is None:
+                break
+            if first_widget.focusPolicy() != Qt.NoFocus:
+                first_widget.setFocus(Qt.PopupFocusReason)
+                break
         LOGGER.debug( 'done' )
-        #self._widget_layout.setContentsMargins(7, 7, 7, 7)
-
 
 class FormView(AbstractView):
     """A FormView is the combination of a FormWidget, possible actions and menu
@@ -243,7 +215,8 @@ class FormView(AbstractView):
 
     form_widget = FormWidget
 
-    def __init__(self, title, admin, model, index, parent = None):
+    def __init__(self, title, admin, model, form_display, columns,
+                 index, parent = None):
         AbstractView.__init__( self, parent )
 
         layout = QtGui.QVBoxLayout()
@@ -259,10 +232,10 @@ class FormView(AbstractView):
         self.title_prefix = title
         self.refresh_action = Refresh()
 
-        form = FormWidget(self, admin)
+        form = FormWidget(admin=admin, model=model, form_display=form_display,
+                          columns=columns, parent=self)
         form.setObjectName( 'form' )
         form.changed_signal.connect( self.update_title )
-        form.set_model(model)
         form.set_index(index)
         form_and_actions_layout.addWidget(form)
 
@@ -273,7 +246,6 @@ class FormView(AbstractView):
         self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper, 
                                                          'widget_mapper' )
         self.setLayout( layout )
-
         self.change_title(title)
 
         if hasattr(admin, 'form_size') and admin.form_size:
@@ -281,18 +253,6 @@ class FormView(AbstractView):
 
         self.accept_close_event = False
 
-        get_actions = admin.get_form_actions
-        post( functools.update_wrapper( functools.partial( get_actions, 
-                                                           None ),
-                                        get_actions ),
-              self.set_actions )
-
-        get_toolbar_actions = admin.get_form_toolbar_actions
-        post( functools.update_wrapper( functools.partial( get_toolbar_actions, 
-                                                           Qt.TopToolBarArea ),
-                                        get_toolbar_actions ),
-              self.set_toolbar_actions )
-                
     @QtCore.pyqtSlot()
     def refresh(self):
         """Refresh the data in the current view"""

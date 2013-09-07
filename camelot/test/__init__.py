@@ -31,6 +31,9 @@ as /camelot.
 import unittest
 import six
 
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
+
 has_programming_error = False
 
 _application_ = []
@@ -49,7 +52,6 @@ def get_application():
             QApplication.setStyle('cleanlooks')
             application = QApplication(sys.argv)
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
-            from PyQt4 import QtCore
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
             #try:
             #    from PyTitan import QtnOfficeStyle
@@ -76,8 +78,6 @@ class ModelThreadTestCase(unittest.TestCase):
         """
         import sys
         import os
-        from PyQt4 import QtGui, QtCore
-        from PyQt4.QtCore import Qt
         from PyQt4.QtGui import QPixmap
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
@@ -97,10 +97,9 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        self.process()
         QtGui.QApplication.flush()
+        widget.repaint()
         inner_pixmap = QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
-        inner_image = inner_pixmap.toImage()
         # add a border to the image
         border = 4
         outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
@@ -168,8 +167,8 @@ class ApplicationViewsTest(ModelThreadTestCase):
         from camelot.view.mainwindow import MainWindow
         from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)          
-        app_admin = self.get_application_admin()        
+        QtCore.QCoreApplication.installTranslator(translator)
+        app_admin = self.get_application_admin()
         widget = MainWindow(app_admin)
         self.grab_widget(widget, subdir='applicationviews')
         
@@ -216,14 +215,8 @@ class EntityViewsTest(ModelThreadTestCase):
                 raise Exception()
             
         app_admin = self.get_application_admin()
-        return [app_admin.get_entity_admin(c) for c in classes if app_admin.get_entity_admin(c)]
+        return [app_admin.get_related_admin(c) for c in classes if app_admin.get_related_admin(c)]
 
-    def test_select_view(self):
-        for admin in self.get_admins():
-            widget = admin.create_select_view()
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
-            
     def test_table_view(self):
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
@@ -233,12 +226,27 @@ class EntityViewsTest(ModelThreadTestCase):
             self.assertFalse( has_programming_error )
 
     def test_new_view(self):
+        from camelot.admin.entity_admin import EntityAdmin
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        from ..view.action_steps.gui import OpenFormView
         for admin in self.get_admins():
-            widget = admin.create_new_view()
+            # create an object or take one from the db
+            obj = None
+            if isinstance(admin, EntityAdmin):
+                obj = admin.get_query().first()
+            if obj is None:
+                obj = admin.entity()
+            # create a model
+            model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
+            model._add_data(admin.get_fields(), 0, obj)
+            # create a form view
+            form_view_step = OpenFormView([obj], admin)
+            widget = form_view_step.render(model, 0)
+            mapper = widget.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+            mapper.revert()
+            self.process()
             if admin.form_state != None:
                 # virtually maximize the widget
                 widget.setMinimumSize(1200, 800)
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             self.assertFalse( has_programming_error )
-
-

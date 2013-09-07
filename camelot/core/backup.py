@@ -251,7 +251,7 @@ class BackupMechanism(object):
         from_meta_data.bind = from_engine
         from_meta_data.reflect()
         
-        yield (0, 0, _('Analyzing database structure'))     
+        yield (0, 0, _('Analyzing database structure'))
         to_meta_data = MetaData()
         to_meta_data.bind = to_engine
         to_meta_data.reflect()

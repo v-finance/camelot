@@ -28,24 +28,20 @@ import six
 
 from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 
-from camelot.view.art import Icon
+from ....admin.action import field_action
 from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
+from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
-from camelot.core.utils import create_constant_function
 
 from .customeditor import CustomEditor, set_background_color_palette
 
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
-
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
-
-    new_icon = Icon('tango/16x16/actions/document-new.png')
-    search_icon = Icon('tango/16x16/actions/system-search.png')
 
     arrow_down_key_pressed = QtCore.pyqtSignal()
 
@@ -72,11 +68,15 @@ class Many2OneEditor( CustomEditor ):
         def columnCount(self, index=None):
             return 1
 
-    def __init__(self, 
-                 admin=None, 
-                 parent=None, 
-                 editable=True, 
-                 field_name='manytoone', 
+    def __init__(self,
+                 admin=None,
+                 parent=None,
+                 editable=True,
+                 field_name='manytoone',
+                 actions = [field_action.ClearObject(),
+                            field_action.SelectObject(),
+                            field_action.NewObject(),
+                            field_action.OpenObject()],
                  **kwargs):
         """:param entity_admin : The Admin interface for the object on the one
         side of the relation
@@ -86,35 +86,14 @@ class Many2OneEditor( CustomEditor ):
                             QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
-        self.entity_set = False
-        self._editable = editable
+        self.new_value = None
         self._entity_representation = ''
-        self.entity_instance_getter = None
+        self.obj = None
         self._last_highlighted_entity_getter = None
 
         self.layout = QtGui.QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
-
-        # Search button
-        self.search_button = QtGui.QToolButton()
-        self.search_button.setAutoRaise(True)
-        self.search_button.setFocusPolicy(Qt.ClickFocus)
-        self.search_button.setFixedHeight(self.get_height())
-        self.search_button.clicked.connect(self.searchButtonClicked)
-        self.search_button.setIcon(
-            Icon('tango/16x16/actions/edit-clear.png').getQIcon()
-        )
-        self.search_button.setToolTip(six.text_type(_('clear')))
-
-        # Open button
-        self.open_button = QtGui.QToolButton()
-        self.open_button.setAutoRaise(True)
-        self.open_button.setFocusPolicy(Qt.ClickFocus)
-        self.open_button.setFixedHeight(self.get_height())
-        self.open_button.clicked.connect(self.openButtonClicked)
-        self.open_button.setIcon( self.new_icon.getQIcon() )
-        self.open_button.setToolTip(six.text_type(_('new')))
 
         # Search input
         self.search_input = DecoratedLineEdit(self)
@@ -123,7 +102,7 @@ class Many2OneEditor( CustomEditor ):
         self.search_input.set_minimum_width( 20 )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
         # suppose garbage was entered, we need to refresh the content
-        self.search_input.editingFinished.connect( self.search_input_editing_finished )
+        self.search_input.editingFinished.connect(self.search_input_editing_finished)
         self.setFocusProxy(self.search_input)
 
         # Search Completer
@@ -134,29 +113,22 @@ class Many2OneEditor( CustomEditor ):
         self.completer.setCompletionMode(
             QtGui.QCompleter.UnfilteredPopupCompletion
         )
-        #self.completer.activated.connect(self.completionActivated)
-        #self.completer.highlighted.connect(self.completion_highlighted)
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
         self.search_input.setCompleter(self.completer)
 
         # Setup layout
         self.layout.addWidget(self.search_input)
-        self.layout.addWidget(self.search_button)
-        self.layout.addWidget(self.open_button)
         self.setLayout(self.layout)
+        self.add_actions(actions, self.layout)
+        get_signal_handler().connect_signals(self)
 
-    def set_field_attributes(self, editable = True, 
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        self.set_editable(editable)
-        set_background_color_palette( self.search_input, background_color )
-        self.search_input.setToolTip(six.text_type(tooltip or ''))
-
-    def set_editable(self, editable):
-        self._editable = editable
-        self.search_input.setEnabled(editable)
-        self.search_button.setEnabled(editable)
+    def set_field_attributes(self, **fa):
+        self.field_attributes = fa
+        set_background_color_palette(self.search_input, fa.get('background_color'))
+        self.search_input.setToolTip(fa.get('tooltip', '') or '')
+        self.search_input.setEnabled(fa.get('editable', False))
+        self.update_actions()
 
     def on_arrow_down_key_pressed(self):
         self.arrow_down_key_pressed.emit()
@@ -178,15 +150,15 @@ class Many2OneEditor( CustomEditor ):
     def search_completions(self, text):
         """Search for object that match text, to fill the list of completions
 
-        :return: a list of tuples of (object_representation, object_getter)
+        :return: a list of tuples of (object_representation, object)
         """
         search_decorator = create_entity_search_query_decorator(
             self.admin, text
         )
         if search_decorator:
             sresult = [
-                (six.text_type(e), create_constant_function(e))
-                for e in search_decorator(self.admin.entity.query).limit(20)
+                (six.text_type(e), e)
+                for e in search_decorator(self.admin.get_query()).limit(20)
             ]
             return text, sresult
         return text, []
@@ -199,182 +171,84 @@ class Many2OneEditor( CustomEditor ):
         self.completer.complete()
 
     def completionActivated(self, index):
-        object_getter = index.data(Qt.EditRole)
-        self.setEntity(variant_to_py(object_getter))
+        obj = index.data(Qt.EditRole)
+        self.set_object(variant_to_py(obj))
 
     def completion_highlighted(self, index ):
-        object_getter = index.data(Qt.EditRole)
-        pyob = variant_to_py(object_getter)
-        self._last_highlighted_entity_getter = pyob
+        obj = index.data(Qt.EditRole)
+        self._last_highlighted_entity_getter = variant_to_py(obj)
 
-    def openButtonClicked(self):
-        if self.entity_set:
-            return self.createFormView()
-        else:
-            return self.createNew()
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_update( self, sender, entity ):
+        if entity is self.get_value():
+            self.set_object(entity, False)
 
-    def createSelectView(self):
-        from camelot.view.action_steps.select_object import SelectDialog
-        select_dialog = SelectDialog( self.admin, self )
-        select_dialog.exec_()
-        if select_dialog.object_getter != None:
-            self.select_object( select_dialog.object_getter )
-            
-    def returnPressed(self):
-        if not self.entity_set:
-            self.createSelectView()
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_delete( self, sender, entity ):
+        if entity is self.get_value():
+            self.set_object(None, False)
 
-    def searchButtonClicked(self):
-        if self.entity_set:
-            self.setEntity(lambda:None)
-        else:
-            self.createSelectView()
-
-    def trashButtonClicked(self):
-        self.setEntity(lambda:None)
-
-    def createNew(self):
-        assert object_thread( self )
-
-        @model_function
-        def get_has_subclasses():
-            return len(self.admin.get_subclass_tree())
-
-        post(get_has_subclasses, self.show_new_view)
-
-    def show_new_view(self, has_subclasses):
-        assert object_thread( self )
-        from camelot.view.workspace import show_top_level
-        selected = QtGui.QDialog.Accepted
-        admin = self.admin
-        if has_subclasses:
-            from camelot.view.controls.inheritance import SubclassDialog
-            select_subclass = SubclassDialog(self, self.admin)
-            select_subclass.setWindowTitle(_('select'))
-            selected = select_subclass.exec_()
-            admin = select_subclass.selected_subclass
-        if selected:
-            form = admin.create_new_view()
-            form.entity_created_signal.connect( self.select_object )
-            show_top_level( form, self )
-
-    def createFormView(self):
-        if self.entity_instance_getter:
-
-            def get_admin_and_title():
-                obj = self.entity_instance_getter()
-                admin = self.admin.get_related_admin(obj.__class__)
-                return admin, ''
-
-            post(get_admin_and_title, self.show_form_view)
-
-    def show_form_view(self, admin_and_title):
-        from camelot.view.workspace import show_top_level
-        admin, title = admin_and_title
-
-        def create_collection_getter(instance_getter):
-            return lambda:[instance_getter()]
-
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-
-        model = CollectionProxy(
-            admin,
-            create_collection_getter(self.entity_instance_getter),
-            admin.get_fields
-        )
-        model.dataChanged.connect(self.dataChanged)
-        form = admin.create_form_view(title, model, 0)
-        # @todo : dirty trick to keep reference
-        #self.__form = form
-        show_top_level( form, self )
-
-    def dataChanged(self, index1, index2):
-        self.setEntity(self.entity_instance_getter, False)
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_create( self, sender, entity ):
+        if entity is self.new_value:
+            self.new_value = None
+            self.set_object(entity)
 
     def search_input_editing_finished(self):
-        if not self.entity_set:
+        if self.obj is None:
             # Only try to 'guess' what the user meant when no entity is set
             # to avoid inappropriate removal of data, (eg when the user presses
             # Esc, editingfinished will be called as well, and we should not
             # overwrite the current entity set)
             if self._last_highlighted_entity_getter:
-                self.setEntity(self._last_highlighted_entity_getter)
-            elif not self.entity_set and self.completions_model.rowCount()==1:
+                self.set_object(self._last_highlighted_entity_getter)
+            elif self.completions_model.rowCount()==1:
                 # There is only one possible option
                 index = self.completions_model.index(0,0)
                 entity_getter = variant_to_py(index.data(Qt.EditRole))
-                self.setEntity(entity_getter)
+                self.set_object(entity_getter)
         self.search_input.setText(self._entity_representation or u'')
 
     def set_value(self, value):
         """:param value: either ValueLoading, or a function that returns None
         or the entity to be shown in the editor"""
         self._last_highlighted_entity_getter = None
+        self.new_value = None
         value = CustomEditor.set_value(self, value)
-        if value:
-            self.setEntity(value, propagate = False)
+        self.set_object(value, propagate = False)
+        self.update_actions()
 
     def get_value(self):
         """:return: a function that returns the selected entity or ValueLoading
         or None"""
         value = CustomEditor.get_value(self)
-        if not value:
-            value = self.entity_instance_getter
-        return value
+        if value is not None:
+            return value
+        return self.obj
 
     @QtCore.pyqtSlot(tuple)
     def set_instance_representation(self, representation_and_propagate):
         """Update the gui"""
-        ((desc, pk), propagate) = representation_and_propagate
+        (desc, propagate) = representation_and_propagate
         self._entity_representation = desc
         self.search_input.setText(desc or u'')
-
-        if pk != False:
-            self.open_button.setIcon(
-                Icon('tango/16x16/places/folder.png').getQIcon()
-            )
-            self.open_button.setToolTip(six.text_type(_('open')))
-            self.open_button.setEnabled(True)
-
-            self.search_button.setIcon(
-                Icon('tango/16x16/actions/edit-clear.png').getQIcon()
-            )
-            self.search_button.setToolTip(six.text_type(_('clear')))
-            self.entity_set = True
-        else:
-            self.open_button.setIcon( self.new_icon.getQIcon() )
-            self.open_button.setToolTip(six.text_type(_('new')))
-            self.open_button.setEnabled(self._editable)
-
-            self.search_button.setIcon( self.search_icon.getQIcon() )
-            self.search_button.setToolTip(_('Search'))
-            self.entity_set = False
 
         if propagate:
             self.editingFinished.emit()
 
-    def setEntity(self, entity_instance_getter, propagate=True):
-        self.entity_instance_getter = entity_instance_getter
-        
-        def get_instance_representation( entity_instance_getter, propagate ):
-            """Get a representation of the instance
+    def set_object(self, obj, propagate=True):
+        self.obj = obj
 
-            :return: (unicode, pk) its unicode representation and its primary
-            key or ('', False) if the instance was None"""
-            
-            entity = entity_instance_getter()
-            if entity and hasattr(entity, 'id'):
-                return ((six.text_type(entity), entity.id), propagate)
-            elif entity:
-                return ((six.text_type(entity), False), propagate)
-            return ((None, False), propagate)
+        def get_instance_representation( obj, propagate ):
+            """Get a representation of the instance"""
+            if obj is not None:
+                return (unicode(obj), propagate)
+            return (None, propagate)
 
         post( update_wrapper( partial( get_instance_representation,
-                                       entity_instance_getter,
+                                       obj,
                                        propagate ),
-                              get_instance_representation ), 
+                              get_instance_representation ),
               self.set_instance_representation)
 
-    def select_object( self, entity_instance_getter ):
-        self.setEntity(entity_instance_getter)
-
+    selected_object = property(fset=set_object)

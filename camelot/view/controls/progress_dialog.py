@@ -56,7 +56,9 @@ to display a progress dialog until my_function has finished::
         QtGui.QProgressDialog.__init__( self, QtCore.QString(), QtCore.QString(), 0, 0 )
         label = QtGui.QLabel( six.text_type(name) )
         progress_bar = QtGui.QProgressBar()
+        progress_bar.setObjectName('progress_bar')
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        cancel_button.setObjectName( 'cancel' )
         ok_button = QtGui.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.clicked.connect( self.accept )
@@ -79,14 +81,20 @@ to display a progress dialog until my_function has finished::
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
         button_layout.addStretch()
+        layout.addWidget( details )
         layout.addLayout( button_layout )
-        layout.addWidget( details )        
         self.setLayout( layout )
         # show immediately, to prevent a pop up before another window
         # opened in an action_step
         self.show() 
         #QtCore.QTimer.singleShot( 1000, self.show )
-            
+    
+    # This method is overwritten,to undo the overwrite of this method
+    # in QProgressDialog, as the QProgressDialot then manually relayouts
+    # the dialog instead of using the normal layouts
+    def resizeEvent(self, event):
+        return QtGui.QWidget.resizeEvent(self, event)
+    
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
         :param text: a string
@@ -111,9 +119,16 @@ to display a progress dialog until my_function has finished::
             
     def set_ok_hidden( self, hidden = True ):
         ok_button = self.findChild( QtGui.QPushButton, 'ok' )
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
         if ok_button:
             ok_button.setHidden( hidden )
-        
+            progress_bar.setHidden(not hidden)
+
+    def set_cancel_hidden( self, hidden = True ):
+        cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
+        if cancel_button:
+            cancel_button.setHidden( hidden )
+
     @QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot()
     def finished(self, success=True):
@@ -145,26 +160,43 @@ class SplashProgress( QtGui.QSplashScreen ):
         super( SplashProgress, self ).__init__(pixmap)
         # allow the splash screen to keep the application alive, even
         # if the last dialog was closed
+        layout = QtGui.QVBoxLayout()
+        progress_bar = QtGui.QProgressBar(parent=self)
+        progress_bar.setObjectName('progress_bar')
+        layout.addStretch(1)
+        layout.addWidget(progress_bar)
         self.setAttribute(Qt.WA_QuitOnClose)
         self.setWindowTitle(' ')
         # support transparency
-        if pixmap.mask(): self.setMask(pixmap.mask()) 
+        if pixmap.mask(): self.setMask(pixmap.mask())
+        self.setLayout(layout)
         
-    def setMaximum( self, _maximum ):
-        pass
+    def setMaximum( self, maximum ):
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar.setMaximum(maximum)
     
-    def setValue( self, _value ):
-        pass
+    def setValue( self, value ):
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar.setValue(value)
     
     def setLabelText( self, text ):
-        return
-        self.showMessage( text, QtCore.Qt.AlignTop, QtCore.Qt.white )
-        
+        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar.setFormat(text)
+
     def wasCanceled( self ):
         return False
         
     def clear_details( self ):
         pass
     
-    def add_detail( self ):
-        pass   
+    def add_detail( self, text ):
+        self.setLabelText(text)
+    
+    def set_cancel_hidden( self, hidden = True ):
+        pass
+    
+    def set_ok_hidden( self, hidden = True ):
+        pass
+    
+    def exec_(self):
+        pass
