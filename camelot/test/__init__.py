@@ -208,7 +208,7 @@ class EntityViewsTest(ModelThreadTestCase):
         from sqlalchemy.orm.mapper import _mapper_registry
          
         classes = []
-        for mapper in _mapper_registry.keys():
+        for mapper in six.iterkeys(_mapper_registry):
             if hasattr(mapper, 'class_'):
                 classes.append( mapper.class_ )
             else:

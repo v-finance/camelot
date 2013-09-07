@@ -279,7 +279,7 @@ doc = """Field types handled through introspection :
 """ + row_separator + """
 """
 
-field_types = sorted( _sqlalchemy_to_python_type_.keys(),
+field_types = sorted( six.iterkeys(_sqlalchemy_to_python_type_),
                       key = lambda ft:ft.__name__ )
 
 for field_type in field_types:

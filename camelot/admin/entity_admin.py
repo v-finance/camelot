@@ -124,7 +124,7 @@ It has additional class attributes that customise its behaviour.
         try:
             self.mapper = orm.class_mapper(self.entity)
         except UnmappedClassError as exception:
-            mapped_entities = [six.text_type(m) for m in _mapper_registry.keys()]
+            mapped_entities = [six.text_type(m) for m in six.iterkeys(_mapper_registry)]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
@@ -242,7 +242,7 @@ It has additional class attributes that customise its behaviour.
                 side of a relation.  Use the name of the class to avoid
                 circular dependencies"""
                 if isinstance(target, six.string_types):
-                    for mapped_class in _mapper_registry.keys():
+                    for mapped_class in six.iterkeys(_mapper_registry):
                         if mapped_class.class_.__name__ == target:
                             return mapped_class.class_
                     raise Exception('No mapped class found for target %s'%target)

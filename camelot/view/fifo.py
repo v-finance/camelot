@@ -65,7 +65,7 @@ class Fifo(object):
         :return: a interator of the row numbers for which this fifo
         had data
         """
-        return self.data_by_rows.keys()
+        return six.iterkeys(self.data_by_rows)
     
     def shallow_copy(self, max_entries):
         """Copy the cache without the actual data but with the references

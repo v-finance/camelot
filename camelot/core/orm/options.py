@@ -84,6 +84,8 @@ For examples, please refer to the examples and unit tests.
 
 from sqlalchemy import types
 
+import six
+
 from . statements import ClassMutator
 
 DEFAULT_AUTO_PRIMARYKEY_NAME = "id"
@@ -116,7 +118,7 @@ options_defaults = dict(
     table_options={},
 )
 
-valid_options = list( options_defaults.keys() ) + [
+valid_options = list( six.iterkeys(options_defaults) ) + [
     'metadata',
     'session',
 ]
