@@ -89,7 +89,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
     @QtCore.pyqtSlot( int )
     def _current_index_changed( self, current_index ):
         assert object_thread( self )
-        for tab_index, (first_column, last_column) in self.groups.items():
+        for tab_index, (first_column, last_column) in six.iteritems(self.groups):
             for column_index in range( first_column, last_column ):
                 self.table_widget.setColumnHidden( column_index,
                                                    tab_index != current_index )
@@ -138,7 +138,7 @@ and above the text.
         """On timer event, save changed column widths to the model
         """
         assert object_thread( self )
-        for logical_index, new_width in self._columns_changed.items():
+        for logical_index, new_width in six.iteritems(self._columns_changed):
             if self.horizontalHeader().isSectionHidden( logical_index ):
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0

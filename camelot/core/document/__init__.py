@@ -26,6 +26,8 @@
 
 from sqlalchemy import inspect, orm
 
+import six
+
 from ...admin.entity_admin import EntityAdmin
 
 def document_classes(classes):
@@ -61,7 +63,7 @@ def document_classes(classes):
         
         mapper = inspect(model)
         
-        for key, value in mapper.column_attrs.items():
+        for key, value in six.iteritems(mapper.column_attrs):
             doc = document_property( cls, key, value )
             if doc:
                 documented_fields.append( doc )

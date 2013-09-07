@@ -33,6 +33,7 @@ should be kept alive.
 '''
 
 import logging
+import six
 
 from ..core.qt import QtCore, valid_variant, variant_to_py
 
@@ -90,6 +91,6 @@ def dump_register( logger ):
     """Method to see the currently monitored objects, for debugging
     purposes"""
     if _global_register_:
-        for k,v in _global_register_._registed_by_monitor_key.items():
+        for k,v in six.iteritems(_global_register_._registed_by_monitor_key):
             logger.warn( '%s : %s'%( k, v ) )
 

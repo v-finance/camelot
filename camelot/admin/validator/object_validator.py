@@ -26,6 +26,8 @@ from copy import copy
 import logging
 logger = logging.getLogger('camelot.admin.validator.object_validator')
 
+import six
+
 from PyQt4 import QtCore
 
 from camelot.view.fifo import Fifo
@@ -108,7 +110,7 @@ class ObjectValidator(QtCore.QObject):
         messages = []
         fields_and_attributes = dict(self.admin.get_columns())
         fields_and_attributes.update(dict(self.admin.get_fields()))
-        for field, attributes in fields_and_attributes.items():
+        for field, attributes in six.iteritems(fields_and_attributes):
             # if the field was not editable, don't waste any time
             if attributes['editable']:
                 # if the field, is nullable, don't waste time getting its value

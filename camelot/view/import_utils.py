@@ -114,7 +114,7 @@ class ColumnMapping( object ):
     def match_names( self ):
         """Use the data in the current row to determine field names"""
         field_choices = [ (f,entity_fa['name']) for f,entity_fa in 
-                          self.admin.get_all_fields_and_attributes().items() 
+                          six.iteritems(self.admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True) ]
         # create a dict that  will be used to search field names
         matches = dict( (six.text_type(verbose_name).lower(), fn)

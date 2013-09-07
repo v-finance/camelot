@@ -82,7 +82,7 @@ class FieldLabel(UserTranslatableLabel):
                 return value.__name__
             return six.text_type(value)
         
-        return [Attribute(key,attribute_value_to_string(key, value)) for key,value in self._field_attributes.items()]
+        return [Attribute(key,attribute_value_to_string(key, value)) for key,value in six.iteritems(self._field_attributes)]
     
     @QtCore.pyqtSlot()
     def show_field_attributes(self):

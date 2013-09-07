@@ -66,7 +66,7 @@ class EntityDescriptor(object):
         self.counter = EntityDescriptor.global_counter
         EntityDescriptor.global_counter += 1
         # set default value for other options
-        for key, value in options.options_defaults.items():
+        for key, value in six.iteritems(options.options_defaults):
             if isinstance( value, dict ):
                 value = value.copy()
             setattr( self, key, value )        
@@ -78,7 +78,7 @@ class EntityDescriptor(object):
         #
         # verify if a primary key was set manually
         #
-        for key, value in entity.__dict__.items():
+        for key, value in six.iteritems(entity.__dict__):
             if isinstance( value, schema.Column ):
                 if value.primary_key:
                     self.has_pk = True
@@ -255,7 +255,7 @@ class EntityMeta( DeclarativeMeta ):
         if '_descriptor' in dict_:
             descriptor = dict_['_descriptor']
             descriptor.set_entity( cls )
-            for key, value in dict_.items():
+            for key, value in six.iteritems(dict_):
                 if isinstance( value, EntityBuilder ):
 		    value.attach( cls, key )
 		    descriptor.add_builder(value)
@@ -313,7 +313,7 @@ def dict_to_entity( entity, data ):
 
     mapper = orm.object_mapper( entity )
 
-    for key, value in data.items():
+    for key, value in six.iteritems(data):
         if isinstance( value, dict ):
             dbvalue = getattr( entity, key )
             rel_class = mapper.get_property(key).mapper.class_
@@ -356,7 +356,7 @@ def entity_to_dict( entity, deep = {}, exclude = [], deep_primary_key=False ):
                       if isinstance(p, orm.properties.ColumnProperty)]
     data = dict([(name, getattr(entity, name))
                  for name in col_prop_names if name not in exclude])
-    for rname, rdeep in deep.items():
+    for rname, rdeep in six.iteritems(deep):
         dbdata = getattr(entity, rname)
         prop = mapper.get_property( rname )
         fks = prop.remote_side
@@ -393,7 +393,7 @@ class EntityBase( object ):
     #
 
     def set( self, **kwargs ):
-        for key, value in kwargs.items():
+        for key, value in six.iteritems(kwargs):
             setattr( self, key, value )
 
     @classmethod

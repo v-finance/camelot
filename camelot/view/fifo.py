@@ -73,7 +73,7 @@ class Fifo(object):
         new_fifo = Fifo(max_entries)
         new_fifo.entities = copy( self.entities )
         # None is to distinguish between a list of data and no data
-        new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in self.data_by_rows.items() )
+        new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in six.iteritems(self.data_by_rows) )
         new_fifo.rows_by_entity = copy( self.rows_by_entity )
         return new_fifo
         

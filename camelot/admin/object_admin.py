@@ -468,7 +468,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in field_attributes.items():
+            for name, value in six.iteritems(field_attributes):
                 if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
@@ -499,7 +499,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             dynamic_field_attributes = {'obj':obj}
-            for name, value in field_attributes.items():
+            for name, value in six.iteritems(field_attributes):
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if name in ('default',):

@@ -82,7 +82,7 @@ class Memento( Entity ):
     def previous( self ):
         previous = self.previous_attributes
         if previous:
-            return [PreviousAttribute(k,v) for k,v in previous.items()]
+            return [PreviousAttribute(k,v) for k,v in six.iteritems(previous)]
         return []
     
     class Admin( EntityAdmin ):

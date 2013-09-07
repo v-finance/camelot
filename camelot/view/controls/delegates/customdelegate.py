@@ -77,7 +77,7 @@ def DocumentationMetaclass(name, bases, dct):
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
         dct['__doc__'] = dct['__doc__'] + row_format%('**Field Attributes**', '**Editor**') + '\n'
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
-        for state, attrs in states.items():
+        for state, attrs in six.iteritems(states):
             for i,attr in enumerate(attrs):
                 if i==0:
                     image = '.. image:: /_static/editors/%s_%s.png'%(dct['editor'].__name__, state)

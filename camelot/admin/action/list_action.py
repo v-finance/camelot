@@ -457,7 +457,7 @@ class ExportSpreadsheet( ListContextAction ):
         admin = model_context.admin
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         all_fields.items() ]          
+                         six.iteritems(all_fields) ]          
         row_data = RowData( 1, [None] * len( all_fields ) )
         mapping = ColumnMapping( len( all_fields ), 
                                  [row_data], 
@@ -499,10 +499,10 @@ class ExportSpreadsheet( ListContextAction ):
             except KeyError:
                 style = XFStyle()
                 style.font = Font()
-                for key, value in font_specs.items():
+                for key, value in six.iteritems(font_specs):
                     setattr( style.font, key, value )
                 style.borders = Borders()
-                for key, value in border_specs.items():
+                for key, value in six.iteritems(border_specs):
                     setattr( style.borders, key, value )
                 if pattern:
                     style.pattern = pattern
@@ -694,7 +694,7 @@ class ImportFromFile( EditAction ):
                                         admin,
                                         default_fields )
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         admin.get_all_fields_and_attributes().items() 
+                         six.iteritems(admin.get_all_fields_and_attributes())
                          if entity_fa.get('editable', True)]        
         column_mapping_admin = ColumnMappingAdmin( columns, 
                                                    admin,

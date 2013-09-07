@@ -388,7 +388,7 @@ class Refresh( Action ):
         # objects
         #
         session_items = len( session.identity_map )
-        for i, (_key, obj) in enumerate( session.identity_map.items() ):
+        for i, (_key, obj) in enumerate( six.iteritems(session.identity_map) ):
             try:
                 session.refresh( obj )
                 refreshed_objects.append( obj )
@@ -493,7 +493,7 @@ class DumpState( Action ):
         for o in session:
             type_counter[type(o).__name__] += 1
         dump_logger.warn( '======= begin session dump ==============' )
-        for k,v in type_counter.items():
+        for k,v in six.iteritems(type_counter):
             dump_logger.warn( '%s : %s'%(k,v) )
         dump_logger.warn( '======= end session dump ==============' )
 
