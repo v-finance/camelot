@@ -303,6 +303,26 @@ class CloseView( ActionStep ):
         if view != None:
             view.close_view( self.accept )
 
+class ToFirstForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toFirst()
+
+class ToNextForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toNext()
+        
+class ToLastForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toLast()
+        
+class ToPreviousForm( ActionStep ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.toPrevious()
+
 class MessageBox( ActionStep ):
     """
     Popup a :class:`QtGui.QMessageBox` and send it result back.  The arguments
@@ -317,7 +337,7 @@ class MessageBox( ActionStep ):
         default an :guilabel:`Ok` and a button :guilabel:`Cancel` will be shown.
 
     When the :guilabel:`Cancel` button is pressed, this action step will raise
-    a `CancelRequest`
+    a :class:`camelot.core.exception.CancelRequest`
 
     .. image:: /_static/listactions/import_from_file_confirmation.png
 

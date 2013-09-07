@@ -182,6 +182,13 @@ class CloseForm( Action ):
     verbose_name = _('Close')
     tooltip = _('Close this form')
     
+    def step_when_valid(self):
+        """
+        :return: the `ActionStep` to take when the current object is valid
+        """
+        from camelot.view import action_steps
+        return action_steps.CloseView()
+    
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.submit()
         super( CloseForm, self ).gui_run( gui_context )
@@ -194,7 +201,7 @@ class CloseForm( Action ):
         obj = model_context.get_object()
         admin  = model_context.admin
         if obj is None:
-            yield action_steps.CloseView()
+            yield self.step_when_valid()
             raise StopIteration
         #
         # validate the object, and if the object is valid, simply close
@@ -203,7 +210,7 @@ class CloseForm( Action ):
         messages = validator.validate_object( obj )
         valid = ( len( messages ) == 0 )
         if valid:
-            yield action_steps.CloseView()
+            yield self.step_when_valid()
         else:
             #
             # if the object is not valid, request the user what to do
@@ -214,7 +221,7 @@ class CloseForm( Action ):
                                                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard )
             reply = yield message
             if reply == QtGui.QMessageBox.Discard:
-                yield action_steps.CloseView()
+                yield self.step_when_valid()
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObject( obj )
@@ -222,46 +229,34 @@ class CloseForm( Action ):
                     yield action_steps.DeleteObject( obj )
                     admin.expunge( obj )
     
-class ToPreviousForm( list_action.ToPreviousRow ):
+class ToPreviousForm( list_action.AbstractToPrevious, CloseForm ):
     """Move to the previous form"""
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toPrevious()
-        
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
-class ToFirstForm( list_action.ToFirstRow ):
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToPreviousForm()
+
+class ToFirstForm( list_action.AbstractToFirst, CloseForm ):
     """Move to the form"""
     
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toFirst()
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToFirstForm()
 
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
-class ToNextForm( list_action.ToNextRow ):
+class ToNextForm( list_action.AbstractToNext, CloseForm ):
     """Move to the next form"""
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toNext()
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToNextForm()
 
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
-class ToLastForm( list_action.ToLastRow ):
+class ToLastForm( list_action.AbstractToLast, CloseForm ):
     """Move to the last form"""
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toLast()
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToLastForm()
 
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.  If the python
     object is a tuple, a CallMethod is constructed with this tuple as arguments.  If

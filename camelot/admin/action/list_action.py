@@ -112,7 +112,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         """
         :return: the object displayed in the current row or None
         """
-        if self.current_row != None:
+        if self.current_row is not None:
             return self._model._get_object( self.current_row )
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
@@ -156,12 +156,14 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         collection_count = 0
         selection_count = 0
         selected_rows = []
-        if self.item_view != None:
-            current_row = self.item_view.currentIndex().row()
+        if self.item_view is not None:
+            current_index = self.item_view.currentIndex()
+            if current_index.isValid():
+                current_row = current_index.row()
             model = self.item_view.model()
-            if model != None:
+            if model is not None:
                 collection_count = model.rowCount()
-            if self.item_view.selectionModel() != None:
+            if self.item_view.selectionModel() is not None:
                 selection = self.item_view.selectionModel().selection()
                 for i in range( len( selection ) ):
                     selection_range = selection[i]
@@ -307,10 +309,11 @@ class DeleteSelection( EditAction ):
             raise StopIteration
         admin = model_context.admin
         if model_context.admin.get_delete_mode() == 'on_confirm':
-            step = action_steps.MessageBox( _('Please confirm'),
-                                            admin.get_delete_message(None),
-                                            QtGui.QMessageBox.Yes,
-                                            QtGui.QMessageBox.No )
+            buttons = QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
+            message = admin.get_delete_message(None)
+            step = action_steps.MessageBox( title = _('Please confirm'),
+                                            text = message,
+                                            standard_buttons = buttons)
             response = yield step
             if response == QtGui.QMessageBox.No:
                 raise StopIteration
@@ -344,14 +347,15 @@ class DeleteSelection( EditAction ):
         from camelot.view import action_steps
         yield action_steps.DeleteObject( obj )
         model_context.admin.delete( obj )
-        
-class ToPreviousRow( ListContextAction ):
-    """Move to the previous row in a table"""
-    
+
+class AbstractToPrevious(object):
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
     icon = Icon('tango/16x16/actions/go-previous.png')
     tooltip = _('Previous')
     verbose_name = _('Previous')
+    
+class ToPreviousRow( AbstractToPrevious, ListContextAction ):
+    """Move to the previous row in a table"""
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
@@ -371,26 +375,28 @@ class ToPreviousRow( ListContextAction ):
         #if state.enabled:
         #    state.enabled = ( model_context.current_row > 0 )
         return state
-    
-class ToFirstRow( ToPreviousRow ):
-    """Move to the first row in a table"""
-    
+
+class AbstractToFirst(object):
     shortcut = QtGui.QKeySequence.MoveToStartOfDocument
     icon = Icon('tango/16x16/actions/go-first.png')
     tooltip = _('First')
     verbose_name = _('First')
-    
+
+class ToFirstRow( AbstractToFirst, ToPreviousRow ):
+    """Move to the first row in a table"""
+
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
 
-class ToNextRow( ListContextAction ):
-    """Move to the next row in a table"""
-    
+class AbstractToNext(object):
     shortcut = QtGui.QKeySequence.MoveToNextPage
     icon = Icon('tango/16x16/actions/go-next.png')
     tooltip = _('Next')
     verbose_name = _('Next')
-
+    
+class ToNextRow( AbstractToNext, ListContextAction ):
+    """Move to the next row in a table"""
+    
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         selection = item_view.selectedIndexes()
@@ -410,14 +416,15 @@ class ToNextRow( ListContextAction ):
         #    max_row = model_context.collection_count - 1
         #    state.enabled = ( model_context.current_row < max_row )
         return state
-    
-class ToLastRow( ToNextRow ):
-    """Move to the last row in a table"""
-    
+
+class AbstractToLast(object):
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
     icon = Icon('tango/16x16/actions/go-last.png')
     tooltip = _('Last')
     verbose_name = _('Last')
+    
+class ToLastRow( AbstractToLast, ToNextRow ):
+    """Move to the last row in a table"""
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view

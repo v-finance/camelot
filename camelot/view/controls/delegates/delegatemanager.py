@@ -38,20 +38,20 @@ class DelegateManager(QtGui.QItemDelegate):
     def __init__(self, columns, parent=None):
         QtGui.QItemDelegate.__init__(self, parent)
         # set a delegate for the vertical header
-        self.insertColumnDelegate(-1, PlainTextDelegate(parent=self))
-        for i, c in enumerate(columns):
-            field_name = c[0]
-            logger.debug( 'creating delegate for %s' % field_name )
-            delegate = c[1]['delegate'](parent = self, **c[1])
-            self.insertColumnDelegate( i, delegate )
+        self.insert_column_delegate(-1, PlainTextDelegate(parent=self))
+        self._columns = columns
 
     def get_column_delegate(self, column):
-        return self.findChild(QtGui.QAbstractItemDelegate, str(column))
+        delegate = self.findChild(QtGui.QAbstractItemDelegate, str(column))
+        if delegate is None:
+            field_name, field_attributes = self._columns[column]
+            delegate = field_attributes['delegate'](parent=self, **field_attributes)
+            self.insert_column_delegate(column, delegate)
+        return delegate
 
-    def insertColumnDelegate(self, column, delegate):
+    def insert_column_delegate(self, column, delegate):
         """Inserts a custom column delegate"""
         assert delegate != None
-        delegate.setParent(self)
         delegate.setObjectName(str(column))
         delegate.commitData.connect(self._commit_data)
         delegate.closeEditor.connect(self._close_editor)
