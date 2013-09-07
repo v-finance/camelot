@@ -77,7 +77,7 @@ class ChoicesEditor(CustomEditor):
         """
         model.insertRow(model.rowCount())
 
-        for role, value in data.iteritems():
+        for role, value in six.iteritems(data):
             index = model.index(model.rowCount()-1, 0)
             if isinstance(value, Icon):
                 value = value.getQIcon()

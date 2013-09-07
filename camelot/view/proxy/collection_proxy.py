@@ -775,7 +775,7 @@ position in the query.
         grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
             grouped_requests[row].append( (flushed, column, value) )
-        for row, request_group in grouped_requests.iteritems():
+        for row, request_group in six.iteritems(grouped_requests):
             #
             # don't use _get_object, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the

@@ -65,7 +65,7 @@ class Profile(object):
         kwargs['name'] = name
         for profile_field in profile_fields:
             kwargs.setdefault( profile_field, '' )
-        for key, value in kwargs.iteritems():
+        for key, value in six.iteritems(kwargs):
             setattr(self, key, value )
     
     def get_connection_string( self ):
@@ -113,7 +113,7 @@ class Profile(object):
             encoded form
         """
         state = dict()
-        for key, value in self.__dict__.iteritems():
+        for key, value in six.iteritems(self.__dict__):
             # flip 'pass' and 'password' for backward compatibility
             if key=='password':
                 key='pass'
@@ -128,7 +128,7 @@ class Profile(object):
         :param state: a `dict` with the profile information in encrypted and
             encoded form, as created by `__getstate__`.
         """
-        for key, value in state.iteritems():
+        for key, value in six.iteritems(state):
             if key=='pass':
                 key='password'
             if key=='profilename':
@@ -254,7 +254,7 @@ class ProfileStore(object):
         qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
-            for key, value in profile.__getstate__().iteritems():
+            for key, value in six.iteritems(profile.__getstate__()):
                 if key != 'profilename':
                     value = self._encode(value)
                 else:

@@ -482,7 +482,7 @@ class ExportSpreadsheet( ListContextAction ):
         # can be used is limited.
         #
         styles = dict()
-        freeze = lambda d:tuple(sorted(d.iteritems()))
+        freeze = lambda d:tuple(sorted(six.iteritems(d)))
         
         def get_style( font_specs=dict(), 
                        border_specs = dict(), 
