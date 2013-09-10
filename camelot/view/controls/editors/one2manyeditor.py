@@ -161,7 +161,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         collection = CustomEditor.set_value( self, collection )
         model = self.get_model()
         if model is not None:
-            model.set_value(collection)
+            if model.get_value() is not collection:
+                model.set_value(collection)
             model_context = self.gui_context.create_model_context()
             for toolbar in self.findChildren( QtGui.QToolBar ):
                 for qaction in toolbar.actions():

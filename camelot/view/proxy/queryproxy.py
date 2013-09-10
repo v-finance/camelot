@@ -103,6 +103,10 @@ class QueryTableProxy(CollectionProxy):
             self.setQuery(None)
         else:
             self.setQuery(lambda:query)
+            
+    def get_value(self):
+        if self._query_getter is not None:
+            return self._query_getter()
 
     def get_collection(self):
         """In case the collection is requested of a QueryProxy, we will return
