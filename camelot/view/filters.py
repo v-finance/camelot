@@ -81,7 +81,19 @@ class Filter(object):
         
         The name and the list of options can be fetched with get_name_and_options"""
         raise NotImplementedError()
+
+    def create_decorator(self, col, attributes, value, joins):
         
+        def decorator(q):
+            if joins:
+                q = q.join( *joins, aliased=True)
+            if 'precision' in attributes:
+                delta = pow( 10,  -1*attributes['precision'])
+                return q.filter( sql.and_(col < value+delta, col > value-delta) )
+            return q.filter(col==value)
+          
+        return decorator
+
     def get_filter_data(self, admin):
         """
         :return:  a :class:`filter_data` object
@@ -114,17 +126,6 @@ class Filter(object):
 
         col = getattr( admin.entity, field_name )
         query = select([col], distinct=True, order_by=col.asc()).select_from(table)
-          
-        def create_decorator(col, attributes, value, joins):
-            def decorator(q):
-                if joins:
-                    q = q.join( *joins, aliased=True)
-                if 'precision' in attributes:
-                    delta = pow( 10,  -1*attributes['precision'])
-                    return q.filter( sql.and_(col < value+delta, col > value-delta) )
-                return q.filter(col==value)
-              
-            return decorator
 
         options = [ filter_option( name = _('All'),
                                    value = Filter.All,
@@ -140,7 +141,7 @@ class Filter(object):
         
             options.append( filter_option( name = option_name,
                                            value = value[0],
-                                           decorator = create_decorator(col, attributes, value[0], joins) ) )
+                                           decorator = self.create_decorator(col, attributes, value[0], joins) ) )
         
         return filter_data( name = filter_names[0],
                             options = options,

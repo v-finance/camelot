@@ -60,6 +60,7 @@ from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
+from camelot.view.filters import GroupBoxFilter, filter_data, filter_option
 
 class StatusType( object ):
     """Mixin class to describe the different statuses an
@@ -150,7 +151,7 @@ class Status( EntityBuilder ):
         # use `type` instead of `class`, to give status type and history
         # classes a specific name, so these classes can be used whithin the
         # memento and the fixture module
-        if self.enumeration == None:
+        if self.enumeration is None:
 
             status_type_admin = type( entity.__name__ + 'StatusType',
                                       ( StatusTypeAdmin, ),
@@ -298,3 +299,31 @@ class ChangeStatus( Action ):
         for obj in model_context.get_selection():
             obj.change_status( self.new_status )
         yield action_steps.FlushSession( model_context.session )
+
+class StatusFilter(GroupBoxFilter):
+    """
+    Filter to be used in a table view to enable filtering on the status
+    of an object.  This filter will display all available statuses, and as
+    such, needs not to query the distinct values used in the database to
+    build up it's widget.
+    
+    :param attribute: the attribute that holds the status
+    """
+    
+    def get_filter_data(self, admin):
+        fa = admin.get_field_attributes(self.attribute)
+        options = [ filter_option( name = _('All'),
+                                   value = GroupBoxFilter.All,
+                                   decorator = lambda q:q ) ]
+        
+        enumeration_attribute = '_%s_enumeration'%self.attribute
+        for _id, name in getattr(admin.entity, enumeration_attribute):
+            decorator = self.create_decorator(admin.entity.current_status, 
+                                              fa, name, [])
+            options.append(filter_option( name = name.capitalize(),
+                                          value = name,
+                                          decorator = decorator ))
+
+        return filter_data( name = fa['name'],
+                            options = options,
+                            default = self.default )
