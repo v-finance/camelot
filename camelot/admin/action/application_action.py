@@ -236,15 +236,14 @@ class OpenTableView( EntityAction ):
         state = super( OpenTableView, self ).get_state( model_context )
         state.verbose_name = self.verbose_name or self._entity_admin.get_verbose_name_plural()
         return state
-        
-    def gui_run( self, gui_context ):
-        table_view = self._entity_admin.create_table_view( gui_context )
-        if gui_context.mode_name == 'new_tab':
-            gui_context.workspace.add_view( table_view )
-        else:
-            gui_context.workspace.set_view( table_view )
-        table_view.setFocus(Qt.PopupFocusReason)
-        
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        step = action_steps.OpenTableView(self._entity_admin,
+                                          self._entity_admin.get_query())
+        step.new_tab = (model_context.mode_name == 'new_tab')
+        yield step
+
 class OpenNewView( EntityAction ):
     """An application action that opens a new view of an Entity
     

@@ -39,7 +39,6 @@ from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
-from camelot.view.model_thread import model_function
 from camelot.view import register
 
 from search import SimpleSearchControl
@@ -438,10 +437,6 @@ class TableView( AbstractView  ):
     # The proxy class to use
     #
     table_model = QueryTableProxy
-    #
-    # Format to use as the window title
-    #
-    title_format = '%(verbose_name_plural)s'
 
     row_selected_signal = QtCore.pyqtSignal(int)
 
@@ -455,7 +450,6 @@ class TableView( AbstractView  ):
         self.admin = admin
         self.application_gui_context = gui_context
         self.gui_context = gui_context
-        post( self.get_title, self.change_title )
         widget_layout = QtGui.QVBoxLayout()
         if self.header_widget:
             self.header = self.header_widget( self, admin )
@@ -486,7 +480,6 @@ class TableView( AbstractView  ):
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )
         #filters_widget.hide()
-        self.set_admin( admin )
         splitter.addWidget( table_widget )
         splitter.addWidget( filters_widget )
         self.setLayout( widget_layout )
@@ -495,19 +488,14 @@ class TableView( AbstractView  ):
         shortcut.activated.connect( self.activate_search )
         if self.header_widget:
             self.header.filters_changed_signal.connect( self.rebuild_query )
-        post( self.admin.get_subclass_tree, self.setSubclassTree )
 
     @QtCore.pyqtSlot()
     def activate_search(self):
         assert object_thread( self )
         self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
-    @model_function
-    def get_title( self ):
-        return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
-
     @QtCore.pyqtSlot(object)
-    def setSubclassTree( self, subclasses ):
+    def set_subclass_tree( self, subclasses ):
         assert object_thread( self )
         if len( subclasses ) > 0:
             from inheritance import SubclassTree
@@ -607,10 +595,6 @@ class TableView( AbstractView  ):
         """return the columns to be displayed in the table view"""
         assert object_thread( self )
         return self.admin.get_columns()
-
-    def getTitle( self ):
-        """return the name of the entity managed by the admin attribute"""
-        return self.admin.get_verbose_name()
 
     @QtCore.pyqtSlot(object)
     def _set_query(self, query_getter):

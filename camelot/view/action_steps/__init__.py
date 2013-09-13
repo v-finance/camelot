@@ -29,7 +29,7 @@ from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
                   ShowChart, ShowPixmap, SelectSubclass,
                   ToFirstForm, ToLastForm, ToNextForm, ToPreviousForm,
                   UpdateEditor,)
-from item_view import Sort
+from item_view import Sort, OpenTableView
 from open_file import ( OpenFile, OpenStream,
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
@@ -58,6 +58,7 @@ __all__ = [
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
+    OpenTableView.__name__,
     PrintChart.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,

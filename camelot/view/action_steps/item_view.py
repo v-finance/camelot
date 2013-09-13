@@ -47,3 +47,39 @@ class Sort( ActionStep ):
             model = gui_context.item_view.model()
             model.sort( self.column, self.order )
 
+class OpenTableView( ActionStep ):
+    """
+    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param value: a list of objects or a query
+
+    .. attribute:: title
+        the title of the the new view
+        
+    .. attribute:: subclasses
+        a tree of subclasses to be displayed on the left of the
+
+    .. attribute:: new_tab
+        open the view in a new tab instead of the current tab
+        
+    """
+    
+    def __init__( self, admin, value ):
+        self.admin = admin
+        self.value = value
+        self.new_tab = False
+        self.title = admin.get_verbose_name_plural()
+        self.subclasses = admin.get_subclass_tree()
+        self.search_text = ''
+    
+    def gui_run( self, gui_context ):
+        from camelot.view.controls.tableview import TableView
+        table_view = TableView( gui_context, self.admin, self.search_text )
+        table_view.set_admin(self.admin)
+        table_view.set_subclass_tree(self.subclasses)
+        if self.new_tab == True:
+            gui_context.workspace.add_view(table_view)
+        else:
+            gui_context.workspace.set_view(table_view)
+        table_view.change_title(self.title)
+        table_view.setFocus(Qt.PopupFocusReason)
+
