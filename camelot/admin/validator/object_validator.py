@@ -28,7 +28,6 @@ logger = logging.getLogger('camelot.admin.validator.object_validator')
 
 from PyQt4 import QtCore
 
-from camelot.view.fifo import Fifo
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
 
@@ -52,10 +51,9 @@ class ObjectValidator(QtCore.QObject):
         super(ObjectValidator, self).__init__()
         self.admin = admin
         self.model = model
-        self.message_cache = Fifo(10)
-        if model:
-            model.dataChanged.connect( self.data_changed )
-            model.layoutChanged.connect( self.layout_changed )
+        #if model:
+            #model.dataChanged.connect( self.data_changed )
+            #model.layoutChanged.connect( self.layout_changed )
         self._invalid_rows = set()
         self._related_validators = dict()
 
@@ -83,22 +81,24 @@ class ObjectValidator(QtCore.QObject):
         for row in copy(self._invalid_rows):
             self.isValid(row)
 
-    @QtCore.pyqtSlot()
-    def layout_changed(self):
-        post(self.validate_invalid_rows)
+    #@QtCore.pyqtSlot()
+    #def layout_changed(self):
+        #post(self.validate_invalid_rows)
 
-    @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
-    def data_changed(self, from_index, thru_index):
+    #@QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
+    #def data_changed(self, from_index, thru_index):
+        #if self.receivers(self.validity_changed_signal) == 0:
+            #return
 
-        def create_validity_updater(from_row, thru_row):
+        #def create_validity_updater(from_row, thru_row):
 
-            def validity_updater():
-                for i in range(from_row, thru_row+1):
-                    self.isValid(i)
+            #def validity_updater():
+                #for i in range(from_row, thru_row+1):
+                    #self.isValid(i)
 
-            return validity_updater
+            #return validity_updater
 
-        post(create_validity_updater(from_index.row(), thru_index.row()))
+        #post(create_validity_updater(from_index.row(), thru_index.row()))
 
     def validate_object( self, obj ):
         """:return: list of messages explaining invalid data
@@ -156,7 +156,6 @@ class ObjectValidator(QtCore.QObject):
             entity_instance = self.model._get_object(row)
             if entity_instance is not None:
                 messages = self.validate_object(entity_instance)
-                self.message_cache.add_data(row, entity_instance, messages)
         except Exception, e:
             logger.error(
                 'programming error while validating object',
@@ -173,11 +172,3 @@ class ObjectValidator(QtCore.QObject):
         logger.debug('valid : %s' % valid)
         return valid
 
-    def validityMessages(self, row):
-        try:
-            return self.message_cache.get_data_at_row(row)
-        except KeyError:
-            raise Exception(
-                'Programming error : isValid should be called '
-                'before calling validityMessage'
-            )
