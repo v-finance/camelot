@@ -439,8 +439,6 @@ class TableView( AbstractView  ):
     header_widget = HeaderWidget
     AdminTableWidget = AdminTableWidget
 
-    row_selected_signal = QtCore.pyqtSignal(int)
-
     def __init__( self, 
                   gui_context, 
                   admin, 
@@ -547,7 +545,7 @@ class TableView( AbstractView  ):
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
         self.table = self.AdminTableWidget( self.admin, splitter )
         self.table.setObjectName('AdminTableWidget')
-        new_model = self.proxy(admin, None, lambda:[])
+        new_model = self.proxy(admin)
         self.table.setModel(new_model)
         self.header.set_model(new_model)
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )

@@ -86,6 +86,7 @@ class OpenFormView( ActionStep ):
         self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
         self.title = u' '
         self._columns = admin.get_fields()
+        self._static_fa = list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
         self._form_display = admin.get_form_display()
 
     def render(self, model, row):
@@ -112,8 +113,6 @@ class OpenFormView( ActionStep ):
             if isinstance( related_model, QueryTableProxy ):
                 model = QueryTableProxy(
                     gui_context.admin,
-                    related_model.get_query_getter(),
-                    gui_context.admin.get_fields,
                     max_number_of_rows = 1,
                     cache_collection_proxy = related_model,
                 )
@@ -121,23 +120,19 @@ class OpenFormView( ActionStep ):
                 # no cache or sorting information is transferred
                 model = CollectionProxy(
                     gui_context.admin,
-                    related_model.get_collection,
-                    gui_context.admin.get_fields,
                     max_number_of_rows = 1,
                 )
                 # get the unsorted row
                 row = related_model.map_to_source( row )
+            model.set_value(related_model.get_value())
         else:
             row = self.row
-            def create_collection_getter( objects ):
-                return lambda:objects
-
             model = CollectionProxy(
                 self.admin,
-                create_collection_getter(self.objects),
-                self.admin.get_fields,
                 max_number_of_rows=10
             )
+            model.set_value(self.objects)
+        model.set_columns_and_static_field_attributes((self._columns, self._static_fa))
         formview = self.render(model, row)
         show_top_level( formview, gui_context.workspace )
 

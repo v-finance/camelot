@@ -136,6 +136,8 @@ class FormWidget(QtGui.QWidget):
             model.dataChanged.connect(self._data_changed)
             model.layoutChanged.connect(self._layout_changed)
             model.modelReset.connect(self._model_reset)
+            model.rowsInserted.connect(self._layout_changed)
+            model.rowsRemoved.connect(self._layout_changed)
             if widget_mapper is not None:
                 widget_mapper.setModel( model )
                 register.register( model, widget_mapper )

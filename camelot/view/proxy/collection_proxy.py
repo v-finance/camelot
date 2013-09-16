@@ -194,26 +194,14 @@ class CollectionProxy( QtGui.QProxyModel ):
     _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( int, int )
     _rows_inserted_signal = QtCore.pyqtSignal( int, int )
 
-    def __init__( self, 
-                  admin, 
-                  collection_getter, 
-                  columns_getter,
+    def __init__( self,
+                  admin,
                   max_number_of_rows = 10, 
                   flush_changes = True,
                   cache_collection_proxy = None,
                   ):
         """
 :param admin: the admin interface for the items in the collection
-
-:param collection_getter: a function that takes no arguments and returns
-the collection that will be visualized. This function will be called inside
-the model thread, to prevent delays when this function causes the database
-to be hit.  If the collection is a list, it should not contain any duplicate
-elements.
-
-:param columns_getter: a function that takes no arguments and returns the
-columns that will be cached in the proxy. This function will be called
-inside the model thread.
 
 :param cache_collection_proxy: the CollectionProxy on which this CollectionProxy
 will reuse the cache. Passing a cache has the advantage that objects that were
@@ -253,7 +241,7 @@ position in the query.
         else:
             self.form_icon = QtCore.QVariant()
         self.validator = admin.get_validator( self )
-        self._collection_getter = collection_getter or (lambda:[])
+        self._collection_getter = lambda:[]
         self.flush_changes = flush_changes
         self.mt = get_model_thread()
         # Set database connection and load data

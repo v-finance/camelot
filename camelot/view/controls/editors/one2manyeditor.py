@@ -78,7 +78,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = (proxy or CollectionProxy)(admin, None, lambda:[])
+        model = (proxy or CollectionProxy)(admin)
         table.setModel(model)
         register.register(model, table)
         self.admin = admin
