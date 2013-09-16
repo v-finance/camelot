@@ -27,9 +27,14 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
+from sqlalchemy.orm import Query
+
 from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import ActionStep
+from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.proxy.queryproxy import QueryTableProxy
+
 
 class Sort( ActionStep ):
     
@@ -48,7 +53,8 @@ class Sort( ActionStep ):
             model.sort( self.column, self.order )
 
 class OpenTableView( ActionStep ):
-    """
+    """Open a new table view in the workspace.
+    
     :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
     :param value: a list of objects or a query
 
@@ -70,10 +76,23 @@ class OpenTableView( ActionStep ):
         self.title = admin.get_verbose_name_plural()
         self.subclasses = admin.get_subclass_tree()
         self.search_text = ''
+        if isinstance(value, list):
+            self.proxy = CollectionProxy
+        elif isinstance(value, Query):
+            self.proxy = QueryTableProxy
+        else:
+            raise Exception('Unhandled value type : {0}'.format(type(value)))
+        self.filters = admin.get_filters()
+        self.list_actions = admin.get_list_actions()
+        self.columns = self.admin.get_columns()
+        self.static_fa = list(self.admin.get_static_field_attributes([c[0] for c in self.columns]))
     
     def gui_run( self, gui_context ):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView( gui_context, self.admin, self.search_text )
+        table_view = TableView(gui_context, 
+                               self.admin, 
+                               self.search_text,
+                               proxy = self.proxy)
         table_view.set_admin(self.admin)
         table_view.set_subclass_tree(self.subclasses)
         if self.new_tab == True:
@@ -81,5 +100,21 @@ class OpenTableView( ActionStep ):
         else:
             gui_context.workspace.set_view(table_view)
         table_view.change_title(self.title)
+        # columns and static_fa should be reworked
+        model = table_view.get_model()
+        print 'columns', self.columns
+        print 'static fa', self.static_fa
+        model.set_columns_and_static_field_attributes((self.columns, self.static_fa))
+        print '================='
+        print model
+        print model._columns
+        # filters can have default values, so they need to be set before
+        # the value is set
+        #table_view.set_filters(self.filters)
+        print 'set value', self.value
+        table_view.set_value(self.value)
+        #table_view.set_list_actions(self.list_actions)
+        print 'after set value'
+        print model._columns
         table_view.setFocus(Qt.PopupFocusReason)
 

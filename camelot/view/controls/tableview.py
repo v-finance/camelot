@@ -392,6 +392,8 @@ class TableView( AbstractView  ):
       object.
   :param admin: an :class:`camelot.admin.entity_admin.EntityAdmin` object
   :param search_text: a predefined search text to put in the search widget
+  :param proxy: a class implementing :class:`QtCore.QAbstractTableModel` that 
+      will be used as a model for the table view.
   :param parent: a :class:`QtGui.QWidget` object
   
   A generic tableview widget that puts together some other widgets.  The behaviour of this class and
@@ -421,35 +423,26 @@ class TableView( AbstractView  ):
 
   title_format = '%(verbose_name_plural)s'
 
-  .. attribute:: table_model
-
-  A class implementing QAbstractTableModel that will be used as a model for the table view ::
-
-    table_model = QueryTableProxy
-
   - emits the row_selected signal when a row has been selected
   """
 
     header_widget = HeaderWidget
     AdminTableWidget = AdminTableWidget
 
-    #
-    # The proxy class to use
-    #
-    table_model = QueryTableProxy
-
     row_selected_signal = QtCore.pyqtSignal(int)
 
     def __init__( self, 
                   gui_context, 
                   admin, 
-                  search_text = None, 
+                  search_text = None,
+                  proxy = QueryTableProxy,
                   parent = None ):
         super(TableView, self).__init__( parent )
         assert object_thread( self )
         self.admin = admin
         self.application_gui_context = gui_context
         self.gui_context = gui_context
+        self.proxy = proxy
         widget_layout = QtGui.QVBoxLayout()
         if self.header_widget:
             self.header = self.header_widget( self, admin )
@@ -518,17 +511,16 @@ class TableView( AbstractView  ):
             self.table.close_editor()
         self.admin.list_action.gui_run( self.gui_context )
 
-    def create_table_model( self, admin ):
-        """Create a table model for the given admin interface"""
-        return self.table_model( admin,
-                                 None,
-                                 admin.get_columns )
-
     def get_admin(self):
         return self.admin
 
     def get_model(self):
         return self.table.model()
+
+    def set_value(self, value):
+        model = self.get_model()
+        if model is not None:
+            model.set_value(value)
 
     @QtCore.pyqtSlot( object )
     def set_admin( self, admin ):
@@ -545,8 +537,8 @@ class TableView( AbstractView  ):
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
         self.table = self.AdminTableWidget( self.admin, splitter )
         self.table.setObjectName('AdminTableWidget')
-        new_model = self.create_table_model( admin )
-        self.table.setModel( new_model )
+        new_model = self.proxy(admin, None, lambda:[])
+        self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
         self.table.keyboard_selection_signal.connect(self.on_keyboard_selection_signal)
         self.table.model().layoutChanged.connect( self.tableLayoutChanged )
@@ -556,11 +548,6 @@ class TableView( AbstractView  ):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
-
-        def get_filters_and_actions():
-            return ( admin.get_filters(), admin.get_list_actions() )
-
-        post( get_filters_and_actions,  self.set_filters_and_actions )
 
     @QtCore.pyqtSlot()
     def on_keyboard_selection_signal(self):
@@ -574,27 +561,12 @@ class TableView( AbstractView  ):
         model = self.table.model()
         if self.header:
             self.header.setNumberOfRows( model.rowCount() )
-        item_delegate = model.getItemDelegate()
-        if item_delegate:
-            self.table.setItemDelegate( item_delegate )
-        for i in range( model.columnCount() ):
-            self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
 
     def closeEvent( self, event ):
         """reimplements close event"""
         assert object_thread( self )
         logger.debug( 'tableview closed' )
         event.accept()
-
-    def selectTableRow( self, row ):
-        """selects the specified row"""
-        assert object_thread( self )
-        self.table.selectRow( row )
-
-    def getColumns( self ):
-        """return the columns to be displayed in the table view"""
-        assert object_thread( self )
-        return self.admin.get_columns()
 
     @QtCore.pyqtSlot(object)
     def _set_query(self, query_getter):
@@ -646,24 +618,24 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         self.rebuild_query()
 
-    @QtCore.pyqtSlot(object)
-    def set_filters_and_actions( self, filters_and_actions ):
-        """sets filters for the tableview"""
-        assert object_thread( self )
-        filters, actions = filters_and_actions
-        from camelot.view.controls.filterlist import FilterList
-        from camelot.view.controls.actionsbox import ActionsBox
+    def set_columns(self, columns):
+        delegate = DelegateManager(columns, parent=self)
+        table.setItemDelegate(delegate)
+        self.table.setItemDelegate( delegate )
+        for i in range( model.columnCount() ):
+            self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
+
+    def set_filters(self, filters):
         logger.debug( 'setting filters for tableview' )
+        from camelot.view.controls.filterlist import FilterList
         filters_widget = self.findChild(FilterList, 'filters')
-        actions_widget = self.findChild(ActionsBox, 'actions')
-        
         while True:
             item = self.filters_layout.takeAt( 0 )
             if item == None:
                 break
             widget = item.widget()
             if widget != None:
-                widget.deleteLater()            
+                widget.deleteLater()
         if filters:
             splitter = self.findChild( QtGui.QWidget, 'splitter' )
             filters_widget = FilterList( filters, parent=splitter )
@@ -673,8 +645,14 @@ class TableView( AbstractView  ):
         #
         # filters might have default values, so we can only build the queries now
         #
-        self.rebuild_query()
+        #self.rebuild_query()
         self.filters_layout.addStretch(1)
+
+    def set_list_actions( self, actions ):
+        """sets filters for the tableview"""
+        assert object_thread( self )
+        from camelot.view.controls.actionsbox import ActionsBox
+        actions_widget = self.findChild(ActionsBox, 'actions')
         if actions:
             actions_widget = ActionsBox( parent = self,
                                          gui_context = self.gui_context )

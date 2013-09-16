@@ -185,7 +185,6 @@ class CollectionProxy( QtGui.QProxyModel ):
 
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
-    item_delegate_changed_signal = QtCore.pyqtSignal()
     row_changed_signal = QtCore.pyqtSignal(int, int, int)
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
@@ -256,7 +255,6 @@ position in the query.
         self.validator = admin.get_validator( self )
         self._collection_getter = collection_getter or (lambda:[])
         self.flush_changes = flush_changes
-        self.delegate_manager = None
         self.mt = get_model_thread()
         # Set database connection and load data
         self._rows = 0
@@ -287,13 +285,6 @@ position in the query.
         self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
-
-        def get_columns():
-            columns = columns_getter()
-            static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in columns]))
-            return columns, static_field_attributes
-
-        post( get_columns, self.set_columns_and_static_field_attributes )
 #    # the initial collection might contain unflushed rows
         post( self._update_unflushed_rows )
 #    # in that way the number of rows is requested as well
@@ -522,17 +513,6 @@ position in the query.
         self._rows = rows
         self.layoutChanged.emit()
 
-    def getItemDelegate( self ):
-        """:return: a DelegateManager for this model, or None if no DelegateManager yet available
-        a DelegateManager will be available once the item_delegate_changed signal has been emitted"""
-        assert object_thread( self )
-        self.logger.debug( 'getItemDelegate' )
-        return self.delegate_manager
-
-    def getColumns( self ):
-        """:return: the columns as set by the setColumns method"""
-        return self._columns
-
     @QtCore.pyqtSlot(object)
     def set_columns_and_static_field_attributes( self, columns_and_static_fa ):
         """Callback method to set the columns
@@ -591,9 +571,6 @@ position in the query.
         
         self.settings.endGroup()
         self.settings.endGroup()
-        # Only set the delegate manager when it is fully set up
-        self.delegate_manager = delegate_manager
-        self.item_delegate_changed_signal.emit()
         self.endResetModel()
             
     def setHeaderData( self, section, orientation, value, role ):
