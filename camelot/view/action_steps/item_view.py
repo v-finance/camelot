@@ -102,19 +102,12 @@ class OpenTableView( ActionStep ):
         table_view.change_title(self.title)
         # columns and static_fa should be reworked
         model = table_view.get_model()
-        print 'columns', self.columns
-        print 'static fa', self.static_fa
         model.set_columns_and_static_field_attributes((self.columns, self.static_fa))
-        print '================='
-        print model
-        print model._columns
+        table_view.set_columns(self.columns)
         # filters can have default values, so they need to be set before
         # the value is set
-        #table_view.set_filters(self.filters)
-        print 'set value', self.value
+        table_view.set_filters(self.filters)
         table_view.set_value(self.value)
-        #table_view.set_list_actions(self.list_actions)
-        print 'after set value'
-        print model._columns
+        table_view.set_list_actions(self.list_actions)
         table_view.setFocus(Qt.PopupFocusReason)
 

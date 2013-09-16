@@ -40,6 +40,7 @@ from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
+from .delegates.delegatemanager import DelegateManager
 
 from search import SimpleSearchControl
         
@@ -620,8 +621,9 @@ class TableView( AbstractView  ):
 
     def set_columns(self, columns):
         delegate = DelegateManager(columns, parent=self)
-        table.setItemDelegate(delegate)
-        self.table.setItemDelegate( delegate )
+        table = self.table
+        table.setItemDelegate( delegate )
+        model = table.model()
         for i in range( model.columnCount() ):
             self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
 
