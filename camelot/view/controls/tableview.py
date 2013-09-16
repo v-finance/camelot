@@ -277,14 +277,27 @@ class RowsWidget( QtGui.QLabel ):
 
     _number_of_rows_font = QtGui.QApplication.font()
 
-    def __init__( self, parent ):
+    def __init__( self, parent=None ):
         QtGui.QLabel.__init__( self, parent )
         assert object_thread( self )
         self.setFont( self._number_of_rows_font )
 
-    def setNumberOfRows( self, rows ):
+    def set_model(self, model):
+        model.layoutChanged.connect(self.update_rows)
+        model.modelReset.connect(self.update_rows)
+        model.rowsInserted.connect(self.update_rows)
+        model.rowsRemoved.connect(self.update_rows)
+        self.update_rows_from_model(model)
+    
+    def update_rows_from_model(self, model):
+        rows = model.rowCount()
+        self.setText(_('(%i rows)')%rows)
+        
+    @QtCore.pyqtSlot()
+    def update_rows(self, *args):
         assert object_thread( self )
-        self.setText( _('(%i rows)')%rows )
+        model = self.sender()
+        self.update_rows_from_model(model)
 
 class HeaderWidget( QtGui.QWidget ):
     """HeaderWidget for a tableview, containing the title, the search widget,
@@ -313,11 +326,9 @@ class HeaderWidget( QtGui.QWidget ):
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
         widget_layout.addWidget( search )
-        if self.rows_widget:
-            self.number_of_rows = self.rows_widget( self )
-            widget_layout.addWidget( self.number_of_rows )
-        else:
-            self.number_of_rows = None
+        number_of_rows = self.rows_widget(parent=self)
+        number_of_rows.setObjectName('number_of_rows')
+        widget_layout.addWidget(number_of_rows)
         layout.addLayout( widget_layout, 0 )
         self._expanded_filters_created = False
         self._expanded_search = QtGui.QWidget()
@@ -325,7 +336,6 @@ class HeaderWidget( QtGui.QWidget ):
         layout.addWidget( self._expanded_search, 1 )
         self.setLayout( layout )
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
-        self.setNumberOfRows( 0 )
         self.search = search
 
     def _fill_expanded_search_options(self, columns):
@@ -380,11 +390,10 @@ class HeaderWidget( QtGui.QWidget ):
             self._expanded_search.show()
         else:
             self._expanded_search.hide()
-
-    def setNumberOfRows( self, rows ):
-        assert object_thread( self )
-        if self.number_of_rows:
-            self.number_of_rows.setNumberOfRows( rows )
+    
+    def set_model(self, model):
+        number_of_rows = self.findChild(self.rows_widget, 'number_of_rows')
+        number_of_rows.set_model(model)
     
 class TableView( AbstractView  ):
     """
@@ -539,10 +548,9 @@ class TableView( AbstractView  ):
         self.table.setObjectName('AdminTableWidget')
         new_model = self.proxy(admin, None, lambda:[])
         self.table.setModel(new_model)
+        self.header.set_model(new_model)
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
         self.table.keyboard_selection_signal.connect(self.on_keyboard_selection_signal)
-        self.table.model().layoutChanged.connect( self.tableLayoutChanged )
-        self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
         self.gui_context = self.application_gui_context.copy( ListActionGuiContext )
         self.gui_context.view = self
@@ -553,14 +561,6 @@ class TableView( AbstractView  ):
     def on_keyboard_selection_signal(self):
         assert object_thread( self )
         self.sectionClicked( self.table.currentIndex().row() )
-
-    @QtCore.pyqtSlot()
-    def tableLayoutChanged( self ):
-        assert object_thread( self )
-        logger.debug('tableLayoutChanged')
-        model = self.table.model()
-        if self.header:
-            self.header.setNumberOfRows( model.rowCount() )
 
     def closeEvent( self, event ):
         """reimplements close event"""

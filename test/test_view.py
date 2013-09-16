@@ -955,6 +955,17 @@ class ControlsTest(test.ModelThreadTestCase):
                             self.app_admin.get_entity_admin(Person) )
         self.grab_widget(widget)
 
+    def test_rows_widget(self):
+        from camelot.view.controls.tableview import RowsWidget
+        model = QtGui.QStringListModel(['one', 'two', 'three'])
+        
+        widget = RowsWidget()
+        widget.set_model(model)
+        self.assertTrue('3' in str(widget.text()))
+        
+        model.setStringList(['one', 'two'])
+        self.assertTrue('2' in str(widget.text()))
+        
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
         from camelot.view.controls.tableview import TableView
