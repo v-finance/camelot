@@ -456,26 +456,29 @@ class FormTest(test.ModelThreadTestCase):
         from camelot.view.controls.formview import FormEditors
         from camelot.core.orm import entities
         self.entities = [e for e in entities]
+        from camelot.admin.action import GuiContext
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot.view.proxy.queryproxy import QueryTableProxy
+        from camelot.view.controls.delegates import DelegateManager
         from camelot.model.party import Person
         from camelot_example.model import Movie
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
 
-        self.movie_model = QueryTableProxy( self.movie_admin,
-                                            lambda:Movie.query,
-                                            self.movie_admin.get_fields )
+        self.movie_model = QueryTableProxy( self.movie_admin)
+        self.movie_model.set_value(self.movie_admin.get_query())
+        self.movie_model.set_columns(self.movie_admin.get_fields())
 
+        delegate = DelegateManager(self.movie_admin.get_fields())
         widget_mapper = QtGui.QDataWidgetMapper()
         widget_mapper.setModel( self.movie_model )
-        widget_mapper.setItemDelegate( self.movie_model.getItemDelegate() )
+        widget_mapper.setItemDelegate(delegate)
         self.widgets = FormEditors( self.movie_admin.get_fields(),
                                     widget_mapper,
                                     self.movie_admin )
 
         self.person_entity = Person
-        self.collection_getter = lambda:[Person()]
+        self.gui_context = GuiContext()
 
     def tearDown(self):
         #
@@ -539,21 +542,21 @@ class FormTest(test.ModelThreadTestCase):
         from snippet.form.nested_form import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
-        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
+        self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
         from camelot.view.action_steps import OpenFormView
         from snippet.form.inherited_form import InheritedAdmin
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
-        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
+        self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
         from camelot.view.action_steps import OpenFormView
         from snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
-        self.grab_widget( open_form_view.render(QtGui.QStandardItemModel(), 0) )
+        self.grab_widget( open_form_view.render(self.gui_context) )
 
 class DelegateTest(test.ModelThreadTestCase):
     """Test the basic functionallity of the delegates :
@@ -925,7 +928,7 @@ class FilterTest(test.ModelThreadTestCase):
         table_view = TableView( gui_context, person_admin )
         items = [ (self.group_box_filter, self.test_data ),
                   (self.combo_box_filter, self.test_data ) ]
-        table_view.set_filters_and_actions( (items, None) )
+        table_view.set_filters(items)
 
 class ControlsTest(test.ModelThreadTestCase):
     """Test some basic controls"""
@@ -977,8 +980,10 @@ class ControlsTest(test.ModelThreadTestCase):
         admin = SmallColumnsAdmin( self.app_admin, Person )
         widget = TableView( self.gui_context,
                             admin )
+        widget.set_admin(admin)
+        widget.get_model().set_columns(admin.get_columns())
         self.grab_widget( widget )
-        model = widget.table.model()
+        model = widget.get_model()
         header = widget.table.horizontalHeader()
 
         first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
@@ -999,10 +1004,11 @@ class ControlsTest(test.ModelThreadTestCase):
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context,
-                            admin )
+        widget = TableView(self.gui_context, admin)
+        widget.set_admin(admin)
+        widget.get_model().set_columns(admin.get_columns())
         self.grab_widget( widget )
-        model = widget.table.model()
+        model = widget.get_model()
         header = widget.table.horizontalHeader()
 
         first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
@@ -1156,77 +1162,57 @@ class SnippetsTest(test.ModelThreadTestCase):
 
     def setUp( self ):
         super( SnippetsTest, self ).setUp()
+        from camelot.admin.action.base import GuiContext
         from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
+        self.gui_context = GuiContext()
 
     def test_simple_plot(self):
         from snippet.chart.simple_plot import Wave
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.action_steps import OpenFormView
         wave = Wave()
         admin = Wave.Admin( self.app_admin, Wave )
-        proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
         open_form_view = OpenFormView([wave], admin)
-        form = open_form_view.render(proxy, 0)
+        form = open_form_view.render(self.gui_context)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
 
     def test_advanced_plot(self):
         from snippet.chart.advanced_plot import Wave
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.action_steps import OpenFormView
         wave = Wave()
         #wave.phase = '2.89'
         admin = Wave.Admin( self.app_admin, Wave )
-        proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
         open_form_view = OpenFormView([wave], admin)
-        form = open_form_view.render(proxy, 0)
+        form = open_form_view.render(self.gui_context)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
 
     def test_fields_with_actions(self):
         from snippet.fields_with_actions import Coordinate
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
         open_form_view = OpenFormView([coordinate], admin)
-        form = open_form_view.render(proxy, 0)
+        form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         from snippet.fields_with_tooltips import Coordinate
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
         open_form_view = OpenFormView([coordinate], admin)
-        form = open_form_view.render(proxy, 0)
+        form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
-    def test_entity_validator(self):
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.model.party import Person
-        from snippet.entity_validator import PersonValidator, Admin
-        person_admin = Admin( self.app_admin, Person)
-        proxy = CollectionProxy(person_admin, lambda:[Person()], person_admin.get_columns)
-        validator = PersonValidator(person_admin, proxy)
-        self.mt.post(lambda:validator.isValid(0))
-        self.process()
-        self.assertEqual(len(validator.validityMessages(0)), 3)
-
     def test_background_color(self):
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.party import Person
         from snippet.background_color import Admin
         person_admin = Admin( self.app_admin, Person )
-        proxy = CollectionProxy(person_admin, lambda:[Person(first_name='John', last_name='Cleese'),
-                                                      Person(first_name='eric', last_name='Idle')],
-                                                       person_admin.get_columns)
         from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
         editor = One2ManyEditor(admin=person_admin)
-        editor.set_value(proxy)
+        editor.set_value([Person(first_name='John', last_name='Cleese'),
+                          Person(first_name='eric', last_name='Idle')])
         self.process()
         self.grab_widget(editor)

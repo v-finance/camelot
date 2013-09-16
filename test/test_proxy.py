@@ -80,9 +80,10 @@ class CollectionProxyCase( ProxyCase ):
         super( CollectionProxyCase, self ).setUp()
         session = Session()
         self.collection = list( session.query( Person ).all() )
-        self.proxy = CollectionProxy( self.person_admin,
-                                      collection_getter=lambda:self.collection,
-                                      columns_getter=self.person_admin.get_columns )
+        self.proxy = CollectionProxy( self.person_admin )
+        self.proxy.set_value(self.collection)
+        self.columns = self.person_admin.get_columns()
+        self.proxy.set_columns(self.columns)
         self.signal_register = ProxySignalRegister( self.proxy )
         
     def test_modify_list_while_editing( self ):
@@ -138,9 +139,9 @@ class CollectionProxyCase( ProxyCase ):
         obj = DynamicObject()
         collection = [obj]
         admin = self.app_admin.get_related_admin(DynamicObject)
-        proxy = CollectionProxy( admin,
-                                 collection_getter=lambda:collection,
-                                 columns_getter=admin.get_columns )
+        proxy = CollectionProxy(admin)
+        proxy.set_value(collection)
+        proxy.set_columns(admin.get_columns())
         # get the data once, to fill the cached values of the field attributes
         # so changes get passed the first check
         self._data(0, 0, proxy)
@@ -159,9 +160,10 @@ class QueryProxyCase( ProxyCase ):
         super( QueryProxyCase, self ).setUp()
         if admin is None:
             admin = self.person_admin
-        self.proxy = QueryTableProxy(admin, 
-                                     query_getter = admin.get_query, 
-                                     columns_getter = admin.get_columns )
+        self.proxy = QueryTableProxy(admin)
+        self.proxy.set_value(admin.get_query())
+        self.columns = admin.get_columns()
+        self.proxy.set_columns(self.columns)
 
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -201,11 +203,11 @@ class QueryProxyCase( ProxyCase ):
         # create a related proxy (eg, to display a form view)
         related_proxy = QueryTableProxy(
             self.person_admin,
-            self.proxy.get_query_getter(),
-            self.person_admin.get_columns,
             max_number_of_rows = 1,
             cache_collection_proxy = self.proxy
         )
+        related_proxy.set_value(self.proxy.get_value())
+        related_proxy.set_columns(self.columns)
         self.assertEqual( new_rowcount, related_proxy.rowCount() )
         self._load_data( related_proxy )
         self.assertEqual( self._data( new_row, 0, related_proxy ), 'Foo' )

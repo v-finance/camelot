@@ -85,9 +85,8 @@ class OpenTableView( ActionStep ):
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
         self.columns = self.admin.get_columns()
-        self.static_fa = list(self.admin.get_static_field_attributes([c[0] for c in self.columns]))
-    
-    def gui_run( self, gui_context ):
+
+    def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
         table_view = TableView(gui_context, 
                                self.admin, 
@@ -95,19 +94,22 @@ class OpenTableView( ActionStep ):
                                proxy = self.proxy)
         table_view.set_admin(self.admin)
         table_view.set_subclass_tree(self.subclasses)
-        if self.new_tab == True:
-            gui_context.workspace.add_view(table_view)
-        else:
-            gui_context.workspace.set_view(table_view)
-        table_view.change_title(self.title)
-        # columns and static_fa should be reworked
         model = table_view.get_model()
-        model.set_columns_and_static_field_attributes((self.columns, self.static_fa))
+        model.set_columns(self.columns)
         table_view.set_columns(self.columns)
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
         table_view.set_value(self.value)
         table_view.set_list_actions(self.list_actions)
+        return table_view
+        
+    def gui_run( self, gui_context ):
+        table_view = self.render(gui_context)
+        if self.new_tab == True:
+            gui_context.workspace.add_view(table_view)
+        else:
+            gui_context.workspace.set_view(table_view)
+        table_view.change_title(self.title)
         table_view.setFocus(Qt.PopupFocusReason)
 

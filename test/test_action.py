@@ -136,14 +136,14 @@ class ActionStepsCase( ModelThreadTestCase ):
 
     def test_change_object( self ):
         from camelot.bin.meta import NewProjectOptions
-        from camelot.view.action_steps.change_object import ChangeObjectDialog
-        admin = NewProjectOptions.Admin( self.app_admin, NewProjectOptions )
+        from camelot.view.action_steps.change_object import ChangeObject
+        admin = self.app_admin.get_related_admin(NewProjectOptions)
         options = NewProjectOptions()
         options.name = 'Videostore'
         options.module = 'videostore'
         options.domain = 'example.com'
-        dialog = ChangeObjectDialog( options, admin, admin.get_form_display(),
-                                     admin.get_fields())
+        change_object = ChangeObject(options, admin)
+        dialog = change_object.render(self.gui_context)
         self.grab_widget( dialog )
 
     def test_select_file( self ):
@@ -512,7 +512,7 @@ class ListActionsCase( test_model.ExampleModelCase ):
         admin = self.context.admin
         admin.drop_action = DropAction()
 
-        proxy = QueryTableProxy( admin, admin.get_query, admin.get_columns )
+        proxy = QueryTableProxy(admin)
         proxy.dropMimeData( mime_data,
                             Qt.MoveAction,
                             -1,

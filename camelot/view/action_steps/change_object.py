@@ -55,7 +55,6 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   admin,
                   form_display,
                   columns,
-                  static_fa,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
@@ -73,7 +72,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         model = CollectionProxy(admin)
         model.set_value([obj])
-        model.set_columns_and_static_field_attributes(columns, static_fa)
+        model.set_columns(columns)
         validator = model.get_validator()
         layout = QtGui.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -244,7 +243,7 @@ class ChangeObject( ActionStep ):
         the action step."""
         super(ChangeObject, self).gui_run(gui_context)
         dialog = ChangeObjectDialog(self.obj, self.admin, self.form_display,
-                                    self.columns, self.static_fa)
+                                    self.columns)
         return dialog
 
     def gui_run( self, gui_context ):
@@ -260,7 +259,6 @@ class ChangeObject( ActionStep ):
         self.admin = self.admin or model_context.admin.get_related_admin( cls )
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
-        self.static_fa = list(self.admin.get_static_field_attributes([c[0] for c in self.columns]))
         
 class ChangeObjects( ActionStep ):
     """

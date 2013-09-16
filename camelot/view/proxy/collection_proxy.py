@@ -501,17 +501,24 @@ position in the query.
         self._rows = rows
         self.layoutChanged.emit()
 
+    def get_static_field_attributes(self):
+        return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
+    
     @QtCore.pyqtSlot(object)
-    def set_columns_and_static_field_attributes( self, columns_and_static_fa ):
+    def set_static_field_attributes(self, static_fa):
+        self._static_field_attributes = static_fa
+
+    def set_columns(self, columns):
         """Callback method to set the columns
 
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
-        returned by the getColumns method of the ElixirAdmin class
+        returned by the `get_columns` method of the `EntityAdmin` class
         """
         assert object_thread( self )
         self.beginResetModel()
         self.logger.debug( 'setColumns' )
-        self._columns, self._static_field_attributes = columns_and_static_fa
+        self._columns = columns
+        post(self.get_static_field_attributes, self.set_static_field_attributes)
 
         delegate_manager = delegates.DelegateManager(self._columns)
 

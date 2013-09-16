@@ -218,16 +218,19 @@ class EntityViewsTest(ModelThreadTestCase):
 
     def test_table_view(self):
         from camelot.admin.action.base import GuiContext
+        from camelot.view.action_steps import OpenTableView
         gui_context = GuiContext()
         for admin in self.get_admins():
-            widget = admin.create_table_view( gui_context )
+            step = OpenTableView(admin, admin.get_query())
+            widget = step.render(gui_context)
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             self.assertFalse( has_programming_error )
 
     def test_new_view(self):
+        from camelot.admin.action.base import GuiContext
         from camelot.admin.entity_admin import EntityAdmin
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from ..view.action_steps.gui import OpenFormView
+        gui_context = GuiContext()
         for admin in self.get_admins():
             # create an object or take one from the db
             obj = None
@@ -235,12 +238,9 @@ class EntityViewsTest(ModelThreadTestCase):
                 obj = admin.get_query().first()
             if obj is None:
                 obj = admin.entity()
-            # create a model
-            model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
-            model._add_data(admin.get_fields(), 0, obj)
             # create a form view
             form_view_step = OpenFormView([obj], admin)
-            widget = form_view_step.render(model, 0)
+            widget = form_view_step.render(gui_context)
             mapper = widget.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
             mapper.revert()
             self.process()

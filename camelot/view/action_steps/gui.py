@@ -86,23 +86,12 @@ class OpenFormView( ActionStep ):
         self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
         self.title = u' '
         self._columns = admin.get_fields()
-        self._static_fa = list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
         self._form_display = admin.get_form_display()
 
-    def render(self, model, row):
-        from camelot.view.controls.formview import FormView
-        form = FormView(title=self.title, admin=self.admin, model=model,
-                        columns=self._columns, form_display=self._form_display,
-                        index=row)
-        form.set_actions(self.actions)
-        form.set_toolbar_actions(self.top_toolbar_actions)
-        self.admin._apply_form_state( form )
-        return form
-
-    def gui_run( self, gui_context ):
+    def render(self, gui_context):
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.view.workspace import show_top_level
+        from camelot.view.controls.formview import FormView
 
         if self.objects is None:
             related_model = gui_context.item_view.model()
@@ -132,8 +121,20 @@ class OpenFormView( ActionStep ):
                 max_number_of_rows=10
             )
             model.set_value(self.objects)
-        model.set_columns_and_static_field_attributes((self._columns, self._static_fa))
-        formview = self.render(model, row)
+        model.set_columns(self._columns)
+
+        form = FormView(title=self.title, admin=self.admin, model=model,
+                        columns=self._columns, form_display=self._form_display,
+                        index=row)
+        form.set_actions(self.actions)
+        form.set_toolbar_actions(self.top_toolbar_actions)
+        self.admin._apply_form_state( form )
+        
+        return form
+
+    def gui_run( self, gui_context ):
+        from camelot.view.workspace import show_top_level
+        formview = self.render(gui_context)
         show_top_level( formview, gui_context.workspace )
 
 class SelectSubclass(ActionStep):
