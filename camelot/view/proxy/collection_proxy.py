@@ -507,21 +507,8 @@ position in the query.
     @QtCore.pyqtSlot(object)
     def set_static_field_attributes(self, static_fa):
         self._static_field_attributes = static_fa
-
-    def set_columns(self, columns):
-        """Callback method to set the columns
-
-        :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
-        returned by the `get_columns` method of the `EntityAdmin` class
-        """
-        assert object_thread( self )
         self.beginResetModel()
-        self.logger.debug( 'setColumns' )
-        self._columns = columns
-        post(self.get_static_field_attributes, self.set_static_field_attributes)
-
         delegate_manager = delegates.DelegateManager(self._columns)
-
         index = QtCore.QModelIndex()
         option = QtGui.QStyleOptionViewItem()
         self.settings.beginGroup( 'column_width' )
@@ -567,7 +554,18 @@ position in the query.
         self.settings.endGroup()
         self.settings.endGroup()
         self.endResetModel()
-            
+
+    def set_columns(self, columns):
+        """Callback method to set the columns
+
+        :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
+        returned by the `get_columns` method of the `EntityAdmin` class
+        """
+        assert object_thread( self )
+        self.logger.debug( 'set_columns' )
+        self._columns = columns
+        post(self.get_static_field_attributes, self.set_static_field_attributes)
+
     def setHeaderData( self, section, orientation, value, role ):
         assert object_thread( self )
         if orientation == Qt.Horizontal:
