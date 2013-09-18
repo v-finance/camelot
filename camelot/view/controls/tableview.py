@@ -469,6 +469,12 @@ class TableView( AbstractView  ):
         splitter.setObjectName('splitter')
         widget_layout.addWidget( splitter )
         table_widget = QtGui.QWidget( self )
+        # make sure the table itself takes expands to fill the available
+        # width of the view
+        size_policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                        QtGui.QSizePolicy.Expanding)
+        size_policy.setHorizontalStretch(1)
+        table_widget.setSizePolicy(size_policy)
         filters_widget = QtGui.QWidget( self )
         self.table_layout = QtGui.QVBoxLayout()
         self.table_layout.setSpacing( 0 )

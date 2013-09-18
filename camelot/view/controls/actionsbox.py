@@ -33,7 +33,7 @@ class ActionsBox( QtGui.QWidget ):
     """A box containing actions to be applied to a view
 
     :param gui_context: a :class:`camelot.admin.action.base.GuiContext` object
-    :param parent: a :class:`PyQt4.QtGui.QWidget` object
+    :param parent: a :class:`QtGui.QWidget` object
     
     """
 
