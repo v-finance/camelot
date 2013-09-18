@@ -399,11 +399,12 @@ position in the query.
         if collection is None:
             self.set_collection_getter(lambda:[])
         else:
+            assert isinstance(collection, list)
             self.set_collection_getter(lambda:collection)
     
     def get_value(self):
         if self._collection_getter is not None:
-            return self._collection_getter
+            return self._collection_getter()
 
     def set_collection_getter( self, collection_getter ):
         """
