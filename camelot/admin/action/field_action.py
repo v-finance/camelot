@@ -23,7 +23,8 @@
 #  ============================================================================
 
 """ModelContext, GuiContext and Actions that are used in the context of
-editing a single field on a form or in a table.
+editing a single field on a form or in a table.  This module contains the
+various actions that are beyond the icons shown in the editors of a form.
 """
 
 from PyQt4.QtCore import Qt
@@ -94,12 +95,9 @@ class FieldActionGuiContext( ApplicationActionGuiContext ):
         new_context.editor = self.editor
         return new_context
 
-class SelectObject(Action):
-    """Allows the user to select an object, and set the selected object as
-    the new value of the editor"""
-
-    icon = Icon('tango/16x16/actions/system-search.png')
-    tooltip = _('select existing')
+class FieldAction(Action):
+    """Action class that renders itself as a toolbutton, small enough to
+    fit in an editor"""
 
     def render( self, gui_context, parent ):
         from ...view.controls.action_widget import ActionToolbutton
@@ -107,6 +105,13 @@ class SelectObject(Action):
         button.setAutoRaise(True)
         button.setFocusPolicy(Qt.ClickFocus)
         return button
+
+class SelectObject(FieldAction):
+    """Allows the user to select an object, and set the selected object as
+    the new value of the editor"""
+
+    icon = Icon('tango/16x16/actions/system-search.png')
+    tooltip = _('select existing')
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -174,3 +179,75 @@ class ClearObject(OpenObject):
         state = super(ClearObject, self).get_state(model_context)
         state.enabled = model_context.field_attributes.get('editable', False)
         return state
+
+class UploadFile(FieldAction):
+    """Upload a new file into the storage of the field"""
+
+    icon = Icon('tango/16x16/actions/list-add.png')
+    tooltip = _('Attach file')
+
+    def model_run(self, model_context):
+        pass
+
+    def get_state(self, model_context):
+        state = super(UploadFile, self).get_state(model_context)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        state.enabled = (state.enabled is True) and (model_context.value is None)
+        state.visible = (model_context.value is None)
+        return state
+
+class DeleteFile(FieldAction):
+    """Set the new value of the editor to `None`, leaving the
+    actual file in the storage alone"""
+
+    icon = Icon('tango/16x16/actions/edit-delete.png')
+    tooltip = _('Detach file')
+
+    def model_run(self, model_context):
+        pass
+
+    def get_state(self, model_context):
+        state = super(DeleteFile, self).get_state(model_context)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        state.enabled = (state.enabled is True) and (model_context.value is not None)
+        state.visible = (model_context.value is not None)
+        return state
+
+class OpenFile(FieldAction):
+    """Open the file shown in the editor"""
+
+    icon = Icon('tango/16x16/actions/document-open.png')
+    tooltip = _('Open file')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.UpdateProgress(text=_('Checkout file'))
+        storage = model_context.field_attributes['storage']
+        local_path = storage.checkout(model_context.value)
+        yield action_steps.UpdateProgress(text=_('Open file'))
+        yield action_steps.OpenFile(local_path)
+
+    def get_state(self, model_context):
+        state = super(OpenFile, self).get_state(model_context)
+        state.enabled = model_context.value is not None
+        state.visible = state.enabled
+        return state
+
+class SaveFile(OpenFile):
+    """Copy the file shown in the editor to another location"""
+
+    icon = Icon('tango/16x16/actions/document-save-as.png')
+    tooltip = _('Save as')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        stored_file = model_context.value
+        storage = model_context.field_attributes['storage']
+        select_file = action_steps.SelectFile(caption=stored_file.verbose_name)
+        select_file.existing = False
+        selected_files = yield select_file
+        for local_path in selected_files:
+            with open(local_path, 'wb') as destination:
+                yield action_steps.UpdateProgress(text=_('Saving file'))
+                destination.write(storage.checkout_stream(stored_file).read())
+

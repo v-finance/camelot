@@ -43,23 +43,6 @@ class OpenFileProgressDialog(QtGui.QProgressDialog):
         self.setWindowTitle(_('Open file'))
         self.setRange(0, 0)
 
-    def open_path(self, path):
-        if not os.path.exists(path):
-            QtGui.QMessageBox.critical(
-                self,
-                _('Could not open file'),
-                _('%s does not exist') % path,
-            )
-        #
-        # support for windows shares
-        #
-        if not path.startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile(path)
-        else:
-            url = QtCore.QUrl(path, QtCore.QUrl.TolerantMode)
-        QtGui.QDesktopServices.openUrl(url)
-        self.close()
-
     def file_stored(self):
         """Called when the file has been stored at path"""
         self.close()
@@ -77,19 +60,6 @@ class SaveFileProgressDialog(QtGui.QProgressDialog):
     def finish(self, on_finish):
         on_finish()
         self.close()
-
-
-def open_stored_file(parent, stored_file):
-    """Open the stored file with the default system editor for
-    this file type"""
-
-    progress = OpenFileProgressDialog()
-
-    def get_path():
-        return stored_file.storage.checkout(stored_file)
-
-    post(get_path, progress.open_path, model_thread_exception_message_box)
-    progress.exec_()
 
 def save_stored_file(parent, stored_file):
     """Save a stored file as another file"""

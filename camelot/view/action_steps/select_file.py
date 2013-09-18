@@ -35,6 +35,8 @@ class SelectFile( ActionStep ):
         be selected, such as 'All files (*)'.  
         See :class:`QtGui.QFileDialog` for more documentation.
     
+    :param caption: the default filename shown in the dialog
+    
     .. attribute:: single
     
         defaults to :const:`True`, set to :const:`False` if selection
@@ -56,10 +58,11 @@ class SelectFile( ActionStep ):
     and uses it as the initial location the next time it is invoked.
     """
     
-    def __init__( self, file_name_filter = '' ):
+    def __init__( self, file_name_filter = '', caption='' ):
         self.file_name_filter = unicode(file_name_filter)
         self.single = True
         self.existing = True
+        self.caption = caption
     
     def render( self, directory = None ):
         """create the file dialog widget. this method is used to unit test
@@ -69,6 +72,7 @@ class SelectFile( ActionStep ):
             use the default
         """
         dialog = QtGui.QFileDialog( filter = self.file_name_filter,
+                                    caption = self.caption,
                                     directory = (directory or '') )
         if self.existing == False:
             file_mode = QtGui.QFileDialog.AnyFile
