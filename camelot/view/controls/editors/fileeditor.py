@@ -29,21 +29,19 @@ from ....admin.action import field_action
 from customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext as _
 
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
 
-    filter = 'All files (*)'
     document_pixmap = Icon( 'tango/16x16/mimetypes/x-office-document.png' )
         
     def __init__(self, parent=None,
                  storage=None,
                  field_name='file',
                  remove_original=False,
-                 actions = [field_action.DeleteFile(),
+                 actions = [field_action.DetachFile(),
                             field_action.OpenFile(),
                             field_action.UploadFile(),
                             field_action.SaveFile()],
@@ -143,32 +141,6 @@ class FileEditor(CustomEditor):
         self.filename.setReadOnly(not editable)
         self.document_label.setEnabled(editable)
         self.setAcceptDrops(editable)
-
-    def stored_file_ready(self, stored_file):
-        """Slot to be called when a new stored_file has been created by
-        the storage"""
-        self.set_value(stored_file)
-        self.editingFinished.emit()
-
-    def add_button_clicked(self):
-        from camelot.view.storage import create_stored_file
-        create_stored_file(
-            self,
-            self.storage,
-            self.stored_file_ready,
-            filter=self.filter,
-            remove_original=self.remove_original,
-        )
-
-    def clear_button_clicked(self):
-        answer = QtGui.QMessageBox.question( self, 
-                                             _('Remove this file ?'), 
-                                             _('If you continue, you will no longer be able to open this file.'), 
-                                             QtGui.QMessageBox.Yes,
-                                             QtGui.QMessageBox.No )
-        if answer == QtGui.QMessageBox.Yes:
-            self.value = None
-            self.editingFinished.emit()
 
     #
     # Drag & Drop

@@ -42,14 +42,19 @@ class UpdateEditor(ActionStep):
 
     :param attribute: the name of the attribute of the editor to update
     :param value: the new value of the attribute
+    :param propagate: set to `True` if the editor should notify the underlying
+       model of it's change, so that the changes can be written to the model
     """
 
-    def __init__(self, attribute, value):
+    def __init__(self, attribute, value, propagate=False):
         self.attribute = attribute
         self.value = value
+        self.propagate = propagate
 
     def gui_run(self, gui_context):
         setattr(gui_context.editor, self.attribute, self.value)
+        if self.propagate:
+            gui_context.editor.editingFinished.emit()
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.

@@ -27,7 +27,10 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
+import os
+
 from PyQt4.QtCore import Qt
+from PyQt4 import QtGui
 
 from ...core.utils import ugettext_lazy as _
 from ...view.art import Icon
@@ -185,9 +188,28 @@ class UploadFile(FieldAction):
 
     icon = Icon('tango/16x16/actions/list-add.png')
     tooltip = _('Attach file')
+    file_name_filter = 'All files (*)'
 
     def model_run(self, model_context):
-        pass
+        from camelot.view import action_steps
+        filenames = yield action_steps.SelectFile(self.file_name_filter)
+        storage = model_context.field_attributes['storage']
+        for file_name in filenames:
+            remove = False
+            if model_context.field_attributes.get('remove_original'):
+                reply = yield action_steps.MessageBox(
+                    text = _('Do you want to remove the original file?'),
+                    icon = QtGui.QMessageBox.Warning,
+                    title = _('The file will be stored.'),
+                    standard_buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes
+                    )
+                if reply == QtGui.QMessageBox.Yes:
+                    remove = True
+            yield action_steps.UpdateProgress(text='Attaching file')
+            stored_file = storage.checkin(file_name)
+            yield action_steps.UpdateEditor('value', stored_file, propagate=True)
+            if remove:
+                os.remove(file_name)
 
     def get_state(self, model_context):
         state = super(UploadFile, self).get_state(model_context)
@@ -196,18 +218,26 @@ class UploadFile(FieldAction):
         state.visible = (model_context.value is None)
         return state
 
-class DeleteFile(FieldAction):
+class DetachFile(FieldAction):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
     icon = Icon('tango/16x16/actions/edit-delete.png')
     tooltip = _('Detach file')
+    message_title = _('Detach this file ?')
+    message_text = _('If you continue, you will no longer be able to open this file.')
 
     def model_run(self, model_context):
-        pass
+        from camelot.view import action_steps
+        buttons = QtGui.QMessageBox.Yes|QtGui.QMessageBox.No
+        answer = yield action_steps.MessageBox(title=self.message_title,
+                                               text=self.message_text,
+                                               standard_buttons=buttons)
+        if answer == QtGui.QMessageBox.Yes:
+            yield action_steps.UpdateEditor('value', None, propagate=True)
 
     def get_state(self, model_context):
-        state = super(DeleteFile, self).get_state(model_context)
+        state = super(DetachFile, self).get_state(model_context)
         state.enabled = model_context.field_attributes.get('editable', False)
         state.enabled = (state.enabled is True) and (model_context.value is not None)
         state.visible = (model_context.value is not None)
@@ -243,8 +273,10 @@ class SaveFile(OpenFile):
         from camelot.view import action_steps
         stored_file = model_context.value
         storage = model_context.field_attributes['storage']
-        select_file = action_steps.SelectFile(caption=stored_file.verbose_name)
+        select_file = action_steps.SelectFile()
+        select_file.proposal = stored_file.verbose_name
         select_file.existing = False
+        select_file.button_text = _('Save as')
         selected_files = yield select_file
         for local_path in selected_files:
             with open(local_path, 'wb') as destination:
