@@ -544,7 +544,6 @@ class TableView( AbstractView  ):
         logger.debug('set_admin called')
         self.admin = admin
         if self.table:
-            self.table.model().layoutChanged.disconnect( self.tableLayoutChanged )
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             self.table.model().deleteLater()

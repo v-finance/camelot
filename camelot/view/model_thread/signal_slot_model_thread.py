@@ -178,17 +178,11 @@ class SignalSlotModelThread( AbstractModelThread ):
     task_available = QtCore.pyqtSignal()
 
     def __init__( self ):
-        """
-        @param setup_thread: function to be called at startup of the thread to initialize
-        everything, by default this will setup the model.  set to None if nothing should
-        be done.
-        """
         super(SignalSlotModelThread, self).__init__()
         self._task_handler = None
         self._mutex = QtCore.QMutex()
         self._request_queue = []
         self._connected = False
-        self._setup_busy = True
 
     def run( self ):
         self.logger.debug( 'model thread started' )
@@ -197,7 +191,6 @@ class SignalSlotModelThread( AbstractModelThread ):
         # Some tasks might have been posted before the signals were connected to the task handler,
         # so once force the handling of tasks
         self._task_handler.handle_task()
-        self._setup_busy = False
         self.exec_()
         self.logger.debug('model thread stopped')
 
@@ -253,7 +246,7 @@ class SignalSlotModelThread( AbstractModelThread ):
             import time
             time.sleep(1)
         app = QtCore.QCoreApplication.instance()
-        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy() or self._setup_busy
+        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy()
 
     def wait_on_work(self):
         """Wait for all work to be finished, this function should only be used
