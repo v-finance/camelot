@@ -239,6 +239,7 @@ class OpenTableView( EntityAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        yield action_steps.UpdateProgress(text=_('Open table'))
         step = action_steps.OpenTableView(self._entity_admin,
                                           self._entity_admin.get_query())
         step.new_tab = (model_context.mode_name == 'new_tab')
