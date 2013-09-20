@@ -29,7 +29,7 @@ from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
                   ShowChart, ShowPixmap, SelectSubclass,
                   ToFirstForm, ToLastForm, ToNextForm, ToPreviousForm,
                   UpdateEditor,)
-from item_view import Sort, OpenTableView
+from item_view import Sort, OpenTableView, UpdateTableView
 from open_file import ( OpenFile, OpenStream,
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
@@ -80,6 +80,7 @@ __all__ = [
     UpdateEditor.__name__,
     UpdateObject.__name__,
     UpdateProgress.__name__,
+    UpdateTableView.__name__,
     WordJinjaTemplate.__name__,
     ]
 

@@ -32,7 +32,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSizePolicy
 
-from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
 from camelot.core.utils import variant_to_pyobject, ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
@@ -509,7 +509,12 @@ class TableView( AbstractView  ):
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
             class_tree = SubclassTree( self.admin, subclasses, splitter )
             splitter.insertWidget( 0, class_tree )
-            class_tree.subclass_clicked_signal.connect( self.set_admin )
+            class_tree.subclass_clicked_signal.connect( self.change_admin )
+
+    @QtCore.pyqtSlot(object)
+    def change_admin(self, new_admin):
+        action = ChangeAdmin(new_admin)
+        action.gui_run(self.gui_context)
 
     @QtCore.pyqtSlot(int)
     def sectionClicked( self, section ):

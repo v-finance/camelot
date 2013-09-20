@@ -52,7 +52,45 @@ class Sort( ActionStep ):
             model = gui_context.item_view.model()
             model.sort( self.column, self.order )
 
-class OpenTableView( ActionStep ):
+class UpdateTableView( ActionStep ):
+    """Change the admin and or value of an existing table view
+    
+    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param value: a list of objects or a query
+    
+    """
+
+    def __init__( self, admin, value ):
+        self.admin = admin
+        self.value = value
+        self.new_tab = False
+        self.title = admin.get_verbose_name_plural()
+        if isinstance(value, list):
+            self.proxy = CollectionProxy
+        elif isinstance(value, Query):
+            self.proxy = QueryTableProxy
+        else:
+            raise Exception('Unhandled value type : {0}'.format(type(value)))
+        self.filters = admin.get_filters()
+        self.list_actions = admin.get_list_actions()
+        self.columns = self.admin.get_columns()
+    
+    def update_table_view(self, table_view):
+        table_view.set_admin(self.admin)
+        model = table_view.get_model()
+        model.set_columns(self.columns)
+        table_view.set_columns(self.columns)
+        # filters can have default values, so they need to be set before
+        # the value is set
+        table_view.set_filters(self.filters)
+        table_view.set_value(self.value)
+        table_view.set_list_actions(self.list_actions)
+
+    def gui_run(self, gui_context):
+        self.update_table_view(gui_context.view)
+        gui_context.view.change_title(self.title)
+
+class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
     
     :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
@@ -70,21 +108,9 @@ class OpenTableView( ActionStep ):
     """
     
     def __init__( self, admin, value ):
-        self.admin = admin
-        self.value = value
-        self.new_tab = False
-        self.title = admin.get_verbose_name_plural()
+        super(OpenTableView, self).__init__(admin, value)
         self.subclasses = admin.get_subclass_tree()
         self.search_text = ''
-        if isinstance(value, list):
-            self.proxy = CollectionProxy
-        elif isinstance(value, Query):
-            self.proxy = QueryTableProxy
-        else:
-            raise Exception('Unhandled value type : {0}'.format(type(value)))
-        self.filters = admin.get_filters()
-        self.list_actions = admin.get_list_actions()
-        self.columns = self.admin.get_columns()
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
@@ -92,16 +118,8 @@ class OpenTableView( ActionStep ):
                                self.admin, 
                                self.search_text,
                                proxy = self.proxy)
-        table_view.set_admin(self.admin)
         table_view.set_subclass_tree(self.subclasses)
-        model = table_view.get_model()
-        model.set_columns(self.columns)
-        table_view.set_columns(self.columns)
-        # filters can have default values, so they need to be set before
-        # the value is set
-        table_view.set_filters(self.filters)
-        table_view.set_value(self.value)
-        table_view.set_list_actions(self.list_actions)
+        self.update_table_view(table_view)
         return table_view
         
     def gui_run( self, gui_context ):

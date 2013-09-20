@@ -264,6 +264,20 @@ class OpenFormView( ListContextAction ):
     def model_run(self, model_context):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
+
+class ChangeAdmin( Action ):
+    """Change the admin of a tableview, this action is used to switch from
+    one subclass to another in a table view.
+    """
+    
+    def __init__(self, admin):
+        super(ChangeAdmin, self).__init__()
+        self.admin = admin
+    
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.UpdateTableView(self.admin,
+                                           self.admin.get_query())
     
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
