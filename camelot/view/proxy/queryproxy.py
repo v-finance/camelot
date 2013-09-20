@@ -37,11 +37,14 @@ class QueryTableProxy(CollectionProxy):
     QTableView
     """
 
-    def __init__(self, admin, max_number_of_rows=10, 
+    def __init__(self, admin, query=None, max_number_of_rows=10, 
                  cache_collection_proxy=None):
         """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
         logger.debug('initialize query table')
-        self._query_getter = None
+        if query is not None:
+            self._query_getter = lambda:query
+        else:
+            self._query_getter = None
         self._sort_decorator = None
         self._mapper = admin.mapper
         #rows appended to the table which have not yet been flushed to the
