@@ -33,6 +33,8 @@ from camelot.view.art import Icon
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.tableview import TableView
 
+from .item_view import OpenTableView
+
 class SetSelectedObjects(ActionStep):
 
     def __init__(self, objects):
@@ -64,6 +66,10 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
 
     def get_list_actions(self, *a, **kwa):
         return [CancelSelection(), ConfirmSelection()]
+    
+    def get_related_admin(self, cls):
+        admin = super(SelectAdminDecorator, self).get_related_admin(cls)
+        return SelectAdminDecorator(admin)
 
 class SelectDialog(QtGui.QDialog):
     
@@ -75,26 +81,35 @@ class SelectDialog(QtGui.QDialog):
         self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
         self.setSizeGripEnabled(True)
         table = TableView(gui_context, admin, search_text=search_text, parent=self)
+        table.setObjectName('table_view')
         layout.addWidget(table)
         self.setLayout( layout )
         self.objects = []
         self.setWindowState(Qt.WindowMaximized)
 
-class SelectObjects( ActionStep ):
+class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
 
     :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
     :param search_text: a default string on which to search for in the selection
         dialog
+    :param value: a query or a list of object from which the selection should
+        be made.  If none is given, the default query from the admin is taken.
     """
 
-    def __init__(self, admin, search_text=None):
-        self.admin = SelectAdminDecorator(admin)
+    def __init__(self, admin, search_text=None, value=None):
+        if value is None:
+            value = admin.get_query()
+        super(SelectObjects, self).__init__(SelectAdminDecorator(admin), value)
         self.search_text = search_text
 
     def render(self, gui_context):
-        return SelectDialog(gui_context, self.admin, self.search_text)
+        dialog = SelectDialog(gui_context, self.admin, self.search_text)
+        table_view = dialog.findChild(QtGui.QWidget, 'table_view')
+        table_view.set_subclass_tree(self.subclasses)
+        self.update_table_view(table_view)
+        return dialog
 
     def gui_run( self, gui_context ):
         dialog = self.render(gui_context)
