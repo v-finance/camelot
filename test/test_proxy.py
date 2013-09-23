@@ -3,12 +3,16 @@ import unittest
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore
 
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
 from camelot_example.fixtures import load_movie_fixtures
 from camelot.model.party import Person
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.conf import settings
 from camelot.core.orm import Session
 from camelot.core.utils import variant_to_pyobject
 from camelot.test import ModelThreadTestCase
@@ -48,7 +52,7 @@ class ProxyCase( ModelThreadTestCase ):
 
     def setUp( self ):
         super( ProxyCase, self ).setUp()
-        load_movie_fixtures()
+        settings.setup_model()
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
         
@@ -164,6 +168,11 @@ class QueryProxyCase( ProxyCase ):
         self.proxy.set_value(admin.get_query())
         self.columns = admin.get_columns()
         self.proxy.set_columns(self.columns)
+        self.query_counter = 0
+        event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
+        
+    def increase_query_counter(self, conn, cursor, statement, parameters, context, executemany):
+        self.query_counter += 1
 
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -224,3 +233,15 @@ class QueryProxyCase( ProxyCase ):
         self.assertTrue( self.proxy._get_object( rows - 1 ) )        
         self.assertFalse( self.proxy._get_object( rows ) )
         self.assertFalse( self.proxy._get_object( rows + 1 ) )
+        
+    def test_single_query(self):
+        # after constructing a queryproxy, 2 queries are issued
+        # before data is returned (count query + get data query)
+        first_person = self.person_admin.get_query().first()
+        start = self.query_counter
+        proxy = QueryTableProxy(self.person_admin)
+        proxy.set_value(self.person_admin.get_query().filter_by(id=first_person.id))
+        proxy.set_columns(self.person_admin.get_columns())
+        self._load_data(proxy)
+        self.assertEqual(self.query_counter, start+2)
+        self.assertEqual(proxy.rowCount(), 1)

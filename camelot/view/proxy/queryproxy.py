@@ -85,7 +85,7 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def getRowCount(self):
         self._clean_appended_rows()
-        if not self._query_getter:
+        if self._query_getter is None:
             return 0
         query = self.get_query_getter()()
         return query.count() + len(self._appended_rows)

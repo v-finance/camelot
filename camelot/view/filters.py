@@ -158,14 +158,19 @@ class FilterWidget( QtGui.QGroupBox ):
         layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
         self.setLayout( layout )
-        self.group = QtGui.QButtonGroup(self)
+        self.setFlat(True)
+        group = QtGui.QButtonGroup(self)
+        # connect to the signal of the group instead of the individual buttons,
+        # otherwise 2 signals will be received for a single switch of buttons
+        group.buttonClicked.connect(self.emit_filter_changed)
         self.set_filter_data( filter_data )
          
-    @QtCore.pyqtSlot(bool)
+    @QtCore.pyqtSlot(int)
     def emit_filter_changed( self, state) :
         self.filter_changed_signal.emit()
     
     def set_filter_data( self, filter_data ):
+        group = self.findChild(QtGui.QButtonGroup)
         self.filter_data = filter_data
         layout = self.layout()
         button_layout = QtGui.QVBoxLayout()
@@ -173,16 +178,16 @@ class FilterWidget( QtGui.QGroupBox ):
         for i, choice in enumerate( filter_data.options ):
             button = QtGui.QRadioButton( unicode( choice.name ), self)
             button_layout.addWidget( button )
-            self.group.addButton(button, i)
+            group.addButton(button, i)
             if choice.value == filter_data.default:
                 button.setChecked(True)
-            button.toggled.connect( self.emit_filter_changed )
             
         layout.addLayout( button_layout )
         self.setLayout(layout)
     
     def decorate_query( self, query ):
-        checked = self.group.checkedId()
+        group = self.findChild(QtGui.QButtonGroup)
+        checked = group.checkedId()
         if checked>=0:
             return self.filter_data.options[checked].decorator( query )
         return query
