@@ -67,9 +67,18 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
     def get_list_actions(self, *a, **kwa):
         return [CancelSelection(), ConfirmSelection()]
     
+    
     def get_related_admin(self, cls):
-        admin = super(SelectAdminDecorator, self).get_related_admin(cls)
+        admin = self._original_admin.get_related_admin(cls)
         return SelectAdminDecorator(admin)
+    
+    def get_subclass_tree(self):
+        new_subclasses = []
+        subclasses = self._original_admin.get_subclass_tree()
+        for admin, tree in subclasses:
+            new_admin = SelectAdminDecorator(admin)
+            new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
+        return new_subclasses
 
 class SelectDialog(QtGui.QDialog):
     
