@@ -105,8 +105,12 @@ class OpenFormView( ActionStep ):
             #
             row = gui_context.item_view.currentIndex().row()
             if isinstance( related_model, QueryTableProxy ):
+                # here the query and the cache are passed to the proxy
+                # constructor to prevent an additional query when a
+                # form is opened to look for an object that was in the list
                 model = QueryTableProxy(
                     gui_context.admin,
+                    query = related_model.get_value(),
                     max_number_of_rows = 1,
                     cache_collection_proxy = related_model,
                 )
@@ -118,7 +122,7 @@ class OpenFormView( ActionStep ):
                 )
                 # get the unsorted row
                 row = related_model.map_to_source( row )
-            model.set_value(related_model.get_value())
+                model.set_value(related_model.get_value())
         else:
             row = self.row
             model = CollectionProxy(
