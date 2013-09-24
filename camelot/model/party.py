@@ -770,7 +770,7 @@ class PartyCategory( Entity ):
     name = Field( Unicode(40), index=True, required=True )
     color = Field( camelot.types.Color() )
 # end category definition
-    parties = ManyToMany( 'Party', lazy = True,
+    parties = ManyToMany( 'Party', lazy = True, backref='categories',
                           tablename='party_category_party', 
                           remote_colname='party_id',
                           local_colname='party_category_id')
