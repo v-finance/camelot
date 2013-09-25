@@ -286,6 +286,7 @@ allow all languages
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password'))
         self.network_status_label.setText('')
         self.network_status_label.setStyleSheet('')
+        self.toggle_ok_button()
 
     @QtCore.pyqtSlot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
     def proxy_authentication_required(self, proxy, authenticator):
