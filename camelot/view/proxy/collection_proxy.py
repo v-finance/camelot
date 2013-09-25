@@ -66,9 +66,6 @@ def strip_data_from_object( obj, columns ):
     """
     row_data = []
 
-    def create_collection_getter( o, attr ):
-        return lambda: getattr( o, attr )
-
     for _i, col in enumerate( columns ):
         field_value = None
         try:
@@ -169,21 +166,18 @@ class RowModelContext(ListActionModelContext):
         return self.obj
 
 class CollectionProxy( QtGui.QProxyModel ):
-    """The CollectionProxy contains a limited copy of the data in the actual
-    collection, usable for fast visualisation in a QTableView
+    """The :class:`CollectionProxy` contains a limited copy of the data in the
+    actual collection, usable for fast visualisation in a 
+    :class:`QtGui.QTableView`
 
-    the CollectionProxy has some class attributes that can be overwritten when
-    subclassing it :
-
-    * header_icon : the icon to be used in the vertical header
+    The behavior of the :class:`QtGui.QTableView`, such as what happens when the
+    user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
     """
 
     _header_font = QtGui.QApplication.font()
     _header_font_required = QtGui.QApplication.font()
     _header_font_required.setBold( True )
-
-    header_icon = Icon( 'tango/16x16/places/folder.png' )
 
     row_changed_signal = QtCore.pyqtSignal(int, int, int)
     exception_signal = QtCore.pyqtSignal(object)
@@ -234,13 +228,7 @@ position in the query.
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
-        self.iconSize = QtCore.QSize( vertical_header_font_height,
-                                      vertical_header_font_height )
-        if self.header_icon:
-            self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
-        else:
-            self.form_icon = QtCore.QVariant()
-        self.validator = admin.get_validator( self )
+        self.validator = admin.get_validator(self)
         self._collection_getter = lambda:[]
         self.flush_changes = flush_changes
         self.mt = get_model_thread()
