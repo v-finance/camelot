@@ -211,6 +211,16 @@ and above the text.
         QtGui.QTableView.setModel( self, model )
         register.register( model, self )
         self.selectionModel().currentChanged.connect( self.activated )
+        model.modelReset.connect(self.update_headers)
+        self.update_headers()
+        
+    @QtCore.pyqtSlot()
+    def update_headers(self):
+        """Updating the header size seems to be no default Qt function, so,
+        it's managed here"""
+        model = self.model()
+        for i in range( model.columnCount() ):
+            self.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
         
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def activated( self, selectedIndex, previousSelectedIndex ):
@@ -632,8 +642,6 @@ class TableView( AbstractView  ):
         table = self.table
         table.setItemDelegate( delegate )
         model = table.model()
-        for i in range( model.columnCount() ):
-            self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
 
     def set_filters(self, filters):
         logger.debug( 'setting filters for tableview' )
