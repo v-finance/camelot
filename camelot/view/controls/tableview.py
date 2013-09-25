@@ -210,7 +210,7 @@ and above the text.
         #
         QtGui.QTableView.setModel( self, model )
         register.register( model, self )
-        self.selectionModel().currentChanged.connect( self.activated )
+        self.selectionModel().currentChanged.connect(self._current_changed)
         model.modelReset.connect(self.update_headers)
         self.update_headers()
         
@@ -220,21 +220,44 @@ and above the text.
         it's managed here"""
         model = self.model()
         for i in range( model.columnCount() ):
-            self.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
-        
+            size_hint = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize()
+            self.setColumnWidth(i, size_hint.width())
+        # dont save these changes, since they are the defaults
+        self._columns_changed = dict()
+    
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
-    def activated( self, selectedIndex, previousSelectedIndex ):
-        assert object_thread( self )
-        option = QtGui.QStyleOptionViewItem()
-        new_size = self.itemDelegate( selectedIndex ).sizeHint( option,
-                                                                selectedIndex )
-        row = selectedIndex.row()
-        if previousSelectedIndex.row() >= 0:
-            previous_row = previousSelectedIndex.row()
-            self.setRowHeight( previous_row, self._minimal_row_height )
-        self.setRowHeight( row, max( new_size.height(),
-                                     self._minimal_row_height ) )
-                                     
+    def _current_changed(self, current, previous):
+        """This slot is called whenever the current cell is changed"""
+        editor = self.indexWidget(current)
+        header_data = self.model().headerData
+        # if there is an editor in the current cell, change the column and
+        # row width to the size hint of the editor
+        if editor is not None:
+            column_size_hint = header_data(current.column(), Qt.Horizontal, 
+                                           Qt.SizeHintRole).toSize()
+            row_size_hint = header_data(current.row(), Qt.Vertical,
+                                        Qt.SizeHintRole).toSize()
+            editor_size_hint = editor.sizeHint()
+            self.setRowHeight(current.row(), max(row_size_hint.height(),
+                                                 editor_size_hint.height()))
+            self.setColumnWidth(current.column(), max(column_size_hint.width(),
+                                                      editor_size_hint.width()))
+        if current.row() != previous.row():
+            if previous.row() >= 0:
+                row_size_hint = header_data(previous.row(), Qt.Vertical,
+                                            Qt.SizeHintRole).toSize()
+                self.setRowHeight(previous.row(), 
+                                  row_size_hint.height())
+        if current.column() != previous.column():
+            if previous.column() >= 0:
+                column_size_hint = header_data(previous.column(), Qt.Horizontal,
+                                               Qt.SizeHintRole).toSize()
+                self.setColumnWidth(previous.column(), 
+                                    column_size_hint.width())
+        # whenever we change the size, sectionsResized is called, but these
+        # changes should not be saved.
+        self._columns_changed = dict()
+
     def keyPressEvent(self, e):
         assert object_thread( self )
         if self.hasFocus() and e.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
@@ -640,8 +663,7 @@ class TableView( AbstractView  ):
     def set_columns(self, columns):
         delegate = DelegateManager(columns, parent=self)
         table = self.table
-        table.setItemDelegate( delegate )
-        model = table.model()
+        table.setItemDelegate(delegate)
 
     def set_filters(self, filters):
         logger.debug( 'setting filters for tableview' )

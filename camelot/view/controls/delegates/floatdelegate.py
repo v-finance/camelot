@@ -43,8 +43,7 @@ class FloatDelegate( CustomDelegate ):
                  parent=None,
                  unicode_format=None,
                  **kwargs ):
-        super(FloatDelegate, self).__init__(self,
-                                            parent=parent,
+        super(FloatDelegate, self).__init__(parent=parent,
                                             minimum=minimum, maximum=maximum,
                                             **kwargs )
         self.minimum = minimum

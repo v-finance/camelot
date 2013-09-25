@@ -41,9 +41,7 @@ from PyQt4 import QtGui, QtCore
 from camelot.admin.action.list_action import ListActionModelContext
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
-from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
-from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import object_thread, \
                                       model_function, post
@@ -497,14 +495,13 @@ position in the query.
     def set_static_field_attributes(self, static_fa):
         self._static_field_attributes = static_fa
         self.beginResetModel()
-        delegate_manager = delegates.DelegateManager(self._columns)
-        index = QtCore.QModelIndex()
-        option = QtGui.QStyleOptionViewItem()
         self.settings.beginGroup( 'column_width' )
         self.settings.beginGroup( '0' )
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
+        font_metrics = QtGui.QFontMetrics(self._header_font_required)
+        default_column_width = font_metrics.averageCharWidth() * 20
         for i, c in enumerate( self._columns ):
             field_name = c[0]
             #
@@ -521,17 +518,14 @@ position in the query.
                                      Qt.FontRole )
 
             settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
-            label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
-            minimal_widths = [ label_size.width() + 10 ]
+            label_size = font_metrics.size(Qt.TextSingleLine, unicode(c[1]['name']) + u' ')
+            minimal_widths = [label_size.width() + 15, default_column_width]
             if 'minimal_column_width' in c[1]:
-                minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
-            delegate = delegate_manager.get_column_delegate(i)
-            if c[1].get('editable', True) != False:
-                minimal_widths.append( delegate.sizeHint( option, index ).width() )
+                minimal_widths.append(font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
             column_width = c[1].get( 'column_width', None )
             if column_width != None:
-                minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
-            if settings_width:
+                minimal_widths = [ font_metrics.averageCharWidth() * column_width ]
+            if settings_width > 0:
                 header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
                                      Qt.SizeHintRole )
             else:
