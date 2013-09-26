@@ -89,6 +89,12 @@ class CollectionProxyCase( ProxyCase ):
         self.columns = self.person_admin.get_columns()
         self.proxy.set_columns(self.columns)
         self.signal_register = ProxySignalRegister( self.proxy )
+    
+    def test_change_column_width(self):
+        self.proxy.setHeaderData(1, Qt.Horizontal, QtCore.QSize(140,10), 
+                                 Qt.SizeHintRole)
+        size_hint = self.proxy.headerData(1, Qt.Horizontal, Qt.SizeHintRole).toSize()
+        self.assertEqual(size_hint.width(), 140)
         
     def test_modify_list_while_editing( self ):
         person1 = self.collection[0]
