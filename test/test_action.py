@@ -252,6 +252,13 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog.show()
         self.grab_widget( dialog )
 
+    def test_edit_profile(self):
+        from camelot.view.action_steps.profile import EditProfiles
+        step = EditProfiles([], '')
+        dialog = step.render(self.gui_context)
+        dialog.show()
+        self.grab_widget(dialog)
+
     def test_open_file( self ):
         stream = StringIO.StringIO('1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
