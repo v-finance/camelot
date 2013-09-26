@@ -501,16 +501,16 @@ position in the query.
         # this loop can take a while to complete, so processEvents is called regulary
         #
         font_metrics = QtGui.QFontMetrics(self._header_font_required)
-        default_column_width = font_metrics.averageCharWidth() * 20
-        for i, c in enumerate( self._columns ):
-            field_name = c[0]
+        char_width = font_metrics.averageCharWidth()
+        for i, (field_name, fa) in enumerate( self._columns ):
+            verbose_name = unicode(fa['name'])
             #
             # Set the header data
             #
             header_item = QtGui.QStandardItem()
-            header_item.setData( QtCore.QVariant( unicode(c[1]['name']) ),
+            header_item.setData( QtCore.QVariant(verbose_name),
                                  Qt.DisplayRole )
-            if c[1].get( 'nullable', True ) == False:
+            if fa.get( 'nullable', True ) == False:
                 header_item.setData( self._header_font_required,
                                      Qt.FontRole )
             else:
@@ -518,13 +518,14 @@ position in the query.
                                      Qt.FontRole )
 
             settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
-            label_size = font_metrics.size(Qt.TextSingleLine, unicode(c[1]['name']) + u' ')
-            minimal_widths = [label_size.width() + 15, default_column_width]
-            if 'minimal_column_width' in c[1]:
-                minimal_widths.append(font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
-            column_width = c[1].get( 'column_width', None )
-            if column_width != None:
-                minimal_widths = [ font_metrics.averageCharWidth() * column_width ]
+            label_size = font_metrics.size(Qt.TextSingleLine, verbose_name+u' ')
+            length = fa.get('length', 0) or 0
+            minimal_widths = [label_size.width()+15, char_width*length]
+            if 'minimal_column_width' in fa:
+                minimal_widths.append(char_width * fa['minimal_column_width'] )
+            column_width = fa.get('column_width', None)
+            if column_width is not None:
+                minimal_widths = [char_width * column_width ]
             if settings_width > 0:
                 header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
                                      Qt.SizeHintRole )
