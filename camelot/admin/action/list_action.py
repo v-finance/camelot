@@ -600,13 +600,14 @@ class ExportSpreadsheet( ListContextAction ):
         # write data
         #
         offset = 3
+        static_attributes = list(admin.get_static_field_attributes(field_names)) 
         for j, obj in enumerate( model_context.get_collection( yield_per = 100 ) ):
             dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
                                                                      field_names )
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            for i, ((_name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
+            for i, (attributes, delta_attributes)  in enumerate( zip( static_attributes, dynamic_attributes ) ):
                 attributes.update( delta_attributes )
                 value = attributes['getter']( obj )
                 format_string = '0'
