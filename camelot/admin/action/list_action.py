@@ -24,6 +24,7 @@
 
 import copy
 import datetime
+import itertools
 import logging
 
 from .base import Action
@@ -456,9 +457,8 @@ class ExportSpreadsheet( ListContextAction ):
     def model_run( self, model_context ):
         from decimal import Decimal
         from xlwt import Font, Borders, XFStyle, Pattern, Workbook
-        from camelot.view.import_utils import ( RowData, 
-                                                ColumnMapping,
-                                                ColumnSelectionAdmin )        
+        from camelot.view.import_utils import ( ColumnMapping,
+                                                ColumnSelectionAdmin )
         from camelot.view.utils import ( local_date_format, 
                                          local_datetime_format,
                                          local_time_format )
@@ -466,23 +466,28 @@ class ExportSpreadsheet( ListContextAction ):
         #
         # Select the columns that need to be exported
         # 
+        yield action_steps.UpdateProgress(text=_('Prepare export'))
         admin = model_context.admin
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         all_fields.items() ]          
-        row_data = RowData( 1, [None] * len( all_fields ) )
-        mapping = ColumnMapping( len( all_fields ), 
-                                 [row_data], 
-                                 admin,
-                                 [field for field, _fa in admin.get_columns()] )
-        mapping_admin = ColumnSelectionAdmin( len( all_fields ), 
-                                              admin, field_choices )
-        yield action_steps.ChangeObject( mapping, mapping_admin )
+                         all_fields.items() ]
+        row_data = [None] * len(all_fields)
+        column_range = xrange(len(all_fields))
+        mappings = []
+        for i, default_field in itertools.izip_longest(column_range,
+                                                       admin.get_columns(),
+                                                       fillvalue=(None,None)):
+            mappings.append(ColumnMapping(i, [row_data], default_field[0]))
+            
+        mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
+        change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
+        change_mappings.title = _('Select field')
+        change_mappings.subtitle = _('Specify for each column the field to export')
+        yield change_mappings
         columns = []
-        for i in range( len( all_fields ) ):
-            field = getattr( mapping, 'column_%i_field'%i )
-            if field != None:
-                columns.append( ( field, all_fields[field] ) )
+        for mapping in mappings:
+            if mapping.field is not None:
+                columns.append((mapping.field, all_fields[mapping.field]))
         #
         # setup worksheet
         #
@@ -690,11 +695,11 @@ class ImportFromFile( EditAction ):
         # read the data into temporary row_data objects
         #
         if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
-            items = XlsReader( file_name )
+            items = list(XlsReader(file_name))
         else:
             detected = chardet.detect( open( file_name ).read() )['encoding']
             enc = detected or 'utf-8'
-            items = UnicodeReader( open( file_name ), encoding = enc )
+            items = list(UnicodeReader( open( file_name ), encoding = enc ))
         collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
         if len( collection ) < 1:
             raise UserException( _('No data in file' ) )
@@ -702,25 +707,29 @@ class ImportFromFile( EditAction ):
         # select columns to import
         #
         admin = model_context.admin
-        columns = max( row_data.columns for row_data in collection )
         default_fields = [field for field, fa in admin.get_columns() 
                           if fa.get('editable', True)]
-        column_mapping = ColumnMapping( columns, 
-                                        collection, 
-                                        admin,
-                                        default_fields )
-        field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         admin.get_all_fields_and_attributes().items() 
-                         if entity_fa.get('editable', True)]        
-        column_mapping_admin = ColumnMappingAdmin( columns, 
-                                                   admin,
-                                                   field_choices )
+        mappings = []
+        all_fields = [(f,entity_fa['name']) for f,entity_fa in 
+                      admin.get_all_fields_and_attributes().items()
+                      if entity_fa.get('editable', True)]
+        for i, default_field in itertools.izip_longest(xrange(len(all_fields)),
+                                                       default_fields):
+            mappings.append(ColumnMapping(i, items, default_field))
+        
 
-        yield action_steps.ChangeObject( column_mapping, column_mapping_admin )
+        column_mapping_admin = ColumnMappingAdmin(admin,
+                                                  field_choices=all_fields)
+
+        change_mappings = action_steps.ChangeObjects(mappings, 
+                                                     column_mapping_admin)
+        change_mappings.title = _('Select import column')
+        change_mappings.title = _('Select for each column in which field it should be imported')
+        yield change_mappings
         #
         # validate the temporary data
         #
-        row_data_admin = RowDataAdmin( admin, column_mapping )
+        row_data_admin = RowDataAdmin(admin, mappings)
         yield action_steps.ChangeObjects( collection, row_data_admin )
         #
         # Ask confirmation
