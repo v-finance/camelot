@@ -252,6 +252,13 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog.show()
         self.grab_widget( dialog )
 
+    def test_edit_profile(self):
+        from camelot.view.action_steps.profile import EditProfiles
+        step = EditProfiles([], '')
+        dialog = step.render(self.gui_context)
+        dialog.show()
+        self.grab_widget(dialog)
+
     def test_open_file( self ):
         stream = StringIO.StringIO('1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
@@ -618,6 +625,20 @@ class ApplicationCase( test_model.ExampleModelCase ):
         from camelot.admin.action.application import Application
         app = Application(self.app_admin)
         list(app.model_run(self.context))
+        
+    def test_custom_application(self):
+        from camelot.admin.action.application import Application
+
+        # begin custom application
+        class CustomApplication(Application):
+        
+            def model_run( self, model_context ):
+                from camelot.view import action_steps
+                yield action_steps.UpdateProgress(text='Starting up')
+        # end custom application
+        
+        application = CustomApplication(self.app_admin)
+        application.gui_run(GuiContext())
 
 class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.

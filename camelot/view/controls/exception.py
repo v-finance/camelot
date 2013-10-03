@@ -85,13 +85,4 @@ class ExceptionDialog(QtGui.QMessageBox):
                                                 unicode(title), unicode(text))
         self.setInformativeText(unicode(resolution or ''))
         self.setDetailedText(unicode(detail or ''))
-    
-def model_thread_exception_message_box(exception_info):
-    """Display an exception that occurred in the model thread in a message box,
-    use this function as the exception argument in the model thread's post function
-    to represent the exception to the user
-    
-    :param exception_info: a tuple containing exception information
-    """
-    dialog = ExceptionDialog( exception_info )
-    dialog.exec_()
+
