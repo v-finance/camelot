@@ -621,7 +621,9 @@ class TableView( AbstractView  ):
     def refresh(self):
         """Refresh the whole view"""
         assert object_thread( self )
-        post( self.get_admin, self.set_admin )
+        model = self.get_model()
+        if model is not None:
+            model.refresh()
 
     @QtCore.pyqtSlot()
     def rebuild_query( self ):
