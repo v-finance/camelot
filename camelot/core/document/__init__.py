@@ -63,7 +63,7 @@ def document_classes(classes):
         
         mapper = inspect(model)
         
-        for key, value in six.iteritems(mapper.column_attrs):
+        for key, value in mapper.column_attrs.items():
             doc = document_property( cls, key, value )
             if doc:
                 documented_fields.append( doc )

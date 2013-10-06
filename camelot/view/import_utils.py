@@ -30,20 +30,20 @@ import csv
 import codecs
 import logging
 import string
-import re
 
 import six
 from six import moves
 
-from camelot.view import forms
 from camelot.view.controls import delegates
-from camelot.admin.action import CallMethod
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
+from camelot.admin.action import Action
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.utils import local_date_format
+
+from . import action_steps
 
 logger = logging.getLogger('camelot.view.import_utils')
 
@@ -68,129 +68,128 @@ class RowData(object):
 
     def __getattr__(self, attr_name):
         return None
-    
+
+def column_name(column):
+    """Create a column name starting from an index starting at 0
+    eg : column=0 -> name='A'
+    """
+    if column <= 25:
+        return string.uppercase[column];
+    else:
+        return column_name((column/26)-1) + column_name(column%26)
+
 class ColumnMapping( object ):
     """
-    Object that maps the columns in the rows to import onto the fields of the 
-    data model.  This object has attributes named `column_0_field`, 
-    `column_1_field`, ...  Each of these attributes should be set to the field
-    name in which the data of the column should be imported.
+    Object that maps a column in the rows to import to a field of the 
+    data model.
     
-    :param columns: the number of columns in the rows
+    :param column: a number that indicates which column is mapped
     :param rows: the list of RowData objects to import, the list should
         not be empty    
-    :param admin: the admin object of the model in which to import
-    :param default_fields: a list of field names that will be used as the
-        default fields to map
+    :param default_field: the default field that is mapped, or `None`
+    
     """
     
-    def __init__( self, columns, rows, admin, default_fields ):
+    def __init__(self, column, rows, default_field=None):
         # show row is the row that will be previewed in the column
         # selection form
-        self.columns = columns
+        self.column = column
+        self.column_name = column_name(column)
         self.rows = rows
-        self.admin = admin
-        for i in range( self.columns ):
-            setattr( self, 'column_%i_field'%i, None )
-        self.show_row = 0
-        for i, field in moves.zip( range( self.columns ),
-                                   default_fields ):
-            setattr( self, 'column_%i_field'%i, field )
+        self.field = default_field
+        self.value = None
+        self.preview_row = None
+        self.set_preview_row(0)
 
-    def __setattr__( self, attr, value ):
-        if attr == 'show_row':
-            if value >= 0 and value < len(self.rows):
-                for i in range( self.columns ):
-                    column_value = getattr( self.rows[value], 'column_%i'%i )
-                    setattr( self, 'column_%i_value'%i, column_value )
-        super( ColumnMapping, self ).__setattr__( attr, value )
-        
-    def show_next( self ):
-        self.show_row = self.show_row + 1
-        
-    def show_previous( self ):
-        self.show_row = self.show_row - 1
-        
-    def match_names( self ):
-        """Use the data in the current row to determine field names"""
+    def get_preview_row(self):
+        return self.preview_row
+
+    def set_preview_row(self, row):
+        if row >= 0 and row < len(self.rows):
+            self.preview_row = row
+            if self.column < len(self.rows[row]):
+                self.value = self.rows[row][self.column]
+            else:
+                self.value = None
+
+class ShowNext(Action):
+    
+    verbose_name = _('Show next')
+    
+    def model_run(self, model_context):
+        for mapping in model_context.get_collection():
+            mapping.set_preview_row(mapping.get_preview_row()+1)
+            yield action_steps.UpdateObject(mapping)
+
+class ShowPrevious(Action):
+    
+    verbose_name = _('Show previous')
+    
+    def model_run(self, model_context):
+        for mapping in model_context.get_collection():
+            mapping.set_preview_row(mapping.get_preview_row()-1)
+            yield action_steps.UpdateObject(mapping)
+
+class MatchNames(Action):
+    """Use the data in the current row to determine field names"""
+    
+    verbose_name = _('Match names')
+    
+    def model_run(self, model_context):
         field_choices = [ (f,entity_fa['name']) for f,entity_fa in 
-                          six.iteritems(self.admin.get_all_fields_and_attributes())
+                          six.iteritems(model_context.admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True) ]
         # create a dict that  will be used to search field names
         matches = dict( (six.text_type(verbose_name).lower(), fn)
                          for fn, verbose_name in field_choices )
         matches.update( dict( (fn.lower().replace('_',''), fn)
                               for fn, _verbose_name in field_choices ) )
-        for i in range( self.columns ):
-            value = getattr( self, 'column_%i_value'%i )
-            field_name = matches.get( value.replace('_','').lower(), None )
-            setattr( self, 'column_%i_field'%i, field_name )
-            
-class ColumnMappingAdmin( ObjectAdmin ):
-    """Admin class that allows the user to manipulate the column mapping
+        for mapping in model_context.get_collection():
+            if mapping.value is not None:
+                field = matches.get(mapping.value.replace('_','').lower(), None)
+                mapping.field = field
+            else:
+                mapping.field = None
+            yield action_steps.UpdateObject(mapping)
+
+class ColumnMappingAdmin(ObjectAdmin):
+    """Admin class that allows the user to manipulate the column mappings
     
-    :param columns: the number of columns for which to edit the mapping
     :param admin: the admin object of the model in which to import
-    :param field_choices: the list of fields out of which the user can select
     :param entity: the class that is used to define the column mapping
+    :param field_choices: the list of fields out of which the user can select
     """
     
     verbose_name = _('Select fields')
-    
-    field_attributes = { 'show_row' : { 'editable':True,
-                                        'calculator':False,
-                                        'delegate':delegates.IntegerDelegate }
-                         }
-    
-    form_actions = [ CallMethod( _('Show next'), ColumnMapping.show_next ),
-                     CallMethod( _('Show previous'), ColumnMapping.show_previous ),
-                     CallMethod( _('Match names'), ColumnMapping.match_names ),
-                     ]
-    
-    def __init__( self, columns, admin, field_choices, entity = ColumnMapping ):
-        self.columns = columns
-        self.admin = admin
-        self.field_choices = field_choices
-        self.column_field_expression = re.compile('^column_([0-9]*)_field$')
-        super( ColumnMappingAdmin, self ).__init__( admin, entity )
-        
-    def verbose_name_for_column( self, column ):
-        """Create a column name starting from an index starting at 0
-        eg : column=0 -> name='A'
-        """
-        if column <= 25:
-            return string.uppercase[column];
-        else:
-            return self.verbose_name_for_column(column/26 - 1) + self.verbose_name_for_column(column%26)        
 
-    def get_field_attributes( self, field_name ):
-        fa = ObjectAdmin.get_field_attributes( self, field_name )
-        match = self.column_field_expression.match( field_name )
-        if match != None:
-            column = int( match.group(1) )
-            fa.update( { 'delegate':delegates.ComboBoxDelegate,
-                         'editable':True,
-                         'name':self.verbose_name_for_column( column ),
-                         'choices': [(None,'')] + self.field_choices } )
-        return fa
-            
-    def get_form_display( self ):
-        columns = self.columns
-        rows = [ [ 'column_%i_value'%i,
-                   'column_%i_field'%i ] for i in range( columns ) 
-                                 ]
-        return forms.Form( [ forms.GridForm( rows ) ], scrollbars = True )
+    list_action = None
+    list_display = ['column_name', 'field', 'value']
+    field_attributes = {'column_name': {'name':_('Column'),},}
     
-class ColumnSelectionAdmin( ColumnMappingAdmin ):
+    def __init__(self, admin, entity = ColumnMapping, field_choices=[]):
+        super(ColumnMappingAdmin, self).__init__(admin, entity)
+        self.field_choices = [(None,'')] + field_choices
+        
+    def get_field_attributes( self, field_name ):
+        fa = ObjectAdmin.get_field_attributes(self, field_name)
+        if field_name=='field':
+            fa.update({'delegate':delegates.ComboBoxDelegate,
+                        'editable':True,
+                        'choices': self.field_choices })
+        return fa
+    
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        return [ShowNext(), ShowPrevious(), MatchNames()]
+
+class ColumnSelectionAdmin(ColumnMappingAdmin):
     """Admin to edit a `ColumnMapping` class without data preview
     """
     
-    form_actions = []
+    list_display = ['column_name', 'field']
+    list_actions = []
     
-    def get_form_display( self ):
-        columns = self.columns
-        return forms.Form( [ 'column_%i_field'%i for i in range( columns ) ], 
-                           scrollbars = True )    
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        return []
 
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder( object ):
@@ -330,17 +329,26 @@ class RowDataAdmin(object):
     
     :param admin: the `camelot.admin.object_admin.ObjectAdmin` admin object 
         of the objects that will be imported
-    :param column_mapping: the `ColumnMapping` object that maps the columns
+    :param column_mappings: list of `ColumnMapping` object that maps the columns
         in the row data to fields of the objects.
     """
 
     list_action = None
     
-    def __init__(self, admin, column_mapping):
+    def __init__(self, admin, column_mappings):
         self.admin = admin
-        self.column_mapping = column_mapping
         self._new_field_attributes = {}
-        self._columns = None
+        self._columns = []
+        for column_mapping in column_mappings:
+            field_name = 'column_%i'%column_mapping.column
+            original_field = column_mapping.field
+            if original_field != None:
+                fa = self.new_field_attributes(original_field)
+                self._columns.append( (field_name, fa) )
+                self._new_field_attributes[field_name] = fa
+
+    def get_columns(self):
+        return self._columns
 
     def __getattr__(self, attr):
         return getattr(self.admin, attr)
@@ -408,7 +416,7 @@ class RowDataAdmin(object):
             else:
                 yield {'background_color':ColorScheme.pink_1}
 
-    def new_field_attributes(self, i, original_field):
+    def new_field_attributes(self, original_field):
         from camelot.view.controls import delegates
 
         original_field_attributes = self.admin.get_field_attributes( original_field )
@@ -421,24 +429,7 @@ class RowDataAdmin(object):
         for attribute in ['background_color', 'tooltip']:
             attributes[attribute] = None
 
-        self._new_field_attributes['column_%i' %i] = attributes
-
         return attributes
 
-    def get_columns( self ):
-        if self._columns:
-            return self._columns
-
-        new_columns = []
-        for i in range( self.column_mapping.columns ):
-            field_name = 'column_%i' %i
-            original_field = getattr( self.column_mapping,
-                                      field_name + '_field' )
-            if original_field != None:
-                fa = self.new_field_attributes( i, original_field )
-                new_columns.append( (field_name, fa) )
-
-        self._columns = new_columns
-        return new_columns
 
 

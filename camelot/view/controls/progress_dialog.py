@@ -39,13 +39,7 @@ LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
 class ProgressDialog(QtGui.QProgressDialog):
     """
-A Progress Dialog to be used in combination with a post to the model thread:
-    
-to display a progress dialog until my_function has finished::
-
-    d = ProgressDialog()
-    post(my_function, d.finished, d.exception)
-    d.exec_()
+A Progress Dialog, used during the :meth:`gui_run` of an action.
     
 .. image:: /_static/controls/progress_dialog.png
     """
@@ -90,7 +84,7 @@ to display a progress dialog until my_function has finished::
         #QtCore.QTimer.singleShot( 1000, self.show )
     
     # This method is overwritten,to undo the overwrite of this method
-    # in QProgressDialog, as the QProgressDialot then manually relayouts
+    # in QProgressDialog, as the QProgressDialog then manually relayouts
     # the dialog instead of using the normal layouts
     def resizeEvent(self, event):
         return QtGui.QWidget.resizeEvent(self, event)
@@ -128,23 +122,6 @@ to display a progress dialog until my_function has finished::
         cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
         if cancel_button:
             cancel_button.setHidden( hidden )
-
-    @QtCore.pyqtSlot(bool)
-    @QtCore.pyqtSlot()
-    def finished(self, success=True):
-        self.close()
-        
-    @QtCore.pyqtSlot(object)
-    def exception(self, exception_info):
-        from camelot.view.controls.exception import model_thread_exception_message_box
-        model_thread_exception_message_box(exception_info)
-        self.finished(False)
-        
-    @QtCore.pyqtSlot(object)
-    def exit(self, return_code):
-        """Stop the application event loop, with the given return code"""
-        LOGGER.info( 'exit application with code %s'%return_code )
-        QtGui.QApplication.exit( int( return_code ) ) 
 
 class SplashProgress( QtGui.QSplashScreen ):
     """

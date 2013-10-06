@@ -287,6 +287,7 @@ allow all languages
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password'))
         self.network_status_label.setText('')
         self.network_status_label.setStyleSheet('')
+        self.toggle_ok_button()
 
     @QtCore.pyqtSlot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
     def proxy_authentication_required(self, proxy, authenticator):
@@ -362,6 +363,15 @@ allow all languages
         self.media_location_editor.setText(selected)
 
 class EditProfiles(ActionStep):
+    """Allows the user to change or create his current database and media
+    settings.
+    
+    :param profiles: a list of :class:`camelot.core.profile.Profile` objects
+    :param current_profile`: the name of the current profile, or an empty string
+        if there is no current profile.
+        
+    .. image:: /_static/actionsteps/edit_profile.png
+    """
 
     def __init__(self, profiles, current_profile=''):
         self.profiles = profiles

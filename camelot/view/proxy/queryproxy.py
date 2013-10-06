@@ -37,19 +37,20 @@ class QueryTableProxy(CollectionProxy):
     QTableView
     """
 
-    def __init__(self, admin, query_getter, columns_getter,
-                 max_number_of_rows=10,
+    def __init__(self, admin, query=None, max_number_of_rows=10, 
                  cache_collection_proxy=None):
         """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
         logger.debug('initialize query table')
-        self._query_getter = query_getter
+        if query is not None:
+            self._query_getter = lambda:query
+        else:
+            self._query_getter = None
         self._sort_decorator = None
         self._mapper = admin.mapper
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
         self._appended_rows = []
-        super(QueryTableProxy, self).__init__(admin, lambda: [],
-                                              columns_getter, 
+        super(QueryTableProxy, self).__init__(admin,
                                               max_number_of_rows=max_number_of_rows, 
                                               cache_collection_proxy=cache_collection_proxy)     
         
@@ -84,7 +85,7 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def getRowCount(self):
         self._clean_appended_rows()
-        if not self._query_getter:
+        if self._query_getter is None:
             return 0
         query = self.get_query_getter()()
         return query.count() + len(self._appended_rows)
@@ -103,6 +104,10 @@ class QueryTableProxy(CollectionProxy):
             self.setQuery(None)
         else:
             self.setQuery(lambda:query)
+            
+    def get_value(self):
+        if self._query_getter is not None:
+            return self._query_getter()
 
     def get_collection(self):
         """In case the collection is requested of a QueryProxy, we will return

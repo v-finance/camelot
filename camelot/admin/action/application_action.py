@@ -23,6 +23,7 @@
 #  ============================================================================
 
 import logging
+import time
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
@@ -104,6 +105,9 @@ class SelectProfile( Action ):
     
     :param profile_store: an object of type 
         :class:`camelot.core.profile.ProfileStore`
+        
+    This action is also useable as an action step, which will return the
+    selected profile.
     """
     
     new_icon = Icon('tango/16x16/actions/document-new.png')
@@ -116,6 +120,11 @@ class SelectProfile( Action ):
         if profile_store==None:
             profile_store=ProfileStore()
         self.profile_store = profile_store
+        self.selected_profile = None
+    
+    def gui_run(self, gui_context):
+        super(SelectProfile, self).gui_run(gui_context)
+        return self.selected_profile
         
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -208,6 +217,8 @@ class SelectProfile( Action ):
         message = ugettext('Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
         self.profile_store.set_last_profile( selected_profile )
+        self.selected_profile = selected_profile
+        
 
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
@@ -238,15 +249,15 @@ class OpenTableView( EntityAction ):
         state = super( OpenTableView, self ).get_state( model_context )
         state.verbose_name = self.verbose_name or self._entity_admin.get_verbose_name_plural()
         return state
-        
-    def gui_run( self, gui_context ):
-        table_view = self._entity_admin.create_table_view( gui_context )
-        if gui_context.mode_name == 'new_tab':
-            gui_context.workspace.add_view( table_view )
-        else:
-            gui_context.workspace.set_view( table_view )
-        table_view.setFocus(Qt.PopupFocusReason)
-        
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        yield action_steps.UpdateProgress(text=_('Open table'))
+        step = action_steps.OpenTableView(self._entity_admin,
+                                          self._entity_admin.get_query())
+        step.new_tab = (model_context.mode_name == 'new_tab')
+        yield step
+
 class OpenNewView( EntityAction ):
     """An application action that opens a new view of an Entity
     
@@ -439,31 +450,57 @@ class ChangeLogging( Action ):
     verbose_name = _('Change logging')
     icon = Icon('tango/16x16/emblems/emblem-photos.png')
     tooltip = _('Change the logging configuration of the application')
-    
+
+    @classmethod
+    def before_cursor_execute(cls, conn, cursor, statement, parameters, context,
+                              executemany):
+        context._query_start_time = time.time()
+        LOGGER.info("start query:\n\t%s" % statement.replace("\n", "\n\t"))
+        LOGGER.info("parameters: %r" % (parameters,))
+
+    @classmethod
+    def after_cursor_execute(cls, conn, cursor, statement, parameters, context,
+                             executemany):
+        total = time.time() - context._query_start_time
+        LOGGER.info("query Complete in %.02fms" % (total*1000))
+
     def model_run( self, model_context ):
         from camelot.view.controls import delegates
         from camelot.view import action_steps
         from camelot.admin.object_admin import ObjectAdmin
         
+        from sqlalchemy import event
+        from sqlalchemy.engine import Engine
+        
         class Options( object ):
             
             def __init__( self ):
                 self.level = logging.INFO
+                self.queries = False
                 
             class Admin( ObjectAdmin ):
-                list_display = ['level']
+                list_display = ['level', 'queries']
                 field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
                                                'editable':True,
                                                'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
                                                                                                 logging.INFO, 
                                                                                                 logging.WARNING,
                                                                                                 logging.ERROR,
-                                                                                                logging.CRITICAL]]} }
+                                                                                                logging.CRITICAL]]},
+                                     'queries':{ 'delegate': delegates.BoolDelegate,
+                                                 'tooltip': _('Log and time queries send to the database'),
+                                                 'editable': True},
+                                     }
                 
         options = Options()
         yield action_steps.ChangeObject( options )
         logging.getLogger().setLevel( options.level )
-        
+        if options.queries == True:
+            event.listen(Engine, 'before_cursor_execute',
+                         self.before_cursor_execute)
+            event.listen(Engine, 'after_cursor_execute',
+                         self.after_cursor_execute)
+
 class DumpState( Action ):
     """Dump the state of the application to the output, this method is
     triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""

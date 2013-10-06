@@ -377,13 +377,6 @@ It has additional class attributes that customise its behaviour.
 
         return list(filter_generator())
 
-    def create_table_view( self, gui_context ):
-        """Returns a :class:`QtGui.QWidget` containing a table view
-        :param gui_context: a :class:`camelot.admin.action.base.GuiContext`
-            object.
-        """
-        return self.TableView( gui_context, self )
-
     def primary_key( self, obj ):
         """Get the primary key of an object
         :param obj: the object to get the primary key from

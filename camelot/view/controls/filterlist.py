@@ -51,8 +51,8 @@ class FilterList( QtGui.QWidget ):
         if len(items) == 0:
             self.setMaximumWidth(0)
         else:
-            self.setSizePolicy( QtGui.QSizePolicy.MinimumExpanding, 
-                                QtGui.QSizePolicy.Expanding )
+            self.setSizePolicy( QtGui.QSizePolicy.Minimum, 
+                                QtGui.QSizePolicy.Minimum )
 
     def decorate_query(self, query):
         for i in range(self.layout().count()):

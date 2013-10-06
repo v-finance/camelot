@@ -667,6 +667,9 @@ be specified using the verbose_name attribute.
         fields.update(dict(self.get_fields()))
         return fields
 
+    def get_filters(self):
+        return []
+
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:

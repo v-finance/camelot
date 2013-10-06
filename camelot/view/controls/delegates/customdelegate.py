@@ -29,11 +29,6 @@ from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
-# custom color
-not_editable_background = QtGui.QColor(235, 233, 237)
-# darkgray
-not_editable_foreground = QtGui.QColor(Qt.darkGray)
-
 
 def DocumentationMetaclass(name, bases, dct):
     dct['__doc__'] = dct.get('__doc__','') + """

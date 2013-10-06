@@ -44,9 +44,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...core.qt import QtCore, QtGui, Qt, py_to_variant, variant_to_py
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted
-from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
-from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import object_thread, \
                                       model_function, post
@@ -69,9 +67,6 @@ def strip_data_from_object( obj, columns ):
     :param columns: a list of columns for which to get data
     """
     row_data = []
-
-    def create_collection_getter( o, attr ):
-        return lambda: getattr( o, attr )
 
     for _i, col in enumerate( columns ):
         field_value = None
@@ -173,19 +168,15 @@ class RowModelContext(ListActionModelContext):
         return self.obj
 
 class CollectionProxy( QtGui.QIdentityProxyModel ):
-    """The CollectionProxy contains a limited copy of the data in the actual
-    collection, usable for fast visualisation in a QTableView
+    """The :class:`CollectionProxy` contains a limited copy of the data in the
+    actual collection, usable for fast visualisation in a 
+    :class:`QtGui.QTableView`
 
-    the CollectionProxy has some class attributes that can be overwritten when
-    subclassing it :
-
-    * header_icon : the icon to be used in the vertical header
+    The behavior of the :class:`QtGui.QTableView`, such as what happens when the
+    user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
     """
 
-    header_icon = Icon( 'tango/16x16/places/folder.png' )
-
-    item_delegate_changed_signal = QtCore.pyqtSignal()
     row_changed_signal = QtCore.pyqtSignal(int, int, int)
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
@@ -195,26 +186,14 @@ class CollectionProxy( QtGui.QIdentityProxyModel ):
     _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( int, int )
     _rows_inserted_signal = QtCore.pyqtSignal( int, int )
 
-    def __init__( self, 
-                  admin, 
-                  collection_getter, 
-                  columns_getter,
+    def __init__( self,
+                  admin,
                   max_number_of_rows = 10, 
                   flush_changes = True,
                   cache_collection_proxy = None,
                   ):
         """
 :param admin: the admin interface for the items in the collection
-
-:param collection_getter: a function that takes no arguments and returns
-the collection that will be visualized. This function will be called inside
-the model thread, to prevent delays when this function causes the database
-to be hit.  If the collection is a list, it should not contain any duplicate
-elements.
-
-:param columns_getter: a function that takes no arguments and returns the
-columns that will be cached in the proxy. This function will be called
-inside the model thread.
 
 :param cache_collection_proxy: the CollectionProxy on which this CollectionProxy
 will reuse the cache. Passing a cache has the advantage that objects that were
@@ -247,16 +226,9 @@ position in the query.
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
-        self.iconSize = QtCore.QSize( vertical_header_font_height,
-                                      vertical_header_font_height )
-        if self.header_icon:
-            self.form_icon = py_to_variant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
-        else:
-            self.form_icon = py_to_variant()
-        self.validator = admin.get_validator( self )
-        self._collection_getter = collection_getter or (lambda:[])
+        self.validator = admin.get_validator(self)
+        self._collection_getter = lambda:[]
         self.flush_changes = flush_changes
-        self.delegate_manager = None
         self.mt = get_model_thread()
         # Set database connection and load data
         self._rows = 0
@@ -287,13 +259,6 @@ position in the query.
         self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
-
-        def get_columns():
-            columns = columns_getter()
-            static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in columns]))
-            return columns, static_field_attributes
-
-        post( get_columns, self.set_columns_and_static_field_attributes )
 #    # the initial collection might contain unflushed rows
         post( self._update_unflushed_rows )
 #    # in that way the number of rows is requested as well
@@ -430,7 +395,12 @@ position in the query.
         if collection is None:
             self.set_collection_getter(lambda:[])
         else:
+            assert isinstance(collection, list)
             self.set_collection_getter(lambda:collection)
+    
+    def get_value(self):
+        if self._collection_getter is not None:
+            return self._collection_getter()
 
     def set_collection_getter( self, collection_getter ):
         """
@@ -528,67 +498,46 @@ position in the query.
         self._rows = rows
         self.layoutChanged.emit()
 
-    def getItemDelegate( self ):
-        """:return: a DelegateManager for this model, or None if no DelegateManager yet available
-        a DelegateManager will be available once the item_delegate_changed signal has been emitted"""
-        assert object_thread( self )
-        self.logger.debug( 'getItemDelegate' )
-        return self.delegate_manager
-
-    def getColumns( self ):
-        """:return: the columns as set by the setColumns method"""
-        return self._columns
-
+    def get_static_field_attributes(self):
+        return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
+    
     @QtCore.pyqtSlot(object)
-    def set_columns_and_static_field_attributes( self, columns_and_static_fa ):
-        """Callback method to set the columns
-
-        :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
-        returned by the getColumns method of the ElixirAdmin class
-        """
-        assert object_thread( self )
+    def set_static_field_attributes(self, static_fa):
+        self._static_field_attributes = static_fa
         self.beginResetModel()
-        self.logger.debug( 'setColumns' )
-        self._columns, self._static_field_attributes = columns_and_static_fa
-
-        delegate_manager = delegates.DelegateManager(self._columns)
-
-        index = QtCore.QModelIndex()
-        option = QtGui.QStyleOptionViewItem()
         self.settings.beginGroup( 'column_width' )
         self.settings.beginGroup( '0' )
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
+        font_metrics = QtGui.QFontMetrics(self._header_font_required)
+        char_width = font_metrics.averageCharWidth()
         source_model = self.sourceModel()
-        source_model.setColumnCount(len(self._columns))
-        for i, c in enumerate( self._columns ):
+        for i, (field_name, fa) in enumerate( self._columns ):
+            verbose_name = six.text_type(fa['name'])
             set_header_data = functools.partial(source_model.setHeaderData,
                                                 i,
                                                 Qt.Horizontal)
-            field_name = c[0]
             #
             # Set the header data
             #
-            set_header_data(py_to_variant( six.text_type(c[1]['name']) ),
+            set_header_data(py_to_variant( verbose_name ),
                             Qt.DisplayRole)
-            if c[1].get( 'nullable', True ) == False:
+            if fa.get( 'nullable', True ) == False:
                 set_header_data(self._header_font_required, Qt.FontRole)
             else:
                 set_header_data(self._header_font, Qt.FontRole)
 
             settings_width = int( variant_to_py( self.settings.value( field_name, 0 ) ) )
-            label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, six.text_type(c[1]['name']) + u' ' )
-            minimal_widths = [ label_size.width() + 10 ]
-            if 'minimal_column_width' in c[1]:
-                minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
-            delegate = delegate_manager.get_column_delegate(i)
-            if c[1].get('editable', True) != False:
-                minimal_widths.append( delegate.sizeHint( option, index ).width() )
-            column_width = c[1].get( 'column_width', None )
-            if column_width != None:
-                minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
-            if settings_width:
+            label_size = font_metrics.size(Qt.TextSingleLine, verbose_name+u' ')
+            length = fa.get('length', 0) or 0
+            minimal_widths = [label_size.width()+15, char_width*length]
+            if 'minimal_column_width' in fa:
+                minimal_widths.append(char_width * fa['minimal_column_width'] )
+            column_width = fa.get('column_width', None)
+            if column_width is not None:
+                minimal_widths = [char_width * column_width ]
+            if settings_width > 0:
                 set_header_data( py_to_variant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
             else:
@@ -597,11 +546,19 @@ position in the query.
         
         self.settings.endGroup()
         self.settings.endGroup()
-        # Only set the delegate manager when it is fully set up
-        self.delegate_manager = delegate_manager
-        self.item_delegate_changed_signal.emit()
         self.endResetModel()
-            
+
+    def set_columns(self, columns):
+        """Callback method to set the columns
+
+        :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
+        returned by the `get_columns` method of the `EntityAdmin` class
+        """
+        assert object_thread( self )
+        self.logger.debug( 'set_columns' )
+        self._columns = columns
+        post(self.get_static_field_attributes, self.set_static_field_attributes)
+
     def setHeaderData( self, section, orientation, value, role ):
         assert object_thread( self )
         if orientation == Qt.Horizontal:

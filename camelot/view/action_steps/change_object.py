@@ -72,7 +72,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
+        model = CollectionProxy(admin)
+        model.set_value([obj])
+        model.set_columns(columns)
         validator = model.get_validator()
         layout = QtGui.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -259,7 +261,7 @@ class ChangeObject( ActionStep ):
         self.admin = self.admin or model_context.admin.get_related_admin( cls )
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
-
+        
 class ChangeObjects( ActionStep ):
     """
     Pop up a list for the user to change objects

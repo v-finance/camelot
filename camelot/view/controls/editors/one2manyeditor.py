@@ -77,7 +77,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = (proxy or CollectionProxy)(admin, None, lambda:[])
+        model = (proxy or CollectionProxy)(admin)
         table.setModel(model)
         register.register(model, table)
         self.admin = admin
@@ -93,8 +93,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         post(self.admin.get_related_toolbar_actions,
              self.set_right_toolbar_actions,
              args = (Qt.RightToolBarArea, self.direction ) )
-        post(self.get_columns_and_static_field_attributes,
-             self.set_columns_and_static_field_attributes)
+        post(self.get_columns, self.set_columns)
 
     @QtCore.pyqtSlot( object )
     def set_right_toolbar_actions( self, toolbar_actions ):
@@ -119,10 +118,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.field_attributes = kwargs
         self.update_action_status()
 
-    def get_columns_and_static_field_attributes(self):
-        columns = self.admin.get_columns()
-        static_fa = list(self.admin.get_static_field_attributes([c[0] for c in columns]))
-        return columns, static_fa
+    def get_columns(self):
+        return self.admin.get_columns()
 
     def update_action_status( self ):
         toolbar = self.findChild( QtGui.QToolBar )
@@ -142,16 +139,15 @@ class One2ManyEditor(CustomEditor, WideEditor):
             return table.model()
 
     @QtCore.pyqtSlot(object)
-    def set_columns_and_static_field_attributes(self, columns_and_static_fa):
+    def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
-        columns, _static_fa = columns_and_static_fa
         table = self.findChild(QtGui.QWidget, 'table')
         if table is not None:
             delegate = DelegateManager(columns, parent=self)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                model.set_columns_and_static_field_attributes(columns_and_static_fa)
+                model.set_columns(columns)
                 for i in range( model.columnCount() ):
                     txtwidth = model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
                     table.setColumnWidth( i, txtwidth )
@@ -160,6 +156,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         collection = CustomEditor.set_value( self, collection )
         model = self.get_model()
         if model is not None:
+            # even if the collection 'is' the same object as the current
+            # one, still need to set it, since the content of the collection
+            # might have changed.
             model.set_value(collection)
             model_context = self.gui_context.create_model_context()
             for toolbar in self.findChildren( QtGui.QToolBar ):

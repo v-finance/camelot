@@ -32,6 +32,7 @@ import six
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
+from camelot.view.controls.exception import ExceptionDialog
 from camelot.view.model_thread import post
 
 LOGGER = logging.getLogger( 'camelot.view.action_runner' )
@@ -146,8 +147,8 @@ class ActionRunner( QtCore.QEventLoop ):
     @QtCore.pyqtSlot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
-        from camelot.view.controls.exception import model_thread_exception_message_box
-        model_thread_exception_message_box( exception_info )
+        dialog = ExceptionDialog( exception_info )
+        dialog.exec_()
         self.exit()
         
     @QtCore.pyqtSlot( object )

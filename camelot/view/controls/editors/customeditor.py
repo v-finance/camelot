@@ -24,7 +24,6 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
 
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
@@ -153,8 +152,6 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     def add_actions(self, actions, layout):
         for action in actions:
             action_widget = action.render(self.gui_context, self)
-            action_widget.setAutoRaise(True)
-            action_widget.setFocusPolicy(Qt.ClickFocus)
             action_widget.setFixedHeight(self.get_height())
             layout.addWidget(action_widget)
 

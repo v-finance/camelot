@@ -88,10 +88,8 @@ class SubclassDialog(QtGui.QDialog):
     def __init__(self, admin, subclass_tree, parent=None):
         QtGui.QDialog.__init__(self, parent)
         subclass_tree = SubclassTree(admin, subclass_tree, self)
-
         layout = QtGui.QVBoxLayout()
         layout.addWidget(subclass_tree)
-        layout.addStretch(1)
         self.setLayout(layout)
 
         self.selected_subclass = None

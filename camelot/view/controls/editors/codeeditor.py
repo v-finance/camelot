@@ -31,7 +31,6 @@ from PyQt4.QtCore import Qt
 from camelot.view.model_thread import object_thread
 
 from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
-import re
 
 class PartEditor(QtGui.QLineEdit):
 
@@ -79,7 +78,6 @@ class CodeEditor(CustomEditor):
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignLeft)
         for i, part in enumerate(parts):
-            part = re.sub('\W*', '', part)
             part_length = len(part)
             editor = PartEditor(part, part_length, i==0, i==(len(parts)-1) )
             editor.setFocusPolicy( Qt.StrongFocus )

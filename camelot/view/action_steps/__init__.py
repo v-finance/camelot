@@ -29,14 +29,14 @@ from .gui import (CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
                   ShowChart, ShowPixmap, SelectSubclass,
                   ToFirstForm, ToLastForm, ToNextForm, ToPreviousForm,
                   UpdateEditor,)
-from .item_view import Sort
-from open_file import ( OpenFile, OpenStream,
-                        OpenString, OpenJinjaTemplate, WordJinjaTemplate)
+from .item_view import Sort, OpenTableView, UpdateTableView
+from .open_file import ( OpenFile, OpenStream,
+                         OpenString, OpenJinjaTemplate, WordJinjaTemplate)
 from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from print_preview import ( PrintChart, PrintHtml, PrintPreview,
-                            PrintJinjaTemplate)
+from .print_preview import ( PrintChart, PrintHtml, PrintPreview,
+                             PrintJinjaTemplate)
 from .select_file import SelectFile
-from select_object import SelectObjects
+from .select_object import SelectObjects
 from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
 
@@ -58,6 +58,7 @@ __all__ = [
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
+    OpenTableView.__name__,
     PrintChart.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
@@ -79,5 +80,6 @@ __all__ = [
     UpdateEditor.__name__,
     UpdateObject.__name__,
     UpdateProgress.__name__,
+    UpdateTableView.__name__,
     WordJinjaTemplate.__name__,
     ]

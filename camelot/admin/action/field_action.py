@@ -23,10 +23,14 @@
 #  ============================================================================
 
 """ModelContext, GuiContext and Actions that are used in the context of
-editing a single field on a form or in a table.
+editing a single field on a form or in a table.  This module contains the
+various actions that are beyond the icons shown in the editors of a form.
 """
 
+import os
+
 from PyQt4.QtCore import Qt
+from PyQt4 import QtGui
 
 from ...core.utils import ugettext_lazy as _
 from ...view.art import Icon
@@ -94,12 +98,9 @@ class FieldActionGuiContext( ApplicationActionGuiContext ):
         new_context.editor = self.editor
         return new_context
 
-class SelectObject(Action):
-    """Allows the user to select an object, and set the selected object as
-    the new value of the editor"""
-
-    icon = Icon('tango/16x16/actions/system-search.png')
-    tooltip = _('select existing')
+class FieldAction(Action):
+    """Action class that renders itself as a toolbutton, small enough to
+    fit in an editor"""
 
     def render( self, gui_context, parent ):
         from ...view.controls.action_widget import ActionToolbutton
@@ -107,6 +108,13 @@ class SelectObject(Action):
         button.setAutoRaise(True)
         button.setFocusPolicy(Qt.ClickFocus)
         return button
+
+class SelectObject(FieldAction):
+    """Allows the user to select an object, and set the selected object as
+    the new value of the editor"""
+
+    icon = Icon('tango/16x16/actions/system-search.png')
+    tooltip = _('select existing')
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -174,3 +182,104 @@ class ClearObject(OpenObject):
         state = super(ClearObject, self).get_state(model_context)
         state.enabled = model_context.field_attributes.get('editable', False)
         return state
+
+class UploadFile(FieldAction):
+    """Upload a new file into the storage of the field"""
+
+    icon = Icon('tango/16x16/actions/list-add.png')
+    tooltip = _('Attach file')
+    file_name_filter = 'All files (*)'
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        filenames = yield action_steps.SelectFile(self.file_name_filter)
+        storage = model_context.field_attributes['storage']
+        for file_name in filenames:
+            remove = False
+            if model_context.field_attributes.get('remove_original'):
+                reply = yield action_steps.MessageBox(
+                    text = _('Do you want to remove the original file?'),
+                    icon = QtGui.QMessageBox.Warning,
+                    title = _('The file will be stored.'),
+                    standard_buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes
+                    )
+                if reply == QtGui.QMessageBox.Yes:
+                    remove = True
+            yield action_steps.UpdateProgress(text='Attaching file')
+            stored_file = storage.checkin(file_name)
+            yield action_steps.UpdateEditor('value', stored_file, propagate=True)
+            if remove:
+                os.remove(file_name)
+
+    def get_state(self, model_context):
+        state = super(UploadFile, self).get_state(model_context)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        state.enabled = (state.enabled is True) and (model_context.value is None)
+        state.visible = (model_context.value is None)
+        return state
+
+class DetachFile(FieldAction):
+    """Set the new value of the editor to `None`, leaving the
+    actual file in the storage alone"""
+
+    icon = Icon('tango/16x16/actions/edit-delete.png')
+    tooltip = _('Detach file')
+    message_title = _('Detach this file ?')
+    message_text = _('If you continue, you will no longer be able to open this file.')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        buttons = QtGui.QMessageBox.Yes|QtGui.QMessageBox.No
+        answer = yield action_steps.MessageBox(title=self.message_title,
+                                               text=self.message_text,
+                                               standard_buttons=buttons)
+        if answer == QtGui.QMessageBox.Yes:
+            yield action_steps.UpdateEditor('value', None, propagate=True)
+
+    def get_state(self, model_context):
+        state = super(DetachFile, self).get_state(model_context)
+        state.enabled = model_context.field_attributes.get('editable', False)
+        state.enabled = (state.enabled is True) and (model_context.value is not None)
+        state.visible = (model_context.value is not None)
+        return state
+
+class OpenFile(FieldAction):
+    """Open the file shown in the editor"""
+
+    icon = Icon('tango/16x16/actions/document-open.png')
+    tooltip = _('Open file')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.UpdateProgress(text=_('Checkout file'))
+        storage = model_context.field_attributes['storage']
+        local_path = storage.checkout(model_context.value)
+        yield action_steps.UpdateProgress(text=_('Open file'))
+        yield action_steps.OpenFile(local_path)
+
+    def get_state(self, model_context):
+        state = super(OpenFile, self).get_state(model_context)
+        state.enabled = model_context.value is not None
+        state.visible = state.enabled
+        return state
+
+class SaveFile(OpenFile):
+    """Copy the file shown in the editor to another location"""
+
+    icon = Icon('tango/16x16/actions/document-save-as.png')
+    tooltip = _('Save as')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        stored_file = model_context.value
+        storage = model_context.field_attributes['storage']
+        select_file = action_steps.SelectFile()
+        select_file.proposal = stored_file.verbose_name
+        select_file.existing = False
+        select_file.button_text = _('Save as')
+        selected_files = yield select_file
+        for local_path in selected_files:
+            with open(local_path, 'wb') as destination:
+                yield action_steps.UpdateProgress(text=_('Saving file'))
+                destination.write(storage.checkout_stream(stored_file).read())
+

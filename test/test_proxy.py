@@ -3,12 +3,16 @@ import unittest
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore
 
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
 from camelot_example.fixtures import load_movie_fixtures
 from camelot.model.party import Person
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.conf import settings
 from camelot.core.orm import Session
 from camelot.core.qt import variant_to_py
 from camelot.test import ModelThreadTestCase
@@ -48,7 +52,7 @@ class ProxyCase( ModelThreadTestCase ):
 
     def setUp( self ):
         super( ProxyCase, self ).setUp()
-        load_movie_fixtures()
+        settings.setup_model()
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
         
@@ -80,10 +84,17 @@ class CollectionProxyCase( ProxyCase ):
         super( CollectionProxyCase, self ).setUp()
         session = Session()
         self.collection = list( session.query( Person ).all() )
-        self.proxy = CollectionProxy( self.person_admin,
-                                      collection_getter=lambda:self.collection,
-                                      columns_getter=self.person_admin.get_columns )
+        self.proxy = CollectionProxy( self.person_admin )
+        self.proxy.set_value(self.collection)
+        self.columns = self.person_admin.get_columns()
+        self.proxy.set_columns(self.columns)
         self.signal_register = ProxySignalRegister( self.proxy )
+    
+    def test_change_column_width(self):
+        self.proxy.setHeaderData(1, Qt.Horizontal, QtCore.QSize(140,10), 
+                                 Qt.SizeHintRole)
+        size_hint = self.proxy.headerData(1, Qt.Horizontal, Qt.SizeHintRole).toSize()
+        self.assertEqual(size_hint.width(), 140)
         
     def test_modify_list_while_editing( self ):
         person1 = self.collection[0]
@@ -138,9 +149,9 @@ class CollectionProxyCase( ProxyCase ):
         obj = DynamicObject()
         collection = [obj]
         admin = self.app_admin.get_related_admin(DynamicObject)
-        proxy = CollectionProxy( admin,
-                                 collection_getter=lambda:collection,
-                                 columns_getter=admin.get_columns )
+        proxy = CollectionProxy(admin)
+        proxy.set_value(collection)
+        proxy.set_columns(admin.get_columns())
         # get the data once, to fill the cached values of the field attributes
         # so changes get passed the first check
         self._data(0, 0, proxy)
@@ -159,9 +170,15 @@ class QueryProxyCase( ProxyCase ):
         super( QueryProxyCase, self ).setUp()
         if admin is None:
             admin = self.person_admin
-        self.proxy = QueryTableProxy(admin, 
-                                     query_getter = admin.get_query, 
-                                     columns_getter = admin.get_columns )
+        self.proxy = QueryTableProxy(admin)
+        self.proxy.set_value(admin.get_query())
+        self.columns = admin.get_columns()
+        self.proxy.set_columns(self.columns)
+        self.query_counter = 0
+        event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
+        
+    def increase_query_counter(self, conn, cursor, statement, parameters, context, executemany):
+        self.query_counter += 1
 
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -201,11 +218,11 @@ class QueryProxyCase( ProxyCase ):
         # create a related proxy (eg, to display a form view)
         related_proxy = QueryTableProxy(
             self.person_admin,
-            self.proxy.get_query_getter(),
-            self.person_admin.get_columns,
             max_number_of_rows = 1,
             cache_collection_proxy = self.proxy
         )
+        related_proxy.set_value(self.proxy.get_value())
+        related_proxy.set_columns(self.columns)
         self.assertEqual( new_rowcount, related_proxy.rowCount() )
         self._load_data( related_proxy )
         self.assertEqual( self._data( new_row, 0, related_proxy ), 'Foo' )
@@ -222,3 +239,15 @@ class QueryProxyCase( ProxyCase ):
         self.assertTrue( self.proxy._get_object( rows - 1 ) )        
         self.assertFalse( self.proxy._get_object( rows ) )
         self.assertFalse( self.proxy._get_object( rows + 1 ) )
+        
+    def test_single_query(self):
+        # after constructing a queryproxy, 2 queries are issued
+        # before data is returned (count query + get data query)
+        first_person = self.person_admin.get_query().first()
+        start = self.query_counter
+        proxy = QueryTableProxy(self.person_admin)
+        proxy.set_value(self.person_admin.get_query().filter_by(id=first_person.id))
+        proxy.set_columns(self.person_admin.get_columns())
+        self._load_data(proxy)
+        self.assertEqual(self.query_counter, start+2)
+        self.assertEqual(proxy.rowCount(), 1)

@@ -44,14 +44,19 @@ class UpdateEditor(ActionStep):
 
     :param attribute: the name of the attribute of the editor to update
     :param value: the new value of the attribute
+    :param propagate: set to `True` if the editor should notify the underlying
+       model of it's change, so that the changes can be written to the model
     """
 
-    def __init__(self, attribute, value):
+    def __init__(self, attribute, value, propagate=False):
         self.attribute = attribute
         self.value = value
+        self.propagate = propagate
 
     def gui_run(self, gui_context):
         setattr(gui_context.editor, self.attribute, self.value)
+        if self.propagate:
+            gui_context.editor.editingFinished.emit()
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
@@ -90,20 +95,10 @@ class OpenFormView( ActionStep ):
         self._columns = admin.get_fields()
         self._form_display = admin.get_form_display()
 
-    def render(self, model, row):
-        from camelot.view.controls.formview import FormView
-        form = FormView(title=self.title, admin=self.admin, model=model,
-                        columns=self._columns, form_display=self._form_display,
-                        index=row)
-        form.set_actions(self.actions)
-        form.set_toolbar_actions(self.top_toolbar_actions)
-        self.admin._apply_form_state( form )
-        return form
-
-    def gui_run( self, gui_context ):
+    def render(self, gui_context):
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.view.workspace import show_top_level
+        from camelot.view.controls.formview import FormView
 
         if self.objects is None:
             related_model = gui_context.item_view.model()
@@ -112,10 +107,12 @@ class OpenFormView( ActionStep ):
             #
             row = gui_context.item_view.currentIndex().row()
             if isinstance( related_model, QueryTableProxy ):
+                # here the query and the cache are passed to the proxy
+                # constructor to prevent an additional query when a
+                # form is opened to look for an object that was in the list
                 model = QueryTableProxy(
                     gui_context.admin,
-                    related_model.get_query_getter(),
-                    gui_context.admin.get_fields,
+                    query = related_model.get_value(),
                     max_number_of_rows = 1,
                     cache_collection_proxy = related_model,
                 )
@@ -123,24 +120,32 @@ class OpenFormView( ActionStep ):
                 # no cache or sorting information is transferred
                 model = CollectionProxy(
                     gui_context.admin,
-                    related_model.get_collection,
-                    gui_context.admin.get_fields,
                     max_number_of_rows = 1,
                 )
                 # get the unsorted row
                 row = related_model.map_to_source( row )
+                model.set_value(related_model.get_value())
         else:
             row = self.row
-            def create_collection_getter( objects ):
-                return lambda:objects
-
             model = CollectionProxy(
                 self.admin,
-                create_collection_getter(self.objects),
-                self.admin.get_fields,
                 max_number_of_rows=10
             )
-        formview = self.render(model, row)
+            model.set_value(self.objects)
+        model.set_columns(self._columns)
+
+        form = FormView(title=self.title, admin=self.admin, model=model,
+                        columns=self._columns, form_display=self._form_display,
+                        index=row)
+        form.set_actions(self.actions)
+        form.set_toolbar_actions(self.top_toolbar_actions)
+        self.admin._apply_form_state( form )
+        
+        return form
+
+    def gui_run( self, gui_context ):
+        from camelot.view.workspace import show_top_level
+        formview = self.render(gui_context)
         show_top_level( formview, gui_context.workspace )
 
 class SelectSubclass(ActionStep):

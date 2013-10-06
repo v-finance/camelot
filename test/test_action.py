@@ -137,14 +137,14 @@ class ActionStepsCase( ModelThreadTestCase ):
 
     def test_change_object( self ):
         from camelot.bin.meta import NewProjectOptions
-        from camelot.view.action_steps.change_object import ChangeObjectDialog
-        admin = NewProjectOptions.Admin( self.app_admin, NewProjectOptions )
+        from camelot.view.action_steps.change_object import ChangeObject
+        admin = self.app_admin.get_related_admin(NewProjectOptions)
         options = NewProjectOptions()
         options.name = 'Videostore'
         options.module = 'videostore'
         options.domain = 'example.com'
-        dialog = ChangeObjectDialog( options, admin, admin.get_form_display(),
-                                     admin.get_fields())
+        change_object = ChangeObject(options, admin)
+        dialog = change_object.render(self.gui_context)
         self.grab_widget( dialog )
 
     def test_select_file( self ):
@@ -252,6 +252,13 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog = steps[0].render( self.gui_context )
         dialog.show()
         self.grab_widget( dialog )
+
+    def test_edit_profile(self):
+        from camelot.view.action_steps.profile import EditProfiles
+        step = EditProfiles([], '')
+        dialog = step.render(self.gui_context)
+        dialog.show()
+        self.grab_widget(dialog)
 
     def test_open_file( self ):
         stream = six.StringIO('1, 2, 3, 4')
@@ -513,7 +520,7 @@ class ListActionsCase( test_model.ExampleModelCase ):
         admin = self.context.admin
         admin.drop_action = DropAction()
 
-        proxy = QueryTableProxy( admin, admin.get_query, admin.get_columns )
+        proxy = QueryTableProxy(admin)
         proxy.dropMimeData( mime_data,
                             Qt.MoveAction,
                             -1,
@@ -619,6 +626,20 @@ class ApplicationCase( test_model.ExampleModelCase ):
         from camelot.admin.action.application import Application
         app = Application(self.app_admin)
         list(app.model_run(self.context))
+        
+    def test_custom_application(self):
+        from camelot.admin.action.application import Application
+
+        # begin custom application
+        class CustomApplication(Application):
+        
+            def model_run( self, model_context ):
+                from camelot.view import action_steps
+                yield action_steps.UpdateProgress(text='Starting up')
+        # end custom application
+        
+        application = CustomApplication(self.app_admin)
+        application.gui_run(GuiContext())
 
 class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.
