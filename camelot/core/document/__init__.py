@@ -26,8 +26,6 @@
 
 from sqlalchemy import inspect, orm
 
-import six
-
 from ...admin.entity_admin import EntityAdmin
 
 def document_classes(classes):

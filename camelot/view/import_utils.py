@@ -32,7 +32,6 @@ import logging
 import string
 
 import six
-from six import moves
 
 from camelot.view.controls import delegates
 from camelot.admin.object_admin import ObjectAdmin

@@ -31,7 +31,6 @@ returned and an update signal is emitted when the correct data is available.
 
 import collections
 import datetime
-import functools
 import logging
 
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
@@ -515,14 +514,12 @@ position in the query.
         source_model = self.sourceModel()
         for i, (field_name, fa) in enumerate( self._columns ):
             verbose_name = six.text_type(fa['name'])
-            set_header_data = functools.partial(source_model.setHeaderData,
-                                                i,
-                                                Qt.Horizontal)
+            header_item = QtGui.QStandardItem()
+            set_header_data = header_item.setData
             #
             # Set the header data
             #
-            set_header_data(py_to_variant( verbose_name ),
-                            Qt.DisplayRole)
+            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(self._header_font_required, Qt.FontRole)
             else:
@@ -543,6 +540,7 @@ position in the query.
             else:
                 set_header_data( py_to_variant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
+            source_model.setHorizontalHeaderItem(i, header_item)
         
         self.settings.endGroup()
         self.settings.endGroup()

@@ -39,7 +39,7 @@ from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, Qt, variant_to_py
 from .delegates.delegatemanager import DelegateManager
 
 from .search import SimpleSearchControl
