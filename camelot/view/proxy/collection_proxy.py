@@ -724,6 +724,7 @@ position in the query.
         grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
             grouped_requests[row].append( (flushed, column, value) )
+        admin = self.admin
         for row, request_group in grouped_requests.items():
             #
             # don't use _get_object, but only update objects which are in the
@@ -743,7 +744,7 @@ position in the query.
             #
             # the object might have been deleted while an editor was open
             # 
-            if self.admin.is_deleted( o ):
+            if admin.is_deleted( o ):
                 continue
             changed = False
             for flushed, column, value in request_group:
@@ -773,7 +774,7 @@ position in the query.
                 # dynamic and change after every change of the object
                 #
                 fields = [attribute]
-                for fa in self.admin.get_dynamic_field_attributes(o, fields):
+                for fa in admin.get_dynamic_field_attributes(o, fields):
                     # if editable is not in the field_attributes dict, it wasn't
                     # dynamic but static, so earlier checks should have 
                     # intercepted this change
@@ -784,12 +785,12 @@ position in the query.
                     continue
                 # update the model
                 try:
-                    setattr( o, attribute, new_value )
+                    admin.set_field_value(o, attribute, new_value)
                     #
-                    # setting this attribute, might trigger a default function to return a value,
-                    # that was not returned before
+                    # setting this attribute, might trigger a default function 
+                    # to return a value, that was not returned before
                     #
-                    self.admin.set_defaults( o, include_nullable_fields=False )
+                    admin.set_defaults( o, include_nullable_fields=False )
                 except AttributeError, e:
                     self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
                 except TypeError:
@@ -799,9 +800,9 @@ position in the query.
             if changed:
                 if self.flush_changes and self.validator.isValid( row ):
                     # save the state before the update
-                    was_persistent = self.admin.is_persistent(o)
+                    was_persistent =admin.is_persistent(o)
                     try:
-                        self.admin.flush( o )
+                        admin.flush( o )
                     except DatabaseError, e:
                         #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
                         self.logger.error( 'Programming Error, could not flush object', exc_info = e )
@@ -817,7 +818,7 @@ position in the query.
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
                 self.rsh.sendEntityUpdate( self, o )
-                for depending_obj in self.admin.get_depending_objects( o ):
+                for depending_obj in admin.get_depending_objects( o ):
                     self.rsh.sendEntityUpdate( self, depending_obj )
                 return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
             elif flushed:

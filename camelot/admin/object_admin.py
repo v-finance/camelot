@@ -685,6 +685,17 @@ be specified using the verbose_name attribute.
             if self.form_state == constants.MINIMIZED:
                 widget.setWindowState(QtCore.Qt.WindowMinimized)
 
+    def set_field_value(self, obj, field_name, value):
+        """Set the value of a field on an object.  By default this method calls
+        the builtin :func:`setattr` function.
+        
+        :param obj: the object on which to set the value
+        :param field_name: the name of the field, which by default will be used
+            as the name of the attribute to set
+        :param value: the value to set
+        """
+        setattr(obj, field_name, value)
+        
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object
         :param include_nullable_fields: also set defaults for nullable fields, 
