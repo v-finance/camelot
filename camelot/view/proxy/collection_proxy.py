@@ -520,6 +520,8 @@ position in the query.
             settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
             label_size = font_metrics.size(Qt.TextSingleLine, verbose_name+u' ')
             length = fa.get('length', 0) or 0
+            if length > 50:
+                length = 50
             minimal_widths = [label_size.width()+15, char_width*length]
             if 'minimal_column_width' in fa:
                 minimal_widths.append(char_width * fa['minimal_column_width'] )
