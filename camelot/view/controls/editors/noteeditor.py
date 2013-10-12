@@ -42,17 +42,15 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         self.setTextFormat( QtCore.Qt.RichText )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Minimum )
-        style = """
-        QLabel {
-          margin: 0px;
-          padding: 3px;
-          border: 1px solid black;
-          color: black;
-          background-color: %s;
-        }
-        """%(ColorScheme.yellow_1.name())
-        self.setStyleSheet( style );
-        
+        self.setMargin(0)
+        self.setFrameStyle(QtGui.QFrame.StyledPanel)
+        self.setLineWidth(3)
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), ColorScheme.yellow_1)
+        palette.setColor(self.foregroundRole(), QtGui.QColor('black'))
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
+
     def set_value( self, value ):
         value = super( NoteEditor, self ).set_value( value )
         self.setVisible( value != None )
