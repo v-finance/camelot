@@ -298,6 +298,7 @@ class ChangeStatus( Action ):
     def model_run( self, model_context ):
         for obj in model_context.get_selection():
             obj.change_status( self.new_status )
+            yield action_steps.UpdateObject(obj)
         yield action_steps.FlushSession( model_context.session )
 
 class StatusFilter(GroupBoxFilter):
