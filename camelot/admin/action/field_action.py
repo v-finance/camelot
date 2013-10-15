@@ -27,6 +27,7 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
+import inspect
 import os
 
 from PyQt4.QtCore import Qt
@@ -108,6 +109,30 @@ class FieldAction(Action):
         button.setAutoRaise(True)
         button.setFocusPolicy(Qt.ClickFocus)
         return button
+
+class ShowFieldAttributes(Action):
+    
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        from camelot.admin.object_admin import ObjectAdmin
+
+        class Attribute(object):
+            """Helper class representing a field attribute's name and its value"""
+            def __init__(self, name, value):
+                self.name = unicode(name)
+                if inspect.isclass(value):
+                    self.value = value.__name__
+                else:
+                    self.value = unicode(value)
+                        
+            class Admin(ObjectAdmin):
+                list_display = ['name', 'value']
+                field_attributes = {'name':{'minimal_column_width':25},
+                                    'value':{'minimal_column_width':25}}
+        
+        attributes = [Attribute(key,value) for key,value in model_context.field_attributes.items()]
+        yield action_steps.ChangeObjects(attributes, 
+                                         model_context.admin.get_related_admin(Attribute))
 
 class SelectObject(FieldAction):
     """Allows the user to select an object, and set the selected object as
