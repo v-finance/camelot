@@ -518,23 +518,12 @@ position in the query.
                                      Qt.FontRole )
 
             settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
-            label_size = font_metrics.size(Qt.TextSingleLine, verbose_name+u' ')
-            length = fa.get('length', 0) or 0
-            if length > 50:
-                length = 50
-            minimal_widths = [label_size.width()+15, char_width*length]
-            if 'minimal_column_width' in fa:
-                minimal_widths.append(char_width * fa['minimal_column_width'] )
-            column_width = fa.get('column_width', None)
-            if column_width is not None:
-                minimal_widths = [char_width * column_width ]
             if settings_width > 0:
-                header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
-                                     Qt.SizeHintRole )
+                width = settings_width
             else:
-                header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
-                                     Qt.SizeHintRole )
-             
+                width = fa['column_width'] * char_width
+            header_item.setData( QtCore.QVariant( QtCore.QSize( width, self._horizontal_header_height ) ),
+                                 Qt.SizeHintRole )
             self.source_model.setHorizontalHeaderItem( i, header_item )
         
         self.settings.endGroup()
