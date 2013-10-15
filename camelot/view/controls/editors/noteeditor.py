@@ -47,7 +47,7 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         self.setTextFormat( QtCore.Qt.RichText )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Minimum )
-        self.setMargin(0)
+        self.setContentsMargins(0, 0, 0, 0)
         self.setFrameStyle(QtGui.QFrame.Box)
         self.setLineWidth(2)
         palette = self.palette()
