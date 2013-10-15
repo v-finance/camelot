@@ -26,9 +26,14 @@ from PyQt4 import QtGui, QtCore
 from camelot.view.art import ColorScheme
 from customeditor import AbstractCustomEditor
 
+color = ColorScheme.yellow_1
+
 class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
     """An editor that behaves like a note, the editor hides itself when
-    there is no text to display"""
+    there is no text to display.  The default background color of the not
+    is yellow, but can be changed through the `background_color` field
+    attribute.
+    """
     
     editingFinished = QtCore.pyqtSignal()
     
@@ -43,11 +48,12 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Minimum )
         self.setMargin(0)
-        self.setFrameStyle(QtGui.QFrame.StyledPanel)
-        self.setLineWidth(3)
+        self.setFrameStyle(QtGui.QFrame.Box)
+        self.setLineWidth(2)
         palette = self.palette()
-        palette.setColor(self.backgroundRole(), ColorScheme.yellow_1)
-        palette.setColor(self.foregroundRole(), QtGui.QColor('black'))
+        palette.setColor(self.backgroundRole(), color)
+        palette.setColor(QtGui.QPalette.Shadow, QtGui.QColor('black'))
+        palette.setColor(QtGui.QPalette.Dark, QtGui.QColor('black'))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
@@ -56,4 +62,8 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         self.setVisible( value != None )
         if value:
             self.setText( unicode( value ) )
+    
+    def set_field_attributes(self, **kwargs):
+        kwargs['background_color'] = kwargs.get('background_color') or color
+        super(NoteEditor, self).set_field_attributes(**kwargs)
 
