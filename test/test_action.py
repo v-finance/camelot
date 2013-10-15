@@ -455,14 +455,22 @@ class ListActionsCase( test_model.ExampleModelCase ):
                 xlrd.open_workbook( filename )
 
     def test_match_names( self ):
-        from camelot.view.import_utils import RowData, ColumnMapping
+        from camelot.view.import_utils import RowData, ColumnMapping, MatchNames
 
-        rows = [ RowData( 0, ['rating', 'name'] ) ]
+        rows = [['rating', 'name'],
+                ['5',      'The empty bitbucket']
+                ]
         fields = [field for field, _fa in self.context.admin.get_columns()]
-        mapping = ColumnMapping( 2, rows, self.context.admin, fields )
-        self.assertNotEqual( mapping.column_0_field, 'rating' )
-        mapping.match_names()
-        self.assertEqual( mapping.column_0_field, 'rating' )
+        mapping = ColumnMapping(0, rows)
+        self.assertNotEqual( mapping.field, 'rating' )
+        
+        match_names = MatchNames()
+        model_context = MockModelContext()
+        model_context.obj = mapping
+        model_context.admin = self.context.admin
+        
+        list(match_names.model_run(model_context))
+        self.assertEqual( mapping.field, 'rating' )
 
     def test_import_from_xls_file( self ):
         self.test_import_from_file( 'import_example.xls' )
