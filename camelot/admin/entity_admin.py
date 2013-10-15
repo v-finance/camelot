@@ -300,7 +300,7 @@ It has additional class attributes that customise its behaviour.
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict[x]
             #
-            # In case of a text 'target' field attribute, resolvee it
+            # In case of a text 'target' field attribute, resolve it
             #
             target = attributes.get('target', None)
             if isinstance(target, basestring):

@@ -577,7 +577,7 @@ be specified using the verbose_name attribute.
         #
         # If no column_width is specified, try to derive one
         #
-        if field_attributes.get('column_with', None) is None:
+        if field_attributes.get('column_width', None) is None:
             length = min(field_attributes.get('length', 0) or 0, 50)
             field_attributes['column_width'] = max( 
                 field_attributes.get('minimal_column_width', 0),
