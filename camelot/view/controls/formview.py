@@ -71,7 +71,8 @@ class FormEditors( object ):
         index = self._index[field_name]
         model = self._widget_mapper.model()
         delegate = self._widget_mapper.itemDelegate()
-        model_index = model.createIndex(0, index, 0)
+        model_index = model.createIndex(self._widget_mapper.currentIndex(),
+                                        index, 0)
         widget_editor = delegate.createEditor(
             parent,
             self.option,
