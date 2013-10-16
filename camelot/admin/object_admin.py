@@ -561,7 +561,7 @@ be specified using the verbose_name attribute.
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
             )
             forced_attributes = self.field_attributes.get(field_name, {})
-            field_attributes.update(forced_attributes)
+            attributes.update(forced_attributes)
             self._expand_field_attributes(attributes, field_name)
             self._field_attributes[field_name] = attributes
             return attributes

@@ -385,16 +385,10 @@ class HeaderWidget( QtGui.QWidget ):
         layout.setContentsMargins( 0, 0, 0, 0 )
         for i, (field, attributes) in enumerate(columns):
             if 'operators' in attributes and attributes['operators']:
-                box = QtGui.QGroupBox()
-                box_layout = QtGui.QVBoxLayout()
-                box_layout.setContentsMargins( 1, 1, 1, 1 )
                 widget = FilterOperator( self._admin.entity,
-                                         field, attributes,
-                                         box )
-                box_layout.addWidget( widget )
-                box.setLayout( box_layout )
+                                         field, attributes )
                 widget.filter_changed_signal.connect( self._filter_changed )
-                layout.addWidget( box )
+                layout.addWidget( widget )
         #layout.addStretch()
         self._expanded_search.setLayout( layout )
         self._expanded_filters_created = True

@@ -29,9 +29,8 @@ from PyQt4 import QtGui, QtCore
 from camelot.view.field_attributes import order_operators
 from camelot.core.utils import ugettext
 from camelot.view.utils import operator_names
-from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
-class FilterOperator( QtGui.QWidget ):
+class FilterOperator( QtGui.QGroupBox ):
     """Widget that allows applying various filter operators on a field
 
     :param cls: the class on which the filter will be applied
@@ -56,14 +55,15 @@ class FilterOperator( QtGui.QWidget ):
                   default_value_1 = None,
                   default_value_2 = None,
                   parent = None ):
-        super( FilterOperator, self ).__init__( parent )        
+        super(FilterOperator, self).__init__(unicode(field_attributes['name']),
+                                             parent)
         self._entity, self._field_name = cls, field_name
         self._field_attributes = copy.copy( field_attributes )
         self._field_attributes['editable'] = True
+        self.setFlat(True)
         layout = QtGui.QVBoxLayout()
         layout.setContentsMargins( 2, 2, 2, 2 )
         layout.setSpacing( 2 )
-        layout.addWidget( UserTranslatableLabel( field_attributes['name'] ) )
         self._operators = field_attributes.get('operators', [])
         default_index = 0
         self._choices = [(0, ugettext('All')), (1, ugettext('None'))]
