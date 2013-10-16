@@ -299,6 +299,7 @@ It has additional class attributes that customise its behaviour.
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict[x]
+            attributes.update(forced_attributes)
             #
             # In case of a text 'target' field attribute, resolve it
             #
