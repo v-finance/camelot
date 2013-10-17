@@ -34,7 +34,6 @@ from PyQt4 import QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
-from camelot.view.model_thread import model_function
 
 _application_admin_ = []
 
@@ -148,7 +147,6 @@ shortcut confusion and reduce the number of status updates.
         """
         self.admins[entity] = admin_class
 
-    @model_function
     def get_sections( self ):
         """A list of :class:`camelot.admin.section.Section` objects,
         these are the sections to be displayed in the left panel.

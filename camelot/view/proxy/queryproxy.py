@@ -29,7 +29,7 @@ import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
 from collection_proxy import CollectionProxy
-from camelot.view.model_thread import model_function, object_thread, post
+from camelot.view.model_thread import object_thread, post
 
 class QueryTableProxy(CollectionProxy):
     """The QueryTableProxy contains a limited copy of the data in the SQLAlchemy
@@ -71,7 +71,6 @@ class QueryTableProxy(CollectionProxy):
         """Does nothing since all rows returned by a query are flushed"""
         pass
     
-    @model_function
     def _clean_appended_rows(self):
         """Remove those rows from appended rows that have been flushed"""
         flushed_rows = []
@@ -82,7 +81,6 @@ class QueryTableProxy(CollectionProxy):
         for o in flushed_rows:
             self._appended_rows.remove(o)
 
-    @model_function
     def getRowCount(self):
         self._clean_appended_rows()
         if self._query_getter is None:
@@ -130,7 +128,6 @@ class QueryTableProxy(CollectionProxy):
             return []
         return self.get_query_getter()().all()
     
-    @model_function
     def _set_sort_decorator( self, column=None, order=None ):
         """set the sort decorator attribute of this model to a function that
         sorts a query by the given column using the given order.  When no
@@ -228,7 +225,6 @@ class QueryTableProxy(CollectionProxy):
             self._appended_rows.remove(o)
         self._rows = self._rows - 1
 
-    @model_function
     def _get_collection_range( self, offset, limit ):
         """Get the objects in a certain range of the collection
         :return: an iterator over the objects in the collection, starting at 
@@ -265,7 +261,6 @@ class QueryTableProxy(CollectionProxy):
                 
         return query.all()
                     
-    @model_function
     def _extend_cache(self):
         """Extend the cache around the rows under request"""
         if self._query_getter:
@@ -315,7 +310,6 @@ class QueryTableProxy(CollectionProxy):
                         self._add_data(columns, row, obj)                
             return (offset, limit)
 
-    @model_function
     def _get_object(self, row):
         """Get the object corresponding to row.  If row is smaller than 0
         (in case of an invalid widget mapper), None is returned as an object"""

@@ -22,8 +22,6 @@
 #
 #  ============================================================================
 
-from functools import wraps
-
 from PyQt4 import QtCore
 
 import logging
@@ -55,27 +53,6 @@ def object_thread( self ):
     documentation.
     """
     return self.thread() == QtCore.QThread.currentThread()
-    
-def model_function(original_function):
-    """Decorator to ensure a function is only called from within the model
-    thread. If this function is called in another thread, an exception will be
-    thrown"""
-
-    def in_model_thread():
-        """return wether current thread is model thread"""
-        from no_thread_model_thread import NoThreadModelThread
-        current_thread = QtCore.QThread.currentThread()
-        model_thread = get_model_thread()
-        return (current_thread==model_thread) or isinstance(
-            model_thread, (NoThreadModelThread,)
-        )
-
-    @wraps(original_function)
-    def wrapper(*args, **kwargs):
-        assert (not verify_threads) or in_model_thread()
-        return original_function(*args, **kwargs)
-
-    return wrapper
 
 class AbstractModelThread(QtCore.QThread):
     """Abstract implementation of a model thread class
