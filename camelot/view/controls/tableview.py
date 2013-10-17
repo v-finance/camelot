@@ -401,11 +401,8 @@ class HeaderWidget( QtGui.QWidget ):
         """Apply expanded filters on the query"""
         if self._expanded_filters_created:
             for i in range(self._expanded_search.layout().count()):
-                box = self._expanded_search.layout().itemAt(i).widget()
-                if box:
-                    widget = box.layout().itemAt(0).widget()
-                    if widget:
-                        query = widget.decorate_query(query)
+                widget = self._expanded_search.layout().itemAt(i).widget()
+                query = widget.decorate_query(query)
         return query
 
     @QtCore.pyqtSlot()
@@ -567,6 +564,7 @@ class TableView( AbstractView  ):
         model = self.get_model()
         if model is not None:
             model.set_value(value)
+            self.rebuild_query()
 
     @QtCore.pyqtSlot( object )
     def set_admin( self, admin ):
