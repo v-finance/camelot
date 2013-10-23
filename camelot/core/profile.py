@@ -223,7 +223,7 @@ class ProfileStore(object):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
-            for key in state.keys():
+            for key in six.iterkeys(state):
                 value = str( qsettings.value(key, empty).toString() )
                 if key != 'profilename':
                     value = self._decode(value)

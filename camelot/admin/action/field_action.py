@@ -39,6 +39,7 @@ from .base import Action
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
+import six
 
 class FieldActionModelContext( ApplicationActionModelContext ):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
@@ -130,7 +131,7 @@ class ShowFieldAttributes(Action):
                 field_attributes = {'name':{'minimal_column_width':25},
                                     'value':{'minimal_column_width':25}}
         
-        attributes = [Attribute(key,value) for key,value in model_context.field_attributes.items()]
+        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes.items)]
         yield action_steps.ChangeObjects(attributes, 
                                          model_context.admin.get_related_admin(Attribute))
 

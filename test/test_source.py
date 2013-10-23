@@ -30,4 +30,3 @@ class SourceQualityCase( unittest.TestCase ):
         # run the 2to3 tool, to see if nothing remains unconverted
         from lib2to3.main import main
         main('lib2to3.fixes', [source_code, '-x', 'unicode'])
-                    

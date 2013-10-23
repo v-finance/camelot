@@ -276,7 +276,7 @@ class BackupMechanism(object):
         
         yield (number_of_tables * 2 + 2, steps, _('Load new data'))
         from sqlalchemy.orm.session import _sessions
-        for session in _sessions.values():
+        for session in six.itervalues(_sessions):
             session.expunge_all()
         
         yield (1, 1, _('Restore completed'))

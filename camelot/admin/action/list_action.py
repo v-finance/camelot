@@ -472,9 +472,9 @@ class ExportSpreadsheet( ListContextAction ):
         admin = model_context.admin
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         six.iteritems(all_fields) ]          
+                         six.iteritems(all_fields) ]
         row_data = [None] * len(all_fields)
-        column_range = xrange(len(all_fields))
+        column_range = range(len(all_fields))
         mappings = []
         for i, default_field in itertools.izip_longest(column_range,
                                                        admin.get_columns(),
@@ -580,7 +580,7 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(zip(field_names, 
+            fields = enumerate(szip(field_names, 
                                    static_attributes,
                                    dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:

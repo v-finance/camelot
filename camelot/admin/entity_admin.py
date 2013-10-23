@@ -305,7 +305,7 @@ It has additional class attributes that customise its behaviour.
             # In case of a text 'target' field attribute, resolve it
             #
             target = attributes.get('target', None)
-            if isinstance(target, basestring):
+            if isinstance(target, six.basestring):
                 for mapped_class in _mapper_registry.keys():
                     if mapped_class.class_.__name__ == target:
                         attributes['target'] = mapped_class.class_

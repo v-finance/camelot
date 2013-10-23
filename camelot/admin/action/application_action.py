@@ -647,7 +647,7 @@ def structure_to_application_action(structure, application_admin):
         :class:`camelot.admin.application_admin.ApplicationAdmin` to use to
         create other Admin classes.
     """
-    if isinstance(structure, (Action,)):
+    if isinstance(structure, Action):
         return structure
     admin = application_admin.get_related_admin( structure )
     return OpenTableView( admin )

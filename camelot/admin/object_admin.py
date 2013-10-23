@@ -469,7 +469,7 @@ be specified using the verbose_name attribute.
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
             for name, value in six.iteritems(field_attributes):
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+                if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
 
@@ -507,7 +507,7 @@ be specified using the verbose_name attribute.
                     # and the continuous evaluation of it might be expensive,
                     # as it might be the max of a column
                     continue
-                if callable(value):
+                if six.callable(value):
                     return_value = None
                     try:
                         return_value = value(obj)
@@ -728,7 +728,7 @@ be specified using the verbose_name attribute.
                         default_value = default.arg
                     else:
                         default_value = default.execute()
-                elif callable(default):
+                elif six.callable(default):
                     import inspect
                     args, _varargs, _kwargs, _defs = \
                         inspect.getargspec(default)
