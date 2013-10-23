@@ -57,6 +57,11 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         ok_button.setObjectName( 'ok' )
         ok_button.clicked.connect( self.accept )
         ok_button.hide()
+        copy_button = QtGui.QPushButton( ugettext('Copy') )
+        copy_button.setObjectName( 'copy' )
+        copy_button.clicked.connect( self.copy_clicked )
+        copy_button.hide()
+        copy_button.setToolTip(ugettext('Copy details to clipboard'))
         self.setBar( progress_bar )
         self.setLabel( label )
         self.setCancelButton( cancel_button )
@@ -74,6 +79,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         button_layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
+        button_layout.addWidget( copy_button )
         button_layout.addStretch()
         layout.addWidget( details )
         layout.addLayout( button_layout )
@@ -89,21 +95,37 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     def resizeEvent(self, event):
         return QtGui.QWidget.resizeEvent(self, event)
     
+    @QtCore.pyqtSlot(bool)
+    def copy_clicked(self, checked):
+        details = self.findChild( QtGui.QListView, 'details' )
+        if details is None:
+            return
+        model = details.model()
+        if model is not None:
+            text = u'\n'.join([unicode(s) for s in model.stringList()])
+            QtGui.QApplication.clipboard().setText(text)
+            
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
         :param text: a string
         """
         details = self.findChild( QtGui.QListView, 'details' )
-        if details != None:
+        copy_button = self.findChild( QtGui.QPushButton, 'copy' )
+        if copy_button is not None:
+            copy_button.show()
+        if details is not None:
             # a standarditem model is used, in the ideal case, the item
             # model with the real data should live in the model thread, and
             # this should only be a proxy
             if details.isHidden():
                 details.show()
-                model = QtGui.QStandardItemModel( parent = self )
+                model = QtGui.QStringListModel( parent = self )
                 details.setModel( model )
             model = details.model()
-            model.appendRow( QtGui.QStandardItem( text ) )
+            model.insertRow(model.rowCount())
+            model.setData(model.index(model.rowCount()-1, 0),
+                          QtCore.QVariant(text),
+                          Qt.DisplayRole)
         
     def clear_details( self ):
         """Clear the detail text"""

@@ -563,49 +563,44 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
             )
-            #
-            # Field attributes forced by the field_attributes property
-            #
-            forced_attributes = {}
-            try:
-                forced_attributes = self.field_attributes[field_name]
-            except KeyError:
-                pass
-
-            #
-            # TODO : move part of logic from entity admin class over here
-            #
-
-            #
-            # Overrule introspected field_attributes with those defined
-            #
-            attributes.update(forced_attributes)
-
-            #
-            # In case of a 'target' field attribute, instantiate an appropriate
-            # 'admin' attribute
-            #
-
-            def get_entity_admin(target):
-                """Helper function that instantiated an Admin object for a
-                target entity class
-
-                :param target: an entity class for which an Admin object is
-                needed
-                """
-                try:
-                    fa = self.field_attributes[field_name]
-                    target = fa.get('target', target)
-                    admin_class = fa['admin']
-                    return admin_class(self.app_admin, target)
-                except KeyError:
-                    return self.get_related_admin(target)
-
-            if 'target' in attributes:
-                attributes['admin'] = get_entity_admin(attributes['target'])
-
+            self._expand_field_attributes(attributes, field_name)
             self._field_attributes[field_name] = attributes
             return attributes
+
+    def _expand_field_attributes(self, field_attributes, field_name):
+        """Given a set field attributes, expand the set with attributes
+        derived from the given attributes and those forced through the
+        `field_attributes` class attribute.
+        """
+        #
+        # Field attributes forced by the field_attributes property
+        #
+        forced_attributes = self.field_attributes.get(field_name, {})
+        field_attributes.update(forced_attributes)
+        #
+        # If no column_width is specified, try to derive one
+        #
+        if field_attributes.get('column_width', None) is None:
+            length = min(field_attributes.get('length', 0) or 0, 50)
+            field_attributes['column_width'] = max( 
+                field_attributes.get('minimal_column_width', 0),
+                2 + len(unicode(field_attributes['name'])),
+                length
+                )
+        #
+        # If there is an `admin` field attribute, instantiate it
+        #
+        target = field_attributes.get('target', None)
+        if target is not None:
+            admin = field_attributes.get('admin', None)
+            if admin is not None:
+                field_attributes['admin'] = admin(self, target)
+            #
+            # In case of a 'target' field attribute, add an appropriate
+            # 'admin' attribute
+            #
+            else:
+                field_attributes['admin'] = self.get_related_admin(target)
 
     def get_table( self ):
         """The definition of the table to be used in a list view
@@ -688,6 +683,17 @@ be specified using the verbose_name attribute.
             if self.form_state == constants.MINIMIZED:
                 widget.setWindowState(QtCore.Qt.WindowMinimized)
 
+    def set_field_value(self, obj, field_name, value):
+        """Set the value of a field on an object.  By default this method calls
+        the builtin :func:`setattr` function.
+        
+        :param obj: the object on which to set the value
+        :param field_name: the name of the field, which by default will be used
+            as the name of the attribute to set
+        :param value: the value to set
+        """
+        setattr(obj, field_name, value)
+        
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object
         :param include_nullable_fields: also set defaults for nullable fields, 

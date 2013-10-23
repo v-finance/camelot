@@ -46,6 +46,7 @@ class Application( Action ):
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
             dialog = exception.ExceptionDialog(exc_info)
             dialog.exec_()
+            QtCore.QCoreApplication.exit(-1)
 
     def set_application_attributes(self):
         """Sets the attributes of the QApplication object

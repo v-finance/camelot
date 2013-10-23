@@ -231,36 +231,8 @@ It has additional class attributes that customise its behaviour.
             #
             # Field attributes forced by the field_attributes property
             #
-            forced_attributes = {}
-            try:
-                forced_attributes = self.field_attributes[field_name]
-            except KeyError:
-                pass
+            forced_attributes = self.field_attributes.get(field_name, {})
 
-            def resolve_target(target):
-                """A class or name of the class representing the other
-                side of a relation.  Use the name of the class to avoid
-                circular dependencies"""
-                if isinstance(target, six.string_types):
-                    for mapped_class in six.iterkeys(_mapper_registry):
-                        if mapped_class.class_.__name__ == target:
-                            return mapped_class.class_
-                    raise Exception('No mapped class found for target %s'%target)
-                return target
-
-            def get_entity_admin(target):
-                """Helper function that instantiated an Admin object for a
-                target entity class.
-
-                :param target: an entity class for which an Admin object is
-                needed
-                """
-
-                try:
-                    admin_class = forced_attributes['admin']
-                    return admin_class(self.app_admin, target)
-                except KeyError:
-                    return self.get_related_admin(target)
             #
             # Get the default field_attributes trough introspection if the
             # field is a mapped field
@@ -281,7 +253,6 @@ It has additional class attributes that customise its behaviour.
                                                     property.mapper.class_ )
 
                     attributes.update( target = target,
-                                       admin = get_entity_admin(target),
                                        editable = property.viewonly==False,
                                        nullable = True)
                     foreign_keys = list( property._user_defined_foreign_keys )
@@ -330,20 +301,19 @@ It has additional class attributes that customise its behaviour.
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict[x]
+            #
+            # In case of a text 'target' field attribute, resolve it
+            #
+            target = attributes.get('target', None)
+            if isinstance(target, basestring):
+                for mapped_class in _mapper_registry.keys():
+                    if mapped_class.class_.__name__ == target:
+                        attributes['target'] = mapped_class.class_
+                        break
+                else:
+                    raise Exception('No mapped class found for target %s'%target)
 
-            #
-            # Overrule introspected field_attributes with those defined
-            #
-            attributes.update(forced_attributes)
-
-            #
-            # In case of a 'target' field attribute, instantiate an appropriate
-            # 'admin' attribute
-            #
-            if 'target' in attributes:
-                attributes['target'] = resolve_target(attributes['target'])
-                attributes['admin'] = get_entity_admin(attributes['target'])
-
+            self._expand_field_attributes(attributes, field_name)
             self._field_attributes[field_name] = attributes
             return attributes
 

@@ -526,21 +526,12 @@ position in the query.
                 set_header_data(self._header_font, Qt.FontRole)
 
             settings_width = int( variant_to_py( self.settings.value( field_name, 0 ) ) )
-            label_size = font_metrics.size(Qt.TextSingleLine, verbose_name+u' ')
-            length = fa.get('length', 0) or 0
-            minimal_widths = [label_size.width()+15, char_width*length]
-            if 'minimal_column_width' in fa:
-                minimal_widths.append(char_width * fa['minimal_column_width'] )
-            column_width = fa.get('column_width', None)
-            if column_width is not None:
-                minimal_widths = [char_width * column_width ]
             if settings_width > 0:
-                set_header_data( py_to_variant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
+                width = settings_width
             else:
-                set_header_data( py_to_variant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                width = fa['column_width'] * char_width
+            header_item.setData( QtCore.QVariant( QtCore.QSize( width, self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
-            source_model.setHorizontalHeaderItem(i, header_item)
         
         self.settings.endGroup()
         self.settings.endGroup()
@@ -730,6 +721,7 @@ position in the query.
         grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
             grouped_requests[row].append( (flushed, column, value) )
+        admin = self.admin
         for row, request_group in six.iteritems(grouped_requests):
             #
             # don't use _get_object, but only update objects which are in the
@@ -749,7 +741,7 @@ position in the query.
             #
             # the object might have been deleted while an editor was open
             # 
-            if self.admin.is_deleted( o ):
+            if admin.is_deleted( o ):
                 continue
             changed = False
             for flushed, column, value in request_group:
@@ -779,7 +771,7 @@ position in the query.
                 # dynamic and change after every change of the object
                 #
                 fields = [attribute]
-                for fa in self.admin.get_dynamic_field_attributes(o, fields):
+                for fa in admin.get_dynamic_field_attributes(o, fields):
                     # if editable is not in the field_attributes dict, it wasn't
                     # dynamic but static, so earlier checks should have 
                     # intercepted this change
@@ -790,12 +782,12 @@ position in the query.
                     continue
                 # update the model
                 try:
-                    setattr( o, attribute, new_value )
+                    admin.set_field_value(o, attribute, new_value)
                     #
-                    # setting this attribute, might trigger a default function to return a value,
-                    # that was not returned before
+                    # setting this attribute, might trigger a default function 
+                    # to return a value, that was not returned before
                     #
-                    self.admin.set_defaults( o, include_nullable_fields=False )
+                    admin.set_defaults( o, include_nullable_fields=False )
                 except AttributeError as e:
                     self.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
                 except TypeError:
@@ -805,9 +797,9 @@ position in the query.
             if changed:
                 if self.flush_changes and self.validator.isValid( row ):
                     # save the state before the update
-                    was_persistent = self.admin.is_persistent(o)
+                    was_persistent =admin.is_persistent(o)
                     try:
-                        self.admin.flush( o )
+                        admin.flush( o )
                     except DatabaseError as e:
                         #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
                         self.logger.error( 'Programming Error, could not flush object', exc_info = e )
@@ -823,7 +815,7 @@ position in the query.
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
                 self.rsh.sendEntityUpdate( self, o )
-                for depending_obj in self.admin.get_depending_objects( o ):
+                for depending_obj in admin.get_depending_objects( o ):
                     self.rsh.sendEntityUpdate( self, depending_obj )
                 return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
             elif flushed:
