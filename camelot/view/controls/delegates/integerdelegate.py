@@ -52,7 +52,7 @@ class IntegerDelegate( six.with_metaclass( DocumentationMetaclass,
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = self.locale.toString( long(value) )
+            value_str = self.locale.toString( six.long(value) )
 
         if self.unicode_format is not None:
             value_str = self.unicode_format(value)

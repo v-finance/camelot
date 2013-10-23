@@ -165,7 +165,7 @@ class FilterOperator( QtGui.QWidget ):
         """:return: the current operator and its arity"""
         operator = self._operators[self._index-2]
         try:
-            func_code = operator.func_code
+            func_code = six.get_function_code(operator)
         except AttributeError:
             arity = 1 # probably a builtin function, assume arity == 1
         else:

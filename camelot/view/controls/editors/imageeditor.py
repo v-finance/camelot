@@ -29,6 +29,8 @@ from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
 from camelot.view.action import ActionFactory
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -127,8 +129,7 @@ All files (*)"""
         
     def checkin_byte_array(self, byte_array, suffix):
         """Check a byte_array into the storage"""
-        import cStringIO
-        stream = cStringIO.StringIO( byte_array.data() )
+        stream = six.StringIO( byte_array.data() )
         return self.storage.checkin_stream( 'clipboard', suffix, stream)
         
     def set_enabled(self, editable=True):
