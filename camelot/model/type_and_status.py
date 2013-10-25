@@ -159,7 +159,7 @@ class Status( EntityBuilder ):
                                         'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
 
             status_type = type( entity.__name__ + 'StatusType', 
-                                (StatusType, entity._descriptor.entity_base,),
+                                (StatusType, entity._descriptor.get_top_entity_base(),),
                                 { '__tablename__':self.status_type_table,
                                   'Admin':status_type_admin } )	 
 
@@ -168,7 +168,7 @@ class Status( EntityBuilder ):
                                              onupdate = 'cascade')
 
             status_history = type( entity.__name__ + 'StatusHistory',
-                                   ( StatusHistory, entity._descriptor.entity_base, ),
+                                   ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
                                    {'__tablename__':self.status_history_table,
                                     'classified_by_id':schema.Column( PrimaryKey(), 
                                                                       foreign_key, 
@@ -182,7 +182,7 @@ class Status( EntityBuilder ):
         else:
 
             status_history = type( entity.__name__ + 'StatusHistory',
-                                   ( StatusHistory, entity._descriptor.entity_base, ),
+                                   ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
                                    {'__tablename__':self.status_history_table,
                                     'classified_by':schema.Column( Enumeration( self.enumeration ), 
                                                                    nullable=False, index=True ),
