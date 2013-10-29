@@ -43,7 +43,7 @@ def hide_progress_dialog( gui_context ):
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.progress_dialog
     original_state = None
-    if isinstance( progress_dialog, ( QtGui.QWidget, ) ):
+    if isinstance( progress_dialog, QtGui.QWidget ):
         original_state = progress_dialog.isHidden()
     try:
         if original_state == False:
@@ -111,7 +111,7 @@ class ActionRunner( QtCore.QEventLoop ):
         try:
             result = generator_method( *args )
             while True:
-                if isinstance( result, (ActionStep,)):
+                if isinstance(result, ActionStep):
                     if result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
@@ -185,7 +185,7 @@ class ActionRunner( QtCore.QEventLoop ):
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        if isinstance( yielded, (ActionStep,) ):
+        if isinstance( yielded, ActionStep ):
             try:
                 self._was_canceled( self._gui_context )
                 to_send = yielded.gui_run( self._gui_context )

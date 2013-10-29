@@ -231,7 +231,7 @@ class EntityAction( Action ):
             visualize the entities
         """
         from camelot.admin.entity_admin import EntityAdmin
-        assert isinstance( entity_admin, (EntityAdmin,) )
+        assert isinstance( entity_admin, EntityAdmin )
         self._entity_admin = entity_admin
         
 class OpenTableView( EntityAction ):

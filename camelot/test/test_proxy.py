@@ -24,7 +24,6 @@
 
 import sys
 import unittest
-import StringIO
 import subprocess
 from subprocess import PIPE
 
@@ -39,6 +38,7 @@ from PyQt4.QtNetwork import QNetworkAccessManager
 from camelot.test.http_proxy import HTTPProxy
 from camelot.core.dbprofiles import get_network_proxy
 
+from six import StringIO
 
 _application_ = None
 if not QtGui.QApplication.instance():
@@ -72,9 +72,6 @@ def clear_win_http_settings():
 
     ERROR_SUCCESS = 0
     error_code = win32api.GetLastError()
-    if error_code != ERROR_SUCCESS:
-        print 'win32 error code %d', error_code, \
-            win32api.FormatMessage(error_code)
 
 
 class ProxyTestCase(unittest.TestCase):

@@ -191,7 +191,7 @@ and takes these parameters :
             else:
                 editor = widgets.create_editor( field, form_widget )
                 if editor != None:
-                    if isinstance( editor, ( WideEditor, ) ):
+                    if isinstance( editor, WideEditor ):
                         c.next_empty_row()
                         col_span = 2 * columns
                         label = widgets.create_label( field, editor, form_widget )

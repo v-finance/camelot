@@ -136,7 +136,6 @@ class HTTPProxy(QObject):
         else:
             protocol, host = address.split(':')
            
-        print 'address', address
         
         #url = QUrl( protocol + host )
         url = QUrl.fromEncoded(address)

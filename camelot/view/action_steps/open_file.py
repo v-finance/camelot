@@ -27,6 +27,8 @@ from PyQt4 import QtGui, QtCore
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 
+from six import StringIO
+
 class OpenFile( ActionStep ):
     """
     Open a file with the preferred application from the user.  The absolute
@@ -133,7 +135,6 @@ class OpenJinjaTemplate( OpenStream ):
                   context={},
                   environment = environment,
                   suffix='.txt' ):
-        from cStringIO import StringIO
         template = environment.get_template( template )
         template_stream = template.stream( context )
         output_stream = StringIO()
