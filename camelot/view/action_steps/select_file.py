@@ -98,7 +98,7 @@ class SelectFile( ActionStep ):
     
     def gui_run( self, gui_context ):
         settings = QtCore.QSettings()
-        directory = unicode(settings.value( 'datasource' ).toString())
+        directory = unicode(settings.value('datasource').toString())
         dialog = self.render( directory )
         with hide_progress_dialog( gui_context ):
             if dialog.exec_() == QtGui.QDialog.Rejected:
@@ -108,4 +108,33 @@ class SelectFile( ActionStep ):
                 settings.setValue( 'datasource', QtCore.QVariant( file_names[0] ) )
             return file_names
 
+class SelectDirectory(ActionStep):
+    """Select a single directory
 
+    .. attribute:: caption
+    
+        The text to display to the user
+
+    .. attribute:: options
+    
+        options to pass to :meth:`QtGui.QFileDialog.getExistingDirectory`,
+        defaults to :const:`QtGui.QFileDialog.ShowDirsOnly`
+
+    """
+    
+    def __init__(self):
+        self.caption = _('Select directory')
+        self.options = QtGui.QFileDialog.ShowDirsOnly
+        
+    def gui_run(self, gui_context):
+        settings = QtCore.QSettings()
+        directory = unicode(settings.value('datasource').toString())
+        get_directory = QtGui.QFileDialog.getExistingDirectory
+        with hide_progress_dialog( gui_context ):
+            selected = get_directory(parent=gui_context.workspace,
+                                     caption=unicode(self.caption),
+                                     directory=directory,
+                                     options=self.options)
+            if selected:
+                settings.setValue('datasource', QtCore.QVariant(selected))
+            return unicode(selected)

@@ -322,8 +322,8 @@ class Enumeration(types.TypeDecorator):
     def __init__(self, choices=[], **kwargs):
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)
-        self._string_to_int = dict((v,k) for (k,v) in choices)
-        self.choices = [v for (k,v) in choices]
+        self._string_to_int = dict((str_value,int_key) for (int_key,str_value) in choices)
+        self.choices = [value for (_key,value) in choices]
         
     def bind_processor(self, dialect):
   
