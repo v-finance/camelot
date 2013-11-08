@@ -108,6 +108,45 @@ class SelectFile( ActionStep ):
                 settings.setValue( 'datasource', QtCore.QVariant( file_names[0] ) )
             return file_names
 
+class SaveFile( ActionStep ):
+    """Select a file for saving
+    
+    :param file_name_filter: Filter on the names of the files that can
+        be selected, such as 'All files (*)'.  
+        See :class:`QtGui.QFileDialog` for more documentation.
+
+    .. attribute:: caption
+
+        The text to display to the user
+
+    The :keyword:`yield` statement of :class:`SaveFile` returns a file name.
+    Raises a :class:`camelot.core.exception.CancelRequest` when no file was
+    selected.
+    
+    This action step stores its last location into the :class:`QtCore.QSettings` 
+    and uses it as the initial location the next time it is invoked.
+    """
+
+    def __init__( self, file_name_filter = ''):
+        self.file_name_filter = unicode(file_name_filter)
+        self.caption = _('Save')
+        
+    def gui_run(self, gui_context):
+        settings = QtCore.QSettings()
+        directory = unicode(settings.value('datasource').toString())
+        directory = os.path.dirname(directory)
+        get_filename = QtGui.QFileDialog.getSaveFileName
+        with hide_progress_dialog( gui_context ):
+            selected = get_filename(parent=gui_context.workspace,
+                                    caption=unicode(self.caption),
+                                    directory=directory,
+                                    filter=self.file_name_filter)
+            if selected:
+                settings.setValue('datasource', QtCore.QVariant(selected))
+                return unicode(selected)
+            else:
+                raise CancelRequest()
+
 class SelectDirectory(ActionStep):
     """Select a single directory
 
