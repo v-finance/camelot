@@ -18,11 +18,17 @@ Development
  
  * New action steps :
  
-   * OpenTableView
-   * Next/Previous form
-   * SelectObjects
-   * SelectItem
-   * 
+   * :class:`camelot.view.action_steps.item_view.OpenTableView`
+   * :class:`camelot.view.action_steps.select_file.SaveFile`
+   * :class:`camelot.view.action_steps.select_file.SelectDirectory`
+   * :class:`camelot.view.action_steps.select_object.SelectObjects`
+   * :class:`camelot.view.action_steps.gui.SelectItem`
+   * :class:`camelot.view.action_steps.gui.SelectSubclass`
+   * :class:`camelot.view.action_steps.application.MainWindow`
+   * :class:`camelot.view.action_steps.form_view.ToFirstForm`
+   * :class:`camelot.view.action_steps.form_view.ToLastForm`
+   * :class:`camelot.view.action_steps.form_view.ToNextForm`
+   * :class:`camelot.view.action_steps.form_view.ToPreviousForm`
  
  * Reworked import/export action to handle tables with many columns
  
