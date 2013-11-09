@@ -298,13 +298,8 @@ class SaveFile(OpenFile):
         from camelot.view import action_steps
         stored_file = model_context.value
         storage = model_context.field_attributes['storage']
-        select_file = action_steps.SelectFile()
-        select_file.proposal = stored_file.verbose_name
-        select_file.existing = False
-        select_file.button_text = _('Save as')
-        selected_files = yield select_file
-        for local_path in selected_files:
-            with open(local_path, 'wb') as destination:
-                yield action_steps.UpdateProgress(text=_('Saving file'))
-                destination.write(storage.checkout_stream(stored_file).read())
+        local_path = yield action_steps.SaveFile()
+        with open(local_path, 'wb') as destination:
+            yield action_steps.UpdateProgress(text=_('Saving file'))
+            destination.write(storage.checkout_stream(stored_file).read())
 
