@@ -1,9 +1,45 @@
 Development
 -----------
 
+ * The application itself is an action : :class:`camelot.admin.action.application.Application`.
+   This makes it easy to customize the startup process by overwritting its `model_run` method.
+  
+ * Modified progress dialog to add and clear details while the action runs.
+ 
+ * Default sizes for forms are calculated, avoiding the need of setting the `form_size` attribute
+   on the `Admin` class.
+ 
+ * The `OneToMany` editor can display query attributes, created with `lazy='dynamic'`.
+ 
+ * New available actions :
+ 
+   * Start and stop a profiler
+   * Change authentication picture
+ 
+ * New action steps :
+ 
+   * OpenTableView
+   * Next/Previous form
+   * SelectObjects
+   * SelectItem
+   * 
+ 
+ * Reworked import/export action to handle tables with many columns
+ 
+ * New database profiles api
+ 
+ * Integer and float editors display `None` as an empty string
+ 
+ * The `list_action` state used to determine the icon in a table view
+ 
+ * Delayed primary key type definition in default models
+
  * Introduction of the :class:`camelot.admin.field_admin.FieldAdmin` class to
    allow definition of the field attributes within the entity class.
- 
+
+ * See :ref:`migrate-latest` for documentation on how to upgrade an 
+   existing Camelot project to the latest version.
+
 Release 13.04.13
 ----------------
 
@@ -48,8 +84,8 @@ Release 13.04.13
  
  * Unittests cover 80% of the code
  
- * See :ref:`migrate-latest` for documentation on how to upgrade an 
-   existing Camelot project to the latest version. 
+ * See :ref:`migrate-13.04.13` for documentation on how to upgrade an 
+   existing Camelot project to 13.04.13. 
 
 Release 12.06.29
 ----------------
