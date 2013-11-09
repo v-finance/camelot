@@ -45,6 +45,8 @@ Development
 
  * See :ref:`migrate-latest` for documentation on how to upgrade an 
    existing Camelot project to the latest version.
+ 
+ * Tested with SQLAlchemy 0.8.3
 
 Release 13.04.13
 ----------------
