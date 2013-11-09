@@ -16,3 +16,6 @@ Migrate from Camelot 13.04.13 to the development branch
  * In the default party model, all relations between parties have been removed
    (such as Employer, Employee, Customer, Supplier).  If these are needed in 
    an application, they should be added in the application itself.
+ 
+ * The `SelectFile` action step can no longer be used to select a non existing
+   file, use `SaveFile` instead.
