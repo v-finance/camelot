@@ -22,23 +22,23 @@
 #
 #  ============================================================================
 
-from application import MainWindow, InstallTranslator, Exit
-from backup import SelectBackup, SelectRestore
-from change_object import ChangeField, ChangeObject, ChangeObjects
-from gui import ( CloseView, MessageBox, OpenFormView, Refresh, SelectItem,
-                  ShowChart, ShowPixmap, SelectSubclass,
-                  ToFirstForm, ToLastForm, ToNextForm, ToPreviousForm,
-                  UpdateEditor,)
-from item_view import Sort, OpenTableView, UpdateTableView
-from open_file import ( OpenFile, OpenStream,
-                        OpenString, OpenJinjaTemplate, WordJinjaTemplate )
-from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from print_preview import ( PrintChart, PrintHtml, PrintPreview,
-                            PrintJinjaTemplate )
-from select_file import SelectFile, SelectDirectory, SaveFile
-from select_object import SelectObjects
-from text_edit import EditTextDocument
-from update_progress import UpdateProgress
+from .application import MainWindow, InstallTranslator, Exit
+from .backup import SelectBackup, SelectRestore
+from .change_object import ChangeField, ChangeObject, ChangeObjects
+from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
+                        ToPreviousForm)
+from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
+                   ShowChart, ShowPixmap, SelectSubclass, UpdateEditor,)
+from .item_view import Sort, OpenTableView, UpdateTableView
+from .open_file import ( OpenFile, OpenStream,
+                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
+from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
+from .print_preview import ( PrintChart, PrintHtml, PrintPreview,
+                             PrintJinjaTemplate )
+from .select_file import SelectFile, SelectDirectory, SaveFile
+from .select_object import SelectObjects
+from .text_edit import EditTextDocument
+from .update_progress import UpdateProgress
 
 __all__ = [
     ChangeField.__name__,

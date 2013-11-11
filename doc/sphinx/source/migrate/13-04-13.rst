@@ -1,4 +1,4 @@
-.. _migrate-latest:
+.. _migrate-13.04.13:
 
 Migrate from Camelot 12.06.29 to 13.04.13
 =========================================

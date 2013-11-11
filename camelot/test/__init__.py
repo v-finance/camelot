@@ -229,7 +229,7 @@ class EntityViewsTest(ModelThreadTestCase):
     def test_new_view(self):
         from camelot.admin.action.base import GuiContext
         from camelot.admin.entity_admin import EntityAdmin
-        from ..view.action_steps.gui import OpenFormView
+        from ..view.action_steps import OpenFormView
         gui_context = GuiContext()
         for admin in self.get_admins():
             # create an object or take one from the db
