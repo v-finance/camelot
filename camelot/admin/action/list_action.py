@@ -722,7 +722,7 @@ class ImportFromFile( EditAction ):
             change_mappings = action_steps.ChangeObjects(mappings, 
                                                          column_mapping_admin)
             change_mappings.title = _('Select import column')
-            change_mappings.title = _('Select for each column in which field it should be imported')
+            change_mappings.subtitle = _('Select for each column in which field it should be imported')
             yield change_mappings
             #
             # validate the temporary data
