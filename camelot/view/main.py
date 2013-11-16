@@ -58,7 +58,9 @@ def main_action(action):
     """
     import sys
     from PyQt4 import QtGui, QtCore
-    app = QtGui.QApplication([a for a in sys.argv if a])
+    app = QtCore.QCoreApplication.instance()
+    if app is None:
+        app = QtGui.QApplication([a for a in sys.argv if a])
     gui_context = ApplicationActionGuiContext()
     QtCore.QTimer.singleShot( 0, functools.partial( action.gui_run, 
                                                     gui_context ) )
