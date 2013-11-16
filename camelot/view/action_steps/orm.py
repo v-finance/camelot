@@ -69,7 +69,7 @@ class FlushSession( ActionStep ):
         #for dirty_object in session.dirty:
         #    obj_admin = admin.get_related_admin( type( dirty_object ) )
         #    if obj_admin:
-        #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )            
+        #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )
         
         for obj_to_delete in session.deleted:
         #    obj_admin = admin.get_related_admin( type( obj_to_delete ) )

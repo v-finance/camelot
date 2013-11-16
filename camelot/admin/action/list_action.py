@@ -767,6 +767,7 @@ class ReplaceFieldContents( EditAction ):
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
+    icon = Icon('tango/16x16/actions/edit-find-replace.png')
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -777,6 +778,9 @@ class ReplaceFieldContents( EditAction ):
             with model_context.session.begin():
                 for obj in model_context.get_selection():
                     setattr( obj, field_name, value )
+                    # dont rely on the session to update the gui, since the objects
+                    # might not be in a session
+                    yield action_steps.UpdateObject(obj)
                 yield action_steps.FlushSession( model_context.session )
         
 class AddExistingObject( EditAction ):
