@@ -621,6 +621,9 @@ class TableView( AbstractView  ):
     def rebuild_query( self ):
         """resets the table model query"""
         from filterlist import FilterList
+        
+        if not isinstance(self.table.model(), QueryTableProxy):
+            return
 
         def rebuild_query():
             query = self.admin.get_query()
