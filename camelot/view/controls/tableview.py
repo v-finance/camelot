@@ -225,6 +225,18 @@ and above the text.
         # dont save these changes, since they are the defaults
         self._columns_changed = dict()
     
+    #def sizeHint(self):
+        #size_hint = super(TableWidget, self).sizeHint()
+        #model = self.model()
+        #columns_width = 0
+        #if model is not None:
+            #for i in range( model.columnCount() ):
+                #column_size = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
+                #columns_width += column_size.toSize().width()
+        #size_hint = QtCore.QSize(max(size_hint.width(), columns_width),
+                                 #size_hint.height())
+        #return size_hint
+    
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def _current_changed(self, current, previous):
         """This slot is called whenever the current cell is changed"""
