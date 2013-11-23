@@ -100,39 +100,37 @@ class UpdateObject( ActionStep ):
     """
     
     def __init__( self, obj ):
+        self.obj = obj
         signal_handler = get_signal_handler()
-        if obj != None:
-            signal_handler.sendEntityUpdate( self, obj )
+        if self.obj != None:
+            signal_handler.sendEntityUpdate( self, self.obj )
     
-    def gui_run( self, gui_context ):
-        pass
+    def get_object(self):
+        return self.obj
 
-class DeleteObject( ActionStep ):
+class DeleteObject( UpdateObject ):
     """Inform the GUI that obj is going to be deleted.
 
     :param obj: the object that is going to be deleted
     """
     
     def __init__( self, obj ):
+        self.obj = obj
         signal_handler = get_signal_handler()
-        if obj != None:
-            signal_handler.sendEntityDelete( self, obj )
+        if self.obj != None:
+            signal_handler.sendEntityDelete( self, self.obj )
     
-    def gui_run( self, gui_context ):
-        pass
-    
-class CreateObject( ActionStep ):
+class CreateObject( UpdateObject ):
     """Inform the GUI that obj was created.
 
     :param obj: the object that was created
     """
     
     def __init__( self, obj ):
+        self.obj = obj
         signal_handler = get_signal_handler()
-        if obj != None:
-            signal_handler.sendEntityCreate( self, obj )
-    
-    def gui_run( self, gui_context ):
-        pass
+        if self.obj != None:
+            signal_handler.sendEntityCreate( self, self.obj )
+
 
 
