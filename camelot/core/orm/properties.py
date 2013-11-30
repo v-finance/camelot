@@ -73,8 +73,7 @@ class CounterMeta(type):
         CounterMeta.counter += 1
         return instance
 
-@six.with_metaclass(CounterMeta)
-class EntityBuilder( object ):
+class EntityBuilder(six.with_metaclass(CounterMeta)):
     """
     Abstract base class for all entity builders. An Entity builder is a class
     of objects which can be added to an Entity (usually by using special
