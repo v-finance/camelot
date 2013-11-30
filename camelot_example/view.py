@@ -20,7 +20,7 @@ def setup_views():
     from camelot_example.model import Movie, VisitorReport
         
     try:
-        class_mapper(VisitorReport)
+        class_mapper(VisitorsPerDirector)
         return
     except exc.UnmappedClassError:
         pass
