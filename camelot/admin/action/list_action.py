@@ -24,7 +24,6 @@
 
 import copy
 import datetime
-import itertools
 import logging
 
 import six
@@ -580,9 +579,9 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(szip(field_names, 
-                                   static_attributes,
-                                   dynamic_attributes))
+            fields = enumerate(six.zip(field_names, 
+                                       static_attributes,
+                                       dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )

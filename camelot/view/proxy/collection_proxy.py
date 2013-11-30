@@ -526,6 +526,7 @@ position in the query.
                 width = fa['column_width'] * char_width
             header_item.setData( QtCore.QVariant( QtCore.QSize( width, self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
+            source_model.setHorizontalHeaderItem( i, header_item )
         
         self.settings.endGroup()
         self.settings.endGroup()
