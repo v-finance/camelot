@@ -191,7 +191,7 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
         return []
 
 # see http://docs.python.org/library/csv.html
-class UTF8Recoder( object ):
+class UTF8Recoder( six.Iterator ):
     """Iterator that reads an encoded stream and reencodes the input to
     UTF-8."""
 
@@ -201,11 +201,11 @@ class UTF8Recoder( object ):
     def __iter__(self):
         return self
 
-    def next(self):
-        return self.reader.next().encode('utf-8')
+    def __next__(self):
+        return six.next(self.reader).encode('utf-8')
 
 # see http://docs.python.org/library/csv.html
-class UnicodeReader( object ):
+class UnicodeReader( six.Iterator ):
     """A CSV reader which will iterate over lines in the CSV file "f", which is
     encoded in the given encoding."""
 
@@ -215,10 +215,10 @@ class UnicodeReader( object ):
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.line = 0
 
-    def next( self ):
+    def __next__( self ):
         self.line += 1
         try:
-            row = self.reader.next()
+            row = six.next(self.reader)
             return [six.text_type(s, 'utf-8') for s in row]
         except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),

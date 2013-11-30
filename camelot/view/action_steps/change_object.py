@@ -357,14 +357,14 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         layout.addWidget( editor )
         self.main_widget().setLayout( layout )
 
-        def filter(attributes):
+        def field_changeable(attributes):
             if not attributes['editable']:
                 return False
             if attributes['delegate'] in (delegates.One2ManyDelegate,):
                 return False
             return True
 
-        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes) if filter(attributes)]
+        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes) if field_changeable(attributes)]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
         editor.set_value( None )
@@ -386,7 +386,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             self.field = selected_field
             self.value = None
             field_attributes = self.field_attributes[selected_field]
-            static_field_attributes = dict( (k,v) for k,v in six.iteritems(field_attributes) if not callable(v) )
+            static_field_attributes = dict( (k,v) for k,v in six.iteritems(field_attributes) if not six.callable(v) )
             delegate = field_attributes['delegate']( parent = self,
                                                      **static_field_attributes)
             option = QtGui.QStyleOptionViewItem()

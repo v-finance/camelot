@@ -91,7 +91,7 @@ class Fifo(object):
         if len(self.entities)>self.max_entries:
             entity = self.entities.pop(0)
             self.delete_by_entity(entity)
-        if old_value == None:
+        if old_value is None:
             # there was no old data, so everything has changed
             return set( range( len( value ) ) )
         values = izip_longest( value, old_value or [], fillvalue = _fill )
@@ -127,7 +127,7 @@ class Fifo(object):
         there isn't"""
         try:
             data = self.get_data_at_row( row )
-            if data != None:
+            if data is not None:
                 return True
         except KeyError:
             pass

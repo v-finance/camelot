@@ -305,7 +305,7 @@ the moment the tab is shown.
                 # if one of the tabs is expanding, the others should have spacer
                 # items to stretch
                 #
-                for j, vertical_expanding_of_widget in zip(range(i), self._vertical_expanding):
+                for j, vertical_expanding_of_widget in zip(list(range(i)), self._vertical_expanding):
                     if vertical_expanding_of_widget == False:
                         tab_widget = self.widget( j )
                         tab_widget.layout().addStretch( 1 )                
