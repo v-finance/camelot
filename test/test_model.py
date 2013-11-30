@@ -72,7 +72,7 @@ class ModelCase( ExampleModelCase ):
         try:
             generator = export_action.model_run( model_context )
             file_step = six.advance_iterator( generator )
-            generator.send( ['/tmp/test.po'] )
+            generator.send('/tmp/test.po')
         except StopIteration:
             pass
         

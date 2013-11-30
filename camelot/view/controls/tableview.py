@@ -226,6 +226,18 @@ and above the text.
         # dont save these changes, since they are the defaults
         self._columns_changed = dict()
     
+    #def sizeHint(self):
+        #size_hint = super(TableWidget, self).sizeHint()
+        #model = self.model()
+        #columns_width = 0
+        #if model is not None:
+            #for i in range( model.columnCount() ):
+                #column_size = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
+                #columns_width += column_size.toSize().width()
+        #size_hint = QtCore.QSize(max(size_hint.width(), columns_width),
+                                 #size_hint.height())
+        #return size_hint
+    
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def _current_changed(self, current, previous):
         """This slot is called whenever the current cell is changed"""
@@ -393,16 +405,10 @@ class HeaderWidget( QtGui.QWidget ):
         layout.setContentsMargins( 0, 0, 0, 0 )
         for i, (field, attributes) in enumerate(columns):
             if 'operators' in attributes and attributes['operators']:
-                box = QtGui.QGroupBox()
-                box_layout = QtGui.QVBoxLayout()
-                box_layout.setContentsMargins( 1, 1, 1, 1 )
                 widget = FilterOperator( self._admin.entity,
-                                         field, attributes,
-                                         box )
-                box_layout.addWidget( widget )
-                box.setLayout( box_layout )
+                                         field, attributes )
                 widget.filter_changed_signal.connect( self._filter_changed )
-                layout.addWidget( box )
+                layout.addWidget( widget )
         #layout.addStretch()
         self._expanded_search.setLayout( layout )
         self._expanded_filters_created = True
@@ -415,11 +421,8 @@ class HeaderWidget( QtGui.QWidget ):
         """Apply expanded filters on the query"""
         if self._expanded_filters_created:
             for i in range(self._expanded_search.layout().count()):
-                box = self._expanded_search.layout().itemAt(i).widget()
-                if box:
-                    widget = box.layout().itemAt(0).widget()
-                    if widget:
-                        query = widget.decorate_query(query)
+                widget = self._expanded_search.layout().itemAt(i).widget()
+                query = widget.decorate_query(query)
         return query
 
     @QtCore.pyqtSlot()
@@ -581,6 +584,7 @@ class TableView( AbstractView  ):
         model = self.get_model()
         if model is not None:
             model.set_value(value)
+            self.rebuild_query()
 
     @QtCore.pyqtSlot( object )
     def set_admin( self, admin ):
@@ -638,6 +642,9 @@ class TableView( AbstractView  ):
     def rebuild_query( self ):
         """resets the table model query"""
         from .filterlist import FilterList
+        
+        if not isinstance(self.table.model(), QueryTableProxy):
+            return
 
         def rebuild_query():
             query = self.admin.get_query()

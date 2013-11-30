@@ -689,81 +689,79 @@ class ImportFromFile( EditAction ):
                                                 ColumnMapping,
                                                 ColumnMappingAdmin )
         file_names = yield action_steps.SelectFile()
-        if not len( file_names ):
-            return
-        file_name = file_names[0]
-        yield action_steps.UpdateProgress( text = _('Reading data') )
-        #
-        # read the data into temporary row_data objects
-        #
-        if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
-            items = list(XlsReader(file_name))
-        else:
-            detected = chardet.detect( open( file_name ).read() )['encoding']
-            enc = detected or 'utf-8'
-            items = list(UnicodeReader( open( file_name ), encoding = enc ))
-        collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
-        if len( collection ) < 1:
-            raise UserException( _('No data in file' ) )
-        #
-        # select columns to import
-        #
-        admin = model_context.admin
-        default_fields = [field for field, fa in admin.get_columns() 
-                          if fa.get('editable', True)]
-        mappings = []
-        all_fields = [(f,entity_fa['name']) for f,entity_fa in 
+        for file_name in file_names:
+            yield action_steps.UpdateProgress( text = _('Reading data') )
+            #
+            # read the data into temporary row_data objects
+            #
+            if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
+                items = list(XlsReader(file_name))
+            else:
+                detected = chardet.detect( open( file_name ).read() )['encoding']
+                enc = detected or 'utf-8'
+                items = list(UnicodeReader( open( file_name ), encoding = enc ))
+            collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
+            if len( collection ) < 1:
+                raise UserException( _('No data in file' ) )
+            #
+            # select columns to import
+            #
+            admin = model_context.admin
+            default_fields = [field for field, fa in admin.get_columns() 
+                              if fa.get('editable', True)]
+            mappings = []
+            all_fields = [(f,entity_fa['name']) for f,entity_fa in 
                          six.iteritems(admin.get_all_fields_and_attributes())
-                      if entity_fa.get('editable', True)]
-        for i, default_field in itertools.izip_longest(xrange(len(all_fields)),
-                                                       default_fields):
-            mappings.append(ColumnMapping(i, items, default_field))
-        
-
-        column_mapping_admin = ColumnMappingAdmin(admin,
-                                                  field_choices=all_fields)
-
-        change_mappings = action_steps.ChangeObjects(mappings, 
-                                                     column_mapping_admin)
-        change_mappings.title = _('Select import column')
-        change_mappings.title = _('Select for each column in which field it should be imported')
-        yield change_mappings
-        #
-        # validate the temporary data
-        #
-        row_data_admin = RowDataAdmin(admin, mappings)
-        yield action_steps.ChangeObjects( collection, row_data_admin )
-        #
-        # Ask confirmation
-        #
-        yield action_steps.MessageBox( icon = QtGui.QMessageBox.Warning, 
-                                       title = _('Proceed with import'), 
-                                       text = _('Importing data cannot be undone,\n'
-                                                'are you sure you want to continue') )
-        #
-        # import the temporary objects into real objects
-        #
-        with model_context.session.begin():
-            for i,row in enumerate( collection ):
-                new_entity_instance = admin.entity()
-                for field_name, attributes in row_data_admin.get_columns():
-                    try:
-                        from_string = attributes['from_string']
-                    except KeyError:
-                        LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
-                        from_string = lambda _a:None
-                    setattr(
-                        new_entity_instance,
-                        attributes['original_field'],
-                        from_string(getattr(row, field_name))
-                    )
-                admin.add( new_entity_instance )
-                # in case the model is a collection proxy, the new objects should
-                # be appended
-                model_context._model.append( new_entity_instance )
-                yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
-            yield action_steps.FlushSession( model_context.session )
-        yield action_steps.Refresh()
+                          if entity_fa.get('editable', True)]
+            for i, default_field in itertools.izip_longest(xrange(len(all_fields)),
+                                                           default_fields):
+                mappings.append(ColumnMapping(i, items, default_field))
+            
+    
+            column_mapping_admin = ColumnMappingAdmin(admin,
+                                                      field_choices=all_fields)
+    
+            change_mappings = action_steps.ChangeObjects(mappings, 
+                                                         column_mapping_admin)
+            change_mappings.title = _('Select import column')
+            change_mappings.subtitle = _('Select for each column in which field it should be imported')
+            yield change_mappings
+            #
+            # validate the temporary data
+            #
+            row_data_admin = RowDataAdmin(admin, mappings)
+            yield action_steps.ChangeObjects( collection, row_data_admin )
+            #
+            # Ask confirmation
+            #
+            yield action_steps.MessageBox( icon = QtGui.QMessageBox.Warning, 
+                                           title = _('Proceed with import'), 
+                                           text = _('Importing data cannot be undone,\n'
+                                                    'are you sure you want to continue') )
+            #
+            # import the temporary objects into real objects
+            #
+            with model_context.session.begin():
+                for i,row in enumerate( collection ):
+                    new_entity_instance = admin.entity()
+                    for field_name, attributes in row_data_admin.get_columns():
+                        try:
+                            from_string = attributes['from_string']
+                        except KeyError:
+                            LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
+                            from_string = lambda _a:None
+                        setattr(
+                            new_entity_instance,
+                            attributes['original_field'],
+                            from_string(getattr(row, field_name))
+                        )
+                    admin.add( new_entity_instance )
+                    # in case the model is a collection proxy, the new objects should
+                    # be appended
+                    model_context._model.append( new_entity_instance )
+                    yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
+                yield action_steps.FlushSession( model_context.session )
+            yield action_steps.Refresh()
         
 
 class ReplaceFieldContents( EditAction ):
@@ -771,6 +769,7 @@ class ReplaceFieldContents( EditAction ):
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
+    icon = Icon('tango/16x16/actions/edit-find-replace.png')
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -781,6 +780,9 @@ class ReplaceFieldContents( EditAction ):
             with model_context.session.begin():
                 for obj in model_context.get_selection():
                     setattr( obj, field_name, value )
+                    # dont rely on the session to update the gui, since the objects
+                    # might not be in a session
+                    yield action_steps.UpdateObject(obj)
                 yield action_steps.FlushSession( model_context.session )
         
 class AddExistingObject( EditAction ):

@@ -36,8 +36,6 @@ class ExampleSettings( SimpleSettings ):
         #
         configure_mappers()
         metadata.create_all()
-        from camelot.model.authentication import update_last_login
-        #update_last_login()
         # 
         # Load sample data with the fixure mechanism
         #

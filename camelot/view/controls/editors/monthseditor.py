@@ -111,13 +111,12 @@ class MonthsEditor(CustomEditor):
         years = int(self.years_spinbox.value())
         self.months_spinbox.interpretText()
         months = int(self.months_spinbox.value())
-        if years == self.years_spinbox.minimum():
-            if months == self.months_spinbox.minimum():
-                return None
-            else:
-                years = 0
-        value = (years * 12) + months
-        return value
-
-
-
+        years_is_none = (years == self.years_spinbox.minimum())
+        months_is_none = (months == self.months_spinbox.minimum())
+        if years_is_none and months_is_none:
+            return None
+        if years_is_none:
+            years = 0
+        if months_is_none:
+            months = 0
+        return (years * 12) + months

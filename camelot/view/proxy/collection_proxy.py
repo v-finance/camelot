@@ -45,8 +45,7 @@ from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted
 from camelot.view.fifo import Fifo
 from camelot.view.remote_signals import get_signal_handler
-from camelot.view.model_thread import object_thread, \
-                                      model_function, post
+from camelot.view.model_thread import object_thread, post
 
 from camelot.core.files.storage import StoredImage
 
@@ -57,7 +56,6 @@ class ProxyDict(dict):
     everything python"""
     pass
 
-@model_function
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
     object.  Getting a value from an object is time consuming, so using
@@ -80,7 +78,6 @@ def strip_data_from_object( obj, columns ):
             row_data.append( field_value )
     return row_data
 
-@model_function
 def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynamic_field_attributes ):
     """Extract for each field in the row data a 'visible' form of
     data"""
@@ -345,7 +342,6 @@ position in the query.
         collection"""
         return self._sort_and_filter[sorted_row_number]
 
-    @model_function
     def _update_unflushed_rows( self ):
         """Verify all rows to see if some of them should be added to the
         unflushed rows"""
@@ -361,7 +357,6 @@ position in the query.
         self.logger.debug( 'hasUnflushed rows : %s' % has_unflushed_rows )
         return has_unflushed_rows
 
-    @model_function
     def getRowCount( self ):
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
@@ -409,7 +404,6 @@ position in the query.
         self._collection_getter = collection_getter
         self.refresh()
 
-    @model_function
     def get_collection( self ):
         collection = self._collection_getter()
         assert isinstance( collection, list )
@@ -695,7 +689,6 @@ position in the query.
                 return None
             return value.get(field_attribute, None)
 
-    @model_function
     def _handle_update_requests(self):
         #
         # wait for a while until the update requests array doesn't change any
@@ -996,7 +989,6 @@ position in the query.
             raise e
         return (offset, limit)
 
-    @model_function
     def _extend_cache( self ):
         """Extend the cache around the rows under request"""
         offset, limit = self._offset_and_limit_rows_to_get()
@@ -1022,7 +1014,6 @@ position in the query.
                 pass
         return ( offset, limit )
 
-    @model_function
     def _get_object( self, sorted_row_number ):
         """Get the object corresponding to row
         :return: the object at row row or None if the row index is invalid
@@ -1076,14 +1067,12 @@ position in the query.
                 post( self._extend_cache, self._cache_extended )
             return empty_row_data
 
-    @model_function
     def remove( self, o ):
         collection = self.get_collection()
         if o in collection:
             collection.remove( o )
             self._rows -= 1
 
-    @model_function
     def append( self, o ):
         collection = self.get_collection()
         if o not in collection:
@@ -1097,7 +1086,6 @@ position in the query.
     def _rows_inserted( self, _first, _last ):
         self.endInsertRows()
         
-    @model_function
     def append_object(self, obj):
         """Append an object to this collection
         

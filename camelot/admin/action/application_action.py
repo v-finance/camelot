@@ -201,11 +201,8 @@ class SelectProfile( Action ):
                         self.profile_store.write_profile(profile)
                         selected_profile = profile
                 elif selected_profile is save_profiles:
-                    select_file = action_steps.SelectFile(file_name_filter=self.file_name_filter)
-                    select_file.existing=False
-                    file_names =  yield select_file
-                    for file_name in file_names:
-                        self.profile_store.write_to_file(file_name)
+                    file_name = action_steps.SaveFile(file_name_filter=self.file_name_filter)
+                    self.profile_store.write_to_file(file_name)
                 elif selected_profile is load_profiles:
                     file_names =  yield action_steps.SelectFile(file_name_filter=self.file_name_filter)
                     for file_name in file_names:
@@ -422,6 +419,41 @@ class Refresh( Action ):
             signal_handler.sendEntityDelete( None, obj )
         yield action_steps.Refresh()
 
+class Profiler( Action ):
+    """Start/Stop the runtime profiler.  This action exists for debugging
+    purposes, to evaluate where an application spends its time.
+    """
+    
+    verbose_name = _('Profiler start/stop')
+    
+    def __init__(self):
+        self.profile = None
+    
+    def model_run(self, model_context):
+        from ...view import action_steps
+        import cProfile
+        import cStringIO
+        import pstats
+        if self.profile is None:
+            yield action_steps.MessageBox('Start profiler')
+            self.profile = cProfile.Profile()
+            self.profile.enable()
+        else:
+            yield action_steps.UpdateProgress(text='Creating statistics')
+            self.profile.disable()
+            stream = cStringIO.StringIO()
+            stats = pstats.Stats(self.profile, stream=stream)
+            self.profile = None
+            stats.sort_stats('cumulative')
+            yield action_steps.UpdateProgress(text='Create report')
+            stats.print_stats()
+            stream.seek(0)
+            yield action_steps.OpenStream(stream)
+            filename = action_steps.OpenFile.create_temporary_file('.prof')
+            stats.dump_stats(filename)
+            yield action_steps.MessageBox(
+                'Profile stored in {0}'.format(filename))
+            
 class Exit( Action ):
     """Exit the application"""
     
@@ -544,7 +576,7 @@ class DumpState( Action ):
                     for rr in gc.get_referrers(r):
                         dump_logger.warn( '  ' + type(rr).__name__ )
         dump_logger.warn( '======= end item model dump ===========' )
-                        
+
 class RuntimeInfo( Action ):
     """Pops up a messagebox showing the version of certain
     libraries used.  This is for debugging purposes., this action is

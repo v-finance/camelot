@@ -42,7 +42,7 @@ from sqlalchemy.ext import hybrid
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
-	
+
 class EntityDescriptor(object):
     """
     EntityDescriptor holds information about the Entity before it is
@@ -69,7 +69,7 @@ class EntityDescriptor(object):
         for key, value in six.iteritems(options.options_defaults):
             if isinstance( value, dict ):
                 value = value.copy()
-            setattr( self, key, value )        
+            setattr( self, key, value )
 
     def set_entity( self, entity ):
         self.entity = entity
@@ -82,14 +82,23 @@ class EntityDescriptor(object):
             if isinstance( value, schema.Column ):
                 if value.primary_key:
                     self.has_pk = True
-        
+    
+    def get_top_entity_base(self):
+        """
+        :return: the Declarative base class in the top of the class hierarchy
+        """
+        base_descriptor = getattr( self.entity_base, '_descriptor', None )
+        if base_descriptor is not None:
+            return base_descriptor.get_top_entity_base()
+        return self.entity_base
+
     def add_builder( self, builder ):
-	"""Add an `EntityBuilder`
-	"""
-	# builders have to be executed in the order they were
-	# created
-	bisect.insort( self.builders, builder )
-	
+        """Add an `EntityBuilder`
+        """
+        # builders have to be executed in the order they were
+        # created
+        bisect.insort( self.builders, builder )
+
     @property
     def primary_keys( self ):
         return self.entity.__table__.primary_key
@@ -117,24 +126,24 @@ class EntityDescriptor(object):
         infinite loop since a loop of primary_keys is not a valid situation.
         """
         self.call_builders( 'create_pk_cols' )
-	
-	if self._pk_col_done:
-	    return
-	
+
+        if self._pk_col_done:
+            return
+
         base_descriptor = getattr( self.entity_base, '_descriptor', None )
-	has_table = hasattr(self.entity, '__table__')
+        has_table = hasattr(self.entity, '__table__')
 
         if not self.has_pk and base_descriptor == None and not has_table:
-	    colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
-	    builder = PrimaryKeyProperty()
-	    builder.attach( self.entity, colname )
-	    self.add_builder(builder)
-	    builder.create_pk_cols()	    
+            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+            builder = PrimaryKeyProperty()
+            builder.attach( self.entity, colname )
+            self.add_builder(builder)
+            builder.create_pk_cols()
 
         self._pk_col_done = True
 
     def create_properties(self):
-        self.call_builders( 'create_properties' )        
+        self.call_builders( 'create_properties' )
 
     def create_tables(self):
         self.call_builders( 'create_tables' )
@@ -229,6 +238,8 @@ class EntityMeta( DeclarativeMeta ):
         if classname != 'Entity':
             entity_base = None
             for base in bases:
+                # in case the base class is itself a subclass of Entity,
+                # get to Entity itself.
                 if hasattr(base, '_decl_class_registry'):
                     entity_base = base
                     break
@@ -257,8 +268,8 @@ class EntityMeta( DeclarativeMeta ):
             descriptor.set_entity( cls )
             for key, value in six.iteritems(dict_):
                 if isinstance( value, EntityBuilder ):
-		    value.attach( cls, key )
-		    descriptor.add_builder(value)
+                    value.attach( cls, key )
+                    descriptor.add_builder(value)
             cls._descriptor.create_pk_cols()
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
@@ -268,15 +279,15 @@ class EntityMeta( DeclarativeMeta ):
 
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
-	    
+
     def __setattr__(cls, key, value):
-	if isinstance( value, EntityBuilder ):
-	    if '__mapper__' in cls.__dict__:
-		value.attach( cls, key )
-		cls._descriptor.add_builder(value)
-		value.create_pk_cols()
-	else:
-	    super(EntityMeta,cls).__setattr__(key,value)
+        if isinstance( value, EntityBuilder ):
+            if '__mapper__' in cls.__dict__:
+                value.attach( cls, key )
+                cls._descriptor.add_builder(value)
+                value.create_pk_cols()
+        else:
+            super(EntityMeta,cls).__setattr__(key,value)
 
 #
 # Keep these functions separated from EntityBase to be able
@@ -345,7 +356,7 @@ def dict_to_entity( entity, data ):
 
 def entity_to_dict( entity, deep = {}, exclude = [], deep_primary_key=False ):
     """Generate a JSON-style nested dict/list structure from an object.
-    
+
     :param deep_primary_key: when related objects are generated, preserve
         the primary key of those related objects
     """
@@ -361,9 +372,9 @@ def entity_to_dict( entity, deep = {}, exclude = [], deep_primary_key=False ):
         prop = mapper.get_property( rname )
         fks = prop.remote_side
         #FIXME: use attribute names (ie coltoprop) instead of column names
-	remote_exclude = exclude + [ c.name for c in fks ]
-	if prop.direction==orm.interfaces.MANYTOONE and deep_primary_key:
-	    remote_exclude = exclude
+        remote_exclude = exclude + [ c.name for c in fks ]
+        if prop.direction==orm.interfaces.MANYTOONE and deep_primary_key:
+            remote_exclude = exclude
         if dbdata is None:
             data[rname] = None            
         elif isinstance(dbdata, list):            
@@ -378,14 +389,14 @@ class EntityBase( object ):
     available in Elixir"""
 
     def __init__( self, *args, **kwargs ): 
-	session = kwargs.pop('_session', None)
+        session = kwargs.pop('_session', None)
         _declarative_constructor( self, *args, **kwargs )
         # due to cascading rules and a constructor argument, the object might
         # allready be in a session
         if orm.object_session( self ) == None:
-	    if session==None:
-		session=Session()
-	    session.add( self ) 
+            if session==None:
+                session=Session()
+            session.add( self ) 
 
     #
     # methods below were copied from camelot.core.orm to mimic the Elixir Entity

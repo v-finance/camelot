@@ -31,7 +31,6 @@ import six
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
-from camelot.view.model_thread import model_function
 
 class StoredFile( object ):
     """Helper class for the File field type.
@@ -68,7 +67,6 @@ class StoredImage( StoredFile ):
         super(StoredImage, self).__init__( storage, name )
         self._thumbnails = dict()
         
-    @model_function
     def checkout_image( self ):
         """Checkout the image from the storage, this function is only to be
         used in the model thread.
@@ -84,7 +82,6 @@ class StoredImage( StoredFile ):
         else:
             return image
 
-    @model_function
     def checkout_thumbnail( self, width, height ):
         """Checkout a thumbnail for this image from the storage, this function
         is only to be used in the model thread

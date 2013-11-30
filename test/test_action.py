@@ -150,8 +150,6 @@ class ActionStepsCase( ModelThreadTestCase ):
     def test_select_file( self ):
         from camelot.view.action_steps import SelectFile
         select_file = SelectFile( 'Image Files (*.png *.jpg);;All Files (*)' )
-        dialog = select_file.render()
-        self.grab_widget( dialog )
 
     def test_select_item( self ):
         from camelot.view.action_steps import SelectItem

@@ -29,7 +29,7 @@ import six
 from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
-from camelot.view.model_thread import post, object_thread, model_function
+from camelot.view.model_thread import post, object_thread
 from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -146,7 +146,6 @@ class Many2OneEditor( CustomEditor ):
         )
         self.completer.complete()
 
-    @model_function
     def search_completions(self, text):
         """Search for object that match text, to fill the list of completions
 

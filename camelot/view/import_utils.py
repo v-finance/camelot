@@ -235,6 +235,8 @@ class XlsReader( six.Iterator ):
     
     The to_string field attribute is supposed to be able to interprete those
     strings and create a valid datatype.
+    
+    :param filename: the name of the xls or xlsx file
     """
     
     def __init__( self, filename ):

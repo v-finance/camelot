@@ -1,4 +1,4 @@
-SQLAlchemy==0.8.0
+SQLAlchemy==0.8.3
 Jinja2==2.6
 chardet==2.1.1 
 xlwt==0.7.4 

@@ -52,13 +52,10 @@ class ExportAsPO( Action ):
     icon = Icon('tango/16x16/actions/document-save.png')
 
     def model_run( self, model_context ):
-        from camelot.view.action_steps import SelectFile
-        select_file = SelectFile()
-        select_file.existing = False
-        filenames = yield select_file
-        for filename in filenames:
-            file = open(filename, 'w')
-            for translation in model_context.get_collection():
+        from camelot.view.action_steps import SaveFile
+        filename = yield SaveFile()
+        file = open(filename, 'w')
+        for translation in model_context.get_collection():
                 file.write( u'msgid  "%s"\n'%translation.source )
                 file.write( u'msgstr "%s"\n\n'%translation.value )
                 

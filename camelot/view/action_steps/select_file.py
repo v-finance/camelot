@@ -34,7 +34,7 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 
 class SelectFile( ActionStep ):
-    """Select one or more files to open or to process.
+    """Select one or more files to open
     
     :param file_name_filter: Filter on the names of the files that can
         be selected, such as 'All files (*)'.  
@@ -44,26 +44,15 @@ class SelectFile( ActionStep ):
     
         defaults to :const:`True`, set to :const:`False` if selection
         of multiple files is allowed
-
-    .. attribute:: existing
-    
-        defaults to :const:`True`, set to :const:`False` if non existing
-        files are allowed (to save something)
-        
-    .. attribute:: proposal
-    
-         proposed file name
          
-    .. attribute:: button_text
-    
-         the text in the button to confirm the selection
+    .. attribute:: caption
+
+        The text to display to the user
         
     The :keyword:`yield` statement of :class:`SelectFile` returns a list
     of selected file names.  This list has only one element when single is
     set to :const:`True`.  Raises a 
     :class:`camelot.core.exception.CancelRequest` when no file was selected.
-    
-    .. image:: /_static/actionsteps/select_file.png
     
     This action step stores its last location into the :class:`QtCore.QSettings` 
     and uses it as the initial location the next time it is invoked.
@@ -72,42 +61,97 @@ class SelectFile( ActionStep ):
     def __init__( self, file_name_filter = ''):
         self.file_name_filter = unicode(file_name_filter)
         self.single = True
-        self.existing = True
-        self.proposal = None
-        self.button_text = _('Open')
-    
-    def render( self, directory = None ):
-        """create the file dialog widget. this method is used to unit test
-        the action step.
+        self.caption = _('Open')
 
-        :param directory: the directory in which to open the dialog, None to
-            use the default
-        """
-        directory = os.path.dirname(directory or '')
-        if self.proposal is not None:
-            directory = os.path.join(directory, self.proposal)
-        dialog = QtGui.QFileDialog( filter = self.file_name_filter,
-                                    directory = directory )
-        if self.existing == False:
-            file_mode = QtGui.QFileDialog.AnyFile
-        else:
-            if self.single == True:
-                file_mode = QtGui.QFileDialog.ExistingFile
-            else:
-                file_mode = QtGui.QFileDialog.ExistingFiles
-        dialog.setFileMode( file_mode )
-        return dialog
-    
-    def gui_run( self, gui_context ):
+    def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = unicode(settings.value( 'datasource' ).toString())
-        dialog = self.render( directory )
+        directory = unicode(settings.value('datasource').toString())
+        directory = os.path.dirname(directory)
+        if self.single:
+            get_filename = QtGui.QFileDialog.getOpenFileName
+        else:
+            get_filename = QtGui.QFileDialog.getOpenFileNames
         with hide_progress_dialog( gui_context ):
-            if dialog.exec_() == QtGui.QDialog.Rejected:
+            selected = get_filename(parent=gui_context.workspace,
+                                    caption=unicode(self.caption),
+                                    directory=directory,
+                                    filter=self.file_name_filter)
+            if selected:
+                if self.single:
+                    settings.setValue( 'datasource', QtCore.QVariant(selected))
+                    return [unicode(selected)]
+                else:
+                    settings.setValue( 'datasource', QtCore.QVariant(selected[0]))
+                    return [unicode(fn) for fn in selected]
+            else:
                 raise CancelRequest()
-            file_names = [six.text_type(fn) for fn in dialog.selectedFiles()]
-            if file_names:
-                settings.setValue( 'datasource', py_to_variant( file_names[0] ) )
-            return file_names
 
+class SaveFile( ActionStep ):
+    """Select a file for saving
+    
+    :param file_name_filter: Filter on the names of the files that can
+        be selected, such as 'All files (*)'.  
+        See :class:`QtGui.QFileDialog` for more documentation.
 
+    .. attribute:: caption
+
+        The text to display to the user
+
+    The :keyword:`yield` statement of :class:`SaveFile` returns a file name.
+    Raises a :class:`camelot.core.exception.CancelRequest` when no file was
+    selected.
+    
+    This action step stores its last location into the :class:`QtCore.QSettings` 
+    and uses it as the initial location the next time it is invoked.
+    """
+
+    def __init__( self, file_name_filter = ''):
+        self.file_name_filter = unicode(file_name_filter)
+        self.caption = _('Save')
+        
+    def gui_run(self, gui_context):
+        settings = QtCore.QSettings()
+        directory = unicode(settings.value('datasource').toString())
+        directory = os.path.dirname(directory)
+        get_filename = QtGui.QFileDialog.getSaveFileName
+        with hide_progress_dialog( gui_context ):
+            selected = get_filename(parent=gui_context.workspace,
+                                    caption=unicode(self.caption),
+                                    directory=directory,
+                                    filter=self.file_name_filter)
+            if selected:
+                settings.setValue('datasource', QtCore.QVariant(selected))
+                return unicode(selected)
+            else:
+                raise CancelRequest()
+
+class SelectDirectory(ActionStep):
+    """Select a single directory
+
+    .. attribute:: caption
+    
+        The text to display to the user
+
+    .. attribute:: options
+    
+        options to pass to :meth:`QtGui.QFileDialog.getExistingDirectory`,
+        defaults to :const:`QtGui.QFileDialog.ShowDirsOnly`
+
+    """
+    
+    def __init__(self):
+        self.caption = _('Select directory')
+        self.options = QtGui.QFileDialog.ShowDirsOnly
+        
+    def gui_run(self, gui_context):
+        settings = QtCore.QSettings()
+        directory = unicode(settings.value('datasource').toString())
+        get_directory = QtGui.QFileDialog.getExistingDirectory
+        with hide_progress_dialog( gui_context ):
+            selected = get_directory(parent=gui_context.workspace,
+                                     caption=unicode(self.caption),
+                                     directory=directory,
+                                     options=self.options)
+            if selected:
+                settings.setValue('datasource', QtCore.QVariant(selected))
+            return unicode(selected)

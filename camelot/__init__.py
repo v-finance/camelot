@@ -22,9 +22,10 @@
 #
 #  ============================================================================
 
-"""Camelot is a python GUI framework on top of Elixir / Sqlalchemy inspired by
-the Django admin interface.  Start building applications at warp speed, simply
-by adding some additional information to you Elixir model."""
+"""Camelot provides components for building business applications on top of
+Python, SQLAlchemy and Qt.  It is inspired by the Django admin interface.
+You can use Camelot to develop both simple and complex business applications
+at warp speed."""
 
 __version__ = '13.04.13'
 

@@ -32,7 +32,7 @@ class MyApplicationAdmin(ApplicationAdmin):
                          items = [ Movie, 
                                    Tag, 
                                    VisitorReport, 
-#                                   VisitorsPerDirector,
+                                   VisitorsPerDirector,
                                    ImportCovers() ]),
 # end section with action
                 Section( _('Relation'),
@@ -87,7 +87,7 @@ class MiniApplicationAdmin( MyApplicationAdmin ):
         if toolbar_area == Qt.LeftToolBarArea:
             return [ movies_action,
                      persons_action,
-                     list_action.OpenNewView(),
+                     list_action.AddNewObject(),
                      list_action.OpenFormView(),
                      list_action.DeleteSelection(),
                      application_action.Exit(),]

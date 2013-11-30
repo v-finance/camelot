@@ -563,20 +563,16 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
             )
+            forced_attributes = self.field_attributes.get(field_name, {})
+            attributes.update(forced_attributes)
             self._expand_field_attributes(attributes, field_name)
             self._field_attributes[field_name] = attributes
             return attributes
 
     def _expand_field_attributes(self, field_attributes, field_name):
         """Given a set field attributes, expand the set with attributes
-        derived from the given attributes and those forced through the
-        `field_attributes` class attribute.
+        derived from the given attributes.
         """
-        #
-        # Field attributes forced by the field_attributes property
-        #
-        forced_attributes = self.field_attributes.get(field_name, {})
-        field_attributes.update(forced_attributes)
         #
         # If no column_width is specified, try to derive one
         #

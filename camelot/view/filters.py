@@ -159,6 +159,7 @@ class FilterWidget( QtGui.QGroupBox ):
         super( FilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
         layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
+        layout.setContentsMargins( 2, 2, 2, 2 )
         self.setLayout( layout )
         self.setFlat(True)
         group = QtGui.QButtonGroup(self)
@@ -209,6 +210,8 @@ class GroupBoxFilterWidget( QtGui.QGroupBox ):
         super( GroupBoxFilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
+        layout.setContentsMargins( 2, 2, 2, 2 )
+        self.setFlat(True)
         self.filter_data = filter_data
         combobox = QtGui.QComboBox(self)
         self.current_index = 0
@@ -288,6 +291,7 @@ class DateFilterWidget( QtGui.QGroupBox ):
         super( DateFilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
+        self.setFlat(True)
         self.date_editor = DateEditor(parent=self, nullable=True)
         self.date_editor.set_value( filter_data.default )
         for option in filter_data.options:
