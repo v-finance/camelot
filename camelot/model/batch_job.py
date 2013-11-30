@@ -147,17 +147,17 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         """
         import traceback
         sio = six.StringIO()
-        traceback.print_exception( exc_type or sys.exc_type, 
-                                   exc_val or sys.exc_value,
-                                   exc_tb or sys.exc_traceback,
+        traceback.print_exception( exc_type or sys.exc_info()[0], 
+                                   exc_val or sys.exc_info()[1],
+                                   exc_tb or sys.exc_info()[2],
                                    None, 
                                    sio )
         traceback_print = sio.getvalue()
         sio.close()
-        self.add_strings_to_message( [ six.text_type(exc_type or sys.exc_type) ], 
-                                     color = 'red' )
-        self.add_strings_to_message( traceback_print.split('\n'),
-                                     color = 'grey' )
+        self.add_strings_to_message([six.text_type(exc_type or sys.exc_info()[0])],
+                                    color = 'red' )
+        self.add_strings_to_message(traceback_print.split('\n'),
+                                    color = 'grey' )
         
     def add_strings_to_message( self, strings, color = None ):
         """Add strings to the message of this batch job.

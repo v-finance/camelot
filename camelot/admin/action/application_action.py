@@ -431,8 +431,8 @@ class Profiler( Action ):
     
     def model_run(self, model_context):
         from ...view import action_steps
+        from six import StringIO
         import cProfile
-        import cStringIO
         import pstats
         if self.profile is None:
             yield action_steps.MessageBox('Start profiler')
@@ -441,7 +441,7 @@ class Profiler( Action ):
         else:
             yield action_steps.UpdateProgress(text='Creating statistics')
             self.profile.disable()
-            stream = cStringIO.StringIO()
+            stream = StringIO.StringIO()
             stats = pstats.Stats(self.profile, stream=stream)
             self.profile = None
             stats.sort_stats('cumulative')

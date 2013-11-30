@@ -26,7 +26,6 @@
 the data that is passed between the model and the gui thread"""
 
 from copy import copy
-from itertools import izip_longest
 
 _fill = object()
 _no_data = (None,None)
@@ -94,7 +93,7 @@ class Fifo(object):
         if old_value is None:
             # there was no old data, so everything has changed
             return set( range( len( value ) ) )
-        values = izip_longest( value, old_value or [], fillvalue = _fill )
+        values = six.zip_longest( value, old_value or [], fillvalue = _fill )
         return set( i for i,(new,old) in enumerate( values ) if new != old )
       
     def delete_by_row(self, row):

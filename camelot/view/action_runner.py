@@ -161,7 +161,7 @@ class ActionRunner( QtCore.QEventLoop ):
         #
         if self._generator != None:
             post( self._iterate_until_blocking, 
-                  self.next, 
+                  self.__next__, 
                   self.exception,
                   args = ( functools.partial( six.advance_iterator,
                                               self._generator ), ) )
@@ -179,8 +179,8 @@ class ActionRunner( QtCore.QEventLoop ):
                 raise CancelRequest()
             
     @QtCore.pyqtSlot( object )
-    def next( self, yielded ):
-        """Handle the result of the next call of the generator
+    def __next__( self, yielded ):
+        """Handle the result of the __next__ call of the generator
         
         :param yielded: the object that was yielded by the generator in the
             *model thread*
@@ -191,12 +191,12 @@ class ActionRunner( QtCore.QEventLoop ):
                 to_send = yielded.gui_run( self._gui_context )
                 self._was_canceled( self._gui_context )
                 post( self._iterate_until_blocking, 
-                      self.next, 
+                      self.__next__, 
                       self.exception, 
                       args = ( self._generator.send, to_send,) )
             except CancelRequest as exc:
                 post( self._iterate_until_blocking,
-                      self.next,
+                      self.__next__,
                       self.exception,
                       args = ( self._generator.throw, exc,) )
             except Exception as exc:
@@ -209,7 +209,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 # should be past to the model.
                 #
                 post( self._iterate_until_blocking,
-                      self.next,
+                      self.__next__,
                       self.exception,
                       args = ( self._generator.throw, GuiException(), ) )
         elif isinstance( yielded, (StopIteration, CancelRequest) ):
@@ -220,7 +220,7 @@ class ActionRunner( QtCore.QEventLoop ):
             self.processEvents()
             self.exit()
         else:
-            LOGGER.error( 'next call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
+            LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
             LOGGER.error( six.text_type( yielded ) )
             raise Exception( 'this should not happen' )
 

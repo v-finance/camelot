@@ -474,11 +474,11 @@ class ExportSpreadsheet( ListContextAction ):
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
                          six.iteritems(all_fields) ]
         row_data = [None] * len(all_fields)
-        column_range = range(len(all_fields))
+        column_range = six.range(len(all_fields))
         mappings = []
-        for i, default_field in itertools.izip_longest(column_range,
-                                                       admin.get_columns(),
-                                                       fillvalue=(None,None)):
+        for i, default_field in six.zip_longest(column_range,
+                                                admin.get_columns(),
+                                                fillvalue=(None,None)):
             mappings.append(ColumnMapping(i, [row_data], default_field[0]))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
@@ -650,7 +650,7 @@ class PrintPreview( ListContextAction ):
         table = []
         fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
-        column_range = range( len( columns ) )
+        column_range = six.range( len( columns ) )
         for obj in model_context.get_collection():
             table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
@@ -713,8 +713,8 @@ class ImportFromFile( EditAction ):
             all_fields = [(f,entity_fa['name']) for f,entity_fa in 
                          six.iteritems(admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True)]
-            for i, default_field in itertools.izip_longest(xrange(len(all_fields)),
-                                                           default_fields):
+            for i, default_field in six.zip_longest(six.range(len(all_fields)),
+                                                    default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))
             
     
