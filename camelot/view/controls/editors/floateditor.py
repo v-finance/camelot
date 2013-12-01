@@ -81,9 +81,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = six.text_type( locale.toString( float(value),
-                                               'f', 
-                                               self.decimals() ) )
+        text = six.text_type( locale().toString( float(value),
+                                                 'f', 
+                                                 self.decimals() ) )
         return text
     
     def stripped(self, qinput):
@@ -226,6 +226,7 @@ class FloatEditor(CustomEditor):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         spinBox.setReadOnly(not editable)
         spinBox.setEnabled(editable)
+        self.calculatorButton.setShown(editable and self._calculator)
         if editable:
             spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         else:

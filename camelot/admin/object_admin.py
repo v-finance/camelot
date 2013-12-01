@@ -433,7 +433,7 @@ be specified using the verbose_name attribute.
                 ))
 
         def admin_key(admin):
-            return admin.get_verbose_name_plural()
+            return admin[0].get_verbose_name_plural()
 
         subclasses.sort(key=admin_key)
         return subclasses
