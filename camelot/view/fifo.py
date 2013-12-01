@@ -93,7 +93,7 @@ class Fifo(object):
         if old_value is None:
             # there was no old data, so everything has changed
             return set( range( len( value ) ) )
-        values = six.zip_longest( value, old_value or [], fillvalue = _fill )
+        values = six.moves.zip_longest( value, old_value or [], fillvalue = _fill )
         return set( i for i,(new,old) in enumerate( values ) if new != old )
       
     def delete_by_row(self, row):

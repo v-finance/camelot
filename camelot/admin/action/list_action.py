@@ -473,11 +473,11 @@ class ExportSpreadsheet( ListContextAction ):
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
                          six.iteritems(all_fields) ]
         row_data = [None] * len(all_fields)
-        column_range = six.range(len(all_fields))
+        column_range = six.moves.range(len(all_fields))
         mappings = []
-        for i, default_field in six.zip_longest(column_range,
-                                                admin.get_columns(),
-                                                fillvalue=(None,None)):
+        for i, default_field in six.moves.zip_longest(column_range,
+                                                      admin.get_columns(),
+                                                      fillvalue=(None,None)):
             mappings.append(ColumnMapping(i, [row_data], default_field[0]))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
@@ -579,9 +579,9 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(six.zip(field_names, 
-                                       static_attributes,
-                                       dynamic_attributes))
+            fields = enumerate(six.moves.zip(field_names, 
+                                             static_attributes,
+                                             dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
@@ -649,7 +649,7 @@ class PrintPreview( ListContextAction ):
         table = []
         fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
-        column_range = six.range( len( columns ) )
+        column_range = six.moves.range( len( columns ) )
         for obj in model_context.get_collection():
             table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
@@ -712,8 +712,8 @@ class ImportFromFile( EditAction ):
             all_fields = [(f,entity_fa['name']) for f,entity_fa in 
                          six.iteritems(admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True)]
-            for i, default_field in six.zip_longest(six.range(len(all_fields)),
-                                                    default_fields):
+            for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
+                                                          default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))
             
     
