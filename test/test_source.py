@@ -35,6 +35,7 @@ class SourceQualityCase( unittest.TestCase ):
         qt_incompatible = [
             'QVariant',
             'toBool',
+            'toSize',
         ]
 
         for dirpath, filename in self.walk_source_files():

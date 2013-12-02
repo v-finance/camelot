@@ -24,7 +24,7 @@
 
 import six
 
-from PyQt4 import QtGui
+from ....core.qt import QtGui, variant_to_py
 
 from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
@@ -58,11 +58,7 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
         value = six.text_type(self.text())
         if len(value)==0:
-            if self.property('value').isNull():
-                return None
-            if self.property('value').toString().length() == 0:
-                return u''
-            return None
+            value = variant_to_py(self.property('value'))
 
         return value
 

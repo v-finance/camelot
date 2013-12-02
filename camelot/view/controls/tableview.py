@@ -221,8 +221,11 @@ and above the text.
         it's managed here"""
         model = self.model()
         for i in range( model.columnCount() ):
-            size_hint = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize()
-            self.setColumnWidth(i, size_hint.width())
+            size_hint = variant_to_py(model.headerData(i,
+                                                       Qt.Horizontal,
+                                                       Qt.SizeHintRole))
+            if size_hint is not None:
+                self.setColumnWidth(i, size_hint.width())
         # dont save these changes, since they are the defaults
         self._columns_changed = dict()
     
@@ -233,7 +236,7 @@ and above the text.
         #if model is not None:
             #for i in range( model.columnCount() ):
                 #column_size = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
-                #columns_width += column_size.toSize().width()
+                #columns_width += variant_to_py(column_size).width()
         #size_hint = QtCore.QSize(max(size_hint.width(), columns_width),
                                  #size_hint.height())
         #return size_hint
@@ -246,10 +249,11 @@ and above the text.
         # if there is an editor in the current cell, change the column and
         # row width to the size hint of the editor
         if editor is not None:
-            column_size_hint = header_data(current.column(), Qt.Horizontal, 
-                                           Qt.SizeHintRole).toSize()
-            row_size_hint = header_data(current.row(), Qt.Vertical,
-                                        Qt.SizeHintRole).toSize()
+            column_size_hint = variant_to_py(header_data(current.column(),
+                                                         Qt.Horizontal, 
+                                                         Qt.SizeHintRole))
+            row_size_hint = variant_to_py(header_data(current.row(), Qt.Vertical,
+                                                      Qt.SizeHintRole))
             editor_size_hint = editor.sizeHint()
             self.setRowHeight(current.row(), max(row_size_hint.height(),
                                                  editor_size_hint.height()))
@@ -257,14 +261,16 @@ and above the text.
                                                       editor_size_hint.width()))
         if current.row() != previous.row():
             if previous.row() >= 0:
-                row_size_hint = header_data(previous.row(), Qt.Vertical,
-                                            Qt.SizeHintRole).toSize()
+                row_size_hint = variant_to_py(header_data(previous.row(),
+                                                          Qt.Vertical,
+                                                          Qt.SizeHintRole))
                 self.setRowHeight(previous.row(), 
                                   row_size_hint.height())
         if current.column() != previous.column():
             if previous.column() >= 0:
-                column_size_hint = header_data(previous.column(), Qt.Horizontal,
-                                               Qt.SizeHintRole).toSize()
+                column_size_hint = variant_to_py(header_data(previous.column(),
+                                                             Qt.Horizontal,
+                                                             Qt.SizeHintRole))
                 self.setColumnWidth(previous.column(), 
                                     column_size_hint.width())
         # whenever we change the size, sectionsResized is called, but these

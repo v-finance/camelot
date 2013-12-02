@@ -196,7 +196,6 @@ def to_pyside( source, destination ):
         source = replace_word( source, 'py_to_variant(', '(' )
         source = replace_word( source, '.toByteArray()', '' )
         source = replace_word( source, '.toString()', '' )
-        source = replace_word( source, '.toSize()', '' )
         source = replace_word( source, '.toLongLong()', ', True' )
         source = replace_word( source, ').isValid()', ')' )
         output.write( source )
