@@ -65,7 +65,7 @@ class SelectFile( ActionStep ):
 
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = six.text_type(settings.value('datasource').toString())
+        directory = six.text_type(variant_to_py(settings.value('datasource')))
         directory = os.path.dirname(directory)
         if self.single:
             get_filename = QtGui.QFileDialog.getOpenFileName
@@ -111,7 +111,7 @@ class SaveFile( ActionStep ):
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = six.text_type(settings.value('datasource').toString())
+        directory = six.text_type(variant_to_py(settings.value('datasource')))
         directory = os.path.dirname(directory)
         get_filename = QtGui.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
@@ -145,7 +145,7 @@ class SelectDirectory(ActionStep):
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = six.text_type(settings.value('datasource').toString())
+        directory = six.text_type(variant_to_py(settings.value('datasource')))
         get_directory = QtGui.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
             selected = get_directory(parent=gui_context.workspace,

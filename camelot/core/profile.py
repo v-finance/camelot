@@ -224,7 +224,7 @@ class ProfileStore(object):
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             for key in six.iterkeys(state):
-                value = str( qsettings.value(key, empty).toString() )
+                value = str( variant_to_py(qsettings.value(key, empty)) )
                 if key != 'profilename':
                     value = self._decode(value)
                 else:
@@ -281,8 +281,8 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = six.text_type(self._qsettings().value('last_used_database_profile',
-                                               variant_to_py('')).toString(), 
+        name = six.text_type(variant_to_py(self._qsettings().value('last_used_database_profile',
+                                                                   variant_to_py(''))), 
                        'utf-8')
         for profile in profiles:
             if profile.name == name:

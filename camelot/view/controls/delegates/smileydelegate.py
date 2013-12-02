@@ -21,13 +21,13 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+
+from ....core.qt import QtGui, QtCore, Qt, variant_to_py
 
 import six
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls.editors.smileyeditor import SmileyEditor, default_icons
+from ..editors.smileyeditor import SmileyEditor, default_icons
 
 class SmileyDelegate( six.with_metaclass( DocumentationMetaclass,
                                           CustomDelegate ) ):
@@ -46,7 +46,7 @@ class SmileyDelegate( six.with_metaclass( DocumentationMetaclass,
         
     def paint(self, painter, option, index):
         painter.save()
-        icon_name = six.text_type(index.model().data(index, Qt.DisplayRole).toString())
+        icon_name = six.text_type(variant_to_py(index.model().data(index, Qt.DisplayRole)))
         
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         

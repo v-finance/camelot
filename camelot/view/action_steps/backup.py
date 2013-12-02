@@ -158,7 +158,7 @@ class SelectDialog( StandaloneWizardPage ):
 
     def _customButtonClicked(self):
         settings = QtCore.QSettings()
-        previous_location = settings.value( self.settings_key ).toString()
+        previous_location = variant_to_py(settings.value( self.settings_key ))
         path = self._setPath( previous_location )
         if path:
             self._custom_edit.setText(QtCore.QDir.toNativeSeparators(path))

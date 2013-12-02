@@ -21,13 +21,14 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4.QtCore import Qt
+
+from ....core.qt import Qt, variant_to_py
 
 import six
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
+from .. import editors
+from ...proxy import ValueLoading
 
 class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
                                             CustomDelegate ) ):
@@ -47,7 +48,7 @@ class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
           
         painter.save()
         self.drawBackground(painter, option, index)
-        value = six.text_type(index.model().data(index, Qt.EditRole).toString())
+        value = six.text_type(variant_to_py(index.model().data(index, Qt.EditRole)))
 
         value_str = u''
         if value not in (None, ValueLoading):

@@ -22,8 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from ...core.qt import QtGui, QtCore, variant_to_py
 
 import six
 
@@ -392,7 +391,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         sender = self.sender()
         mode = None
         if isinstance( sender, QtGui.QAction ):
-            mode = six.text_type( sender.data().toString() )
+            mode = six.text_type( variant_to_py(sender.data()) )
         self.run_action( mode )
 
     @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
