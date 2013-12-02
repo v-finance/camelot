@@ -524,7 +524,7 @@ position in the query.
                 width = settings_width
             else:
                 width = fa['column_width'] * char_width
-            header_item.setData( QtCore.QVariant( QtCore.QSize( width, self._horizontal_header_height ) ),
+            header_item.setData( py_to_variant( QtCore.QSize( width, self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
             source_model.setHorizontalHeaderItem( i, header_item )
         
@@ -570,7 +570,7 @@ position in the query.
                 # sizehint role is requested, for every row, so we have to
                 # return a fixed value
                 #
-                return QtCore.QVariant(self.vertical_header_size)
+                return variant_to_py(self.vertical_header_size)
             #
             # get icon from action state
             #

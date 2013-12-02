@@ -580,7 +580,7 @@ be specified using the verbose_name attribute.
             length = min(field_attributes.get('length', 0) or 0, 50)
             field_attributes['column_width'] = max( 
                 field_attributes.get('minimal_column_width', 0),
-                2 + len(unicode(field_attributes['name'])),
+                2 + len(six.text_type(field_attributes['name'])),
                 length
                 )
         #

@@ -32,8 +32,7 @@ from camelot.view.art import Icon
 
 import six
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+from ...core.qt import QtGui, QtCore, Qt, q_string
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -47,7 +46,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')
     
     def __init__(self, name, icon=progress_icon):
-        QtGui.QProgressDialog.__init__( self, QtCore.QString(), QtCore.QString(), 0, 0 )
+        QtGui.QProgressDialog.__init__( self, q_string(), q_string(), 0, 0 )
         label = QtGui.QLabel( six.text_type(name) )
         progress_bar = QtGui.QProgressBar()
         progress_bar.setObjectName('progress_bar')
