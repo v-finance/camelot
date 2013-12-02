@@ -158,8 +158,8 @@ class SelectItem( ActionStep ):
         dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
         dialog.set_choices(self.items)
         dialog.set_value(self.value)
-        dialog.setWindowTitle( unicode( self.title ) )
-        dialog.set_banner_subtitle( unicode( self.subtitle ) )
+        dialog.setWindowTitle( six.text_type( self.title ) )
+        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
         return dialog
 
     def gui_run(self, gui_context):
@@ -260,8 +260,8 @@ class MessageBox( ActionStep ):
                                           self.title,
                                           self.text,
                                           self.standard_buttons )
-        message_box.setInformativeText(unicode(self.informative_text))
-        message_box.setDetailedText(unicode(self.detailed_text))
+        message_box.setInformativeText(six.text_type(self.informative_text))
+        message_box.setDetailedText(six.text_type(self.detailed_text))
         return message_box
 
     def gui_run( self, gui_context ):

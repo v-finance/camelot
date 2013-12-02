@@ -135,7 +135,7 @@ class Many2OneEditor( CustomEditor ):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
-        text = unicode( self.search_input.text() )
+        text = six.text_type( self.search_input.text() )
 
         def create_search_completion(text):
             return lambda: self.search_completions(text)
@@ -241,7 +241,7 @@ class Many2OneEditor( CustomEditor ):
         def get_instance_representation( obj, propagate ):
             """Get a representation of the instance"""
             if obj is not None:
-                return (unicode(obj), propagate)
+                return (six.text_type(obj), propagate)
             return (None, propagate)
 
         post( update_wrapper( partial( get_instance_representation,

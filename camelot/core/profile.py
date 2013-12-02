@@ -281,7 +281,7 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = unicode(self._qsettings().value('last_used_database_profile',
+        name = six.text_type(self._qsettings().value('last_used_database_profile',
                                                variant_to_py('')).toString(), 
                        'utf-8')
         for profile in profiles:

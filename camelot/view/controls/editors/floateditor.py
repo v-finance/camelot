@@ -98,7 +98,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
             copy_from += self.prefix().size()
         if self.suffix().size() and qinput.endsWith(self.suffix()):
             copy_to = -1*self.suffix().size()
-        partial_input = unicode(qinput)[copy_from:copy_to]
+        partial_input = six.text_type(qinput)[copy_from:copy_to]
         return partial_input.strip()
     
     def validate(self, qinput, pos):
@@ -192,7 +192,7 @@ class FloatEditor(CustomEditor):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setToolTip(unicode(tooltip or ''))
+        spinBox.setToolTip(six.text_type(tooltip or ''))
         spinBox.setPrefix(u'%s '%(six.text_type(prefix or '').lstrip()))
         spinBox.setSuffix(u' %s'%(six.text_type(suffix or '').rstrip()))
         spinBox.setSingleStep(single_step)

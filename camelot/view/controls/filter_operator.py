@@ -57,7 +57,7 @@ class FilterOperator( QtGui.QGroupBox ):
                   default_value_1 = None,
                   default_value_2 = None,
                   parent = None ):
-        super(FilterOperator, self).__init__(unicode(field_attributes['name']),
+        super(FilterOperator, self).__init__(six.text_type(field_attributes['name']),
                                              parent)
         self._entity, self._field_name = cls, field_name
         self._field_attributes = copy.copy( field_attributes )

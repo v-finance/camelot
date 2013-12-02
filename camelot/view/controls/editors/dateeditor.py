@@ -133,7 +133,7 @@ class DateEditor(CustomEditor):
 
     def text_edited(self, text ):
         try:
-            date_from_string( unicode( self.line_edit.text() ) )
+            date_from_string( six.text_type( self.line_edit.text() ) )
             self.line_edit.set_valid(True)
             self.valueChanged.emit()
         except ParsingError:
@@ -141,7 +141,7 @@ class DateEditor(CustomEditor):
 
     def get_value(self):
         try:
-            value = date_from_string( unicode( self.line_edit.text() ) )
+            value = date_from_string( six.text_type( self.line_edit.text() ) )
         except ParsingError:
             value = None
         return CustomEditor.get_value(self) or value

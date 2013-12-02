@@ -120,11 +120,11 @@ class ShowFieldAttributes(Action):
         class Attribute(object):
             """Helper class representing a field attribute's name and its value"""
             def __init__(self, name, value):
-                self.name = unicode(name)
+                self.name = six.text_type(name)
                 if inspect.isclass(value):
                     self.value = value.__name__
                 else:
-                    self.value = unicode(value)
+                    self.value = six.text_type(value)
                         
             class Admin(ObjectAdmin):
                 list_display = ['name', 'value']

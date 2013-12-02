@@ -101,7 +101,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             return
         model = details.model()
         if model is not None:
-            text = u'\n'.join([unicode(s) for s in model.stringList()])
+            text = u'\n'.join([six.text_type(s) for s in model.stringList()])
             QtGui.QApplication.clipboard().setText(text)
             
     def add_detail( self, text ):

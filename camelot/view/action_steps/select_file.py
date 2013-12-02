@@ -25,7 +25,9 @@
 import os
 
 from ...core.qt import QtGui, QtCore, variant_to_py
-  
+
+import six
+
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
@@ -57,13 +59,13 @@ class SelectFile( ActionStep ):
     """
     
     def __init__( self, file_name_filter = ''):
-        self.file_name_filter = unicode(file_name_filter)
+        self.file_name_filter = six.text_type(file_name_filter)
         self.single = True
         self.caption = _('Open')
 
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = unicode(settings.value('datasource').toString())
+        directory = six.text_type(settings.value('datasource').toString())
         directory = os.path.dirname(directory)
         if self.single:
             get_filename = QtGui.QFileDialog.getOpenFileName
@@ -71,16 +73,16 @@ class SelectFile( ActionStep ):
             get_filename = QtGui.QFileDialog.getOpenFileNames
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
-                                    caption=unicode(self.caption),
+                                    caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
             if selected:
                 if self.single:
                     settings.setValue( 'datasource', variant_to_py(selected))
-                    return [unicode(selected)]
+                    return [six.text_type(selected)]
                 else:
                     settings.setValue( 'datasource', variant_to_py(selected[0]))
-                    return [unicode(fn) for fn in selected]
+                    return [six.text_type(fn) for fn in selected]
             else:
                 raise CancelRequest()
 
@@ -104,22 +106,22 @@ class SaveFile( ActionStep ):
     """
 
     def __init__( self, file_name_filter = ''):
-        self.file_name_filter = unicode(file_name_filter)
+        self.file_name_filter = six.text_type(file_name_filter)
         self.caption = _('Save')
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = unicode(settings.value('datasource').toString())
+        directory = six.text_type(settings.value('datasource').toString())
         directory = os.path.dirname(directory)
         get_filename = QtGui.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
-                                    caption=unicode(self.caption),
+                                    caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
             if selected:
                 settings.setValue('datasource', variant_to_py(selected))
-                return unicode(selected)
+                return six.text_type(selected)
             else:
                 raise CancelRequest()
 
@@ -143,13 +145,13 @@ class SelectDirectory(ActionStep):
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = unicode(settings.value('datasource').toString())
+        directory = six.text_type(settings.value('datasource').toString())
         get_directory = QtGui.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
             selected = get_directory(parent=gui_context.workspace,
-                                     caption=unicode(self.caption),
+                                     caption=six.text_type(self.caption),
                                      directory=directory,
                                      options=self.options)
             if selected:
                 settings.setValue('datasource', variant_to_py(selected))
-            return unicode(selected)
+            return six.text_type(selected)

@@ -421,13 +421,13 @@ class ActionToolbutton(QtGui.QToolButton, AbstractActionWidget):
     def set_state( self, state ):
         AbstractActionWidget.set_state(self, state)
         if state.verbose_name != None:
-            self.setText( unicode( state.verbose_name ) )
+            self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
             self.setIcon( state.icon.getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( unicode( state.tooltip ) )
+            self.setToolTip( six.text_type( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.set_menu( state )

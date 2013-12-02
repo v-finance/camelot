@@ -190,7 +190,7 @@ class SelectProfile( Action ):
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
                                                                      standard_buttons = QtGui.QMessageBox.Ok )
-                            exception_box.informative_text = unicode(e)
+                            exception_box.informative_text = six.text_type(e)
                             yield exception_box
                             edit_profile_name = profile.name
                             if profile in profiles:
