@@ -39,7 +39,7 @@ class BoolDelegate( six.with_metaclass( DocumentationMetaclass,
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground( painter, option, index )
-        checked = index.model().data(index, Qt.EditRole).toBool()
+        checked = variant_to_py(index.model().data(index, Qt.EditRole))
         
         check_option = QtGui.QStyleOptionButton()
         
@@ -88,7 +88,7 @@ class TextBoolDelegate(CustomDelegate):
 
         rect = option.rect
         
-        value = index.model().data(index, Qt.EditRole).toBool()
+        value = variant_to_py(index.model().data(index, Qt.EditRole))
         font_color = QtGui.QColor()
         if value:
             text = self.yes

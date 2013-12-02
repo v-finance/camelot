@@ -32,7 +32,7 @@ from camelot.view.art import Icon
 
 import six
 
-from ...core.qt import QtGui, QtCore, Qt, q_string
+from ...core.qt import QtGui, QtCore, Qt, q_string, variant_to_py
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -123,7 +123,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             model = details.model()
             model.insertRow(model.rowCount())
             model.setData(model.index(model.rowCount()-1, 0),
-                          QtCore.QVariant(text),
+                          variant_to_py(text),
                           Qt.DisplayRole)
         
     def clear_details( self ):

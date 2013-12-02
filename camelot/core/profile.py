@@ -39,7 +39,7 @@ import logging
 
 import six
 
-from .qt import QtCore
+from .qt import QtCore, variant_to_py
 
 from camelot.core.conf import settings
 
@@ -218,7 +218,7 @@ class ProfileStore(object):
         size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
-        empty = QtCore.QVariant('')
+        empty = variant_to_py('')
         for index in range(size):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
@@ -259,7 +259,7 @@ class ProfileStore(object):
                     value = self._encode(value)
                 else:
                     value = (value or '').encode('utf-8')
-                qsettings.setValue(key, QtCore.QVariant(value))
+                qsettings.setValue(key, variant_to_py(value))
         qsettings.endArray()
         qsettings.sync()
         
@@ -282,7 +282,7 @@ class ProfileStore(object):
         """
         profiles = self.read_profiles()
         name = unicode(self._qsettings().value('last_used_database_profile',
-                                               QtCore.QVariant('')).toString(), 
+                                               variant_to_py('')).toString(), 
                        'utf-8')
         for profile in profiles:
             if profile.name == name:

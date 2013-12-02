@@ -30,9 +30,7 @@ well.  Form classes can be used recursive.
 import logging
 logger = logging.getLogger( 'camelot.view.forms' )
 
-from PyQt4 import QtCore, QtGui
-
-from ..core.utils import variant_to_pyobject
+from ..core.qt import QtCore, QtGui, variant_to_py
 from ..core.exception import log_programming_error
 
 import six
@@ -199,7 +197,7 @@ and takes these parameters :
                             form_layout.addWidget( label, c.row, c.col, row_span, col_span )
                             c.next_row()
                         form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
-                        stretch = variant_to_pyobject( editor.property('stretch') )
+                        stretch = variant_to_py( editor.property('stretch') )
                         if stretch is not None:
                             form_layout.setRowStretch(c.row, stretch)
                         c.next_row()

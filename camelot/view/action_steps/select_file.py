@@ -24,7 +24,7 @@
 
 import os
 
-from ...core.qt import QtGui, QtCore
+from ...core.qt import QtGui, QtCore, variant_to_py
   
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
@@ -76,10 +76,10 @@ class SelectFile( ActionStep ):
                                     filter=self.file_name_filter)
             if selected:
                 if self.single:
-                    settings.setValue( 'datasource', QtCore.QVariant(selected))
+                    settings.setValue( 'datasource', variant_to_py(selected))
                     return [unicode(selected)]
                 else:
-                    settings.setValue( 'datasource', QtCore.QVariant(selected[0]))
+                    settings.setValue( 'datasource', variant_to_py(selected[0]))
                     return [unicode(fn) for fn in selected]
             else:
                 raise CancelRequest()
@@ -118,7 +118,7 @@ class SaveFile( ActionStep ):
                                     directory=directory,
                                     filter=self.file_name_filter)
             if selected:
-                settings.setValue('datasource', QtCore.QVariant(selected))
+                settings.setValue('datasource', variant_to_py(selected))
                 return unicode(selected)
             else:
                 raise CancelRequest()
@@ -151,5 +151,5 @@ class SelectDirectory(ActionStep):
                                      directory=directory,
                                      options=self.options)
             if selected:
-                settings.setValue('datasource', QtCore.QVariant(selected))
+                settings.setValue('datasource', variant_to_py(selected))
             return unicode(selected)

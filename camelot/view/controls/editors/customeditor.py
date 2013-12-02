@@ -22,8 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from ....core.qt import QtGui, QtCore, variant_to_py
 
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
@@ -96,7 +95,7 @@ class AbstractCustomEditor(object):
             return value
 
     def get_value(self):
-        if self.property('value_loading').toBool():
+        if variant_to_py(self.property('value_loading')):
             return ValueLoading
         return None
 

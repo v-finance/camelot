@@ -81,7 +81,7 @@ class ChoicesEditor(CustomEditor):
             index = model.index(model.rowCount()-1, 0)
             if isinstance(value, Icon):
                 value = value.getQIcon()
-            model.setData(index, QtCore.QVariant(value), role)
+            model.setData(index, variant_to_py(value), role)
 
     def set_choices( self, choices ):
         """
@@ -160,7 +160,7 @@ class ChoicesEditor(CustomEditor):
         value = super(ChoicesEditor, self).set_value(value)
         self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
-        if not self.property('value_loading').toBool() and value != NotImplemented:
+        if not variant_to_py(self.property('value_loading')) and value != NotImplemented:
             combobox = self.findChild(QtGui.QComboBox, 'combobox')
             for i in range(combobox.count()):
                 if value == variant_to_py(combobox.itemData(i)):

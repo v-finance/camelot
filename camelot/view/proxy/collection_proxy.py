@@ -51,7 +51,7 @@ from camelot.core.files.storage import StoredImage
 
 
 class ProxyDict(dict):
-    """Subclass of dictionary to fool the QVariant object and prevent
+    """Subclass of dictionary to fool the Qt Variant object and prevent
     it from converting dictionary keys to whatever Qt object, but keep
     everything python"""
     pass
@@ -645,7 +645,7 @@ position in the query.
            not ( 0 <= index.row() < self.rowCount( index ) ) or \
            not ( 0 <= index.column() < self.columnCount() ):
             if role == Qt.UserRole:
-                return QtCore.QVariant({})
+                return variant_to_py({})
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -654,7 +654,7 @@ position in the query.
             data = self._get_row_data( index.row(), cache )
             value = data[index.column()]
             if isinstance( value, datetime.datetime ):
-                # Putting a python datetime into a QVariant and returning
+                # Putting a python datetime into a Qt Variant and returning
                 # it to a PyObject seems to be buggy, therefore we chop the
                 # microseconds
                 if value:
