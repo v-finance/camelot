@@ -120,7 +120,7 @@ class Filter(object):
                 admin = attributes['admin']
                 joins.append(field_name)
                 if attributes['direction'] == 'manytoone':
-                    table = admin.mapper.mapped_table.join( table )
+                    table = table.join(admin.mapper.mapped_table)
                 else:
                     table = admin.mapper.mapped_table
 
@@ -143,7 +143,7 @@ class Filter(object):
                                            value = value[0],
                                            decorator = self.create_decorator(col, attributes, value[0], joins) ) )
         
-        return filter_data( name = filter_names[0],
+        return filter_data( name = filter_names[-1],
                             options = options,
                             default = self.default )
 
