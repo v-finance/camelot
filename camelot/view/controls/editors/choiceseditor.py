@@ -81,7 +81,7 @@ class ChoicesEditor(CustomEditor):
             index = model.index(model.rowCount()-1, 0)
             if isinstance(value, Icon):
                 value = value.getQIcon()
-            model.setData(index, variant_to_py(value), role)
+            model.setData(index, py_to_variant(value), role)
 
     def set_choices( self, choices ):
         """

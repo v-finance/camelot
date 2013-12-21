@@ -29,6 +29,11 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
+if six.PY3:
+    long_int = int
+else:
+    long_int = six.integer_types[-1]
+
 class IntegerDelegate( six.with_metaclass( DocumentationMetaclass,
                                            CustomDelegate ) ):
     """Custom delegate for integer values"""
@@ -52,11 +57,12 @@ class IntegerDelegate( six.with_metaclass( DocumentationMetaclass,
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = self.locale.toString( six.long(value) )
+            value_str = self.locale.toString( long_int(value) )
 
         if self.unicode_format is not None:
             value_str = self.unicode_format(value)
         
-        self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
+        self.paint_text(painter, option, index, value_str,
+                        horizontal_align=Qt.AlignRight)
         painter.restore()
 

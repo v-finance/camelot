@@ -78,7 +78,8 @@ class Many2OneEditor( CustomEditor ):
                             field_action.NewObject(),
                             field_action.OpenObject()],
                  **kwargs):
-        """:param entity_admin : The Admin interface for the object on the one
+        """
+        :param entity_admin : The Admin interface for the object on the one
         side of the relation
         """
         CustomEditor.__init__(self, parent)

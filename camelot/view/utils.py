@@ -255,7 +255,7 @@ def text_from_richtext( unstripped_text ):
     if not unstripped_text:
         return strings
 
-    class HtmlToTextParser(html_parser):
+    class HtmlToTextParser(html_parser.HTMLParser):
         
         def handle_endtag(self, tag):
             if tag == 'br':

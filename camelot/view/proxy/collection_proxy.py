@@ -570,7 +570,7 @@ position in the query.
                 # sizehint role is requested, for every row, so we have to
                 # return a fixed value
                 #
-                return variant_to_py(self.vertical_header_size)
+                return py_to_variant(self.vertical_header_size)
             #
             # get icon from action state
             #

@@ -28,7 +28,7 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import variant_to_py, QtGui, QtCore, Qt
+from ...core.qt import variant_to_py, QtGui, QtCore, Qt, py_to_variant
 
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -78,7 +78,7 @@ class FormEditors( object ):
         )
         widget_editor.setObjectName('%s_editor'%field_name)
         stretch = self._field_attributes[field_name].get('stretch', 1)
-        widget_editor.setProperty('stretch', variant_to_py(stretch))
+        widget_editor.setProperty('stretch', py_to_variant(stretch))
         delegate.setEditorData( widget_editor, model_index )
         self._widget_mapper.addMapping( widget_editor, index )
         return widget_editor

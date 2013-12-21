@@ -28,6 +28,7 @@ import six
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
+from ...utils import text_from_richtext
 from ...proxy import ValueLoading
 
 class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -44,8 +45,6 @@ class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
         self._width = self._width * 3
     
     def paint(self, painter, option, index):
-        from camelot.view.utils import text_from_richtext
-          
         painter.save()
         self.drawBackground(painter, option, index)
         value = six.text_type(variant_to_py(index.model().data(index, Qt.EditRole)))
@@ -55,7 +54,7 @@ class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
             value_str = ' '.join(text_from_richtext(value))[:256]
 
         self.paint_text(painter, option, index, value_str)
-        painter.restore()        
+        painter.restore()
     
 
 

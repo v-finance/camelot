@@ -28,6 +28,7 @@ from ....core.qt import variant_to_py, QtGui, QtCore, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.art import Icon
+from camelot.view.proxy import ValueLoading
 
 class StarDelegate( six.with_metaclass( DocumentationMetaclass, 
                                         CustomDelegate ) ):
@@ -59,12 +60,12 @@ class StarDelegate( six.with_metaclass( DocumentationMetaclass,
         else:
             if not self.editable:
                 painter.fillRect(option.rect, option.palette.window())
-          
-        pixmap = self.star_icon.getQPixmap()
-        style = QtGui.QApplication.style()
-        for i in range( self.maximum ):
-            if i+1<=stars:
-                style.drawItemPixmap( painter, rect, 1, pixmap )
-                rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
+        if stars not in (None, ValueLoading):
+            pixmap = self.star_icon.getQPixmap()
+            style = QtGui.QApplication.style()
+            for i in range( self.maximum ):
+                if i+1<=stars:
+                    style.drawItemPixmap( painter, rect, 1, pixmap )
+                    rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
         painter.restore()
 
