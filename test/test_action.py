@@ -259,10 +259,10 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.grab_widget(dialog)
 
     def test_open_file( self ):
-        stream = six.StringIO('1, 2, 3, 4')
+        stream = six.BytesIO(b'1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
-        self.assertTrue( unicode( open_stream ) )
-        action_steps.OpenString( '1, 2, 3, 4' )
+        self.assertTrue( six.text_type( open_stream ) )
+        action_steps.OpenString( six.b('1, 2, 3, 4') )
         context = { 'columns':['width', 'height'],
                     'table':[[1,2],[3,4]] }
         action_steps.OpenJinjaTemplate( 'list.html', context )

@@ -27,7 +27,7 @@ from PyQt4 import QtGui, QtCore
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 
-from six import StringIO
+from six import BytesIO
 
 class OpenFile( ActionStep ):
     """
@@ -83,7 +83,7 @@ class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
     preferred application of the user.
     
-    :param stream: the stream to write to a file
+    :param stream: the byte stream to write to a file
     :param suffix: the suffix of the temporary file
     """
 
@@ -100,7 +100,7 @@ class OpenString( OpenFile ):
     """Write a string to a temporary file and open that file with the
     preferred application of the user.
         
-    :param string: the string to write to a file
+    :param string: the binary string to write to a file
     :param suffix: the suffix of the temporary file
     """
 
@@ -137,7 +137,7 @@ class OpenJinjaTemplate( OpenStream ):
                   suffix='.txt' ):
         template = environment.get_template( template )
         template_stream = template.stream( context )
-        output_stream = StringIO()
+        output_stream = BytesIO()
         template_stream.dump( output_stream, encoding='utf-8' )
         output_stream.seek( 0 )
         super( OpenJinjaTemplate, self).__init__( output_stream, suffix=suffix )

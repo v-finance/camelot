@@ -282,7 +282,7 @@ class ProfileStore(object):
         """
         profiles = self.read_profiles()
         name = six.binary_type(variant_to_py(self._qsettings().value('last_used_database_profile',
-                                                                   py_to_variant(''))))
+                                                                   py_to_variant(six.binary_type('')))))
         name = name.decode('utf-8')
         for profile in profiles:
             if profile.name == name:

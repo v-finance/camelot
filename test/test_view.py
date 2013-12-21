@@ -537,21 +537,21 @@ class FormTest(test.ModelThreadTestCase):
 
     def test_nested_form(self):
         from camelot.view.action_steps import OpenFormView
-        from snippet.form.custom_layout import Admin
+        from .snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
         from camelot.view.action_steps import OpenFormView
-        from snippet.form.inherited_form import InheritedAdmin
+        from .snippet.form.inherited_form import InheritedAdmin
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
         from camelot.view.action_steps import OpenFormView
-        from snippet.form.custom_layout import Admin
+        from .snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
