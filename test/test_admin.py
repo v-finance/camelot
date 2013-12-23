@@ -203,5 +203,11 @@ class EntityAdminCase( TestMetaData ):
         self.assertEqual( d_fa['proxy'], QueryTableProxy )
         
         e_fa = admin.get_field_attributes('e')
-        self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate ) 
-        
+        self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate )
+    
+    def test_custom_relation_admin(self):
+        from .snippet.admin_field_attribute import (MailingGroup,
+                                                    PersonOnMailingGroupAdmin)
+        admin = self.app_admin.get_related_admin(MailingGroup)
+        persons_fa = admin.get_field_attributes('persons')
+        self.assertTrue(isinstance(persons_fa['admin'], PersonOnMailingGroupAdmin))
