@@ -132,7 +132,7 @@ def get_model_thread():
     try:
         return _model_thread_[0]
     except IndexError:
-        from signal_slot_model_thread import SignalSlotModelThread
+        from .signal_slot_model_thread import SignalSlotModelThread
         _model_thread_.insert(0, SignalSlotModelThread())
         _model_thread_[0].start()
         return _model_thread_[0]

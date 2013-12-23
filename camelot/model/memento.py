@@ -33,6 +33,8 @@ the custom `ApplicationAdmin`.
 
 import datetime
 
+import six
+
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
@@ -45,14 +47,14 @@ from camelot.view import filters
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
 
-from authentication import AuthenticationMechanism
+from .authentication import AuthenticationMechanism
 
 class PreviousAttribute( object ):
     """Helper class to display previous attributes"""
     
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
-        self.previous_value = unicode( previous_value )
+        self.previous_value = six.text_type( previous_value )
         
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']
@@ -80,7 +82,7 @@ class Memento( Entity ):
     def previous( self ):
         previous = self.previous_attributes
         if previous:
-            return [PreviousAttribute(k,v) for k,v in previous.items()]
+            return [PreviousAttribute(k,v) for k,v in six.iteritems(previous)]
         return []
     
     class Admin( EntityAdmin ):

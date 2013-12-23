@@ -21,7 +21,7 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from customdelegate import CustomDelegate
+from .customdelegate import CustomDelegate
 from camelot.view.controls import editors
 
 class ManyToOneChoicesDelegate( CustomDelegate ):

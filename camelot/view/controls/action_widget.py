@@ -22,8 +22,9 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from ...core.qt import QtGui, QtCore, variant_to_py
+
+import six
 
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.core.utils import is_deleted, ugettext
@@ -357,7 +358,7 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
     @QtCore.pyqtSlot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
-            self.setText( unicode( state.verbose_name ) )
+            self.setText( six.text_type( state.verbose_name ) )
         else:
             self.setText( '' )
         if state.icon != None:
@@ -365,7 +366,7 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( unicode( state.tooltip ) )
+            self.setToolTip( six.text_type( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.setEnabled( state.enabled )
@@ -390,7 +391,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         sender = self.sender()
         mode = None
         if isinstance( sender, QtGui.QAction ):
-            mode = unicode( sender.data().toString() )
+            mode = six.text_type( variant_to_py(sender.data()) )
         self.run_action( mode )
 
     @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
@@ -400,7 +401,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     def set_state( self, state ):
         super( ActionPushButton, self ).set_state( state )
         if state.verbose_name != None:
-            self.setText( unicode( state.verbose_name ) )
+            self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
             self.setIcon( state.icon.getQIcon() )
         else:
@@ -419,13 +420,13 @@ class ActionToolbutton(QtGui.QToolButton, AbstractActionWidget):
     def set_state( self, state ):
         AbstractActionWidget.set_state(self, state)
         if state.verbose_name != None:
-            self.setText( unicode( state.verbose_name ) )
+            self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
             self.setIcon( state.icon.getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( unicode( state.tooltip ) )
+            self.setToolTip( six.text_type( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.set_menu( state )

@@ -27,36 +27,29 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.navpane2')
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QMenu
-from PyQt4.QtGui import QFrame
-from PyQt4.QtGui import QWidget
-from PyQt4.QtGui import QToolBox
-from PyQt4.QtGui import QDockWidget
-from PyQt4.QtGui import QVBoxLayout
+import six
 
+from ...core.qt import variant_to_py, QtCore, QtGui, Qt
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.section import Section, SectionItem
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
-class PaneSection(QWidget):
+class PaneSection(QtGui.QWidget):
 
     def __init__(self, parent, section, workspace):
         super(PaneSection, self).__init__(parent)
         self._items = []
         self._workspace = workspace
         self._section = section
-        layout = QVBoxLayout()
+        layout = QtGui.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         section_tree = ModelTree(parent=self)
         # i hate the sunken frame style
-        section_tree.setFrameShape(QFrame.NoFrame)
-        section_tree.setFrameShadow(QFrame.Plain)
-        section_tree.contextmenu = QMenu(self)
+        section_tree.setFrameShape(QtGui.QFrame.NoFrame)
+        section_tree.setFrameShadow(QtGui.QFrame.Plain)
+        section_tree.contextmenu = QtGui.QMenu(self)
         section_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         section_tree.customContextMenuRequested.connect(self.create_context_menu)
         section_tree.setObjectName( 'SectionTree' )
@@ -84,7 +77,7 @@ class PaneSection(QWidget):
                 label = item.get_verbose_name()
                 icon = item.get_icon()
                 model_item = ModelItem( parent, 
-                                        [unicode(label)],
+                                        [six.text_type(label)],
                                         item )
                 if icon:
                     model_item.set_icon(icon.getQIcon())
@@ -113,7 +106,7 @@ class PaneSection(QWidget):
     @QtCore.pyqtSlot(bool)
     def _action_triggered( self, _checked ):
         action = self.sender()
-        mode_name = variant_to_pyobject( action.data() )
+        mode_name = variant_to_py( action.data() )
         self._run_current_action( mode_name )
         
     @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
@@ -139,7 +132,7 @@ class PaneSection(QWidget):
             gui_context.admin = self._section.admin
             section_item.get_action().gui_run( gui_context )
                         
-class NavigationPane(QDockWidget):
+class NavigationPane(QtGui.QDockWidget):
 
     def __init__(self, app_admin, workspace, parent):
         super(NavigationPane, self).__init__(parent)
@@ -147,17 +140,17 @@ class NavigationPane(QDockWidget):
         self._workspace = workspace
         self.app_admin = app_admin
         
-        tb = QToolBox()
-        tb.setFrameShape(QFrame.NoFrame)
+        tb = QtGui.QToolBox()
+        tb.setFrameShape(QtGui.QFrame.NoFrame)
         tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
         tb.setObjectName('toolbox')
         tb.setMouseTracking(True)
         
         # hack for removing the dock title bar
-        self.setTitleBarWidget(QWidget())
+        self.setTitleBarWidget(QtGui.QWidget())
         self.setWidget(tb)
-        self.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.update_sections()
 
     def wheelEvent(self, wheel_event):
@@ -202,7 +195,7 @@ class NavigationPane(QDockWidget):
             
         for section in sections:
             # TODO: old navpane used translation here
-            name = unicode( section.get_verbose_name() )
+            name = six.text_type( section.get_verbose_name() )
             icon = section.get_icon().getQIcon()
             pwdg = PaneSection(toolbox, section, self._workspace)
             toolbox.addItem(pwdg, icon, name)

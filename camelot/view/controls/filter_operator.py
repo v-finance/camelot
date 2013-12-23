@@ -24,6 +24,8 @@
 
 import copy
 
+import six
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.field_attributes import order_operators
@@ -55,7 +57,7 @@ class FilterOperator( QtGui.QGroupBox ):
                   default_value_1 = None,
                   default_value_2 = None,
                   parent = None ):
-        super(FilterOperator, self).__init__(unicode(field_attributes['name']),
+        super(FilterOperator, self).__init__(six.text_type(field_attributes['name']),
                                              parent)
         self._entity, self._field_name = cls, field_name
         self._field_attributes = copy.copy( field_attributes )
@@ -68,13 +70,13 @@ class FilterOperator( QtGui.QGroupBox ):
         default_index = 0
         self._choices = [(0, ugettext('All')), (1, ugettext('None'))]
         for i, operator in enumerate(self._operators):
-            self._choices.append( (i+2, unicode(operator_names[operator])) )
+            self._choices.append( (i+2, six.text_type(operator_names[operator])) )
             if operator == default_operator:
                 default_index = i + 2
         combobox = QtGui.QComboBox(self)
         layout.addWidget(combobox)
         for i, name in self._choices:
-            combobox.insertItem(i, unicode(name))
+            combobox.insertItem(i, six.text_type(name))
         combobox.setCurrentIndex( default_index )
         combobox.currentIndexChanged.connect( self.combobox_changed )
         delegate = self._field_attributes['delegate'](**self._field_attributes)
@@ -163,7 +165,7 @@ class FilterOperator( QtGui.QGroupBox ):
         """:return: the current operator and its arity"""
         operator = self._operators[self._index-2]
         try:
-            func_code = operator.func_code
+            func_code = six.get_function_code(operator)
         except AttributeError:
             arity = 1 # probably a builtin function, assume arity == 1
         else:

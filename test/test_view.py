@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui
+
+import six
 
 import datetime
 import logging
 import os
 import time
 
+from camelot.core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 from camelot import test
 from camelot.view.art import ColorScheme
-
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 
 logger = logging.getLogger('view.unittests')
 
@@ -490,7 +488,7 @@ class FormTest(test.ModelThreadTestCase):
                 entities.remove(e)
 
     def test_form(self):
-        from snippet.form.simple_form import Movie
+        from .snippet.form.simple_form import Movie
         self.grab_widget(Movie.Admin.form_display.render(self.widgets))
         form = forms.Form( ['title', 'short_description',
                             'director', 'releasedate'] )
@@ -499,7 +497,7 @@ class FormTest(test.ModelThreadTestCase):
         form.add_field( 'tags' )
         form.add_field( forms.Break() )
         form.add_field( forms.Label('End') )
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
@@ -509,7 +507,7 @@ class FormTest(test.ModelThreadTestCase):
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
 
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
@@ -521,39 +519,39 @@ class FormTest(test.ModelThreadTestCase):
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( unicode( form ) )
+        self.assertTrue( six.text_type( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
         from camelot.view.action_steps import OpenFormView
-        from snippet.form.nested_form import Admin
+        from .snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
         from camelot.view.action_steps import OpenFormView
-        from snippet.form.inherited_form import InheritedAdmin
+        from .snippet.form.inherited_form import InheritedAdmin
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
         from camelot.view.action_steps import OpenFormView
-        from snippet.form.custom_layout import Admin
+        from .snippet.form.custom_layout import Admin
         person_admin = Admin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
@@ -580,13 +578,12 @@ class DelegateTest(test.ModelThreadTestCase):
     def grab_delegate(self, delegate, data, suffix='editable'):
         import sys
         from camelot.view.controls.tableview import TableWidget
-        from PyQt4.QtCore import Qt
 
-        model = QStandardItemModel(1, 1)
-        index = model.index(0, 0, QModelIndex())
-        model.setData( index, QtCore.QVariant( data ) )
-        model.setData( index, QtCore.QVariant( QtGui.QColor('white') ), Qt.BackgroundRole )
-        model.setData( index, QtCore.QVariant( dict(editable=True) ), Qt.UserRole )
+        model = QtGui.QStandardItemModel(1, 1)
+        index = model.index(0, 0, QtCore.QModelIndex())
+        model.setData( index, py_to_variant( data ) )
+        model.setData( index, py_to_variant( QtGui.QColor('white') ), Qt.BackgroundRole )
+        model.setData( index, py_to_variant( dict(editable=True) ), Qt.UserRole )
 
         option = QtGui.QStyleOptionViewItem()
 
@@ -600,18 +597,19 @@ class DelegateTest(test.ModelThreadTestCase):
         test_case_name = sys._getframe(1).f_code.co_name[4:]
 
         for state_name, state in zip(('selected', 'unselected'),
-                                     (QStyle.State_Selected, QStyle.State_None)):
+                                     (QtGui.QStyle.State_Selected, 
+                                      QtGui.QStyle.State_None)):
             tableview.adjustSize()
 
-            if state == QStyle.State_Selected:
-                tableview.selectionModel().select(index, QItemSelectionModel.Select)
+            if state == QtGui.QStyle.State_Selected:
+                tableview.selectionModel().select(index, QtGui.QItemSelectionModel.Select)
             else:
-                tableview.selectionModel().select(index, QItemSelectionModel.Clear)
+                tableview.selectionModel().select(index, QtGui.QItemSelectionModel.Clear)
 
             cell_size = tableview.visualRect(index).size()
 
-            headers_size = QSize(tableview.verticalHeader().width(),
-                                 tableview.horizontalHeader().height())
+            headers_size = QtCore.QSize(tableview.verticalHeader().width(),
+                                        tableview.horizontalHeader().height())
 
             tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
             tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
@@ -622,7 +620,7 @@ class DelegateTest(test.ModelThreadTestCase):
             delegate_images_path = os.path.join(static_images_path, 'delegates')
             if not os.path.exists(delegate_images_path):
                 os.makedirs(delegate_images_path)
-            pixmap = QPixmap.grabWidget(tableview)
+            pixmap = QtGui.QPixmap.grabWidget(tableview)
             pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
                         'PNG')
 
@@ -986,8 +984,8 @@ class ControlsTest(test.ModelThreadTestCase):
         model = widget.get_model()
         header = widget.table.horizontalHeader()
 
-        first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-        suffix_width = model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
 
         self.assertTrue( first_name_width > suffix_width )
 
@@ -1011,8 +1009,8 @@ class ControlsTest(test.ModelThreadTestCase):
         model = widget.get_model()
         header = widget.table.horizontalHeader()
 
-        first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-        suffix_width = model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
 
         self.assertEqual( first_name_width, suffix_width )
 
@@ -1132,6 +1130,7 @@ class ControlsTest(test.ModelThreadTestCase):
 
     def test_user_exception(self):
         from camelot.view.controls.exception import register_exception, ExceptionDialog
+        exc = None
         try:
             #begin user_exception
             from camelot.core.exception import UserException
@@ -1139,10 +1138,10 @@ class ControlsTest(test.ModelThreadTestCase):
             raise UserException( text = "Could not burn movie to non empty DVD",
                                  resolution = "Insert an empty DVD and retry" )
             #end user_exception
-        except Exception, e:
-            pass
+        except Exception as e:
+            exc = e
 
-        exc_info = register_exception(logger, 'unit test', e)
+        exc_info = register_exception(logger, 'unit test', exc)
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )
 
@@ -1168,7 +1167,7 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.gui_context = GuiContext()
 
     def test_simple_plot(self):
-        from snippet.chart.simple_plot import Wave
+        from .snippet.chart.simple_plot import Wave
         from camelot.view.action_steps import OpenFormView
         wave = Wave()
         admin = Wave.Admin( self.app_admin, Wave )
@@ -1178,7 +1177,7 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_advanced_plot(self):
-        from snippet.chart.advanced_plot import Wave
+        from .snippet.chart.advanced_plot import Wave
         from camelot.view.action_steps import OpenFormView
         wave = Wave()
         #wave.phase = '2.89'
@@ -1189,7 +1188,7 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_fields_with_actions(self):
-        from snippet.fields_with_actions import Coordinate
+        from .snippet.fields_with_actions import Coordinate
         from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
@@ -1198,7 +1197,7 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
-        from snippet.fields_with_tooltips import Coordinate
+        from .snippet.fields_with_tooltips import Coordinate
         from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
@@ -1208,7 +1207,7 @@ class SnippetsTest(test.ModelThreadTestCase):
 
     def test_background_color(self):
         from camelot.model.party import Person
-        from snippet.background_color import Admin
+        from .snippet.background_color import Admin
         person_admin = Admin( self.app_admin, Person )
         from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
         editor = One2ManyEditor(admin=person_admin)

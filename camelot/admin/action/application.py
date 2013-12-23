@@ -41,7 +41,7 @@ class Application( Action ):
             self.gui_context.admin = self.application_admin
             super( Application, self ).gui_run( gui_context )
             gui_context.progress_dialog.close()
-        except Exception, e:
+        except Exception as e:
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
             dialog = exception.ExceptionDialog(exc_info)

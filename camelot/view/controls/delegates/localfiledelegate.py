@@ -25,22 +25,20 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
-from PyQt4.QtCore import Qt
+import six
 
-from customdelegate import CustomDelegate
-from customdelegate import DocumentationMetaclass
-
-from camelot.core.utils import variant_to_pyobject
+from ....core.qt import variant_to_py, Qt
+from .customdelegate import CustomDelegate
+from .customdelegate import DocumentationMetaclass
 
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class LocalFileDelegate(CustomDelegate):
+class LocalFileDelegate( six.with_metaclass( DocumentationMetaclass,
+                                             CustomDelegate ) ):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.LocalFileEditor
 
@@ -54,11 +52,11 @@ class LocalFileDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
         
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = unicode(value)
+            value_str = six.text_type(value)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

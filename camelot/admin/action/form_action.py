@@ -24,13 +24,15 @@
 
 from PyQt4 import QtGui
 
+import six
+
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
-from application_action import ( ApplicationActionGuiContext,
+from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-import list_action
+from . import list_action
 
 class FormActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -164,7 +166,7 @@ class ShowHistory( Action ):
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
             if None not in primary_key:
-                changes = list( memento.get_changes( model = unicode( model_context.admin.entity.__name__ ),
+                changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
                                                      primary_key = primary_key,
                                                      current_attributes = {} ) )
                 admin = ChangeAdmin( model_context.admin, object )
@@ -262,7 +264,7 @@ def structure_to_form_actions( structure ):
     object is a tuple, a CallMethod is constructed with this tuple as arguments.  If
     the python object is an instance of as Action, it is kept as is.
     """
-    from list_action import CallMethod
+    from .list_action import CallMethod
     
     def object_to_action( o ):
         if isinstance( o, Action ):

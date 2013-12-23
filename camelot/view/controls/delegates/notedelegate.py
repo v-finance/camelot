@@ -21,12 +21,14 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from texteditdelegate import TextEditDelegate, DocumentationMetaclass
+
+import six
+
+from .texteditdelegate import TextEditDelegate, DocumentationMetaclass
 from camelot.view.controls.editors.noteeditor import NoteEditor
 
-class NoteDelegate(TextEditDelegate):
-    
-    __metaclass__ = DocumentationMetaclass
+class NoteDelegate( six.with_metaclass( DocumentationMetaclass,
+                                        TextEditDelegate ) ):
     
     editor = NoteEditor
 

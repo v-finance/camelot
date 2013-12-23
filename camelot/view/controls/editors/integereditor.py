@@ -22,17 +22,19 @@
 #
 #  ============================================================================
 
+from math import floor
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from math import floor
-from camelot.view.art import Icon
+import six
 
+from camelot.view.art import Icon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
 class IntegerEditor(CustomEditor):
@@ -99,14 +101,14 @@ class IntegerEditor(CustomEditor):
         self.set_enabled(editable)
         set_background_color_palette(self.spinBox.lineEdit(), background_color )
 
-        self.spinBox.setToolTip(unicode(tooltip or ''))
+        self.spinBox.setToolTip(six.text_type(tooltip or ''))
         
         if prefix:
-            self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
+            self.spinBox.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
         else:
             self.spinBox.setPrefix('')
         if suffix:
-            self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+            self.spinBox.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
         else:
             self.spinBox.setSuffix(u'')
         
@@ -151,9 +153,9 @@ class IntegerEditor(CustomEditor):
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(six.text_type)
     def calculation_finished(self, value):
-        self.spinBox.setValue(floor(float(unicode(value))))
+        self.spinBox.setValue(floor(float(six.text_type(value))))
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()

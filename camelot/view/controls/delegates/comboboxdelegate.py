@@ -25,31 +25,31 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
-from PyQt4.QtCore import Qt
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 
+import six
+
+from ....core.qt import Qt, variant_to_py
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class ComboBoxDelegate(CustomDelegate):
-
-    __metaclass__ = DocumentationMetaclass
+class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate ) ):
     
     editor = editors.ChoicesEditor
 
     def setEditorData(self, editor, index):
-        value = variant_to_pyobject(index.data(Qt.EditRole))
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        value = variant_to_py(index.data(Qt.EditRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
 
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject(index.data(Qt.DisplayRole))
+        value = variant_to_py(index.data(Qt.DisplayRole))
         if value in (None, ValueLoading):
             value = ''
-        self.paint_text(painter, option, index, unicode(value) )
+        self.paint_text(painter, option, index, six.text_type(value) )
         painter.restore()
 

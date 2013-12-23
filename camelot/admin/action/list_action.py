@@ -24,11 +24,12 @@
 
 import copy
 import datetime
-import itertools
 import logging
 
+import six
+
 from .base import Action
-from application_action import ( ApplicationActionGuiContext,
+from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -470,13 +471,13 @@ class ExportSpreadsheet( ListContextAction ):
         admin = model_context.admin
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         all_fields.items() ]
+                         six.iteritems(all_fields) ]
         row_data = [None] * len(all_fields)
-        column_range = xrange(len(all_fields))
+        column_range = six.moves.range(len(all_fields))
         mappings = []
-        for i, default_field in itertools.izip_longest(column_range,
-                                                       admin.get_columns(),
-                                                       fillvalue=(None,None)):
+        for i, default_field in six.moves.zip_longest(column_range,
+                                                      admin.get_columns(),
+                                                      fillvalue=(None,None)):
             mappings.append(ColumnMapping(i, [row_data], default_field[0]))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
@@ -499,7 +500,7 @@ class ExportSpreadsheet( ListContextAction ):
         # can be used is limited.
         #
         styles = dict()
-        freeze = lambda d:tuple(sorted(d.iteritems()))
+        freeze = lambda d:tuple(sorted(six.iteritems(d)))
         
         def get_style( font_specs=dict(), 
                        border_specs = dict(), 
@@ -516,10 +517,10 @@ class ExportSpreadsheet( ListContextAction ):
             except KeyError:
                 style = XFStyle()
                 style.font = Font()
-                for key, value in font_specs.items():
+                for key, value in six.iteritems(font_specs):
                     setattr( style.font, key, value )
                 style.borders = Borders()
-                for key, value in border_specs.items():
+                for key, value in six.iteritems(border_specs):
                     setattr( style.borders, key, value )
                 if pattern:
                     style.pattern = pattern
@@ -549,13 +550,13 @@ class ExportSpreadsheet( ListContextAction ):
         #
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
-            verbose_name = unicode( field_attributes.get( 'name', name ) )
+            verbose_name = six.text_type( field_attributes.get( 'name', name ) )
             field_names.append( name )
             font_specs = dict( font_name = self.font_name, 
                                bold = True, 
                                height = 200 )
             border_specs = dict( top = 0x01 )
-            name = unicode( name )
+            name = six.text_type( name )
             if i == 0:
                 border_specs[ 'left' ] = 0x01                
             elif i == len( columns ) - 1:
@@ -578,9 +579,9 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(zip(field_names, 
-                                   static_attributes,
-                                   dynamic_attributes))
+            fields = enumerate(six.moves.zip(field_names, 
+                                             static_attributes,
+                                             dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
@@ -593,7 +594,7 @@ class ExportSpreadsheet( ListContextAction ):
                             value = ugettext( value )
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
-                        value = separator.join([unicode(el) for el in value])
+                        value = separator.join([six.text_type(el) for el in value])
                     elif isinstance( value, float ):
                         precision = attributes.get( 'precision', 2 )
                         format_string = '0.' + '0'*precision
@@ -606,7 +607,7 @@ class ExportSpreadsheet( ListContextAction ):
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
                     else:
-                        value = unicode( value )
+                        value = six.text_type( value )
                 else:
                     # empty cells should be filled as well, to get the
                     # borders right
@@ -625,7 +626,7 @@ class ExportSpreadsheet( ListContextAction ):
                                    None, 
                                    format_string )
                 worksheet.write( row, i, value, style )
-                min_width = len( unicode( value ) ) * 300
+                min_width = len( six.text_type( value ) ) * 300
                 worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
         
         yield action_steps.UpdateProgress( text = _('Saving file') )
@@ -648,7 +649,7 @@ class PrintPreview( ListContextAction ):
         table = []
         fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
-        column_range = range( len( columns ) )
+        column_range = six.moves.range( len( columns ) )
         for obj in model_context.get_collection():
             table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
@@ -709,10 +710,10 @@ class ImportFromFile( EditAction ):
                               if fa.get('editable', True)]
             mappings = []
             all_fields = [(f,entity_fa['name']) for f,entity_fa in 
-                          admin.get_all_fields_and_attributes().items()
+                         six.iteritems(admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True)]
-            for i, default_field in itertools.izip_longest(xrange(len(all_fields)),
-                                                           default_fields):
+            for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
+                                                          default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))
             
     

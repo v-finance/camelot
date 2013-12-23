@@ -31,6 +31,8 @@ user to review or plan them.
 import logging
 import sys
 
+import six
+
 import sqlalchemy.types
 from sqlalchemy import orm, sql
 
@@ -83,7 +85,7 @@ class BatchJobType( Entity ):
         
 def hostname():
     import socket
-    return unicode( socket.gethostname() )
+    return six.text_type( socket.gethostname() )
 
 class BatchJob( Entity, type_and_status.StatusMixin ):
     """A batch job is a long running task that is scheduled by
@@ -143,19 +145,19 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         :param exc_val: value of the exception, such as in `sys.exc_value`
         :param exc_tb: a traceback object, such as in `sys.exc_traceback`
         """
-        import traceback, cStringIO
-        sio = cStringIO.StringIO()
-        traceback.print_exception( exc_type or sys.exc_type, 
-                                   exc_val or sys.exc_value,
-                                   exc_tb or sys.exc_traceback,
+        import traceback
+        sio = six.StringIO()
+        traceback.print_exception( exc_type or sys.exc_info()[0], 
+                                   exc_val or sys.exc_info()[1],
+                                   exc_tb or sys.exc_info()[2],
                                    None, 
                                    sio )
         traceback_print = sio.getvalue()
         sio.close()
-        self.add_strings_to_message( [ unicode(exc_type or sys.exc_type) ], 
-                                     color = 'red' )
-        self.add_strings_to_message( traceback_print.split('\n'),
-                                     color = 'grey' )
+        self.add_strings_to_message([six.text_type(exc_type or sys.exc_info()[0])],
+                                    color = 'red' )
+        self.add_strings_to_message(traceback_print.split('\n'),
+                                    color = 'grey' )
         
     def add_strings_to_message( self, strings, color = None ):
         """Add strings to the message of this batch job.

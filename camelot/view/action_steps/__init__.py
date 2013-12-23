@@ -85,5 +85,3 @@ __all__ = [
     UpdateTableView.__name__,
     WordJinjaTemplate.__name__,
     ]
-
-

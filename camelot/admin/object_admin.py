@@ -33,8 +33,11 @@ from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from validator.object_validator import ObjectValidator
+from .validator.object_validator import ObjectValidator
+
 from PyQt4 import QtCore
+
+import six
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -292,12 +295,12 @@ be specified using the verbose_name attribute.
 #                text = text[0].lower() + re.sub(r'([A-Z])', downcase, text[1:])
 #            return text 
 
-        return unicode(
+        return six.text_type(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
-        return unicode(
+        return six.text_type(
             self.verbose_name_plural
             or (self.get_verbose_name() + 's')
         )
@@ -310,7 +313,7 @@ be specified using the verbose_name attribute.
         for the user, eg : the primary key of an object.  This verbose identifier can
         be used to generate a title for a form view of an object.
         """
-        return u'%s : %s' % (self.get_verbose_name(), unicode(obj))
+        return u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
 
     def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
@@ -429,10 +432,10 @@ be specified using the verbose_name attribute.
                     subclass_admin.get_subclass_tree()
                 ))
 
-        def sort_admins(a1, a2):
-            return cmp(a1[0].get_verbose_name_plural(), a2[0].get_verbose_name_plural())
+        def admin_key(admin):
+            return admin[0].get_verbose_name_plural()
 
-        subclasses.sort(cmp=sort_admins)
+        subclasses.sort(key=admin_key)
         return subclasses
 
     def get_related_admin(self, cls):
@@ -465,8 +468,8 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in field_attributes.items():
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+            for name, value in six.iteritems(field_attributes):
+                if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
 
@@ -496,7 +499,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             dynamic_field_attributes = {'obj':obj}
-            for name, value in field_attributes.items():
+            for name, value in six.iteritems(field_attributes):
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if name in ('default',):
@@ -504,11 +507,11 @@ be specified using the verbose_name attribute.
                     # and the continuous evaluation of it might be expensive,
                     # as it might be the max of a column
                     continue
-                if callable(value):
+                if six.callable(value):
                     return_value = None
                     try:
                         return_value = value(obj)
-                    except (ValueError, Exception, RuntimeError, TypeError, NameError), exc:
+                    except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
                     finally:
                         dynamic_field_attributes[name] = return_value
@@ -577,7 +580,7 @@ be specified using the verbose_name attribute.
             length = min(field_attributes.get('length', 0) or 0, 50)
             field_attributes['column_width'] = max( 
                 field_attributes.get('minimal_column_width', 0),
-                2 + len(unicode(field_attributes['name'])),
+                2 + len(six.text_type(field_attributes['name'])),
                 length
                 )
         #
@@ -721,7 +724,7 @@ be specified using the verbose_name attribute.
                         default_value = default.arg
                     else:
                         default_value = default.execute()
-                elif callable(default):
+                elif six.callable(default):
                     import inspect
                     args, _varargs, _kwargs, _defs = \
                         inspect.getargspec(default)
@@ -734,12 +737,12 @@ be specified using the verbose_name attribute.
                 logger.debug(
                     'set default for %s to %s' % (
                         field,
-                        unicode(default_value)
+                        six.text_type(default_value)
                     )
                 )
                 try:
                     setattr(object_instance, field, default_value)
-                except AttributeError, exc:
+                except AttributeError as exc:
                     logger.error(
                         'Programming Error : could not set'
                         ' attribute %s to %s on %s' % (

@@ -21,19 +21,18 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+import six
+
+from ....core.qt import variant_to_py, Qt, QtCore
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class FloatDelegate( CustomDelegate ):
+class FloatDelegate( six.with_metaclass( DocumentationMetaclass,
+                                         CustomDelegate ) ):
     """Custom delegate for float values"""
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.FloatEditor
 
@@ -54,8 +53,8 @@ class FloatDelegate( CustomDelegate ):
     def paint( self, painter, option, index ):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
+        value = variant_to_py(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
 
         if field_attributes == ValueLoading:
             precision = 2
@@ -67,7 +66,7 @@ class FloatDelegate( CustomDelegate ):
         elif self.unicode_format:
             value_str = self.unicode_format(value)
         else:
-            value_str = unicode( self._locale.toString( float(value), 
+            value_str = six.text_type( self._locale.toString( float(value), 
                                                         'f', 
                                                         precision ) )
 

@@ -167,7 +167,7 @@ The use of :attr:`choices` forces the use of the ComboBox delegate::
 
   field_attributes = {'state':{'choices':lambda o:[(1, 'Active'), 
                                                    (2, 'Passive')]}}
-	   
+
 .. _field-attribute-minmal_column_width:
                                               
 minimal_column_width
@@ -285,8 +285,10 @@ admin
 In case of relation fields, specifies the admin class that is to be used
 to visualize the other end of the relation.  Defaults to the default admin
 class of the target class.  This can be used to make the table view 
-within a one2many widget look different from the default table view for
-the same object.
+within a one to many relation look different from the default table view of a
+class.
+
+.. literalinclude:: ../../../../test/snippet/admin_field_attribute.py
 
 .. _field-attribute-address_type:
 

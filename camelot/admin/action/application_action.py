@@ -28,6 +28,8 @@ import time
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+import six
+
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -184,11 +186,11 @@ class SelectProfile( Action ):
                             cursor = connection.cursor()
                             cursor.close()
                             connection.close()
-                        except Exception, e:
+                        except Exception as e:
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
                                                                      standard_buttons = QtGui.QMessageBox.Ok )
-                            exception_box.informative_text = unicode(e)
+                            exception_box.informative_text = six.text_type(e)
                             yield exception_box
                             edit_profile_name = profile.name
                             if profile in profiles:
@@ -226,7 +228,7 @@ class EntityAction( Action ):
             visualize the entities
         """
         from camelot.admin.entity_admin import EntityAdmin
-        assert isinstance( entity_admin, (EntityAdmin,) )
+        assert isinstance( entity_admin, EntityAdmin )
         self._entity_admin = entity_admin
         
 class OpenTableView( EntityAction ):
@@ -315,7 +317,7 @@ class ShowAbout( Action ):
         abtmsg = gui_context.admin.get_application_admin().get_about()
         QtGui.QMessageBox.about( gui_context.workspace, 
                                  ugettext('About'), 
-                                 unicode( abtmsg ) )
+                                 six.text_type( abtmsg ) )
         
 class Backup( Action ):
     """
@@ -394,7 +396,7 @@ class Refresh( Action ):
         # objects
         #
         session_items = len( session.identity_map )
-        for i, (_key, obj) in enumerate( session.identity_map.items() ):
+        for i, (_key, obj) in enumerate( six.iteritems(session.identity_map) ):
             try:
                 session.refresh( obj )
                 refreshed_objects.append( obj )
@@ -429,8 +431,8 @@ class Profiler( Action ):
     
     def model_run(self, model_context):
         from ...view import action_steps
+        from six import StringIO
         import cProfile
-        import cStringIO
         import pstats
         if self.profile is None:
             yield action_steps.MessageBox('Start profiler')
@@ -439,7 +441,7 @@ class Profiler( Action ):
         else:
             yield action_steps.UpdateProgress(text='Creating statistics')
             self.profile.disable()
-            stream = cStringIO.StringIO()
+            stream = StringIO.StringIO()
             stats = pstats.Stats(self.profile, stream=stream)
             self.profile = None
             stats.sort_stats('cumulative')
@@ -560,7 +562,7 @@ class DumpState( Action ):
         for o in session:
             type_counter[type(o).__name__] += 1
         dump_logger.warn( '======= begin session dump ==============' )
-        for k,v in type_counter.items():
+        for k,v in six.iteritems(type_counter):
             dump_logger.warn( '%s : %s'%(k,v) )
         dump_logger.warn( '======= end session dump ==============' )
 
@@ -568,7 +570,7 @@ class DumpState( Action ):
         dump_logger.warn( '======= begin item model dump =========' )
         for o in gc.get_objects():
             if isinstance(o, CollectionProxy):
-                dump_logger.warn( '%s is used by :'%unicode( o ) )
+                dump_logger.warn( '%s is used by :'%(six.text_type( o )) )
                 for r in gc.get_referrers(o):
                     dump_logger.warn( ' ' + type(r).__name__ )
                     for rr in gc.get_referrers(r):
@@ -608,7 +610,7 @@ class RuntimeInfo( Action ):
                                               jinja2.__version__,
                                               xlrd.__VERSION__,
                                               xlwt.__VERSION__,
-                                              unicode(sys.path))        
+                                              six.text_type(sys.path))        
         yield action_steps.PrintHtml( html )
         
 class SegmentationFault( Action ):
@@ -677,7 +679,7 @@ def structure_to_application_action(structure, application_admin):
         :class:`camelot.admin.application_admin.ApplicationAdmin` to use to
         create other Admin classes.
     """
-    if isinstance(structure, (Action,)):
+    if isinstance(structure, Action):
         return structure
     admin = application_admin.get_related_admin( structure )
     return OpenTableView( admin )

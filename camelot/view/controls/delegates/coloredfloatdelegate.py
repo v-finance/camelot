@@ -22,24 +22,21 @@
 #
 #  ============================================================================
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
+import six
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from ....core.qt import variant_to_py, Qt, QtCore, QtGui
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.proxy import ValueLoading
 
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 
-
-class ColoredFloatDelegate(CustomDelegate):
+class ColoredFloatDelegate( six.with_metaclass( DocumentationMetaclass,
+                                                CustomDelegate ) ):
     """Custom delegate for float values.
 
   The class attribute icons is used to customize the icons displayed.
   """
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.ColoredFloatEditor
     icons = {
@@ -65,8 +62,8 @@ class ColoredFloatDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        value = variant_to_py( index.model().data(index, Qt.EditRole) )
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         fontColor = QtGui.QColor()
         editable, prefix, suffix, background_color, arrow = True, '', '', None, None
 
@@ -105,10 +102,10 @@ class ColoredFloatDelegate(CustomDelegate):
             if self.unicode_format != None:
                 value_str = self.unicode_format(value)
             else:
-                value_str = unicode( self._locale.toString( float(value), 
+                value_str = six.text_type( self._locale.toString( float(value), 
                                                             'f', 
                                                             self.precision ) )
-        value_str = unicode(prefix) + u' ' + unicode(value_str) + u' ' + unicode(suffix)
+        value_str = six.text_type(prefix) + u' ' + six.text_type(value_str) + u' ' + six.text_type(suffix)
 
         fontColor = fontColor.darker()
         painter.setPen(fontColor.toRgb())

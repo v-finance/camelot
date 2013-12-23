@@ -37,7 +37,9 @@ import base64
 import functools
 import logging
 
-from PyQt4 import QtCore
+import six
+
+from .qt import QtCore, variant_to_py, py_to_variant
 
 from camelot.core.conf import settings
 
@@ -63,7 +65,7 @@ class Profile(object):
         kwargs['name'] = name
         for profile_field in profile_fields:
             kwargs.setdefault( profile_field, '' )
-        for key, value in kwargs.iteritems():
+        for key, value in six.iteritems(kwargs):
             setattr(self, key, value )
     
     def get_connection_string( self ):
@@ -111,7 +113,7 @@ class Profile(object):
             encoded form
         """
         state = dict()
-        for key, value in self.__dict__.iteritems():
+        for key, value in six.iteritems(self.__dict__):
             # flip 'pass' and 'password' for backward compatibility
             if key=='password':
                 key='pass'
@@ -126,7 +128,7 @@ class Profile(object):
         :param state: a `dict` with the profile information in encrypted and
             encoded form, as created by `__getstate__`.
         """
-        for key, value in state.iteritems():
+        for key, value in six.iteritems(state):
             if key=='pass':
                 key='password'
             if key=='profilename':
@@ -181,7 +183,7 @@ class ProfileStore(object):
         """Encrypt and encode a single value, this method is used to 
         write profiles."""
         cipher = self._cipher()
-        return base64.b64encode( cipher.encrypt( unicode(value).encode('utf-8' ) ) )
+        return base64.b64encode( cipher.encrypt( six.text_type(value).encode('utf-8' ) ) )
             
     def _decode( self, value ):
         """Decrypt and decode a single value, this method is used to
@@ -216,13 +218,13 @@ class ProfileStore(object):
         size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
-        empty = QtCore.QVariant('')
+        empty = py_to_variant('')
         for index in range(size):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
-            for key in state.keys():
-                value = str( qsettings.value(key, empty).toString() )
+            for key in six.iterkeys(state):
+                value = str( variant_to_py(qsettings.value(key, empty)) )
                 if key != 'profilename':
                     value = self._decode(value)
                 else:
@@ -252,12 +254,12 @@ class ProfileStore(object):
         qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
-            for key, value in profile.__getstate__().iteritems():
+            for key, value in six.iteritems(profile.__getstate__()):
                 if key != 'profilename':
                     value = self._encode(value)
                 else:
                     value = (value or '').encode('utf-8')
-                qsettings.setValue(key, QtCore.QVariant(value))
+                qsettings.setValue(key, py_to_variant(value))
         qsettings.endArray()
         qsettings.sync()
         
@@ -279,9 +281,9 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = unicode(self._qsettings().value('last_used_database_profile',
-                                               QtCore.QVariant('')).toString(), 
-                       'utf-8')
+        name = six.binary_type(variant_to_py(self._qsettings().value('last_used_database_profile',
+                                                                   py_to_variant(six.binary_type('')))))
+        name = name.decode('utf-8')
         for profile in profiles:
             if profile.name == name:
                 return profile

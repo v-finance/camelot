@@ -31,7 +31,7 @@ import logging
 logger = logging.getLogger('camelot.view.model_thread.no_thread_model_thread')
 
 from PyQt4 import QtCore
-from signal_slot_model_thread import AbstractModelThread
+from .signal_slot_model_thread import AbstractModelThread
 from camelot.view.controls.exception import register_exception
 
 class NoThreadModelThread( AbstractModelThread ):
@@ -48,7 +48,7 @@ class NoThreadModelThread( AbstractModelThread ):
         try:
             result = request(*args)
             response( result )
-        except Exception, e:
+        except Exception as e:
             if exception:
                 exception_info = register_exception(logger, 'Exception caught in model thread while executing %s'%request.__name__, e )
                 exception(exception_info)

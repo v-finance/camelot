@@ -27,22 +27,22 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QSizePolicy
+from sqlalchemy.ext.hybrid import hybrid_property
+
+import six
 
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
-from camelot.core.utils import variant_to_pyobject, ugettext as _
+from camelot.core.utils import ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
+from ...core.qt import QtCore, QtGui, Qt, variant_to_py
 from .delegates.delegatemanager import DelegateManager
 
-from search import SimpleSearchControl
+from .search import SimpleSearchControl
         
 class ColumnGroupsWidget( QtGui.QTabBar ):
     """A tabbar the user can use to select a group of columns within an
@@ -66,7 +66,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
         tab_index = 0
         for column in table.columns:
             if isinstance( column, ColumnGroup ):
-                self.addTab( unicode( column.verbose_name ) )
+                self.addTab( six.text_type( column.verbose_name ) )
                 previous_column_index = column_index
                 column_index = column_index + len( column.get_fields() )
                 self.groups[ tab_index ] = ( previous_column_index,
@@ -89,7 +89,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
     @QtCore.pyqtSlot( int )
     def _current_index_changed( self, current_index ):
         assert object_thread( self )
-        for tab_index, (first_column, last_column) in self.groups.items():
+        for tab_index, (first_column, last_column) in six.iteritems(self.groups):
             for column_index in range( first_column, last_column ):
                 self.table_widget.setColumnHidden( column_index,
                                                    tab_index != current_index )
@@ -120,7 +120,8 @@ and above the text.
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
                               QtGui.QAbstractItemView.DoubleClicked |
                               QtGui.QAbstractItemView.CurrentChanged )
-        self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        self.setSizePolicy( QtGui.QSizePolicy.Expanding, 
+                            QtGui.QSizePolicy.Expanding )
         self.horizontalHeader().setClickable( True )
         self._header_font_required = QtGui.QApplication.font()
         self._header_font_required.setBold( True )
@@ -137,12 +138,12 @@ and above the text.
         """On timer event, save changed column widths to the model
         """
         assert object_thread( self )
-        for logical_index, new_width in self._columns_changed.items():
+        for logical_index, new_width in six.iteritems(self._columns_changed):
             if self.horizontalHeader().isSectionHidden( logical_index ):
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0
                 continue
-            old_size = variant_to_pyobject( self.model().headerData( logical_index, 
+            old_size = variant_to_py( self.model().headerData( logical_index, 
                                                                      Qt.Horizontal, 
                                                                      Qt.SizeHintRole ) )
             # when the size is different from the one from the model, the
@@ -220,8 +221,11 @@ and above the text.
         it's managed here"""
         model = self.model()
         for i in range( model.columnCount() ):
-            size_hint = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize()
-            self.setColumnWidth(i, size_hint.width())
+            size_hint = variant_to_py(model.headerData(i,
+                                                       Qt.Horizontal,
+                                                       Qt.SizeHintRole))
+            if size_hint is not None:
+                self.setColumnWidth(i, size_hint.width())
         # dont save these changes, since they are the defaults
         self._columns_changed = dict()
     
@@ -232,7 +236,7 @@ and above the text.
         #if model is not None:
             #for i in range( model.columnCount() ):
                 #column_size = model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
-                #columns_width += column_size.toSize().width()
+                #columns_width += variant_to_py(column_size).width()
         #size_hint = QtCore.QSize(max(size_hint.width(), columns_width),
                                  #size_hint.height())
         #return size_hint
@@ -245,10 +249,11 @@ and above the text.
         # if there is an editor in the current cell, change the column and
         # row width to the size hint of the editor
         if editor is not None:
-            column_size_hint = header_data(current.column(), Qt.Horizontal, 
-                                           Qt.SizeHintRole).toSize()
-            row_size_hint = header_data(current.row(), Qt.Vertical,
-                                        Qt.SizeHintRole).toSize()
+            column_size_hint = variant_to_py(header_data(current.column(),
+                                                         Qt.Horizontal, 
+                                                         Qt.SizeHintRole))
+            row_size_hint = variant_to_py(header_data(current.row(), Qt.Vertical,
+                                                      Qt.SizeHintRole))
             editor_size_hint = editor.sizeHint()
             self.setRowHeight(current.row(), max(row_size_hint.height(),
                                                  editor_size_hint.height()))
@@ -256,14 +261,16 @@ and above the text.
                                                       editor_size_hint.width()))
         if current.row() != previous.row():
             if previous.row() >= 0:
-                row_size_hint = header_data(previous.row(), Qt.Vertical,
-                                            Qt.SizeHintRole).toSize()
+                row_size_hint = variant_to_py(header_data(previous.row(),
+                                                          Qt.Vertical,
+                                                          Qt.SizeHintRole))
                 self.setRowHeight(previous.row(), 
                                   row_size_hint.height())
         if current.column() != previous.column():
             if previous.column() >= 0:
-                column_size_hint = header_data(previous.column(), Qt.Horizontal,
-                                               Qt.SizeHintRole).toSize()
+                column_size_hint = variant_to_py(header_data(previous.column(),
+                                                             Qt.Horizontal,
+                                                             Qt.SizeHintRole))
                 self.setColumnWidth(previous.column(), 
                                     column_size_hint.width())
         # whenever we change the size, sectionsResized is called, but these
@@ -321,12 +328,14 @@ class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
     in the table view"""
 
-    _number_of_rows_font = QtGui.QApplication.font()
-
     def __init__( self, parent=None ):
         QtGui.QLabel.__init__( self, parent )
         assert object_thread( self )
         self.setFont( self._number_of_rows_font )
+        
+    @hybrid_property
+    def _number_of_rows_font(cls):
+        return QtGui.QApplication.font()
 
     def set_model(self, model):
         model.layoutChanged.connect(self.update_rows)
@@ -345,6 +354,7 @@ class RowsWidget( QtGui.QLabel ):
         model = self.sender()
         self.update_rows_from_model(model)
 
+
 class HeaderWidget( QtGui.QWidget ):
     """HeaderWidget for a tableview, containing the title, the search widget,
     and the number of rows in the table"""
@@ -353,9 +363,6 @@ class HeaderWidget( QtGui.QWidget ):
     rows_widget = RowsWidget
 
     filters_changed_signal = QtCore.pyqtSignal()
-
-    _title_font = QtGui.QApplication.font()
-    _title_font.setBold( True )
 
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
@@ -381,9 +388,16 @@ class HeaderWidget( QtGui.QWidget ):
         self._expanded_search.hide()
         layout.addWidget( self._expanded_search, 1 )
         self.setLayout( layout )
-        self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
+        self.setSizePolicy( QtGui.QSizePolicy.Minimum, 
+                            QtGui.QSizePolicy.Fixed )
         self.search = search
 
+    @hybrid_property
+    def _title_font(cls):
+        font = QtGui.QApplication.font()
+        font.setBold( True )
+        return font
+    
     def _fill_expanded_search_options(self, columns):
         """Given the columns in the table view, present the user
         with more options to filter rows in the table
@@ -541,7 +555,7 @@ class TableView( AbstractView  ):
     def set_subclass_tree( self, subclasses ):
         assert object_thread( self )
         if len( subclasses ) > 0:
-            from inheritance import SubclassTree
+            from .inheritance import SubclassTree
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
             class_tree = SubclassTree( self.admin, subclasses, splitter )
             splitter.insertWidget( 0, class_tree )
@@ -608,6 +622,7 @@ class TableView( AbstractView  ):
         assert object_thread( self )
         self.sectionClicked( self.table.currentIndex().row() )
 
+
     def closeEvent( self, event ):
         """reimplements close event"""
         assert object_thread( self )
@@ -632,7 +647,7 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot()
     def rebuild_query( self ):
         """resets the table model query"""
-        from filterlist import FilterList
+        from .filterlist import FilterList
         
         if not isinstance(self.table.model(), QueryTableProxy):
             return
@@ -658,7 +673,7 @@ class TableView( AbstractView  ):
         assert object_thread( self )
         from camelot.view.search import create_entity_search_query_decorator
         logger.debug( 'search %s' % text )
-        self.search_filter = create_entity_search_query_decorator( self.admin, unicode(text) )
+        self.search_filter = create_entity_search_query_decorator( self.admin, six.text_type(text) )
         self.rebuild_query()
 
     @QtCore.pyqtSlot()

@@ -26,6 +26,8 @@ import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
+import six
+
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
@@ -139,7 +141,7 @@ class Storage( object ):
         if self._upload_to == None:
             root = self._root or settings.CAMELOT_MEDIA_ROOT
             import os
-            if callable( root ):
+            if six.callable( root ):
                 root = root()
             self._upload_to = os.path.join( root, self._subfolder )
         return self._upload_to
@@ -154,7 +156,7 @@ class Storage( object ):
             if not os.path.exists( self.upload_to ):
                 os.makedirs( self.upload_to )
             return True
-        except Exception, e:
+        except Exception as e:
             logger.warn( 'Could not access or create path %s, files will be unreachable' % self.upload_to, exc_info = e )
 
     def writeable(self):
@@ -193,7 +195,7 @@ class Storage( object ):
         #       able to get directory separators in here or something related
         try:
             return tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if not self.available():
                 raise UserException( text = ugettext('The directory %s does not exist')%(self.upload_to),
                                      resolution = ugettext( 'Contact your system administrator' ) )

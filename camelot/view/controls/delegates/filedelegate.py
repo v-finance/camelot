@@ -21,25 +21,24 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+import six
+
+from ....core.qt import variant_to_py, QtGui, Qt
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class FileDelegate(CustomDelegate):
+class FileDelegate( six.with_metaclass( DocumentationMetaclass,
+                                        CustomDelegate ) ):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """
     
-    __metaclass__ = DocumentationMetaclass
-    
     editor = editors.FileEditor
     
     def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
-        value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        value =  variant_to_py(index.model().data(index, Qt.EditRole))
         text = ''
         if value not in (None, ValueLoading):
             text = value.verbose_name

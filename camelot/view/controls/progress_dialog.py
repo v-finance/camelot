@@ -30,8 +30,9 @@ import logging
 from camelot.core.utils import ugettext
 from camelot.view.art import Icon
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+import six
+
+from ...core.qt import QtGui, QtCore, Qt, q_string, variant_to_py
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -45,8 +46,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')
     
     def __init__(self, name, icon=progress_icon):
-        QtGui.QProgressDialog.__init__( self, QtCore.QString(), QtCore.QString(), 0, 0 )
-        label = QtGui.QLabel( unicode(name) )
+        QtGui.QProgressDialog.__init__( self, q_string(), q_string(), 0, 0 )
+        label = QtGui.QLabel( six.text_type(name) )
         progress_bar = QtGui.QProgressBar()
         progress_bar.setObjectName('progress_bar')
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
@@ -100,7 +101,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             return
         model = details.model()
         if model is not None:
-            text = u'\n'.join([unicode(s) for s in model.stringList()])
+            text = u'\n'.join([six.text_type(s) for s in model.stringList()])
             QtGui.QApplication.clipboard().setText(text)
             
     def add_detail( self, text ):
@@ -122,7 +123,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             model = details.model()
             model.insertRow(model.rowCount())
             model.setData(model.index(model.rowCount()-1, 0),
-                          QtCore.QVariant(text),
+                          variant_to_py(text),
                           Qt.DisplayRole)
         
     def clear_details( self ):

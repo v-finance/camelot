@@ -25,8 +25,9 @@
 """Functions and widget to represent exceptions to the user"""
 
 import collections
-
 from PyQt4 import QtGui
+
+import six
 
 from camelot.core.utils import ugettext as _
 from camelot.core.exception import UserException
@@ -59,9 +60,10 @@ def register_exception(logger, text, exception):
     text  = _('An unexpected event occurred')
     icon  = None
     # chop the size of the text to prevent error dialogs larger than the screen
-    resolution = unicode(exception)[:1000]
-    import traceback, cStringIO
-    sio = cStringIO.StringIO()
+    resolution = six.text_type(exception)[:1000]
+    from six.moves import cStringIO
+    import traceback
+    sio = cStringIO()
     traceback.print_exc(file=sio)
     detail = sio.getvalue()
     sio.close()
@@ -82,7 +84,8 @@ class ExceptionDialog(QtGui.QMessageBox):
 
         (title, text, icon, resolution, detail) = exception_info
         super( ExceptionDialog, self ).__init__(QtGui.QMessageBox.Warning,
-                                                unicode(title), unicode(text))
-        self.setInformativeText(unicode(resolution or ''))
-        self.setDetailedText(unicode(detail or ''))
+                                                six.text_type(title), 
+                                                six.text_type(text))
+        self.setInformativeText(six.text_type(resolution or ''))
+        self.setDetailedText(six.text_type(detail or ''))
 

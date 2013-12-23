@@ -25,6 +25,7 @@
 import logging
 import pkgutil
 
+import six
 from PyQt4 import QtCore, QtGui, QtNetwork
 from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QFileInfo
@@ -259,7 +260,7 @@ allow all languages
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = unicode(self.profile_editor.currentText())
+        text = six.text_type(self.profile_editor.currentText())
         return text
 
     def set_current_profile(self, profile_name):
@@ -344,7 +345,7 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = unicode(QFileDialog.getExistingDirectory(self, caption))
+        selected = six.text_type(QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return

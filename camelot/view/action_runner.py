@@ -23,9 +23,12 @@
 #  ============================================================================
 
 import contextlib
+import functools
 import logging
 
 from PyQt4 import QtCore, QtGui
+
+import six
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
@@ -40,7 +43,7 @@ def hide_progress_dialog( gui_context ):
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.progress_dialog
     original_state = None
-    if isinstance( progress_dialog, ( QtGui.QWidget, ) ):
+    if isinstance( progress_dialog, QtGui.QWidget ):
         original_state = progress_dialog.isHidden()
     try:
         if original_state == False:
@@ -108,7 +111,7 @@ class ActionRunner( QtCore.QEventLoop ):
         try:
             result = generator_method( *args )
             while True:
-                if isinstance( result, (ActionStep,)):
+                if isinstance(result, ActionStep):
                     if result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
@@ -124,11 +127,11 @@ class ActionRunner( QtCore.QEventLoop ):
                     result = self._generator.throw( CancelRequest() )
                 else:
                     LOGGER.debug( 'move iterator forward' )
-                    result = self._generator.next()
-        except CancelRequest, e:
+                    result = six.advance_iterator( self._generator )
+        except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
-        except StopIteration, e:
+        except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
             return e
 
@@ -158,9 +161,10 @@ class ActionRunner( QtCore.QEventLoop ):
         #
         if self._generator != None:
             post( self._iterate_until_blocking, 
-                  self.next, 
+                  self.__next__, 
                   self.exception,
-                  args = ( self._generator.next, ) )
+                  args = ( functools.partial( six.advance_iterator,
+                                              self._generator ), ) )
         else:
             self.exit()
         
@@ -175,27 +179,27 @@ class ActionRunner( QtCore.QEventLoop ):
                 raise CancelRequest()
             
     @QtCore.pyqtSlot( object )
-    def next( self, yielded ):
-        """Handle the result of the next call of the generator
+    def __next__( self, yielded ):
+        """Handle the result of the __next__ call of the generator
         
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        if isinstance( yielded, (ActionStep,) ):
+        if isinstance( yielded, ActionStep ):
             try:
                 self._was_canceled( self._gui_context )
                 to_send = yielded.gui_run( self._gui_context )
                 self._was_canceled( self._gui_context )
                 post( self._iterate_until_blocking, 
-                      self.next, 
+                      self.__next__, 
                       self.exception, 
                       args = ( self._generator.send, to_send,) )
-            except CancelRequest, exc:
+            except CancelRequest as exc:
                 post( self._iterate_until_blocking,
-                      self.next,
+                      self.__next__,
                       self.exception,
                       args = ( self._generator.throw, exc,) )
-            except Exception, exc:
+            except Exception as exc:
                 LOGGER.error( 'gui exception while executing action', 
                               exc_info=exc)
                 #
@@ -205,7 +209,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 # should be past to the model.
                 #
                 post( self._iterate_until_blocking,
-                      self.next,
+                      self.__next__,
                       self.exception,
                       args = ( self._generator.throw, GuiException(), ) )
         elif isinstance( yielded, (StopIteration, CancelRequest) ):
@@ -216,8 +220,8 @@ class ActionRunner( QtCore.QEventLoop ):
             self.processEvents()
             self.exit()
         else:
-            LOGGER.error( 'next call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( unicode( yielded ) )
+            LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
+            LOGGER.error( six.text_type( yielded ) )
             raise Exception( 'this should not happen' )
 
 

@@ -22,11 +22,9 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QItemDelegate
-from camelot.core.utils import variant_to_pyobject
+import six
+
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
@@ -74,7 +72,7 @@ def DocumentationMetaclass(name, bases, dct):
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
         dct['__doc__'] = dct['__doc__'] + row_format%('**Field Attributes**', '**Editor**') + '\n'
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
-        for state, attrs in states.items():
+        for state, attrs in six.iteritems(states):
             for i,attr in enumerate(attrs):
                 if i==0:
                     image = '.. image:: /_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
@@ -103,7 +101,7 @@ def DocumentationMetaclass(name, bases, dct):
 color_groups = {True: QtGui.QPalette.Inactive,
                 False: QtGui.QPalette.Disabled}
 
-class CustomDelegate(QItemDelegate):
+class CustomDelegate(QtGui.QItemDelegate):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -120,7 +118,7 @@ class CustomDelegate(QItemDelegate):
         is editable
 
         """
-        QItemDelegate.__init__(self, parent)
+        super( CustomDelegate, self ).__init__(parent)
         self.editable = editable
         self.kwargs = kwargs
         self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
@@ -135,7 +133,7 @@ class CustomDelegate(QItemDelegate):
 
         editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
         assert editor != None
-        assert isinstance(editor, (QtGui.QWidget,))
+        assert isinstance(editor, QtGui.QWidget)
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )
@@ -150,7 +148,7 @@ class CustomDelegate(QItemDelegate):
     def commitAndCloseEditor(self):
         editor = self.sender()
         assert editor != None
-        assert isinstance(editor, (QtGui.QWidget,))
+        assert isinstance(editor, QtGui.QWidget)
         self.commitData.emit(editor)
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not
@@ -160,15 +158,15 @@ class CustomDelegate(QItemDelegate):
     def setEditorData(self, editor, index):
         if not index.model():
             return
-        value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole)) or dict()
+        value = variant_to_py(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ToolTipRole
         # but i wonder if we should make the detour by Qt.ToolTipRole or just
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
-            editor.setToolTip( unicode( field_attributes.get('tooltip', '') ) )
+            editor.setToolTip( six.text_type( field_attributes.get('tooltip', '') ) )
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
@@ -179,7 +177,7 @@ class CustomDelegate(QItemDelegate):
 
     def setModelData(self, editor, model, index):
         if isinstance(model, QtGui.QStandardItemModel):
-            val = QtCore.QVariant(editor.get_value())
+            val = py_to_variant(editor.get_value())
         else:
             val = create_constant_function(editor.get_value())
         model.setData(index, val)
@@ -187,12 +185,12 @@ class CustomDelegate(QItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
+        value = variant_to_py(index.model().data(index, Qt.DisplayRole))
 
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = unicode( value )
+            value_str = six.text_type( value )
 
         self.paint_text( painter, option, index, value_str )
         painter.restore()
@@ -219,7 +217,7 @@ class CustomDelegate(QItemDelegate):
         if rect.height() > 2 * self._height:
             vertical_align = Qt.AlignTop
 
-        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
+        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
         tooltip = None
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
@@ -241,9 +239,9 @@ class CustomDelegate(QItemDelegate):
             painter.drawPixmap(rect.x(), rect.y(), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
 
         if prefix:
-            text = '%s %s' % (unicode( prefix ).strip(), unicode( text ).strip() )
+            text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )
         if suffix:
-            text = '%s %s' % (unicode( text ).strip(), unicode( suffix ).strip() )
+            text = '%s %s' % (six.text_type( text ).strip(), six.text_type( suffix ).strip() )
 
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,

@@ -30,10 +30,10 @@ well.  Form classes can be used recursive.
 import logging
 logger = logging.getLogger( 'camelot.view.forms' )
 
-from PyQt4 import QtCore, QtGui
-
-from ..core.utils import variant_to_pyobject
+from ..core.qt import QtCore, QtGui, variant_to_py
 from ..core.exception import log_programming_error
+
+import six
 
 class Form( list ):
     """Base Form class to put fields on a form.  The base class of a form is
@@ -73,7 +73,7 @@ and takes these parameters :
                 for nested_field in  field._get_fields_from_form():
                     yield nested_field
             else:
-                assert isinstance( field, ( str, unicode ) )
+                assert isinstance( field, six.string_types )
                 yield field;
 
 
@@ -112,7 +112,7 @@ and takes these parameters :
         self.append( new_field )
 
     def __unicode__( self ):
-        return 'Form(%s)' % ( u','.join( unicode( c ) for c in self ) )
+        return 'Form(%s)' % ( u','.join( six.text_type( c ) for c in self ) )
 
     def render( self, widgets, parent = None, toplevel = False):
         """
@@ -189,7 +189,7 @@ and takes these parameters :
             else:
                 editor = widgets.create_editor( field, form_widget )
                 if editor != None:
-                    if isinstance( editor, ( WideEditor, ) ):
+                    if isinstance( editor, WideEditor ):
                         c.next_empty_row()
                         col_span = 2 * columns
                         label = widgets.create_label( field, editor, form_widget )
@@ -197,7 +197,7 @@ and takes these parameters :
                             form_layout.addWidget( label, c.row, c.col, row_span, col_span )
                             c.next_row()
                         form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
-                        stretch = variant_to_pyobject( editor.property('stretch') )
+                        stretch = variant_to_py( editor.property('stretch') )
                         if stretch is not None:
                             form_layout.setRowStretch(c.row, stretch)
                         c.next_row()
@@ -210,7 +210,7 @@ and takes these parameters :
                         c.next_col()
                     size_policy = editor.sizePolicy()
                 else:
-                    log_programming_error( logger, 'widgets should contain a widget for field %s'%unicode(field) )
+                    log_programming_error( logger, 'widgets should contain a widget for field %s'%six.text_type(field) )
             if size_policy and size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
                 has_vertical_expanding_row = True
 
@@ -262,9 +262,9 @@ class Label( Form ):
     def render( self, widgets, parent = None, toplevel = False ):
         from PyQt4 import QtGui
         if self.style:
-            widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,unicode(self.label)) )
+            widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
         else:
-            widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,unicode(self.label)) )
+            widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,six.text_type(self.label)) )
         widget.setSizePolicy( QtGui.QSizePolicy.Preferred,
                               QtGui.QSizePolicy.Fixed )    
         return widget
@@ -288,7 +288,7 @@ the moment the tab is shown.
         for tab_label, tab_form in tabs:
             self._forms.append( tab_form )
             tab_widget = QtGui.QWidget( self )
-            self.addTab( tab_widget, unicode(tab_label) )
+            self.addTab( tab_widget, six.text_type(tab_label) )
         #
         # render the first tab and continue rendering until we have
         # a tab with an expanding size policy, because then we know
@@ -303,7 +303,7 @@ the moment the tab is shown.
                 # if one of the tabs is expanding, the others should have spacer
                 # items to stretch
                 #
-                for j, vertical_expanding_of_widget in zip(range(i), self._vertical_expanding):
+                for j, vertical_expanding_of_widget in zip(list(range(i)), self._vertical_expanding):
                     if vertical_expanding_of_widget == False:
                         tab_widget = self.widget( j )
                         tab_widget.layout().addStretch( 1 )                
@@ -366,7 +366,7 @@ Render forms within a :class:`QtGui.QTabWidget`::
                                       for tab_label, tab_form in self.tabs ), [] ) )
 
     def __unicode__( self ):
-        return 'TabForm { %s\n        }' % ( u'\n  '.join( '%s : %s' % ( label, unicode( form ) ) for label, form in self.tabs ) )
+        return 'TabForm { %s\n        }' % ( u'\n  '.join( '%s : %s' % ( label, six.text_type( form ) ) for label, form in self.tabs ) )
 
     def add_tab_at_index( self, tab_label, tab_form, index ):
         """Add a tab to the form at the specified index
@@ -444,7 +444,7 @@ class HBoxForm( Form ):
                                       for column_form in self.columns ), [] ), scrollbars=scrollbars )
 
     def __unicode__( self ):
-        return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.columns] ) )
+        return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [six.text_type( form ) for form in self.columns] ) )
 
     def replace_field( self, original_field, new_field ):
         for form in self.columns:
@@ -501,7 +501,7 @@ class VBoxForm( Form ):
                 yield field
 
     def __unicode__( self ):
-        return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
+        return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [six.text_type( form ) for form in self.rows] ) )
 
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
@@ -596,7 +596,7 @@ class WidgetOnlyForm( Form ):
     """Renders a single widget without its label, typically a one2many widget"""
 
     def __init__( self, field ):
-        assert isinstance( field, ( str, unicode ) )
+        assert isinstance( field, six.string_types )
         super( WidgetOnlyForm, self ).__init__( [field] )
 
     def render( self, widgets, parent = None, toplevel = False ):
@@ -634,7 +634,7 @@ class GroupBoxForm( Form ):
         Form.__init__( self, content, scrollbars, columns=columns )
 
     def render( self, widgets, parent = None, toplevel = False ):
-        widget = QtGui.QGroupBox( unicode(self.title), parent )
+        widget = QtGui.QGroupBox( six.text_type(self.title), parent )
         layout = QtGui.QVBoxLayout()
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )

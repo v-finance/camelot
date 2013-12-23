@@ -21,13 +21,14 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.core.utils import ugettext as _
 from camelot.admin.action.field_action import (ShowFieldAttributes,
                                                FieldActionGuiContext)
-from user_translatable_label import UserTranslatableLabel
+from .user_translatable_label import UserTranslatableLabel
 
 
 class FieldLabel(UserTranslatableLabel):

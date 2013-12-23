@@ -1,12 +1,13 @@
 import datetime
 import logging
 import os
-import StringIO
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from sqlalchemy import orm
+
+import six
 
 from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import ( list_action, application_action,
@@ -20,9 +21,9 @@ from camelot.test.action import MockModelContext
 from camelot.view import action_steps
 from camelot.view.controls import tableview
 
-from test_view import static_images_path
-import test_proxy
-import test_model
+from . import test_view
+from . import test_proxy
+from . import test_model
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -50,7 +51,7 @@ class ActionWidgetsCase( ModelThreadTestCase ):
     """Test widgets related to actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp(self):
         from camelot.admin.action import ApplicationActionGuiContext, State
@@ -104,7 +105,7 @@ class ActionStepsCase( ModelThreadTestCase ):
     action.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp(self):
         ModelThreadTestCase.setUp(self)
@@ -124,7 +125,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         # create an import action
         action = ImportCovers()
         generator = action.model_run( None )
-        select_file = generator.next()
+        select_file = six.advance_iterator( generator )
         self.assertFalse( select_file.single )
         # pretend the user selected a file
         generator.send(test_images)
@@ -258,10 +259,10 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.grab_widget(dialog)
 
     def test_open_file( self ):
-        stream = StringIO.StringIO('1, 2, 3, 4')
+        stream = six.BytesIO(b'1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
-        self.assertTrue( unicode( open_stream ) )
-        action_steps.OpenString( '1, 2, 3, 4' )
+        self.assertTrue( six.text_type( open_stream ) )
+        action_steps.OpenString( six.b('1, 2, 3, 4') )
         context = { 'columns':['width', 'height'],
                     'table':[[1,2],[3,4]] }
         action_steps.OpenJinjaTemplate( 'list.html', context )
@@ -352,7 +353,7 @@ class ActionStepsCase( ModelThreadTestCase ):
     def test_update_progress( self ):
         from camelot.view.controls.progress_dialog import ProgressDialog
         update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
-        self.assertTrue( unicode( update_progress ) )
+        self.assertTrue( six.text_type( update_progress ) )
         # give the gui context a progress dialog, so it can be updated
         self.gui_context.progress_dialog = ProgressDialog('Progress')
         update_progress.gui_run( self.gui_context )
@@ -365,7 +366,7 @@ class ListActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp( self ):
         super( ListActionsCase, self ).setUp()
@@ -576,7 +577,7 @@ class FormActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp( self ):
         super( FormActionsCase, self ).setUp()
@@ -650,7 +651,7 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
@@ -773,7 +774,7 @@ class DocumentActionsCase( ModelThreadTestCase ):
     """Test the standard document actions.
     """
 
-    images_path = static_images_path
+    images_path = test_view.static_images_path
 
     def setUp( self ):
         ModelThreadTestCase.setUp(self)

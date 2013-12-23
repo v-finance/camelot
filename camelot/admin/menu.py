@@ -24,6 +24,8 @@
 
 from PyQt4 import QtGui
 
+import six
+
 class Menu( object ):
     """A menu is a part of the main menu shown on the main window.  Each Menu
 contains a list of items the user select.  Such a menu item is either a Menu
@@ -51,7 +53,7 @@ itself, an Action object or None to insert a separator.
         """
         :return: a :class:`QtGui.QMenu` object
         """
-        menu = QtGui.QMenu( unicode( self.get_verbose_name() ), parent )
+        menu = QtGui.QMenu( six.text_type( self.get_verbose_name() ), parent )
         for item in self.get_items():
             if item == None:
                 menu.addSeparator()

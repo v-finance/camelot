@@ -26,10 +26,11 @@
 the data that is passed between the model and the gui thread"""
 
 from copy import copy
-from itertools import izip_longest
 
 _fill = object()
 _no_data = (None,None)
+
+import six
 
 class Fifo(object):
     """Fifo, is the actual cache containing a limited set of copies of row data
@@ -49,7 +50,7 @@ class Fifo(object):
         self.rows_by_entity = dict()
         
     def __unicode__(self):
-        return u','.join(unicode(e) for e in self.entities)
+        return u','.join(six.text_type(e) for e in self.entities)
     
     def __str__(self):
         return 'Fifo cache of %s rows'%(len(self.entities))
@@ -63,7 +64,7 @@ class Fifo(object):
         :return: a interator of the row numbers for which this fifo
         had data
         """
-        return self.data_by_rows.keys()
+        return six.iterkeys(self.data_by_rows)
     
     def shallow_copy(self, max_entries):
         """Copy the cache without the actual data but with the references
@@ -71,7 +72,7 @@ class Fifo(object):
         new_fifo = Fifo(max_entries)
         new_fifo.entities = copy( self.entities )
         # None is to distinguish between a list of data and no data
-        new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in self.data_by_rows.items() )
+        new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in six.iteritems(self.data_by_rows) )
         new_fifo.rows_by_entity = copy( self.rows_by_entity )
         return new_fifo
         
@@ -89,10 +90,10 @@ class Fifo(object):
         if len(self.entities)>self.max_entries:
             entity = self.entities.pop(0)
             self.delete_by_entity(entity)
-        if old_value == None:
+        if old_value is None:
             # there was no old data, so everything has changed
             return set( range( len( value ) ) )
-        values = izip_longest( value, old_value or [], fillvalue = _fill )
+        values = six.moves.zip_longest( value, old_value or [], fillvalue = _fill )
         return set( i for i,(new,old) in enumerate( values ) if new != old )
       
     def delete_by_row(self, row):
@@ -125,7 +126,7 @@ class Fifo(object):
         there isn't"""
         try:
             data = self.get_data_at_row( row )
-            if data != None:
+            if data is not None:
                 return True
         except KeyError:
             pass

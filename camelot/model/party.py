@@ -31,10 +31,11 @@ by Len Silverston, Chapter 2
 
 import datetime
 
+import six
+
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode
 from sqlalchemy.sql.expression import and_
-
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
@@ -45,7 +46,7 @@ import camelot.types
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
 
-from authentication import end_of_times
+from .authentication import end_of_times
 
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
@@ -654,7 +655,7 @@ class PartyAddress( Entity, Addressable ):
     party_name = ColumnProperty( party_name, deferred = True )
 
     def __unicode__( self ):
-        return '%s : %s' % ( unicode( self.party ), unicode( self.address ) )
+        return '%s : %s' % ( six.text_type( self.party ), six.text_type( self.address ) )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -760,7 +761,7 @@ class PartyContactMechanism( Entity ):
     party_name = ColumnProperty( party_name, deferred = True )
 
     def __unicode__( self ):
-        return unicode( self.contact_mechanism )
+        return six.text_type( self.contact_mechanism )
 
     Admin = PartyContactMechanismAdmin
 

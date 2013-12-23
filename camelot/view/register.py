@@ -33,8 +33,9 @@ should be kept alive.
 '''
 
 import logging
+import six
 
-from PyQt4 import QtCore
+from ..core.qt import QtCore, valid_variant, variant_to_py
 
 LOGGER = logging.getLogger('camelot.view.register')
 
@@ -56,7 +57,7 @@ class Register(QtCore.QObject):
         :param registered: the object that will be registered
         :param monitored: the object that will be monitored
         """
-        if monitored.property(self._key_name).isValid():
+        if valid_variant( monitored.property(self._key_name) ):
             key, _success = monitored.property( self._key_name ).toLongLong()
         else:
             self._max_monitor_key += 1
@@ -69,7 +70,7 @@ class Register(QtCore.QObject):
     @QtCore.pyqtSlot(QtCore.QObject)
     def _monitored_object_destroyed(self, qobject):
         """slot to indicate a monitored object is destroyed"""
-        key, _success = qobject.property( self._key_name ).toLongLong()
+        key = variant_to_py( qobject.property( self._key_name ) )
         LOGGER.debug('object with key %s is destroyed'%key)
         del self._registed_by_monitor_key[key]
         
@@ -90,6 +91,6 @@ def dump_register( logger ):
     """Method to see the currently monitored objects, for debugging
     purposes"""
     if _global_register_:
-        for k,v in _global_register_._registed_by_monitor_key.items():
+        for k,v in six.iteritems(_global_register_._registed_by_monitor_key):
             logger.warn( '%s : %s'%( k, v ) )
 

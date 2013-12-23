@@ -1,5 +1,6 @@
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, Date
+
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Entity
 from camelot.view import forms

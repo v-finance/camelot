@@ -78,8 +78,8 @@ class LazyProxy(list):
         
         try:
             mod = __import__('settings', {}, {}, [''])
-        except ImportError, e:
-            raise ImportError, "Could not import settings (Is it on sys.path? Does it have syntax errors?): %s" % (e)
+        except ImportError as e:
+            raise ImportError("Could not import settings (Is it on sys.path? Does it have syntax errors?): %s" % (e))
         self.append( mod )
 
 settings = LazyProxy()

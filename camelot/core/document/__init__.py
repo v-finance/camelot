@@ -24,7 +24,7 @@
 """Decorators to enhance the docstrings of classes
 """
 
-from sqlalchemy import inspect, orm
+from sqlalchemy import inspect, orm, util
 
 from ...admin.entity_admin import EntityAdmin
 
@@ -60,8 +60,10 @@ def document_classes(classes):
         documented_fields = []
         
         mapper = inspect(model)
-        
-        for key, value in mapper.column_attrs.items():
+
+        # this is a hack to use the items method of ImmutableProperties, without
+        # triggering the PY3K convertor
+        for key, value in util.ImmutableProperties.items(mapper.column_attrs):
             doc = document_property( cls, key, value )
             if doc:
                 documented_fields.append( doc )

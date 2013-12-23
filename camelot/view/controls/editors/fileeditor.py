@@ -22,11 +22,13 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
 from ....admin.action import field_action
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
 
@@ -69,30 +71,6 @@ class FileEditor(CustomEditor):
         self.filename.set_minimum_width( 20 )
         self.filename.setFocusPolicy( Qt.ClickFocus )
 
-        # Search Completer
-        #
-        # Turn completion off, since it creates a thread per field on a form
-        #
-        # self.completer = QtGui.QCompleter()
-        # self.completions_model = QtGui.QFileSystemModel()
-        # self.completer.setCompletionMode(
-        #    QtGui.QCompleter.UnfilteredPopupCompletion
-        # )        
-        # self.completer.setModel( self.completions_model )
-        # self.completer.activated[QtCore.QModelIndex].connect(self.file_completion_activated)
-        # self.filename.setCompleter( self.completer )
-        # settings = QtCore.QSettings()
-        # last_path = settings.value('lastpath').toString()
-        
-        # # This setting of a rootPath causes a major delay on Windows, since 
-        # # the QFileSystemModel starts to fetch file information in a non-
-        # # blocking way (although the documentation state the opposite).
-        # # On Linux, there is no such delay, so it's safe to set such a root
-        # # path and let the underlaying system start indexing.
-        # import sys
-        # if sys.platform != "win32":
-        #    self.completions_model.setRootPath( last_path )
-
         # Setup layout
         self.document_label = QtGui.QLabel(self)
         self.document_label.setPixmap(self.document_pixmap.getQPixmap())
@@ -133,7 +111,7 @@ class FileEditor(CustomEditor):
         self.set_enabled(kwargs.get('editable', False))
         if self.filename:
             set_background_color_palette( self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(unicode(kwargs.get('tooltip') or ''))
+            self.filename.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
         self.remove_original = kwargs.get('remove_original', False)
 
     def set_enabled(self, editable=True):

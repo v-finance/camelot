@@ -24,10 +24,12 @@
 
 import os.path
 
+import six
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
@@ -96,7 +98,7 @@ class LocalFileEditor( CustomEditor ):
             value = QtGui.QFileDialog.getOpenFileName( self,
                                                        filter = self._file_filter,
                                                        directory = current_directory )
-        value = os.path.abspath( unicode( value ) )
+        value = os.path.abspath( six.text_type( value ) )
         self.filename.setText( value )
         self.valueChanged.emit()
         self.editingFinished.emit()
@@ -111,7 +113,7 @@ class LocalFileEditor( CustomEditor ):
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or unicode( self.filename.text() )
+        return CustomEditor.get_value(self) or six.text_type( self.filename.text() )
     
     value = QtCore.pyqtProperty( str, get_value, set_value )
 
@@ -123,5 +125,5 @@ class LocalFileEditor( CustomEditor ):
         self.setEnabled( editable )
         if self.filename:
             set_background_color_palette( self.filename, background_color )
-            self.filename.setToolTip(unicode(tooltip or ''))
+            self.filename.setToolTip(six.text_type(tooltip or ''))
 

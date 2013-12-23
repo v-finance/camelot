@@ -23,8 +23,10 @@
 #  ============================================================================
 from PyQt4 import QtCore
 
-from wideeditor import WideEditor
-from customeditor import AbstractCustomEditor, QtGui
+import six
+
+from .wideeditor import WideEditor
+from .customeditor import AbstractCustomEditor, QtGui
 
 class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
@@ -44,17 +46,17 @@ class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         #if value:
-        #    self.setText(unicode(value))
+        #    self.setText(six.text_type(value))
         #else:
         #    self.setText('')
-        self.setText(unicode(value))
+        self.setText(six.text_type(value))
         return value
 
     def get_value(self):
         val = AbstractCustomEditor.get_value(self)
         if val is not None: # we need to distinguish between None
             return val      # and other falsy values
-        return unicode(self.toPlainText())
+        return six.text_type(self.toPlainText())
 
 
     def set_enabled(self, editable=True):

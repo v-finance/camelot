@@ -26,10 +26,9 @@ import logging
 
 LOGGER = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-from wideeditor import WideEditor
-from customeditor import CustomEditor
+from .wideeditor import WideEditor
+from .customeditor import CustomEditor
+from ....core.qt import Qt, QtCore, QtGui, variant_to_py
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import object_thread, post
@@ -150,7 +149,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             if model is not None:
                 model.set_columns(columns)
                 for i in range( model.columnCount() ):
-                    txtwidth = model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+                    txtwidth = variant_to_py(model.headerData( i, Qt.Horizontal, Qt.SizeHintRole )).width()
                     table.setColumnWidth( i, txtwidth )
 
     def set_value( self, collection ):

@@ -54,6 +54,8 @@ Here is a quick example of how to use ``has_property``.
 """
 from sqlalchemy import orm, schema
 
+import six
+
 from . statements import ClassMutator
 from . import options
 
@@ -70,8 +72,8 @@ class CounterMeta(type):
         instance.counter = CounterMeta.counter
         CounterMeta.counter += 1
         return instance
-    
-class EntityBuilder( object ):
+
+class EntityBuilder(six.with_metaclass(CounterMeta)):
     """
     Abstract base class for all entity builders. An Entity builder is a class
     of objects which can be added to an Entity (usually by using special
@@ -82,8 +84,6 @@ class EntityBuilder( object ):
     in the correct order (for example, that the table is fully created before
     the mapper that use it is defined).
     """
-    
-    __metaclass__ = CounterMeta
 
     def __init__(self, *args, **kwargs):
         self.entity = None

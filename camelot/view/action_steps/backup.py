@@ -27,13 +27,14 @@
 :class:`camelot.admin.action.application.Restore` action
 """
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+import six
+
+from ...core.qt import QtGui, QtCore, py_to_variant, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext, variant_to_pyobject
+from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.art import Icon
@@ -72,12 +73,12 @@ class LabelComboBox(QtGui.QComboBox):
         for i, stored_file in enumerate( stored_files):
             if i == 0:
                 self._file_name = stored_file.name
-            self.addItem( unicode( stored_file.verbose_name ), 
-                          QtCore.QVariant( stored_file ) )            
+            self.addItem( six.text_type( stored_file.verbose_name ), 
+                          py_to_variant( stored_file ) )            
         self.currentIndexChanged[int].connect(self._onCurrentIndexChanged)
 
     def _onCurrentIndexChanged( self, index ):
-        self._file_name = variant_to_pyobject( self.itemData(index) ).name
+        self._file_name = variant_to_py( self.itemData(index) ).name
 
     def filename( self ):
         return self._file_name
@@ -157,7 +158,7 @@ class SelectDialog( StandaloneWizardPage ):
 
     def _customButtonClicked(self):
         settings = QtCore.QSettings()
-        previous_location = settings.value( self.settings_key ).toString()
+        previous_location = variant_to_py(settings.value( self.settings_key ))
         path = self._setPath( previous_location )
         if path:
             self._custom_edit.setText(QtCore.QDir.toNativeSeparators(path))
@@ -213,7 +214,7 @@ class SelectBackupDialog( SelectDialog ):
             
     def _setPath(self, dir):
         path = QtGui.QFileDialog.getSaveFileName(
-                self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+                self, six.text_type(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
             )
         return path
 
@@ -261,7 +262,7 @@ class SelectRestoreDialog( SelectDialog ):
 
     def _setPath(self, dir):
         path = QtGui.QFileDialog.getOpenFileName(
-            self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+            self, six.text_type(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
         )
         return path
 
@@ -273,7 +274,7 @@ class SelectBackup( ActionStep ):
         formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
         # replace all non-ascii chars with underscores
         import string
-        formatted_date_time_str = unicode(formatted_date_time)
+        formatted_date_time_str = six.text_type(formatted_date_time)
         for c in formatted_date_time_str:
             if c not in string.ascii_letters and c not in string.digits:
                 formatted_date_time_str = formatted_date_time_str.replace(c, '_')                

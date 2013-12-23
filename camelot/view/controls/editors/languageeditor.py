@@ -21,10 +21,10 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+import six
 
-from customeditor import AbstractCustomEditor
+from .customeditor import AbstractCustomEditor
+from ....core.qt import QtGui, QtCore, py_to_variant, variant_to_py
 
 class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     """A ComboBox that shows a list of languages, the editor takes
@@ -48,11 +48,11 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
             for language in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
                 if languages and (language not in languages):
                     continue
-                language_name = unicode( QtCore.QLocale.languageToString( language ))
+                language_name = six.text_type( QtCore.QLocale.languageToString( language ))
                 self.language_choices.append( (language, language_name ) )
             self.language_choices.sort(key=lambda x:x[1])
         for i, (language, language_name) in enumerate( self.language_choices ):
-            self.addItem( language_name, QtCore.QVariant(language) )
+            self.addItem( language_name, py_to_variant(language) )
             self.index_by_language[ language ] = i
         self.activated.connect( self._activated )
 
@@ -71,12 +71,11 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
             self.setCurrentIndex( self.index_by_language[locale.language()] )
             
     def get_value(self):
-        from camelot.core.utils import variant_to_pyobject
         current_index = self.currentIndex()
         if current_index >= 0:
-            language = variant_to_pyobject(self.itemData(self.currentIndex()))
+            language = variant_to_py(self.itemData(self.currentIndex()))
             locale = QtCore.QLocale( language )
-            value = unicode( locale.name() )
+            value = six.text_type( locale.name() )
         else:
             value = None
         return AbstractCustomEditor.get_value(self) or value

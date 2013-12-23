@@ -23,11 +23,14 @@
 #  ============================================================================
 """Helper functions for the view subpackage"""
 
-from HTMLParser import HTMLParser
+from six.moves import html_parser
 
 from PyQt4 import QtCore, QtGui
 
+import six
+
 from datetime import datetime, time, date
+import decimal
 import re
 import logging
 import operator
@@ -59,10 +62,10 @@ def local_date_format():
     global _local_date_format
     if not _local_date_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', unicode(locale.dateFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', six.text_type(locale.dateFormat(locale.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
-        _local_date_format = unicode(u''.join(format_sequence))
+        _local_date_format = six.text_type(u''.join(format_sequence))
     return _local_date_format
 
 def local_datetime_format():
@@ -70,10 +73,10 @@ def local_datetime_format():
     global _local_datetime_format
     if not _local_datetime_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', unicode(locale.dateTimeFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', six.text_type(locale.dateTimeFormat(locale.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
-        _local_datetime_format = unicode(u''.join(format_sequence))
+        _local_datetime_format = six.text_type(u''.join(format_sequence))
     return _local_datetime_format
 
 def local_time_format():
@@ -81,21 +84,21 @@ def local_time_format():
     global _local_time_format
     if not _local_time_format:
         locale = QtCore.QLocale()
-        _local_time_format = unicode(locale.timeFormat(locale.ShortFormat) )
+        _local_time_format = six.text_type(locale.timeFormat(locale.ShortFormat) )
     return _local_time_format
 
 def default_language(*args):
     """takes arguments, to be able to use this function as a
     default field attribute"""
     locale = QtCore.QLocale()
-    return unicode(locale.name())
+    return six.text_type(locale.name())
 
 class ParsingError(Exception): pass
 
 def string_from_string(s):
     if not s:
         return None
-    return unicode(s)
+    return six.text_type(s)
 
 def bool_from_string(s):
     if s is None: raise ParsingError()
@@ -201,11 +204,15 @@ def float_from_string(s):
         raise ParsingError()
     return f
 
+def decimal_from_string(s):
+    # direct conversion not possible, due to locale
+    return decimal.Decimal( float_from_string( s ) )
+
 def pyvalue_from_string(pytype, s):
     if pytype is str:
         return str(s)
     elif pytype is unicode:
-        return unicode(s)
+        return six.text_type(s)
     elif pytype is bool:
         return bool_from_string(s)
     elif pytype is date:
@@ -222,10 +229,10 @@ def pyvalue_from_string(pytype, s):
 def to_string( value ):
     if value == None:
         return u''
-    return unicode( value )
+    return six.text_type( value )
 
 def enumeration_to_string(value):
-    return ugettext(unicode(value or u'').replace('_', ' ').capitalize())
+    return ugettext(six.text_type(value or u'').replace('_', ' ').capitalize())
 
 operator_names = {
     operator.eq : _( u'=' ),
@@ -248,7 +255,8 @@ def text_from_richtext( unstripped_text ):
     if not unstripped_text:
         return strings
 
-    class HtmlToTextParser(HTMLParser):
+    class HtmlToTextParser(html_parser.HTMLParser):
+        
         def handle_endtag(self, tag):
             if tag == 'br':
                 strings.append('')

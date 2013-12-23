@@ -24,14 +24,17 @@
 
 """Default field attributes for various sqlalchemy column types"""
 
+import six
+
 import sqlalchemy.types
+
 import camelot.types
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 import datetime
 import operator
 
-from controls import delegates
+from .controls import delegates
 from camelot.core import constants
 from camelot.view.utils import (
     bool_from_string,
@@ -135,7 +138,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.IntegerDelegate,
         'from_string': int_from_string,
-        'to_string': unicode,
+        'to_string': six.text_type,
         'widget': 'int',
         'operators': _numerical_operators,
     },
@@ -276,8 +279,8 @@ doc = """Field types handled through introspection :
 """ + row_separator + """
 """
 
-field_types = _sqlalchemy_to_python_type_.keys()
-field_types.sort(lambda x, y: cmp(x.__name__, y.__name__))
+field_types = sorted( six.iterkeys(_sqlalchemy_to_python_type_),
+                      key = lambda ft:ft.__name__ )
 
 for field_type in field_types:
     field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())

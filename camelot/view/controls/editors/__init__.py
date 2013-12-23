@@ -38,35 +38,35 @@ ValueLoading until set_value is called with another argument.
 
 """
 
-from booleditor import BoolEditor, TextBoolEditor
-from charteditor import ChartEditor
-from choiceseditor import ChoicesEditor
-from codeeditor import CodeEditor
-from coloredfloateditor import ColoredFloatEditor
-from coloreditor import ColorEditor
-from customeditor import CustomEditor
-from dateeditor import DateEditor
-from datetimeeditor import DateTimeEditor
-from fileeditor import FileEditor
-from floateditor import FloatEditor
-from imageeditor import ImageEditor
-from integereditor import IntegerEditor
-from languageeditor import LanguageEditor
-from localfileeditor import LocalFileEditor
-from many2oneeditor import Many2OneEditor
-from one2manyeditor import One2ManyEditor
-from onetomanychoiceseditor import OneToManyChoicesEditor
-from richtexteditor import RichTextEditor
-from stareditor import StarEditor
-from textlineeditor import TextLineEditor
-from timeeditor import TimeEditor
-from virtualaddresseditor import VirtualAddressEditor
-from smileyeditor import SmileyEditor
-from textediteditor import TextEditEditor
-from wideeditor import WideEditor
-from noteeditor import NoteEditor
-from labeleditor import LabelEditor
-from monthseditor import MonthsEditor
+from .booleditor import BoolEditor, TextBoolEditor
+from .charteditor import ChartEditor
+from .choiceseditor import ChoicesEditor
+from .codeeditor import CodeEditor
+from .coloredfloateditor import ColoredFloatEditor
+from .coloreditor import ColorEditor
+from .customeditor import CustomEditor
+from .dateeditor import DateEditor
+from .datetimeeditor import DateTimeEditor
+from .fileeditor import FileEditor
+from .floateditor import FloatEditor
+from .imageeditor import ImageEditor
+from .integereditor import IntegerEditor
+from .languageeditor import LanguageEditor
+from .localfileeditor import LocalFileEditor
+from .many2oneeditor import Many2OneEditor
+from .one2manyeditor import One2ManyEditor
+from .onetomanychoiceseditor import OneToManyChoicesEditor
+from .richtexteditor import RichTextEditor
+from .stareditor import StarEditor
+from .textlineeditor import TextLineEditor
+from .timeeditor import TimeEditor
+from .virtualaddresseditor import VirtualAddressEditor
+from .smileyeditor import SmileyEditor
+from .textediteditor import TextEditEditor
+from .wideeditor import WideEditor
+from .noteeditor import NoteEditor
+from .labeleditor import LabelEditor
+from .monthseditor import MonthsEditor
 
 __all__ = [
     BoolEditor.__name__,

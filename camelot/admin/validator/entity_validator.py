@@ -26,7 +26,7 @@ import logging
 logger = logging.getLogger('camelot.admin.validator.entity_validator')
 
 from sqlalchemy import orm
-from object_validator import ObjectValidator
+from .object_validator import ObjectValidator
 
 class EntityValidator(ObjectValidator):
     """A validator class validates an entity before flushing it to the database

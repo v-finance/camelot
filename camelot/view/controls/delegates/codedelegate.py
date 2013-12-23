@@ -22,16 +22,15 @@
 #
 #  ============================================================================
 
-from PyQt4.QtCore import Qt
+import six
 
-from customdelegate import CustomDelegate, DocumentationMetaclass
+from ....core.qt import variant_to_py, Qt
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
-class CodeDelegate(CustomDelegate):
-  
-    __metaclass__ = DocumentationMetaclass
+class CodeDelegate( six.with_metaclass( DocumentationMetaclass, 
+                                        CustomDelegate) ):
       
     editor = editors.CodeEditor
     
@@ -43,10 +42,10 @@ class CodeDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = self.separator.join([unicode(i) for i in value])
+            value_str = self.separator.join([six.text_type(i) for i in value])
         self.paint_text(painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()
 

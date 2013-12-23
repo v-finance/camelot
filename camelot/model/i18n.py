@@ -37,6 +37,8 @@ from camelot.view.art import Icon
 from camelot.view.utils import default_language
 import camelot.types
 
+import six
+
 from sqlalchemy import sql
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode
@@ -54,8 +56,8 @@ class ExportAsPO( Action ):
         filename = yield SaveFile()
         file = open(filename, 'w')
         for translation in model_context.get_collection():
-            file.write( (u'msgid  "%s"\n'%translation.source).encode('utf-8') )
-            file.write( (u'msgstr "%s"\n\n'%translation.value).encode('utf-8') )
+                file.write( u'msgid  "%s"\n'%translation.source )
+                file.write( u'msgstr "%s"\n\n'%translation.value )
                 
         
 class Translation( Entity ):
@@ -91,7 +93,7 @@ class Translation( Entity ):
             if key in cls._cache:
                 return cls._cache[key]
             query = Session().query( cls )
-            query = query.filter( sql.and_( cls.source == unicode( source ),
+            query = query.filter( sql.and_( cls.source == six.text_type( source ),
                                             cls.language == language,
                                             cls.value != None,
                                             cls.value != '' ) )
@@ -107,7 +109,7 @@ class Translation( Entity ):
         """Translate source to language, if no translation is found, register the
         source as to be translated and return the source"""
         if source:
-            source = unicode( source )
+            source = six.text_type( source )
             translation = cls.translate( source, language )
             if not translation:
                 session = Session()

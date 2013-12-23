@@ -21,19 +21,19 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 
-from camelot.core.utils import variant_to_pyobject
-from customdelegate import CustomDelegate, DocumentationMetaclass
+import six
+
+from ....core.qt import variant_to_py, QtGui, QtCore, Qt
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.art import Icon
+from camelot.view.proxy import ValueLoading
 
-class StarDelegate( CustomDelegate ):
+class StarDelegate( six.with_metaclass( DocumentationMetaclass, 
+                                        CustomDelegate ) ):
     """Delegate for integer values from ( default from 1 to 5)(Rating Delegate)  
     """
-  
-    __metaclass__ = DocumentationMetaclass
   
     editor = editors.StarEditor
     star_icon = Icon('tango/16x16/status/weather-clear.png')
@@ -49,7 +49,7 @@ class StarDelegate( CustomDelegate ):
     def paint( self, painter, option, index ):
         painter.save()
         self.drawBackground(painter, option, index)
-        stars = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
+        stars = variant_to_py( index.model().data(index, Qt.EditRole) )
         
         rect = option.rect
         rect = QtCore.QRect( rect.left()+3, rect.top()+6, 
@@ -60,12 +60,12 @@ class StarDelegate( CustomDelegate ):
         else:
             if not self.editable:
                 painter.fillRect(option.rect, option.palette.window())
-          
-        pixmap = self.star_icon.getQPixmap()
-        style = QtGui.QApplication.style()
-        for i in range( self.maximum ):
-            if i+1<=stars:
-                style.drawItemPixmap( painter, rect, 1, pixmap )
-                rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
+        if stars not in (None, ValueLoading):
+            pixmap = self.star_icon.getQPixmap()
+            style = QtGui.QApplication.style()
+            for i in range( self.maximum ):
+                if i+1<=stars:
+                    style.drawItemPixmap( painter, rect, 1, pixmap )
+                    rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
         painter.restore()
 

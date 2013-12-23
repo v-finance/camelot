@@ -36,6 +36,9 @@ import logging
 
 from sqlalchemy import sql, orm, exc
 
+import six
+
+
 from camelot.core.utils import ugettext
 
 memento_types = [ (1, 'before_update'),
@@ -70,7 +73,7 @@ class Change( object ):
         self.by = row.by
         self.changes = None
         if row.previous_attributes:
-            self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
+            self.changes = u', '.join( ugettext('%s was %s')%(k,six.text_type(v)) for k,v in six.iteritems(row.previous_attributes) )
         self.memento_type = row.memento_type
         
 class SqlMemento( object ):
@@ -133,7 +136,7 @@ class SqlMemento( object ):
         if len( mementos ):
             try:
                 session.flush()
-            except exc.DatabaseError, e:
+            except exc.DatabaseError as e:
                 LOGGER.error( 'Programming Error, could not flush history', exc_info = e )                
     
     def get_changes( self, 

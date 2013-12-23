@@ -21,10 +21,13 @@
 #  info@conceptive.be
 #
 #  ============================================================================
+
+import six
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import ColorScheme
-from customeditor import AbstractCustomEditor
+from .customeditor import AbstractCustomEditor
 
 color = ColorScheme.yellow_1
 
@@ -61,7 +64,7 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         value = super( NoteEditor, self ).set_value( value )
         self.setVisible( value != None )
         if value:
-            self.setText( unicode( value ) )
+            self.setText( six.text_type( value ) )
     
     def set_field_attributes(self, **kwargs):
         kwargs['background_color'] = kwargs.get('background_color') or color

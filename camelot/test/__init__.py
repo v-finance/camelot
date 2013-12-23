@@ -29,6 +29,7 @@ as /camelot.
 """
 
 import unittest
+import six
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
@@ -50,7 +51,7 @@ def get_application():
             from camelot.view import art
             QApplication.setStyle('cleanlooks')
             application = QApplication(sys.argv)
-            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
+            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
             #try:
             #    from PyTitan import QtnOfficeStyle
@@ -159,7 +160,7 @@ class ApplicationViewsTest(ModelThreadTestCase):
         nav_pane = navpane2.NavigationPane(app_admin, None, None)
         self.grab_widget(nav_pane, subdir='applicationviews')
         for i, section in enumerate(nav_pane.get_sections()):
-            nav_pane.change_current((i, unicode(section.get_verbose_name())))
+            nav_pane.change_current((i, six.text_type(section.get_verbose_name())))
             self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
       
     def test_main_window(self):
@@ -207,7 +208,7 @@ class EntityViewsTest(ModelThreadTestCase):
         from sqlalchemy.orm.mapper import _mapper_registry
          
         classes = []
-        for mapper in _mapper_registry.keys():
+        for mapper in six.iterkeys(_mapper_registry):
             if hasattr(mapper, 'class_'):
                 classes.append( mapper.class_ )
             else:

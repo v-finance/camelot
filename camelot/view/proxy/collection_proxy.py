@@ -35,20 +35,23 @@ import logging
 
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
-from PyQt4.QtCore import Qt, QThread
-from PyQt4 import QtGui, QtCore
+import six
 
 from camelot.admin.action.list_action import ListActionModelContext
+from sqlalchemy.ext.hybrid import hybrid_property
+
+from ...core.qt import QtCore, QtGui, Qt, py_to_variant, variant_to_py
 from camelot.core.exception import log_programming_error
-from camelot.core.utils import is_deleted, variant_to_pyobject
+from camelot.core.utils import is_deleted
 from camelot.view.fifo import Fifo
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import object_thread, post
 
 from camelot.core.files.storage import StoredImage
 
+
 class ProxyDict(dict):
-    """Subclass of dictionary to fool the QVariant object and prevent
+    """Subclass of dictionary to fool the Qt Variant object and prevent
     it from converting dictionary keys to whatever Qt object, but keep
     everything python"""
     pass
@@ -66,7 +69,7 @@ def strip_data_from_object( obj, columns ):
         field_value = None
         try:
             field_value = getattr( obj, col[0] )
-        except (Exception, RuntimeError, TypeError, NameError), e:
+        except (Exception, RuntimeError, TypeError, NameError) as e:
             message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
             log_programming_error( logger, 
                                    message,
@@ -95,7 +98,7 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
                     if key == field_data:
                         unicode_data = value
             elif isinstance( field_data, list ):
-                unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
+                unicode_data = u'.'.join( [six.text_type( e ) for e in field_data] )
             elif isinstance( field_data, datetime.datetime ):
                 # datetime should come before date since datetime is a subtype of date
                 if field_data.year >= 1900:
@@ -106,8 +109,8 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             elif isinstance( field_data, StoredImage):
                 unicode_data = field_data.checkout_thumbnail(100, 100)
             elif field_data != None:
-                unicode_data = unicode( field_data )
-        except (Exception, RuntimeError, TypeError, NameError), e:
+                unicode_data = six.text_type( field_data )
+        except (Exception, RuntimeError, TypeError, NameError) as e:
             log_programming_error( logger,
                                    "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
                                                                                                         obj.__class__.__name__),
@@ -160,7 +163,7 @@ class RowModelContext(ListActionModelContext):
     def get_object( self ):
         return self.obj
 
-class CollectionProxy( QtGui.QProxyModel ):
+class CollectionProxy( QtGui.QIdentityProxyModel ):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtGui.QTableView`
@@ -169,10 +172,6 @@ class CollectionProxy( QtGui.QProxyModel ):
     user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
     """
-
-    _header_font = QtGui.QApplication.font()
-    _header_font_required = QtGui.QApplication.font()
-    _header_font_required.setBold( True )
 
     row_changed_signal = QtCore.pyqtSignal(int, int, int)
     exception_signal = QtCore.pyqtSignal(object)
@@ -207,7 +206,7 @@ position in the query.
         # objects in the collection.
         #
         self.source_model = QtGui.QStandardItemModel()
-        self.setModel( self.source_model )
+        self.setSourceModel(self.source_model)
         
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
@@ -265,6 +264,17 @@ position in the query.
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    
+    @hybrid_property
+    def _header_font( cls ):
+        return QtGui.QApplication.font()
+    
+    @hybrid_property
+    def _header_font_required( cls ):
+        font = QtGui.QApplication.font()
+        font.setBold( True )
+        return font
+
     #
     # Reimplementation of methods of QProxyModel, because for now, we only
     # use the proxy to store header data
@@ -313,7 +323,6 @@ position in the query.
     
     def dropMimeData( self, mime_data, action, row, column, parent ):
         assert object_thread( self )
-        #print mime_data, [unicode(f) for f in mime_data.formats()]
         return True
     
     #
@@ -496,29 +505,28 @@ position in the query.
         #
         font_metrics = QtGui.QFontMetrics(self._header_font_required)
         char_width = font_metrics.averageCharWidth()
+        source_model = self.sourceModel()
         for i, (field_name, fa) in enumerate( self._columns ):
-            verbose_name = unicode(fa['name'])
+            verbose_name = six.text_type(fa['name'])
+            header_item = QtGui.QStandardItem()
+            set_header_data = header_item.setData
             #
             # Set the header data
             #
-            header_item = QtGui.QStandardItem()
-            header_item.setData( QtCore.QVariant(verbose_name),
-                                 Qt.DisplayRole )
+            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
             if fa.get( 'nullable', True ) == False:
-                header_item.setData( self._header_font_required,
-                                     Qt.FontRole )
+                set_header_data(self._header_font_required, Qt.FontRole)
             else:
-                header_item.setData( self._header_font,
-                                     Qt.FontRole )
+                set_header_data(self._header_font, Qt.FontRole)
 
-            settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
+            settings_width = int( variant_to_py( self.settings.value( field_name, 0 ) ) )
             if settings_width > 0:
                 width = settings_width
             else:
                 width = fa['column_width'] * char_width
-            header_item.setData( QtCore.QVariant( QtCore.QSize( width, self._horizontal_header_height ) ),
+            header_item.setData( py_to_variant( QtCore.QSize( width, self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
-            self.source_model.setHorizontalHeaderItem( i, header_item )
+            source_model.setHorizontalHeaderItem( i, header_item )
         
         self.settings.endGroup()
         self.settings.endGroup()
@@ -562,7 +570,7 @@ position in the query.
                 # sizehint role is requested, for every row, so we have to
                 # return a fixed value
                 #
-                return QtCore.QVariant(self.vertical_header_size)
+                return py_to_variant(self.vertical_header_size)
             #
             # get icon from action state
             #
@@ -573,12 +581,12 @@ position in the query.
                     if role == Qt.DecorationRole:
                         return icon.getQPixmap()
                     elif role == Qt.DisplayRole:
-                        return QtCore.QVariant('')
+                        return py_to_variant('')
                 tooltip = action_state.tooltip
                 if tooltip is not None:
                     if role == Qt.ToolTipRole:
-                        return QtCore.QVariant(unicode(tooltip))
-        return super( CollectionProxy, self ).headerData( section, orientation, role )
+                        return py_to_variant(six.text_type(tooltip))
+        return self.sourceModel().headerData(section, orientation, role)
 
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
@@ -595,11 +603,11 @@ position in the query.
                     key_1, key_2 = None, None
                     try:
                         key_1 = getattr( line_1[1], field_name )
-                    except Exception, e:
+                    except Exception as e:
                         logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
                     try:
                         key_2 = getattr( line_2[1], field_name )
-                    except Exception, e:
+                    except Exception as e:
                         logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
                     if key_1 == None and key_2 == None:
                         return 0
@@ -637,8 +645,7 @@ position in the query.
            not ( 0 <= index.row() < self.rowCount( index ) ) or \
            not ( 0 <= index.column() < self.columnCount() ):
             if role == Qt.UserRole:
-                return QtCore.QVariant({})
-            return QtCore.QVariant()
+                return variant_to_py({})
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -647,30 +654,30 @@ position in the query.
             data = self._get_row_data( index.row(), cache )
             value = data[index.column()]
             if isinstance( value, datetime.datetime ):
-                # Putting a python datetime into a QVariant and returning
+                # Putting a python datetime into a Qt Variant and returning
                 # it to a PyObject seems to be buggy, therefore we chop the
                 # microseconds
                 if value:
                     value = QtCore.QDateTime(value.year, value.month,
                                              value.day, value.hour,
                                              value.minute, value.second)
-            return QtCore.QVariant( value )
+            return py_to_variant( value )
         elif role == Qt.ToolTipRole:
-            return QtCore.QVariant(self._get_field_attribute_value(index, 'tooltip'))
+            return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))
         elif role == Qt.BackgroundRole:
-            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtCore.QVariant())
+            return py_to_variant(self._get_field_attribute_value(index, 'background_color') or py_to_variant())
         elif role == Qt.UserRole:
             field_attributes = ProxyDict(self._static_field_attributes[index.column()])
             dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
             if dynamic_field_attributes != ValueLoading:
                 field_attributes.update( dynamic_field_attributes )
-            return QtCore.QVariant(field_attributes)
+            return py_to_variant(field_attributes)
         elif role == Qt.UserRole + 1:
             try:
-                return QtCore.QVariant( self.edit_cache.get_entity_at_row( index.row() ) )
+                return py_to_variant( self.edit_cache.get_entity_at_row( index.row() ) )
             except KeyError:
-                return QtCore.QVariant( ValueLoading )
-        return QtCore.QVariant()
+                return py_to_variant( ValueLoading )
+        return py_to_variant()
 
     def _get_field_attribute_value(self, index, field_attribute):
         """Get the values for the static and the dynamic field attributes at once
@@ -693,7 +700,7 @@ position in the query.
         while previous_length != len(self._update_requests):
             previous_length = len(self._update_requests)
             locker.unlock()
-            QThread.msleep(5)
+            QtCore.QThread.msleep(5)
             locker.relock()
         #
         # Copy the update requests and clear the list of requests
@@ -709,7 +716,7 @@ position in the query.
         for flushed, row, column, value in update_requests:
             grouped_requests[row].append( (flushed, column, value) )
         admin = self.admin
-        for row, request_group in grouped_requests.items():
+        for row, request_group in six.iteritems(grouped_requests):
             #
             # don't use _get_object, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the
@@ -775,8 +782,8 @@ position in the query.
                     # to return a value, that was not returned before
                     #
                     admin.set_defaults( o, include_nullable_fields=False )
-                except AttributeError, e:
-                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
+                except AttributeError as e:
+                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
                 except TypeError:
                     # type error can be raised in case we try to set to a collection
                     pass
@@ -787,7 +794,7 @@ position in the query.
                     was_persistent =admin.is_persistent(o)
                     try:
                         admin.flush( o )
-                    except DatabaseError, e:
+                    except DatabaseError as e:
                         #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
                         self.logger.error( 'Programming Error, could not flush object', exc_info = e )
                     locker.relock()
@@ -950,7 +957,7 @@ position in the query.
         while previous_length != len(self.rows_under_request):
             previous_length = len(self.rows_under_request)
             locker.unlock()
-            QThread.msleep(5)
+            QtCore.QThread.msleep(5)
             locker.relock()
         #
         # now filter out all rows that have been put in the cache
@@ -978,8 +985,8 @@ position in the query.
                     if rows_to_get[i-offset] != i:
                         break
                 limit = i - offset + 1
-        except IndexError, e:
-            logger.error('index error with rows_to_get %s'%unicode(rows_to_get), exc_info=e)
+        except IndexError as e:
+            logger.error('index error with rows_to_get %s'%six.text_type(rows_to_get), exc_info=e)
             raise e
         return (offset, limit)
 

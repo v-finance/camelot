@@ -22,11 +22,13 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 from camelot.core import constants
 from camelot.view.art import Icon
 
@@ -127,16 +129,16 @@ class ColoredFloatEditor(CustomEditor):
                                    single_step = 1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.setToolTip(unicode(tooltip or ''))
-        self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
-        self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        self.setToolTip(six.text_type(tooltip or ''))
+        self.spinBox.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
+        self.spinBox.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setSingleStep(single_step)
 
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable)
+        self.calculatorButton.setVisible(editable)
         if editable:
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         else:
@@ -145,7 +147,8 @@ class ColoredFloatEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0.0
         self.spinBox.setValue(value)
-        self.arrow.setPixmap( self.icons[cmp(value,0)].getQPixmap() )
+        # the cmp functionn has been removed in PY3
+        self.arrow.setPixmap( self.icons[(value>0)-(value<0)].getQPixmap() )
 
     def get_value(self):
         self.spinBox.interpretText()
@@ -160,7 +163,7 @@ class ColoredFloatEditor(CustomEditor):
         calculator.exec_()
 
     def calculation_finished(self, value):
-        self.spinBox.setValue(float(unicode(value)))
+        self.spinBox.setValue(float(six.text_type(value)))
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()

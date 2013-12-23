@@ -83,6 +83,8 @@ entities = EntityCollection()
 #   before and after mapper and table creation.
 #
 
+import six
+
 from . entity import EntityBase, EntityMeta
 
 @event.listens_for( mapper, 'after_configured' )
@@ -94,7 +96,7 @@ def process_deferred_properties( class_registry = entities ):
                                                          _MultipleClassMarker )
     LOGGER.debug( 'process deferred properties' )
     classes = list()
-    for cls in class_registry.values():
+    for cls in six.itervalues(class_registry):
         if isinstance( cls, ( _ModuleMarker, _MultipleClassMarker ) ):
             continue
         classes.append( ( cls._descriptor.counter, cls ) )

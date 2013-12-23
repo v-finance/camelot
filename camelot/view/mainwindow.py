@@ -25,8 +25,7 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
+from ..core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.section_widget import NavigationPane
@@ -43,7 +42,7 @@ class MainWindow(QtGui.QMainWindow):
     """
 
     def __init__(self, gui_context, parent=None):
-        from workspace import DesktopWorkspace
+        from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 
@@ -93,13 +92,15 @@ class MainWindow(QtGui.QMainWindow):
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
         settings = QtCore.QSettings()
-        self.restoreGeometry(settings.value('geometry').toByteArray())
+        geometry = variant_to_py( settings.value('geometry') )
+        if geometry:
+            self.restoreGeometry( geometry )
 
     def write_settings(self):
         """Store the current geometry of the main window"""
         logger.debug('writing application settings')
         settings = QtCore.QSettings()
-        settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
+        settings.setValue('geometry', py_to_variant(self.saveGeometry()))
         logger.debug('settings written')
 
     @QtCore.pyqtSlot( object )

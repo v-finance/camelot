@@ -22,13 +22,15 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.view.model_thread import object_thread
 
-from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
+from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 
 class PartEditor(QtGui.QLineEdit):
 
@@ -118,7 +120,7 @@ class CodeEditor(CustomEditor):
             old_value = self.get_value()
             if value!=old_value:
                 for part_editor, part in zip( self._get_part_editors(), value ):
-                    part_editor.setText(unicode(part))
+                    part_editor.setText(six.text_type(part))
         else:
             for part_editor in self._get_part_editors():
                 part_editor.setText('')
@@ -127,7 +129,7 @@ class CodeEditor(CustomEditor):
         assert object_thread( self )
         value = []
         for part_editor in self._get_part_editors():
-            value.append( unicode( part_editor.text() ) )
+            value.append( six.text_type( part_editor.text() ) )
         return CustomEditor.get_value(self) or value
 
     def set_background_color(self, background_color):
@@ -140,5 +142,5 @@ class CodeEditor(CustomEditor):
         assert object_thread( self )
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.layout().itemAt(0).widget().setToolTip(unicode(tooltip or ''))
+        self.layout().itemAt(0).widget().setToolTip(six.text_type(tooltip or ''))
 

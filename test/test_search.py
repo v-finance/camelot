@@ -40,16 +40,18 @@ for i, (name, definition) in enumerate(possible_types):
             types_to_test[(i, '%s_%i'%(name, i))] = definition
 
 class SearchCase( test_orm.TestMetaData ):
+    pass
+
     """Test the creation of search queries"""
      
     def value_for_type( self, definition, i ):
         value = i        
         if issubclass( definition, sqlalchemy.types.DateTime ):
-            value = datetime.datetime( year = 2000, month = 1, day = 1, hour = 1, minute = i )       
+            value = datetime.datetime( year = 2000, month = 1, day = 1, hour = 1, minute = 1+i%59 )       
         elif issubclass( definition, sqlalchemy.types.Date ):
-            value = datetime.date( year = 2000, month = 1, day = i%31 )                  
+            value = datetime.date( year = 2000, month = 1, day = 1 + i%30 )                  
         elif issubclass( definition, sqlalchemy.types.Time ):
-            value = datetime.time( hour = 1, minute = i )
+            value = datetime.time( hour = 1, minute = 1+i%59 )
         elif issubclass( definition, sqlalchemy.types.String ):
             value = str( i )
         elif issubclass( definition, sqlalchemy.types.Boolean ):
@@ -104,8 +106,6 @@ class SearchCase( test_orm.TestMetaData ):
                                                                      string_value )
             query = self.session.query( T )
             query = search_decorator( query )
-            
-            #print query
             
             self.assertTrue( query.count() > 0 )
             

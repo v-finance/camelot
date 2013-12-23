@@ -31,6 +31,8 @@ import codecs
 import logging
 import string
 
+import six
+
 from camelot.view.controls import delegates
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
@@ -134,10 +136,10 @@ class MatchNames(Action):
     
     def model_run(self, model_context):
         field_choices = [ (f,entity_fa['name']) for f,entity_fa in 
-                          model_context.admin.get_all_fields_and_attributes().items() 
+                          six.iteritems(model_context.admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True) ]
         # create a dict that  will be used to search field names
-        matches = dict( (unicode(verbose_name).lower(), fn)
+        matches = dict( (six.text_type(verbose_name).lower(), fn)
                          for fn, verbose_name in field_choices )
         matches.update( dict( (fn.lower().replace('_',''), fn)
                               for fn, _verbose_name in field_choices ) )
@@ -189,7 +191,7 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
         return []
 
 # see http://docs.python.org/library/csv.html
-class UTF8Recoder( object ):
+class UTF8Recoder( six.Iterator ):
     """Iterator that reads an encoded stream and reencodes the input to
     UTF-8."""
 
@@ -199,11 +201,11 @@ class UTF8Recoder( object ):
     def __iter__(self):
         return self
 
-    def next(self):
-        return self.reader.next().encode('utf-8')
+    def __next__(self):
+        return six.next(self.reader).encode('utf-8')
 
 # see http://docs.python.org/library/csv.html
-class UnicodeReader( object ):
+class UnicodeReader( six.Iterator ):
     """A CSV reader which will iterate over lines in the CSV file "f", which is
     encoded in the given encoding."""
 
@@ -213,20 +215,20 @@ class UnicodeReader( object ):
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.line = 0
 
-    def next( self ):
+    def __next__( self ):
         self.line += 1
         try:
-            row = self.reader.next()
-            return [unicode(s, 'utf-8') for s in row]
-        except UnicodeError, exception:
+            row = six.next(self.reader)
+            return [six.text_type(s, 'utf-8') for s in row]
+        except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
-                                 detail = ugettext('Exception occured at line %s : ') % self.line + unicode( exception ) )
+                                 detail = ugettext('Exception occured at line %s : ') % self.line + six.text_type( exception ) )
 
     def __iter__( self ):
         return self
     
-class XlsReader( object ):
+class XlsReader( six.Iterator ):
     """Read an XLS/XLSX file and iterator over its lines.
     
     The iterator returns each line of the excel as a list of strings.
@@ -269,7 +271,7 @@ class XlsReader( object ):
         f = self.format_map[ xf.format_key ]
         return f.format_str
         
-    def next( self ):
+    def __next__( self ):
         import xlrd
         if self.current_row < self.rows:
             vector = []    
@@ -282,7 +284,7 @@ class XlsReader( object ):
                              xlrd.XL_CELL_BLANK ):
                     pass
                 elif ctype == xlrd.XL_CELL_TEXT:
-                    value = unicode( cell.value )
+                    value = six.text_type( cell.value )
                 elif ctype == xlrd.XL_CELL_NUMBER:
                     format_string = self.get_format_string( cell.xf_index )
                     # try to display the number with the same precision as
@@ -294,7 +296,7 @@ class XlsReader( object ):
                     # see if it specifies scientific notation.  scientific
                     # notation is not used because it loses precision when 
                     # converting to a string
-                    value = unicode( self.locale.toString( cell.value, 
+                    value = six.text_type( self.locale.toString( cell.value, 
                                                            format = 'f',
                                                            precision = precision ) )
                 elif ctype == xlrd.XL_CELL_DATE:
@@ -302,7 +304,7 @@ class XlsReader( object ):
                     date_tuple = xlrd.xldate_as_tuple( cell.value, 
                                                        self.datemode )
                     dt = QtCore.QDate( *date_tuple[:3] )
-                    value = unicode( dt.toString( self.date_format ) )
+                    value = six.text_type( dt.toString( self.date_format ) )
                 elif ctype == xlrd.XL_CELL_BOOLEAN:
                     value = 'false'
                     if cell.value == 1:

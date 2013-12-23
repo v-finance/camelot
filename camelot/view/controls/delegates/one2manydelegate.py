@@ -21,22 +21,22 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4.QtCore import Qt
 
+import six
+
+from ....core.qt import variant_to_py, Qt
 from camelot.view.controls import editors
-from customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.core.utils import variant_to_pyobject
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 
-class One2ManyDelegate( CustomDelegate ):
+class One2ManyDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate ) ):
     """Custom delegate for many 2 one relations
   
   .. image:: /_static/onetomany.png
   """
-
-    __metaclass__ = DocumentationMetaclass
 
     def __init__( self, parent = None, **kwargs ):
         super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )
@@ -52,9 +52,9 @@ class One2ManyDelegate( CustomDelegate ):
 
     def setEditorData( self, editor, index ):
         logger.debug( 'set one2many editor data' )
-        model = variant_to_pyobject( index.data( Qt.EditRole ) )
+        model = variant_to_py( index.data( Qt.EditRole ) )
         editor.set_value( model )
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         editor.set_field_attributes(**field_attributes)
 
     def setModelData( self, editor, model, index ):

@@ -39,6 +39,7 @@ from .base import Action
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
+import six
 
 class FieldActionModelContext( ApplicationActionModelContext ):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
@@ -119,18 +120,18 @@ class ShowFieldAttributes(Action):
         class Attribute(object):
             """Helper class representing a field attribute's name and its value"""
             def __init__(self, name, value):
-                self.name = unicode(name)
+                self.name = six.text_type(name)
                 if inspect.isclass(value):
                     self.value = value.__name__
                 else:
-                    self.value = unicode(value)
+                    self.value = six.text_type(value)
                         
             class Admin(ObjectAdmin):
                 list_display = ['name', 'value']
                 field_attributes = {'name':{'minimal_column_width':25},
                                     'value':{'minimal_column_width':25}}
         
-        attributes = [Attribute(key,value) for key,value in model_context.field_attributes.items()]
+        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes.items)]
         yield action_steps.ChangeObjects(attributes, 
                                          model_context.admin.get_related_admin(Attribute))
 

@@ -34,6 +34,8 @@ import logging
 
 logger = logging.getLogger('camelot.types')
 
+import six
+
 from sqlalchemy import types
 
 from camelot.core.orm import options
@@ -336,8 +338,8 @@ class Enumeration(types.TypeDecorator):
                 try:
                     value = self._string_to_int[value]
                     return impl_processor(value)
-                except KeyError, e:
-                    logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(self._string_to_int.keys()))), exc_info=e)
+                except KeyError as e:
+                    logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(six.iterkeys(self._string_to_int)))), exc_info=e)
                     raise
             else:
                 impl_processor(value)
@@ -355,7 +357,7 @@ class Enumeration(types.TypeDecorator):
                 value = impl_processor(value)
                 try:
                     return self._int_to_string[value]
-                except KeyError, e:
+                except KeyError as e:
                     logger.error('could not process %s'%value, exc_info=e)
                     raise
                 

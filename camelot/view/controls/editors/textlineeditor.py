@@ -22,9 +22,11 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from customeditor import AbstractCustomEditor, draw_tooltip_visualization
+import six
 
+from ....core.qt import QtGui, variant_to_py
+
+from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
@@ -44,7 +46,7 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
         value = AbstractCustomEditor.set_value(self, value)
         self.setProperty('value', value)
         if value is not None:
-            self.setText(unicode(value))
+            self.setText(six.text_type(value))
         else:
             self.setText('')
         return value
@@ -54,13 +56,9 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
         if value_loading is not None:
             return value_loading
 
-        value = unicode(self.text())
+        value = six.text_type(self.text())
         if len(value)==0:
-            if self.property('value').isNull():
-                return None
-            if self.property('value').toString().length() == 0:
-                return u''
-            return None
+            value = variant_to_py(self.property('value'))
 
         return value
 
@@ -69,7 +67,7 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
                                    tooltip = None, **kwargs):
         self.set_background_color( background_color )
         self.set_enabled( editable )
-        self.setToolTip(unicode(tooltip or ''))
+        self.setToolTip(six.text_type(tooltip or ''))
 
     def set_enabled(self, editable=True):
         value = self.text()

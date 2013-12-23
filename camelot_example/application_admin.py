@@ -103,6 +103,6 @@ class MiniApplicationAdmin( MyApplicationAdmin ):
     
     def get_stylesheet(self):
         from camelot.view import art
-        return art.read('stylesheet/black.qss')
+        return art.read('stylesheet/black.qss').decode('utf-8')
     
 # end mini admin

@@ -24,20 +24,18 @@
 
 from functools import update_wrapper, partial
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
+import six
+
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
 from camelot.view.model_thread import post, object_thread
 from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-
 from camelot.core.utils import ugettext as _
-from camelot.core.utils import variant_to_pyobject
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
@@ -59,10 +57,10 @@ class Many2OneEditor( CustomEditor ):
 
         def data(self, index, role):
             if role == Qt.DisplayRole:
-                return QtCore.QVariant(self._completions[index.row()][0])
+                return py_to_variant(self._completions[index.row()][0])
             elif role == Qt.EditRole:
-                return QtCore.QVariant(self._completions[index.row()][1])
-            return QtCore.QVariant()
+                return py_to_variant(self._completions[index.row()][1])
+            return py_to_variant()
 
         def rowCount(self, index=None):
             return len(self._completions)
@@ -80,7 +78,8 @@ class Many2OneEditor( CustomEditor ):
                             field_action.NewObject(),
                             field_action.OpenObject()],
                  **kwargs):
-        """:param entity_admin : The Admin interface for the object on the one
+        """
+        :param entity_admin : The Admin interface for the object on the one
         side of the relation
         """
         CustomEditor.__init__(self, parent)
@@ -137,13 +136,13 @@ class Many2OneEditor( CustomEditor ):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
-        text = unicode( self.search_input.text() )
+        text = six.text_type( self.search_input.text() )
 
         def create_search_completion(text):
             return lambda: self.search_completions(text)
 
         post(
-            create_search_completion(unicode(text)),
+            create_search_completion(six.text_type(text)),
             self.display_search_completions
         )
         self.completer.complete()
@@ -158,7 +157,7 @@ class Many2OneEditor( CustomEditor ):
         )
         if search_decorator:
             sresult = [
-                (unicode(e), e)
+                (six.text_type(e), e)
                 for e in search_decorator(self.admin.get_query()).limit(20)
             ]
             return text, sresult
@@ -173,11 +172,11 @@ class Many2OneEditor( CustomEditor ):
 
     def completionActivated(self, index):
         obj = index.data(Qt.EditRole)
-        self.set_object(variant_to_pyobject(obj))
+        self.set_object(variant_to_py(obj))
 
     def completion_highlighted(self, index ):
         obj = index.data(Qt.EditRole)
-        self._last_highlighted_entity_getter = variant_to_pyobject(obj)
+        self._last_highlighted_entity_getter = variant_to_py(obj)
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
@@ -206,7 +205,7 @@ class Many2OneEditor( CustomEditor ):
             elif self.completions_model.rowCount()==1:
                 # There is only one possible option
                 index = self.completions_model.index(0,0)
-                entity_getter = variant_to_pyobject(index.data(Qt.EditRole))
+                entity_getter = variant_to_py(index.data(Qt.EditRole))
                 self.set_object(entity_getter)
         self.search_input.setText(self._entity_representation or u'')
 
@@ -243,7 +242,7 @@ class Many2OneEditor( CustomEditor ):
         def get_instance_representation( obj, propagate ):
             """Get a representation of the instance"""
             if obj is not None:
-                return (unicode(obj), propagate)
+                return (six.text_type(obj), propagate)
             return (None, propagate)
 
         post( update_wrapper( partial( get_instance_representation,

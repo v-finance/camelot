@@ -26,10 +26,13 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
-from camelot.view.art import Icon
-from camelot.view.utils import locale
-from camelot.core import constants
+import six
+
+from .customeditor import (CustomEditor, set_background_color_palette,
+                           draw_tooltip_visualization)
+from ...art import Icon
+from ...utils import locale
+from ....core import constants
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -78,9 +81,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = unicode( locale().toString( float(value), 
-                                           'f', 
-                                           self.decimals() ) )
+        text = six.text_type( locale().toString( float(value),
+                                                 'f', 
+                                                 self.decimals() ) )
         return text
     
     def stripped(self, qinput):
@@ -95,7 +98,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
             copy_from += self.prefix().size()
         if self.suffix().size() and qinput.endsWith(self.suffix()):
             copy_to = -1*self.suffix().size()
-        partial_input = unicode(qinput)[copy_from:copy_to]
+        partial_input = six.text_type(qinput)[copy_from:copy_to]
         return partial_input.strip()
     
     def validate(self, qinput, pos):
@@ -189,9 +192,9 @@ class FloatEditor(CustomEditor):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setToolTip(unicode(tooltip or ''))
-        spinBox.setPrefix(u'%s '%(unicode(prefix or '').lstrip()))
-        spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
+        spinBox.setToolTip(six.text_type(tooltip or ''))
+        spinBox.setPrefix(u'%s '%(six.text_type(prefix or '').lstrip()))
+        spinBox.setSuffix(u' %s'%(six.text_type(suffix or '').rstrip()))
         spinBox.setSingleStep(single_step)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
@@ -236,10 +239,10 @@ class FloatEditor(CustomEditor):
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(six.text_type)
     def calculation_finished(self, value):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setValue(float(unicode(value)))
+        spinBox.setValue(float(six.text_type(value)))
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()

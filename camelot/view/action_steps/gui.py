@@ -28,6 +28,8 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 
 from PyQt4 import QtGui, QtCore
 
+import six
+
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -156,8 +158,8 @@ class SelectItem( ActionStep ):
         dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
         dialog.set_choices(self.items)
         dialog.set_value(self.value)
-        dialog.setWindowTitle( unicode( self.title ) )
-        dialog.set_banner_subtitle( unicode( self.subtitle ) )
+        dialog.setWindowTitle( six.text_type( self.title ) )
+        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
         return dialog
 
     def gui_run(self, gui_context):
@@ -245,8 +247,8 @@ class MessageBox( ActionStep ):
                   title = _('Message'),
                   standard_buttons = default_buttons ):
         self.icon = icon
-        self.title = unicode( title )
-        self.text = unicode( text )
+        self.title = six.text_type( title )
+        self.text = six.text_type( text )
         self.standard_buttons = standard_buttons
         self.informative_text = ''
         self.detailed_text = ''
@@ -258,8 +260,8 @@ class MessageBox( ActionStep ):
                                           self.title,
                                           self.text,
                                           self.standard_buttons )
-        message_box.setInformativeText(unicode(self.informative_text))
-        message_box.setDetailedText(unicode(self.detailed_text))
+        message_box.setInformativeText(six.text_type(self.informative_text))
+        message_box.setDetailedText(six.text_type(self.detailed_text))
         return message_box
 
     def gui_run( self, gui_context ):

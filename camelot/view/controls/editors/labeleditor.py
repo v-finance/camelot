@@ -22,10 +22,12 @@
 #
 #  ============================================================================
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from customeditor import AbstractCustomEditor, draw_tooltip_visualization
+from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
 
@@ -50,7 +52,7 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
     def set_field_attributes(self, editable = True,
                                    background_color = None,
                                    tooltip = None, **kwargs):
-        self.setToolTip(unicode(tooltip or ''))
+        self.setToolTip(six.text_type(tooltip or ''))
             
     def paintEvent(self, event):
         if self.toolTip():

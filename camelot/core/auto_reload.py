@@ -32,6 +32,8 @@ will be emitted when the application needs to be reloaded.
 import logging
 import sys
 
+import six
+
 from PyQt4 import QtCore
 
 from sqlalchemy import event
@@ -73,7 +75,7 @@ class AutoReload( QtCore.QFileSystemWatcher ):
         # reload previously imported modules
         #
         from types import ModuleType
-        for name, module in sys.modules.items():
+        for name, module in six.iteritems(sys.modules):
             if not isinstance( module, ModuleType ):
                 continue
             if not name.startswith( 'camelot' ):

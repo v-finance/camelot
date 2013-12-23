@@ -22,22 +22,22 @@
 #
 #  ============================================================================
 
-from PyQt4.QtCore import Qt
+import six
 
+from ....core.qt import Qt, variant_to_py
 from camelot.view.controls.editors import MonthsEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.core.utils import variant_to_pyobject, ugettext
+from camelot.core.utils import ugettext
 from camelot.view.proxy import ValueLoading
 
-class MonthsDelegate(CustomDelegate):
+class MonthsDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate ) ):
     """MonthsDelegate
 
     custom delegate for showing and editing months and years
     """
 
     editor = MonthsEditor
-
-    __metaclass__ = DocumentationMetaclass
 
     def __init__(self, parent=None, forever=200*12, **kwargs):
         """
@@ -54,7 +54,7 @@ class MonthsDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
         
         value_str = u''
         if self._forever != None and value == self._forever:
@@ -68,7 +68,3 @@ class MonthsDelegate(CustomDelegate):
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()
-
-
-
-

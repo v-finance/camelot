@@ -50,6 +50,8 @@ class MyEntity(Entity):
 
 """
 
+import six
+
 from PyQt4.QtCore import Qt
 
 class Container(object):
@@ -106,7 +108,7 @@ class IntervalsContainer(Container):
         self.intervals = intervals
 
     def __unicode__(self):
-        return u', '.join(unicode(i) for i in self.intervals)
+        return u', '.join(six.text_type(i) for i in self.intervals)
 
 
 

@@ -22,17 +22,17 @@
 #
 #  ============================================================================
 
+import six
 
-from PyQt4.QtCore import Qt
-
-from customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
+from ....core.qt import Qt, variant_to_py
+from .customdelegate import CustomDelegate, DocumentationMetaclass
+from .. import editors
 
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
-
-class Many2OneDelegate(CustomDelegate):
+class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
+                                            CustomDelegate ) ):
     """Custom delegate for many 2 one relations
 
   .. image:: /_static/manytoone.png
@@ -41,8 +41,6 @@ class Many2OneDelegate(CustomDelegate):
   in the editor or the table.  So the related classes need an implementation of
   their __unicode__ method.
   """
-
-    __metaclass__ = DocumentationMetaclass
 
     editor = editors.Many2OneEditor
 
@@ -61,8 +59,8 @@ class Many2OneDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = index.data(Qt.DisplayRole).toString()
-        self.paint_text(painter, option, index, unicode(value) )
+        value = variant_to_py(index.data(Qt.DisplayRole))
+        self.paint_text(painter, option, index, six.text_type(value) )
         painter.restore()
 
     def createEditor(self, parent, option, index):

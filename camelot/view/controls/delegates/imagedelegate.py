@@ -21,7 +21,7 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from filedelegate import FileDelegate
+from .filedelegate import FileDelegate
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 

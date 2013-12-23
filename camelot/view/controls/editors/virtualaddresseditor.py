@@ -24,11 +24,13 @@
 
 import re
 
+import six
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 import camelot.types
@@ -153,7 +155,7 @@ class VirtualAddressEditor(CustomEditor):
             self.checkValue(value[1])
 
     def get_value(self):
-        value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
+        value = (six.text_type(self.combo.currentText()), six.text_type(self.editor.text()))
         return CustomEditor.get_value(self) or value
 
     def set_enabled(self, editable=True):
@@ -166,8 +168,8 @@ class VirtualAddressEditor(CustomEditor):
                 self.label.setEnabled(True)
 
     def checkValue(self, text):
-        address_type = unicode( self.combo.currentText() )
-        valid, _corrected = self._address_validator( address_type, unicode( text ) )
+        address_type = six.text_type( self.combo.currentText() )
+        valid, _corrected = self._address_validator( address_type, six.text_type( text ) )
         self.editor.set_valid( valid )
 
     def editorValueChanged(self, text):
@@ -177,7 +179,7 @@ class VirtualAddressEditor(CustomEditor):
     def mail_click(self):
         address = self.editor.text()
         url = QtCore.QUrl()
-        url.setUrl( u'mailto:%s?subject=Subject'%unicode(address) )
+        url.setUrl( u'mailto:%s?subject=Subject'%six.text_type(address) )
         QtGui.QDesktopServices.openUrl(url)
 
     def emit_editing_finished(self):
@@ -198,7 +200,7 @@ class VirtualAddressEditor(CustomEditor):
                                    tooltip = None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.setToolTip(unicode(tooltip or ''))
+        self.setToolTip(six.text_type(tooltip or ''))
 
 
 

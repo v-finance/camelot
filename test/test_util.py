@@ -1,6 +1,11 @@
 import unittest
 import datetime
 
+import six
+
+if six.PY3:
+    long = int 
+    
 class ViewUtilsCase(unittest.TestCase):
     """test the utility functions in camelot.view.utils
     """

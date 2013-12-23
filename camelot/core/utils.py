@@ -24,11 +24,11 @@
 
 """Utility functions"""
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
-import datetime
 import logging
+
+import six
+
+from .qt import QtCore
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -85,89 +85,6 @@ class CollectionGetterFromObjectGetter(object):
             self._collection = [self._object_getter()]
         return self._collection
 
-
-"""
-A Note on GUI Types
-
-Because QVariant is part of the QtCore library, it cannot provide conversion
-functions to data types defined in QtGui, such as QColor, QImage, and QPixmap.
-In other words, there is no toColor() function. Instead, you can use the
-QVariant.value() or the qVariantValue() template function. For example:
-
- QVariant variant;
- ...
- QColor color = variant.value<QColor>();
-
-The inverse conversion (e.g., from QColor to QVariant) is automatic for all
-data types supported by QVariant, including GUI-related types:
-
- QColor color = palette().background().color();
- QVariant variant = color;
-"""
-
-def variant_to_pyobject_1(qvariant=None):
-    """Try to convert a QVariant to a python object as good as possible"""
-    if not qvariant:
-        return None
-    if qvariant.isNull():
-        return None
-    type = qvariant.type()
-    if type == QtCore.QVariant.String:
-        value = unicode(qvariant.toString())
-    elif type == QtCore.QVariant.Date:
-        value = qvariant.toDate()
-        value = datetime.date( year=value.year(),
-                               month=value.month(),
-                               day=value.day() )
-    elif type == QtCore.QVariant.Int:
-        value = int(qvariant.toInt()[0])
-    elif type == QtCore.QVariant.LongLong:
-        value = int(qvariant.toLongLong()[0])
-    elif type == QtCore.QVariant.Double:
-        value = float(qvariant.toDouble()[0])
-    elif type == QtCore.QVariant.Bool:
-        value = bool(qvariant.toBool())
-    elif type == QtCore.QVariant.Time:
-        value = qvariant.toTime()
-        value = datetime.time( hour = value.hour(),
-                               minute = value.minute(),
-                               second = value.second() )        
-    elif type == QtCore.QVariant.DateTime:
-        value = qvariant.toDateTime()
-        value = value.toPyDateTime()
-    elif type == QtCore.QVariant.Color:
-        value = QtGui.QColor(qvariant)
-    else:
-        value = qvariant.toPyObject()
-
-    return value
-
-def variant_to_pyobject_2( value ):
-    if isinstance( value, QtCore.QDate ):
-        value = datetime.date( year = value.year(),
-                               month = value.month(),
-                               day = value.day() )
-    elif isinstance( value, QtCore.QTime ):
-        value = datetime.time( hour = value.hour(),
-                               minute = value.minute(),
-                               second = value.second() )        
-    elif isinstance( value, QtCore.QDateTime ):
-        date = value.date()
-        time = value.time()
-        value = datetime.datetime( year = date.year(),
-                                   month = date.month(),
-                                   day = date.day(),
-                                   hour = time.hour(),
-                                   minute = time.minute(),
-                                   second = time.second()                                   
-                                   )
-    return value
-
-if pyqt:
-    variant_to_pyobject = variant_to_pyobject_1
-else:
-    variant_to_pyobject = variant_to_pyobject_2
-
 #
 # Global dictionary containing all user defined translations in the
 # current locale
@@ -187,7 +104,7 @@ def set_translation(source, value):
 def load_translations():
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
-    language = unicode(QtCore.QLocale().name())
+    language = six.text_type(QtCore.QLocale().name())
     from sqlalchemy import sql
     from camelot.model.i18n import Translation
     # only load translations when the camelot model is active
@@ -205,9 +122,9 @@ def _qtranslate(string_to_translate):
     :param string_to_translate: a unicode string
     :return: the translated unicode string if it was possible to translate
     """
-    return unicode(QtCore.QCoreApplication.translate('', 
-                                                     string_to_translate.encode('utf-8'), 
-                                                     encoding=_encoding))
+    return six.text_type(QtCore.QCoreApplication.translate('', 
+                                                           string_to_translate.encode('utf-8'), 
+                                                           encoding=_encoding))
     
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
@@ -215,7 +132,7 @@ def ugettext(string_to_translate):
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
     tries to get the translation from the .qm files)"""
-    assert isinstance(string_to_translate, basestring)
+    assert isinstance(string_to_translate, six.string_types)
     result = _translations_.get(string_to_translate, None)
     if not result:
         result = _qtranslate( string_to_translate )
@@ -232,7 +149,7 @@ def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
     """
-    assert isinstance(message, basestring)
+    assert isinstance(message, six.string_types)
     from camelot.model.i18n import Translation
     from sqlalchemy import sql
     query = sql.select( [Translation.value],
@@ -249,7 +166,7 @@ class ugettext_lazy(object):
     """
 
     def __init__(self, string_to_translate):
-        assert isinstance(string_to_translate, basestring)
+        assert isinstance(string_to_translate, six.string_types)
         self._string_to_translate = string_to_translate
 
     def __str__(self):
@@ -259,7 +176,7 @@ class ugettext_lazy(object):
         return ugettext(self._string_to_translate)
     
     def __eq__(self, other_string):
-        if isinstance(other_string, basestring):
+        if isinstance(other_string, six.string_types):
             return other_string == self._string_to_translate
         if isinstance(other_string, ugettext_lazy):
             return other_string._string_to_translate == self._string_to_translate
@@ -273,5 +190,3 @@ class ugettext_lazy(object):
 
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
-
-

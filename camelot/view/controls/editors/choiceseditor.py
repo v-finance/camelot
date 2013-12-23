@@ -24,10 +24,10 @@
 
 import logging
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+import six
 from PyQt4.QtCore import Qt
 
+from ....core.qt import QtGui, QtCore, py_to_variant, variant_to_py
 from camelot.view.proxy import ValueLoading
 from ...art import Icon
 from .customeditor import CustomEditor
@@ -66,7 +66,7 @@ class ChoicesEditor(CustomEditor):
 
     @QtCore.pyqtSlot(int)
     def _activated(self, _index):
-        self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
+        self.setProperty( 'value', py_to_variant( self.get_value() ) )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -77,11 +77,11 @@ class ChoicesEditor(CustomEditor):
         """
         model.insertRow(model.rowCount())
 
-        for role, value in data.iteritems():
+        for role, value in six.iteritems(data):
             index = model.index(model.rowCount()-1, 0)
             if isinstance(value, Icon):
                 value = value.getQIcon()
-            model.setData(index, QtCore.QVariant(value), role)
+            model.setData(index, py_to_variant(value), role)
 
     def set_choices( self, choices ):
         """
@@ -103,7 +103,7 @@ class ChoicesEditor(CustomEditor):
         combobox = self.findChild(QtGui.QComboBox, 'combobox')
         current_index = combobox.currentIndex()
         if current_index >= 0:
-            current_name = unicode(combobox.itemText(current_index))
+            current_name = six.text_type(combobox.itemText(current_index))
         current_value = self.get_value()
         current_value_available = False
         none_available = False
@@ -117,7 +117,7 @@ class ChoicesEditor(CustomEditor):
                 (value, name) = choice
                 font = QtGui.QFont()
                 font.setItalic(True)
-                choice = {Qt.DisplayRole: unicode(name),
+                choice = {Qt.DisplayRole: six.text_type(name),
                           Qt.UserRole: value}
             else:
                 value = choice[Qt.UserRole]
@@ -150,22 +150,20 @@ class ChoicesEditor(CustomEditor):
         """
     :rtype: a list of (value,name) tuples
     """
-        from camelot.core.utils import variant_to_pyobject
         combobox = self.findChild(QtGui.QComboBox, 'combobox')
-        return [(variant_to_pyobject(combobox.itemData(i)),
-                 unicode(combobox.itemText(i))) for i in range(combobox.count())]
+        return [(variant_to_py(combobox.itemData(i)),
+                 six.text_type(combobox.itemText(i))) for i in range(combobox.count())]
 
     def set_value(self, value):
         """Set the current value of the combobox where value, the name displayed
         is the one that matches the value in the list set with set_choices"""
-        from camelot.core.utils import variant_to_pyobject
         value = super(ChoicesEditor, self).set_value(value)
-        self.setProperty( 'value', QtCore.QVariant(value) )
+        self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
-        if not self.property('value_loading').toBool() and value != NotImplemented:
+        if not variant_to_py(self.property('value_loading')) and value != NotImplemented:
             combobox = self.findChild(QtGui.QComboBox, 'combobox')
             for i in range(combobox.count()):
-                if value == variant_to_pyobject(combobox.itemData(i)):
+                if value == variant_to_py(combobox.itemData(i)):
                     combobox.setCurrentIndex(i)
                     self.update_actions()
                     return
@@ -173,17 +171,16 @@ class ChoicesEditor(CustomEditor):
             # method has not happened yet or the choices don't contain the value
             # set
             combobox.setCurrentIndex( -1 )
-            LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( unicode( value ),
-                                                                                                           unicode( self.objectName() ) ) )
+            LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( six.text_type( value ),
+                                                                                                           six.text_type( self.objectName() ) ) )
         self.update_actions()
 
     def get_value(self):
         """Get the current value of the combobox"""
-        from camelot.core.utils import variant_to_pyobject
         combobox = self.findChild(QtGui.QComboBox, 'combobox')
         current_index = combobox.currentIndex()
         if current_index >= 0:
-            value = variant_to_pyobject(combobox.itemData(combobox.currentIndex()))
+            value = variant_to_py(combobox.itemData(combobox.currentIndex()))
         else:
             value = ValueLoading
         return super(ChoicesEditor, self).get_value() or value
