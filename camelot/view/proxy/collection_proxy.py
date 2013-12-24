@@ -646,6 +646,8 @@ position in the query.
            not ( 0 <= index.column() < self.columnCount() ):
             if role == Qt.UserRole:
                 return variant_to_py({})
+            else:
+                return variant_to_py()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -1046,6 +1048,7 @@ position in the query.
         :param cache: the cache out of which to get row data
         :return: row_data
         """
+        assert row >= 0
         try:
             data = cache.get_data_at_row( row )
             #

@@ -54,7 +54,7 @@ class One2ManyDelegate( six.with_metaclass( DocumentationMetaclass,
         logger.debug( 'set one2many editor data' )
         model = variant_to_py( index.data( Qt.EditRole ) )
         editor.set_value( model )
-        field_attributes = variant_to_py(index.data(Qt.UserRole))
+        field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()
         editor.set_field_attributes(**field_attributes)
 
     def setModelData( self, editor, model, index ):
