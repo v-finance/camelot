@@ -1,6 +1,10 @@
 """
-Qt compatibility module.  This module hides the differences in behavior of
-Qt4 and Qt5
+Qt compatibility module.  This module hides the differences in behavior between :
+
+    * Qt4 and Qt5
+    * PyQt and PySide
+    * PyQt4 and PyQt5
+
 """
 
 import datetime
@@ -8,11 +12,22 @@ import datetime
 import sip
 import six
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt
-
-# the api version is only available after importing QtCore
-variant_api = sip.getapi('QVariant')
+try:
+    import sip
+    from PyQt4 import QtCore, QtGui
+    from PyQt4.QtCore import Qt
+    
+    # the api version is only available after importing QtCore
+    variant_api = sip.getapi('QVariant')
+    string_api = sip.getapi('QString')
+except ImportError:
+    try:
+        from PySide import QtCore, QtGui
+        from PySide.QtCore import Qt
+        variant_api = 2
+        string_api = 2
+    except ImportError:
+        raise Exception('PyQt nor PySide could be imported')
 
 def _py_to_variant_1( obj=None ):
     """Convert a Python object to a :class:`QtCore.QVariant` object
@@ -100,8 +115,6 @@ elif variant_api==1:
     variant_to_py = _variant_to_py_1
 else:
     raise Exception('Unsupported QVariant API')
-
-string_api = sip.getapi('QString')
 
 def _q_string_2(arg=None):
     return arg
