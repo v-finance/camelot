@@ -63,16 +63,21 @@ class Filter(object):
     class All(object):
         pass
     
-    def __init__(self, attribute, default=All):
+    def __init__(self, attribute, default=All, verbose_name=None):
         """
         :param attribute: the attribute on which to filter, this attribute
             may contain dots to indicate relationships that need to be followed, 
             eg.  'person.name'
+
         :param default: the default value to filter on when the view opens,
             defaults to showing all records.
+        
+        :param verbose_name: the name of the filter as shown to the user, defaults
+            to the name of the field on which to filter.
         """
         self.attribute = attribute
         self.default = default
+        self.verbose_name = verbose_name
         
     def render(self, parent, name, options):
         """Render this filter as a qt object
@@ -88,7 +93,7 @@ class Filter(object):
         
         def decorator(q):
             if joins:
-                q = q.join( *joins, aliased=True)
+                q = q.join(*joins)
             if 'precision' in attributes:
                 delta = pow( 10,  -1*attributes['precision'])
                 return q.filter( sql.and_(col < value+delta, col > value-delta) )
@@ -100,40 +105,29 @@ class Filter(object):
         """
         :return:  a :class:`filter_data` object
         """
-        from sqlalchemy.sql import select
         from camelot.core.orm import Session
         session = Session()
         filter_names = []
         joins = []
-        #
-        # in case of inheritance, use the local table to be able to join,
-        # otherwise use the mapped table, to be able to filter on views
-        #
-        if admin.mapper!=admin.mapper.base_mapper:
-            table = admin.mapper.local_table
-        else:
-            table = admin.mapper.mapped_table
-        path = self.attribute.split('.')
-        for field_name in path:
-            attributes = admin.get_field_attributes(field_name)
+        entity = admin.entity
+        related_admin = admin
+        for field_name in self.attribute.split('.'):
+            attributes = related_admin.get_field_attributes(field_name)
             filter_names.append(attributes['name'])
-            # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
+            # @todo: if the filter is not on an attribute of the relation, but on 
+            # the relation itselves
             if 'target' in attributes:
-                admin = attributes['admin']
+                related_admin = attributes['admin']
                 joins.append(field_name)
-                if attributes['direction'] == 'manytoone':
-                    table = table.join(admin.mapper.mapped_table)
-                else:
-                    table = admin.mapper.mapped_table
 
-        col = getattr( admin.entity, field_name )
-        query = select([col], distinct=True, order_by=col.asc()).select_from(table)
+        col = getattr(related_admin.entity, field_name)
+        query = session.query(col).select_from(entity).join(*joins)
+        query = query.distinct()
 
         options = [ filter_option( name = _('All'),
                                    value = Filter.All,
                                    decorator = lambda q:q ) ]
-        
-        for value in session.execute(query):
+        for value in query:
             if 'to_string' in attributes:
                 option_name = attributes['to_string'](value[0])
             else:
@@ -145,7 +139,11 @@ class Filter(object):
                                            value = value[0],
                                            decorator = self.create_decorator(col, attributes, value[0], joins) ) )
         
-        return filter_data( name = filter_names[-1],
+        verbose_name = self.verbose_name or filter_names[0]
+        # sort outside the query to sort on the verbose name of the value
+        options.sort(key=lambda option:option.name)
+        
+        return filter_data( name = verbose_name,
                             options = options,
                             default = self.default )
 

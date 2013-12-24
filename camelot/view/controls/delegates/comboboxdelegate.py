@@ -41,7 +41,7 @@ class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
     def setEditorData(self, editor, index):
         value = variant_to_py(index.data(Qt.EditRole))
         field_attributes = variant_to_py(index.data(Qt.UserRole))
-        editor.set_field_attributes(**field_attributes)
+        editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)
 
     def paint(self, painter, option, index):
