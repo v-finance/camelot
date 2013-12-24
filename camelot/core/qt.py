@@ -9,7 +9,6 @@ Qt compatibility module.  This module hides the differences in behavior between 
 
 import datetime
 
-import sip
 import six
 
 try:
