@@ -28,6 +28,8 @@ import functools
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
+from sqlalchemy import orm, sql
+
 from .collection_proxy import CollectionProxy
 from camelot.view.model_thread import object_thread, post
 
@@ -85,8 +87,14 @@ class QueryTableProxy(CollectionProxy):
         self._clean_appended_rows()
         if self._query_getter is None:
             return 0
+        # manipulate the query to circumvent the use of subselects and order by
+        # clauses
         query = self.get_query_getter()()
-        return query.count() + len(self._appended_rows)
+        mapper = orm.class_mapper(self.admin.entity)
+        select = query.order_by(None).as_scalar()
+        select = select.with_only_columns([sql.func.count(*mapper.primary_key)])
+        count = query.session.execute(select, mapper=mapper).scalar()
+        return count + len(self._appended_rows)
 
     def setQuery(self, query_getter):
         """Set the query and refresh the view"""

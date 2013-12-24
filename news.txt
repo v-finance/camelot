@@ -11,6 +11,10 @@ Development
  
  * The `OneToMany` editor can display query attributes, created with `lazy='dynamic'`.
  
+ * The `count` query no longer uses subselects, reducing the time needed to build
+   up an initial table view on databases that are slow when handling subselects,
+   such as MySQL.
+
  * New available actions :
  
    * Start and stop a profiler
