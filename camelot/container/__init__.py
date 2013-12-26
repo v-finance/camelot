@@ -52,7 +52,7 @@ class MyEntity(Entity):
 
 import six
 
-from PyQt4.QtCore import Qt
+from ..core.qt import Qt
 
 class Container(object):
     """Top level class for all container classes"""
