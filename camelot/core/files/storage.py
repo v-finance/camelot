@@ -28,6 +28,7 @@ logger = logging.getLogger( 'camelot.core.files.storage' )
 
 import six
 
+from ..qt import Qt, QtGui
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
@@ -73,12 +74,11 @@ class StoredImage( StoredFile ):
         
         :return: a QImage
         """
-        from PyQt4.QtGui import QImage
         p = self.storage.checkout( self )
-        image = QImage(p)
+        image = QtGui.QImage(p)
         
         if image.isNull():
-            return QImage(':/image_not_found.png')
+            return QtGui.QImage(':/image_not_found.png')
         else:
             return image
 
@@ -96,7 +96,6 @@ class StoredImage( StoredFile ):
             return thumbnail_image
         except KeyError:
             pass
-        from PyQt4.QtCore import Qt
         original_image = self.checkout_image()
         thumbnail_image = original_image.scaled( width, height, Qt.KeepAspectRatio )
         self._thumbnails[key] = thumbnail_image

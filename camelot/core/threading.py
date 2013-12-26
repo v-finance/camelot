@@ -26,7 +26,7 @@ Some helper functions and classes related
 to threading issues
 '''
 
-from PyQt4 import QtCore
+from .qt import QtCore
 
 def synchronized( original_function ):
     """Decorator for synchronized access to an object, the object should

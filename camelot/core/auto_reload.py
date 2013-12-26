@@ -34,7 +34,7 @@ import sys
 
 import six
 
-from PyQt4 import QtCore
+from .qt import QtCore
 
 from sqlalchemy import event
 

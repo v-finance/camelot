@@ -48,7 +48,7 @@ The logging url could include a part indentifying the user and as such assisting
 first line support.
 """
 
-from PyQt4 import QtCore
+from .qt import QtCore
 
 import getpass
 import logging
