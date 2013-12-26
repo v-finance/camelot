@@ -126,8 +126,8 @@ class Code(types.TypeDecorator):
     .. image:: /_static/editors/CodeEditor_editable.png
     
     :param parts: a list of input masks specifying the mask for each part,
-        eg ``['99', 'AA']``. For valid input masks, see
-        `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_    
+        eg ``['99', 'AA']``. For valid input masks, see the documentation of
+        :class:`QtGui.QLineEdit`.
         
     :param separator: a string that will be used to separate the different parts
         in the GUI and in the database
