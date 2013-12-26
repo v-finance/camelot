@@ -29,7 +29,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore
+from ..core.qt import QtCore
 
 import six
 
