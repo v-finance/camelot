@@ -29,12 +29,13 @@ could be the start of MetaCamelot
 import os
 import logging
 
-from camelot.core.utils import ugettext_lazy as _
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.action import Action
-from camelot.view.controls import delegates
-from camelot.view.main import main_action
+from ..core.qt import QtGui
+from ..core.utils import ugettext_lazy as _
+from ..admin.application_admin import ApplicationAdmin
+from ..admin.object_admin import ObjectAdmin
+from ..admin.action import Action
+from ..view.controls import delegates
+from ..view.main import main_action
 
 LOGGER = logging.getLogger( 'camelot.bin.meta' )
 
@@ -283,7 +284,6 @@ class CreateNewProject( Action ):
             
     def model_run(self, model_context):
         # begin change object
-        from PyQt4 import QtGui
         from camelot.view import action_steps
         app_admin = MetaCamelotAdmin()
         options = NewProjectOptions()

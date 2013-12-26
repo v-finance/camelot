@@ -48,7 +48,7 @@ with sphinx.
 """),
     ('license_update', """Change the license header of a project,
 use license_update project_directory license_file"""),
-    ('to_pyside', """Takes a folder with PyQt4 source code and translates it to
+    ('to_pyside', """Takes a folder with PyQt source code and translates it to
 PySide source code.  Usage ::
    
    to_pyside source destination"""),
@@ -188,7 +188,6 @@ def to_pyside( source, destination ):
         LOGGER.info( 'converting %s'%filename )
         source = open(filename).read()
         output = open(filename, 'w')
-        source = replace_word( source, 'PyQt4', 'PySide' )
         source = replace_word( source, 'pyqtSlot', 'Slot' )
         source = replace_word( source, 'pyqtSignal', 'Signal' )
         source = replace_word( source, 'pyqtProperty', 'Property' )
