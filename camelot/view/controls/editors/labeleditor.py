@@ -24,9 +24,7 @@
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
+from ....core.qt import QtGui, QtCore
 from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):

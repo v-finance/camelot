@@ -26,7 +26,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from PyQt4 import QtGui, QtCore
+from ...core.qt import QtCore, QtGui
 
 import six
 

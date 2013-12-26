@@ -24,9 +24,7 @@
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
-
+from ....core.qt import QtGui, Qt
 from ....admin.action import field_action
 from .customeditor import CustomEditor, set_background_color_palette
 

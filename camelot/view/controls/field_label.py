@@ -22,9 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
+from ...core.qt import QtCore, QtGui, Qt
 from camelot.core.utils import ugettext as _
 from camelot.admin.action.field_action import (ShowFieldAttributes,
                                                FieldActionGuiContext)

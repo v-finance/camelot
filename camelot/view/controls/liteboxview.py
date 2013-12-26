@@ -22,25 +22,15 @@
 #
 #  ============================================================================
 
-from PyQt4.QtGui import (
-    QPainter,
-    QGraphicsView,
-    QGraphicsScene,
-    QColor, QPixmap,
-    QGraphicsPixmapItem,
-)
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
-
+from ...core.qt import QtCore, QtGui, Qt
 from camelot.view.art import Pixmap
 
 
 def get_desktop():
-    from PyQt4.QtCore import QCoreApplication
-    return QCoreApplication.instance().desktop()
+    return QtCore.QCoreApplication.instance().desktop()
 
 def get_desktop_pixmap():
-    return QPixmap.grabWindow(get_desktop().winId())
+    return QtGui.QPixmap.grabWindow(get_desktop().winId())
 
 def fit_to_screen(pixmap):
     d = get_desktop()
@@ -51,7 +41,7 @@ def fit_to_screen(pixmap):
         return pixmap.scaled(dw * fit, dh * fit, Qt.KeepAspectRatio)
     return pixmap
 
-class CloseMark(QGraphicsPixmapItem):
+class CloseMark(QtGui.QGraphicsPixmapItem):
 
     def __init__(self, pixmap=None, hover_pixmap=None, parent=None):
         super(CloseMark, self).__init__(parent)
@@ -87,9 +77,9 @@ class CloseMark(QGraphicsPixmapItem):
         view.close()
 
 
-class LiteBoxView(QGraphicsView):
+class LiteBoxView(QtGui.QGraphicsView):
 
-    ALPHA = QColor(0, 0, 0, 192)
+    ALPHA = QtGui.QColor(0, 0, 0, 192)
 
     closed_signal = QtCore.pyqtSignal()
 
@@ -99,15 +89,15 @@ class LiteBoxView(QGraphicsView):
         #self.setAttribute(Qt.WA_DeleteOnClose)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
         QtGui.QShortcut( Qt.Key_Escape, self, self.close )
         self.desktopshot = None
 
         # will propagate to children
-        self.setRenderHint(QPainter.Antialiasing)
-        self.setRenderHint(QPainter.TextAntialiasing)
+        self.setRenderHint(QtGui.QPainter.Antialiasing)
+        self.setRenderHint(QtGui.QPainter.TextAntialiasing)
 
-        self.scene = QGraphicsScene()
+        self.scene = QtGui.QGraphicsScene()
         self.setScene(self.scene)
 
     def close(self):
@@ -122,20 +112,14 @@ class LiteBoxView(QGraphicsView):
         painter.setBrush(LiteBoxView.ALPHA)
         painter.drawRect(rect)
 
-    def show_fullscreen_svg(self, path):
-        """:param path: path to an svg file"""
-        from PyQt4 import QtSvg
-        item = QtSvg.QGraphicsSvgItem(path)
-        self.show_fullscreen_item(item)
-
     def show_fullscreen_pixmap(self, pixmap):
         """:param pixmap: a QPixmap"""
-        item = QGraphicsPixmapItem(pixmap)
+        item = QtGui.QGraphicsPixmapItem(pixmap)
         self.show_fullscreen_item(item)
         
     def show_fullscreen_image(self, image):
         """:param image: a QImage"""
-        pixmap = QPixmap.fromImage(image)
+        pixmap = QtGui.QPixmap.fromImage(image)
         self.show_fullscreen_pixmap( pixmap )
 
     def show_fullscreen_item(self, item):

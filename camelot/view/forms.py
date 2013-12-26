@@ -260,7 +260,6 @@ class Label( Form ):
         self.style = style
 
     def render( self, widgets, parent = None, toplevel = False ):
-        from PyQt4 import QtGui
         if self.style:
             widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
         else:

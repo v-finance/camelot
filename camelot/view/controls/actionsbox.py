@@ -27,7 +27,7 @@
 import logging
 LOGGER = logging.getLogger('controls.actionsbox')
 
-from PyQt4 import QtGui
+from ...core.qt import QtGui
 
 class ActionsBox( QtGui.QWidget ):
     """A box containing actions to be applied to a view

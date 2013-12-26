@@ -27,9 +27,8 @@ Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
 
-from PyQt4.QtCore import Qt
-
-from camelot.admin.action.base import ActionStep
+from ...admin.action.base import ActionStep
+from ...core.qt import Qt
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.

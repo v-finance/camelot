@@ -31,10 +31,7 @@ from camelot.view.action import ActionFactory
 
 import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
+from ....core.qt import QtGui, QtCore, Qt
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class ImageEditor( FileEditor ):

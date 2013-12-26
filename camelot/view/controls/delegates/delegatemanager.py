@@ -27,9 +27,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 import six
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
+from ....core.qt import QtGui, QtCore, Qt
 from .plaintextdelegate import PlainTextDelegate
 
 class DelegateManager(QtGui.QItemDelegate):

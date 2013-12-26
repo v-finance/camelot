@@ -27,8 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.modeltree')
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
+from ...core.qt import QtGui, Qt
 
 from camelot.core.utils import ugettext as _
 

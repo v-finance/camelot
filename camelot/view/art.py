@@ -28,7 +28,7 @@ import os
 import logging
 logger = logging.getLogger('camelot.view.art')
 
-from PyQt4 import QtGui
+from ..core.qt import QtGui
 
 def file_(name):
     from camelot.core.resources import resource_filename
@@ -81,8 +81,7 @@ class Pixmap(object):
         if self._cached_pixmap:
             return self._cached_pixmap
         from camelot.core.resources import resource_string
-        from PyQt4.QtGui import QPixmap
-        qpm = QPixmap()
+        qpm = QtGui.QPixmap()
         p = os.path.join('art', self._path)
         try:
             # For some reason this throws a unicode error if the path contains an accent (cf windows username)
@@ -100,8 +99,7 @@ class Icon(Pixmap):
 
     def getQIcon(self):
         """QPixmaps can only be used in the gui thread"""
-        from PyQt4.QtGui import QIcon
-        return QIcon(self.getQPixmap())
+        return QtGui.QIcon(self.getQPixmap())
     
 class IconFromImage(object):
     """:class:`QtGui.QImage` based icon

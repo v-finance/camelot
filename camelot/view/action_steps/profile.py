@@ -26,11 +26,8 @@ import logging
 import pkgutil
 
 import six
-from PyQt4 import QtCore, QtGui, QtNetwork
-from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QFileInfo
-from PyQt4.QtGui import QBoxLayout, QGridLayout, QHBoxLayout, \
-    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox
+
+from ...core.qt import QtCore, QtGui, QtNetwork, Qt
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -90,29 +87,29 @@ allow all languages
         self.new_network_request()
 
     def create_labels_and_widgets(self):
-        self.profile_label = QLabel(_('Profile Name:'))
-        self.dialect_label = QLabel(_('Driver:'))
-        self.host_label = QLabel(_('Server Host:'))
-        self.port_label = QLabel(_('Port:'))
-        self.database_name_label = QLabel(_('Database Name:'))
-        self.username_label = QLabel(_('Username:'))
-        self.password_label = QLabel(_('Password:'))
-        self.media_location_label = QLabel(_('Media Location:'))
-        self.language_label = QLabel(_('Language:'))
-        self.proxy_host_label = QLabel(_('Proxy Host:'))
-        self.proxy_port_label = QLabel(_('Port:'))
-        self.proxy_username_label = QLabel(_('Proxy Username:'))
-        self.proxy_password_label = QLabel(_('Proxy Password:'))
-        self.network_status_label = QLabel()
+        self.profile_label = QtGui.QLabel(_('Profile Name:'))
+        self.dialect_label = QtGui.QLabel(_('Driver:'))
+        self.host_label = QtGui.QLabel(_('Server Host:'))
+        self.port_label = QtGui.QLabel(_('Port:'))
+        self.database_name_label = QtGui.QLabel(_('Database Name:'))
+        self.username_label = QtGui.QLabel(_('Username:'))
+        self.password_label = QtGui.QLabel(_('Password:'))
+        self.media_location_label = QtGui.QLabel(_('Media Location:'))
+        self.language_label = QtGui.QLabel(_('Language:'))
+        self.proxy_host_label = QtGui.QLabel(_('Proxy Host:'))
+        self.proxy_port_label = QtGui.QLabel(_('Port:'))
+        self.proxy_username_label = QtGui.QLabel(_('Proxy Username:'))
+        self.proxy_password_label = QtGui.QLabel(_('Proxy Password:'))
+        self.network_status_label = QtGui.QLabel()
 
-        self.not_accessible_media_path_label = QLabel(_('Media location path '\
+        self.not_accessible_media_path_label = QtGui.QLabel(_('Media location path '\
             'is not accessible.'))
         self.not_accessible_media_path_label.setStyleSheet('color: red')
-        self.not_writable_media_path_label = QLabel(_('Media location path '\
+        self.not_writable_media_path_label = QtGui.QLabel(_('Media location path '\
             'is not writable.'))
         self.not_writable_media_path_label.setStyleSheet('color: red')
 
-        layout = QGridLayout()
+        layout = QtGui.QGridLayout()
 
         layout.addWidget(self.profile_label, 0, 0, Qt.AlignRight)
         layout.addWidget(self.dialect_label, 1, 0, Qt.AlignRight)
@@ -128,7 +125,7 @@ allow all languages
         layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
         layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
 
-        self.profile_editor = QComboBox(self)
+        self.profile_editor = QtGui.QComboBox(self)
         self.profile_editor.setEditable(True)
 
         # 32767 is Qt max length for string
@@ -146,7 +143,7 @@ allow all languages
         self.username_editor = TextLineEditor(self)
         self.username_editor.set_value('')
         self.password_editor = TextLineEditor(self)
-        self.password_editor.setEchoMode(QLineEdit.Password)
+        self.password_editor.setEchoMode(QtGui.QLineEdit.Password)
         self.password_editor.set_value('')
         self.media_location_editor = TextLineEditor(self, length=32767)
         self.media_location_editor.set_value('')
@@ -173,7 +170,7 @@ allow all languages
         self.proxy_username_editor.set_value('')
         self.proxy_password_editor = TextLineEditor(self)
         self.proxy_password_editor.set_value('')
-        self.proxy_password_editor.setEchoMode(QLineEdit.Password)
+        self.proxy_password_editor.setEchoMode(QtGui.QLineEdit.Password)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 1)
         layout.addWidget(self.dialect_editor, 1, 1, 1, 1)
@@ -219,11 +216,11 @@ allow all languages
         self.dialect_editor.editingFinished.connect(self.toggle_ok_button)
 
     def create_buttons(self):
-        self.cancel_button = QPushButton(_('Cancel'))
-        self.ok_button = QPushButton(_('OK'))
+        self.cancel_button = QtGui.QPushButton(_('Cancel'))
+        self.ok_button = QtGui.QPushButton(_('OK'))
 
-        layout = QHBoxLayout()
-        layout.setDirection(QBoxLayout.RightToLeft)
+        layout = QtGui.QHBoxLayout()
+        layout.setDirection(QtGui.QBoxLayout.RightToLeft)
 
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.ok_button)
@@ -231,7 +228,7 @@ allow all languages
 
         self.buttons_widget().setLayout(layout)
 
-        self.browse_button = QPushButton(_('Browse'))
+        self.browse_button = QtGui.QPushButton(_('Browse'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
 
     def set_tab_order(self):
@@ -345,12 +342,12 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = six.text_type(QFileDialog.getExistingDirectory(self, caption))
+        selected = six.text_type(QtGui.QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return
 
-        info = QFileInfo(selected)
+        info = QtGui.QFileInfo(selected)
         if not info.isReadable():
             self.main_widget().layout().addWidget(
                 self.not_accessible_media_path_label, 13, 1, 1, 4)

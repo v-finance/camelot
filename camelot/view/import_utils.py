@@ -24,8 +24,6 @@
 
 """Utility classes to import files into Camelot"""
 
-from PyQt4 import QtCore
-
 import csv
 import codecs
 import logging
@@ -33,6 +31,7 @@ import string
 
 import six
 
+from ..core.qt import QtCore
 from camelot.view.controls import delegates
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table

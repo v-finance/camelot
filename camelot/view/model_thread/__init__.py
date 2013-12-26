@@ -22,9 +22,10 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtCore
-
 import logging
+
+from ...core.qt import QtCore
+
 logger = logging.getLogger('camelot.view.model_thread')
 
 _model_thread_ = []

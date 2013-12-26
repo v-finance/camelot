@@ -32,11 +32,11 @@ import datetime
 
 import six
 
-from PyQt4 import QtCore, QtGui
 from sqlalchemy import sql
 
+from ..core.qt import QtCore, QtGui
 from camelot.view.controls.editors import DateEditor
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 
 #
 # data structures to feed the filter widgets
@@ -124,7 +124,7 @@ class Filter(object):
         query = session.query(col).select_from(entity).join(*joins)
         query = query.distinct()
 
-        options = [ filter_option( name = _('All'),
+        options = [ filter_option( name = ugettext('All'),
                                    value = Filter.All,
                                    decorator = lambda q:q ) ]
         for value in query:
@@ -133,9 +133,11 @@ class Filter(object):
             else:
                 option_name = value[0]
             if attributes.get( 'translate_content', False ):
-                option_name = _( option_name )
+                option_name = ugettext( option_name )
         
-            options.append( filter_option( name = option_name,
+            # option_name name can be of type ugettext_lazy, convert it to unicode
+            # to make it sortable
+            options.append( filter_option( name = six.text_type(option_name),
                                            value = value[0],
                                            decorator = self.create_decorator(col, attributes, value[0], joins) ) )
         

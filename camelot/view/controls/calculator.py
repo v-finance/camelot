@@ -22,11 +22,9 @@
 #
 #  ============================================================================
 
+from ...core.qt import QtCore, QtGui
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
-
-from PyQt4 import QtGui
-from PyQt4 import QtCore
 
 class Calculator(QtGui.QDialog):
     

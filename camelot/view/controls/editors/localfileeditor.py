@@ -26,9 +26,7 @@ import os.path
 
 import six
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
+from ....core.qt import QtGui, QtCore, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon

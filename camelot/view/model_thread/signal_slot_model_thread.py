@@ -30,14 +30,13 @@ import logging
 import sys
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
-from PyQt4 import QtCore
-
 import six
 
-from camelot.core.utils import pyqt
-from camelot.core.threading import synchronized
-from camelot.view.model_thread import AbstractModelThread, object_thread
-from camelot.view.controls.exception import register_exception
+from ...core.qt import QtCore
+from ...core.utils import pyqt
+from ...core.threading import synchronized
+from ...view.model_thread import AbstractModelThread, object_thread
+from ...view.controls.exception import register_exception
 
 #
 # Wrap and unwrap None passed through signal/slot accross threads to

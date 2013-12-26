@@ -26,10 +26,9 @@ import contextlib
 import functools
 import logging
 
-from PyQt4 import QtCore, QtGui
-
 import six
 
+from ..core.qt import QtCore, QtGui
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog

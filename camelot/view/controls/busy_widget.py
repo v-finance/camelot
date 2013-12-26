@@ -22,9 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
+from ...core.qt import QtCore, QtGui, Qt
 from camelot.view.art import Pixmap
 from camelot.view.model_thread import get_model_thread
 

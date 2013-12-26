@@ -24,9 +24,7 @@
 
 import six
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
+from ...core.qt import QtCore, QtGui, Qt
 from camelot.core.utils import ugettext_lazy
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon

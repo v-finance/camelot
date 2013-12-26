@@ -22,12 +22,12 @@
 #
 #  ============================================================================
 """
-PyQt4 port of the layouts/flowlayout example from Qt v4.x
+PyQt port of the layouts/flowlayout example from Qt v4.x
 
 The original port was copied from the PyQt layout examples.
 """
 
-from PyQt4 import QtCore, QtGui
+from ..core.qt import QtCore, QtGui
 
 class FlowLayout( QtGui.QLayout ):
     """

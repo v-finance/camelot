@@ -26,8 +26,7 @@ import copy
 
 import six
 
-from PyQt4 import QtGui, QtCore
-
+from ...core.qt import QtCore, QtGui
 from camelot.view.field_attributes import order_operators
 from camelot.core.utils import ugettext
 from camelot.view.utils import operator_names

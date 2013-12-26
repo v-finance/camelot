@@ -24,11 +24,7 @@
 
 import six
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QAbstractSpinBox
-
+from ....core.qt import QtGui, QtCore, Qt
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
 from camelot.view.controls.editors.customeditor import ValueLoading
@@ -63,7 +59,7 @@ class MonthsEditor(CustomEditor):
         self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         
-        layout = QHBoxLayout()
+        layout = QtGui.QHBoxLayout()
         layout.addWidget(self.years_spinbox)
         layout.addWidget(self.months_spinbox)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -86,11 +82,11 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setReadOnly(not editable)
         self.months_spinbox.setEnabled(editable)
         if not editable:
-            self.years_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            self.years_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            self.months_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         else:
-            self.years_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)
-            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)
+            self.years_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+            self.months_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading

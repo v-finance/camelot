@@ -25,8 +25,6 @@
 
 from six.moves import html_parser
 
-from PyQt4 import QtCore, QtGui
-
 import six
 
 from datetime import datetime, time, date
@@ -35,6 +33,7 @@ import re
 import logging
 import operator
 
+from ..core.qt import QtCore, QtGui
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
@@ -113,10 +112,9 @@ def date_from_string(s):
     s = s.strip()
     if not s:
         return None
-    from PyQt4.QtCore import QDate
     import string
     f = local_date_format()
-    dt = QDate.fromString(s, f)
+    dt = QtCore.QDate.fromString(s, f)
     if not dt.isValid():
         #
         # if there is a mismatch of 1 in length between format and
@@ -124,7 +122,7 @@ def date_from_string(s):
         #
         if len(f) == len(s) + 1:
             s = '0' + s
-            dt = QDate.fromString(s, f)
+            dt = QtCore.QDate.fromString(s, f)
     if not dt.isValid():
         #
         # try alternative separators
@@ -132,7 +130,7 @@ def date_from_string(s):
         separators = u''.join([c for c in f if c not in string.ascii_letters])
         if separators:
             alternative_string = u''.join([(c if c in string.digits else separators[0]) for c in s])
-            dt = QDate.fromString(alternative_string, f)
+            dt = QtCore.QDate.fromString(alternative_string, f)
     if not dt.isValid():
         # try parsing without separators
         # attention : using non ascii letters will fail on windows
@@ -140,11 +138,11 @@ def date_from_string(s):
         # encoding, so we cannot convert them to unicode to compare them
         only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
-        dt = QDate.fromString(only_letters_string, only_letters_format)
+        dt = QtCore.QDate.fromString(only_letters_string, only_letters_format)
         if not dt.isValid():
             # try parsing without the year, and take the current year by default
             only_letters_format = u''.join([c for c in only_letters_format if c not in ['y']])
-            dt = QDate.fromString(only_letters_string, only_letters_format)
+            dt = QtCore.QDate.fromString(only_letters_string, only_letters_format)
             if not dt.isValid():
                 raise ParsingError()
 #                # try parsing without year and month, and take the current year and month by default
@@ -163,9 +161,8 @@ def time_from_string(s):
     s = s.strip()
     if not s:
         return None
-    from PyQt4.QtCore import QTime
     f = local_time_format()
-    tm = QTime.fromString(s, f)
+    tm = QtCore.QTime.fromString(s, f)
     if not tm.isValid():
         raise ParsingError()
     return time( tm.hour(), tm.minute(), tm.second() )
@@ -174,9 +171,8 @@ def datetime_from_string(s):
     s = s.strip()
     if not s:
         return None
-    from PyQt4.QtCore import QDateTime
     f = local_datetime_format()
-    dt = QDateTime.fromString(s, f)
+    dt = QtCore.QDateTime.fromString(s, f)
     if not dt.isValid():
         raise ParsingError()
     return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 

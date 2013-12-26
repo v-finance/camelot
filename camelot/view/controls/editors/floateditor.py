@@ -22,12 +22,9 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
 import six
 
+from ....core.qt import QtGui, QtCore, Qt
 from .customeditor import (CustomEditor, set_background_color_palette,
                            draw_tooltip_visualization)
 from ...art import Icon

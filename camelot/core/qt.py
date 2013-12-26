@@ -13,7 +13,7 @@ import six
 
 try:
     import sip
-    from PyQt4 import QtCore, QtGui
+    from PyQt4 import QtCore, QtGui, QtNetwork
     from PyQt4.QtCore import Qt
     
     # the api version is only available after importing QtCore
@@ -21,7 +21,7 @@ try:
     string_api = sip.getapi('QString')
 except ImportError:
     try:
-        from PySide import QtCore, QtGui
+        from PySide import QtCore, QtGui, QtNetwork
         from PySide.QtCore import Qt
         variant_api = 2
         string_api = 2
@@ -128,6 +128,7 @@ else:
 __all__ = [
     QtCore.__name__,
     QtGui.__name__,
+    QtNetwork.__name__,
     Qt.__name__,
     py_to_variant.__name__,
     valid_variant.__name__,

@@ -25,7 +25,7 @@
 """Functions and widget to represent exceptions to the user"""
 
 import collections
-from PyQt4 import QtGui
+from ...core.qt import QtGui
 
 import six
 

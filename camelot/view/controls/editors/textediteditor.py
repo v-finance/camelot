@@ -21,12 +21,12 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtCore
 
 import six
 
+from ....core.qt import QtGui, QtCore
 from .wideeditor import WideEditor
-from .customeditor import AbstractCustomEditor, QtGui
+from .customeditor import AbstractCustomEditor
 
 class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 

@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtCore, QtGui
+from ...core.qt import QtCore, QtGui
 
 from camelot.admin.action import ( ActionStep,
                                    DocumentActionGuiContext )

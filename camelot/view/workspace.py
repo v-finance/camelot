@@ -24,15 +24,12 @@
 
 """Convenience functions and classes to present views to the user"""
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
 import six
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
+from ..core.qt import QtCore, QtGui, Qt
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread import object_thread, post

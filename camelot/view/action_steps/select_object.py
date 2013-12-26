@@ -22,8 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
+from ...core.qt import QtGui, Qt
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator

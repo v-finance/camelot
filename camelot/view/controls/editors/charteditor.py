@@ -24,9 +24,7 @@
 
 import logging
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
+from ....core.qt import QtGui, QtCore
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors.customeditor import AbstractCustomEditor

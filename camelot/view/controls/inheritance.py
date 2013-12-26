@@ -27,9 +27,7 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
+from ...core.qt import QtCore, QtGui
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 

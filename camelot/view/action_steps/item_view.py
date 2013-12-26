@@ -29,11 +29,10 @@ the `ListActionGuiContext`.
 
 from sqlalchemy.orm import Query
 
-from PyQt4.QtCore import Qt
-
-from camelot.admin.action.base import ActionStep
-from camelot.view.proxy.collection_proxy import CollectionProxy
-from camelot.view.proxy.queryproxy import QueryTableProxy
+from ...admin.action.base import ActionStep
+from ...core.qt import Qt
+from ...view.proxy.collection_proxy import CollectionProxy
+from ...view.proxy.queryproxy import QueryTableProxy
 
 
 class Sort( ActionStep ):

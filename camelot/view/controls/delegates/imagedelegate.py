@@ -21,12 +21,12 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from .filedelegate import FileDelegate
-from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+from ....core.qt import QtGui, QtCore, Qt
+from ....view.controls import editors
+from ....view.proxy import ValueLoading
+from .filedelegate import FileDelegate
+
 
 class ImageDelegate(FileDelegate):
     """Delegate for :class:`camelot.types.Image` fields.  Expects values of type 

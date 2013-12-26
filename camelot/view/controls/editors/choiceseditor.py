@@ -25,9 +25,8 @@
 import logging
 
 import six
-from PyQt4.QtCore import Qt
 
-from ....core.qt import QtGui, QtCore, py_to_variant, variant_to_py
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 from camelot.view.proxy import ValueLoading
 from ...art import Icon
 from .customeditor import CustomEditor

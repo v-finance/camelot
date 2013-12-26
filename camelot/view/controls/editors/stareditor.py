@@ -22,9 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
-
+from ....core.qt import QtGui, Qt
 from .customeditor import CustomEditor
 from camelot.view.art import Icon
 

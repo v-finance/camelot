@@ -22,10 +22,9 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
-
 import six
 
+from ...core.qt import QtCore, QtGui
 from .editors.customeditor import draw_tooltip_visualization
 
 class DecoratedLineEdit(QtGui.QLineEdit):

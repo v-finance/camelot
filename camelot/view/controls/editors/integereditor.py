@@ -24,12 +24,9 @@
 
 from math import floor
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
 import six
 
+from ....core.qt import QtGui, QtCore, Qt
 from camelot.view.art import Icon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint

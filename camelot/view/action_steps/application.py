@@ -1,7 +1,5 @@
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
 from ...admin.action.base import ActionStep
+from ...core.qt import QtCore, Qt
 
 class Exit( ActionStep ):
     """

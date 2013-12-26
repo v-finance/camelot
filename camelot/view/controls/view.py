@@ -24,11 +24,9 @@
 
 """Functionality common to TableViews and FormViews"""
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
 import six
 
+from ...core.qt import QtCore, QtGui
 from camelot.view.model_thread import post
 
 class AbstractView(QtGui.QWidget):

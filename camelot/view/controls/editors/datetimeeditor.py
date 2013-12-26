@@ -24,11 +24,9 @@
 
 import datetime
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
 import six
 
+from ....core.qt import QtGui, QtCore, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 from .dateeditor import DateEditor
 from camelot.view.proxy import ValueLoading

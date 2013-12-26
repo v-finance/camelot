@@ -27,7 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.filter')
 
-from PyQt4 import QtGui, QtCore
+from ...core.qt import QtCore, QtGui
 
 class FilterList( QtGui.QWidget ):
     """A list with filters that can be applied on a query in the tableview"""

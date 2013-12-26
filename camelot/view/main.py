@@ -25,10 +25,12 @@
 """Main function, to be called to start the GUI interface"""
 
 import functools
+import sys
 
 from camelot.art import resources # Required for tooltip visualization
 resources.__name__ # Dodge PyFlakes' attack
 
+from ..core.qt import QtCore, QtGui
 from ..admin.action.application import Application
 from ..admin.action.application_action import ApplicationActionGuiContext
 
@@ -56,8 +58,6 @@ def main_action(action):
     :class:`camelot.admin.action.application.Application`.  But it can be
     used with any action object.
     """
-    import sys
-    from PyQt4 import QtGui, QtCore
     app = QtCore.QCoreApplication.instance()
     if app is None:
         app = QtGui.QApplication([a for a in sys.argv if a])

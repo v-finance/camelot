@@ -24,8 +24,7 @@
 
 import six
 
-from PyQt4 import QtGui, QtCore
-
+from ....core.qt import QtGui, QtCore
 from camelot.view.art import ColorScheme
 from .customeditor import AbstractCustomEditor
 

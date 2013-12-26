@@ -25,7 +25,7 @@ import logging
 
 LOGGER = logging.getLogger('remote_signals')
 
-from PyQt4 import QtCore
+from ..core.qt import QtCore
 
 class SignalHandler(QtCore.QObject):
     """The signal handler connects multiple collection proxy classes to

@@ -25,8 +25,7 @@
 """The action module contains various QAction classes, representing commands
 that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 
-from PyQt4 import QtGui
-
+from ..core.qt import QtGui
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 

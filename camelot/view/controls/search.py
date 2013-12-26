@@ -24,8 +24,7 @@
 
 import six
 
-from PyQt4 import QtCore, QtGui
-
+from ...core.qt import QtCore, QtGui
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.abstract_widget import AbstractSearchWidget

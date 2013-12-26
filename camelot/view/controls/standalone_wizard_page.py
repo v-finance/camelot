@@ -24,21 +24,17 @@
 
 import six 
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout,
-                          QWidget )
-
+from ...core.qt import QtGui, Qt
 from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
 
-class HSeparator(QFrame):
+class HSeparator(QtGui.QFrame):
 
     def __init__(self, parent=None):
-        super(HSeparator, self).__init__(parent)
-        self.setFrameStyle(QFrame.HLine | QFrame.Sunken)
+        super(QtGui.HSeparator, self).__init__(parent)
+        self.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
 
-class StandaloneWizardPage(QDialog):
+class StandaloneWizardPage(QtGui.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
@@ -48,7 +44,7 @@ class StandaloneWizardPage(QDialog):
 
     def set_layouts(self):
         assert object_thread( self )
-        self._vlayout = QVBoxLayout()
+        self._vlayout = QtGui.QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)
 
@@ -58,20 +54,20 @@ class StandaloneWizardPage(QDialog):
         # therefor commented out
         #self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
 
-        banner_layout = QGridLayout()
+        banner_layout = QtGui.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
-        banner_layout.addWidget(QLabel(), 0, 1, Qt.AlignRight)
-        banner_layout.addLayout(QVBoxLayout(), 0, 0)
+        banner_layout.addWidget(QtGui.QLabel(), 0, 1, Qt.AlignRight)
+        banner_layout.addLayout(QtGui.QVBoxLayout(), 0, 0)
 
         # TODO: allow banner widget to be supplied
-        banner_widget = QWidget()
+        banner_widget = QtGui.QWidget()
         banner_widget.setLayout(banner_layout)
 
         self._vlayout.addWidget(banner_widget)
-        self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QFrame(), 1)
-        self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QWidget())
+        self._vlayout.addWidget(QtGui.HSeparator())
+        self._vlayout.addWidget(QtGui.QFrame(), 1)
+        self._vlayout.addWidget(QtGui.HSeparator())
+        self._vlayout.addWidget(QtGui.QWidget())
         self.setLayout(self._vlayout)
 
     def banner_widget(self):
@@ -96,11 +92,11 @@ class StandaloneWizardPage(QDialog):
         self.banner_logo_holder().setPixmap(pixmap)
 
     def set_banner_title(self, title):
-        title_widget = QLabel('<dt><b>%s</b></dt>' % title)
+        title_widget = QtGui.QLabel('<dt><b>%s</b></dt>' % title)
         self.banner_text_layout().insertWidget(0, title_widget)
 
     def set_banner_subtitle(self, subtitle):
-        subtitle_widget = QLabel('<dd>%s</dd>' % subtitle)
+        subtitle_widget = QtGui.QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
 
     def set_default_buttons( self,

@@ -21,7 +21,8 @@
 #  info@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
+
+from ...core.qt import QtCore, QtGui
 
 class AbstractSearchWidget(QtGui.QWidget):
     expand_search_options_signal = QtCore.pyqtSignal()

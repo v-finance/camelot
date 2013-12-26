@@ -26,7 +26,7 @@ import functools
 
 import six
 
-from PyQt4 import QtGui, QtCore
+from ...core.qt import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
