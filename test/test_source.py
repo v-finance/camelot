@@ -37,6 +37,7 @@ class SourceQualityCase( unittest.TestCase ):
             'toBool',
             'toString()',
             'toSize()',
+            'PyQt4',
         ]
 
         for dirpath, filename in self.walk_source_files():

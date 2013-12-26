@@ -24,11 +24,10 @@
 
 """Helper classes to create unit tests for Actions."""
 
-from PyQt4 import QtGui
-
 from sqlalchemy import orm
 
-from camelot.admin.action.list_action import ListActionGuiContext
+from ..core.qt import QtGui
+from ..admin.action.list_action import ListActionGuiContext
 
 class MockModelContext( object ):
     """Model Context to be used in unit tests

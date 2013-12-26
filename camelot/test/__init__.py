@@ -31,8 +31,7 @@ as /camelot.
 import unittest
 import six
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+from ..core.qt import QtGui, QtCore, Qt
 
 has_programming_error = False
 
@@ -40,17 +39,16 @@ _application_ = []
 
 def get_application():
     """Get the singleton QApplication"""
-    from PyQt4.QtGui import QApplication
     if not len(_application_):
         #
         # Uniform style for screenshot generation
         #
-        application = QApplication.instance()
+        application = QtGui.QApplication.instance()
         if not application:
             import sys
             from camelot.view import art
-            QApplication.setStyle('cleanlooks')
-            application = QApplication(sys.argv)
+            QtGui.QApplication.setStyle('cleanlooks')
+            application = QtGui.QApplication(sys.argv)
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
             #try:
@@ -78,7 +76,6 @@ class ModelThreadTestCase(unittest.TestCase):
         """
         import sys
         import os
-        from PyQt4.QtGui import QPixmap
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
         else:
@@ -99,7 +96,7 @@ class ModelThreadTestCase(unittest.TestCase):
         widget.repaint()
         QtGui.QApplication.flush()
         widget.repaint()
-        inner_pixmap = QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
+        inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
         # add a border to the image
         border = 4
         outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
@@ -153,7 +150,6 @@ class ApplicationViewsTest(ModelThreadTestCase):
         
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
-        from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
         QtCore.QCoreApplication.installTranslator(translator)         
         app_admin = self.get_application_admin()
@@ -165,7 +161,6 @@ class ApplicationViewsTest(ModelThreadTestCase):
       
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
-        from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
         QtCore.QCoreApplication.installTranslator(translator)
         app_admin = self.get_application_admin()
@@ -174,7 +169,6 @@ class ApplicationViewsTest(ModelThreadTestCase):
         
     def test_tool_bar(self):
         from camelot.view.mainwindow import MainWindow
-        from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
         QtCore.QCoreApplication.installTranslator(translator)        
         app_admin = self.get_application_admin()        
@@ -190,7 +184,6 @@ class EntityViewsTest(ModelThreadTestCase):
 
     def setUp(self):
         super(EntityViewsTest, self).setUp()
-        from PyQt4 import QtCore
         global has_programming_error
         translators = self.get_application_admin().get_translator()
         for translator in translators:
