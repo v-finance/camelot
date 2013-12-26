@@ -36,6 +36,7 @@ from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy import orm
 
 import camelot.types
+from ..core.qt import QtCore, QtGui
 from camelot.core.document import document_classes
 from camelot.core.orm import Entity, Session, ManyToMany
 from camelot.core.utils import ugettext_lazy as _
@@ -133,7 +134,6 @@ class AuthenticationMechanism( Entity ):
         :return: a :class:`QtGui.QImage` object with the avatar of the user,
             or `None`.
         """
-        from PyQt4 import QtGui
         if self.representation is None:
             return self.representation
         return QtGui.QImage.fromData(base64.b64decode(self.representation))
@@ -143,7 +143,6 @@ class AuthenticationMechanism( Entity ):
         :param image: a :class:`QtGui.QImage` object with the avatar of the user,
             or `None`.
         """
-        from PyQt4 import QtCore
         if image is None:
             self.representation=None
         qbyte_array = QtCore.QByteArray()
