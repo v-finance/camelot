@@ -41,6 +41,8 @@ class SourceQualityCase( unittest.TestCase ):
             'pyqtSlot',
             'pyqtSignal',
             'pyqtProperty',
+            'toByteArray',
+            'toLongLong',
         ]
 
         for dirpath, filename in self.walk_source_files():

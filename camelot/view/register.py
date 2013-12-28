@@ -58,7 +58,7 @@ class Register(QtCore.QObject):
         :param monitored: the object that will be monitored
         """
         if valid_variant( monitored.property(self._key_name) ):
-            key, _success = monitored.property( self._key_name ).toLongLong()
+            key = variant_to_py(monitored.property( self._key_name ))
         else:
             self._max_monitor_key += 1
             key = self._max_monitor_key

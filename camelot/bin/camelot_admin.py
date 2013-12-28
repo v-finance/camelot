@@ -48,10 +48,6 @@ with sphinx.
 """),
     ('license_update', """Change the license header of a project,
 use license_update project_directory license_file"""),
-    ('to_pyside', """Takes a folder with PyQt source code and translates it to
-PySide source code.  Usage ::
-   
-   to_pyside source destination"""),
 ]
 
 #
@@ -170,39 +166,6 @@ def license_update(project, license_file):
                 translate_file(dirname, name)
             
     os.path.walk(project, translate_directory, None)
-    
-def to_pyside( source, destination ):
-    import os.path
-    import shutil
-    # first take a copy
-    if os.path.exists( destination ):
-        shutil.rmtree( destination )
-    shutil.copytree( source, destination )
-   
-    def replace_word(original_str, old_word, new_word):
-        return new_word.join((t for t in original_str.split(old_word)))
-
-    def translate_file( dirname, name ):
-        """translate a single file"""
-        filename = os.path.join(dirname, name)
-        LOGGER.info( 'converting %s'%filename )
-        source = open(filename).read()
-        output = open(filename, 'w')
-        source = replace_word( source, 'QtCore.QString', 'str' )
-        source = replace_word( source, '.toByteArray()', '' )
-        source = replace_word( source, '.toLongLong()', ', True' )
-        source = replace_word( source, ').isValid()', ')' )
-        output.write( source )
-        
-    def translate_directory( dirname, names ):
-        """recursively translate a directory"""
-        for name in names:
-            if name.endswith('.py'):
-                translate_file(dirname, name)
-            
-    for ( dirpath, _dirnames, filenames ) in os.walk( destination ):
-        translate_directory( dirpath, filenames )
-    
     
 def startproject(module):
     import os
