@@ -22,10 +22,9 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-
 import six
 
+from ...core.qt import QtGui
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
@@ -196,7 +195,6 @@ class CloseForm( Action ):
         super( CloseForm, self ).gui_run( gui_context )
         
     def model_run( self, model_context ):
-        from PyQt4 import QtGui
         from camelot.view import action_steps
         yield action_steps.UpdateProgress( text = _('Closing form') )
         validator = model_context.admin.get_validator()

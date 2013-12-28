@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from ..core.qt import QtGui
 
 import six
 

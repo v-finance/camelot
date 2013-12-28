@@ -28,14 +28,13 @@ import logging
 
 import six
 
+from ...core.qt import QtGui
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.art import Icon
-
-from PyQt4 import QtGui
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 

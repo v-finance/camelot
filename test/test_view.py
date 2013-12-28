@@ -645,14 +645,13 @@ class DelegateTest(test.ModelThreadTestCase):
         self.assertTrue( small_size < wide_size )
 
     def testTextEditDelegate(self):
-        from PyQt4.QtGui import QTextEdit
         delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
         editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, QTextEdit))
+        self.assertTrue(isinstance(editor, QtGui.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text')
         delegate = self.delegates.TextEditDelegate(parent=None, editable=False)
         editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, QTextEdit))
+        self.assertTrue(isinstance(editor, QtGui.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
     def testRichTextDelegate(self):

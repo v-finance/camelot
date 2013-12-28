@@ -2,6 +2,7 @@
 Tests for the Admin classes
 """
 
+from camelot.core.qt import Qt
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.field_admin import FieldAdmin
@@ -10,8 +11,6 @@ from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
 from camelot.view.art import Icon
 from camelot.view.proxy.queryproxy import QueryTableProxy
-
-from PyQt4.QtCore import Qt
 
 from sqlalchemy import schema, types
 

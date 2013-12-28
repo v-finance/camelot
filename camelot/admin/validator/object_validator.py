@@ -28,8 +28,7 @@ logger = logging.getLogger('camelot.admin.validator.object_validator')
 
 import six
 
-from PyQt4 import QtCore
-
+from ...core.qt import QtCore
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
 

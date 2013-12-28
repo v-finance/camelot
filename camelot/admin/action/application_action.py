@@ -25,11 +25,9 @@
 import logging
 import time
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
 import six
 
+from ...core.qt import Qt, QtCore, QtGui
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session

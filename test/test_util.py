@@ -5,13 +5,14 @@ import six
 
 if six.PY3:
     long = int 
-    
+
+from camelot.core.qt import QtCore
+
 class ViewUtilsCase(unittest.TestCase):
     """test the utility functions in camelot.view.utils
     """
     
     def setUp(self):
-        from PyQt4 import QtCore
         from camelot.view import utils
         # clear the date and time format cache to prevent different
         # locales to be used

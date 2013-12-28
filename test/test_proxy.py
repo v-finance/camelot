@@ -1,8 +1,5 @@
 import unittest
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtCore
-
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -14,7 +11,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.conf import settings
 from camelot.core.orm import Session
-from camelot.core.qt import variant_to_py
+from camelot.core.qt import variant_to_py, QtCore, Qt
 from camelot.test import ModelThreadTestCase
 
 class FifoCase( unittest.TestCase ):

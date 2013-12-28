@@ -30,9 +30,7 @@ various actions that are beyond the icons shown in the editors of a form.
 import inspect
 import os
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui
-
+from ...core.qt import Qt, QtGui
 from ...core.utils import ugettext_lazy as _
 from ...view.art import Icon
 from .base import Action

@@ -2,13 +2,11 @@ import datetime
 import logging
 import os
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-
 from sqlalchemy import orm
 
 import six
 
+from camelot.core.qt import QtGui, QtCore, Qt
 from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import ( list_action, application_action,
                                    document_action, form_action )
@@ -214,13 +212,13 @@ class ActionStepsCase( ModelThreadTestCase ):
         class WebkitPrint( Action ):
 
             def model_run( self, model_context ):
-                from PyQt4.QtWebKit import QWebView
+                from camelot.core.qt import QtWebKit
                 from camelot.view.action_steps import PrintPreview
 
                 movie = model_context.get_object()
 
-                document = QWebView()
-                document.setHtml( '<h2>%s</h2>' % movie.title )
+                document = QtWebKit.QWebView()
+                document.setHtml('<h2>%s</h2>' % movie.title)
 
                 yield PrintPreview( document )
         # end webkit print

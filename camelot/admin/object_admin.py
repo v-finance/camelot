@@ -27,6 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from ..core.qt import QtCore
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.controls.tableview import TableView
@@ -34,8 +35,6 @@ from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from .validator.object_validator import ObjectValidator
-
-from PyQt4 import QtCore
 
 import six
 

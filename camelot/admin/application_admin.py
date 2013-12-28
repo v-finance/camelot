@@ -28,11 +28,9 @@ import os
 
 logger = logging.getLogger('camelot.admin.application_admin')
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtCore
-
 import six
 
+from ..core.qt import Qt, QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
@@ -350,7 +348,7 @@ shortcut confusion and reduce the number of status updates.
         return Icon('tango/32x32/apps/system-users.png').getQIcon()
 
     def get_splashscreen(self):
-        """:return: a :class:`PyQt4.QtGui.QPixmap` to be used as splash screen"""
+        """:return: a :class:`QtGui.QPixmap` to be used as splash screen"""
         from camelot.view.art import Pixmap
         qpm = Pixmap('splashscreen.png').getQPixmap()
         img = qpm.toImage()
@@ -378,10 +376,9 @@ shortcut confusion and reduce the number of status updates.
         return self.domain
 
     def get_help_url(self):
-        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to the index page for help"""
-        from PyQt4.QtCore import QUrl
+        """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
         if self.help_url:
-            return QUrl( self.help_url )
+            return QtCore.QUrl( self.help_url )
 
     def get_stylesheet(self):
         """

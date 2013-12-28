@@ -1,4 +1,4 @@
-from camelot.core.qt import QtCore
+from camelot.core.qt import QtCore, QtGui
 
 from camelot.view import forms
 from camelot.view.controls import delegates
@@ -35,7 +35,6 @@ class ExampleObject(object):
         
 if __name__ == "__main__":
     from camelot.view.main import main
-    from PyQt4 import QtGui
     app_admin = ApplicationAdmin()
     
     def show_form():

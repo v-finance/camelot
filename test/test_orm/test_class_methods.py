@@ -6,6 +6,7 @@ import threading
 
 from . import TestMetaData
 
+from camelot.core.qt import QtCore
 from camelot.core.orm import Field, Session
 
 from sqlalchemy.types import String, Unicode, Integer
@@ -30,7 +31,6 @@ class TestClassMethods( TestMetaData ):
         # The query attribute of a class should return a query bound to
         # the session belonging to the current thread
         #
-        from PyQt4 import QtCore
         
         class A( self.Entity ):
             name = Field(String(32))

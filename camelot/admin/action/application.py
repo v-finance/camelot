@@ -1,7 +1,6 @@
 import logging
 
-from PyQt4 import QtCore
-
+from ...core.qt import QtCore
 from ...core.utils import ugettext as _
 from .base import Action
 
