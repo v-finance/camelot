@@ -4,19 +4,23 @@
  Frequently Asked Questions
 ###########################
 
+.. _faq-pyside:
+
 How to use the PySide bindings instead of PyQt ?
 ------------------------------------------------
 
-The Camelot sources as well as the example videostore application can be
-converted from PyQt applications to PySide with the `camelot_admin` tool.
+By default, Camelot uses the PyQt4 Qt bindings.
 
-Download the sources and position the shell in the main directory, and then
-issue these commands::
+To switch between different Qt bindings, set the `CAMELOT_QT_API` environment
+variable to either `PyQt4` or `PySide`
 
-    python camelot/bin/camelot_admin.py to_pyside .
-    
-This will create a subdirectory 'to_pyside' which contains the converted
-source code.
+When working on Linux with the bash shell, type::
+
+    export CAMELOT_QT_API=PySide
+
+On Windows, use::
+
+    set CAMELOT_QT_API=PySide
 
 Can I use Camelot with an existing database ?
 ---------------------------------------------

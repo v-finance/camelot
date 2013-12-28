@@ -1,6 +1,9 @@
 Development
 -----------
 
+ * A single source base for both PyQt4 and PySide, select the appropriate binding by
+   setting the `CAMELOT_QT_API` environment variable, see :ref:`faq-pyside`
+ 
  * The application itself is an action : :class:`camelot.admin.action.application.Application`.
    This makes it easy to customize the startup process by overwritting its `model_run` method.
   
