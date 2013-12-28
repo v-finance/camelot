@@ -211,7 +211,10 @@ and above the text.
         #
         QtGui.QTableView.setModel( self, model )
         register.register( model, self )
-        self.selectionModel().currentChanged.connect(self._current_changed)
+        # assign selection model to local variable to keep it alive during method
+        # call, or PySide segfaults
+        selection_model = self.selectionModel()
+        selection_model.currentChanged.connect(self._current_changed)
         model.modelReset.connect(self.update_headers)
         self.update_headers()
         
