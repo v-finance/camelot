@@ -22,13 +22,15 @@
 #
 #  ============================================================================
 
+import logging
+
 import six
 
 from ....core.qt import Qt, variant_to_py
-from .customdelegate import CustomDelegate, DocumentationMetaclass
+from ...proxy import ValueLoading
 from .. import editors
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-import logging
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
 class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
@@ -60,6 +62,8 @@ class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_py(index.data(Qt.DisplayRole))
+        if value in (None, ValueLoading):
+            value = ''
         self.paint_text(painter, option, index, six.text_type(value) )
         painter.restore()
 
