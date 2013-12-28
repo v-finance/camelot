@@ -163,10 +163,12 @@ class RowModelContext(ListActionModelContext):
     def get_object( self ):
         return self.obj
 
-class CollectionProxy( QtGui.QIdentityProxyModel ):
+# QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
+# QIdentityProxyModel is missing from PySide
+class CollectionProxy(QtGui.QSortFilterProxyModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
-    :class:`QtGui.QTableView`
+    :class:`QtGui.QTableView`  
 
     The behavior of the :class:`QtGui.QTableView`, such as what happens when the
     user clicks on a row is defined in the :class:`ObjectAdmin` class.
@@ -302,6 +304,9 @@ position in the query.
         assert object_thread( self )
         return False
     
+    def buddy(self, index):
+        return index
+
     #
     # end or reimplementation
     #
