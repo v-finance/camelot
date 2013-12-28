@@ -13,20 +13,42 @@ import six
 
 try:
     import sip
-    from PyQt4 import QtCore, QtGui, QtNetwork
+    from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import Qt
     
     # the api version is only available after importing QtCore
     variant_api = sip.getapi('QVariant')
     string_api = sip.getapi('QString')
+    qt_bindings = 'PyQt4'
 except ImportError:
     try:
-        from PySide import QtCore, QtGui, QtNetwork
+        from PySide import QtCore, QtGui
         from PySide.QtCore import Qt
         variant_api = 2
         string_api = 2
+        qt_bindings = 'PySide'
     except ImportError:
-        raise Exception('PyQt nor PySide could be imported')
+        raise Exception('PyQt4 nor PySide could be imported')
+
+class DelayedModule(object):
+    """
+    Import QtWebKit as late as possible, since it's the largest
+    part of the QT Library (15 meg on Ubuntu linux)
+    """
+    
+    def __init__(self, module_name):
+        self.__name__ = module_name
+        self.module = None
+    
+    def __getattr__(self, attr):
+        if self.module is None:
+            binding_module = __import__(qt_bindings,
+                                        globals(), locals(), [self.__name__])
+            self.module = getattr(binding_module, self.__name__)
+        return getattr(self.module, attr)
+
+QtWebKit = DelayedModule('QtWebKit')
+QtNetwork = DelayedModule('QtNetwork')
 
 def _py_to_variant_1( obj=None ):
     """Convert a Python object to a :class:`QtCore.QVariant` object

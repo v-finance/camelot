@@ -27,7 +27,7 @@ import time
 
 import six
 
-from ...core.qt import Qt, QtCore, QtGui
+from ...core.qt import Qt, QtCore, QtGui, QtWebKit
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -291,11 +291,6 @@ class ShowHelp( Action ):
     verbose_name = _('Help')
     
     def gui_run( self, gui_context ):
-        #
-        # Import QtWebKit as late as possible, since it's the largest
-        # part of the QT Library (15 meg on Ubuntu linux)
-        #
-        from PyQt4 import QtWebKit
         self.view = QtWebKit.QWebView( None )
         self.view.load( gui_context.admin.get_application_admin().get_help_url() )
         self.view.setWindowTitle( ugettext('Help Browser') )

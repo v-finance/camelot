@@ -31,7 +31,7 @@ from camelot.core.utils import ugettext_lazy as _
 class HSeparator(QtGui.QFrame):
 
     def __init__(self, parent=None):
-        super(QtGui.HSeparator, self).__init__(parent)
+        super(HSeparator, self).__init__(parent)
         self.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
 
 class StandaloneWizardPage(QtGui.QDialog):
@@ -64,9 +64,9 @@ class StandaloneWizardPage(QtGui.QDialog):
         banner_widget.setLayout(banner_layout)
 
         self._vlayout.addWidget(banner_widget)
-        self._vlayout.addWidget(QtGui.HSeparator())
+        self._vlayout.addWidget(HSeparator())
         self._vlayout.addWidget(QtGui.QFrame(), 1)
-        self._vlayout.addWidget(QtGui.HSeparator())
+        self._vlayout.addWidget(HSeparator())
         self._vlayout.addWidget(QtGui.QWidget())
         self.setLayout(self._vlayout)
 
