@@ -31,7 +31,7 @@ class SignalCounter( QtCore.QObject ):
         super( SignalCounter, self ).__init__()
         self.counter = 0
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def signal_caught( self ):
         self.counter += 1
 

@@ -40,7 +40,7 @@ class ProxySignalRegister( QtCore.QObject ):
     def clear( self ):
         self.data_changes = []
         
-    @QtCore.pyqtSlot(object, object)
+    @QtCore.qt_slot(object, object)
     def register_data_change( self, from_index, thru_index ):
         self.data_changes.append( ((from_index.row(), from_index.column()),
                                    (thru_index.row(), thru_index.column())) )
