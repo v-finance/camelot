@@ -31,13 +31,16 @@ class SourceQualityCase( unittest.TestCase ):
 
     def test_qt_incompatible(self):
         # test for the use of constructs that should be handled through
-        # the qt compatibility modume
+        # the qt compatibility module
         qt_incompatible = [
             'QVariant',
             'toBool',
             'toString()',
             'toSize()',
             'PyQt4',
+            'pyqtSlot',
+            'pyqtSignal',
+            'pyqtProperty',
         ]
 
         for dirpath, filename in self.walk_source_files():

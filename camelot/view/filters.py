@@ -153,7 +153,7 @@ class FilterWidget( QtGui.QGroupBox ):
     """A box containing a filter that can be applied on a table view, this filter is
     based on the distinct values in a certain column"""
   
-    filter_changed_signal = QtCore.pyqtSignal()
+    filter_changed_signal = QtCore.qt_signal()
     
     def __init__(self, filter_data, parent):
         super( FilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
@@ -168,7 +168,7 @@ class FilterWidget( QtGui.QGroupBox ):
         group.buttonClicked.connect(self.emit_filter_changed)
         self.set_filter_data( filter_data )
          
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def emit_filter_changed( self, state) :
         self.filter_changed_signal.emit()
     
@@ -204,7 +204,7 @@ class GroupBoxFilter(Filter):
 class GroupBoxFilterWidget( QtGui.QGroupBox ):
     """Flter widget based on a QGroupBox"""
   
-    filter_changed_signal = QtCore.pyqtSignal()
+    filter_changed_signal = QtCore.qt_signal()
     
     def __init__(self, filter_data, parent):
         super( GroupBoxFilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
@@ -224,7 +224,7 @@ class GroupBoxFilterWidget( QtGui.QGroupBox ):
         self.setLayout(layout)
         combobox.currentIndexChanged.connect( self.emit_filter_changed )
             
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def emit_filter_changed(self, index):
         self.current_index = index
         self.filter_changed_signal.emit()
@@ -285,7 +285,7 @@ class EditorFilter(Filter):
 class DateFilterWidget( QtGui.QGroupBox ):
     """Filter widget based on a DateEditor"""
   
-    filter_changed_signal = QtCore.pyqtSignal()
+    filter_changed_signal = QtCore.qt_signal()
     
     def __init__( self, filter_data, parent ):
         super( DateFilterWidget, self ).__init__( six.text_type( filter_data.name ), parent )
@@ -300,7 +300,7 @@ class DateFilterWidget( QtGui.QGroupBox ):
         self.setLayout( layout )
         self.date_editor.editingFinished.connect( self.emit_filter_changed )
             
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def emit_filter_changed(self):
         self.filter_changed_signal.emit()
         

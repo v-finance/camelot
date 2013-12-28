@@ -30,7 +30,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     """A ComboBox that shows a list of languages, the editor takes
     as its value the ISO code of the language"""
 
-    editingFinished = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
     language_choices = []
     
     def __init__(self, parent=None, languages=[], field_name='language', **kwargs):
@@ -56,7 +56,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
             self.index_by_language[ language ] = i
         self.activated.connect( self._activated )
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def _activated(self, _index):
         self.editingFinished.emit()
             

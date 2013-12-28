@@ -29,7 +29,7 @@ from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
 
-    editingFinished = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
     
     def __init__(self, 
                  parent = None, 

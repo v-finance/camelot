@@ -107,9 +107,9 @@ class DateTimeEditor(CustomEditor):
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 
-    @QtCore.pyqtSlot(six.text_type)
-    @QtCore.pyqtSlot(int)
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(int)
+    @QtCore.qt_slot()
     def editing_finished(self, _arg=None):
         if self.time() and self.date():
             self.editingFinished.emit()

@@ -43,7 +43,7 @@ logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
 
-    arrow_down_key_pressed = QtCore.pyqtSignal()
+    arrow_down_key_pressed = QtCore.qt_signal()
 
     class CompletionsModel(QtCore.QAbstractListModel):
 
@@ -178,17 +178,17 @@ class Many2OneEditor( CustomEditor ):
         obj = index.data(Qt.EditRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def handle_entity_update( self, sender, entity ):
         if entity is self.get_value():
             self.set_object(entity, False)
 
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def handle_entity_delete( self, sender, entity ):
         if entity is self.get_value():
             self.set_object(None, False)
 
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def handle_entity_create( self, sender, entity ):
         if entity is self.new_value:
             self.new_value = None
@@ -226,7 +226,7 @@ class Many2OneEditor( CustomEditor ):
             return value
         return self.obj
 
-    @QtCore.pyqtSlot(tuple)
+    @QtCore.qt_slot(tuple)
     def set_instance_representation(self, representation_and_propagate):
         """Update the gui"""
         (desc, propagate) = representation_and_propagate

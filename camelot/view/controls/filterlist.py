@@ -32,7 +32,7 @@ from ...core.qt import QtCore, QtGui
 class FilterList( QtGui.QWidget ):
     """A list with filters that can be applied on a query in the tableview"""
 
-    filters_changed_signal = QtCore.pyqtSignal()
+    filters_changed_signal = QtCore.qt_signal()
     
     def __init__(self, items, parent):
         """
@@ -60,7 +60,7 @@ class FilterList( QtGui.QWidget ):
                 query = self.layout().itemAt(i).widget().decorate_query(query)
         return query
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def emit_filters_changed(self):
         logger.debug('filters changed')
         self.filters_changed_signal.emit()

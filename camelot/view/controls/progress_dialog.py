@@ -94,7 +94,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     def resizeEvent(self, event):
         return QtGui.QWidget.resizeEvent(self, event)
     
-    @QtCore.pyqtSlot(bool)
+    @QtCore.qt_slot(bool)
     def copy_clicked(self, checked):
         details = self.findChild( QtGui.QListView, 'details' )
         if details is None:

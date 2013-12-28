@@ -59,14 +59,14 @@ class AutoReload( QtCore.QFileSystemWatcher ):
     
     dispatch = event.dispatcher( AutoReloadEvents )
     
-    reload = QtCore.pyqtSignal()
+    reload = QtCore.qt_signal()
 
     def __init__( self, parent = None ):
         super( AutoReload, self ).__init__( None )
         self.fileChanged.connect( self.source_changed )
         self.directoryChanged.connect( self.source_changed )
 
-    @QtCore.pyqtSlot( str )
+    @QtCore.qt_slot( str )
     def source_changed( self, changed ):
         LOGGER.warn( u'%s changed, reload application'%changed )
         for fn in self.dispatch.before_reload:

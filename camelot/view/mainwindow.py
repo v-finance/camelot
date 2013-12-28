@@ -69,7 +69,7 @@ class MainWindow(QtGui.QMainWindow):
 
         logger.debug('initialization complete')
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def unmaximize_view( self ):
         """Show the navigation pane and the menu bar if they exist """
         if self.navpane:
@@ -77,7 +77,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.menuBar():
             self.menuBar().show()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def change_view_mode( self ):
         """Switch between hidden or shown menubar and navigation pane"""
         if self.menuBar().isHidden():
@@ -103,7 +103,7 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue('geometry', py_to_variant(self.saveGeometry()))
         logger.debug('settings written')
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_main_menu( self, main_menu ):
         """Set the main menu
         :param main_menu: a list of :class:`camelot.admin.menu.Menu` objects,
@@ -130,7 +130,7 @@ class MainWindow(QtGui.QMainWindow):
             return active_view.gui_context
         return self.gui_context
         
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
         """Set the toolbar for a specific area
         :param toolbar_area: the area on which to put the toolbar, from
@@ -170,7 +170,7 @@ class MainWindow(QtGui.QMainWindow):
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_hidden_actions( self, hidden_actions ):
         from camelot.view.controls.action_widget import ActionAction
         for action in hidden_actions:
@@ -178,7 +178,7 @@ class MainWindow(QtGui.QMainWindow):
             action_action.triggered.connect( self.action_triggered )
             self.addAction( action_action )
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def view_activated( self ):
         """Update the state of the actions when the active tab in the
         desktop widget has changed"""
@@ -199,7 +199,7 @@ class MainWindow(QtGui.QMainWindow):
                       qaction.set_state,
                       args = ( model_context, ) )
         
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         """Execute an action that was triggered somewhere in the main window,
         such as the toolbar or the main menu"""
@@ -207,7 +207,7 @@ class MainWindow(QtGui.QMainWindow):
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
         
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_sections( self, sections ):
         """Set the sections of the navigation pane
         :param main_menu: a list of :class:`camelot.admin.section.Section` objects,

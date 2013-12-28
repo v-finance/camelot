@@ -30,7 +30,7 @@ from .customeditor import AbstractCustomEditor
 
 class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
-    editingFinished = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
  
     def __init__(self, 
                  parent, 

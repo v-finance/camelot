@@ -55,14 +55,14 @@ class PrintPreviewDialog( QtGui.QPrintPreviewDialog ):
             toolbar.addAction( qaction )
         self.paintRequested.connect( self.paint_on_printer )
             
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context ) 
         preview_widget = self.findChild( QtGui.QPrintPreviewWidget )
         preview_widget.updatePreview()
         
-    @QtCore.pyqtSlot( QtGui.QPrinter )
+    @QtCore.qt_slot( QtGui.QPrinter )
     def paint_on_printer( self, printer ):
         self.gui_context.document.print_( printer )
 

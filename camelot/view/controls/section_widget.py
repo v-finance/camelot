@@ -59,7 +59,7 @@ class PaneSection(QtGui.QWidget):
         self.setLayout(layout)
         post( section.get_items, self.set_items )
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def set_items(self, items, parent = None):
         logger.debug('setting items for current navpane section')
         section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
@@ -103,13 +103,13 @@ class PaneSection(QtGui.QWidget):
                 section_tree.setCurrentItem(item)
                 section_tree.contextmenu.popup(section_tree.mapToGlobal(point))
 
-    @QtCore.pyqtSlot(bool)
+    @QtCore.qt_slot(bool)
     def _action_triggered( self, _checked ):
         action = self.sender()
         mode_name = variant_to_py( action.data() )
         self._run_current_action( mode_name )
         
-    @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
+    @QtCore.qt_slot(QtGui.QTreeWidgetItem, int)
     def _item_clicked(self, _item, _column):
         self._run_current_action()
 
@@ -160,14 +160,14 @@ class NavigationPane(QtGui.QDockWidget):
             current_index = toolbox.currentIndex()
             toolbox.setCurrentIndex( max( 0, min( current_index + steps, toolbox.count() ) ) )
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def update_sections(self):
         post(self.app_admin.get_sections, self.set_sections)
 
     def get_sections(self):
         return self._sections
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
         if not sections:

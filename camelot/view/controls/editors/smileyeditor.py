@@ -91,7 +91,7 @@ class SmileyEditor(CustomEditor):
     def set_enabled(self, editable=True):
         self.box.setEnabled(editable)
 
-    @QtCore.pyqtSlot( int )
+    @QtCore.qt_slot( int )
     def smiley_changed(self, _index ):
         self.editingFinished.emit()
 

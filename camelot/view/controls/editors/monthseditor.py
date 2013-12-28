@@ -65,7 +65,7 @@ class MonthsEditor(CustomEditor):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
         

@@ -35,9 +35,9 @@ class SignalHandler(QtCore.QObject):
     could be used to inform other signal handlers on the network of the change.
      """
 
-    entity_update_signal = QtCore.pyqtSignal(object, object)
-    entity_delete_signal = QtCore.pyqtSignal(object, object)
-    entity_create_signal = QtCore.pyqtSignal(object, object)
+    entity_update_signal = QtCore.qt_signal(object, object)
+    entity_delete_signal = QtCore.qt_signal(object, object)
+    entity_create_signal = QtCore.qt_signal(object, object)
     
     def __init__(self):
         super(SignalHandler, self).__init__()

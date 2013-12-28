@@ -43,22 +43,22 @@ class AbstractView(QtGui.QWidget):
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.pyqtSignal(six.text_type)
-    icon_changed_signal = QtCore.pyqtSignal(QtGui.QIcon)
+    title_changed_signal = QtCore.qt_signal(six.text_type)
+    icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the data in the current view"""
         pass
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
         #import sip
         #if not sip.isdeleted(self):
         self.title_changed_signal.emit( six.text_type(new_title) )
         
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
 
@@ -87,7 +87,7 @@ class TabView(AbstractView):
         post(get_views_and_titles, self.set_views_and_titles)
         post(lambda:self.title_format, self.change_title)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the data in the current view"""
         for i in range(self._tab_widget.count()):

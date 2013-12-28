@@ -38,7 +38,7 @@ from camelot.core.utils import ugettext as _
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
-    calendar_action_trigger = QtCore.pyqtSignal()
+    calendar_action_trigger = QtCore.qt_signal()
     special_date_icon = Icon('tango/16x16/apps/office-calendar.png')
     
     def __init__(self, parent = None,

@@ -59,7 +59,7 @@ class DelegateManager(QtGui.QItemDelegate):
     def _commit_data(self, editor):
         self.commitData.emit(editor)
 
-    @QtCore.pyqtSlot( QtGui.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
+    @QtCore.qt_slot( QtGui.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 

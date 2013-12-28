@@ -173,14 +173,14 @@ class CollectionProxy( QtGui.QIdentityProxyModel ):
 
     """
 
-    row_changed_signal = QtCore.pyqtSignal(int, int, int)
-    exception_signal = QtCore.pyqtSignal(object)
-    rows_removed_signal = QtCore.pyqtSignal()
+    row_changed_signal = QtCore.qt_signal(int, int, int)
+    exception_signal = QtCore.qt_signal(object)
+    rows_removed_signal = QtCore.qt_signal()
     
     # it looks as QtCore.QModelIndex cannot be serialized for cross
     # thread signals
-    _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( int, int )
-    _rows_inserted_signal = QtCore.pyqtSignal( int, int )
+    _rows_about_to_be_inserted_signal = QtCore.qt_signal( int, int )
+    _rows_inserted_signal = QtCore.qt_signal( int, int )
 
     def __init__( self,
                   admin,
@@ -367,7 +367,7 @@ position in the query.
         assert object_thread( self )
         post( self.getRowCount, self._refresh_content )
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
         locker = QtCore.QMutexLocker(self._mutex)
@@ -419,7 +419,7 @@ position in the query.
         self.dataChanged.emit( self.index( row, 0 ),
                                self.index( row, self.columnCount() - 1 ) )
 
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def handle_entity_update( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -449,7 +449,7 @@ position in the query.
         else:
             self.logger.debug( 'duplicate update' )
 
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def handle_entity_delete( self, sender, obj ):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -472,7 +472,7 @@ position in the query.
 
             post( entity_remove, self._refresh_content, args=(obj,) )
 
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def handle_entity_create( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -482,7 +482,7 @@ position in the query.
         #         probably do nothing
         return
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def setRowCount( self, rows ):
         """Callback method to set the number of rows
         @param rows the new number of rows
@@ -494,7 +494,7 @@ position in the query.
     def get_static_field_attributes(self):
         return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
     
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def set_static_field_attributes(self, static_fa):
         self._static_field_attributes = static_fa
         self.beginResetModel()
@@ -645,9 +645,9 @@ position in the query.
            not ( 0 <= index.row() < self.rowCount( index ) ) or \
            not ( 0 <= index.column() < self.columnCount() ):
             if role == Qt.UserRole:
-                return variant_to_py({})
+                return py_to_variant({})
             else:
-                return variant_to_py()
+                return py_to_variant()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -857,7 +857,7 @@ position in the query.
     # @todo : it seems Qt regulary crashes when dataChanged is emitted
     #         don't do the emit inside a slot, but rework the CollectionProxy
     #         to behave as an action that yields all it's updates
-    @QtCore.pyqtSlot(int, int, int)
+    @QtCore.qt_slot(int, int, int)
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
         self.headerDataChanged.emit(Qt.Vertical, row, row)
@@ -1033,7 +1033,7 @@ position in the query.
             pass
         return None
 
-    @QtCore.pyqtSlot(tuple)
+    @QtCore.qt_slot(tuple)
     def _cache_extended( self, interval ):
         offset, limit = interval
         locker = QtCore.QMutexLocker(self._mutex)
@@ -1082,11 +1082,11 @@ position in the query.
         if o not in collection:
             collection.append( o )
 
-    @QtCore.pyqtSlot( int, int )
+    @QtCore.qt_slot( int, int )
     def _rows_about_to_be_inserted( self, first, last ):
         self.beginInsertRows( QtCore.QModelIndex(), first, last )
         
-    @QtCore.pyqtSlot( int, int )
+    @QtCore.qt_slot( int, int )
     def _rows_inserted( self, _first, _last ):
         self.endInsertRows()
         

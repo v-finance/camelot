@@ -57,7 +57,7 @@ within by right clicking on it and selecting the appropriate submenu.
         else:
             self._text = None
             
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def change_translation(self):
         if self._text:
             new_translation, ok = QtGui.QInputDialog.getText(self, 

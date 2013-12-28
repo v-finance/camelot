@@ -91,20 +91,20 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.search_input.setText(search_text)
         self.emit_search()
 
-    @QtCore.pyqtSlot()
-    @QtCore.pyqtSlot(str)
+    @QtCore.qt_slot()
+    @QtCore.qt_slot(str)
     def _start_search_timer(self, str=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer:
             timer.stop()
             timer.start()
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def emit_expand_search_options(self):
         self.expand_search_options_signal.emit()
 
-    @QtCore.pyqtSlot()
-    @QtCore.pyqtSlot(str)
+    @QtCore.qt_slot()
+    @QtCore.qt_slot(str)
     def emit_search(self, str=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer:
@@ -112,7 +112,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         text = six.text_type(self.search_input.text())
         self.search_signal.emit( text )
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def emit_cancel(self):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer:
@@ -120,7 +120,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.search_input.setText('')
         self.cancel_signal.emit()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def on_arrow_down_key_pressed(self):
         self.on_arrow_down_signal.emit()
 

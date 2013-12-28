@@ -102,14 +102,14 @@ All files (*)"""
         QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
         self.clipboard_data_changed()
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def clipboard_data_changed(self):
         paste_button = self.findChild(QtGui.QWidget, 'paste')
         if paste_button:
             mime_data = QtGui.QApplication.clipboard().mimeData()
             paste_button.setVisible( mime_data.hasImage() )
             
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def paste_from_clipboard(self):
         """Paste an image from the clipboard into the editor"""
         mime_data = QtGui.QApplication.clipboard().mimeData()
@@ -139,7 +139,7 @@ All files (*)"""
     def set_image(self, image):
         self.set_pixmap(QtGui.QPixmap.fromImage(image))
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def copy_to_clipboard(self):
         """Copy the image to the clipboard"""
         if self.value:

@@ -46,7 +46,7 @@ class SubclassTree( ModelTree ):
     emits subclassClicked when a subclass has been selected
     """
 
-    subclass_clicked_signal = QtCore.pyqtSignal(object)
+    subclass_clicked_signal = QtCore.qt_signal(object)
     
     def __init__(self, admin, subclasses, parent):
         header_labels = ['Types']
@@ -74,7 +74,7 @@ class SubclassTree( ModelTree ):
         else:
             self.setMaximumWidth(0)
 
-    @QtCore.pyqtSlot(QtCore.QModelIndex)
+    @QtCore.qt_slot(QtCore.QModelIndex)
     def emit_subclass_clicked(self, index):
         logger.debug('subclass clicked at position %s' % index.row())
         item = self.itemFromIndex(index)
@@ -93,7 +93,7 @@ class SubclassDialog(QtGui.QDialog):
         self.selected_subclass = None
         subclass_tree.subclass_clicked_signal.connect( self._subclass_clicked )
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def _subclass_clicked(self, admin):
         self.selected_subclass = admin
         self.accept()

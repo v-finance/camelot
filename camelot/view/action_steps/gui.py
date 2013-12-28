@@ -115,7 +115,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         layout.addWidget( combobox )
         self.main_widget().setLayout(layout)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def _combobox_activated(self):
         if self.autoaccept:
             self.accept()

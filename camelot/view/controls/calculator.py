@@ -28,7 +28,7 @@ from camelot.core.utils import ugettext as _
 
 class Calculator(QtGui.QDialog):
     
-    calculation_finished_signal = QtCore.pyqtSignal(QtCore.QString)
+    calculation_finished_signal = QtCore.qt_signal(QtCore.QString)
     
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)

@@ -95,7 +95,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
              args = (Qt.RightToolBarArea, self.direction ) )
         post(self.get_columns, self.set_columns)
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_right_toolbar_actions( self, toolbar_actions ):
         if toolbar_actions != None:
             toolbar = QtGui.QToolBar( self )
@@ -109,7 +109,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # toolbar was created
             self.update_action_status()
 
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context )
@@ -138,7 +138,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if table is not None:
             return table.model()
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtGui.QWidget, 'table')
@@ -184,7 +184,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             table.setCurrentIndex( index )
             table.edit( index )
 
-    @QtCore.pyqtSlot( int )
+    @QtCore.qt_slot( int )
     def trigger_list_action( self, index ):
         table = self.findChild(QtGui.QWidget, 'table')
         # close the editor to prevent certain Qt crashes

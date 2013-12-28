@@ -39,7 +39,7 @@ class ObjectValidator(QtCore.QObject):
     `validate_object` method to change it's behaviour.
     """
 
-    validity_changed_signal = QtCore.pyqtSignal(int)
+    validity_changed_signal = QtCore.qt_signal(int)
 
     def __init__(self, admin, model = None, initial_validation = False):
         """
@@ -82,11 +82,11 @@ class ObjectValidator(QtCore.QObject):
         for row in copy(self._invalid_rows):
             self.isValid(row)
 
-    #@QtCore.pyqtSlot()
+    #@QtCore.qt_slot()
     #def layout_changed(self):
         #post(self.validate_invalid_rows)
 
-    #@QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
+    #@QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex )
     #def data_changed(self, from_index, thru_index):
         #if self.receivers(self.validity_changed_signal) == 0:
             #return

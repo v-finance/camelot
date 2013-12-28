@@ -130,8 +130,8 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     as its value, specifying that no value has been set yet.
     """
 
-    editingFinished = QtCore.pyqtSignal()
-    valueChanged = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
+    valueChanged = QtCore.qt_signal()
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)

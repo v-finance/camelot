@@ -108,7 +108,7 @@ class VirtualAddressEditor(CustomEditor):
         self.setLayout(self.layout)
         self.checkValue(self.editor.text())
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def comboIndexChanged(self):
         self.checkValue(self.editor.text())
         self.emit_editing_finished()
@@ -172,7 +172,7 @@ class VirtualAddressEditor(CustomEditor):
     def editorValueChanged(self, text):
         self.checkValue(text)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def mail_click(self):
         address = self.editor.text()
         url = QtCore.QUrl()

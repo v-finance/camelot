@@ -46,7 +46,7 @@ class FilterOperator( QtGui.QGroupBox ):
     :param parent: the parent :obj:`QtGui.QWidget`
     """
     
-    filter_changed_signal = QtCore.pyqtSignal()
+    filter_changed_signal = QtCore.qt_signal()
         
     def __init__( self, 
                   cls, 
@@ -127,7 +127,7 @@ class FilterOperator( QtGui.QGroupBox ):
             self._editor2.setEnabled(False)
             self._editor2.hide()
         
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def combobox_changed(self, index):
         """Whenever the combobox changes, show or hide the
         appropriate editors and emit the filter_changed signal """

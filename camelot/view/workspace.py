@@ -71,7 +71,7 @@ class DesktopBackground(QtGui.QWidget):
     # This method is invoked when the desktop workspace decides or gets told
     # that the actions should be updated due to the presence of to be added 
     # actions. 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def set_actions(self, actions):
         """
         :param actions: a list of EntityActions
@@ -107,7 +107,7 @@ class DesktopBackground(QtGui.QWidget):
                 actionButton.setInteractive(True)
                 actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
             
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def onActionButtonEntered(self):
         actionButton = self.sender()
         actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
@@ -118,7 +118,7 @@ class DesktopBackground(QtGui.QWidget):
                   actionButtonInfoWidget.setInfoFromState,
                   args = (None,) )
        
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def onActionButtonLeft(self):
         actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
         if actionButtonInfoWidget is not None:
@@ -140,7 +140,7 @@ class DesktopBackground(QtGui.QWidget):
     # by already hovering the action buttons. This switch assures that the user 
     # cannot perform mouse interaction with the action buttons until they're
     # static.
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def makeInteractive(self, interactive=True):
         for actionButton in self.findChildren(ActionLabel):
             actionButton.setInteractive(interactive)
@@ -190,7 +190,7 @@ class ActionButtonInfoWidget(QtGui.QWidget):
 
         self.setLayout(mainLayout)
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def setInfoFromState(self, state):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
@@ -219,7 +219,7 @@ class ActionButtonInfoWidget(QtGui.QWidget):
     
 class DesktopTabbar(QtGui.QTabBar):
 
-    change_view_mode_signal = QtCore.pyqtSignal()
+    change_view_mode_signal = QtCore.qt_signal()
     
     def mouseDoubleClickEvent(self, event):
         self.change_view_mode_signal.emit()
@@ -246,9 +246,9 @@ class DesktopWorkspace(QtGui.QWidget):
     The widget class to be used as the view for the uncloseable 'Start' tab.
     """
 
-    view_activated_signal = QtCore.pyqtSignal(QtGui.QWidget)
-    change_view_mode_signal = QtCore.pyqtSignal()
-    last_view_closed_signal = QtCore.pyqtSignal()
+    view_activated_signal = QtCore.qt_signal(QtGui.QWidget)
+    change_view_mode_signal = QtCore.qt_signal()
+    last_view_closed_signal = QtCore.qt_signal()
 
     def __init__(self, app_admin, parent):
         super(DesktopWorkspace, self).__init__(parent)
@@ -287,15 +287,15 @@ class DesktopWorkspace(QtGui.QWidget):
         self.setLayout(layout)
         self.reload_background_widget()
              
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def reload_background_widget(self):
         post(self._app_admin.get_actions, self._background_widget.set_actions)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def _change_view_mode(self):
         self.change_view_mode_signal.emit()
         
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def _tab_close_request(self, index):
         """
         Handle the request for the removal of a tab at index.
@@ -311,7 +311,7 @@ class DesktopWorkspace(QtGui.QWidget):
                 view.deleteLater()
                 self._tab_widget.removeTab(index)
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def _tab_changed(self, _index):
         """
         The active tab has changed, emit the view_activated signal.
@@ -329,7 +329,7 @@ class DesktopWorkspace(QtGui.QWidget):
         
         return self._tab_widget.widget(i)
 
-    @QtCore.pyqtSlot(six.text_type)
+    @QtCore.qt_slot(six.text_type)
     def change_title(self, new_title):
         """
         Slot to be called when the tile of a view needs to change.
@@ -347,7 +347,7 @@ class DesktopWorkspace(QtGui.QWidget):
             if index > 0:
                 self._tab_widget.setTabText(index, new_title)
                 
-    @QtCore.pyqtSlot(QtGui.QIcon)
+    @QtCore.qt_slot(QtGui.QIcon)
     def change_icon(self, new_icon):
         """
         Slot to be called when the icon of a view needs to change.

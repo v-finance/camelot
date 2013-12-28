@@ -77,8 +77,8 @@ class AbstractModelThread(QtCore.QThread):
     is mostly fatal for the application.
     """
 
-    thread_busy_signal = QtCore.pyqtSignal(bool)
-    setup_exception_signal = QtCore.pyqtSignal(object)
+    thread_busy_signal = QtCore.qt_signal(bool)
+    setup_exception_signal = QtCore.qt_signal(object)
 
     def __init__(self):
         super(AbstractModelThread, self).__init__()

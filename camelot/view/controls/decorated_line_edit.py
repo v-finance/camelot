@@ -35,7 +35,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
 
     """
       
-    arrow_down_key_pressed = QtCore.pyqtSignal()
+    arrow_down_key_pressed = QtCore.qt_signal()
     _font_metrics = None
       
     def __init__(self, parent = None):

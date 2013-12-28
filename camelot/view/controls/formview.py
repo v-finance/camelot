@@ -108,7 +108,7 @@ class FormEditors( object ):
 class FormWidget(QtGui.QWidget):
     """A form widget comes inside a form view"""
 
-    changed_signal = QtCore.pyqtSignal( int )
+    changed_signal = QtCore.qt_signal( int )
 
     def __init__(self, admin, model, form_display, columns, parent):
         QtGui.QWidget.__init__(self, parent)
@@ -151,16 +151,16 @@ class FormWidget(QtGui.QWidget):
         if widget_mapper:
             widget_mapper.clearMapping()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def _model_reset(self):
         self._layout_changed()
             
-    @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex  )
+    @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex  )
     def _data_changed(self, index_from, index_to):
         #@TODO: only revert if this form is in the changed range
         self._layout_changed()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def _layout_changed(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
@@ -170,7 +170,7 @@ class FormWidget(QtGui.QWidget):
             widget_mapper.revert()
             self.changed_signal.emit( widget_mapper.currentIndex() )
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def current_index_changed( self, index ):
         self.changed_signal.emit( index )
         
@@ -254,7 +254,7 @@ class FormView(AbstractView):
 
         self.accept_close_event = False
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the data in the current view"""
         self.model.refresh()
@@ -266,11 +266,11 @@ class FormView(AbstractView):
             self.admin.get_verbose_identifier(obj)
         )
             
-    @QtCore.pyqtSlot( int )
+    @QtCore.qt_slot( int )
     def update_title(self, current_index ):
         post( self._get_title, self.change_title, args=(current_index,) )
 
-    @QtCore.pyqtSlot(list)
+    @QtCore.qt_slot(list)
     def set_actions(self, actions):
         form = self.findChild(QtGui.QWidget, 'form' )
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
@@ -286,7 +286,7 @@ class FormView(AbstractView):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
             
-    @QtCore.pyqtSlot(list)
+    @QtCore.qt_slot(list)
     def set_toolbar_actions(self, actions):
         layout = self.findChild( QtGui.QLayout, 'layout' )
         if layout and actions:
@@ -303,12 +303,12 @@ class FormView(AbstractView):
             # flicker
             self.show()
 
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context )
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def validate_close( self ):
         self.admin.form_close_action.gui_run( self.gui_context )
         

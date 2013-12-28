@@ -37,8 +37,8 @@ class ChoicesEditor(CustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
     keys and values"""
 
-    editingFinished = QtCore.pyqtSignal()
-    valueChanged = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
+    valueChanged = QtCore.qt_signal()
 
     def __init__( self,
                   parent = None,
@@ -63,7 +63,7 @@ class ChoicesEditor(CustomEditor):
         self.setLayout(layout)
         self.add_actions(actions, layout)
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def _activated(self, _index):
         self.setProperty( 'value', py_to_variant( self.get_value() ) )
         self.valueChanged.emit()

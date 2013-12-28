@@ -309,7 +309,7 @@ the moment the tab is shown.
                 break
         self.currentChanged.connect( self.render_tab )
             
-    @QtCore.pyqtSlot( int )
+    @QtCore.qt_slot( int )
     def render_tab( self, index ):
         """
         Render the tab at index

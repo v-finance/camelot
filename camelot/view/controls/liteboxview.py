@@ -81,7 +81,7 @@ class LiteBoxView(QtGui.QGraphicsView):
 
     ALPHA = QtGui.QColor(0, 0, 0, 192)
 
-    closed_signal = QtCore.pyqtSignal()
+    closed_signal = QtCore.qt_signal()
 
     def __init__(self, parent=None):
         super(LiteBoxView, self).__init__(parent)

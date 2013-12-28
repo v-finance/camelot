@@ -67,7 +67,7 @@ class Register(QtCore.QObject):
         self._registed_by_monitor_key[key] = registered
         monitored.setProperty( self._key_name, key )
         
-    @QtCore.pyqtSlot(QtCore.QObject)
+    @QtCore.qt_slot(QtCore.QObject)
     def _monitored_object_destroyed(self, qobject):
         """slot to indicate a monitored object is destroyed"""
         key = variant_to_py( qobject.property( self._key_name ) )

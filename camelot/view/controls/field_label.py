@@ -66,7 +66,7 @@ class FieldLabel(UserTranslatableLabel):
     def get_field_attributes(self):
         return self._field_attributes
     
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def show_field_attributes(self):
         action = ShowFieldAttributes()
         gui_context = FieldActionGuiContext()

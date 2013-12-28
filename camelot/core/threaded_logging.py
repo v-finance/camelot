@@ -86,7 +86,7 @@ class ThreadedHandler(logging.Handler):
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def timeout(self):
         while len(self._records_to_emit):
             record = self._records_to_emit.pop()
@@ -152,7 +152,7 @@ class ThreadedAwsHandler(logging.Handler):
         if ei:
             record.exc_info = ei  # for next handler
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def timeout(self):
         from boto.sqs.message import Message
         if not self._queue and self._connected:

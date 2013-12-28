@@ -142,7 +142,7 @@ class CustomDelegate(QtGui.QItemDelegate):
     def sizeHint(self, option, index):
         return QtCore.QSize(self._width, self._height)
 
-    #@QtCore.pyqtSlot()
+    #@QtCore.qt_slot()
     # not yet converted to new style sig slot because sender doesn't work
     # in certain versions of pyqt
     def commitAndCloseEditor(self):

@@ -122,7 +122,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                                         get_actions ),
               self.set_actions )
 
-    @QtCore.pyqtSlot(list)
+    @QtCore.qt_slot(list)
     def set_actions(self, actions):
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and layout:
@@ -135,7 +135,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def _validity_changed(self, row):
         form = self.findChild( QtGui.QWidget, 'form' )
         if not form:
@@ -198,14 +198,14 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         ok_button.setEnabled( False )
         self.validate_all_rows()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def validate_all_rows(self):
         post( self.validator.validate_all_rows, self._all_rows_validated)
 
     def _all_rows_validated(self, *args):
         self.update_complete( 0 )
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def update_complete(self, row=0):
         complete = (self.validator.number_of_invalid_rows()==0)
         note = self.findChild( QtGui.QWidget, 'note' )
@@ -372,7 +372,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         editor.editingFinished.connect( self.field_changed )
         self.set_default_buttons()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def field_changed(self):
         import sqlalchemy.schema
         selected_field = ValueLoading

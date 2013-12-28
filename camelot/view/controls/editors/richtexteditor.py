@@ -35,8 +35,8 @@ class CustomTextEdit(QtGui.QTextEdit):
     when the text was changed and focus is lost.
     """
 
-    editingFinished = QtCore.pyqtSignal()
-    receivedFocus = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
+    receivedFocus = QtCore.qt_signal()
     
     def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
@@ -100,7 +100,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.currentCharFormatChanged.connect(self.update_format)
         self.textedit.cursorPositionChanged.connect(self.update_text)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def emit_editing_finished(self):
         if self.textedit._changed:
             self.editingFinished.emit()

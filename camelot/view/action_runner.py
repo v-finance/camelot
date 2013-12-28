@@ -61,7 +61,7 @@ class ActionRunner( QtCore.QEventLoop ):
     This is class is intended for internal Camelot use only.
     """
     
-    non_blocking_action_step_signal = QtCore.pyqtSignal(object)
+    non_blocking_action_step_signal = QtCore.qt_signal(object)
     
     def __init__( self, generator_function, gui_context ):
         """
@@ -134,7 +134,7 @@ class ActionRunner( QtCore.QEventLoop ):
             LOGGER.debug( 'iterator raised stop, pass it' )
             return e
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def non_blocking_action_step( self, action_step ):
         try:
             self._was_canceled( self._gui_context )
@@ -143,14 +143,14 @@ class ActionRunner( QtCore.QEventLoop ):
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
         
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
         dialog = ExceptionDialog( exception_info )
         dialog.exec_()
         self.exit()
         
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def generator( self, generator ):
         """Handle the creation of the generator"""
         self._generator = generator
@@ -177,7 +177,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 LOGGER.debug( 'progress dialog was canceled, raise request' )
                 raise CancelRequest()
             
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def __next__( self, yielded ):
         """Handle the result of the __next__ call of the generator
         

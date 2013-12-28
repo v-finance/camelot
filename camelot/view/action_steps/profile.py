@@ -251,7 +251,7 @@ allow all languages
         self.ok_button.pressed.connect(self.accept)
         self.browse_button.pressed.connect(self.fill_media_location)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def toggle_ok_button(self):
         enabled = bool(self.profile_editor.currentText()) and bool(self.dialect_editor.get_value())
         self.ok_button.setEnabled(enabled)
@@ -286,11 +286,11 @@ allow all languages
         self.network_status_label.setStyleSheet('')
         self.toggle_ok_button()
 
-    @QtCore.pyqtSlot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
+    @QtCore.qt_slot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
     def proxy_authentication_required(self, proxy, authenticator):
         pass
 
-    @QtCore.pyqtSlot(QtNetwork.QNetworkReply)
+    @QtCore.qt_slot(QtNetwork.QNetworkReply)
     def update_network_status(self, reply):
         if reply.isFinished():
             error = reply.error()
@@ -301,7 +301,7 @@ allow all languages
         self.network_status_label.setText(_('Internet not available.\n%s.'%reply.errorString()))
         self.network_status_label.setStyleSheet('color: red')
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def new_network_request(self):
         if self.network_reply and not self.network_reply.isFinished():
             self.network_reply.abort()

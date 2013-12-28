@@ -53,7 +53,7 @@ class BusyWidget( QtGui.QLabel ):
         # the model thread might already be busy before we connected to it
         self.set_busy( mt.busy() )
 
-    @QtCore.pyqtSlot(bool)
+    @QtCore.qt_slot(bool)
     def set_busy(self, busy_state):
         """start/stop the animation
         :arg busy_state: True or False

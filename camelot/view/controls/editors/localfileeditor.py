@@ -77,12 +77,12 @@ class LocalFileEditor( CustomEditor ):
         layout.addWidget( browse_button )
         self.setLayout( layout )
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def filename_editing_finished(self):
         self.valueChanged.emit()
         self.editingFinished.emit()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def browse_button_clicked(self):
         current_directory = os.path.dirname( self.get_value() )
         if self._directory:
@@ -113,7 +113,7 @@ class LocalFileEditor( CustomEditor ):
     def get_value(self):
         return CustomEditor.get_value(self) or six.text_type( self.filename.text() )
     
-    value = QtCore.pyqtProperty( str, get_value, set_value )
+    value = QtCore.qt_property( str, get_value, set_value )
 
     def set_field_attributes( self, 
                               editable = True,

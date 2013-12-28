@@ -76,17 +76,17 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
                 column_index += 1
         self.currentChanged.connect( self._current_index_changed )
         
-    @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
+    @QtCore.qt_slot( QtCore.QModelIndex, int, int )
     def columns_changed( self, index, first_column, last_column ):
         assert object_thread( self )
         self._current_index_changed( self.currentIndex() )
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def model_reset( self ):
         assert object_thread( self )
         self._current_index_changed( self.currentIndex() )
         
-    @QtCore.pyqtSlot( int )
+    @QtCore.qt_slot( int )
     def _current_index_changed( self, current_index ):
         assert object_thread( self )
         for tab_index, (first_column, last_column) in six.iteritems(self.groups):
@@ -109,7 +109,7 @@ and above the text.
 """
 
     margin = 5
-    keyboard_selection_signal = QtCore.pyqtSignal()
+    keyboard_selection_signal = QtCore.qt_signal()
 
     def __init__( self, lines_per_row = 1, parent = None ):
         QtGui.QTableView.__init__( self, parent )
@@ -157,7 +157,7 @@ and above the text.
         self._columns_changed = dict()
         super( TableWidget, self ).timerEvent( event )
         
-    @QtCore.pyqtSlot(int, int, int)
+    @QtCore.qt_slot(int, int, int)
     def _save_section_width(self, logical_index, _old_size, new_width ):
         # instead of storing the width immediately, a timer is started to store
         # the width when all event processing is done.  because at this time
@@ -170,7 +170,7 @@ and above the text.
         assert object_thread( self )
         self._columns_changed[ logical_index ] = new_width
 
-    @QtCore.pyqtSlot( int )
+    @QtCore.qt_slot( int )
     def horizontal_section_clicked( self, logical_index ):
         """Update the sorting of the model and the header"""
         assert object_thread( self )
@@ -215,7 +215,7 @@ and above the text.
         model.modelReset.connect(self.update_headers)
         self.update_headers()
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def update_headers(self):
         """Updating the header size seems to be no default Qt function, so,
         it's managed here"""
@@ -241,7 +241,7 @@ and above the text.
                                  #size_hint.height())
         #return size_hint
     
-    @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
+    @QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex)
     def _current_changed(self, current, previous):
         """This slot is called whenever the current cell is changed"""
         editor = self.indexWidget(current)
@@ -348,7 +348,7 @@ class RowsWidget( QtGui.QLabel ):
         rows = model.rowCount()
         self.setText(_('(%i rows)')%rows)
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def update_rows(self, *args):
         assert object_thread( self )
         model = self.sender()
@@ -362,7 +362,7 @@ class HeaderWidget( QtGui.QWidget ):
     search_widget = SimpleSearchControl
     rows_widget = RowsWidget
 
-    filters_changed_signal = QtCore.pyqtSignal()
+    filters_changed_signal = QtCore.qt_signal()
 
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
@@ -431,7 +431,7 @@ class HeaderWidget( QtGui.QWidget ):
                 query = widget.decorate_query(query)
         return query
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def expand_search_options(self):
         assert object_thread( self )
         if self._expanded_search.isHidden():
@@ -546,12 +546,12 @@ class TableView( AbstractView  ):
         if self.header_widget:
             self.header.filters_changed_signal.connect( self.rebuild_query )
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def activate_search(self):
         assert object_thread( self )
         self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def set_subclass_tree( self, subclasses ):
         assert object_thread( self )
         if len( subclasses ) > 0:
@@ -561,12 +561,12 @@ class TableView( AbstractView  ):
             splitter.insertWidget( 0, class_tree )
             class_tree.subclass_clicked_signal.connect( self.change_admin )
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_admin(self, new_admin):
         action = ChangeAdmin(new_admin)
         action.gui_run(self.gui_context)
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.qt_slot(int)
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
         assert object_thread( self )
@@ -592,7 +592,7 @@ class TableView( AbstractView  ):
             model.set_value(value)
             self.rebuild_query()
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_admin( self, admin ):
         """Switch to a different subclass, where admin is the admin object of the
         subclass"""
@@ -617,7 +617,7 @@ class TableView( AbstractView  ):
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
         assert object_thread( self )
         self.sectionClicked( self.table.currentIndex().row() )
@@ -629,14 +629,14 @@ class TableView( AbstractView  ):
         logger.debug( 'tableview closed' )
         event.accept()
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def _set_query(self, query_getter):
         assert object_thread( self )
         if isinstance(self.table.model(), QueryTableProxy):
             self.table.model().setQuery(query_getter)
         self.table.clearSelection()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the whole view"""
         assert object_thread( self )
@@ -644,7 +644,7 @@ class TableView( AbstractView  ):
         if model is not None:
             model.refresh()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def rebuild_query( self ):
         """resets the table model query"""
         from .filterlist import FilterList
@@ -667,7 +667,7 @@ class TableView( AbstractView  ):
 
         post( rebuild_query, self._set_query )
 
-    @QtCore.pyqtSlot(str)
+    @QtCore.qt_slot(str)
     def startSearch( self, text ):
         """rebuilds query based on filtering text"""
         assert object_thread( self )
@@ -676,7 +676,7 @@ class TableView( AbstractView  ):
         self.search_filter = create_entity_search_query_decorator( self.admin, six.text_type(text) )
         self.rebuild_query()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def cancelSearch( self ):
         """resets search filtering to default"""
         assert object_thread( self )
@@ -724,7 +724,7 @@ class TableView( AbstractView  ):
             actions_widget.set_actions( actions )
             self.filters_layout.addWidget( actions_widget )
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def focusTable(self):
         assert object_thread( self )
         if self.table and self.table.model().rowCount() > 0:

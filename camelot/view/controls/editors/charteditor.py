@@ -43,8 +43,8 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
     how exactly to plot itself.
     """
 
-    show_fullscreen_signal = QtCore.pyqtSignal()
-    editingFinished = QtCore.pyqtSignal()
+    show_fullscreen_signal = QtCore.qt_signal()
+    editingFinished = QtCore.qt_signal()
 
     def __init__(self, parent=None, width=50, height=40, dpi=50, field_name='chart', **kwargs):
         from matplotlib.figure import Figure
@@ -108,14 +108,14 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         self._litebox = None
         self.gui_context = ListActionGuiContext()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def copy_to_clipboard(self):
         """Copy the chart to the clipboard"""
         clipboard = QtGui.QApplication.clipboard()
         pixmap = QtGui.QPixmap.grabWidget( self.canvas )
         clipboard.setPixmap( pixmap )
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def print_preview(self):
         """Popup a print preview dialog for the Chart"""
         from camelot.view.action_steps import PrintChart
@@ -149,7 +149,7 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         canvas.draw()
         return litebox
                     
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def show_fullscreen(self):
         """Show the plot full screen, using the litebox"""
         if self._value:

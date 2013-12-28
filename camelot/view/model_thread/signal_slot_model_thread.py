@@ -75,8 +75,8 @@ else:
 
 class Task(QtCore.QObject):
 
-    finished = QtCore.pyqtSignal(object)
-    exception = QtCore.pyqtSignal(object)
+    finished = QtCore.qt_signal(object)
+    exception = QtCore.qt_signal(object)
 
     def __init__(self, request, name='', args=()):
         """A task to be executed in a different thread
@@ -133,7 +133,7 @@ class TaskHandler(QtCore.QObject):
     that are in the queue.
     """
 
-    task_handler_busy_signal = QtCore.pyqtSignal(bool)
+    task_handler_busy_signal = QtCore.qt_signal(bool)
 
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
@@ -149,7 +149,7 @@ class TaskHandler(QtCore.QObject):
         """:return True/False: indicating if this task handler is busy"""
         return self._busy
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def handle_task(self):
         """Handle all tasks that are in the queue"""
         self._busy = True
@@ -181,7 +181,7 @@ class SignalSlotModelThread( AbstractModelThread ):
     since this model thread might not be THE model thread.
     """
 
-    task_available = QtCore.pyqtSignal()
+    task_available = QtCore.qt_signal()
 
     def __init__( self ):
         super(SignalSlotModelThread, self).__init__()
@@ -200,7 +200,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         self.exec_()
         self.logger.debug('model thread stopped')
 
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def _thread_busy(self, busy_state):
         self.thread_busy_signal.emit( busy_state )
 

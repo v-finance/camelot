@@ -25,8 +25,8 @@
 from ...core.qt import QtCore, QtGui
 
 class AbstractSearchWidget(QtGui.QWidget):
-    expand_search_options_signal = QtCore.pyqtSignal()
-    cancel_signal = QtCore.pyqtSignal()
-    search_signal = QtCore.pyqtSignal(str)
-    on_arrow_down_signal = QtCore.pyqtSignal()
+    expand_search_options_signal = QtCore.qt_signal()
+    cancel_signal = QtCore.qt_signal()
+    search_signal = QtCore.qt_signal(str)
+    on_arrow_down_signal = QtCore.qt_signal()
 

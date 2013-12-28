@@ -85,8 +85,8 @@ NOTIFICATION_ANIMATION_DISTANCE = 8
 
 class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
 
-    entered = QtCore.pyqtSignal()
-    left = QtCore.pyqtSignal()
+    entered = QtCore.qt_signal()
+    left = QtCore.qt_signal()
 
     """
     A custom interactive desktop button for the desktop. Each 'button' is
@@ -355,7 +355,7 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
             self.setText( six.text_type( state.verbose_name ) )
@@ -386,7 +386,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         AbstractActionWidget.__init__( self, action, gui_context )
         self.clicked.connect( self.triggered )
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def triggered(self):
         sender = self.sender()
         mode = None
@@ -394,7 +394,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
             mode = six.text_type( variant_to_py(sender.data()) )
         self.run_action( mode )
 
-    @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
+    @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex )
     def data_changed( self, index1, index2 ):
         AbstractActionWidget.data_changed( self, index1, index2 )
 
@@ -467,13 +467,13 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         signal_handler = get_signal_handler()
         signal_handler.entity_update_signal.connect(self.entity_update)
 
-    @QtCore.pyqtSlot(object, object)
+    @QtCore.qt_slot(object, object)
     def entity_update(self, sender, entity):
         from ...model.authentication import AuthenticationMechanism
         if isinstance(entity, AuthenticationMechanism):
             self.current_row_changed(0)
 
-    @QtCore.pyqtSlot(bool)
+    @QtCore.qt_slot(bool)
     def face_clicked(self, state):
         self.run_action()
 

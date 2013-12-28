@@ -150,11 +150,11 @@ class IntegerEditor(CustomEditor):
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.pyqtSlot(six.text_type)
+    @QtCore.qt_slot(six.text_type)
     def calculation_finished(self, value):
         self.spinBox.setValue(floor(float(six.text_type(value))))
         self.editingFinished.emit()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def spinbox_editing_finished(self):
         self.editingFinished.emit()

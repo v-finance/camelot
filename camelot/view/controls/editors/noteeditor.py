@@ -37,7 +37,7 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
     attribute.
     """
     
-    editingFinished = QtCore.pyqtSignal()
+    editingFinished = QtCore.qt_signal()
     
     def __init__( self, 
                   parent = None,

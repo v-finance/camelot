@@ -20,6 +20,9 @@ try:
     variant_api = sip.getapi('QVariant')
     string_api = sip.getapi('QString')
     qt_bindings = 'PyQt4'
+    QtCore.qt_slot = QtCore.pyqtSlot
+    QtCore.qt_signal = QtCore.pyqtSignal
+    QtCore.qt_property = QtCore.pyqtProperty
 except ImportError:
     try:
         from PySide import QtCore, QtGui
@@ -27,6 +30,9 @@ except ImportError:
         variant_api = 2
         string_api = 2
         qt_bindings = 'PySide'
+        QtCore.qt_slot = QtCore.Slot
+        QtCore.qt_signal = QtCore.Signal
+        QtCore.qt_property = QtCore.Property
     except ImportError:
         raise Exception('PyQt4 nor PySide could be imported')
 
@@ -105,7 +111,7 @@ def _variant_to_py_1(qvariant=None):
 
     return value
 
-def _variant_to_py_2( value ):
+def _variant_to_py_2(value=None):
     if isinstance( value, QtCore.QDate ):
         value = datetime.date( year = value.year(),
                                month = value.month(),
