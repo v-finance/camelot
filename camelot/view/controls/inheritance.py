@@ -31,8 +31,6 @@ from ...core.qt import QtCore, QtGui
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 
-QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-
 
 class SubclassItem(ModelItem):
     def __init__(self, parent, admin):

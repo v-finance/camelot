@@ -5,36 +5,56 @@ Qt compatibility module.  This module hides the differences in behavior between 
     * PyQt and PySide
     * PyQt4 and PyQt5
 
+To switch between different Qt bindings, set the `CAMELOT_QT_API` environment
+variable to either `PyQt4` or `PySide`.
+
 """
 
 import datetime
+import logging
+import os
 
 import six
 
-try:
-    import sip
-    from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import Qt
-    
-    # the api version is only available after importing QtCore
-    variant_api = sip.getapi('QVariant')
-    string_api = sip.getapi('QString')
-    qt_bindings = 'PyQt4'
-    QtCore.qt_slot = QtCore.pyqtSlot
-    QtCore.qt_signal = QtCore.pyqtSignal
-    QtCore.qt_property = QtCore.pyqtProperty
-except ImportError:
+LOGGER = logging.Logger('camelot.core.qt')
+
+qt_api = os.environ.get('CAMELOT_QT_API', None)
+if qt_api is not None:
+    LOGGER.warn('CAMELOT_QT_API environment variable set to {}'.format(qt_api))
+
+if qt_api in (None, 'PyQt4'):
+    try:
+        import sip
+        from PyQt4 import QtCore, QtGui
+        from PyQt4.QtCore import Qt
+        
+        # the api version is only available after importing QtCore
+        variant_api = sip.getapi('QVariant')
+        string_api = sip.getapi('QString')
+        qt_api = 'PyQt4'
+        QtCore.qt_slot = QtCore.pyqtSlot
+        QtCore.qt_signal = QtCore.pyqtSignal
+        QtCore.qt_property = QtCore.pyqtProperty
+    except ImportError:
+        pass
+
+elif qt_api in (None, 'PySide'):
     try:
         from PySide import QtCore, QtGui
         from PySide.QtCore import Qt
         variant_api = 2
         string_api = 2
-        qt_bindings = 'PySide'
+        qt_api = 'PySide'
         QtCore.qt_slot = QtCore.Slot
         QtCore.qt_signal = QtCore.Signal
         QtCore.qt_property = QtCore.Property
     except ImportError:
-        raise Exception('PyQt4 nor PySide could be imported')
+        pass
+
+if qt_api is None:
+    raise Exception('PyQt4 nor PySide could be imported')
+else:
+    LOGGER.info('Using {} Qt bindings'.format(qt_api))
 
 class DelayedModule(object):
     """
@@ -48,7 +68,7 @@ class DelayedModule(object):
     
     def __getattr__(self, attr):
         if self.module is None:
-            binding_module = __import__(qt_bindings,
+            binding_module = __import__(qt_api,
                                         globals(), locals(), [self.__name__])
             self.module = getattr(binding_module, self.__name__)
         return getattr(self.module, attr)
