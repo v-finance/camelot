@@ -45,10 +45,11 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
         self.index_by_language = dict()
         languages = [QtCore.QLocale(lang).language() for lang in languages]
         if not self.language_choices:
-            for language in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
-                if languages and (language not in languages):
+            for i in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
+                if languages and (i not in languages):
                     continue
-                language_name = six.text_type( QtCore.QLocale.languageToString( language ))
+                language = QtCore.QLocale.Language(i)
+                language_name = six.text_type(QtCore.QLocale.languageToString(language))
                 self.language_choices.append( (language, language_name ) )
             self.language_choices.sort(key=lambda x:x[1])
         for i, (language, language_name) in enumerate( self.language_choices ):
