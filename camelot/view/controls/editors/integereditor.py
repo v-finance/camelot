@@ -56,11 +56,12 @@ class IntegerEditor(CustomEditor):
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
         
-        self.spinBox = CustomDoubleSpinBox(option, parent)
-        self.spinBox.setRange(minimum-1, maximum)
-        self.spinBox.setDecimals(0)
-        self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        self.spinBox.addAction(action)
+        spin_box = CustomDoubleSpinBox(option, parent)
+        spin_box.setRange(minimum-1, maximum)
+        spin_box.setDecimals(0)
+        spin_box.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        spin_box.addAction(action)
+        spin_box.setObjectName('spin_box')
         
         self.calculatorButton = QtGui.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
@@ -68,21 +69,21 @@ class IntegerEditor(CustomEditor):
         self.calculatorButton.setFocusPolicy(Qt.ClickFocus)
         self.calculatorButton.setFixedHeight(self.get_height())
         self.calculatorButton.clicked.connect(
-            lambda:self.popupCalculator(self.spinBox.value())
+            lambda:self.popupCalculator(spin_box.value())
         )
         action.triggered.connect(
-            lambda:self.popupCalculator(self.spinBox.value())
+            lambda:self.popupCalculator(spin_box.value())
         )
-        self.spinBox.editingFinished.connect( self.spinbox_editing_finished )
+        spin_box.editingFinished.connect( self.spinbox_editing_finished )
 
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(self.spinBox)
+        layout.addWidget(spin_box)
         self._calculator = calculator
         if calculator==True:
             layout.addWidget(self.calculatorButton)
-        self.setFocusProxy(self.spinBox)
+        self.setFocusProxy(spin_box)
         self.setLayout(layout)
         self._nullable = True
         
@@ -96,52 +97,60 @@ class IntegerEditor(CustomEditor):
                                    nullable = True,
                                    single_step = 1, **kwargs):
         self.set_enabled(editable)
-        set_background_color_palette(self.spinBox.lineEdit(), background_color )
-
-        self.spinBox.setToolTip(six.text_type(tooltip or ''))
-        
-        if prefix:
-            self.spinBox.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
-        else:
-            self.spinBox.setPrefix('')
-        if suffix:
-            self.spinBox.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
-        else:
-            self.spinBox.setSuffix(u'')
-        
-        self.spinBox.setSingleStep(single_step)
-        self._nullable = nullable
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            set_background_color_palette(spin_box.lineEdit(), background_color )
+    
+            spin_box.setToolTip(six.text_type(tooltip or ''))
+            
+            if prefix:
+                spin_box.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
+            else:
+                spin_box.setPrefix('')
+            if suffix:
+                spin_box.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
+            else:
+                spin_box.setSuffix(u'')
+            
+            spin_box.setSingleStep(single_step)
+            self._nullable = nullable
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        if value is None:
-            self.spinBox.setValue(self.spinBox.minimum())
-        else:
-            self.spinBox.setValue(value)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            if value is None:
+                spin_box.setValue(spin_box.minimum())
+            else:
+                spin_box.setValue(value)
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading
-        self.spinBox.interpretText()
-        value = int(self.spinBox.value())
-        if value==int(self.spinBox.minimum()):
-            return None
-        return value
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.interpretText()
+            value = int(spin_box.value())
+            if value==int(spin_box.minimum()):
+                return None
+            return value
 
     def set_enabled(self, editable=True):
-        self.spinBox.setReadOnly(not editable)
-        self.spinBox.setEnabled(editable)
-        
-        # Version '5' indicates that this widget is put into a form.
-        # If so, the calculatorButton and the spinBox's controls should be hidden.
-        if self.option and self.option.version != 5:
-            self.calculatorButton.hide()
-            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-        else:
-            self.calculatorButton.setVisible(editable and self._calculator)
-            if not editable:
-                self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setReadOnly(not editable)
+            spin_box.setEnabled(editable)
+            
+            # Version '5' indicates that this widget is put into a form.
+            # If so, the calculatorButton and the spinBox's controls should be hidden.
+            if self.option and self.option.version != 5:
+                self.calculatorButton.hide()
+                spin_box.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            else:
+                self.calculatorButton.setVisible(editable and self._calculator)
+                if not editable:
+                    spin_box.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
@@ -152,8 +161,10 @@ class IntegerEditor(CustomEditor):
 
     @QtCore.qt_slot(six.text_type)
     def calculation_finished(self, value):
-        self.spinBox.setValue(floor(float(six.text_type(value))))
-        self.editingFinished.emit()
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setValue(floor(float(six.text_type(value))))
+            self.editingFinished.emit()
 
     @QtCore.qt_slot()
     def spinbox_editing_finished(self):
