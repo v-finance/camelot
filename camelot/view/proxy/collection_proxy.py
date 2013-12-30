@@ -506,7 +506,7 @@ position in the query.
         self.settings.beginGroup( 'column_width' )
         self.settings.beginGroup( '0' )
         #
-        # this loop can take a while to complete, so processEvents is called regulary
+        # this loop can take a while to complete
         #
         font_metrics = QtGui.QFontMetrics(self._header_font_required)
         char_width = font_metrics.averageCharWidth()

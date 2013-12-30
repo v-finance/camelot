@@ -28,6 +28,8 @@ Created on Sep 9, 2009
 '''
 import logging
 import sys
+import time
+
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 import six
@@ -247,18 +249,16 @@ class SignalSlotModelThread( AbstractModelThread ):
         """Return True or False indicating wether either the model or the
         gui thread is doing something"""
         while not self._task_handler:
-            import time
-            time.sleep(1)
-        app = QtCore.QCoreApplication.instance()
-        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy()
+            time.sleep(0.1)
+        return len(self._request_queue) or self._task_handler.busy()
 
     def wait_on_work(self):
         """Wait for all work to be finished, this function should only be used
         to do unit testing and such, since it will block the calling thread until
         all work is done"""
         assert object_thread( self )
-        app = QtCore.QCoreApplication.instance()
         while self.busy():
-            app.processEvents()
+            time.sleep(0.1)
+
 
 

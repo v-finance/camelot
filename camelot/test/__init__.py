@@ -31,6 +31,7 @@ as /camelot.
 import unittest
 import six
 
+from ..core.orm import Session
 from ..core.qt import QtGui, QtCore, Qt
 
 has_programming_error = False
@@ -189,6 +190,7 @@ class EntityViewsTest(ModelThreadTestCase):
         for translator in translators:
             QtCore.QCoreApplication.installTranslator(translator)
         has_programming_error = False
+        self.session = Session()
 
     def get_application_admin(self):
         """Overwrite this method to make use of a custom application admin"""
@@ -228,10 +230,12 @@ class EntityViewsTest(ModelThreadTestCase):
         for admin in self.get_admins():
             # create an object or take one from the db
             obj = None
+            new_obj = False
             if isinstance(admin, EntityAdmin):
                 obj = admin.get_query().first()
             if obj is None:
                 obj = admin.entity()
+                new_obj = True
             # create a form view
             form_view_step = OpenFormView([obj], admin)
             widget = form_view_step.render(gui_context)
@@ -243,3 +247,5 @@ class EntityViewsTest(ModelThreadTestCase):
                 widget.setMinimumSize(1200, 800)
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             self.assertFalse( has_programming_error )
+            if new_obj:
+                self.session.expunge(obj)

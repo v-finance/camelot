@@ -30,7 +30,6 @@ Created on Sep 12, 2009
 import logging
 logger = logging.getLogger('camelot.view.model_thread.no_thread_model_thread')
 
-from ...core.qt import QtCore
 from .signal_slot_model_thread import AbstractModelThread
 from camelot.view.controls.exception import register_exception
 
@@ -54,13 +53,8 @@ class NoThreadModelThread( AbstractModelThread ):
                 exception(exception_info)
 
     def wait_on_work(self):
-        app = QtCore.QCoreApplication.instance()
-        i = 0
-        # only process events 10 times to avoid dead locks
-        while app.hasPendingEvents() and i < 10:
-            app.processEvents()
-            i += 1
-            
+        pass
+
     def isRunning(self):
         return True
 
