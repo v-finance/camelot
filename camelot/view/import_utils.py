@@ -72,7 +72,7 @@ def column_name(column):
     eg : column=0 -> name='A'
     """
     if column <= 25:
-        return string.uppercase[column];
+        return string.ascii_uppercase[column];
     else:
         return column_name((column/26)-1) + column_name(column%26)
 

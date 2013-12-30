@@ -67,8 +67,6 @@ allow all languages
 
         self.manager = QtNetwork.QNetworkAccessManager( self )
         self.manager.finished.connect( self.update_network_status )
-        #self.manager.networkAccessibleChanged.connect( self.network_accessible_changed )
-        self.manager.proxyAuthenticationRequired.connect( self.proxy_authentication_required )
 
         self.create_labels_and_widgets()
         self.create_buttons()
@@ -285,10 +283,6 @@ allow all languages
         self.network_status_label.setText('')
         self.network_status_label.setStyleSheet('')
         self.toggle_ok_button()
-
-    @QtCore.qt_slot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
-    def proxy_authentication_required(self, proxy, authenticator):
-        pass
 
     @QtCore.qt_slot(QtNetwork.QNetworkReply)
     def update_network_status(self, reply):

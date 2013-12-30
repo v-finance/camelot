@@ -218,13 +218,13 @@ class ProfileStore(object):
         size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
-        empty = py_to_variant('')
+        empty = py_to_variant(b'')
         for index in range(size):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             for key in six.iterkeys(state):
-                value = str( variant_to_py(qsettings.value(key, empty)) )
+                value = six.binary_type(variant_to_py(qsettings.value(key, empty)))
                 if key != 'profilename':
                     value = self._decode(value)
                 else:
@@ -258,7 +258,7 @@ class ProfileStore(object):
                 if key != 'profilename':
                     value = self._encode(value)
                 else:
-                    value = (value or '').encode('utf-8')
+                    value = (value or u'').encode('utf-8')
                 qsettings.setValue(key, py_to_variant(value))
         qsettings.endArray()
         qsettings.sync()
@@ -282,7 +282,7 @@ class ProfileStore(object):
         """
         profiles = self.read_profiles()
         name = six.binary_type(variant_to_py(self._qsettings().value('last_used_database_profile',
-                                                                   py_to_variant(six.binary_type('')))))
+                                                                      py_to_variant(b''))))
         name = name.decode('utf-8')
         for profile in profiles:
             if profile.name == name:
@@ -295,5 +295,5 @@ class ProfileStore(object):
         """
         qsettings = self._qsettings()
         qsettings.setValue('last_used_database_profile', 
-                                   profile.name.encode('utf-8') )
+                           py_to_variant(profile.name.encode('utf-8')))
         qsettings.sync()

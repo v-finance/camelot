@@ -588,7 +588,7 @@ class ExportSpreadsheet( ListContextAction ):
                 if value != None:
                     if isinstance( value, Decimal ):
                         value = float( str( value ) )
-                    if isinstance( value, (unicode, str) ):
+                    if isinstance( value, six.string_types ):
                         if attributes.get( 'translate_content', False ) == True:
                             value = ugettext( value )
                     elif isinstance( value, list ):
@@ -695,9 +695,9 @@ class ImportFromFile( EditAction ):
             if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
                 items = list(XlsReader(file_name))
             else:
-                detected = chardet.detect( open( file_name ).read() )['encoding']
+                detected = chardet.detect(open(file_name, 'rb').read())['encoding']
                 enc = detected or 'utf-8'
-                items = list(UnicodeReader( open( file_name ), encoding = enc ))
+                items = list(UnicodeReader(open(file_name, 'r'), encoding = enc ))
             collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
             if len( collection ) < 1:
                 raise UserException( _('No data in file' ) )

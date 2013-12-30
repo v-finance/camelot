@@ -7,7 +7,7 @@ import logging
 import os
 import time
 
-from camelot.core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
+from camelot.core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, q_string
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 from camelot import test
@@ -330,8 +330,8 @@ class EditorsTest(test.ModelThreadTestCase):
         spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-        self.assertEqual(spinbox.validate(QtCore.QString('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
-        self.assertEqual(spinbox.validate(QtCore.QString('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
         editor = self.editors.FloatEditor(parent=None,
                                           calculator=False)

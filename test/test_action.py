@@ -555,7 +555,7 @@ class ListActionsCase( test_model.ExampleModelCase ):
         from camelot_example.model import Movie
         add_existing_object_action = list_action.AddExistingObject()
         generator = add_existing_object_action.model_run( self.gui_context.create_model_context() )
-        select_objects_step = generator.next()
+        select_objects_step = six.advance_iterator(generator)
         generator.send([Movie(title='Unknown')])
         list(generator)
 
