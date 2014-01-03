@@ -71,10 +71,15 @@ It has additional class attributes that customise its behaviour.
 
    A dictionary of fields that will be deep copied when the user presses the copy
    button.  This is useful for OneToMany fields.  The key in the dictionary should
-   be the name of the field, and the value is a new dictionary that can contain other
-   fields that need to be copied::
+   be the name of the field, and the value is a new dictionary :: 
 
        copy_deep = {'addresses':{}}
+
+   This dictionary can contain fields in the related object that need to be deep 
+   copied as well ::
+
+       copy_deep = {'addresses':{'city':{}}}
+   
 
 .. attribute:: copy_exclude
 
@@ -83,6 +88,14 @@ It has additional class attributes that customise its behaviour.
         copy_exclude = ['name']
 
     The fields that form the primary key of the object will be excluded by default.
+
+To further customize the copy process without additional user interaction,
+:meth:`camelot.admin.object_admin.EntityAdmin.copy` method can be overwritten.
+
+If the user interaction during the copy process needs to be customized as well, the
+:class:`camelot.admin.action.list_action.DuplicateSelection` class can be subclassed
+and used as a custom action.
+
 
 **Searching**
 
