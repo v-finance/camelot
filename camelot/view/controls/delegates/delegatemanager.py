@@ -27,7 +27,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, variant_to_py
 from .plaintextdelegate import PlainTextDelegate
 
 class DelegateManager(QtGui.QItemDelegate):
@@ -86,7 +86,7 @@ class DelegateManager(QtGui.QItemDelegate):
             delegate.setEditorData(editor, index)
         except Exception as e:
             logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
-            logger.error('value that could not be set : %s'%six.text_type(index.model().data(index, Qt.EditRole)))
+            logger.error('value that could not be set : %s'%six.text_type(variant_to_py(index.model().data(index, Qt.EditRole))))
 
     def setModelData(self, editor, model, index):
         """Use a custom delegate setModelData method if it exists"""
