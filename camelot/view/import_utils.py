@@ -25,7 +25,6 @@
 """Utility classes to import files into Camelot"""
 
 import csv
-import codecs
 import logging
 import string
 
@@ -195,7 +194,7 @@ class UTF8Recoder( six.Iterator ):
     UTF-8."""
 
     def __init__(self, f, encoding):
-        self.reader = codecs.getreader(encoding)(f)
+        self.reader = f
 
     def __iter__(self):
         return self
@@ -209,7 +208,8 @@ class UnicodeReader( six.Iterator ):
     encoded in the given encoding."""
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        f = UTF8Recoder(f, encoding)
+        if six.PY3==False:
+            f = UTF8Recoder(f, encoding)
         self.encoding = encoding
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.line = 0
@@ -218,7 +218,10 @@ class UnicodeReader( six.Iterator ):
         self.line += 1
         try:
             row = six.next(self.reader)
-            return [six.text_type(s, 'utf-8') for s in row]
+            if six.PY3==False:
+                return [six.text_type(s, 'utf-8') for s in row]
+            else:
+                return row
         except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
