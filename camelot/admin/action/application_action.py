@@ -489,6 +489,15 @@ class ChangeLogging( Action ):
         total = time.time() - context._query_start_time
         LOGGER.info("query Complete in %.02fms" % (total*1000))
 
+    @classmethod
+    def connection_checkout(cls, dbapi_connection, connection_record, 
+                            connection_proxy):
+        LOGGER.info('checkout connection {0}'.format(id(dbapi_connection)))
+
+    @classmethod
+    def connection_checkin(cls, dbapi_connection, connection_record):
+        LOGGER.info('checkin connection {0}'.format(id(dbapi_connection)))
+
     def model_run( self, model_context ):
         from camelot.view.controls import delegates
         from camelot.view import action_steps
@@ -496,15 +505,17 @@ class ChangeLogging( Action ):
         
         from sqlalchemy import event
         from sqlalchemy.engine import Engine
+        from sqlalchemy.pool import Pool
         
         class Options( object ):
             
             def __init__( self ):
                 self.level = logging.INFO
                 self.queries = False
+                self.pool = False
                 
             class Admin( ObjectAdmin ):
-                list_display = ['level', 'queries']
+                list_display = ['level', 'queries', 'pool']
                 field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
                                                'editable':True,
                                                'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
@@ -515,6 +526,9 @@ class ChangeLogging( Action ):
                                      'queries':{ 'delegate': delegates.BoolDelegate,
                                                  'tooltip': _('Log and time queries send to the database'),
                                                  'editable': True},
+                                     'pool':{ 'delegate': delegates.BoolDelegate,
+                                              'tooltip': _('Log database connection checkin/checkout'),
+                                              'editable': True},
                                      }
                 
         options = Options()
@@ -525,7 +539,12 @@ class ChangeLogging( Action ):
                          self.before_cursor_execute)
             event.listen(Engine, 'after_cursor_execute',
                          self.after_cursor_execute)
-
+        if options.pool == True:
+            event.listen(Pool, 'checkout',
+                         self.connection_checkout)
+            event.listen(Pool, 'checkin',
+                         self.connection_checkin)
+            
 class DumpState( Action ):
     """Dump the state of the application to the output, this method is
     triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
