@@ -179,7 +179,8 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         session.commit()
         
     def __enter__( self ):
-        self.change_status( 'running' )
+        if self.current_status != 'running':
+            self.change_status( 'running' )
         orm.object_session( self ).commit()
         return self
     
