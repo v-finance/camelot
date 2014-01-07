@@ -62,7 +62,7 @@ def main_action(action):
     if app is None:
         app = QtGui.QApplication([a for a in sys.argv if a])
     gui_context = ApplicationActionGuiContext()
-    QtCore.QTimer.singleShot( 0, functools.partial( action.gui_run, 
-                                                    gui_context ) )
+    QtCore.QTimer.singleShot(0, functools.partial(action.gui_run, 
+                                                   gui_context))
     result = app.exec_()
     sys.exit( result )

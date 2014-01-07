@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import codecs
 import copy
 import datetime
 import logging
@@ -697,7 +698,7 @@ class ImportFromFile( EditAction ):
             else:
                 detected = chardet.detect(open(file_name, 'rb').read())['encoding']
                 enc = detected or 'utf-8'
-                items = list(UnicodeReader(open(file_name, 'r'), encoding = enc ))
+                items = list(UnicodeReader(codecs.open(file_name, encoding=enc), encoding = enc ))
             collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
             if len( collection ) < 1:
                 raise UserException( _('No data in file' ) )
