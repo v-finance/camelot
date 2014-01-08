@@ -52,7 +52,8 @@ LOGGER = logging.getLogger('batch_job')
 # to the database, the session is scoped per thread to prevent the
 # session from being garbage collected when the context manager ends
 #
-BatchSession = orm.scoped_session( orm.sessionmaker( autoflush = False ) )
+BatchSession = orm.scoped_session( orm.sessionmaker( autoflush = False,
+                                                      autocommit = True,) )
 
 batch_job_statusses = [ (-2, 'planned'), 
                         (-1, 'running'), 
@@ -102,8 +103,9 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     @classmethod
     def create( cls, batch_job_type = None, status = 'running' ):
         """Create a new batch job object in a session of its
-        own.  This allows flushing the batch job independent from
-        other objects.
+        own.  This allows to flus the batch job independent from
+        other objects, as well as to begin/end/rollback it's session without
+        affecting other objects.
         
         :param batch_job_type: an instance of type 
             :class:`camelot.model.batch_job.BatchJobType`
@@ -111,14 +113,14 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         :return: a new BatchJob object
         """
         batch_session = BatchSession()
-        batch_job = BatchJob(type=batch_job_type)
-        batch_job.change_status( 'running' )
-        session = orm.object_session( batch_job )
-        batch_session_batch_job = batch_session.merge( batch_job )
-        if session:
-            session.expunge( batch_job )
-        batch_session.commit()
-        return batch_session_batch_job
+        with batch_session.begin():
+            batch_job = BatchJob(type=batch_job_type)
+            batch_job.change_status( 'running' )
+            session = orm.object_session( batch_job )
+            batch_session_batch_job = batch_session.merge( batch_job )
+            if session:
+                session.expunge( batch_job )
+            return batch_session_batch_job
 
     def is_canceled( self ):
         """Verifies if this Batch Job is canceled.  Returns :const:`True` if 
@@ -127,10 +129,15 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         batch job object through the :meth:`create` method to make sure
         requesting the status does not interfer with the normal session.
         
+        This method executes within it's own transaction, to make sure the state
+        of the session is rolled back on failure.
+        
         :return: :const:`True` or :const:`False`
         """
-        orm.object_session( self ).expire( self, ['status'] )
-        return self.current_status == 'canceled'
+        session = orm.object_session( self )
+        with session.begin():
+            session.expire( self, ['status'] )
+            self.current_status == 'canceled'
         
     def add_exception_to_message( self, 
                                   exc_type = None, 
@@ -161,7 +168,10 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         
     def add_strings_to_message( self, strings, color = None ):
         """Add strings to the message of this batch job.
-        
+
+        This method executes within it's own transaction, to make sure the state
+        of the session is rolled back on failure.
+
         :param strings: a list or generator of strings
         :param color: the html color to be used for the strings (`'red'`, 
         `'green'`, ...), None if the color needs no change. 
@@ -169,30 +179,35 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         if color:
             strings = [u'<font color="%s">'%color] + strings + [u'</font>']
         session = orm.object_session( self )
-        # message might be changed in the orm
-        session.commit()
-        batch_table = self.__table__
-        update = batch_table.update().where( batch_table.c.id == self.id )
-        update = update.values( message = sql.func.coalesce( batch_table.c.message, '' ) + sql.bindparam('line') )
-        for line in strings:
-            session.execute( update, params = {'line':line + '<br/>'} )
-        session.commit()
+        with session.begin():
+            # message might be changed in the orm
+            session.flush()
+            batch_table = self.__table__
+            update = batch_table.update().where( batch_table.c.id == self.id )
+            update = update.values( message = sql.func.coalesce( batch_table.c.message, '' ) + sql.bindparam('line') )
+            for line in strings:
+                session.execute( update, params = {'line':line + '<br/>'} )
         
     def __enter__( self ):
-        if self.current_status != 'running':
-            self.change_status( 'running' )
-        orm.object_session( self ).commit()
+        batch_session = orm.object_session( self )
+        with batch_session.begin():
+            if self.current_status != 'running':
+                self.change_status( 'running' )
         return self
     
     def __exit__( self, exc_type, exc_val, exc_tb ):
+        new_status = None
         if exc_type != None:
             self.add_exception_to_message( exc_type, exc_val, exc_tb )
-            self.change_status( 'errors' )
+            new_status = 'errors'
             LOGGER.info( 'batch job closed with exception', 
                          exc_info = (exc_type, exc_val, exc_tb) )
-        elif self.current_status == 'running':
-            self.change_status( 'success' )
-        orm.object_session( self ).commit()
+        batch_session = orm.object_session( self )
+        with batch_session.begin():
+            if (new_status is None) and (self.current_status == 'running'):
+                self.change_status('success')
+            else:
+                self.change_status(new_status)
         return True
         
     class Admin(EntityAdmin):
