@@ -92,7 +92,7 @@ class QueryTableProxy(CollectionProxy):
         query = self.get_query_getter()()
         mapper = orm.class_mapper(self.admin.entity)
         select = query.order_by(None).as_scalar()
-        select = select.with_only_columns([sql.func.count(*mapper.primary_key)])
+        select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
         count = query.session.execute(select, mapper=mapper).scalar()
         return count + len(self._appended_rows)
 
