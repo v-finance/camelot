@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import tempfile
 import unittest
@@ -67,7 +68,7 @@ class ProfileCase(unittest.TestCase):
     """
     
     def test_profile_state( self ):
-        name, host, password = 'profile_test', '192.168.1.1', 'top-secret'
+        name, host, password = u'profile_tést', u'192.168.1.1', u'top-sécrèt'
         profile = Profile( name=name, host=host, password=password )
         state = profile.__getstate__()
         # name should not be encrypted, others should
@@ -90,18 +91,18 @@ class ProfileCase(unittest.TestCase):
         store = ProfileStore(filename)
         self.assertEqual( store.read_profiles(), [] )
         self.assertEqual( store.get_last_profile(), None )
-        profile_1 = Profile('profile_1')
-        profile_1.dialect = 'sqlite'
-        profile_2 = Profile('profile_2')
-        profile_2.dialect = 'mysql'
+        profile_1 = Profile(u'prôfile_1')
+        profile_1.dialect = u'sqlite'
+        profile_2 = Profile(u'prôfile_2')
+        profile_2.dialect = u'mysql'
         store.write_profiles( [profile_1, profile_2] )
         self.assertEqual( len(store.read_profiles()), 2 )
         store.set_last_profile( profile_1 )
-        self.assertTrue( store.get_last_profile().name, 'profile_1' )
-        self.assertTrue( store.get_last_profile().dialect, 'sqlite' )
+        self.assertTrue( store.get_last_profile().name, u'prôfile_1' )
+        self.assertTrue( store.get_last_profile().dialect, u'sqlite' )
         store.set_last_profile( profile_2 )
-        self.assertTrue( store.get_last_profile().name, 'profile_2' )
-        self.assertTrue( store.get_last_profile().dialect, 'mysql' )
+        self.assertTrue( store.get_last_profile().name, u'prôfile_2' )
+        self.assertTrue( store.get_last_profile().dialect, u'mysql' )
         # os.remove(filename)
 
         return store

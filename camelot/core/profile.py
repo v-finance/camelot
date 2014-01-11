@@ -183,7 +183,7 @@ class ProfileStore(object):
         """Encrypt and encode a single value, this method is used to 
         write profiles."""
         cipher = self._cipher()
-        return base64.b64encode( cipher.encrypt( six.text_type(value).encode('utf-8' ) ) )
+        return base64.b64encode( cipher.encrypt( six.text_type(value).encode('utf-8' ) ) ).decode('ascii')
             
     def _decode( self, value ):
         """Decrypt and decode a single value, this method is used to
@@ -224,11 +224,11 @@ class ProfileStore(object):
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             for key in six.iterkeys(state):
-                value = six.binary_type(variant_to_py(qsettings.value(key, empty)))
+                value = variant_to_py(qsettings.value(key, empty))
                 if key != 'profilename':
                     value = self._decode(value)
                 else:
-                    value = value.decode('utf-8')
+                    value = value
                 state[key] = value
             profile.__setstate__(state)
             # only profiles with a name can be selected and handled
@@ -258,8 +258,8 @@ class ProfileStore(object):
                 if key != 'profilename':
                     value = self._encode(value)
                 else:
-                    value = (value or u'').encode('utf-8')
-                qsettings.setValue(key, py_to_variant(value))
+                    value = (value or u'')
+                qsettings.setValue(key, value)
         qsettings.endArray()
         qsettings.sync()
         
@@ -281,9 +281,8 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = six.binary_type(variant_to_py(self._qsettings().value('last_used_database_profile',
-                                                                      py_to_variant(b''))))
-        name = name.decode('utf-8')
+        name = variant_to_py(self._qsettings().value('last_used_database_profile',
+                                                      u''))
         for profile in profiles:
             if profile.name == name:
                 return profile
@@ -295,5 +294,5 @@ class ProfileStore(object):
         """
         qsettings = self._qsettings()
         qsettings.setValue('last_used_database_profile', 
-                           py_to_variant(profile.name.encode('utf-8')))
+                           profile.name)
         qsettings.sync()
