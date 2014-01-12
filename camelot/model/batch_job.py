@@ -137,7 +137,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         session = orm.object_session( self )
         with session.begin():
             session.expire( self, ['status'] )
-            self.current_status == 'canceled'
+            return self.current_status == 'canceled'
         
     def add_exception_to_message( self, 
                                   exc_type = None, 

@@ -209,7 +209,7 @@ class SelectProfile( Action ):
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
             yield Exit()
-        message = ugettext('Use {} profile'.format(selected_profile.name))
+        message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
         self.profile_store.set_last_profile( selected_profile )
         self.selected_profile = selected_profile
