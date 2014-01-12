@@ -358,7 +358,8 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 3 )
         editor.set_value( None )
         # pretend the user changed the value
-        editor.spinBox.setValue( 0 )
+        spinbox = editor.findChild(QtGui.QWidget, 'spin_box')
+        spinbox.setValue( 0 )
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
