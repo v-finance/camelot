@@ -36,6 +36,7 @@ class OpenFormView( ActionStep ):
     :param objects: the list of objects to display in the form view, if objects
         is set to `None`, the model of the item view of the gui context is
         reused
+        
     :param admin: the admin class to use to display the form
 
     .. attribute:: row

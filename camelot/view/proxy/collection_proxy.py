@@ -1099,6 +1099,7 @@ position in the query.
         """Append an object to this collection
         
         :param obj: the object to be added to the collection
+        :return: the new number of rows in the collection
         
         """
         rows = self._rows
