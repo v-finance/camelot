@@ -204,10 +204,10 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
                          exc_info = (exc_type, exc_val, exc_tb) )
         batch_session = orm.object_session( self )
         with batch_session.begin():
-            if (new_status is None) and (self.current_status == 'running'):
-                self.change_status('success')
-            else:
+            if new_status is not None:
                 self.change_status(new_status)
+            elif self.current_status in (None, 'running'):
+                self.change_status('success')
         return True
         
     class Admin(EntityAdmin):
