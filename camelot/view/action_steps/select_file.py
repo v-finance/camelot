@@ -24,7 +24,7 @@
 
 import os
 
-from ...core.qt import QtGui, QtCore, variant_to_py
+from ...core.qt import QtGui, QtCore, variant_to_py, py_to_variant
 
 import six
 
@@ -78,10 +78,10 @@ class SelectFile( ActionStep ):
                                     filter=self.file_name_filter)
             if selected:
                 if self.single:
-                    settings.setValue( 'datasource', variant_to_py(selected))
+                    settings.setValue( 'datasource', py_to_variant(selected))
                     return [six.text_type(selected)]
                 else:
-                    settings.setValue( 'datasource', variant_to_py(selected[0]))
+                    settings.setValue( 'datasource', py_to_variant(selected[0]))
                     return [six.text_type(fn) for fn in selected]
             else:
                 raise CancelRequest()
@@ -120,7 +120,7 @@ class SaveFile( ActionStep ):
                                     directory=directory,
                                     filter=self.file_name_filter)
             if selected:
-                settings.setValue('datasource', variant_to_py(selected))
+                settings.setValue('datasource', py_to_variant(selected))
                 return six.text_type(selected)
             else:
                 raise CancelRequest()
@@ -153,5 +153,5 @@ class SelectDirectory(ActionStep):
                                      directory=directory,
                                      options=self.options)
             if selected:
-                settings.setValue('datasource', variant_to_py(selected))
+                settings.setValue('datasource', py_to_variant(selected))
             return six.text_type(selected)
