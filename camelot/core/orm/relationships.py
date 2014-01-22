@@ -363,30 +363,6 @@ relationships.
         belongs_to('parent', of_kind='Person')
         has_many('children', of_kind='Person')
 
-There is also an alternate form of the ``has_many`` relationship that takes
-only two keyword arguments: ``through`` and ``via`` in order to encourage a
-richer form of many-to-many relationship that is an alternative to the
-``has_and_belongs_to_many`` statement.  Here is an example:
-
-.. sourcecode:: python
-
-    class Person(Entity):
-        has_field('name', Unicode)
-        has_many('assignments', of_kind='Assignment')
-        has_many('projects', through='assignments', via='project')
-
-    class Assignment(Entity):
-        has_field('start_date', DateTime)
-        belongs_to('person', of_kind='Person')
-        belongs_to('project', of_kind='Project')
-
-    class Project(Entity):
-        has_field('title', Unicode)
-        has_many('assignments', of_kind='Assignment')
-
-In the above example, a `Person` has many `projects` through the `Assignment`
-relationship object, via a `project` attribute.
-
 
 `has_one`
 ---------
