@@ -22,9 +22,7 @@
 #
 #  ============================================================================
 
-import collections
 import copy
-import itertools
 import logging
 
 logger = logging.getLogger('camelot.admin.validator.object_validator')
