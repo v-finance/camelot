@@ -50,10 +50,15 @@ class FieldAttributesList(list):
         doc = '\n'.join([template%(name, name) for name in original_list])
         self.__doc__ = doc
 
-DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color',
-                                                'editable', 'choices',
-                                                'prefix', 'suffix', 'arrow',
+DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
+                                                'color',
+                                                'background_color',
+                                                'editable',
+                                                'choices',
+                                                'prefix',
+                                                'suffix',
                                                 'new_message',
+                                                'nullable',
                                                 'precision'])
 
 
@@ -611,7 +616,7 @@ be specified using the verbose_name attribute.
         of the name of the field and its attributes needed to display it
         properly
 
-        @return: [(field_name,
+        :return: [(field_name,
                   {'widget': widget_type,
                    'editable': True or False,
                    'blank': True or False,

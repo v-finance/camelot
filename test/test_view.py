@@ -225,17 +225,6 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
         self.assert_valid_editor( editor, (255, 200, 255, 255) )
 
-    def test_ColoredFloatEditor(self):
-        editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor.set_value( 0.0 )
-        self.assertEqual( editor.get_value(), 0.0 )
-        editor.set_value( 3.14 )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(), 3.14 )
-        self.assert_valid_editor( editor, 3.14 )
-
     def test_ChoicesEditor(self):
         editor = self.editors.ChoicesEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
@@ -300,7 +289,7 @@ class EditorsTest(test.ModelThreadTestCase):
     def test_FloatEditor(self):
         from camelot.core.constants import camelot_minfloat, camelot_maxfloat
         editor = self.editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix')
+        editor.set_field_attributes(prefix='prefix', editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
@@ -309,7 +298,7 @@ class EditorsTest(test.ModelThreadTestCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
         editor = self.editors.FloatEditor(parent=None, option=self.option)
-        editor.set_field_attributes(suffix='suffix')
+        editor.set_field_attributes(suffix=' suffix', editable=True)
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -326,7 +315,7 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
         editor = self.editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix', suffix='suffix')
+        editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True)
         spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
@@ -777,16 +766,6 @@ class DelegateTest(test.ModelThreadTestCase):
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.FloatEditor))
         self.grab_delegate(delegate, 0, 'disabled')
-
-    def testColoredFloatDelegate(self):
-        delegate = self.delegates.ColoredFloatDelegate(parent=None, precision=3, editable=True)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
-        self.grab_delegate(delegate, 3.14456)
-        delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=False)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
-        self.grab_delegate(delegate, 3.1, 'disabled')
 
     def testStarDelegate(self):
         delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)

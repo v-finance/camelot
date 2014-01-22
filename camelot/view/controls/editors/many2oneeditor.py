@@ -124,11 +124,11 @@ class Many2OneEditor( CustomEditor ):
         self.add_actions(actions, self.layout)
         get_signal_handler().connect_signals(self)
 
-    def set_field_attributes(self, **fa):
-        self.field_attributes = fa
-        set_background_color_palette(self.search_input, fa.get('background_color'))
-        self.search_input.setToolTip(fa.get('tooltip', '') or '')
-        self.search_input.setEnabled(fa.get('editable', False))
+    def set_field_attributes(self, **kwargs):
+        super(Many2OneEditor, self).set_field_attributes(**kwargs)
+        set_background_color_palette(self.search_input, kwargs.get('background_color'))
+        self.search_input.setToolTip(kwargs.get('tooltip', '') or '')
+        self.search_input.setEnabled(kwargs.get('editable', False))
         self.update_actions()
 
     def on_arrow_down_key_pressed(self):

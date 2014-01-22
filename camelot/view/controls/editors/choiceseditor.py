@@ -139,7 +139,7 @@ class ChoicesEditor(CustomEditor):
             self.set_value( current_value )
 
     def set_field_attributes(self, **fa):
-        self.field_attributes = fa
+        super(ChoicesEditor, self).set_field_attributes(**fa)
         combobox = self.findChild(QtGui.QComboBox, 'combobox')
         if fa.get('choices') is not None:
             self.set_choices(fa['choices'])

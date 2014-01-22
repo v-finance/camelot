@@ -69,12 +69,11 @@ class MonthsEditor(CustomEditor):
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
         
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        self.set_enabled(editable)
-        self.set_background_color(background_color)
-        self.years_spinbox.setToolTip(six.text_type(tooltip or ''))
+    def set_field_attributes(self, **kwargs):
+        super(MonthsEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
+        self.set_background_color(kwargs.get('background_color', None))
+        self.years_spinbox.setToolTip(six.text_type(kwargs.get('tooltip', '')))
 
     def set_enabled(self, editable=True):
         self.years_spinbox.setReadOnly(not editable)

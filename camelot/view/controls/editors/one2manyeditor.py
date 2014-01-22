@@ -115,6 +115,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         action_action.action.gui_run( self.gui_context )
 
     def set_field_attributes( self, **kwargs ):
+        super(One2ManyEditor, self).set_field_attributes(**kwargs)
         self.gui_context.field_attributes = kwargs
         self.update_action_status()
 

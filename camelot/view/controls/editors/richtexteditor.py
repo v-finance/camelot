@@ -112,9 +112,9 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setEnabled(editable)
         self.textedit.setReadOnly( not editable )
 
-    def set_field_attributes(self, editable=True, background_color=None, **kwargs):
-        self.set_editable(editable)
-        self.set_background_color(background_color)
+    def set_field_attributes(self, **kwargs):
+        super(RichTextEditor, self).set_field_attributes(**kwargs)
+        self.set_editable(kwargs.get('editable', False))
 
     def set_toolbar_hidden( self, hidden ):
         """Show or hide the toolbar, by default the toolbar is hidden until

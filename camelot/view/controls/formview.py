@@ -51,8 +51,6 @@ class FormEditors( object ):
             # set version to 5 to indicate the widget will appear on a
             # a form view and not on a table view
             self.option.version = 5
-            self.bold_font = QtGui.QApplication.font()
-            self.bold_font.setBold(True)
             
         self._admin = admin
         self._widget_mapper = widget_mapper
@@ -93,16 +91,12 @@ class FormEditors( object ):
             widget_label = FieldLabel(
                 field_name,
                 field_attributes['name'],
-                field_attributes,
                 self._admin
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):
                 widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
-        # required fields font is bold
-        nullable = field_attributes.get( 'nullable', True )
-        if not nullable:
-            widget_label.setFont( self.bold_font )
+            editor.set_label(widget_label)
         return widget_label
     
 class FormWidget(QtGui.QWidget):

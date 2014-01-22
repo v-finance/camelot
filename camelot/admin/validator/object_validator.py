@@ -22,8 +22,11 @@
 #
 #  ============================================================================
 
-from copy import copy
+import collections
+import copy
+import itertools
 import logging
+
 logger = logging.getLogger('camelot.admin.validator.object_validator')
 
 import six
@@ -52,11 +55,10 @@ class ObjectValidator(QtCore.QObject):
         super(ObjectValidator, self).__init__()
         self.admin = admin
         self.model = model
-        #if model:
-            #model.dataChanged.connect( self.data_changed )
-            #model.layoutChanged.connect( self.layout_changed )
         self._invalid_rows = set()
         self._related_validators = dict()
+        self._all_fields = None
+        self._all_field_field_attributes = dict()
 
         if initial_validation:
             post(self.validate_all_rows)
@@ -79,41 +81,35 @@ class ObjectValidator(QtCore.QObject):
             self.isValid(row)
 
     def validate_invalid_rows(self):
-        for row in copy(self._invalid_rows):
+        for row in copy.copy(self._invalid_rows):
             self.isValid(row)
 
-    #@QtCore.qt_slot()
-    #def layout_changed(self):
-        #post(self.validate_invalid_rows)
-
-    #@QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex )
-    #def data_changed(self, from_index, thru_index):
-        #if self.receivers(self.validity_changed_signal) == 0:
-            #return
-
-        #def create_validity_updater(from_row, thru_row):
-
-            #def validity_updater():
-                #for i in range(from_row, thru_row+1):
-                    #self.isValid(i)
-
-            #return validity_updater
-
-        #post(create_validity_updater(from_index.row(), thru_index.row()))
-
     def validate_object( self, obj ):
-        """:return: list of messages explaining invalid data
-        empty list if object is valid
+        """
+        :return: list of messages explaining invalid data, an empty list if
+            the object is valid
         """
         from camelot.view.controls import delegates
         messages = []
-        fields_and_attributes = dict(self.admin.get_columns())
-        fields_and_attributes.update(dict(self.admin.get_fields()))
-        for field, attributes in six.iteritems(fields_and_attributes):
+        
+        #
+        # initialize cached static field attributes on first use
+        #
+        if self._all_fields is None:
+            self._all_fields = [fn for fn,_fa in six.iteritems(self.admin.get_all_fields_and_attributes())]
+            for field_name, static_fa in zip(self._all_fields, self.admin.get_static_field_attributes(self._all_fields)):
+                self._all_field_field_attributes[field_name] = static_fa
+        #
+        # get dynamic field attributes on each use
+        #
+        for field_name, dynamic_fa in zip(self._all_fields, self.admin.get_dynamic_field_attributes(obj, self._all_fields)):
+            self._all_field_field_attributes[field_name].update(dynamic_fa)
+        
+        for field, attributes in six.iteritems(self._all_field_field_attributes):
             # if the field was not editable, don't waste any time
-            if attributes['editable']:
+            if attributes.get('editable', False):
                 # if the field, is nullable, don't waste time getting its value
-                if attributes['nullable'] != True:
+                if attributes.get('nullable', True) != True:
                     value = getattr(obj, field)
                     logger.debug('column %s is required'%(field))
                     if 'delegate' not in attributes:

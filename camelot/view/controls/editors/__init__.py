@@ -42,7 +42,6 @@ from .booleditor import BoolEditor, TextBoolEditor
 from .charteditor import ChartEditor
 from .choiceseditor import ChoicesEditor
 from .codeeditor import CodeEditor
-from .coloredfloateditor import ColoredFloatEditor
 from .coloreditor import ColorEditor
 from .customeditor import CustomEditor
 from .dateeditor import DateEditor
@@ -73,7 +72,6 @@ __all__ = [
     ChartEditor.__name__,
     ChoicesEditor.__name__,
     CodeEditor.__name__,
-    ColoredFloatEditor.__name__,
     ColorEditor.__name__,
     CustomEditor.__name__,
     DateEditor.__name__,
