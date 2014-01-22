@@ -129,7 +129,7 @@ class ShowFieldAttributes(Action):
                 field_attributes = {'name':{'minimal_column_width':25},
                                     'value':{'minimal_column_width':25}}
         
-        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes.items)]
+        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes)]
         yield action_steps.ChangeObjects(attributes, 
                                          model_context.admin.get_related_admin(Attribute))
 
