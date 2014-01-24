@@ -153,8 +153,10 @@ class DateTimeEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(DateTimeEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
-        self.dateedit.line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            self.set_enabled(kwargs.get('editable', False))
+            line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
 
     def set_background_color(self, background_color):
         self.dateedit.set_background_color( background_color )

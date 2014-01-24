@@ -52,7 +52,7 @@ class DateEditor(CustomEditor):
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
-        line_edit.setObjectName('line_edit')
+        line_edit.setObjectName('date_line_edit')
         line_edit.set_minimum_width( six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)) )
         line_edit.setPlaceholderText( QtCore.QDate(2000,1,1).toString(self.date_format) )
 
@@ -96,7 +96,7 @@ class DateEditor(CustomEditor):
 
         self.minimum = datetime.date.min
         self.maximum = datetime.date.max
-        self.setFocusProxy(self.line_edit)
+        self.setFocusProxy(line_edit)
 
         line_edit.editingFinished.connect( self.line_edit_finished )
         line_edit.textEdited.connect(self.text_edited)
@@ -123,7 +123,7 @@ class DateEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self.setProperty( 'value', py_to_variant( value ) )
-        line_edit = self.findChild(QtGui.QWidget, 'line_edit')
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:
                 qdate = QtCore.QDate(value)
@@ -135,7 +135,7 @@ class DateEditor(CustomEditor):
             self.valueChanged.emit()
 
     def text_edited(self, text ):
-        line_edit = self.findChild(QtGui.QWidget, 'line_edit')
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
         if line_edit is not None:
             try:
                 date_from_string( six.text_type( line_edit.text() ) )
@@ -145,7 +145,7 @@ class DateEditor(CustomEditor):
                 line_edit.set_valid(False)
 
     def get_value(self):
-        line_edit = self.findChild(QtGui.QWidget, 'line_edit')
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
         if line_edit is not None:
             try:
                 value = date_from_string( six.text_type( line_edit.text() ) )
@@ -155,16 +155,18 @@ class DateEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(DateEditor, self).set_field_attributes(**kwargs)
-        line_edit = self.findChild(QtGui.QWidget, 'line_edit')
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
         if line_edit is not None:
             self.set_enabled(kwargs.get('editable', False))
             line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
 
     def set_background_color(self, background_color):
-        set_background_color_palette( self.line_edit, background_color )
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            set_background_color_palette(line_edit, background_color)
 
     def set_enabled(self, editable=True):
-        line_edit = self.findChild(QtGui.QWidget, 'line_edit')
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
         if line_edit is not None:
             line_edit.setEnabled(editable) 
         if editable:
