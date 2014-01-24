@@ -85,35 +85,18 @@ class IntegerEditor(CustomEditor):
             layout.addWidget(self.calculatorButton)
         self.setFocusProxy(spin_box)
         self.setLayout(layout)
-        self._nullable = True
-        
         self.option = option
 
-    def set_field_attributes(self, editable = True,
-                                   background_color = None, 
-                                   tooltip = None,
-                                   prefix = '',
-                                   suffix = '',
-                                   nullable = True,
-                                   single_step = 1, **kwargs):
-        self.set_enabled(editable)
+    def set_field_attributes(self, **kwargs):
+        super(IntegerEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
-            set_background_color_palette(spin_box.lineEdit(), background_color )
-    
-            spin_box.setToolTip(six.text_type(tooltip or ''))
-            
-            if prefix:
-                spin_box.setPrefix(u'%s '%(six.text_type(prefix).lstrip()))
-            else:
-                spin_box.setPrefix('')
-            if suffix:
-                spin_box.setSuffix(u' %s'%(six.text_type(suffix).rstrip()))
-            else:
-                spin_box.setSuffix(u'')
-            
-            spin_box.setSingleStep(single_step)
-            self._nullable = nullable
+            set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
+            spin_box.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+            spin_box.setPrefix(six.text_type(kwargs.get('prefix', '')))
+            spin_box.setSuffix(six.text_type(kwargs.get('suffix', '')))
+            spin_box.setSingleStep(kwargs.get('single_step', 1))
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

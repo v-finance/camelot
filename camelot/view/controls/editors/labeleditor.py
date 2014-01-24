@@ -47,10 +47,9 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
         if value:
             self.setText(value)
             
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        self.setToolTip(six.text_type(tooltip or ''))
+    def set_field_attributes(self, **kwargs):
+        super(LabelEditor, self).set_field_attributes(**kwargs)
+        self.setToolTip(six.text_type(kwargs.get('tooltip', '')))
             
     def paintEvent(self, event):
         if self.toolTip():

@@ -105,7 +105,7 @@ class FileEditor(CustomEditor):
         return CustomEditor.get_value(self) or self.value
 
     def set_field_attributes(self, **kwargs):
-        self.field_attributes = kwargs
+        super(FileEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
         if self.filename:
             set_background_color_palette( self.filename, kwargs.get('background_color', None))

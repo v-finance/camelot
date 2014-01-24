@@ -34,9 +34,9 @@ import sys
 import six
 
 import sqlalchemy.types
-from sqlalchemy import orm, sql
+from sqlalchemy import orm, sql, schema
 
-from camelot.core.orm import Entity, Field, ManyToOne, using_options
+from camelot.core.orm import Entity, ManyToOne, using_options
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters, forms
@@ -53,7 +53,7 @@ LOGGER = logging.getLogger('batch_job')
 # session from being garbage collected when the context manager ends
 #
 BatchSession = orm.scoped_session( orm.sessionmaker( autoflush = False,
-                                                      autocommit = True,) )
+                                                     autocommit = True,) )
 
 batch_job_statusses = [ (-2, 'planned'), 
                         (-1, 'running'), 
@@ -66,7 +66,7 @@ class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
-    name   = Field( sqlalchemy.types.Unicode(256), required=True )
+    name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
     parent = ManyToOne( 'BatchJobType' )
     
     def __unicode__(self):
@@ -95,10 +95,11 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     them
     """
     using_options( tablename = 'batch_job', order_by=['-id'] )
-    host    = Field( sqlalchemy.types.Unicode(256), required=True, default=hostname )
-    type    = ManyToOne( 'BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
+    host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
+    type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
     status  = type_and_status.Status( batch_job_statusses )
-    message = Field( camelot.types.RichText() )
+    message = orm.column_property(schema.Column(camelot.types.RichText())
+                                  , deferred=True)
 
     @classmethod
     def create( cls, batch_job_type = None, status = 'running' ):
@@ -204,10 +205,10 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
                          exc_info = (exc_type, exc_val, exc_tb) )
         batch_session = orm.object_session( self )
         with batch_session.begin():
-            if (new_status is None) and (self.current_status == 'running'):
-                self.change_status('success')
-            else:
+            if new_status is not None:
                 self.change_status(new_status)
+            elif self.current_status in (None, 'running'):
+                self.change_status('success')
         return True
         
     class Admin(EntityAdmin):
@@ -218,4 +219,9 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
                                         ( _('History'), ['status'] ) ] )
         form_actions = [ type_and_status.ChangeStatus( 'canceled',
                                                        _('Cancel') ) ]
+
+        def get_query(self, *args, **kwargs):
+            query = EntityAdmin.get_query(self, *args, **kwargs)
+            query = query.options(orm.subqueryload('status'))
+            return query
 

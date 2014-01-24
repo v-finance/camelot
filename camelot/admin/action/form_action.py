@@ -221,13 +221,16 @@ class CloseForm( Action ):
                                                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard )
             reply = yield message
             if reply == QtGui.QMessageBox.Discard:
-                yield self.step_when_valid()
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObject( obj )
                 else:
                     yield action_steps.DeleteObject( obj )
                     admin.expunge( obj )
+                # only close the form after the object has been discarded or
+                # deleted, to avoid yielding action steps after the widget mapper
+                # has been garbage collected
+                yield self.step_when_valid()
     
 class ToPreviousForm( list_action.AbstractToPrevious, CloseForm ):
     """Move to the previous form"""

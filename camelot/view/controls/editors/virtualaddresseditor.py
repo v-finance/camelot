@@ -192,12 +192,10 @@ class VirtualAddressEditor(CustomEditor):
     def set_background_color(self, background_color):
         set_background_color_palette( self.editor, background_color )
             
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        self.set_enabled(editable)
-        self.set_background_color(background_color)
-        self.setToolTip(six.text_type(tooltip or ''))
+    def set_field_attributes(self, **kwargs):
+        super(VirtualAddressEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
+        self.setToolTip(six.text_type(kwargs.get('tooltip', '')))
 
 
 

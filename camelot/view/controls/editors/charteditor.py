@@ -123,8 +123,8 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         print_chart.gui_run( self.gui_context )
     
     def set_field_attributes(self, *args, **kwargs):
-        """Overwrite set_field attributes because a ChartEditor cannot be disabled
-        or have its background color changed"""
+        """Overwrite set_field attributes because a ChartEditor cannot be
+        disabled or have its background color changed"""
         pass
     
     @staticmethod

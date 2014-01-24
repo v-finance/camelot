@@ -26,7 +26,6 @@ from .booldelegate import BoolDelegate, TextBoolDelegate
 from .chartdelegate import ChartDelegate
 from .codedelegate import CodeDelegate
 from .colordelegate import ColorDelegate
-from .coloredfloatdelegate import ColoredFloatDelegate
 from .comboboxdelegate import ComboBoxDelegate
 from .currencydelegate import CurrencyDelegate
 from .customdelegate import CustomDelegate
@@ -60,7 +59,6 @@ __all__ = [
     ChartDelegate.__name__,
     CodeDelegate.__name__,
     ColorDelegate.__name__,
-    ColoredFloatDelegate.__name__,
     ComboBoxDelegate.__name__,
     CurrencyDelegate.__name__,
     CustomDelegate.__name__,

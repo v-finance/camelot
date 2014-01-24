@@ -179,20 +179,15 @@ class FloatEditor(CustomEditor):
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None,
-                                   prefix = '',
-                                   suffix = '',
-                                   precision = 2,
-                                   single_step = 1.0, **kwargs):
-        self.set_enabled(editable)
-        self.set_background_color(background_color)
+    def set_field_attributes(self, **kwargs):
+        super(FloatEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setToolTip(six.text_type(tooltip or ''))
-        spinBox.setPrefix(u'%s '%(six.text_type(prefix or '').lstrip()))
-        spinBox.setSuffix(u' %s'%(six.text_type(suffix or '').rstrip()))
-        spinBox.setSingleStep(single_step)
+        spinBox.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        spinBox.setPrefix(six.text_type(kwargs.get('prefix', '')))
+        spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
+        spinBox.setSingleStep(kwargs.get('single_step', 1.0))
+        precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
 

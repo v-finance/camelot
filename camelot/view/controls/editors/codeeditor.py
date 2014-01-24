@@ -133,11 +133,9 @@ class CodeEditor(CustomEditor):
         for editor in self._get_part_editors():
             set_background_color_palette( editor, background_color )
             
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        assert object_thread( self )
-        self.set_enabled(editable)
-        self.set_background_color(background_color)
-        self.layout().itemAt(0).widget().setToolTip(six.text_type(tooltip or ''))
+    def set_field_attributes(self, **kwargs):
+        super(CodeEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
+        tooltip = six.text_type(kwargs.get('tooltip', ''))
+        self.layout().itemAt(0).widget().setToolTip(tooltip)
 

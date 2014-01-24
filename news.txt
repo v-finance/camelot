@@ -54,6 +54,10 @@ Development
    existing Camelot project to the latest version.
  
  * Tested with SQLAlchemy 0.8.3
+ 
+ * Removed the `ColoredFloatDelegate` as it is not a basic type of editor
+ 
+ * `nullable` becomes a dynamic field attribute
 
 Release 13.04.13
 ----------------

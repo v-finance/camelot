@@ -85,6 +85,11 @@ class AbstractCustomEditor(object):
 
     def __init__(self):
         self.setProperty('value_loading', True)
+        self.field_attributes = {}
+        self.field_label = None
+
+    def set_label(self, label):
+        self.field_label = label
 
     def set_value(self, value):
         if value is ValueLoading:
@@ -99,10 +104,14 @@ class AbstractCustomEditor(object):
             return ValueLoading
         return None
 
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = '', **kwargs):
-        self.set_background_color(background_color)
+    def get_field_attributes(self):
+        return self.field_attributes
+    
+    def set_field_attributes(self, **kwargs):
+        self.set_background_color(kwargs.get('background_color', None))
+        self.field_attributes = kwargs
+        if self.field_label is not None:
+            self.field_label.set_field_attributes(**kwargs)
 
     """
     Get the 'standard' height for a cell
@@ -136,12 +145,8 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.field_attributes = {}
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self
-
-    def get_field_attributes(self):
-        return self.field_attributes
 
     def paintEvent(self, event):
         super(CustomEditor, self).paintEvent(event)
