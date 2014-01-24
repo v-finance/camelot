@@ -114,7 +114,7 @@ class ObjectAdminCase( ModelThreadTestCase ):
         a_admin.copy( a )
     
     def test_set_defaults(self):
-        
+        pass
         
         
 class EntityAdminCase( TestMetaData ):

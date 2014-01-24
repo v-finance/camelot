@@ -413,12 +413,12 @@ class FixtureCase( ExampleModelCase ):
         example_file = os.path.join( os.path.dirname(__file__), 
                                      '..', 
                                      'camelot_example',
-                                     'import_example.csv' )
+                                     'import_example.xls' )
         person_count_before_import = Person.query.count()
         # begin load csv if fixture version
-        import csv
+        from camelot.view.import_utils import XlsReader
         if FixtureVersion.get_current_version( u'demo_data' ) == 0:
-            reader = csv.reader( open( example_file ) )
+            reader = XlsReader(example_file)
             for line in reader:
                 Person( first_name = line[0], last_name = line[1] )
             FixtureVersion.set_current_version( u'demo_data', 1 )
