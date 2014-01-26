@@ -5,6 +5,8 @@ import itertools
 import types
 import unittest
 
+import six
+
 import sqlalchemy.types
 
 from . import test_orm
@@ -18,8 +20,8 @@ import camelot.types
 # build a list of the various column types for which the search functions
 # should be tested
 #
-possible_types = itertools.chain( sqlalchemy.types.__dict__.iteritems(),
-                                  camelot.types.__dict__.iteritems() )
+possible_types = itertools.chain(six.iteritems(sqlalchemy.types.__dict__),
+                                 six.iteritems(camelot.types.__dict__) )
 types_to_test = collections.OrderedDict()
 for i, (name, definition) in enumerate(possible_types):
     if not inspect.isclass( definition ):

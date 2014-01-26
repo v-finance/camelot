@@ -113,7 +113,14 @@ class VirtualAddress(types.TypeDecorator):
             return virtual_address(u'phone',u'')
             
         return processor  
+
+class _RegexpTranslator(object):
     
+    def __getitem__(self, ch):
+        if chr(ch) in '<>!':
+            return None
+        return ch
+
 class Code(types.TypeDecorator):
     """SQLAlchemy column type to store codes.  Where a code is a list of strings
     on which a regular expression can be enforced.
@@ -143,11 +150,9 @@ class Code(types.TypeDecorator):
         return tuple
     
     def __init__(self, parts=['AB'], separator=u'.', length = None, **kwargs):
-        import string
-        translator = string.maketrans('', '')
         self.parts = parts
         self.separator = separator
-        max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)*len(self.separator)
+        max_length = sum(len(part.translate(_RegexpTranslator())) for part in parts) + len(parts)*len(self.separator)
         types.TypeDecorator.__init__( self, length = length or max_length, **kwargs )
         
     def bind_processor(self, dialect):
