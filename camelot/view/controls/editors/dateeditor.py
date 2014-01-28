@@ -103,10 +103,12 @@ class DateEditor(CustomEditor):
         special_date_menu.triggered.connect(self.set_special_date)
 
     def calendar_widget_activated(self, date):
-        self.calendar_action_trigger.emit()
-        self.set_value(date)
-        self.editingFinished.emit()
-        self.line_edit.setFocus()
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            self.calendar_action_trigger.emit()
+            self.set_value(date)
+            self.editingFinished.emit()
+            line_edit.setFocus()
 
     def line_edit_finished(self):
         self.setProperty( 'value', py_to_variant( self.get_value() ) )
@@ -175,13 +177,15 @@ class DateEditor(CustomEditor):
             self.special_date.hide()
 
     def set_special_date(self, action):
-        if action.text().compare(_('Today')) == 0:
-            self.set_value(datetime.date.today())
-        elif action.text().compare(_('Far future')) == 0:
-            self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-        elif action.text().compare(_('Clear')) == 0:
-            self.set_value(None)
-        self.line_edit.setFocus()
-        self.editingFinished.emit()
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            if action.text().compare(_('Today')) == 0:
+                self.set_value(datetime.date.today())
+            elif action.text().compare(_('Far future')) == 0:
+                self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
+            elif action.text().compare(_('Clear')) == 0:
+                self.set_value(None)
+            line_edit.setFocus()
+            self.editingFinished.emit()
 
 
