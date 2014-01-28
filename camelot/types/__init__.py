@@ -31,6 +31,7 @@ Those fields are stored in the :mod:`camelot.types` module.
 """
 import collections
 import logging
+import string
 
 logger = logging.getLogger('camelot.types')
 
@@ -121,6 +122,11 @@ class _RegexpTranslator(object):
             return None
         return ch
 
+if six.PY3:
+    _translator = _RegexpTranslator()
+else:
+    _translator = string.maketrans('', '')
+
 class Code(types.TypeDecorator):
     """SQLAlchemy column type to store codes.  Where a code is a list of strings
     on which a regular expression can be enforced.
@@ -152,7 +158,7 @@ class Code(types.TypeDecorator):
     def __init__(self, parts=['AB'], separator=u'.', length = None, **kwargs):
         self.parts = parts
         self.separator = separator
-        max_length = sum(len(part.translate(_RegexpTranslator())) for part in parts) + len(parts)*len(self.separator)
+        max_length = sum(len(part.translate(_translator)) for part in parts) + len(parts)*len(self.separator)
         types.TypeDecorator.__init__( self, length = length or max_length, **kwargs )
         
     def bind_processor(self, dialect):
