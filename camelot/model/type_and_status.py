@@ -60,6 +60,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
+from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.view.filters import GroupBoxFilter, filter_data, filter_option
@@ -294,22 +295,64 @@ class StatusMixin( object ):
 
 class ChangeStatus( Action ):
     """
-    An action that changes the status of an object
+    An action that changes the status of an object within a transaction
+    
     :param new_status: the new status of the object
     :param verbose_name: the name of the action
-    :return: a :class:`camelot.admin.action.Action` object that changes
-    the status of a selection to the new status
+
     """
 
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status
 
-    def model_run( self, model_context ):
-        for obj in model_context.get_selection():
-            obj.change_status( self.new_status )
-            yield action_steps.UpdateObject(obj)
-        yield action_steps.FlushSession( model_context.session )
+    def before_status_change(self, model_context, obj):
+        """
+        Use this method to implement checks or actions that need to happen
+        before the status is changed, but within the transaction
+        """
+        yield action_steps.UpdateProgress(text=_('Change status'))
+
+    def after_status_change(self, model_context, obj):
+        """
+        Use this method to implement checks or actions that need to happen
+        before the status is changed, but within the transaction
+        """
+        yield action_steps.UpdateProgress(text=_('Changed status'))
+
+    def model_run(self, model_context, new_status=None):
+        """
+        :param new_status: overrule the new_status defined at the class level,
+            this can be used when overwwriting the `model_run` method in a
+            subclass
+        """
+        new_status = new_status or self.new_status
+        with model_context.session.begin():
+            for obj in model_context.get_selection():
+                # the number of status changes as seen in the UI
+                number_of_statuses = len(obj.status)
+                history_type = obj._status_history
+                history = model_context.session.query(history_type)
+                history = history.filter(history_type.status_for==obj)
+                # Deprecated since version 0.9.0: superseded by Query.
+                # with_for_update().
+                history = history.with_lockmode('update')
+                history_count = sum(1 for _h in history.yield_per(10))
+                if number_of_statuses != history_count:
+                    if obj not in model_context.session.new:
+                        model_context.session.expire(obj)
+                    yield action_steps.UpdateObject(obj)
+                    raise UserException('Concurrent status change',
+                                        detail=_('Another user changed the status'),
+                                        resolution=_('Try again if needed'))
+                if obj.current_status != new_status:
+                    for step in self.before_status_change(model_context, obj):
+                        yield step
+                    obj.change_status(new_status)
+                    for step in self.after_status_change(model_context, obj):
+                        yield step
+                    yield action_steps.UpdateObject(obj)
+            yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(GroupBoxFilter):
     """
