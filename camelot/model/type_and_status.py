@@ -237,7 +237,7 @@ class StatusMixin( object ):
             status_date = datetime.date.today()
         for status_history in self.status:
             if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:
-                return status_history	
+                return status_history
 
     @staticmethod
     def current_status_query( status_history, status_class ):
@@ -262,26 +262,34 @@ class StatusMixin( object ):
     def current_status_expression( cls ):
         return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
 
-    def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
-        from sqlalchemy import orm
+    def change_status(self, new_status, 
+                      status_from_date=None,
+                      status_thru_date=end_of_times()):
+        """
+        Change the status of this object.  This method does not start a
+        transaction, but it is advised to run this method in a transaction.
+        """
         if not status_from_date:
             status_from_date = datetime.date.today()
         history_type = self._status_history
         session = orm.object_session( self )
-        old_status_filter =  sql.and_( history_type.status_for == self,
-                                       history_type.status_from_date <= status_from_date,
-                                       history_type.status_thru_date >= status_from_date )
-        old_status_query = session.query( history_type )
-        old_status = old_status_query.filter( old_status_filter ).first()
-        if old_status != None:
-            old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
-            old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
-        new_status = history_type( status_for = self,
-                                   classified_by = new_status,
-                                   status_from_date = status_from_date,
-                                   status_thru_date = status_thru_date,
-                                   from_date = datetime.date.today(),
-                                   thru_date = end_of_times() )	
+        old_status_query = session.query(history_type)
+        old_status_query = old_status_query.filter(
+            sql.and_(history_type.status_for==self,
+                     history_type.status_from_date <= status_from_date,
+                     history_type.status_thru_date >= status_from_date)
+        )
+        new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
+        new_status_thru_date = status_from_date - datetime.timedelta(days=1)
+        for old_status in old_status_query.yield_per(10):
+            old_status.thru_date = new_thru_date
+            old_status.status_thru_date = new_status_thru_date
+        new_status = history_type(status_for = self,
+                                  classified_by = new_status,
+                                  status_from_date = status_from_date,
+                                  status_thru_date = status_thru_date,
+                                  from_date = datetime.date.today(),
+                                  thru_date = end_of_times())
         session.flush()
 
 class ChangeStatus( Action ):
