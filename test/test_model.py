@@ -504,7 +504,7 @@ class StatusCase( TestMetaData ):
         self.assertEqual( invoice.current_status, 'DRAFT' )
         self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
         draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
-        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()        
+        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
         #end status enumeration use
         self.assertEqual( draft_invoices, 1 )
         self.assertEqual( ready_invoices, 0 )

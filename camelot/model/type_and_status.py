@@ -60,6 +60,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
+from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.view.filters import GroupBoxFilter, filter_data, filter_option
@@ -237,7 +238,7 @@ class StatusMixin( object ):
             status_date = datetime.date.today()
         for status_history in self.status:
             if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:
-                return status_history	
+                return status_history
 
     @staticmethod
     def current_status_query( status_history, status_class ):
@@ -262,46 +263,96 @@ class StatusMixin( object ):
     def current_status_expression( cls ):
         return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
 
-    def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
-        from sqlalchemy import orm
+    def change_status(self, new_status, 
+                      status_from_date=None,
+                      status_thru_date=end_of_times()):
+        """
+        Change the status of this object.  This method does not start a
+        transaction, but it is advised to run this method in a transaction.
+        """
         if not status_from_date:
             status_from_date = datetime.date.today()
         history_type = self._status_history
         session = orm.object_session( self )
-        old_status_filter =  sql.and_( history_type.status_for == self,
-                                       history_type.status_from_date <= status_from_date,
-                                       history_type.status_thru_date >= status_from_date )
-        old_status_query = session.query( history_type )
-        old_status = old_status_query.filter( old_status_filter ).first()
-        if old_status != None:
-            old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
-            old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
-        new_status = history_type( status_for = self,
-                                   classified_by = new_status,
-                                   status_from_date = status_from_date,
-                                   status_thru_date = status_thru_date,
-                                   from_date = datetime.date.today(),
-                                   thru_date = end_of_times() )	
+        old_status_query = session.query(history_type)
+        old_status_query = old_status_query.filter(
+            sql.and_(history_type.status_for==self,
+                     history_type.status_from_date <= status_from_date,
+                     history_type.status_thru_date >= status_from_date)
+        )
+        new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
+        new_status_thru_date = status_from_date - datetime.timedelta(days=1)
+        for old_status in old_status_query.yield_per(10):
+            old_status.thru_date = new_thru_date
+            old_status.status_thru_date = new_status_thru_date
+        new_status = history_type(status_for = self,
+                                  classified_by = new_status,
+                                  status_from_date = status_from_date,
+                                  status_thru_date = status_thru_date,
+                                  from_date = datetime.date.today(),
+                                  thru_date = end_of_times())
         session.flush()
 
 class ChangeStatus( Action ):
     """
-    An action that changes the status of an object
+    An action that changes the status of an object within a transaction
+    
     :param new_status: the new status of the object
     :param verbose_name: the name of the action
-    :return: a :class:`camelot.admin.action.Action` object that changes
-    the status of a selection to the new status
+
     """
 
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status
 
-    def model_run( self, model_context ):
-        for obj in model_context.get_selection():
-            obj.change_status( self.new_status )
-            yield action_steps.UpdateObject(obj)
-        yield action_steps.FlushSession( model_context.session )
+    def before_status_change(self, model_context, obj):
+        """
+        Use this method to implement checks or actions that need to happen
+        before the status is changed, but within the transaction
+        """
+        yield action_steps.UpdateProgress(text=_('Change status'))
+
+    def after_status_change(self, model_context, obj):
+        """
+        Use this method to implement checks or actions that need to happen
+        before the status is changed, but within the transaction
+        """
+        yield action_steps.UpdateProgress(text=_('Changed status'))
+
+    def model_run(self, model_context, new_status=None):
+        """
+        :param new_status: overrule the new_status defined at the class level,
+            this can be used when overwwriting the `model_run` method in a
+            subclass
+        """
+        new_status = new_status or self.new_status
+        with model_context.session.begin():
+            for obj in model_context.get_selection():
+                # the number of status changes as seen in the UI
+                number_of_statuses = len(obj.status)
+                history_type = obj._status_history
+                history = model_context.session.query(history_type)
+                history = history.filter(history_type.status_for==obj)
+                # Deprecated since version 0.9.0: superseded by Query.
+                # with_for_update().
+                history = history.with_lockmode('update')
+                history_count = sum(1 for _h in history.yield_per(10))
+                if number_of_statuses != history_count:
+                    if obj not in model_context.session.new:
+                        model_context.session.expire(obj)
+                    yield action_steps.UpdateObject(obj)
+                    raise UserException('Concurrent status change',
+                                        detail=_('Another user changed the status'),
+                                        resolution=_('Try again if needed'))
+                if obj.current_status != new_status:
+                    for step in self.before_status_change(model_context, obj):
+                        yield step
+                    obj.change_status(new_status)
+                    for step in self.after_status_change(model_context, obj):
+                        yield step
+                    yield action_steps.UpdateObject(obj)
+            yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(GroupBoxFilter):
     """

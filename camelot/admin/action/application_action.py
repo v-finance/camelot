@@ -199,7 +199,7 @@ class SelectProfile( Action ):
                         self.profile_store.write_profile(profile)
                         selected_profile = profile
                 elif selected_profile is save_profiles:
-                    file_name = action_steps.SaveFile(file_name_filter=self.file_name_filter)
+                    file_name = yield action_steps.SaveFile(file_name_filter=self.file_name_filter)
                     self.profile_store.write_to_file(file_name)
                 elif selected_profile is load_profiles:
                     file_names =  yield action_steps.SelectFile(file_name_filter=self.file_name_filter)
