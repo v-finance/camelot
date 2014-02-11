@@ -207,7 +207,7 @@ def decimal_from_string(s):
 def pyvalue_from_string(pytype, s):
     if pytype is str:
         return str(s)
-    elif pytype is unicode:
+    elif pytype is six.text_type:
         return six.text_type(s)
     elif pytype is bool:
         return bool_from_string(s)
