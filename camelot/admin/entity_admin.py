@@ -147,7 +147,8 @@ and used as a custom action.
         """Returns a set of default field attributes based on introspection
         of the SQLAlchemy columns that form a field
 
-        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column` objects.
+        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column`
+            objects.
         :return: a dictionary with field attributes
 
         By default this method looks at the first column that defines the
@@ -170,8 +171,7 @@ and used as a custom action.
                 sql_attributes['nullable'] = column.nullable
                 sql_attributes['default'] = column.default
                 sql_attributes['doc'] = column.doc or ''
-                if column.primary_key:
-                    sql_attributes['editable'] = False
+                sql_attributes['editable'] = (column.primary_key==False)
             field_admin = getattr(column, '_field_admin', None)
             if field_admin != None:
                 sql_attributes.update(field_admin.get_field_attributes())
