@@ -157,7 +157,8 @@ class ColumnMappingAdmin(ObjectAdmin):
     :param field_choices: the list of fields out of which the user can select
     """
     
-    verbose_name = _('Select fields')
+    verbose_name = _('Select field')
+    verbose_name_plural = _('Select fields')
 
     list_action = None
     list_display = ['column_name', 'field', 'value']
