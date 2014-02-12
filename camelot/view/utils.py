@@ -264,7 +264,10 @@ def text_from_richtext( unstripped_text ):
                 strings.append(escape(data))
 
     parser = HtmlToTextParser()
-    parser.feed(unstripped_text.strip())
+    try:
+        parser.feed(unstripped_text.strip())
+    except html_parser.HTMLParseError:
+        logger.warn('html parse error')
 
     return strings
 
