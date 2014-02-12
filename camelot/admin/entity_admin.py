@@ -171,7 +171,13 @@ and used as a custom action.
                 sql_attributes['nullable'] = column.nullable
                 sql_attributes['default'] = column.default
                 sql_attributes['doc'] = column.doc or ''
-                sql_attributes['editable'] = (column.primary_key==False)
+                editable = (column.primary_key is False)
+                # if these fields are editable, they are validated when a form
+                # is closed, while at that time the field is not yet filled
+                # because the foreign key column is only filled after the flush
+                if len(column.foreign_keys):
+                    editable = False
+                sql_attributes['editable'] = editable
             field_admin = getattr(column, '_field_admin', None)
             if field_admin != None:
                 sql_attributes.update(field_admin.get_field_attributes())

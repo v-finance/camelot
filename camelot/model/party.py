@@ -852,7 +852,7 @@ class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
     list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
-    form_display = TabForm( [( _('Basic'), Form( [ 'note', 'name', 'email', 
+    form_display = TabForm( [( _('Basic'), Form( [ WidgetOnlyForm('note'), 'name', 'email', 
                                                    'phone', 
                                                    'fax', 'tax_id', 
                                                    'street1',
