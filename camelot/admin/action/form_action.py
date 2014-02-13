@@ -164,16 +164,17 @@ class ShowHistory( Action ):
             
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
-            if None not in primary_key:
-                changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
-                                                     primary_key = primary_key,
-                                                     current_attributes = {} ) )
-                admin = ChangeAdmin( model_context.admin, object )
-                step = action_steps.ChangeObjects( changes, admin )
-                step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
-                step.title = _('Recent changes')
-                step.subtitle = model_context.admin.get_verbose_identifier( obj )
-                yield step
+            if primary_key != None:
+                if None not in primary_key:
+                    changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
+                                                         primary_key = primary_key,
+                                                         current_attributes = {} ) )
+                    admin = ChangeAdmin( model_context.admin, object )
+                    step = action_steps.ChangeObjects( changes, admin )
+                    step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
+                    step.title = _('Recent changes')
+                    step.subtitle = model_context.admin.get_verbose_identifier( obj )
+                    yield step
         
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
