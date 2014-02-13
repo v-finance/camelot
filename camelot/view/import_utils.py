@@ -133,14 +133,12 @@ class MatchNames(Action):
     verbose_name = _('Match names')
     
     def model_run(self, model_context):
-        field_choices = [ (f,entity_fa['name']) for f,entity_fa in 
-                          six.iteritems(model_context.admin.get_all_fields_and_attributes())
-                          if entity_fa.get('editable', True) ]
+        field_choices = model_context.admin.field_choices
         # create a dict that  will be used to search field names
         matches = dict( (six.text_type(verbose_name).lower(), fn)
-                         for fn, verbose_name in field_choices )
+                         for fn, verbose_name in field_choices if fn )
         matches.update( dict( (fn.lower().replace('_',''), fn)
-                              for fn, _verbose_name in field_choices ) )
+                              for fn, _verbose_name in field_choices if fn) )
         for mapping in model_context.get_collection():
             if mapping.value is not None:
                 field = matches.get(mapping.value.replace('_','').lower(), None)
