@@ -30,7 +30,7 @@ tables of the application can be added.
 
 import logging
 
-from sqlalchemy import event, MetaData
+from sqlalchemy import MetaData
 import sqlalchemy.sql.operators
 
 LOGGER = logging.getLogger('camelot.core.sql')
