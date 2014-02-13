@@ -28,12 +28,13 @@ import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
-from camelot.admin.validator.entity_validator import EntityValidator
+from camelot.types import PrimaryKey
 
 import six
 
@@ -161,6 +162,10 @@ and used as a custom action.
             column_type = column.type
             sql_attributes['python_type'] = ''
             sql_attributes['doc'] = ''
+            # PrimaryKey is not in _sqlalchemy_to_python_type_, but its
+            # implementation class probably is
+            if isinstance(column_type, PrimaryKey):
+                column_type = column_type.load_dialect_impl(None)
             for base_class in inspect.getmro( type( column_type ) ):
                 fa = _sqlalchemy_to_python_type_.get( base_class,
                                                       None )
