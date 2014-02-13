@@ -16,7 +16,7 @@ import os
 
 import six
 
-LOGGER = logging.Logger('camelot.core.qt')
+LOGGER = logging.getLogger('camelot.core.qt')
 
 qt_api = os.environ.get('CAMELOT_QT_API', None)
 if qt_api is not None:
