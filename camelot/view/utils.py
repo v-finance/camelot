@@ -207,7 +207,7 @@ def decimal_from_string(s):
 def pyvalue_from_string(pytype, s):
     if pytype is str:
         return str(s)
-    elif pytype is unicode:
+    elif pytype is six.text_type:
         return six.text_type(s)
     elif pytype is bool:
         return bool_from_string(s)
@@ -264,7 +264,10 @@ def text_from_richtext( unstripped_text ):
                 strings.append(escape(data))
 
     parser = HtmlToTextParser()
-    parser.feed(unstripped_text.strip())
+    try:
+        parser.feed(unstripped_text.strip())
+    except html_parser.HTMLParseError:
+        logger.warn('html parse error')
 
     return strings
 

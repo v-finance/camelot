@@ -470,8 +470,9 @@ class ExportSpreadsheet( ListContextAction ):
         yield action_steps.UpdateProgress(text=_('Prepare export'))
         admin = model_context.admin
         all_fields = admin.get_all_fields_and_attributes()
-        field_choices = [(f,entity_fa['name']) for f,entity_fa in 
+        field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
                          six.iteritems(all_fields) ]
+        field_choices.sort(key=lambda field_tuple:field_tuple[1])
         row_data = [None] * len(all_fields)
         column_range = six.moves.range(len(all_fields))
         mappings = []
@@ -709,9 +710,10 @@ class ImportFromFile( EditAction ):
             default_fields = [field for field, fa in admin.get_columns() 
                               if fa.get('editable', True)]
             mappings = []
-            all_fields = [(f,entity_fa['name']) for f,entity_fa in 
+            all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
                          six.iteritems(admin.get_all_fields_and_attributes())
                           if entity_fa.get('editable', True)]
+            all_fields.sort(key=lambda field_tuple:field_tuple[1])
             for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
                                                           default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))

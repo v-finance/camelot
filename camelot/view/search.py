@@ -31,6 +31,8 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.search')
 
+import six
+
 from camelot.types import virtual_address
 from sqlalchemy import sql, orm, schema
 
@@ -107,7 +109,7 @@ def create_entity_search_query_decorator( admin, text ):
                     arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
                 except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(python_type, (str, unicode)):
+            elif issubclass(python_type, six.string_types):
                 arg = sql.operators.ilike_op(c, '%'+text+'%')
 
             if arg is not None:

@@ -90,7 +90,7 @@ class CollectionProxyCase( ProxyCase ):
     def test_change_column_width(self):
         self.proxy.setHeaderData(1, Qt.Horizontal, QtCore.QSize(140,10), 
                                  Qt.SizeHintRole)
-        size_hint = self.proxy.headerData(1, Qt.Horizontal, Qt.SizeHintRole).toSize()
+        size_hint = variant_to_py(self.proxy.headerData(1, Qt.Horizontal, Qt.SizeHintRole))
         self.assertEqual(size_hint.width(), 140)
         
     def test_modify_list_while_editing( self ):

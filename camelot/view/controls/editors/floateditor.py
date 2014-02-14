@@ -24,7 +24,8 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import (QtGui, QtCore, Qt,
+                         q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import (CustomEditor, set_background_color_palette,
                            draw_tooltip_visualization)
 from ...art import Icon
@@ -90,11 +91,13 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         """
         # this code is based on QAbstractSpinBoxPrivate::stripped
         copy_from = 0
-        copy_to = qinput.size()
-        if self.prefix().size() and qinput.startsWith(self.prefix()):
-            copy_from += self.prefix().size()
-        if self.suffix().size() and qinput.endsWith(self.suffix()):
-            copy_to = -1*self.suffix().size()
+        copy_to = q_string_size(qinput)
+        if q_string_size(self.prefix()):
+            if q_string_startswith(qinput, self.prefix()):
+                copy_from += q_string_size(self.prefix())
+        if q_string_size(self.suffix()):
+            if q_string_endswith(qinput, self.suffix()):
+                copy_to = -1*q_string_size(self.suffix())
         partial_input = six.text_type(qinput)[copy_from:copy_to]
         return partial_input.strip()
     
@@ -102,11 +105,17 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         """Method overwritten from :class:`QtGui.QDoubleSpinBox` to handle
         an empty string as a special value for `None`.
         """
-        valid, new_pos = super(CustomDoubleSpinBox, self).validate(qinput, pos)
+        result = super(CustomDoubleSpinBox, self).validate(qinput, pos)
+        if six.PY3:
+            valid, qinput, new_pos = result
+        else:
+            valid, new_pos = result
         if valid!=QtGui.QValidator.Acceptable:
             # this code is based on QSpinBoxPrivate::validateAndInterpret
             if len(self.stripped(qinput))==0:
                 valid = QtGui.QValidator.Acceptable
+        if six.PY3:
+            return valid, qinput, new_pos
         return valid, new_pos
     
     def valueFromText(self, text):

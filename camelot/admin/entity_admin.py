@@ -28,12 +28,13 @@ import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
-from camelot.admin.validator.entity_validator import EntityValidator
+from camelot.types import PrimaryKey
 
 import six
 
@@ -147,7 +148,8 @@ and used as a custom action.
         """Returns a set of default field attributes based on introspection
         of the SQLAlchemy columns that form a field
 
-        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column` objects.
+        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column`
+            objects.
         :return: a dictionary with field attributes
 
         By default this method looks at the first column that defines the
@@ -160,6 +162,10 @@ and used as a custom action.
             column_type = column.type
             sql_attributes['python_type'] = ''
             sql_attributes['doc'] = ''
+            # PrimaryKey is not in _sqlalchemy_to_python_type_, but its
+            # implementation class probably is
+            if isinstance(column_type, PrimaryKey):
+                column_type = column_type.load_dialect_impl(None)
             for base_class in inspect.getmro( type( column_type ) ):
                 fa = _sqlalchemy_to_python_type_.get( base_class,
                                                       None )
@@ -170,8 +176,13 @@ and used as a custom action.
                 sql_attributes['nullable'] = column.nullable
                 sql_attributes['default'] = column.default
                 sql_attributes['doc'] = column.doc or ''
-                if column.primary_key:
-                    sql_attributes['editable'] = False
+                editable = (column.primary_key is False)
+                # if these fields are editable, they are validated when a form
+                # is closed, while at that time the field is not yet filled
+                # because the foreign key column is only filled after the flush
+                if len(column.foreign_keys):
+                    editable = False
+                sql_attributes['editable'] = editable
             field_admin = getattr(column, '_field_admin', None)
             if field_admin != None:
                 sql_attributes.update(field_admin.get_field_attributes())

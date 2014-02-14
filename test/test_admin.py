@@ -112,6 +112,10 @@ class ObjectAdminCase( ModelThreadTestCase ):
         a_admin.is_deleted( a )
         a_admin.is_persistent( a )
         a_admin.copy( a )
+    
+    def test_set_defaults(self):
+        pass
+        
         
 class EntityAdminCase( TestMetaData ):
     """Test the EntityAdmin

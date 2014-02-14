@@ -35,34 +35,41 @@ class TimeValidator(QtGui.QValidator):
     
     def __init__(self, parent=None):
         QtGui.QValidator.__init__(self, parent)
-        
+    
     def validate(self, input, pos):
-        input = str(input).strip()
+        accept, input, pos = self._validate(input, pos)
+        if six.PY3:
+            return accept, input, pos
+        else:
+            return accept, pos
+
+    def _validate(self, input, pos):
+        input = six.text_type(input).strip()
         # allow None
         if len(input)==0:
-            return (QtGui.QValidator.Acceptable, pos)
+            return (QtGui.QValidator.Acceptable, input, pos)
         parts = input.split(':')
         if len(parts)>2:
-            return (QtGui.QValidator.Invalid, pos)        
+            return (QtGui.QValidator.Invalid, input, pos)
         # validate individual parts
         for i, part in enumerate(parts):
             if len(part)==0:
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, input, pos)
             if len(part)<1:
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, input, pos)
             if len(part)>2:
-                return (QtGui.QValidator.Invalid, pos)            
+                return (QtGui.QValidator.Invalid, input, pos)
             if not part.isdigit():
-                return (QtGui.QValidator.Invalid, pos)
+                return (QtGui.QValidator.Invalid, input, pos)
             if i==1 or (i==0 and len(parts)==1):
                 if int(part) > 59:
-                    return (QtGui.QValidator.Invalid, pos)
+                    return (QtGui.QValidator.Invalid, input, pos)
             elif int(part) > 23:
-                return (QtGui.QValidator.Invalid, pos)
+                return (QtGui.QValidator.Invalid, input, pos)
         # validate the number of parts
         if len(parts)<2:
-            return (QtGui.QValidator.Intermediate, pos)
-        return (QtGui.QValidator.Acceptable, pos)
+            return (QtGui.QValidator.Intermediate, input, pos)
+        return (QtGui.QValidator.Acceptable, input, pos)
     
 class DateTimeEditor(CustomEditor):
     """Widget for editing date and time separated and with popups"""
@@ -153,8 +160,10 @@ class DateTimeEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(DateTimeEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
-        self.dateedit.line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            self.set_enabled(kwargs.get('editable', False))
+            line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
 
     def set_background_color(self, background_color):
         self.dateedit.set_background_color( background_color )

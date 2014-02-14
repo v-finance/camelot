@@ -30,10 +30,8 @@ tables of the application can be added.
 
 import logging
 
-from sqlalchemy import event, MetaData
+from sqlalchemy import MetaData
 import sqlalchemy.sql.operators
-
-from camelot.core.auto_reload import auto_reload
 
 LOGGER = logging.getLogger('camelot.core.sql')
 
@@ -45,8 +43,6 @@ metadata = MetaData()
 metadata.autoflush = False
 metadata.transactional = False
 
-event.listen( auto_reload, 'before_reload', metadata.clear )
-    
 def like_op(column, string):
     return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
 

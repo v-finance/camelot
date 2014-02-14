@@ -51,9 +51,10 @@ class DateEditor(CustomEditor):
                             QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
-        self.line_edit = DecoratedLineEdit()
-        self.line_edit.set_minimum_width( six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)) )
-        self.line_edit.setPlaceholderText( QtCore.QDate(2000,1,1).toString(self.date_format) )
+        line_edit = DecoratedLineEdit()
+        line_edit.setObjectName('date_line_edit')
+        line_edit.set_minimum_width( six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)) )
+        line_edit.setPlaceholderText( QtCore.QDate(2000,1,1).toString(self.date_format) )
 
         # The order of creation of this widgets and their parenting
         # seems very sensitive under windows and creates system crashes
@@ -83,7 +84,7 @@ class DateEditor(CustomEditor):
             special_date_menu.addAction(_('Clear'))
 
         self.hlayout = QtGui.QHBoxLayout()
-        self.hlayout.addWidget(self.line_edit)
+        self.hlayout.addWidget(line_edit)
         self.hlayout.addWidget(self.special_date)
 
         self.hlayout.setContentsMargins(0, 0, 0, 0)
@@ -95,17 +96,19 @@ class DateEditor(CustomEditor):
 
         self.minimum = datetime.date.min
         self.maximum = datetime.date.max
-        self.setFocusProxy(self.line_edit)
+        self.setFocusProxy(line_edit)
 
-        self.line_edit.editingFinished.connect( self.line_edit_finished )
-        self.line_edit.textEdited.connect(self.text_edited)
+        line_edit.editingFinished.connect( self.line_edit_finished )
+        line_edit.textEdited.connect(self.text_edited)
         special_date_menu.triggered.connect(self.set_special_date)
 
     def calendar_widget_activated(self, date):
-        self.calendar_action_trigger.emit()
-        self.set_value(date)
-        self.editingFinished.emit()
-        self.line_edit.setFocus()
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            self.calendar_action_trigger.emit()
+            self.set_value(date)
+            self.editingFinished.emit()
+            line_edit.setFocus()
 
     def line_edit_finished(self):
         self.setProperty( 'value', py_to_variant( self.get_value() ) )
@@ -122,53 +125,67 @@ class DateEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self.setProperty( 'value', py_to_variant( value ) )
-        if value:
-            qdate = QtCore.QDate(value)
-            formatted_date = qdate.toString(self.date_format)
-            self.line_edit.setText(formatted_date)
-            self.calendar_widget.setSelectedDate(qdate)
-        else:
-            self.line_edit.setText('')
-        self.valueChanged.emit()
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            if value:
+                qdate = QtCore.QDate(value)
+                formatted_date = qdate.toString(self.date_format)
+                line_edit.setText(formatted_date)
+                self.calendar_widget.setSelectedDate(qdate)
+            else:
+                line_edit.setText('')
+            self.valueChanged.emit()
 
     def text_edited(self, text ):
-        try:
-            date_from_string( six.text_type( self.line_edit.text() ) )
-            self.line_edit.set_valid(True)
-            self.valueChanged.emit()
-        except ParsingError:
-            self.line_edit.set_valid(False)
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            try:
+                date_from_string( six.text_type( line_edit.text() ) )
+                line_edit.set_valid(True)
+                self.valueChanged.emit()
+            except ParsingError:
+                line_edit.set_valid(False)
 
     def get_value(self):
-        try:
-            value = date_from_string( six.text_type( self.line_edit.text() ) )
-        except ParsingError:
-            value = None
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            try:
+                value = date_from_string( six.text_type( line_edit.text() ) )
+            except ParsingError:
+                value = None
         return CustomEditor.get_value(self) or value
 
     def set_field_attributes(self, **kwargs):
         super(DateEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
-        self.line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            self.set_enabled(kwargs.get('editable', False))
+            line_edit.setToolTip(six.text_type(kwargs.get('tooltip', '')))
 
     def set_background_color(self, background_color):
-        set_background_color_palette( self.line_edit, background_color )
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            set_background_color_palette(line_edit, background_color)
 
     def set_enabled(self, editable=True):
-        self.line_edit.setEnabled(editable)
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            line_edit.setEnabled(editable) 
         if editable:
             self.special_date.show()
         else:
             self.special_date.hide()
 
     def set_special_date(self, action):
-        if action.text().compare(_('Today')) == 0:
-            self.set_value(datetime.date.today())
-        elif action.text().compare(_('Far future')) == 0:
-            self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-        elif action.text().compare(_('Clear')) == 0:
-            self.set_value(None)
-        self.line_edit.setFocus()
-        self.editingFinished.emit()
+        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        if line_edit is not None:
+            if action.text().compare(_('Today')) == 0:
+                self.set_value(datetime.date.today())
+            elif action.text().compare(_('Far future')) == 0:
+                self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
+            elif action.text().compare(_('Clear')) == 0:
+                self.set_value(None)
+            line_edit.setFocus()
+            self.editingFinished.emit()
 
 
