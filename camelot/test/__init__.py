@@ -174,13 +174,6 @@ class ApplicationViewsTest(ModelThreadTestCase):
         step = action_steps.MainWindow(app_admin)
         widget = step.render(self.gui_context)
         self.grab_widget(widget, subdir='applicationviews')
-        
-    def test_tool_bar(self):
-        from camelot.view.mainwindow import MainWindow
-        app_admin = self.get_application_admin()
-        self.install_translators(app_admin)
-        main_window = MainWindow(app_admin)
-        self.grab_widget(main_window.get_tool_bar(), subdir='applicationviews')
     
 class EntityViewsTest(ModelThreadTestCase):
     """Test the views of all the Entity subclasses, subclass this class to test all views
