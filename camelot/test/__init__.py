@@ -160,17 +160,14 @@ class ApplicationViewsTest(ModelThreadTestCase):
             QtCore.QCoreApplication.installTranslator(translator)
 
     def test_navigation_pane(self):
-        from camelot.view.controls import navpane2
+        from camelot.view.controls.section_widget import NavigationPane
         app_admin = self.get_application_admin()
         self.install_translators(app_admin)
-        nav_pane = navpane2.NavigationPane(app_admin, None, None)
+        nav_pane = NavigationPane(None, None)
+        nav_pane.set_sections(app_admin.get_sections())
         self.grab_widget(nav_pane, subdir='applicationviews')
-        for i, section in enumerate(nav_pane.get_sections()):
-            nav_pane.change_current((i, six.text_type(section.get_verbose_name())))
-            self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
       
     def test_main_window(self):
-        from camelot.view.mainwindow import MainWindow
         app_admin = self.get_application_admin()
         self.gui_context.admin = app_admin
         self.install_translators(app_admin)
