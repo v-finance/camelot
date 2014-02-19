@@ -49,7 +49,7 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
             
     def set_field_attributes(self, **kwargs):
         super(LabelEditor, self).set_field_attributes(**kwargs)
-        self.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
             
     def paintEvent(self, event):
         if self.toolTip():

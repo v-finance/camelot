@@ -127,7 +127,7 @@ class Many2OneEditor( CustomEditor ):
     def set_field_attributes(self, **kwargs):
         super(Many2OneEditor, self).set_field_attributes(**kwargs)
         set_background_color_palette(self.search_input, kwargs.get('background_color'))
-        self.search_input.setToolTip(kwargs.get('tooltip', '') or '')
+        self.search_input.setToolTip(kwargs.get('tooltip') or '')
         self.search_input.setEnabled(kwargs.get('editable', False))
         self.update_actions()
 

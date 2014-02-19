@@ -192,7 +192,7 @@ class FloatEditor(CustomEditor):
         super(FloatEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        spinBox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
         spinBox.setPrefix(six.text_type(kwargs.get('prefix', '')))
         spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
