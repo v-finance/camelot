@@ -31,8 +31,10 @@ as /camelot.
 import unittest
 import six
 
+from ..admin.action.application_action import ApplicationActionGuiContext
 from ..core.orm import Session
 from ..core.qt import QtGui, QtCore, Qt
+from ..view import action_steps
 
 has_programming_error = False
 
@@ -143,17 +145,24 @@ class ModelThreadTestCase(unittest.TestCase):
 class ApplicationViewsTest(ModelThreadTestCase):
     """Test various application level views, like the main window, the
     sidepanel"""
-        
+    
+    def setUp(self):
+        super(ApplicationViewsTest, self).setUp()
+        self.gui_context = ApplicationActionGuiContext()
+
     def get_application_admin(self):
         """Overwrite this method to make use of a custom application admin"""
         from camelot.admin.application_admin import ApplicationAdmin
         return ApplicationAdmin()
-        
+    
+    def install_translators(self, app_admin):
+        for translator in app_admin.get_translator():
+            QtCore.QCoreApplication.installTranslator(translator)
+
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)         
         app_admin = self.get_application_admin()
+        self.install_translators(app_admin)
         nav_pane = navpane2.NavigationPane(app_admin, None, None)
         self.grab_widget(nav_pane, subdir='applicationviews')
         for i, section in enumerate(nav_pane.get_sections()):
@@ -162,17 +171,17 @@ class ApplicationViewsTest(ModelThreadTestCase):
       
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)
         app_admin = self.get_application_admin()
-        widget = MainWindow(app_admin)
+        self.gui_context.admin = app_admin
+        self.install_translators(app_admin)
+        step = action_steps.MainWindow(app_admin)
+        widget = step.render(self.gui_context)
         self.grab_widget(widget, subdir='applicationviews')
         
     def test_tool_bar(self):
         from camelot.view.mainwindow import MainWindow
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
-        app_admin = self.get_application_admin()        
+        app_admin = self.get_application_admin()
+        self.install_translators(app_admin)
         main_window = MainWindow(app_admin)
         self.grab_widget(main_window.get_tool_bar(), subdir='applicationviews')
     

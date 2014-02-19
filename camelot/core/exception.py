@@ -26,7 +26,6 @@
 """
 
 from camelot.core.utils import ugettext_lazy as _
-from camelot import test
 
 def log_programming_error( logger, message, exc_info = None ):
     """Log a programming error and set the the global programming error variable
@@ -39,6 +38,7 @@ def log_programming_error( logger, message, exc_info = None ):
     :param message: the message to log
     :param exc_info: an exception that was raised
     """
+    from camelot import test
     test.has_programming_error = True
     logger.error( u'ProgrammingError : %s'%message, exc_info = exc_info )
             
