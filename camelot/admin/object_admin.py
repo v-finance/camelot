@@ -611,11 +611,14 @@ be specified using the verbose_name attribute.
         # If no column_width is specified, try to derive one
         #
         if column_width is None:
-            length = min(field_attributes.get('length', 0) or 0, 50)
+            length = field_attributes.get('length')
+            minimal_column_width = field_attributes.get('minimal_column_width')
+            if (length is None) and (minimal_column_width is None):
+                length = 10
             column_width = max( 
-                field_attributes.get('minimal_column_width', 0),
+                minimal_column_width or 0,
                 2 + len(six.text_type(field_attributes['name'])),
-                length
+                min(length or 0, 50),
                 )
         field_attributes['column_width'] = column_width
 
