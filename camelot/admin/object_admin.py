@@ -578,30 +578,46 @@ be specified using the verbose_name attribute.
         """Given a set field attributes, expand the set with attributes
         derived from the given attributes.
         """
-        #
-        # If no column_width is specified, try to derive one
-        #
-        if field_attributes.get('column_width', None) is None:
-            length = min(field_attributes.get('length', 0) or 0, 50)
-            field_attributes['column_width'] = max( 
-                field_attributes.get('minimal_column_width', 0),
-                2 + len(six.text_type(field_attributes['name'])),
-                length
-                )
+        column_width = field_attributes.get('column_width', None)
         #
         # If there is an `admin` field attribute, instantiate it
         #
         target = field_attributes.get('target', None)
         if target is not None:
             admin = field_attributes.get('admin', None)
+            direction = field_attributes.get('direction', '')
             if admin is not None:
-                field_attributes['admin'] = admin(self, target)
+                related_admin = admin(self, target)
             #
             # In case of a 'target' field attribute, add an appropriate
             # 'admin' attribute
             #
             else:
-                field_attributes['admin'] = self.get_related_admin(target)
+                related_admin = self.get_related_admin(target)
+            #
+            # for an xtomany field, calculate the sum of the column widths, as
+            # an estimate for the width of the table widget
+            #
+            if column_width is None and direction.endswith('many') and related_admin:
+                table = related_admin.get_table()
+                fields = table.get_fields(column_group=0)
+                related_field_attributes = related_admin.get_field_attributes
+                related_column_widths = (
+                    related_field_attributes(field).get('column_width', 0) for 
+                    field in fields)
+                column_width = sum(related_column_widths, 0)
+            field_attributes['admin'] = related_admin
+        #
+        # If no column_width is specified, try to derive one
+        #
+        if column_width is None:
+            length = min(field_attributes.get('length', 0) or 0, 50)
+            column_width = max( 
+                field_attributes.get('minimal_column_width', 0),
+                2 + len(six.text_type(field_attributes['name'])),
+                length
+                )
+        field_attributes['column_width'] = column_width
 
     def get_table( self ):
         """The definition of the table to be used in a list view

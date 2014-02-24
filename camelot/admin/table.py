@@ -75,18 +75,21 @@ class Table( object ):
                   columns ):
         self.columns = columns
         
-    def get_fields( self ):
+    def get_fields( self, column_group = None ):
         """
+        :param column_group: if given, only return the fields in this column group,
+            where column_group is the index of the group
         :return: a ordered list of field names displayed in the table
         """
         fields = []
-        for column in self.columns:
+        for i, column in enumerate(self.columns):
             if isinstance( column, six.string_types ):
                 fields.append( column )
             else:
-                fields.extend( column.get_fields() )
+                if (column_group is None) or (column_group==i):
+                    fields.extend( column.get_fields() )
         return fields
-                
+
     def render( self, item_view, parent = None ):
         """
         Create a tab widget that allows the user to switch between column 
