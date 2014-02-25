@@ -134,12 +134,9 @@ class PaneSection(QtGui.QWidget):
                         
 class NavigationPane(QtGui.QDockWidget):
 
-    def __init__(self, app_admin, workspace, parent):
+    def __init__(self, workspace, parent):
         super(NavigationPane, self).__init__(parent)
-
         self._workspace = workspace
-        self.app_admin = app_admin
-        
         tb = QtGui.QToolBox()
         tb.setFrameShape(QtGui.QFrame.NoFrame)
         tb.layout().setContentsMargins(0,0,0,0)
@@ -151,7 +148,6 @@ class NavigationPane(QtGui.QDockWidget):
         self.setTitleBarWidget(QtGui.QWidget())
         self.setWidget(tb)
         self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        self.update_sections()
 
     def wheelEvent(self, wheel_event):
         steps = -1 * wheel_event.delta() / (8 * 15)
@@ -159,13 +155,6 @@ class NavigationPane(QtGui.QDockWidget):
         if steps and toolbox:
             current_index = toolbox.currentIndex()
             toolbox.setCurrentIndex( max( 0, min( current_index + steps, toolbox.count() ) ) )
-        
-    @QtCore.qt_slot()
-    def update_sections(self):
-        post(self.app_admin.get_sections, self.set_sections)
-
-    def get_sections(self):
-        return self._sections
 
     @QtCore.qt_slot(object)
     def set_sections(self, sections):

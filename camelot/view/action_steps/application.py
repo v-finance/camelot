@@ -85,4 +85,4 @@ class InstallTranslator( ActionStep ):
             for t in translator:
                 app.installTranslator( t )
         else:
-            app.installTranslator( translator )        
+            app.installTranslator( translator )

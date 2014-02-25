@@ -178,10 +178,15 @@ class EntityAdminCase( TestMetaData ):
             e = ManyToMany('E')
             
             class Admin(EntityAdmin):
-                pass
+                list_display = ['b', 'd']
+                field_attributes = {'b':{'column_width': 61},
+                                    'd':{'column_width': 73}}
             
         class B(self.Entity):
             a = OneToMany('A')
+            
+            class Admin(EntityAdmin):
+                pass
           
         class C(self.Entity):
             a = ManyToOne('A')
@@ -193,20 +198,24 @@ class EntityAdminCase( TestMetaData ):
             a = ManyToMany('A')
             
         self.create_all()
-        admin = self.app_admin.get_related_admin( A )
+        a_admin = self.app_admin.get_related_admin( A )
         
-        b_fa = admin.get_field_attributes('b')
+        b_fa = a_admin.get_field_attributes('b')
         self.assertEqual( b_fa['delegate'], delegates.Many2OneDelegate )
         
-        c_fa = admin.get_field_attributes('c')
+        c_fa = a_admin.get_field_attributes('c')
         self.assertEqual( c_fa['delegate'], delegates.Many2OneDelegate )
         
-        d_fa = admin.get_field_attributes('d')
+        d_fa = a_admin.get_field_attributes('d')
         self.assertEqual( d_fa['delegate'], delegates.One2ManyDelegate )
         self.assertEqual( d_fa['proxy'], QueryTableProxy )
         
-        e_fa = admin.get_field_attributes('e')
+        e_fa = a_admin.get_field_attributes('e')
         self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate )
+        
+        b_admin = self.app_admin.get_related_admin( B )
+        a_fa = b_admin.get_field_attributes('a')
+        self.assertEqual( a_fa['column_width'], 61+73)
     
     def test_custom_relation_admin(self):
         from .snippet.admin_field_attribute import (MailingGroup,

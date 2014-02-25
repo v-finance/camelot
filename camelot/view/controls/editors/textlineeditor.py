@@ -65,7 +65,7 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
-        self.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
 
     def set_enabled(self, editable=True):
         value = self.text()

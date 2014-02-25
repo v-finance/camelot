@@ -36,14 +36,16 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     """
       
     arrow_down_key_pressed = QtCore.qt_signal()
+    
     _font_metrics = None
+    _background_color = None
       
     def __init__(self, parent = None):
-        self._valid = True
-        if self._font_metrics == None:
-            self._font_metrics = QtGui.QFontMetrics( QtGui.QApplication.font() )
         super( DecoratedLineEdit, self ).__init__( parent = parent )
-        self._background_color = self.palette().color(self.backgroundRole())
+        self._valid = True
+        if self._font_metrics is None:
+            self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+            self._background_color = self.palette().color(self.backgroundRole())
 
     def set_minimum_width(self, width):
         """Set the minimum width of the line edit, measured in number of 

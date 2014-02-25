@@ -216,11 +216,11 @@ class MainWindow(QtGui.QMainWindow):
         """
         if sections != None:
             self.navpane = NavigationPane(
-                self.app_admin,
                 workspace=self.workspace,
                 parent=self
             )
             self.addDockWidget( Qt.LeftDockWidgetArea, self.navpane )
+            self.navpane.set_sections(sections)
         else:
             self.navpane = None
 

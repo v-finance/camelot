@@ -136,6 +136,6 @@ class CodeEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(CodeEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
-        tooltip = six.text_type(kwargs.get('tooltip', ''))
+        tooltip = six.text_type(kwargs.get('tooltip') or '')
         self.layout().itemAt(0).widget().setToolTip(tooltip)
 

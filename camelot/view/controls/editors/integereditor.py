@@ -93,7 +93,7 @@ class IntegerEditor(CustomEditor):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
-            spin_box.setToolTip(six.text_type(kwargs.get('tooltip', '')))
+            spin_box.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
             spin_box.setPrefix(six.text_type(kwargs.get('prefix', '')))
             spin_box.setSuffix(six.text_type(kwargs.get('suffix', '')))
             spin_box.setSingleStep(kwargs.get('single_step', 1))
