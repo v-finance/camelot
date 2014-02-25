@@ -164,7 +164,7 @@ class ShowHistory( Action ):
             
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
-            if primary_key != None:
+            if primary_key is not None:
                 if None not in primary_key:
                     changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
                                                          primary_key = primary_key,

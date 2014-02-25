@@ -100,7 +100,7 @@ class LocalFileEditor( CustomEditor ):
             value = os.path.abspath( six.text_type( value ) )
             self.filename.setText( value )
             self.valueChanged.emit()
-        self.editingFinished.emit()
+            self.editingFinished.emit()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
