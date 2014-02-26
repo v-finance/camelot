@@ -84,7 +84,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                             QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( (self._font_height + 5) *5 )
         if column_width is not None:
-            print 'set minimum width', column_width
             self.setMinimumWidth(column_width * self._font_width)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
