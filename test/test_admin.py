@@ -176,9 +176,10 @@ class EntityAdminCase( TestMetaData ):
             c = OneToOne('C')
             d = OneToMany('D', lazy='dynamic')
             e = ManyToMany('E')
+            a = ManyToOne('A', backref='related_a')
             
             class Admin(EntityAdmin):
-                list_display = ['b', 'd']
+                list_display = ['b', 'd', 'related_a']
                 field_attributes = {'b':{'column_width': 61},
                                     'd':{'column_width': 73}}
             
@@ -215,7 +216,7 @@ class EntityAdminCase( TestMetaData ):
         
         b_admin = self.app_admin.get_related_admin( B )
         a_fa = b_admin.get_field_attributes('a')
-        self.assertEqual( a_fa['column_width'], 61+73)
+        self.assertEqual( a_fa['column_width'], 2*(61+73))
     
     def test_custom_relation_admin(self):
         from .snippet.admin_field_attribute import (MailingGroup,
