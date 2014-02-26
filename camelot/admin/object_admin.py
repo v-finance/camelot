@@ -568,10 +568,12 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
             )
+            # first put the attributes in the cache, and only then start to expand
+            # them, to be able to prevent recursion when expanding the attributes
+            self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
             self._expand_field_attributes(attributes, field_name)
-            self._field_attributes[field_name] = attributes
             return attributes
 
     def _expand_field_attributes(self, field_attributes, field_name):

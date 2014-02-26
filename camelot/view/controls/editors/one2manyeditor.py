@@ -44,10 +44,15 @@ class One2ManyEditor(CustomEditor, WideEditor):
     
     :param proxy: the proxy class to use to present the data in the list or
         the query to the table view
+    
+    :param column_width: the width of the editor in number of characters
 
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
+
+    _font_height = None
+    _font_width = None
 
     def __init__( self,
                   admin = None,
@@ -55,6 +60,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                   create_inline = False,
                   direction = 'onetomany',
                   field_name = 'onetomany',
+                  column_width = None,
                   proxy = None,
                   **kw ):
         CustomEditor.__init__( self, parent )
@@ -69,11 +75,16 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # parent set by layout manager
         table = AdminTableWidget(admin, self)
         table.setObjectName('table')
-        rowHeight = QtGui.QFontMetrics( self.font() ).height() + 5
+        if self._font_height is None:
+            font_metrics = QtGui.QFontMetrics( self.font() )
+            self._font_height = font_metrics.height()
+            self._font_width = font_metrics.averageCharWidth()
         layout.setSizeConstraint( QtGui.QLayout.SetNoConstraint )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Expanding )
-        self.setMinimumHeight( rowHeight*5 )
+        self.setMinimumHeight( (self._font_height + 5) *5 )
+        if column_width is not None:
+            self.setMinimumWidth(column_width * self._font_width)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )

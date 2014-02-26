@@ -251,7 +251,9 @@ and used as a custom action.
                 validator_list = [],
                 name = ugettext_lazy(field_name.replace('_', ' ').capitalize())
             )
-
+            # first put the attributes in the cache, and only then start to expand
+            # them, to be able to prevent recursion when expanding the attributes
+            self._field_attributes[field_name] = attributes
             #
             # Field attributes forced by the field_attributes property
             #
@@ -339,7 +341,6 @@ and used as a custom action.
                     raise Exception('No mapped class found for target %s'%target)
 
             self._expand_field_attributes(attributes, field_name)
-            self._field_attributes[field_name] = attributes
             return attributes
 
     def get_dynamic_field_attributes(self, obj, field_names):
