@@ -96,10 +96,11 @@ class LocalFileEditor( CustomEditor ):
             value = QtGui.QFileDialog.getOpenFileName( self,
                                                        filter = self._file_filter,
                                                        directory = current_directory )
-        value = os.path.abspath( six.text_type( value ) )
-        self.filename.setText( value )
-        self.valueChanged.emit()
-        self.editingFinished.emit()
+        if value!='':
+            value = os.path.abspath( six.text_type( value ) )
+            self.filename.setText( value )
+            self.valueChanged.emit()
+            self.editingFinished.emit()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
