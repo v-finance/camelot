@@ -84,7 +84,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
                             QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( (self._font_height + 5) *5 )
         if column_width is not None:
-            self.setMinimumWidth(column_width * self._font_width)
+            self.size_hint_width = column_width * self._font_width
+        else:
+            self.size_hint_width = None
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
@@ -106,6 +108,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
              args = (Qt.RightToolBarArea, self.direction ) )
         post(self.get_columns, self.set_columns)
 
+    def sizeHint(self):
+        size_hint = super(One2ManyEditor, self).sizeHint()
+        if self.size_hint_width is not None:
+            size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
+        return size_hint
+        
     @QtCore.qt_slot( object )
     def set_right_toolbar_actions( self, toolbar_actions ):
         if toolbar_actions != None:
