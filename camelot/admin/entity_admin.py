@@ -286,8 +286,6 @@ and used as a custom action.
 
                     if property.direction == orm.interfaces.ONETOMANY:
                         attributes.update( direction = 'onetomany' )
-                        if property.lazy == 'dynamic':
-                            attributes.update(proxy=QueryTableProxy)
                     elif property.direction == orm.interfaces.MANYTOONE:
                         attributes.update(
                             #
@@ -301,6 +299,11 @@ and used as a custom action.
                         attributes.update( direction = 'manytomany' )
                     else:
                         raise Exception('PropertyLoader has unknown direction')
+
+                    if property.direction in (orm.interfaces.ONETOMANY,
+                                              orm.interfaces.MANYTOMANY):
+                        if property.lazy == 'dynamic':
+                            attributes.update(proxy=QueryTableProxy)
 
                     if property.uselist == True:
                         attributes.update(
