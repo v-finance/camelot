@@ -49,7 +49,6 @@ if qt_api in (None, 'PyQt4'):
     try:
         qt_api = 'PyQt4'
         import sip
-        from PyQt4.QtCore import Qt
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
         QtCore.qt_property = QtCore.pyqtProperty
@@ -62,7 +61,6 @@ if qt_api in (None, 'PyQt4'):
 elif qt_api in (None, 'PySide'):
     try:
         qt_api = 'PySide'
-        from PySide.QtCore import Qt
         QtCore.qt_slot = QtCore.Slot
         QtCore.qt_signal = QtCore.Signal
         QtCore.qt_property = QtCore.Property
@@ -75,6 +73,11 @@ if qt_api is None:
     raise Exception('PyQt4 nor PySide could be imported')
 else:
     LOGGER.info('Using {} Qt bindings'.format(qt_api))
+
+Qt = getattr(__import__(qt_api+'.QtCore', globals(), locals(), ['Qt']), 'Qt')
+
+assert variant_api
+assert string_api
 
 def _py_to_variant_1( obj=None ):
     """Convert a Python object to a :class:`QtCore.QVariant` object
