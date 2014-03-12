@@ -771,15 +771,21 @@ class ReplaceFieldContents( EditAction ):
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
     icon = Icon('tango/16x16/actions/edit-find-replace.png')
+    message = _('Field is not editable')
+    resolution = _('Only select editable rows')
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
         field_name, value_getter = yield action_steps.ChangeField( model_context.admin )
         yield action_steps.UpdateProgress( text = _('Replacing field') )
+        dynamic_field_attributes = model_context.admin.get_dynamic_field_attributes
         if value_getter != None:
             value = value_getter()
             with model_context.session.begin():
                 for obj in model_context.get_selection():
+                    dynamic_fa = list(dynamic_field_attributes(obj, [field_name]))[0]
+                    if dynamic_fa.get('editable', True) == False:
+                        raise UserException(self.message, resolution=self.resolution)
                     setattr( obj, field_name, value )
                     # dont rely on the session to update the gui, since the objects
                     # might not be in a session

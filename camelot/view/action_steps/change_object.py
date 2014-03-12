@@ -347,6 +347,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         self.field_attributes = field_attributes
         self.field = None
         self.value = None
+        self.static_field_attributes = admin.get_static_field_attributes
         self.setWindowTitle( admin.get_verbose_name_plural() )
         self.set_banner_title( _('Replace field contents') )
         self.set_banner_subtitle( _('Select the field to update and enter its new value') )
@@ -385,10 +386,11 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         if selected_field not in (None, ValueLoading):
             self.field = selected_field
             self.value = None
-            field_attributes = self.field_attributes[selected_field]
-            static_field_attributes = dict( (k,v) for k,v in six.iteritems(field_attributes) if not six.callable(v) )
-            delegate = field_attributes['delegate']( parent = self,
-                                                     **static_field_attributes)
+            static_field_attributes = list(self.static_field_attributes([selected_field]))[0]
+            # editable might be a dynamic field attribute
+            static_field_attributes.setdefault('editable', True)
+            delegate = static_field_attributes['delegate'](parent = self,
+                                                            **static_field_attributes)
             option = QtGui.QStyleOptionViewItem()
             option.version = 5
             value_editor = delegate.createEditor( self, option, None )
