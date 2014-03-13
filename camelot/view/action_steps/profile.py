@@ -299,7 +299,7 @@ allow all languages
     def new_network_request(self):
         if self.network_reply and not self.network_reply.isFinished():
             self.network_reply.abort()
-        if self.proxy_host_editor.text():
+        if self.proxy_host_editor.text() and self.proxy_port_editor.text():
             proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy,
                                              self.proxy_host_editor.text(),
                                              int( str( self.proxy_port_editor.text() ) ) )#,
