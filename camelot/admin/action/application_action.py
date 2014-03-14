@@ -434,7 +434,7 @@ class Profiler( Action ):
         else:
             yield action_steps.UpdateProgress(text='Creating statistics')
             self.profile.disable()
-            stream = StringIO.StringIO()
+            stream = StringIO()
             stats = pstats.Stats(self.profile, stream=stream)
             self.profile = None
             stats.sort_stats('cumulative')
