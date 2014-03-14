@@ -727,7 +727,9 @@ be specified using the verbose_name attribute.
         if self.is_deleted( object_instance ):
             return False
         
-        for field, attributes in self.get_fields():
+        # set defaults for all fields, also those that are not displayed, since
+        # those might be needed for validation or other logic
+        for field, attributes in self.get_all_fields_and_attributes().items():
             has_default = False
             try:
                 default = attributes['default']
