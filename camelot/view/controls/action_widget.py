@@ -26,7 +26,8 @@ from ...core.qt import QtGui, QtCore, variant_to_py
 
 import six
 
-from camelot.admin.action.form_action import FormActionGuiContext
+from ...admin.action.form_action import FormActionGuiContext
+from ...admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import is_deleted, ugettext
 from camelot.view.model_thread import post
 
@@ -43,6 +44,10 @@ class AbstractActionWidget( object ):
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+        if isinstance( gui_context, ListActionGuiContext ):
+            selection_model = gui_context.item_view.selectionModel()
+            if selection_model is not None:
+                selection_model.currentRowChanged.connect(self.current_row_changed)
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state( self, state ):
@@ -50,7 +55,7 @@ class AbstractActionWidget( object ):
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
 
-    def current_row_changed( self, current_row ):
+    def current_row_changed( self, index1=None, index2=None ):
         post( self.action.get_state,
               self.set_state,
               args = (self.gui_context.create_model_context(),) )
