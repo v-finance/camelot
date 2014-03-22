@@ -2,6 +2,7 @@ import logging
 
 from ...core.qt import QtCore
 from ...core.utils import ugettext as _
+from ..application_admin import ApplicationAdmin
 from .base import Action
 
 logger = logging.getLogger('camelot.admin.action.application')
@@ -13,12 +14,16 @@ class Application( Action ):
     
     Subclass this class and overwrite the :meth:`model_run` method to customize
     the application initialization process
+    
+    :param application_admin: a subclass of camelot.admin.application_admin.ApplicationAdmin
+        customized to your app.  If no application_admin is passed, a default one is
+        created (this is not recommended)
     """
 
-    def __init__(self, application_admin):
-        """:param application_admin: a subclass of camelot.admin.application_admin.ApplicationAdmin
-        customized to your app"""
+    def __init__(self, application_admin=None):
         super(Application, self).__init__()
+        if application_admin is None:
+            application_admin = ApplicationAdmin()
         self.application_admin = application_admin
         self.gui_context = None
         
