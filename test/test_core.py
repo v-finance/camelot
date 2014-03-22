@@ -132,11 +132,12 @@ class ConfCase(unittest.TestCase):
         settings = SimpleSettings( 'Conceptive Engineering', 'Camelot Test')
         self.assertTrue( settings.ENGINE() )
         self.assertTrue( settings.CAMELOT_MEDIA_ROOT() )
-        
-class AutoReloadCase( ModelThreadTestCase ):
-    """Test the auto reload functions"""
-    
-    def test_source_changed( self ):
-        pass
-        #from camelot.core.auto_reload import auto_reload
-        #auto_reload.source_changed( None )
+
+class QtCase(unittest.TestCase):
+    """Test the qt binding abstraction module
+    """
+
+    def test_variant(self):
+        from camelot.core.qt import py_to_variant, variant_to_py
+        for obj in ['a', 5]:
+            self.assertEqual(variant_to_py(py_to_variant(obj)), obj)
