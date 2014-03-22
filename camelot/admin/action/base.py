@@ -70,7 +70,16 @@ strictly to the :class:`ModelContext`
     def __init__( self ):
         self.progress_dialog = None
         self.mode_name = None
+
+    def get_window(self):
+        """
+        The window to be used as a reference to position new windows.  Returns
+        `None` if there is no window yet.
         
+        :return: a :class:`QtGui.QWidget`
+        """
+        return None
+
     def create_model_context( self ):
         """Create a :class:`ModelContext` filled with base information, 
         extracted from this GuiContext.  This function will be called in the

@@ -86,7 +86,11 @@ class ApplicationActionGuiContext( GuiContext ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.workspace = None
         self.admin = None
-        
+    
+    def get_window(self):
+        if self.workspace is not None:
+            return self.workspace.window()
+
     def create_model_context( self ):
         context = super( ApplicationActionGuiContext, self ).create_model_context()
         context.admin = self.admin

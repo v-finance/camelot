@@ -87,6 +87,11 @@ class FieldActionGuiContext( ApplicationActionGuiContext ):
         super( FieldActionGuiContext, self ).__init__()
         self.editor = None
 
+    def get_window(self):
+        if self.editor is not None:
+            return self.editor.window()
+        return super(FieldActionGuiContext, self).get_window()
+
     def create_model_context( self ):
         context = super( FieldActionGuiContext, self ).create_model_context()
         context.value = self.editor.get_value()

@@ -150,6 +150,11 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         self.view = None
         self.field_attributes = dict()
 
+    def get_window(self):
+        if self.item_view is not None:
+            return self.item_view.window()
+        return super(ListActionGuiContext, self).get_window()
+
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )

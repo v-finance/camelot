@@ -123,6 +123,11 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         self.widget_mapper = None
         self.view = None
 
+    def get_window(self):
+        if self.view is not None:
+            return self.view.window()
+        return super(FormActionGuiContext, self).get_window()
+
     def create_model_context( self ):
         context = super( FormActionGuiContext, self ).create_model_context()
         context._model = self.widget_mapper.model()

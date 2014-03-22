@@ -417,7 +417,9 @@ class DesktopWorkspace(QtGui.QWidget):
 top_level_windows = []
 
 def show_top_level(view, parent):
-    """Show a widget as a top level window
+    """Show a widget as a top level window.  If a parent window is given, the new
+    window will have the same modality as the parent.
+    
     :param view: the widget extend AbstractView
     :param parent: the widget with regard to which the top level
     window will be placed.
@@ -456,8 +458,8 @@ def show_top_level(view, parent):
     point = QtCore.QPoint(point.x()-view.width()/2,
                           point.y()-view.height()/2)
     view.move( point )
-
-    #view.setWindowModality(QtCore.Qt.WindowModal)
+    if parent is not None:
+        view.setWindowModality(parent.windowModality())
     view.show()
 
 
