@@ -40,6 +40,7 @@ import six
 from camelot.admin.action.list_action import ListActionModelContext
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...container.collection_container import CollectionContainer
 from ...core.qt import QtCore, QtGui, Qt, py_to_variant, variant_to_py
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted
@@ -225,7 +226,7 @@ position in the query.
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
         self.validator = admin.get_validator(self)
-        self._collection_getter = lambda:[]
+        self._collection = []
         self.flush_changes = flush_changes
         self.mt = get_model_thread()
         # Set database connection and load data
@@ -392,27 +393,17 @@ position in the query.
         :param collection: the list of objects to display
         """
         if collection is None:
-            self.set_collection_getter(lambda:[])
-        else:
-            assert isinstance(collection, list)
-            self.set_collection_getter(lambda:collection)
+            collection = []
+        elif isinstance(collection, CollectionContainer):
+            collection = collection._collection
+        self._collection = collection
+        self.refresh()
     
     def get_value(self):
-        if self._collection_getter is not None:
-            return self._collection_getter()
-
-    def set_collection_getter( self, collection_getter ):
-        """
-        deprecated: use `set_value` instead
-        """
-        self.logger.debug('set collection getter')
-        self._collection_getter = collection_getter
-        self.refresh()
+        return self._collection
 
     def get_collection( self ):
-        collection = self._collection_getter()
-        assert isinstance( collection, list )
-        return collection
+        return self._collection
 
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
@@ -660,7 +651,7 @@ position in the query.
                 cache = self.display_cache
             data = self._get_row_data( index.row(), cache )
             value = data[index.column()]
-            if isinstance( value, datetime.datetime ):
+            if isinstance(value, datetime.datetime):
                 # Putting a python datetime into a Qt Variant and returning
                 # it to a PyObject seems to be buggy, therefore we chop the
                 # microseconds
@@ -668,6 +659,8 @@ position in the query.
                     value = QtCore.QDateTime(value.year, value.month,
                                              value.day, value.hour,
                                              value.minute, value.second)
+            elif isinstance(value, (list, dict)):
+                value = CollectionContainer(value)
             return py_to_variant( value )
         elif role == Qt.ToolTipRole:
             return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))

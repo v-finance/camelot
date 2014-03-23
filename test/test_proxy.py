@@ -119,7 +119,7 @@ class CollectionProxyCase( ProxyCase ):
                 
     def test_data_updated( self ):
         self._load_data()
-        self.signal_register.clear()        
+        self.signal_register.clear()
         person1 = self.collection[0]
         person1.first_name = 'Foo3'
         person1.last_name = 'Bar3'
@@ -158,6 +158,36 @@ class CollectionProxyCase( ProxyCase ):
         obj.field_editable = False
         self._set_data(0, 0, True, proxy)
         self.assertEqual(obj.field, False)
+    
+    def test_list_attribute(self):
+        # when the data method of a CollectionProxy returns a list, manipulations
+        # on this list should be reflected in the original list
+        
+        class Object(object):
+            
+            def __init__(self):
+                self.field = [1, 2]
+            
+            class Admin(ObjectAdmin):
+                list_display = ['field']
+                field_attributes = {'field': {'editable': True}}
+        
+        obj = Object()
+        collection = [obj]
+        admin = self.app_admin.get_related_admin(Object)
+        proxy = CollectionProxy(admin)
+        proxy.set_value(collection)
+        proxy.set_columns(admin.get_columns())
+        # get the data once, to fill the cached values
+        self._data(0, 0, proxy)
+        field_value = self._data(0, 0, proxy)
+        self.assertEqual(len(field_value), len(obj.field))
+        # manipulate the returned list, and see if the original is manipulated
+        # as well
+        field_value.append(3)
+        self.assertTrue( 3 in obj.field )
+        field_value.remove(2)
+        self.assertFalse( 2 in obj.field )
         
 class QueryProxyCase( ProxyCase ):
     """Test the functionality of the QueryProxy to perform CRUD operations on 

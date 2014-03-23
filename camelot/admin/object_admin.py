@@ -723,7 +723,7 @@ be specified using the verbose_name attribute.
         
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
-        for field, attributes in self.get_all_fields_and_attributes().items():
+        for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
             has_default = False
             try:
                 default = attributes['default']

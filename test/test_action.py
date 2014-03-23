@@ -452,7 +452,8 @@ class ListActionsCase( test_model.ExampleModelCase ):
                 xlrd.open_workbook( filename )
 
     def test_match_names( self ):
-        from camelot.view.import_utils import RowData, ColumnMapping, MatchNames
+        from camelot.view.import_utils import (RowData, ColumnMapping, MatchNames,
+                                               ColumnMappingAdmin)
 
         rows = [['rating', 'name'],
                 ['5',      'The empty bitbucket']
@@ -464,7 +465,8 @@ class ListActionsCase( test_model.ExampleModelCase ):
         match_names = MatchNames()
         model_context = MockModelContext()
         model_context.obj = mapping
-        model_context.admin = self.context.admin
+        model_context.admin = ColumnMappingAdmin(self.context.admin,
+                                                 field_choices=[(f,f) for f in fields])
         
         list(match_names.model_run(model_context))
         self.assertEqual( mapping.field, 'rating' )
