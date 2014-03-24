@@ -46,3 +46,6 @@ class CollectionContainer(object):
     
     def __len__(self):
         return len(self._collection)
+    
+    def __iter__(self):
+        return self._collection.__iter__()
