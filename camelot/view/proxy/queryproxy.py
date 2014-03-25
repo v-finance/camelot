@@ -203,7 +203,7 @@ class QueryTableProxy(CollectionProxy):
                                 
         def sort_decorator(class_attributes_to_sort_by, join, query):
             if join:
-                query = query.outerjoin(join)                            
+                query = query.outerjoin(join)
             if class_attributes_to_sort_by:
                 return query.order_by( *class_attributes_to_sort_by )
             else:

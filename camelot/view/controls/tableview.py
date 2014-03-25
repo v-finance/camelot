@@ -511,8 +511,6 @@ class TableView( AbstractView  ):
             self.header.search.search_signal.connect( self.startSearch )
             self.header.search.cancel_signal.connect( self.cancelSearch )
             self.header.search.on_arrow_down_signal.connect(self.focusTable)
-            if search_text:
-                self.header.search.search( search_text )
             self.setFocusProxy(self.header)
         else:
             self.header = None
@@ -548,6 +546,8 @@ class TableView( AbstractView  ):
         shortcut.activated.connect( self.activate_search )
         if self.header_widget:
             self.header.filters_changed_signal.connect( self.rebuild_query )
+            if search_text:
+                self.header.search.search( search_text )
 
     @QtCore.qt_slot()
     def activate_search(self):
@@ -651,7 +651,11 @@ class TableView( AbstractView  ):
     def rebuild_query( self ):
         """resets the table model query"""
         from .filterlist import FilterList
-        
+
+        # table can be None during view initialization
+        if self.table is None:
+            return
+
         if not isinstance(self.table.model(), QueryTableProxy):
             return
 
