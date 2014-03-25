@@ -118,8 +118,9 @@ class OpenFormView( ActionStep ):
 
     def gui_run( self, gui_context ):
         from camelot.view.workspace import show_top_level
+        window = gui_context.get_window()
         formview = self.render(gui_context)
-        show_top_level( formview, gui_context.workspace )
+        show_top_level(formview, window)
 
 class ToFirstForm( ActionStep ):
     

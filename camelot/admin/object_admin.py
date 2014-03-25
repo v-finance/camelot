@@ -259,17 +259,11 @@ be specified using the verbose_name attribute.
     def __init__( self, app_admin, entity ):
         """
         :param app_admin: the application admin object for this application, 
-            if None, then the default application_admin is taken
         :param entity: the entity class for which this admin instance is to be
             used
         """
-        if not app_admin:
-            from camelot.admin.application_admin import get_application_admin
-            self.app_admin = get_application_admin()
-        else:
-            self.app_admin = app_admin
-        if entity:
-            self.entity = entity
+        self.app_admin = app_admin
+        self.entity = entity
         #
         # caches to prevent recalculation of things
         #
@@ -729,7 +723,7 @@ be specified using the verbose_name attribute.
         
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
-        for field, attributes in self.get_all_fields_and_attributes().items():
+        for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
             has_default = False
             try:
                 default = attributes['default']

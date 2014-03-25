@@ -35,18 +35,11 @@ from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 
-_application_admin_ = []
-
 #
 # The translations data needs to be kept alive during the
 # running of the application
 #
 _translations_data_ = []
-
-def get_application_admin():
-    if not len(_application_admin_):
-        raise Exception('No application admin class has been constructed yet')
-    return _application_admin_[0]
 
 class ApplicationAdmin(object):
     """The ApplicationAdmin class defines how the application should look
@@ -128,7 +121,6 @@ shortcut confusion and reduce the number of status updates.
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
         prefered ApplicationAdmin to use througout the application"""
-        _application_admin_.append(self)
         #
         # Cache created ObjectAdmin objects
         #

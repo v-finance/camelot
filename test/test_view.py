@@ -1014,10 +1014,8 @@ class ControlsTest(test.ModelThreadTestCase):
     def test_section_widget(self):
         from camelot.view.controls import section_widget
         self.wait_for_animation()
-        widget = section_widget.NavigationPane( self.app_admin,
-                                                workspace = None,
-                                                parent = None )
-        widget.set_sections( self.app_admin.get_sections() )
+        widget = section_widget.NavigationPane(workspace=None, parent=None)
+        widget.set_sections(self.app_admin.get_sections())
         self.grab_widget(widget)
 
     def test_main_window(self):
