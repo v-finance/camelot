@@ -341,7 +341,7 @@ allow all languages
         if not selected:
             return
 
-        info = QtGui.QFileInfo(selected)
+        info = QtCore.QFileInfo(selected)
         if not info.isReadable():
             self.main_widget().layout().addWidget(
                 self.not_accessible_media_path_label, 13, 1, 1, 4)
