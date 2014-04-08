@@ -105,9 +105,10 @@ class ApplicationActionGuiContext( GuiContext ):
 class SelectProfile( Action ):
     """Select the application profile to use
     
-    :param profile_store: an object of type 
+    :param profile_store: an object of type
         :class:`camelot.core.profile.ProfileStore`
-        
+    :param edit_dialog_class: a :class:`QtGui.QDialog` to display the needed
+        fields to store in a profile
     This action is also useable as an action step, which will return the
     selected profile.
     """
@@ -117,11 +118,12 @@ class SelectProfile( Action ):
     load_icon = Icon('tango/16x16/actions/document-open.png')
     file_name_filter = _('Profiles file (*.ini)')
     
-    def __init__( self, profile_store ):
+    def __init__( self, profile_store, edit_dialog_class=None):
         from camelot.core.profile import ProfileStore
         if profile_store==None:
             profile_store=ProfileStore()
         self.profile_store = profile_store
+        self.edit_dialog_class = edit_dialog_class
         self.selected_profile = None
     
     def gui_run(self, gui_context):
@@ -175,7 +177,7 @@ class SelectProfile( Action ):
                 if selected_profile is new_profile:
                     edit_profile_name = ''
                     while selected_profile is new_profile:
-                        profile_info = yield EditProfiles(profiles, edit_profile_name)
+                        profile_info = yield EditProfiles(profiles, self.edit_dialog_class, edit_profile_name)
                         profile = self.profile_store.read_profile(profile_info['name'])
                         if profile is None:
                             profile = self.profile_store.profile_class(**profile_info)

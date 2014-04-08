@@ -358,20 +358,29 @@ class EditProfiles(ActionStep):
     settings.
     
     :param profiles: a list of :class:`camelot.core.profile.Profile` objects
+    :param dialog_class: a :class:`QtGui.QDialog` to display the needed
+        fields to store in a profile
     :param current_profile`: the name of the current profile, or an empty string
         if there is no current profile.
-        
+
     .. image:: /_static/actionsteps/edit_profile.png
     """
 
-    def __init__(self, profiles, current_profile=''):
+    def __init__(self, profiles, dialog_class=None, current_profile=''):
         self.profiles = profiles
+        if dialog_class is None:
+            self.dialog_class = ProfileWizard
+        else:
+            self.dialog_class = dialog_class
         self.current_profile = current_profile
 
     def render(self, gui_context):
-        wizard = ProfileWizard(self.profiles)
-        wizard.set_current_profile(self.current_profile)
-        return wizard
+        dialog = self.dialog_class(self.profiles)
+        try:
+            dialog.set_current_profile(self.current_profile)
+        except AttributeError:
+            logger.warning('Profile dialog implementation has no method set_current_profile')
+        return dialog
 
     def gui_run(self, gui_context):
         dialog = self.render(gui_context)
