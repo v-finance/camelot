@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tests for the Admin classes
 """
@@ -94,6 +95,7 @@ class ObjectAdminCase( ModelThreadTestCase ):
                 self.y = 2
                 
             class Admin( ObjectAdmin ):
+                verbose_name = u'objèct'
                 list_display = ['x', 'y']
                 
         a = A()
@@ -112,6 +114,7 @@ class ObjectAdminCase( ModelThreadTestCase ):
         a_admin.is_deleted( a )
         a_admin.is_persistent( a )
         a_admin.copy( a )
+        self.assertEqual(a_admin.get_verbose_name_plural(), u'objècts')
     
     def test_set_defaults(self):
         pass

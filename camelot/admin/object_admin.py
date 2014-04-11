@@ -301,7 +301,7 @@ be specified using the verbose_name attribute.
     def get_verbose_name_plural(self):
         return six.text_type(
             self.verbose_name_plural
-            or (self.get_verbose_name() + 's')
+            or (self.get_verbose_name() + u's')
         )
         
     def get_icon(self):
