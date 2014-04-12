@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import unittest
 
 from sqlalchemy import orm
 
@@ -359,6 +360,12 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.gui_context.progress_dialog.cancel()
         with self.assertRaises( CancelRequest ):
             update_progress.gui_run( self.gui_context )
+
+    def test_message_box( self ):
+        step = action_steps.MessageBox('Hello World')
+        dialog = step.render()
+        dialog.show()
+        self.grab_widget(dialog)
 
 class ListActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.

@@ -12,6 +12,7 @@ The reader can read the following sub-sections in any order.
 
 .. toctree::
 
+   hello_world.rst
    videostore.rst
    reporting.rst
    importer.rst

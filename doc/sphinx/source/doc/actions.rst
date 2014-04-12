@@ -66,6 +66,7 @@ or be used in the :attr:`ObjectAdmin.list_actions` or
 The :ref:`tutorial-importer` tutorial has a complete example of creating and
 using and action.
    
+.. _doc-inside-model-run:
 What can happen inside :meth:`model_run`
 ========================================
 
