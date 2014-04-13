@@ -52,9 +52,11 @@ settings.append( ExampleSettings( 'camelot',
                                   data = 'videostore_3.sqlite') )
 
 def main():
-    from camelot.view.main import main
+    from camelot.admin.action.application import Application
+    from camelot.view.main import main_action
     from camelot_example.application_admin import MyApplicationAdmin
-    main( MyApplicationAdmin() )
-    
+    videostore = Application(MyApplicationAdmin())
+    main_action(videostore)
+
 if __name__ == '__main__':
     main()
