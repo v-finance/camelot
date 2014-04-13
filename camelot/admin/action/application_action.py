@@ -219,7 +219,7 @@ class SelectProfile( Action ):
         yield action_steps.UpdateProgress(text=message)
         self.profile_store.set_last_profile( selected_profile )
         self.selected_profile = selected_profile
-        
+
 
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""

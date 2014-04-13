@@ -34,7 +34,7 @@ class ModelContext( object ):
     """
 The Model context in which an action is running.  The model context can contain
 reference to database sessions or other model related data. This object can not 
-contain references to widgets as those belong strictly to the :class:`GuiContext`.    
+contain references to widgets as those belong strictly to the :class:`GuiContext`.
 
 .. attribute:: mode_name
 
