@@ -165,9 +165,11 @@ settings.append( my_settings )
 # end custom settings
 
 def start_application():
-    from camelot.view.main import main
+    from camelot.admin.action.application import Application
+    from camelot.view.main import main_action
     from {{options.module}}.application_admin import MyApplicationAdmin
-    main(MyApplicationAdmin())
+    application = Application(MyApplicationAdmin())
+    main_action(application)
 
 if __name__ == '__main__':
     start_application()

@@ -353,10 +353,11 @@ allow all languages
 
         self.media_location_editor.setText(selected)
 
+
 class EditProfiles(ActionStep):
     """Allows the user to change or create his current database and media
     settings.
-    
+
     :param profiles: a list of :class:`camelot.core.profile.Profile` objects
     :param dialog_class: a :class:`QtGui.QDialog` to display the needed
         fields to store in a profile
@@ -366,7 +367,7 @@ class EditProfiles(ActionStep):
     .. image:: /_static/actionsteps/edit_profile.png
     """
 
-    def __init__(self, profiles, dialog_class=None, current_profile=''):
+    def __init__(self, profiles, current_profile='', dialog_class=None):
         self.profiles = profiles
         if dialog_class is None:
             self.dialog_class = ProfileWizard
@@ -376,10 +377,7 @@ class EditProfiles(ActionStep):
 
     def render(self, gui_context):
         dialog = self.dialog_class(self.profiles)
-        try:
-            dialog.set_current_profile(self.current_profile)
-        except AttributeError:
-            logger.warning('Profile dialog implementation has no method set_current_profile')
+        dialog.set_current_profile(self.current_profile)
         return dialog
 
     def gui_run(self, gui_context):

@@ -45,8 +45,8 @@ main authors of Camelot :
 
 |
 | Conceptive Engineering            
-| L Van Bauwelstraat 16  
-| 2222 Heist-op-den-Berg
+| Perronstraat 3
+| 2200 Herentals
 | Belgium 
 |
 | info@conceptive.be
