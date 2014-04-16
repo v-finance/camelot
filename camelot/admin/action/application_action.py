@@ -177,7 +177,7 @@ class SelectProfile( Action ):
                 if selected_profile is new_profile:
                     edit_profile_name = ''
                     while selected_profile is new_profile:
-                        profile_info = yield EditProfiles(profiles, self.edit_dialog_class, edit_profile_name)
+                        profile_info = yield EditProfiles(profiles, current_profile=edit_profile_name, dialog_class=self.edit_dialog_class)
                         profile = self.profile_store.read_profile(profile_info['name'])
                         if profile is None:
                             profile = self.profile_store.profile_class(**profile_info)
