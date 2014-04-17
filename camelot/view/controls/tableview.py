@@ -41,6 +41,7 @@ from camelot.view.model_thread import object_thread
 from camelot.view import register
 from ...core.qt import QtCore, QtGui, Qt, variant_to_py
 from .delegates.delegatemanager import DelegateManager
+from .inheritance import SubclassTree
 
 from .search import SimpleSearchControl
         
@@ -538,8 +539,13 @@ class TableView( AbstractView  ):
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )
         #filters_widget.hide()
-        splitter.addWidget( table_widget )
-        splitter.addWidget( filters_widget )
+        splitter = self.findChild(QtGui.QWidget, 'splitter' )
+        class_tree = SubclassTree(self.admin, [])
+        class_tree.setObjectName('class_tree')
+        class_tree.subclass_clicked_signal.connect(self.change_admin)
+        splitter.addWidget(class_tree)
+        splitter.addWidget(table_widget)
+        splitter.addWidget(filters_widget)
         self.setLayout( widget_layout )
         self.search_filter = lambda q: q
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
@@ -555,14 +561,14 @@ class TableView( AbstractView  ):
         self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     @QtCore.qt_slot(object)
-    def set_subclass_tree( self, subclasses ):
+    def set_subclass_tree(self, subclasses):
         assert object_thread( self )
+        class_tree =  self.findChild(QtGui.QWidget, 'class_tree')
         if len( subclasses ) > 0:
-            from .inheritance import SubclassTree
-            splitter = self.findChild(QtGui.QWidget, 'splitter' )
-            class_tree = SubclassTree( self.admin, subclasses, splitter )
-            splitter.insertWidget( 0, class_tree )
-            class_tree.subclass_clicked_signal.connect( self.change_admin )
+            class_tree.show()
+            class_tree.set_subclasses(subclasses)
+        else:
+            class_tree.hide()
 
     @QtCore.qt_slot(object)
     def change_admin(self, new_admin):

@@ -41,36 +41,35 @@ class SubclassTree( ModelTree ):
     """Widget to select subclasses of a certain entity, where the subclasses
     are represented in a tree
 
-    emits subclassClicked when a subclass has been selected
+    emits subclass_clicked_signal when a subclass has been selected
     """
 
     subclass_clicked_signal = QtCore.qt_signal(object)
     
-    def __init__(self, admin, subclasses, parent):
+    def __init__(self, admin, subclasses, parent=None):
         header_labels = ['Types']
-        ModelTree.__init__(self, header_labels, parent)
+        ModelTree.__init__(self, header_labels, parent=None)
         self.admin = admin
         self.setSizePolicy(
-            QtGui.QSizePolicy.Minimum,
+            QtGui.QSizePolicy.Expanding,
             QtGui.QSizePolicy.Expanding
         )
         self.clicked.connect( self.emit_subclass_clicked )
+
+    def set_subclasses(self, subclasses):
 
         def append_subclasses(class_item, subclasses):
             for subclass_admin, subsubclasses in subclasses:
                 subclass_item = SubclassItem(class_item, subclass_admin)
                 self.modelitems.append(subclass_item)
                 append_subclasses(subclass_item, subsubclasses)
-
+                
+        self.clear_model_items()
         if len(subclasses):
-            self.clear_model_items()
             top_level_item = SubclassItem(self, self.admin)
             self.modelitems.append(top_level_item)
             append_subclasses(top_level_item, subclasses)
             top_level_item.setExpanded(True)
-            self.setMaximumWidth(self.fontMetrics().width(' ')*70)
-        else:
-            self.setMaximumWidth(0)
 
     @QtCore.qt_slot(QtCore.QModelIndex)
     def emit_subclass_clicked(self, index):
