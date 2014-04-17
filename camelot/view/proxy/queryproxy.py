@@ -205,9 +205,14 @@ class QueryTableProxy(CollectionProxy):
             if join:
                 query = query.outerjoin(join)
             if class_attributes_to_sort_by:
-                return query.order_by( *class_attributes_to_sort_by )
+                # first remove existing order clauses, because they might interfer
+                # with the requested order from the user, as the existing order
+                # clause is first in the list
+                ordered_query = query.order_by(None)
+                ordered_query = ordered_query.order_by(*class_attributes_to_sort_by)
+                return ordered_query
             else:
-                return query       
+                return query
         
         self._sort_decorator = functools.partial( sort_decorator,
                                                   class_attributes_to_sort_by, 
