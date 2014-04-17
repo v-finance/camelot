@@ -151,7 +151,7 @@ class QueryTableProxy(CollectionProxy):
         #
         # First sort according the requested column
         #
-        if column != None and order != None:
+        if None not in (column, order):
             property = None
             field_name = self._columns[column][0]
             class_attribute = getattr(self.admin.entity, field_name)
@@ -168,7 +168,7 @@ class QueryTableProxy(CollectionProxy):
             
             # If the field is a relation: 
             #  If it specifies an order_by option we have to join the related table, 
-            #  else we use the foreing key as sort field, without joining
+            #  else we use the foreign key as sort field, without joining
             if property and isinstance(property, orm.properties.PropertyLoader):
                 target = property.mapper
                 if target:
@@ -176,13 +176,7 @@ class QueryTableProxy(CollectionProxy):
                         join = field_name
                         class_attribute = target.order_by[0]
                     else:
-                        #
-                        # _foreign_keys is for sqla pre 0.6.4
-                        # 
-                        if hasattr(property, '_foreign_keys'):
-                            class_attribute = list(property._foreign_keys)[0]
-                        else:                             
-                            class_attribute = list(property._calculated_foreign_keys)[0]
+                        class_attribute = list(property._calculated_foreign_keys)[0]
             if property:
                 if order:
                     class_attributes_to_sort_by.append( class_attribute.desc() )
@@ -204,15 +198,13 @@ class QueryTableProxy(CollectionProxy):
         def sort_decorator(class_attributes_to_sort_by, join, query):
             if join:
                 query = query.outerjoin(join)
-            if class_attributes_to_sort_by:
-                # first remove existing order clauses, because they might interfer
-                # with the requested order from the user, as the existing order
-                # clause is first in the list
-                ordered_query = query.order_by(None)
-                ordered_query = ordered_query.order_by(*class_attributes_to_sort_by)
-                return ordered_query
-            else:
-                return query
+            # remove existing order clauses, because they might interfer
+            # with the requested order from the user, as the existing order
+            # clause is first in the list
+            if None not in (column, order):
+                query = query.order_by(None)
+            query = query.order_by(*class_attributes_to_sort_by)
+            return query
         
         self._sort_decorator = functools.partial( sort_decorator,
                                                   class_attributes_to_sort_by, 
