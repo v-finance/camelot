@@ -7,6 +7,7 @@ logger = logging.getLogger('videostore.main')
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 try:
     import matplotlib
+    logger.info('matplotlib %s is used'%(matplotlib.__version__))
 except:
     logger.error('Charts will not work because of missing matplotlib')
 
@@ -22,13 +23,20 @@ class ExampleSettings( SimpleSettings ):
         from sqlalchemy.orm import configure_mappers
         from camelot.core.sql import metadata
         metadata.bind = settings.ENGINE()
-        import camelot.model.party
-        import camelot.model.authentication
-        import camelot.model.i18n
-        import camelot.model.fixture
-        import camelot.model.memento
-        import camelot.model.batch_job
-        import camelot_example.model
+        #
+        # import all the needed model files to make sure the mappers and tables
+        # are defined before creating them in the database
+        #
+        from camelot.model import (party, authentication, i18n, fixture,
+                                   memento, batch_job)
+        from . import model
+        logger.debug('loaded datamodel for %s'%party.__name__)
+        logger.debug('loaded datamodel for %s'%authentication.__name__)
+        logger.debug('loaded datamodel for %s'%i18n.__name__)
+        logger.debug('loaded datamodel for %s'%fixture.__name__)
+        logger.debug('loaded datamodel for %s'%memento.__name__)
+        logger.debug('loaded datamodel for %s'%batch_job.__name__)
+        logger.debug('loaded datamodel for %s'%model.__name__)
         #
         # create the tables for all models, configure mappers first, to make
         # sure all deferred properties have been handled, as those could
@@ -47,14 +55,15 @@ class ExampleSettings( SimpleSettings ):
         from camelot_example.view import setup_views
         setup_views()
 
-settings.append( ExampleSettings( 'camelot', 
-                                  'videostore',
-                                  data = 'videostore_3.sqlite') )
+example_settings = ExampleSettings('camelot', 
+                                   'videostore',
+                                   data = 'videostore_3.sqlite')
 
 def main():
     from camelot.admin.action.application import Application
     from camelot.view.main import main_action
     from camelot_example.application_admin import MyApplicationAdmin
+    settings.append(example_settings)
     videostore = Application(MyApplicationAdmin())
     main_action(videostore)
 
