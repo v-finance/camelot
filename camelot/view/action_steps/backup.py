@@ -262,7 +262,7 @@ class SelectRestoreDialog( SelectDialog ):
 
     def _setPath(self, dir):
         path = QtGui.QFileDialog.getOpenFileName(
-            self, six.text_type(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+            self, six.text_type(self.caption), dir or '', ugettext('Database files (*%s);;All files (*.*)' % self.extension),
         )
         return path
 

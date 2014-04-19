@@ -367,7 +367,7 @@ class EditProfiles(ActionStep):
     .. image:: /_static/actionsteps/edit_profile.png
     """
 
-    def __init__(self, profiles, dialog_class=None, current_profile=''):
+    def __init__(self, profiles, current_profile='', dialog_class=None):
         self.profiles = profiles
         if dialog_class is None:
             self.dialog_class = ProfileWizard
