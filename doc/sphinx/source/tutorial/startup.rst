@@ -48,7 +48,19 @@ which they connect, and enables system administrators to deploy the application 
   * :mod:`camelot.view.action_steps.profile` has action steps used in the select profile action.
     Those steps can be reused in other parts of the application.
 
+.. image:: /_static/actionsteps/edit_profile.png
+
 .. note::
 
    The :class:`camelot.core.profile.ProfileStore` requires the :mod:`Crypto` module to store and load profiles.
    If you are using the `Conceptive Python SDK <http://www.conceptive.be/python-sdk.html>`_, this module is already installed.
+
+The application action
+======================
+
+In a typical **Camelot** application, the `Application` object is constructed in :file:`main.py`
+
+.. literalinclude:: ../../../../camelot_example/main.py
+   :pyobject: main
+
+So this is the place to change the default `Application` to a customized one.
