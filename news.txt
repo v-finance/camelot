@@ -1,6 +1,8 @@
 Development
 -----------
 
+ * A single source base for both Python 2.7 and Python 3.3
+
  * A single source base for both PyQt4 and PySide, select the appropriate binding by
    setting the `CAMELOT_QT_API` environment variable, see :ref:`faq-pyside`
  
