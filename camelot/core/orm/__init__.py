@@ -89,7 +89,7 @@ from . entity import EntityBase, EntityMeta
 
 @event.listens_for( mapper, 'after_configured' )
 def process_deferred_properties( class_registry = entities ):
-    """After all mappers have been configured, process the Deferred Propoperties.
+    """After all mappers have been configured, process the Deferred Properties.
     This function is called automatically for the default class_registry.
     """
     from sqlalchemy.ext.declarative.clsregistry import ( _ModuleMarker,
