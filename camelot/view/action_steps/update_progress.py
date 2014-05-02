@@ -52,8 +52,8 @@ updated.
 """
     
     def __init__( self,
-                  value=0, 
-                  maximum=0, 
+                  value=None, 
+                  maximum=None, 
                   text=None, 
                   detail=None, 
                   clear_details=False,
@@ -77,14 +77,16 @@ updated.
         """
         progress_dialog = gui_context.progress_dialog
         if progress_dialog:
-            progress_dialog.setMaximum( self._maximum )
-            progress_dialog.setValue( self._value )
+            if self._maximum is not None:
+                progress_dialog.setMaximum( self._maximum )
+            if self._value is not None:
+                progress_dialog.setValue( self._value )
             progress_dialog.set_cancel_hidden(not self.cancelable)
-            if self._text != None:
+            if self._text is not None:
                 progress_dialog.setLabelText( six.text_type(self._text) )
             if self._clear_details == True:
                 progress_dialog.clear_details()
-            if self._detail != None:
+            if self._detail is not None:
                 progress_dialog.add_detail( self._detail )
             if self.blocking:
                 progress_dialog.set_ok_hidden( False )
