@@ -27,7 +27,7 @@ import six
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
-_detail_format = u'Update Progress {0._value:03d}/{0._maximum:03d} {0._text} {0._detail}'
+_detail_format = u'Update Progress {0:03d}/{1:03d} {2._text} {2._detail}'
 
 class UpdateProgress( ActionStep ):
     """
@@ -67,7 +67,7 @@ updated.
         self.blocking = blocking
         
     def __unicode__( self ):
-        return _detail_format.format( self )
+        return _detail_format.format(self._value or 0, self._maximum or 0, self)
     
     def gui_run( self, gui_context ):
         """This method will update the progress dialog, if such dialog exists
