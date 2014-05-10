@@ -55,7 +55,7 @@ Development
  * See :ref:`migrate-latest` for documentation on how to upgrade an 
    existing Camelot project to the latest version.
  
- * Tested with SQLAlchemy 0.8.3
+ * Tested with SQLAlchemy 0.9.4
  
  * Removed the `ColoredFloatDelegate` as it is not a basic type of editor
  

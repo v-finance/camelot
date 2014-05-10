@@ -130,9 +130,9 @@ def create_entity_search_query_decorator( admin, text ):
                 path = column_name.split('.')
                 target = admin.entity
                 for path_segment in path:
-                    mapper = orm.class_mapper( target )
-                    property = mapper.get_property( path_segment )
-                    if isinstance(property, orm.properties.PropertyLoader):
+                    mapper = orm.class_mapper(target)
+                    property = mapper.get_property(path_segment)
+                    if isinstance(property, orm.properties.RelationshipProperty):
                         joins.append(getattr(target, path_segment))
                         target = property.mapper.class_
                     else:

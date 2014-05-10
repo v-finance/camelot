@@ -117,8 +117,8 @@ class Filter(object):
             # @todo: if the filter is not on an attribute of the relation, but on 
             # the relation itselves
             if 'target' in attributes:
+                joins.append(getattr(related_admin.entity, field_name))
                 related_admin = attributes['admin']
-                joins.append(field_name)
 
         col = getattr(related_admin.entity, field_name)
         query = session.query(col).select_from(entity).join(*joins)
