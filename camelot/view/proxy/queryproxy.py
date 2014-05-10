@@ -169,7 +169,7 @@ class QueryTableProxy(CollectionProxy):
             # If the field is a relation: 
             #  If it specifies an order_by option we have to join the related table, 
             #  else we use the foreign key as sort field, without joining
-            if property and isinstance(property, orm.properties.PropertyLoader):
+            if property and isinstance(property, orm.properties.RelationshipProperty):
                 target = property.mapper
                 if target:
                     if target.order_by:
