@@ -123,21 +123,33 @@ class OpenFormView( ActionStep ):
         show_top_level(formview, window)
 
 class ToFirstForm( ActionStep ):
-    
+    """
+    Show the first object in the collection in the current form
+    """
+
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.toFirst()
 
 class ToNextForm( ActionStep ):
-    
+    """
+    Show the next object in the collection in the current form
+    """
+
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.toNext()
         
 class ToLastForm( ActionStep ):
-    
+    """
+    Show the last object in the collection in the current form
+    """
+
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.toLast()
         
 class ToPreviousForm( ActionStep ):
-    
+    """
+    Show the previous object in the collection in the current form
+    """
+
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.toPrevious()
