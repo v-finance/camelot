@@ -413,9 +413,9 @@ class Refresh( Action ):
                                                    progress_db_message )
         yield action_steps.UpdateProgress( text = progress_view_message )
         for obj in refreshed_objects:
-            signal_handler.sendEntityUpdate( None, obj )
+            signal_handler.sendEntityUpdate( self, obj )
         for obj in expunged_objects:
-            signal_handler.sendEntityDelete( None, obj )
+            signal_handler.sendEntityDelete( self, obj )
         yield action_steps.Refresh()
 
 class Profiler( Action ):
