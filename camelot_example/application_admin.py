@@ -10,8 +10,6 @@ class MyApplicationAdmin(ApplicationAdmin):
 
 # begin sections
     def get_sections(self):
-        
-        from camelot.model.batch_job import BatchJob
         from camelot.model.memento import Memento
         from camelot.model.party import ( Person, Organization, 
                                           PartyCategory )

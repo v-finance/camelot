@@ -89,6 +89,12 @@ class Application( Action ):
             #select_database(self.application_admin)
 
     def model_run( self, model_context ):
+        """
+        Overwrite this generator method to customize the startup process of
+        your application.
+        
+        :param model_context: a :class:`camelot.admin.action.base.ModelContext` object
+        """
         from ...core.conf import settings
         from ...core.utils import load_translations
         from ...view import action_steps

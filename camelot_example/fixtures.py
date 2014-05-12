@@ -1,8 +1,6 @@
 import datetime
 import os
 
-from six import StringIO
-
 def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture

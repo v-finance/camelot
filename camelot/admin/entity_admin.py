@@ -274,7 +274,7 @@ and used as a custom action.
                     columns = property.columns
                     sql_attributes = self.get_sql_field_attributes( columns )
                     attributes.update( sql_attributes )
-                elif isinstance(property, orm.properties.PropertyLoader):
+                elif isinstance(property, orm.properties.RelationshipProperty):
                     target = forced_attributes.get( 'target',
                                                     property.mapper.class_ )
 
@@ -298,7 +298,7 @@ and used as a custom action.
                     elif property.direction == orm.interfaces.MANYTOMANY:
                         attributes.update( direction = 'manytomany' )
                     else:
-                        raise Exception('PropertyLoader has unknown direction')
+                        raise Exception('RelationshipProperty has unknown direction')
 
                     if property.direction in (orm.interfaces.ONETOMANY,
                                               orm.interfaces.MANYTOMANY):
@@ -598,14 +598,13 @@ and used as a custom action.
         # the serialized structure
         #
         # @todo: this should be recursive
-        for property in self.mapper.iterate_properties:
-            if isinstance(property, orm.properties.PropertyLoader):
-                if property.direction == orm.interfaces.ONETOMANY:
-                    target = property.mapper.class_
-                    for relation in serialized.get(property.key, []):
-                        relation_mapper = orm.class_mapper(target)
-                        for primary_key_field in relation_mapper.primary_key:
-                            relation[primary_key_field.name] = None
+        for relationship_property in self.mapper.relationships:
+            if relationship_property.direction == orm.interfaces.ONETOMANY:
+                target = relationship_property.mapper.class_
+                for relation in serialized.get(relationship_property.key, []):
+                    relation_mapper = orm.class_mapper(target)
+                    for primary_key_field in relation_mapper.primary_key:
+                        relation[primary_key_field.name] = None
         #from pprint import pprint
         #pprint( serialized )
         #
@@ -615,12 +614,11 @@ and used as a custom action.
         #
         # recreate the ManyToOne relations
         #
-        for property in self.mapper.iterate_properties:
-            if isinstance(property, orm.properties.PropertyLoader):
-                if property.direction == orm.interfaces.MANYTOONE:
-                    setattr( new_obj,
-                             property.key,
-                             getattr( obj, property.key ) )
+        for relationship_property in self.mapper.relationships:
+            if relationship_property.direction == orm.interfaces.MANYTOONE:
+                setattr( new_obj,
+                         relationship_property.key,
+                         getattr( obj, relationship_property.key ) )
         return new_obj
 
 

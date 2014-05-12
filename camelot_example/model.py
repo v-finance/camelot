@@ -16,11 +16,9 @@ import sqlalchemy.types
 # end basic imports
 
 import camelot.types
-from camelot.core.sql import metadata
-from camelot.core.orm import Entity, Field, ManyToOne, OneToMany, \
-                             ManyToMany, using_options, ColumnProperty
+from camelot.core.orm import (ManyToOne, OneToMany,
+                              ManyToMany, ColumnProperty)
 from camelot.admin.action import Action
-from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.view import action_steps
@@ -28,7 +26,6 @@ from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm, Stretch
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
 from camelot.view.art import ColorScheme
-from sqlalchemy.types import Unicode, Date, Integer
 
 from camelot_example.change_rating import ChangeRatingAction
 from camelot_example.drag_and_drop import DropAction
