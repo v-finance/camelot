@@ -65,20 +65,35 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.view.filters import GroupBoxFilter, filter_data, filter_option
 
-class StatusType( object ):
-    """Mixin class to describe the different statuses an
-    object can have
+class TypeMixin(object):
+    """Mixin class to describe the different types of objects
+    
+    .. attribute:: code
+       
+        the code for this type that will be shown in the drop down lists
+       
+    .. attribute:: description
+       
+        a longer description that will be shown in tooltips
     """
 
-    code = schema.Column( types.Unicode(10), index = True, nullable = False, unique = True )
-    description = schema.Column( types.Unicode( 40 ), index = True )
+    code = schema.Column(types.Unicode(10), index=True, nullable=False)
+    description = schema.Column(types.Unicode( 40 ), index = True)
 
-    def __unicode__( self ):
-        return self.code or ''
+    def __unicode__(self):
+        return self.code or u''
 
-class StatusTypeAdmin( EntityAdmin ):
+class StatusTypeMixin(TypeMixin):
+    """Mixin class to describe the different statuses an object can have
+    """
+    pass
+
+class TypeAdmin(EntityAdmin):
     list_display = ['code', 'description']
     form_display = ['code', 'description']
+
+class StatusTypeAdmin(TypeAdmin):
+    pass
 
 class StatusHistory( object ):
     """Mixin class to track the history of the status an object
@@ -126,7 +141,7 @@ class Status( EntityBuilder ):
     :param status_history_table: the tablename to use to store the status
         history
 
-    :param status_type_table: the tablename to use to starte the status types
+    :param status_type_table: the tablename to use to store the status types
     """
 
     def __init__( self, enumeration = None, 
@@ -162,7 +177,7 @@ class Status( EntityBuilder ):
                                         'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
 
             status_type = type( entity.__name__ + 'StatusType', 
-                                (StatusType, entity._descriptor.get_top_entity_base(),),
+                                (StatusTypeMixin, entity._descriptor.get_top_entity_base(),),
                                 { '__tablename__':self.status_type_table,
                                   'Admin':status_type_admin } )	 
 
@@ -381,3 +396,68 @@ class StatusFilter(GroupBoxFilter):
         return filter_data( name = fa['name'],
                             options = options,
                             default = self.default )
+
+class Type(EntityBuilder):
+    """EntityBuilder that adds a related type table to an `Entity`.
+
+    An additional `Type` entity is created, this is the list of possible types an
+    entity can have.
+
+    :param type_table: the tablename used to store the `Type` entity
+
+    :param nullable: if the underlying column is nullable
+    """
+
+    def __init__(self, type_table=None, nullable=False):
+        super(Type, self ).__init__()
+        self.property = None
+        self.type_table = type_table
+        self.nullable = nullable
+
+    def attach( self, entity, name ):
+        super(Type, self ).attach( entity, name )
+        assert entity != Entity
+
+        if self.type_table is None:
+            self.type_table = entity.__tablename__ + '_type'
+
+        # use `type` instead of `class`, to give status type and history
+        # classes a specific name, so these classes can be used whithin the
+        # memento and the fixture module
+
+        type_verbose_name = _(entity.__name__ + ' Type')
+        type_verbose_name_plural = _(entity.__name__ + ' Type')
+        
+        type_admin = type( entity.__name__ + 'TypeAdmin',
+                           ( TypeAdmin, ),
+                           { 'verbose_name': type_verbose_name,
+                             'verbose_name_plural': type_verbose_name_plural, }
+                           )
+
+        type_entity = type( entity.__name__ + 'Type', 
+                            (TypeMixin, entity._descriptor.get_top_entity_base(),),
+                            { '__tablename__':self.type_table,
+                              'Admin':type_admin }
+                            )
+
+        self.type_entity = type_entity
+        setattr(entity, '_%s_type'%name, self.type_entity)
+
+    def create_non_pk_cols( self ):
+        table = orm.class_mapper(self.type_entity).local_table
+        for col in table.primary_key.columns:
+            col_name = u'%s_%s'%(self.name, col.name)
+            if not hasattr(self.entity, col_name):
+                constraint = schema.ForeignKey(col,
+                                               ondelete = 'restrict', 
+                                               onupdate = 'cascade')
+                column = schema.Column(PrimaryKey(),
+                                       constraint,
+                                       nullable=self.nullable)
+                setattr(self.entity, col_name, column )
+
+    def create_properties( self ):
+        if not self.property:
+            self.property = orm.relationship(self.type_entity)
+            setattr(self.entity, self.name, self.property)
+
