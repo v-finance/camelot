@@ -72,7 +72,7 @@ class VirtualAddressEditor(CustomEditor):
         """
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+                            QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
         self._address_validator = address_validator

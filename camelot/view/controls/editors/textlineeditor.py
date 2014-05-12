@@ -24,53 +24,75 @@
 
 import six
 
-from ....core.qt import QtGui, variant_to_py
+from ....core.qt import QtCore, QtGui, variant_to_py
 
-from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
+from .customeditor import (CustomEditor, draw_tooltip_visualization,
+                           set_background_color_palette)
+from ..decorated_line_edit import DecoratedLineEdit
 
-class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
+class TextLineEditor(CustomEditor):
 
     def __init__(self, 
                  parent, 
                  length = 20, 
                  field_name = 'text_line',
+                 actions = [],
                  **kwargs):
-        QtGui.QLineEdit.__init__(self, parent)
-        AbstractCustomEditor.__init__(self)
-        self.setObjectName( field_name )
-        self.setProperty('value', None)
+        CustomEditor.__init__(self, parent)
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        layout = QtGui.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
+        # Search input
+        text_input = DecoratedLineEdit(self)
+        text_input.setObjectName('text_input')
+        text_input.editingFinished.connect(self.text_input_editing_finished)
+        layout.addWidget(text_input)
         if length:
-            self.setMaxLength(length)
+            text_input.setMaxLength(length)
+        self.setFocusProxy(text_input)
+        self.setObjectName(field_name)
+        self.setProperty('value', None)
+        self.add_actions(actions, layout)
+        self.setLayout(layout)
 
+    @QtCore.qt_slot()
+    def text_input_editing_finished(self):
+        self.editingFinished.emit()
+        
     def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
+        value = CustomEditor.set_value(self, value)
         self.setProperty('value', value)
-        if value is not None:
-            self.setText(six.text_type(value))
-        else:
-            self.setText('')
+        text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        if text_input is not None:
+            if value is not None:
+                text_input.setText(six.text_type(value))
+            else:
+                text_input.setText('')
         return value
 
     def get_value(self):
-        value_loading = AbstractCustomEditor.get_value(self)
+        value_loading = CustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading
 
-        value = six.text_type(self.text())
-        if len(value)==0:
-            value = variant_to_py(self.property('value'))
-
-        return value
+        text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        if text_input is not None:
+            value = six.text_type(text_input.text())
+            if len(value)==0:
+                value = variant_to_py(self.property('value'))
+            return value
 
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
-        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-
-    def set_enabled(self, editable=True):
-        value = self.text()
-        self.setEnabled(editable)
-        self.setText(value)
+        text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        if text_input is not None:
+            editable = kwargs.get('editable', False)
+            value = text_input.text()
+            text_input.setEnabled(editable)
+            text_input.setText(value)
+            text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            set_background_color_palette(text_input, kwargs.get('background_color'))
 
     def paintEvent(self, event):
         super(TextLineEditor, self).paintEvent(event)
