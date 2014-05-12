@@ -52,7 +52,7 @@ class TextLineEditor(CustomEditor):
             text_input.setMaxLength(length)
         self.setFocusProxy(text_input)
         self.setObjectName(field_name)
-        self.setProperty('value', None)
+        self._value = None
         self.add_actions(actions, layout)
         self.setLayout(layout)
 
@@ -62,7 +62,7 @@ class TextLineEditor(CustomEditor):
         
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        self.setProperty('value', value)
+        self._value = value
         text_input = self.findChild(QtGui.QLineEdit, 'text_input')
         if text_input is not None:
             if value is not None:
@@ -80,8 +80,10 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             value = six.text_type(text_input.text())
             if len(value)==0:
-                value = variant_to_py(self.property('value'))
+                value = variant_to_py(self._value)
             return value
+
+    value = QtCore.qt_property(six.text_type, get_value, set_value)
 
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
