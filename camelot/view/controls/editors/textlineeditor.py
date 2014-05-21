@@ -32,9 +32,10 @@ from ..decorated_line_edit import DecoratedLineEdit
 
 class TextLineEditor(CustomEditor):
 
-    def __init__(self, 
-                 parent, 
-                 length = 20, 
+    def __init__(self,
+                 parent,
+                 length = 20,
+                 echo_mode = None,
                  field_name = 'text_line',
                  actions = [],
                  **kwargs):
@@ -47,6 +48,7 @@ class TextLineEditor(CustomEditor):
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
+        text_input.setEchoMode(echo_mode or QtGui.QLineEdit.Normal)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
