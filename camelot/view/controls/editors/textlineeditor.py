@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtCore, QtGui, variant_to_py
+from ....core.qt import QtCore, QtGui
 
 from .customeditor import (CustomEditor, draw_tooltip_visualization,
                            set_background_color_palette)
@@ -82,7 +82,7 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             value = six.text_type(text_input.text())
             if len(value)==0:
-                value = variant_to_py(self._value)
+                return self._value
             return value
 
     value = QtCore.qt_property(six.text_type, get_value, set_value)
