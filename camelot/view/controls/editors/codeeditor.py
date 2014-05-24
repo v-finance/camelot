@@ -115,6 +115,8 @@ class CodeEditor(CustomEditor):
         value = CustomEditor.set_value(self, value)
         if value:
             old_value = self.get_value()
+            # value might be a collection container, with a custom __eq__, so it
+            # should be on the left hand side
             if value!=old_value:
                 for part_editor, part in zip( self._get_part_editors(), value ):
                     part_editor.setText(six.text_type(part))
