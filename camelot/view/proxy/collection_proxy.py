@@ -408,6 +408,7 @@ position in the query.
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
         assert object_thread( self )
+        print 'row update emits data changed', row
         self.display_cache.delete_by_row( row )
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
@@ -858,11 +859,11 @@ position in the query.
     @QtCore.qt_slot(int, int, int)
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
-        self.headerDataChanged.emit(Qt.Vertical, row, row)
+        #self.headerDataChanged.emit(Qt.Vertical, row, row)
         if thru_column >= from_column:
-            top_left = self.index( row, from_column )
-            bottom_right = self.index( row, thru_column )
-            self.dataChanged.emit( top_left, bottom_right )
+            top_left = self.index(row, from_column)
+            bottom_right = self.index(row, thru_column)
+            self.dataChanged.emit(top_left, bottom_right)
 
     def flags( self, index ):
         """Returns the item flags for the given index"""

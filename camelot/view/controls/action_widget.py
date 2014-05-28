@@ -45,6 +45,7 @@ class AbstractActionWidget( object ):
             gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         if isinstance( gui_context, ListActionGuiContext ):
+            gui_context.item_view.model().dataChanged.connect(self.data_changed)
             selection_model = gui_context.item_view.selectionModel()
             if selection_model is not None:
                 selection_model.currentRowChanged.connect(self.current_row_changed)
@@ -60,11 +61,21 @@ class AbstractActionWidget( object ):
               self.set_state,
               args = (self.gui_context.create_model_context(),) )
 
-    def data_changed( self, index1, index2 ):
-        # the model might emit a dataChanged signal, while the widget mapper
-        # has been deleted
-        if not is_deleted(self.gui_context.widget_mapper):
-            self.current_row_changed( index1.row() )
+    def data_changed(self, index1, index2):
+        if isinstance(self.gui_context, FormActionGuiContext):
+            # the model might emit a dataChanged signal, while the widget mapper
+            # has been deleted
+            if not is_deleted(self.gui_context.widget_mapper):
+                self.current_row_changed( index1.row() )
+        if isinstance(self.gui_context, ListActionGuiContext):
+            if not is_deleted(self.gui_context.item_view):
+                selection_model = self.gui_context.item_view.selectionModel()
+                if (selection_model is not None) and selection_model.hasSelection():
+                    parent = QtCore.QModelIndex()
+                    for row in six.moves.range(index1.row(), index2.row()+1):
+                        if selection_model.rowIntersectsSelection(row, parent):
+                            self.current_row_changed(row)
+                            return
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
