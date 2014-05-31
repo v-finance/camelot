@@ -36,7 +36,7 @@ import six
 import sqlalchemy.types
 from sqlalchemy import orm, sql, schema
 
-from camelot.core.orm import Entity, ManyToOne, using_options
+from camelot.core.orm import Entity, ManyToOne
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters, forms
@@ -65,7 +65,9 @@ batch_job_statusses = [ (-2, 'planned'),
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
-    using_options( tablename = 'batch_job_type' )
+    
+    __tablename__ = 'batch_job_type'
+    
     name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
     parent = ManyToOne( 'BatchJobType' )
     
@@ -94,7 +96,9 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     to store information on such running task so the end user can review
     them
     """
-    using_options( tablename = 'batch_job', order_by=['-id'] )
+    
+    __tablename__ = 'batch_job'
+    
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
     type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
     status  = type_and_status.Status( batch_job_statusses )
@@ -222,6 +226,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
 
         def get_query(self, *args, **kwargs):
             query = EntityAdmin.get_query(self, *args, **kwargs)
+            query = query.order_by(self.entity.id.desc())
             query = query.options(orm.subqueryload('status'))
             return query
 
