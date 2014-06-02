@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtCore, QtGui, variant_to_py
+from ....core.qt import QtCore, QtGui
 
 from .customeditor import (CustomEditor, draw_tooltip_visualization,
                            set_background_color_palette)
@@ -32,9 +32,10 @@ from ..decorated_line_edit import DecoratedLineEdit
 
 class TextLineEditor(CustomEditor):
 
-    def __init__(self, 
-                 parent, 
-                 length = 20, 
+    def __init__(self,
+                 parent,
+                 length = 20,
+                 echo_mode = None,
                  field_name = 'text_line',
                  actions = [],
                  **kwargs):
@@ -47,6 +48,7 @@ class TextLineEditor(CustomEditor):
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
+        text_input.setEchoMode(echo_mode or QtGui.QLineEdit.Normal)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
@@ -80,7 +82,7 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             value = six.text_type(text_input.text())
             if len(value)==0:
-                value = variant_to_py(self._value)
+                return self._value
             return value
 
     value = QtCore.qt_property(six.text_type, get_value, set_value)

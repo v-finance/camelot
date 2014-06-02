@@ -49,3 +49,11 @@ class CollectionContainer(object):
     
     def __iter__(self):
         return self._collection.__iter__()
+    
+    def __eq__(self, other_collection):
+        if isinstance(other_collection, CollectionContainer):
+            other_collection = other_collection._collection
+        return self._collection == other_collection
+    
+    def __ne__(self, other_collection):
+        return not self.__eq__(other_collection)

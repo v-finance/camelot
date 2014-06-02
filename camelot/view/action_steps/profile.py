@@ -140,8 +140,10 @@ allow all languages
         self.database_name_editor.set_value('')
         self.username_editor = TextLineEditor(self)
         self.username_editor.set_value('')
-        self.password_editor = TextLineEditor(self)
-        self.password_editor.setEchoMode(QtGui.QLineEdit.Password)
+        self.password_editor = TextLineEditor(
+            echo_mode=QtGui.QLineEdit.Password,
+            parent=self
+        )
         self.password_editor.set_value('')
         self.media_location_editor = TextLineEditor(self, length=32767)
         self.media_location_editor.set_value('')
@@ -166,9 +168,11 @@ allow all languages
         self.proxy_port_editor.set_value('')
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_username_editor.set_value('')
-        self.proxy_password_editor = TextLineEditor(self)
+        self.proxy_password_editor = TextLineEditor(
+            echo_mode=QtGui.QLineEdit.Password,
+            parent=self
+        )
         self.proxy_password_editor.set_value('')
-        self.proxy_password_editor.setEchoMode(QtGui.QLineEdit.Password)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 1)
         layout.addWidget(self.dialect_editor, 1, 1, 1, 1)
@@ -268,18 +272,18 @@ allow all languages
         # self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         # self.port_editor.setText(self.get_profile_value('port') or '3306')
         self.dialect_editor.set_value(self.get_profile_value('dialect') or None)
-        self.host_editor.setText(self.get_profile_value('host'))
-        self.port_editor.setText(self.get_profile_value('port'))
+        self.host_editor.set_value(self.get_profile_value('host'))
+        self.port_editor.set_value(self.get_profile_value('port'))
         # self.port_editor.setText(self.get_profile_value('port') or self._related_default_port(self.dialect_editor))
-        self.database_name_editor.setText(self.get_profile_value('database'))
-        self.username_editor.setText(self.get_profile_value('user'))
-        self.password_editor.setText(self.get_profile_value('password'))
-        self.media_location_editor.setText(self.get_profile_value('media_location'))
+        self.database_name_editor.set_value(self.get_profile_value('database'))
+        self.username_editor.set_value(self.get_profile_value('user'))
+        self.password_editor.set_value(self.get_profile_value('password'))
+        self.media_location_editor.set_value(self.get_profile_value('media_location'))
         self.language_editor.set_value(self.get_profile_value('locale_language'))
-        self.proxy_host_editor.setText(self.get_profile_value('proxy_host'))
-        self.proxy_port_editor.setText(self.get_profile_value('proxy_port'))
-        self.proxy_username_editor.setText(self.get_profile_value('proxy_username'))
-        self.proxy_password_editor.setText(self.get_profile_value('proxy_password'))
+        self.proxy_host_editor.set_value(self.get_profile_value('proxy_host'))
+        self.proxy_port_editor.set_value(self.get_profile_value('proxy_port'))
+        self.proxy_username_editor.set_value(self.get_profile_value('proxy_username'))
+        self.proxy_password_editor.set_value(self.get_profile_value('proxy_password'))
         self.network_status_label.setText('')
         self.network_status_label.setStyleSheet('')
         self.toggle_ok_button()
@@ -299,10 +303,10 @@ allow all languages
     def new_network_request(self):
         if self.network_reply and not self.network_reply.isFinished():
             self.network_reply.abort()
-        if self.proxy_host_editor.text() and self.proxy_port_editor.text():
+        if self.proxy_host_editor.get_value() and self.proxy_port_editor.get_value():
             proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy,
-                                             self.proxy_host_editor.text(),
-                                             int( str( self.proxy_port_editor.text() ) ) )#,
+                                             self.proxy_host_editor.get_value(),
+                                             int( str( self.proxy_port_editor.get_value() ) ) )#,
                                              #self.proxy_username_editor.text(),
                                              #self.proxy_password_editor.text() )
             self.manager.setProxy( proxy )
@@ -322,7 +326,7 @@ allow all languages
         info['name'] = self.current_profile()
         info['dialect'] = self.dialect_editor.get_value()
         info['host'] = self.host_editor.get_value()
-        info['port'] = self.port_editor.text()
+        info['port'] = self.port_editor.get_value()
         info['database'] = self.database_name_editor.get_value()
         info['user'] = self.username_editor.get_value()
         info['password'] = self.password_editor.get_value()

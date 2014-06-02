@@ -251,6 +251,10 @@ class StatusMixin( object ):
         """
         if status_date == None:
             status_date = datetime.date.today()
+        # NOTE
+        # Status id's are not taken into account here, so if statusses have the same dates, this method
+        # might not give the expected result.
+        # An option is to order self.status on id, but this needs to be tested, to see if id is set, not None.
         for status_history in self.status:
             if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:
                 return status_history

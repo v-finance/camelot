@@ -212,9 +212,11 @@ class SelectBackupDialog( SelectDialog ):
         if ok_button:
             ok_button.setEnabled( self.label != '' )
             
-    def _setPath(self, dir):
+    def _setPath(self, start_dir):
         path = QtGui.QFileDialog.getSaveFileName(
-                self, six.text_type(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+                self, six.text_type(self.caption),
+                start_dir or u'',
+                ugettext('Database files (*%s);;All files (*.*)' % self.extension),
             )
         return path
 
