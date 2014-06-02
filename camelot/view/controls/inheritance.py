@@ -46,7 +46,7 @@ class SubclassTree( ModelTree ):
 
     subclass_clicked_signal = QtCore.qt_signal(object)
     
-    def __init__(self, admin, subclasses, parent=None):
+    def __init__(self, admin, parent=None):
         header_labels = ['Types']
         ModelTree.__init__(self, header_labels, parent=None)
         self.admin = admin
@@ -82,13 +82,13 @@ class SubclassDialog(QtGui.QDialog):
     
     def __init__(self, admin, subclass_tree, parent=None):
         QtGui.QDialog.__init__(self, parent)
-        subclass_tree = SubclassTree(admin, subclass_tree, self)
+        tree_widget = SubclassTree(admin, self)
+        tree_widget.set_subclasses(subclass_tree)
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(subclass_tree)
+        layout.addWidget(tree_widget)
         self.setLayout(layout)
-
         self.selected_subclass = None
-        subclass_tree.subclass_clicked_signal.connect( self._subclass_clicked )
+        tree_widget.subclass_clicked_signal.connect( self._subclass_clicked )
 
     @QtCore.qt_slot(object)
     def _subclass_clicked(self, admin):

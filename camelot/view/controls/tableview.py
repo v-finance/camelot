@@ -540,7 +540,7 @@ class TableView( AbstractView  ):
         filters_widget.setLayout( self.filters_layout )
         #filters_widget.hide()
         splitter = self.findChild(QtGui.QWidget, 'splitter' )
-        class_tree = SubclassTree(self.admin, [])
+        class_tree = SubclassTree(self.admin)
         class_tree.setObjectName('class_tree')
         class_tree.subclass_clicked_signal.connect(self.change_admin)
         splitter.addWidget(class_tree)
