@@ -252,9 +252,9 @@ class XlsReader( six.Iterator ):
         self.xf_list = workbook.xf_list
         self.datemode = workbook.datemode
         self.format_map = workbook.format_map
-        self.sheet = workbook.sheets()[0]
+        self.sheets = workbook.sheets()
+        self.sheet = self.sheets[0]
         self.current_row = 0
-        self.rows = self.sheet.nrows
         self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
         
@@ -274,7 +274,7 @@ class XlsReader( six.Iterator ):
         
     def __next__( self ):
         import xlrd
-        if self.current_row < self.rows:
+        if self.current_row < self.sheet.nrows:
             vector = []    
             for column in range( self.sheet.ncols ):
                 cell = self.sheet.cell( self.current_row, column )
