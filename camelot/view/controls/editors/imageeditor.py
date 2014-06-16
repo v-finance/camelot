@@ -154,10 +154,9 @@ All files (*)"""
         self.set_pixmap(dummy_image.getQPixmap())
 
     def set_value(self, value):
-        old_value = self.value
         value = super( ImageEditor, self ).set_value( value )
         if value is not None:
-            if value != old_value:
+            if value.name != self.file_name:
                 post(
                     lambda:value.checkout_thumbnail(
                         self.preview_width,
@@ -165,6 +164,9 @@ All files (*)"""
                     ),
                     self.set_image
                 )
+                # store the file name of which a previous is shown in the editor,
+                # to ensure the preview is updated when this changes
+                self.file_name = value.name
         else:
             self.clear_image()
         return value
