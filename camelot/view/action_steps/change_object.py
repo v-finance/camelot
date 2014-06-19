@@ -215,10 +215,11 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             if complete:
                 note.set_value( None )
             else:
-                note.set_value(_(
-                    'Please correct the data above before proceeding with the '
-                    'import.<br/>Incorrect cells have a pink background.'
-                ))
+                first_row = self.validator.get_first_invalid_row() + 1
+                notes = [
+                    ugettext('Please correct row {0} before proceeding.').format(first_row),
+                    ]
+                note.set_value(u'<br>'.join(notes))
 
 class ChangeObject( ActionStep ):
     """

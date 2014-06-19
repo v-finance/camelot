@@ -141,6 +141,13 @@ class ObjectValidator(QtCore.QObject):
         """
         return len(self._invalid_rows)
 
+    def get_first_invalid_row(self):
+        """
+        :return: the row number of the first invalid row (where the first row
+            has number 0)
+        """
+        return min(self._invalid_rows)
+
     def isValid(self, row):
         """Verify if a row in a model is 'valid' meaning it could be flushed to
         the database
