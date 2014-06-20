@@ -53,6 +53,7 @@ class FileEditor(CustomEditor):
         self.storage = storage
         self.filename = None # the widget containing the filename
         self.value = None
+        self.file_name = None
         self.remove_original = remove_original
         self.actions = actions
         self.setup_widget()

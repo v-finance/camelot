@@ -27,8 +27,9 @@ import six
 import sqlalchemy
 
 from .qt import QtGui
+
 from camelot.core.utils import ugettext as _
-from camelot.core.conf import settings
+from camelot.core.sql import metadata as default_metadata
 
 logger = logging.getLogger('camelot.core.backup')
 
@@ -44,17 +45,21 @@ class BackupMechanism(object):
     backup is copied into the existing schema.
     """
     
-    def __init__(self, filename, storage=None):
+    def __init__(self, filename, storage=None, metadata=None):
         """Backup and restore to a file using it as an sqlite database.
         :param filename: the name of the file in which to store the backup, this
         can be either a local file or the name of a file in the storage.
         :param storage: a storage in which to store the file, if None is given,
         it is assumed that the file should be stored or retrieved from the local
         filesystem.
+        :param metadata: the metadata of the database to be backed up or restored,
+            this defaults to the `metadata` object of :module:`camelot.core.sql`.
+            This metadata object should not contain any dialect specific constructs.
         """
-        self._filename = six.text_type(filename)
-        self._storage = storage
-        
+        self.filename = six.text_type(filename)
+        self.storage = storage
+        self.metadata = metadata or default_metadata
+
     @classmethod
     def get_filename_prefix(cls):
         """
@@ -104,67 +109,36 @@ class BackupMechanism(object):
         """
         return True
     
-    def prepare_schema_for_restore(self, from_engine, to_engine):
+    def prepare_schema_for_restore(self, from_connection, to_connection):
         """This method will be called before the actual restore starts.  It allows bringing
         the schema at the same revision as the backed up data.
         """
         pass
 
-    def update_schema_after_restore(self, from_engine, to_engine):
+    def update_schema_after_restore(self, from_connection, to_connection):
         """This method will be called after the restore has been done.  It allows bringing
         the schema at the revision the application expects.
         """
         pass
-        
-    def get_backup_column_type( self, from_type ):
-        """This function converts column types from the source database to
-        to column types in the backup database.  This is needed when backing
-        up from for example MySQL to SQLite, since column types differ between
-        both databases.  Overwrite this method to support different columns 
-        and/or database types.
-        
-        :param from_type: the column type in the database that is backed up
-        :return: the corresponding column type in the back up database
-        """
-        from sqlalchemy.dialects.mysql import base as mysql_dialect
-        from sqlalchemy.dialects import postgresql as postgresql_dialect  
-        import sqlalchemy.types
-        #
-        # Postgresql
-        #
-        if isinstance( from_type, postgresql_dialect.DOUBLE_PRECISION ):
-            return sqlalchemy.types.Float()
-        if isinstance( from_type, postgresql_dialect.BYTEA ):
-            return sqlalchemy.types.LargeBinary()        
-        #
-        # MySQL
-        #
-        if isinstance( from_type, mysql_dialect.TINYINT ):
-            return sqlalchemy.types.Boolean()
-        if isinstance( from_type, mysql_dialect._StringType ):
-            return sqlalchemy.types.String()   
-        if isinstance( from_type, mysql_dialect._FloatType ):
-            return sqlalchemy.types.Float()
-        return from_type
-        
-    def backup(self):
+
+    def backup(self, from_engine):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a backup.
+        
+        :param from_engine: a :class:`sqlalchemy.engine.Engine` object that
+            provides a connection to the database to be backed up.
         """
         import os
         import tempfile
         import shutil
-        from sqlalchemy import create_engine, types
-        from sqlalchemy import MetaData, Table, Column
+        from sqlalchemy import create_engine
+        from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
         
         yield (0, 0, _('Analyzing database structure'))
-        from_engine = settings.ENGINE()
-        from_meta_data = MetaData()
-        from_meta_data.bind = from_engine
-        from_meta_data.reflect()
-                
+        from_meta_data = self.metadata
+
         yield (0, 0, _('Preparing backup file'))
         #
         # We'll first store the backup in a temporary file, since
@@ -173,48 +147,46 @@ class BackupMechanism(object):
         file_descriptor, temp_file_name = tempfile.mkstemp(suffix='.db')
         os.close(file_descriptor)
         logger.info("preparing backup to '%s'"%temp_file_name)
-        if os.path.exists(self._filename):
-            os.remove(self._filename)
-        to_engine   = create_engine( u'sqlite:///%s'%temp_file_name, poolclass=NullPool )
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+        to_engine = create_engine( u'sqlite:///%s'%temp_file_name, poolclass=NullPool)
+        to_connection = to_engine.connect()
         to_meta_data = MetaData()
-        to_meta_data.bind = to_engine
         #
         # Only copy tables, to prevent issues with indices and constraints
         #
         from_and_to_tables = []
         for from_table in from_meta_data.sorted_tables:
             if self.backup_table_filter(from_table):
-                new_cols = []
-                for col in from_table.columns:
-                    new_type = self.get_backup_column_type( col.type )
-                    if not isinstance( new_type, types.NullType ):
-                        new_cols.append( Column( col.name, new_type ) )
-                    else:
-                        logger.warn( 'cannot backup column %s of table %s'%( col.name, from_table.name ) )
-                to_table = Table(from_table.name, to_meta_data, *new_cols)
-                to_table.create(to_engine)
+                to_table = from_table.tometadata(to_meta_data)
                 from_and_to_tables.append((from_table, to_table))
-        
+        to_meta_data.create_all(to_connection)
+
         number_of_tables = len(from_and_to_tables)
-        for i,(from_table, to_table) in enumerate(from_and_to_tables):
-            yield (i, number_of_tables + 1, _('Copy data of table %s')%from_table.name)
-            self.copy_table_data(from_table, to_table)
+        with from_engine.begin() as from_connection:
+            for i,(from_table, to_table) in enumerate(from_and_to_tables):
+                yield (i, number_of_tables + 1, _('Copy data of table %s')%from_table.name)
+                self.copy_table_data(from_table, to_table,
+                                     from_connection, to_connection)
         yield (number_of_tables, number_of_tables + 1, _('Store backup at requested location') )
-        from_engine.dispose()
+        to_connection.close()
         to_engine.dispose()
-        if not self._storage:
+        if not self.storage:
             logger.info(u'move backup file to its final location')
-            shutil.move(temp_file_name, self._filename)
+            shutil.move(temp_file_name, self.filename)
         else:
-            logger.info(u'check backfup file in to storage with name %s'%self._filename)
-            self._storage.checkin( temp_file_name, self._filename )
+            logger.info(u'check backfup file in to storage with name %s'%self.filename)
+            self.storage.checkin( temp_file_name, self.filename )
             os.remove( temp_file_name )
         yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))
     
-    def restore(self):
+    def restore(self, to_engine):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a restore.
+
+        :param to_engine: a :class:`sqlalchemy.engine.Engine` object that
+            provides a connection to the database to be backed up.
         """
         #
         # The restored database may contain different AuthenticationMechanisms
@@ -231,74 +203,64 @@ class BackupMechanism(object):
         from sqlalchemy.pool import NullPool
 
         yield (0, 0, _('Open backup file'))
-        if self._storage:
-            if not self._storage.exists(self._filename):
+        if self.storage:
+            if not self.storage.exists(self.filename):
                 raise Exception('Backup file does not exist')
-            stored_file = StoredFile(self._storage, self._filename)
-            filename = self._storage.checkout( stored_file )
+            stored_file = StoredFile(self.storage, self.filename)
+            filename = self.storage.checkout( stored_file )
         else:
-            if not os.path.exists(self._filename):
+            if not os.path.exists(self.filename):
                 raise Exception('Backup file does not exist')
-            filename = self._filename
-        from_engine   = create_engine('sqlite:///%s'%filename, poolclass=NullPool )
+            filename = self.filename
+        from_engine = create_engine('sqlite:///%s'%filename, poolclass=NullPool )
+        from_connection = from_engine.connect()
 
-        yield (0, 0, _('Prepare database for restore'))
-        to_engine = settings.ENGINE()
-        self.prepare_schema_for_restore(from_engine, to_engine)
-          
-        yield (0, 0, _('Analyzing backup structure'))
-        from_meta_data = MetaData()
-        from_meta_data.bind = from_engine
-        from_meta_data.reflect()
-        
         yield (0, 0, _('Analyzing database structure'))
-        to_meta_data = MetaData()
-        to_meta_data.bind = to_engine
-        to_meta_data.reflect()
-        to_tables = list(table for table in to_meta_data.sorted_tables if self.restore_table_filter(table))
-        number_of_tables = len(to_tables)
-        steps = number_of_tables * 2 + 2
-        
-        for i,to_table in enumerate(reversed(to_tables)):
-            yield (i, steps, _('Delete data from table %s')%to_table.name)
-            self.delete_table_data(to_table)
+        from_meta_data = MetaData()
+        to_meta_data = self.metadata
+        to_tables = to_meta_data.sorted_tables
+        for to_table in to_tables:
+            if self.restore_table_filter(to_table):
+                to_table.tometadata(from_meta_data)
 
-        for i,to_table in enumerate(to_tables):
-            if to_table.name in from_meta_data.tables:
-                yield (number_of_tables+i, steps, _('Copy data from table %s')%to_table.name)
-                self.copy_table_data(from_meta_data.tables[to_table.name], to_table)
-                
-        yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
-        self.update_schema_after_restore(from_engine, to_engine)
-        
+        with to_engine.begin() as to_connection:
+            yield (0, 0, _('Prepare database for restore'))
+            self.prepare_schema_for_restore(from_connection, to_connection)
+    
+            yield (0, 0, _('Analyzing database structure'))
+            number_of_tables = len(to_tables)
+            steps = number_of_tables * 2 + 2
+            
+            for i,to_table in enumerate(reversed(to_tables)):
+                yield (i, steps, _('Delete data from table %s')%to_table.name)
+                self.delete_table_data(to_table, to_connection)
+    
+            for i,to_table in enumerate(to_tables):
+                if to_table.name in from_meta_data.tables:
+                    yield (number_of_tables+i, steps, _('Copy data from table %s')%to_table.name)
+                    self.copy_table_data(from_meta_data.tables[to_table.name], to_table,
+                                         from_connection, to_connection)
+                    
+            yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
+            self.update_schema_after_restore(from_connection, to_connection)
+        from_connection.close()
         from_engine.dispose()
-        to_engine.dispose()
-        
-        yield (number_of_tables * 2 + 2, steps, _('Load new data'))
-        from sqlalchemy.orm.session import _sessions
-        for session in six.itervalues(_sessions):
-            session.expunge_all()
         
         yield (1, 1, _('Restore completed'))
-                          
-    def delete_table_data(self, to_table):
+
+    def delete_table_data(self, to_table, to_connection):
         """This method might be subclassed to turn off/on foreign key checks"""
-        to_connection = to_table.bind.connect()
         to_connection.execute(to_table.delete())
-        to_connection.close()
-        
-    def copy_table_data(self, from_table, to_table):
-        from_connection = from_table.bind.connect()
+
+    def copy_table_data(self, from_table, to_table, from_connection, to_connection):
         query = sqlalchemy.select([from_table])
+        to_dialect = to_connection.engine.url.get_dialect().name
         table_data = [row for row in from_connection.execute(query).fetchall()]
-        from_connection.close()
         if len(table_data):
-            to_connection = to_table.bind.connect()
             to_connection.execute(to_table.insert(), table_data)
             if 'id' in [c.name for c in to_table.columns]:
-              if to_table.bind.url.get_dialect().name == 'postgresql':
-                table_name = to_table.name
-                seq_name = table_name + "_id_seq"
-                to_connection.execute("select setval('%s', max(id)) from %s" % (seq_name, table_name))
-            to_connection.close()
+                if to_dialect == 'postgresql':
+                    table_name = to_table.name
+                    seq_name = table_name + "_id_seq"
+                    to_connection.execute("select setval('%s', max(id)) from %s" % (seq_name, table_name))
 

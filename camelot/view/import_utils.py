@@ -34,7 +34,7 @@ from ..core.qt import QtCore
 from camelot.view.controls import delegates
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
-from camelot.admin.action import Action
+from camelot.admin.action import Action, RowNumberAction
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -252,9 +252,9 @@ class XlsReader( six.Iterator ):
         self.xf_list = workbook.xf_list
         self.datemode = workbook.datemode
         self.format_map = workbook.format_map
-        self.sheet = workbook.sheets()[0]
+        self.sheets = workbook.sheets()
+        self.sheet = self.sheets[0]
         self.current_row = 0
-        self.rows = self.sheet.nrows
         self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
         
@@ -274,7 +274,7 @@ class XlsReader( six.Iterator ):
         
     def __next__( self ):
         import xlrd
-        if self.current_row < self.rows:
+        if self.current_row < self.sheet.nrows:
             vector = []    
             for column in range( self.sheet.ncols ):
                 cell = self.sheet.cell( self.current_row, column )
@@ -335,7 +335,7 @@ class RowDataAdmin(object):
         in the row data to fields of the objects.
     """
 
-    list_action = None
+    list_action = RowNumberAction()
     
     def __init__(self, admin, column_mappings):
         self.admin = admin
@@ -388,7 +388,10 @@ class RowDataAdmin(object):
         """When flush is called, don't do anything, since we'll only save the
         object when importing them for real"""
         pass
-    
+
+    def is_persistent(self, obj):
+        return True
+
     def delete(self, obj):
         pass
 

@@ -577,8 +577,10 @@ position in the query.
                 if icon is not None:
                     if role == Qt.DecorationRole:
                         return icon.getQPixmap()
-                    elif role == Qt.DisplayRole:
-                        return py_to_variant('')
+                verbose_name = action_state.verbose_name
+                if verbose_name is not None:
+                    if role == Qt.DisplayRole:
+                        return py_to_variant(six.text_type(verbose_name))
                 tooltip = action_state.tooltip
                 if tooltip is not None:
                     if role == Qt.ToolTipRole:

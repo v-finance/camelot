@@ -27,6 +27,7 @@ import time
 
 import six
 
+from ...core.conf import settings
 from ...core.qt import Qt, QtCore, QtGui, QtWebKit
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
@@ -325,7 +326,7 @@ Backup the database to disk
 .. attribute:: backup_mechanism
 
     A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
-    the application to perform backups an restores.    
+    the application to perform backups an restores.
     """
     
     verbose_name = _('&Backup')
@@ -337,38 +338,12 @@ Backup the database to disk
         from camelot.view.action_steps import UpdateProgress, SelectBackup
         label, storage = yield SelectBackup( self.backup_mechanism )
         yield UpdateProgress( text = _('Backup in progress') )
-        backup_mechanism = self.backup_mechanism( label, 
-                                                  storage )
-        for completed, total, description in backup_mechanism.backup():
-            yield UpdateProgress( completed,
-                                  total,
-                                  text = description )
-
-class Restore( Action ):
-    """
-Restore the database to disk
-
-.. attribute:: backup_mechanism
-
-    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
-    the application to perform backups an restores.
-"""
-    
-    verbose_name = _('&Restore')
-    tooltip = _('Restore the database from a backup')
-    icon = Icon('tango/16x16/devices/drive-harddisk.png')
-    backup_mechanism = BackupMechanism
-            
-    def model_run( self, model_context ):
-        from camelot.view.action_steps import UpdateProgress, SelectRestore
-        label, storage = yield SelectRestore( self.backup_mechanism )
-        yield UpdateProgress( text = _('Restore in progress') )
-        backup_mechanism = self.backup_mechanism( label,
-                                                  storage )
-        for completed, total, description in backup_mechanism.restore():
-            yield UpdateProgress( completed,
-                                  total,
-                                  text = description )
+        backup_mechanism = self.backup_mechanism(label, storage)
+        backup_iterator = backup_mechanism.backup(settings.ENGINE())
+        for completed, total, description in backup_iterator:
+            yield UpdateProgress(completed,
+                                 total,
+                                 text = description)
 
 class Refresh( Action ):
     """Reload all objects from the database and update all views in the
@@ -417,6 +392,34 @@ class Refresh( Action ):
         for obj in expunged_objects:
             signal_handler.sendEntityDelete( self, obj )
         yield action_steps.Refresh()
+
+class Restore(Refresh):
+    """
+Restore the database to disk
+
+.. attribute:: backup_mechanism
+
+    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
+    the application to perform backups an restores.
+"""
+    
+    verbose_name = _('&Restore')
+    tooltip = _('Restore the database from a backup')
+    icon = Icon('tango/16x16/devices/drive-harddisk.png')
+    backup_mechanism = BackupMechanism
+            
+    def model_run( self, model_context ):
+        from camelot.view.action_steps import UpdateProgress, SelectRestore
+        label, storage = yield SelectRestore( self.backup_mechanism )
+        yield UpdateProgress( text = _('Restore in progress') )
+        backup_mechanism = self.backup_mechanism(label, storage)
+        restore_iterator = backup_mechanism.restore(settings.ENGINE())
+        for completed, total, description in restore_iterator:
+            yield UpdateProgress(completed,
+                                 total,
+                                 text = description)
+        for step in super(Restore, self).model_run(model_context):
+            yield step
 
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging

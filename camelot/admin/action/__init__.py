@@ -30,7 +30,7 @@ from .document_action import ( DocumentActionGuiContext,
                               DocumentActionModelContext )
 from .form_action import ( FormActionGuiContext, FormActionModelContext )
 from .list_action import ( ListActionGuiContext, ListActionModelContext, 
-                          CallMethod, OpenFormView )
+                          CallMethod, OpenFormView , RowNumberAction)
 from .field_action import (FieldActionGuiContext,
                            FieldActionModelContext)
 
@@ -53,6 +53,7 @@ __all__ = [
     OpenTableView.__name__,
     GuiContext.__name__,
     Mode.__name__,
+    RowNumberAction.__name__,
     State.__name__,
     ]
 

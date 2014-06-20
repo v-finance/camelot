@@ -245,7 +245,18 @@ class ListContextAction( Action ):
         else:
             state.enabled = False
         return state
-    
+
+class RowNumberAction( Action ):
+    """
+    An action that simply displays the current row number as its name to
+    the user.
+    """
+
+    def get_state( self, model_context ):
+        state = super(RowNumberAction, self).get_state(model_context)
+        state.verbose_name = str(model_context.current_row + 1)
+        return state
+
 class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
@@ -266,7 +277,9 @@ class OpenFormView( ListContextAction ):
     shortcut = QtGui.QKeySequence.Open
     icon = Icon('tango/16x16/places/folder.png')
     tooltip = _('Open')
-    verbose_name = _('Open')
+    # verbose name is set to None to avoid displaying it in the vertical
+    # header of the table view
+    verbose_name = None
 
     def model_run(self, model_context):
         from camelot.view import action_steps
