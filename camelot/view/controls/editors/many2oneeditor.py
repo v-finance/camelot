@@ -56,13 +56,7 @@ class Many2OneEditor( CustomEditor ):
             self.layoutChanged.emit()
 
         def data(self, index, role):
-            if role == Qt.DisplayRole:
-                return py_to_variant(self._completions[index.row()][0][0])
-            elif role == Qt.EditRole:
-                return py_to_variant(self._completions[index.row()][1])
-            elif role == Qt.ToolTipRole:
-                return py_to_variant(self._completions[index.row()][0][3])
-            return py_to_variant()
+            return py_to_variant(self._completions[index.row()].get(role))
 
         def rowCount(self, index=None):
             return len(self._completions)
@@ -159,7 +153,7 @@ class Many2OneEditor( CustomEditor ):
         )
         if search_decorator:
             sresult = [
-                (self.admin.get_search_identifiers(e), e)
+                self.admin.get_search_identifiers(e)
                 for e in search_decorator(self.admin.get_query()).limit(20)
             ]
             return text, sresult
