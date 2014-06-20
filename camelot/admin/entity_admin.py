@@ -35,6 +35,7 @@ from camelot.core.utils import ugettext_lazy
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
+from camelot.core.qt import Qt
 
 import six
 
@@ -213,6 +214,14 @@ and used as a custom action.
                         primary_key_representation
                     )
         return self.get_verbose_name()
+    
+    def get_search_identifiers(self, obj):
+        search_identifiers = {}
+        
+        search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
+        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+        
+        return search_identifiers                
 
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name

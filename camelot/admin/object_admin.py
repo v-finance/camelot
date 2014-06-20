@@ -27,7 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
-from ..core.qt import QtCore
+from ..core.qt import QtCore, Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.controls.tableview import TableView
@@ -313,6 +313,16 @@ be specified using the verbose_name attribute.
         be used to generate a title for a form view of an object.
         """
         return u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+
+    def get_search_identifiers(self, obj):
+        """Create a dict of identifiers to be used in search boxes.
+        The keys are Qt roles."""
+        search_identifiers = {} 
+
+        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+
+        return search_identifiers
 
     def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
