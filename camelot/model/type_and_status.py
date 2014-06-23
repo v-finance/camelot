@@ -410,13 +410,24 @@ class Type(EntityBuilder):
     :param type_table: the tablename used to store the `Type` entity
 
     :param nullable: if the underlying column is nullable
+    
+    :param type_verbose_name: the verbose name of the `Type Entity`
+    
+    :param type_verbose_name_plural: the verbose plural name of the `Type Entity`
     """
 
-    def __init__(self, type_table=None, nullable=False):
+    def __init__(self,
+                 type_table=None,
+                 nullable=False,
+                 type_verbose_name=None,
+                 type_verbose_name_plural=None,
+                 ):
         super(Type, self ).__init__()
         self.property = None
         self.type_table = type_table
         self.nullable = nullable
+        self.type_verbose_name = type_verbose_name
+        self.type_verbose_name_plural = type_verbose_name_plural
 
     def attach( self, entity, name ):
         super(Type, self ).attach( entity, name )
@@ -429,12 +440,12 @@ class Type(EntityBuilder):
         # classes a specific name, so these classes can be used whithin the
         # memento and the fixture module
 
-        type_verbose_name = _(entity.__name__ + ' Type')
-        type_verbose_name_plural = _(entity.__name__ + ' Type')
+        type_verbose_name = self.type_verbose_name or _(entity.__name__ + ' Type')
+        type_verbose_name_plural = self.type_verbose_name_plural or _(entity.__name__ + ' Type')
         
         type_admin = type( entity.__name__ + 'TypeAdmin',
                            ( TypeAdmin, ),
-                           { 'verbose_name': type_verbose_name,
+                           { 'verbose_name':  type_verbose_name,
                              'verbose_name_plural': type_verbose_name_plural, }
                            )
 
