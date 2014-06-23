@@ -861,7 +861,9 @@ position in the query.
     @QtCore.qt_slot(int, int, int)
     def _emit_changes( self, row, from_column, thru_column ):
         assert object_thread( self )
-        #self.headerDataChanged.emit(Qt.Vertical, row, row)
+        # emit the headerDataChanged signal, to ensure the row icon is
+        # updated
+        self.headerDataChanged.emit(Qt.Vertical, row, row)
         if thru_column >= from_column:
             top_left = self.index(row, from_column)
             bottom_right = self.index(row, thru_column)
