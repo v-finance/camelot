@@ -216,8 +216,6 @@ class FixtureVersion( Entity ):
     """Keep track of the version the fixtures have in the current database, the 
     subversion revision number is a good candidate to be used as a fixture 
     version.
-    
-    :return: an integer representing the current version, 0 if no version found
     """
     
     __tablename__ = 'fixture_version'
@@ -234,6 +232,8 @@ class FixtureVersion( Entity ):
         :param fixture_class: the fixture class for which to get the version
         :param session: the session to use to query the database, if `None` is
             given, the default Camelot session is used
+        
+        :return: an integer representing the current version, 0 if no version found
         """
         if session is None:
             session = Session()

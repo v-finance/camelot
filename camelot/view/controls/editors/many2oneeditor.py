@@ -56,11 +56,7 @@ class Many2OneEditor( CustomEditor ):
             self.layoutChanged.emit()
 
         def data(self, index, role):
-            if role == Qt.DisplayRole:
-                return py_to_variant(self._completions[index.row()][0])
-            elif role == Qt.EditRole:
-                return py_to_variant(self._completions[index.row()][1])
-            return py_to_variant()
+            return py_to_variant(self._completions[index.row()].get(role))
 
         def rowCount(self, index=None):
             return len(self._completions)
@@ -150,14 +146,14 @@ class Many2OneEditor( CustomEditor ):
     def search_completions(self, text):
         """Search for object that match text, to fill the list of completions
 
-        :return: a list of tuples of (object_representation, object)
+        :return: a list of tuples of (dict_of_object_representation, object)
         """
         search_decorator = create_entity_search_query_decorator(
             self.admin, text
         )
         if search_decorator:
             sresult = [
-                (six.text_type(e), e)
+                self.admin.get_search_identifiers(e)
                 for e in search_decorator(self.admin.get_query()).limit(20)
             ]
             return text, sresult
