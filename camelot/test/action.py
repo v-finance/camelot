@@ -39,6 +39,7 @@ class MockModelContext( object ):
     def __init__( self, session=None ):
         self._model = []
         self.obj = None
+        self.selection = []
         self.admin = None
         self.mode_name = None
         self.collection_count = 1
@@ -50,7 +51,9 @@ class MockModelContext( object ):
         return self.obj
         
     def get_selection( self, yield_per = None ):
-        return [self.obj]
+        if self.obj is not None:
+            return [self.obj]
+        return self.selection
 
     def get_collection( self, yield_per = None ):
         return [self.obj]
