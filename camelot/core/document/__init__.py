@@ -34,25 +34,49 @@ def document_classes(classes):
     :param classes: the list of classes to document
     """
 
-    def document_property( cls, key, prop ):
+    def document_column_property(cls, key, prop):
+        docstrings = []
         if isinstance(prop, orm.ColumnProperty):
             attrs = EntityAdmin.get_sql_field_attributes(prop.columns)
             python_type = attrs.get('python_type', None)
-            docstrings = []
+            
             if prop.doc:
                 docstrings.append( prop.doc )
             if isinstance(python_type, type):
                 docstrings.append(  python_type.__name__ )
             if attrs.get('nullable', True):
-                docstrings.append(  'not required' )
+                docstrings.append('not required' )
             else:
-                docstrings.append(  'required' )
+                docstrings.append('required' )
             length = attrs.get('length', None)
-            if length!=None:
-                docstrings.append(  'length : {}'.format(length) )
-                
-            setattr( getattr(cls,key), '__doc__', ', '.join(docstrings) ) 
-        
+            if length is not None:
+                docstrings.append('length : {}'.format(length) )
+            precision = attrs.get('precision', None)
+            if precision is not None:
+                docstrings.append('precision : {}'.format(precision) )
+            for column in prop.columns:
+                for foreign_key in column.foreign_keys:
+                    docstrings.append('foreign key to {}'.format(foreign_key.column))
+            choices = attrs.get('choices', None)
+            if (choices is not None) and (isinstance(choices, list)):
+                values = [unicode(v) for v, _s in choices]
+                docstrings.append('possible values : {}'.format('/'.join(values)))
+
+        if len(docstrings):
+            setattr( getattr(cls,key), '__doc__', ', '.join(docstrings) )
+
+    def document_relationship_property(cls, key, prop):
+        docstrings = []
+        if isinstance(prop, orm.properties.RelationshipProperty):
+            target = prop.mapper.class_
+            if target is not None:
+                if isinstance(target, basestring):
+                    docstrings.append('points to :class:`{0}`'.format(target))
+                else:
+                    docstrings.append('points to :class:`{0.__module__}.{0.__name__}`'.format(target))
+        if len(docstrings):
+            return '{0} : {1}'.format(key, u', '.join(docstrings))
+
     def document_class(model):
         #
         # Add documentation on its fields
@@ -61,19 +85,26 @@ def document_classes(classes):
         
         mapper = inspect(model)
 
+        if mapper.mapped_table is not None:
+            mapped_to = unicode(mapper.mapped_table)
+
         # this is a hack to use the items method of ImmutableProperties, without
         # triggering the PY3K convertor
         for key, value in util.ImmutableProperties.items(mapper.column_attrs):
-            doc = document_property( cls, key, value )
+            doc = document_column_property( cls, key, value )
+        for key, value in util.ImmutableProperties.items(mapper.relationships):
+            doc = document_relationship_property( cls, key, value )
             if doc:
                 documented_fields.append( doc )
-                
+
         model.__doc__ = (model.__doc__ or '') + """
 
 .. image:: /_static/entityviews/new_view_%s.png
 
+mapped to %s
 
-        """%(model.__name__.lower()) + ''.join('\n * %s'%(doc) for doc in documented_fields)
+        """%(model.__name__.lower(),
+             mapped_to) + ''.join('\n * %s'%(doc) for doc in documented_fields)
 
     for cls in classes:
         document_class(cls)
