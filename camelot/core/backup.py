@@ -24,7 +24,7 @@
 import logging
 
 import six
-import sqlalchemy
+from sqlalchemy import types, sql
 
 from .qt import QtGui
 
@@ -253,14 +253,16 @@ class BackupMechanism(object):
         to_connection.execute(to_table.delete())
 
     def copy_table_data(self, from_table, to_table, from_connection, to_connection):
-        query = sqlalchemy.select([from_table])
+        query = sql.select([from_table])
         to_dialect = to_connection.engine.url.get_dialect().name
         table_data = [row for row in from_connection.execute(query).fetchall()]
         if len(table_data):
             to_connection.execute(to_table.insert(), table_data)
-            if 'id' in [c.name for c in to_table.columns]:
-                if to_dialect == 'postgresql':
-                    table_name = to_table.name
-                    seq_name = table_name + "_id_seq"
-                    to_connection.execute("select setval('%s', max(id)) from %s" % (seq_name, table_name))
+            if to_dialect == 'postgresql':
+                for column in to_table.columns:
+                    if isinstance(column.type, types.Integer) and column.autoincrement==True and column.primary_key==True:
+                        column_name = column.name
+                        table_name = to_table.name
+                        seq_name = table_name + "_" + column_name + "_seq"
+                        to_connection.execute("select setval('%s', max(%s)) from %s" % (seq_name, column_name, table_name))
 
