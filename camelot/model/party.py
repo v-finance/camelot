@@ -51,8 +51,8 @@ from .authentication import end_of_times
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     using_options( tablename = 'geographic_boundary' )
-    code = Field( Unicode( 10 ) )
-    name = Field( Unicode( 40 ), required = True )
+    code = schema.Column( Unicode( 10 ) )
+    name = schema.Column( Unicode( 40 ), nullable = False )
     
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
@@ -121,8 +121,8 @@ class City( GeographicBoundary ):
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
-    street1 = Field( Unicode( 128 ), required = True )
-    street2 = Field( Unicode( 128 ) )
+    street1 = schema.Column( Unicode( 128 ), nullable = False )
+    street2 = schema.Column( Unicode( 128 ) )
     city = ManyToOne( City, 
                       required = True, 
                       ondelete = 'cascade', 
@@ -332,9 +332,9 @@ class Organization( Party ):
                       ForeignKey('party.id'), 
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'organization'}
-    name = Field( Unicode( 50 ), required = True, index = True )
-    logo = Field( camelot.types.Image( upload_to = 'organization-logo' ), deferred = True )
-    tax_id = Field( Unicode( 20 ) )
+    name = schema.Column( Unicode( 50 ), nullable = False, index = True )
+    logo = schema.Column( camelot.types.Image( upload_to = 'organization-logo' ))
+    tax_id = schema.Column( Unicode( 20 ) )
 
     def __unicode__( self ):
         return self.name or ''
@@ -357,20 +357,20 @@ class Person( Party ):
                       ForeignKey('party.id'), 
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'person'}
-    first_name = Field( Unicode( 40 ), required = True )
-    last_name = Field( Unicode( 40 ), required = True )
+    first_name = schema.Column( Unicode( 40 ), nullable = False )
+    last_name = schema.Column( Unicode( 40 ), nullable = False )
 # end short person definition
-    middle_name = Field( Unicode( 40 ) )
-    personal_title = Field( Unicode( 10 ) )
-    suffix = Field( Unicode( 3 ) )
-    sex = Field( Unicode( 1 ), default = u'M' )
-    birthdate = Field( Date() )
-    martial_status = Field( Unicode( 1 ) )
-    social_security_number = Field( Unicode( 12 ) )
-    passport_number = Field( Unicode( 20 ) )
-    passport_expiry_date = Field( Date() )
-    picture = Field( camelot.types.Image( upload_to = 'person-pictures' ), deferred = True )
-    comment = Field( camelot.types.RichText() )
+    middle_name = schema.Column( Unicode( 40 ) )
+    personal_title = schema.Column( Unicode( 10 ) )
+    suffix = schema.Column( Unicode( 3 ) )
+    sex = schema.Column( Unicode( 1 ), default = u'M' )
+    birthdate = schema.Column( Date() )
+    martial_status = schema.Column( Unicode( 1 ) )
+    social_security_number = schema.Column( Unicode( 12 ) )
+    passport_number = schema.Column( Unicode( 20 ) )
+    passport_expiry_date = schema.Column( Date() )
+    picture = schema.Column( camelot.types.Image( upload_to = 'person-pictures' ))
+    comment = schema.Column( camelot.types.RichText() )
 
     @property
     def note(self):
@@ -644,9 +644,9 @@ class PartyAddress( Entity, Addressable ):
                          ondelete = 'cascade', 
                          onupdate = 'cascade',
                          lazy = 'subquery' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( Unicode( 256 ) )
+    from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )
+    thru_date = schema.Column( Date(), default = end_of_times, nullable=False, index = True )
+    comment = schema.Column( Unicode( 256 ) )
 
     def party_name( self ):
         return sql.select( [sql.func.coalesce(Party.full_name, '')],
@@ -694,8 +694,8 @@ class AddressAdmin( PartyAddress.Admin ):
 
 class PartyAddressRoleType( Entity ):
     using_options( tablename = 'party_address_role_type' )
-    code = Field( Unicode( 10 ) )
-    description = Field( Unicode( 40 ) )
+    code = schema.Column( Unicode( 10 ) )
+    description = schema.Column( Unicode( 40 ) )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address role type')
@@ -703,7 +703,7 @@ class PartyAddressRoleType( Entity ):
 
 class ContactMechanism( Entity ):
     using_options( tablename = 'contact_mechanism' )
-    mechanism = Field( camelot.types.VirtualAddress( 256 ), required = True )
+    mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
     party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
     party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
 
@@ -733,9 +733,9 @@ class PartyContactMechanism( Entity ):
                                              cascade='all, delete, delete-orphan' )
                        )
     contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, index = True )
-    comment = Field( Unicode( 256 ) )
+    from_date = schema.Column( Date(), default = datetime.date.today, nullable = False, index = True )
+    thru_date = schema.Column( Date(), default = end_of_times, index = True )
+    comment = schema.Column( Unicode( 256 ) )
 
     @hybrid.hybrid_property
     def mechanism( self ):
@@ -768,8 +768,8 @@ class PartyContactMechanism( Entity ):
 # begin category definition
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
-    name = Field( Unicode(40), index=True, required=True )
-    color = Field( camelot.types.Color() )
+    name = schema.Column( Unicode(40), index=True, nullable = False )
+    color = schema.Column( camelot.types.Color() )
 # end category definition
     parties = ManyToMany( 'Party', lazy = True, backref='categories',
                           tablename='party_category_party', 
