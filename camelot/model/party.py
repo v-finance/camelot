@@ -605,9 +605,11 @@ class Addressable(object):
     
     class Admin(object):
         field_attributes = dict(
-            street1 = dict( editable = True, 
+            street1 = dict( editable = True,
+                            name = _('Street'),
                             minimal_column_width = 50 ),
-            street2 = dict( editable = True, 
+            street2 = dict( editable = True,
+                            name = _('Street Extra'),
                             minimal_column_width = 50 ),
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
