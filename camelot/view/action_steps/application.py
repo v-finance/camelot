@@ -67,7 +67,8 @@ class MainWindow( ActionStep ):
         
 class InstallTranslator( ActionStep ):
     """
-    Install a translator in the application
+    Install a translator in the application.  Ownership of the translator will
+    be moved to the application.
     
     :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
         object
@@ -83,6 +84,7 @@ class InstallTranslator( ActionStep ):
         translator = self.admin.get_translator()
         if isinstance(translator, list):
             for t in translator:
+                t.setParent(app)
                 app.installTranslator( t )
         else:
             app.installTranslator( translator )
