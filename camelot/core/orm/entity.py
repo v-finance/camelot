@@ -30,7 +30,6 @@ These classes can be reused if a custom base class is needed.
 """
 
 import bisect
-import sys
 
 import six
 
@@ -73,7 +72,6 @@ class EntityDescriptor(object):
 
     def set_entity( self, entity ):
         self.entity = entity
-        self.module = sys.modules.get( entity.__module__ )
         self.tablename = entity.__tablename__
         #
         # verify if a primary key was set manually
