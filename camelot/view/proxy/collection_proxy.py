@@ -408,7 +408,6 @@ position in the query.
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
         assert object_thread( self )
-        print 'row update emits data changed', row
         self.display_cache.delete_by_row( row )
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )

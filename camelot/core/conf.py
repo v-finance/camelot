@@ -30,7 +30,7 @@ To access the global configuration, simply import the settings object::
     
     from camelot.core.conf import settings
     
-    print settings.CAMELOT_MEDIA_ROOT
+    print(settings.CAMELOT_MEDIA_ROOT)
     
 Developers can add targets to the settings proxy, to enable reading settings
 from other sources.
