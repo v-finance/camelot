@@ -186,7 +186,56 @@ class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
     list_display = ['mechanism', 'comment', 'from_date', ]
 
-class Party( Entity ):
+class WithAddresses(object):
+
+    @hybrid.hybrid_property
+    def street1( self ):
+        return self._get_address_field( u'street1' )
+    
+    @street1.setter
+    def street1_setter( self, value ):
+        return self._set_address_field( u'street1', value )
+
+    @hybrid.hybrid_property
+    def street2( self ):
+        return self._get_address_field( u'street2' ) 
+    
+    @street2.setter
+    def street2_setter( self, value ):
+        return self._set_address_field( u'street2', value )    
+    
+    @hybrid.hybrid_property
+    def city( self ):
+        return self._get_address_field( u'city' )
+    
+    @city.setter
+    def city_setter( self, value ):
+        return self._set_address_field( u'city', value )
+
+    def get_first_address(self):
+        raise NotImplementedError()
+
+    def set_first_address(self):
+        raise NotImplementedError()
+
+    def _get_address_field( self, name ):
+        first_address = self.get_first_address()
+        if first_address is not None:
+            return getattr( first_address, name )
+
+    def _set_address_field( self, name, value ):
+
+        address = self.set_first_address()
+        setattr( address, name, value )
+        if address.street1==None and address.street2==None and address.city==None:
+            session = orm.object_session( address )
+            if address in session.new:
+                session.expunge( address )
+                self.addresses.remove( address )
+            else:
+                session.delete( address )
+
+class Party(Entity, WithAddresses):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
@@ -198,6 +247,16 @@ class Party( Entity ):
     def name( self ):
         return ''
 
+    def get_first_address(self):
+        for party_address in self.addresses:
+            return party_address
+
+    def set_first_address(self):
+        if not self.addresses:
+            address = PartyAddress()
+            self.addresses.append( address )
+        return self.addresses[0]
+        
     def _get_contact_mechanism( self, described_by ):
         """Get a specific type of contact mechanism
         """
@@ -267,48 +326,6 @@ class Party( Entity ):
     @fax.expression
     def fax_expression( self ):
         return orm.aliased( ContactMechanism ).mechanism 
-
-    def _get_address_field( self, name ):
-        for party_address in self.addresses:
-            return getattr( party_address, name )
-        
-    def _set_address_field( self, name, value ):
-        if not self.addresses:
-            address = PartyAddress()
-            self.addresses.append( address )
-        address = self.addresses[0]
-        setattr( address, name, value )
-        if address.street1==None and address.street2==None and address.city==None:
-            session = orm.object_session( address )
-            if address in session.new:
-                session.expunge( address )
-                self.addresses.remove( address )
-            else:
-                session.delete( address )
-        
-    @hybrid.hybrid_property
-    def street1( self ):
-        return self._get_address_field( u'street1' )
-    
-    @street1.setter
-    def street1_setter( self, value ):
-        return self._set_address_field( u'street1', value )
-
-    @hybrid.hybrid_property
-    def street2( self ):
-        return self._get_address_field( u'street2' ) 
-    
-    @street2.setter
-    def street2_setter( self, value ):
-        return self._set_address_field( u'street2', value )    
-    
-    @hybrid.hybrid_property
-    def city( self ):
-        return self._get_address_field( u'city' )
-    
-    @city.setter
-    def city_setter( self, value ):
-        return self._set_address_field( u'city', value )
     
     def full_name( self ):
 
@@ -671,7 +688,7 @@ class PartyAddress( Entity, Addressable ):
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
-                yield party_address.address        
+                yield party_address.address
 
 class AddressAdmin( PartyAddress.Admin ):
     """Admin with only the Address information and not the Party information"""
