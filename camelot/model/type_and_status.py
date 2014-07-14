@@ -468,6 +468,7 @@ class Type(EntityBuilder):
                                                onupdate = 'cascade')
                 column = schema.Column(PrimaryKey(),
                                        constraint,
+                                       index=True,
                                        nullable=self.nullable)
                 setattr(self.entity, col_name, column )
 
