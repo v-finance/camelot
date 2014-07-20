@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Camelot trunk\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-20 17:28+0200\n"
+"POT-Creation-Date: 2014-07-20 23:31+0200\n"
 "PO-Revision-Date: 2011-12-02 00:06-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: es <LL@li.org>\n"
@@ -838,42 +838,60 @@ msgstr "Personas"
 msgid "Official"
 msgstr "Oficial"
 
-#: camelot/model/type_and_status.py:166 camelot/model/type_and_status.py:176
+#: camelot/model/type_and_status.py:94
+msgid "Code"
+msgstr ""
+
+#: camelot/model/type_and_status.py:95
+#, fuzzy
+msgid "Description"
+msgstr "Excepción"
+
+#: camelot/model/type_and_status.py:115
+msgid "From date"
+msgstr ""
+
+#: camelot/model/type_and_status.py:116
+#, fuzzy
+msgid "Thru date"
+msgstr "Configurar base de datos"
+
+#: camelot/model/type_and_status.py:172 camelot/model/type_and_status.py:182
 #, fuzzy
 msgid " Status"
 msgstr "Estado"
 
-#: camelot/model/type_and_status.py:167 camelot/model/type_and_status.py:177
+#: camelot/model/type_and_status.py:173 camelot/model/type_and_status.py:183
 #, fuzzy
 msgid " Statuses"
 msgstr "Estado"
 
-#: camelot/model/type_and_status.py:333
+#: camelot/model/type_and_status.py:339
 msgid "Change status"
 msgstr ""
 
-#: camelot/model/type_and_status.py:340
+#: camelot/model/type_and_status.py:346
 msgid "Changed status"
 msgstr ""
 
-#: camelot/model/type_and_status.py:364
+#: camelot/model/type_and_status.py:370
 msgid "Concurrent status change"
 msgstr ""
 
-#: camelot/model/type_and_status.py:365
+#: camelot/model/type_and_status.py:371
 msgid "Another user changed the status"
 msgstr ""
 
-#: camelot/model/type_and_status.py:366
+#: camelot/model/type_and_status.py:372
 msgid "Try again if needed"
 msgstr ""
 
-#: camelot/model/type_and_status.py:398 camelot/view/filters.py:127
+#: camelot/model/type_and_status.py:404 camelot/view/filters.py:127
 #: camelot/view/controls/filter_operator.py:70
 msgid "All"
 msgstr "Todos"
 
-#: camelot/model/type_and_status.py:458 camelot/model/type_and_status.py:459
+#: camelot/model/type_and_status.py:464 camelot/model/type_and_status.py:465
 #, fuzzy
 msgid " Type"
 msgstr "Tipo"

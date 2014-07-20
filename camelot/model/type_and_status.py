@@ -91,6 +91,9 @@ class StatusTypeMixin(TypeMixin):
 class TypeAdmin(EntityAdmin):
     list_display = ['code', 'description']
     form_display = ['code', 'description']
+    field_attributes = {'code': {'name': _('Code')},
+                        'description': {'name': _('Description')}
+                        }
 
 class StatusTypeAdmin(TypeAdmin):
     pass
@@ -109,6 +112,9 @@ class StatusHistory( object ):
     status_thru_date = schema.Column( types.Date, nullable = True )
     from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
     thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
+    field_attributes = {'from_date': {'name': _('From date')},
+                        'thru_date': {'name': _('Thru date')}
+                        }
 
 class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
