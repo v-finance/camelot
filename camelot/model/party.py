@@ -167,6 +167,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
     form_display = Form( ['mechanism', 'comment', 'from_date', 'thru_date', ] )
     field_attributes = {'party_name':{'minimal_column_width':25, 'editable':False},
+                        'comment': {'name': _('Comment')},
                         'mechanism':{'minimal_column_width':25,
                                      'editable':True,
                                      'nullable':False,
@@ -633,17 +634,20 @@ class Addressable(object):
                          target = City ), 
             email = dict( editable = True, 
                           minimal_column_width = 20,
+                          name = _('Email'),
                           address_type = 'email',
                           from_string = lambda s:('email', s),
                           delegate = delegates.VirtualAddressDelegate),
             phone = dict( editable = True, 
                           minimal_column_width = 20,
                           address_type = 'phone',
+                          name = _('Phone'),
                           from_string = lambda s:('phone', s),
                           delegate = delegates.VirtualAddressDelegate ),
             fax = dict( editable = True, 
                         minimal_column_width = 20,
                         address_type = 'fax',
+                        name = _('Fax'),
                         from_string = lambda s:('fax', s),
                         delegate = delegates.VirtualAddressDelegate ), )
         
@@ -817,10 +821,6 @@ class PartyCategory( Entity ):
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
 
-#Phone = orm.aliased( ContactMechanism )
-#Email = orm.aliased( ContactMechanism )
-#Fax = orm.aliased( ContactMechanism )
-
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')
     verbose_name_plural = _('Parties')
@@ -830,17 +830,13 @@ class PartyAdmin( EntityAdmin ):
     form_size = (700, 700)
     field_attributes = dict(addresses = {'admin':AddressAdmin},
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
-                            #suppliers = {'admin':SupplierCustomer.SupplierAdmin},
-                            #customers = {'admin':SupplierCustomer.CustomerAdmin},
-                            #employers = {'admin':EmployerEmployee.EmployerAdmin},
-                            #employees = {'admin':EmployerEmployee.EmployeeAdmin},
-                            #directed_organizations = {'admin':DirectedDirector.DirectedAdmin},
-                            #directors = {'admin':DirectedDirector.DirectorAdmin},
-                            #shares = {'admin':SharedShareholder.SharedAdmin},
-                            #shareholders = {'admin':SharedShareholder.ShareholderAdmin},
-                            sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
-                            name = dict( minimal_column_width = 50 ),
+                            sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )], name=_('Gender')),
+                            name = dict( minimal_column_width = 50, name=_('Name')),
                             note = dict( delegate = delegates.NoteDelegate ),
+                            first_name = {'name': _('First name')},
+                            last_name = {'name': _('Last name')},
+                            social_security_number = {'name': _('Social security number')},
+                            tax_id = {'name': _('Tax registration')},
                             )
     field_attributes.update( Addressable.Admin.field_attributes )
 
@@ -909,7 +905,7 @@ class PersonAdmin( Party.Admin ):
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                             ] )
-    
+
     def get_query( self ):
         query = super( PersonAdmin, self ).get_query()
         query = query.options( orm.joinedload('contact_mechanisms') )

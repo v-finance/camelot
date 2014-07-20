@@ -361,7 +361,7 @@ class ChangeStatus( Action ):
                     if obj not in model_context.session.new:
                         model_context.session.expire(obj)
                     yield action_steps.UpdateObject(obj)
-                    raise UserException('Concurrent status change',
+                    raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
                 if obj.current_status != new_status:
