@@ -179,7 +179,7 @@ class Status( EntityBuilder ):
             status_type = type( entity.__name__ + 'StatusType', 
                                 (StatusTypeMixin, entity._descriptor.get_top_entity_base(),),
                                 { '__tablename__':self.status_type_table,
-                                  'Admin':status_type_admin } )	 
+                                  'Admin':status_type_admin } )
 
             foreign_key = schema.ForeignKey( status_type.id,
                                              ondelete = 'cascade', 
@@ -385,21 +385,36 @@ class StatusFilter(GroupBoxFilter):
     
     def get_filter_data(self, admin):
         fa = admin.get_field_attributes(self.attribute)
-        options = [ filter_option( name = _('All'),
-                                   value = GroupBoxFilter.All,
-                                   decorator = lambda q:q ) ]
-        
-        enumeration_attribute = '_%s_enumeration'%self.attribute
-        for _id, name in getattr(admin.entity, enumeration_attribute):
-            decorator = self.create_decorator(admin.entity.current_status, 
-                                              fa, name, [])
-            options.append(filter_option( name = name.capitalize(),
-                                          value = name,
-                                          decorator = decorator ))
+        history_type = fa['target']
+        history_admin = admin.get_related_admin(history_type)
+        classification_fa = history_admin.get_field_attributes('classified_by')
 
-        return filter_data( name = fa['name'],
-                            options = options,
-                            default = self.default )
+        target = classification_fa.get('target')
+        if target is not None:
+            choices = [(st, st.code) for st in target.query.all()]
+        else:
+            choices = classification_fa['choices']
+
+        options = [filter_option(name = _('All'),
+                                 value = GroupBoxFilter.All,
+                                 decorator = lambda q:q )]
+
+        current_date = sql.functions.current_date()
+        join = (history_type, sql.and_(history_type.status_from_date <= current_date,
+                                       history_type.status_thru_date >= current_date)
+                )
+
+        for value, name in choices:
+            decorator = self.create_decorator(getattr(history_type,
+                                                      'classified_by',),
+                                              fa, value, [join])
+            options.append(filter_option(name = name,
+                                         value = value,
+                                         decorator = decorator))
+
+        return filter_data(name = fa['name'],
+                           options = options,
+                           default = self.default)
 
 class Type(EntityBuilder):
     """EntityBuilder that adds a related type table to an `Entity`.
