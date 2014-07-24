@@ -555,6 +555,15 @@ be specified using the verbose_name attribute.
 	    validator_list=[],
 	    name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
 	)
+	#
+	# See if there is a descriptor
+	#
+	for cls in self.entity.__mro__:
+	    descriptor = cls.__dict__.get(field_name, None)
+	    if descriptor is not None:
+	        if hasattr(descriptor, '__set__'):
+		    attributes['editable'] = True
+	        break
 	return attributes
         
     def get_field_attributes(self, field_name):
