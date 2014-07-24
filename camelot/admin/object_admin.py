@@ -24,6 +24,7 @@
 
 """Admin class for Plain Old Python Object"""
 
+import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
@@ -533,6 +534,10 @@ be specified using the verbose_name attribute.
         of the descriptor of a field.  This method is called within 
         `get_field_attributes`.  Overwrite it to handle custom descriptors.
         
+        The default implementation checks if the descriptor is a `property`,
+        and sets the `editable` field attribute to `True` if the property
+        has a setter defined.
+        
         :param field_name: the name of the field
         :return: a dictionary with field attributes
         """
@@ -561,8 +566,8 @@ be specified using the verbose_name attribute.
 	for cls in self.entity.__mro__:
 	    descriptor = cls.__dict__.get(field_name, None)
 	    if descriptor is not None:
-	        if hasattr(descriptor, '__set__'):
-		    attributes['editable'] = True
+	        if isinstance(descriptor, property):
+		    attributes['editable'] = (descriptor.fset is not None)
 	        break
 	return attributes
         
@@ -663,7 +668,17 @@ be specified using the verbose_name attribute.
         :return: a `camelot.admin.table.Table` object
         """
         from camelot.admin.table import structure_to_table
-        table = structure_to_table( self.list_display )
+        if len(self.list_display) == 0:
+	    # take a copy to prevent contamination
+	    self.list_display = list()
+	    # no fields were defined, see if there are properties
+	    for cls in inspect.getmro(self.entity):
+	        for desc_name, desc in cls.__dict__.items():
+		    if desc_name.startswith('__'):
+		        continue
+		    if inspect.isdatadescriptor(desc):
+		        self.list_display.insert(0, desc_name)
+        table = structure_to_table(self.list_display)
         return table
     
     def get_columns(self):
