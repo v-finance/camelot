@@ -527,6 +527,36 @@ be specified using the verbose_name attribute.
                         dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
 
+    def get_descriptor_field_attributes(self, field_name):
+        """
+        Returns a set of default field attributes based on introspection
+        of the descriptor of a field.  This method is called within 
+        `get_field_attributes`.  Overwrite it to handle custom descriptors.
+        
+        :param field_name: the name of the field
+        :return: a dictionary with field attributes
+        """
+        from camelot.view.controls import delegates
+	#
+	# Default attributes for all fields
+	#
+	attributes = dict(
+	    to_string = to_string,
+	    field_name=field_name,
+	    python_type=str,
+	    length=None,
+	    tooltip=None,
+	    background_color=None,
+	    editable=False,
+	    nullable=True,
+	    widget='str',
+	    blank=True,
+	    delegate=delegates.PlainTextDelegate,
+	    validator_list=[],
+	    name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+	)
+	return attributes
+        
     def get_field_attributes(self, field_name):
         """
         Get the attributes needed to visualize the field field_name.  This
@@ -553,31 +583,21 @@ be specified using the verbose_name attribute.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-            from camelot.view.controls import delegates
-            #
-            # Default attributes for all fields
-            #
-            attributes = dict(
-                to_string = to_string,
-                field_name=field_name,
-                python_type=str,
-                length=None,
-                tooltip=None,
-                background_color=None,
-                #minimal_column_width=12,
-                editable=False,
-                nullable=True,
-                widget='str',
-                blank=True,
-                delegate=delegates.PlainTextDelegate,
-                validator_list=[],
-                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
-            )
+            attributes = self.get_descriptor_field_attributes(field_name)
+	    #
             # first put the attributes in the cache, and only then start to expand
             # them, to be able to prevent recursion when expanding the attributes
+            #
             self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
+	    if 'choices' in forced_attributes:
+	        from camelot.view.controls import delegates
+		attributes['delegate'] = delegates.ComboBoxDelegate
+		attributes['editable'] = True
+		if isinstance(forced_attributes['choices'], list):
+		    choices_dict = dict(forced_attributes['choices'])
+		    attributes['to_string'] = lambda x : choices_dict.get(x, '')
             self._expand_field_attributes(attributes, field_name)
             return attributes
 
