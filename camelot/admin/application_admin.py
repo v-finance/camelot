@@ -30,6 +30,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 import six
 
+from .object_admin import ObjectAdmin
 from ..core.qt import Qt, QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
@@ -93,7 +94,7 @@ shortcut confusion and reduce the number of status updates.
     domain = 'python-camelot.com'
 
     version = '1.0'
-    admins = {}
+    admins = {object: ObjectAdmin}
 
     #
     # actions that will be shared between the toolbar and the main menu
@@ -204,21 +205,22 @@ shortcut confusion and reduce the number of status updates.
         
         deprecated : use get_related_admin instead
         """
-
-        admin_class = None
-        try:
-            admin_class = self.admins[entity]
-        except KeyError:
-            pass
-        if not admin_class and hasattr(entity, 'Admin'):
-            admin_class = entity.Admin
-        if admin_class:
-            try:
-                return self._object_admin_cache[admin_class]
-            except KeyError:
-                admin = admin_class(self, entity)
-                self._object_admin_cache[admin_class] = admin
-                return admin
+	try:
+	    return self._object_admin_cache[entity]
+	except KeyError:
+	    for cls in entity.__mro__:
+		admin_class = self.admins.get(cls, None)
+		if admin_class is None:
+		    if hasattr(cls, 'Admin'):
+			admin_class = cls.Admin
+			break
+		else:
+		    break
+	    else:
+	        raise Exception('Could not construct a default admin class')
+            admin = admin_class(self, entity)
+            self._object_admin_cache[admin_class] = admin
+            return admin
 
     def get_actions(self):
         """
