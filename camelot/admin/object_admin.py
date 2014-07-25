@@ -668,7 +668,7 @@ be specified using the verbose_name attribute.
         :return: a `camelot.admin.table.Table` object
         """
         from camelot.admin.table import structure_to_table
-        if len(self.list_display) == 0:
+        if self.list_display == []:
 	    # take a copy to prevent contamination
 	    self.list_display = list()
 	    # no fields were defined, see if there are properties
