@@ -676,7 +676,7 @@ be specified using the verbose_name attribute.
 	        for desc_name, desc in cls.__dict__.items():
 		    if desc_name.startswith('__'):
 		        continue
-		    if inspect.isdatadescriptor(desc):
+		    if isinstance(desc, property):
 		        self.list_display.insert(0, desc_name)
         table = structure_to_table(self.list_display)
         return table
