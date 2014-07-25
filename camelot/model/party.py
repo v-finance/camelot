@@ -167,6 +167,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
     form_display = Form( ['mechanism', 'comment', 'from_date', 'thru_date', ] )
     field_attributes = {'party_name':{'minimal_column_width':25, 'editable':False},
+                        'comment': {'name': _('Comment')},
                         'mechanism':{'minimal_column_width':25,
                                      'editable':True,
                                      'nullable':False,
@@ -186,7 +187,56 @@ class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
     list_display = ['mechanism', 'comment', 'from_date', ]
 
-class Party( Entity ):
+class WithAddresses(object):
+
+    @hybrid.hybrid_property
+    def street1( self ):
+        return self._get_address_field( u'street1' )
+    
+    @street1.setter
+    def street1_setter( self, value ):
+        return self._set_address_field( u'street1', value )
+
+    @hybrid.hybrid_property
+    def street2( self ):
+        return self._get_address_field( u'street2' ) 
+    
+    @street2.setter
+    def street2_setter( self, value ):
+        return self._set_address_field( u'street2', value )    
+    
+    @hybrid.hybrid_property
+    def city( self ):
+        return self._get_address_field( u'city' )
+    
+    @city.setter
+    def city_setter( self, value ):
+        return self._set_address_field( u'city', value )
+
+    def get_first_address(self):
+        raise NotImplementedError()
+
+    def set_first_address(self):
+        raise NotImplementedError()
+
+    def _get_address_field( self, name ):
+        first_address = self.get_first_address()
+        if first_address is not None:
+            return getattr( first_address, name )
+
+    def _set_address_field( self, name, value ):
+
+        address = self.set_first_address()
+        setattr( address, name, value )
+        if address.street1==None and address.street2==None and address.city==None:
+            session = orm.object_session( address )
+            if address in session.new:
+                session.expunge( address )
+                self.addresses.remove( address )
+            else:
+                session.delete( address )
+
+class Party(Entity, WithAddresses):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
@@ -198,6 +248,16 @@ class Party( Entity ):
     def name( self ):
         return ''
 
+    def get_first_address(self):
+        for party_address in self.addresses:
+            return party_address
+
+    def set_first_address(self):
+        if not self.addresses:
+            address = PartyAddress()
+            self.addresses.append( address )
+        return self.addresses[0]
+        
     def _get_contact_mechanism( self, described_by ):
         """Get a specific type of contact mechanism
         """
@@ -267,48 +327,6 @@ class Party( Entity ):
     @fax.expression
     def fax_expression( self ):
         return orm.aliased( ContactMechanism ).mechanism 
-
-    def _get_address_field( self, name ):
-        for party_address in self.addresses:
-            return getattr( party_address, name )
-        
-    def _set_address_field( self, name, value ):
-        if not self.addresses:
-            address = PartyAddress()
-            self.addresses.append( address )
-        address = self.addresses[0]
-        setattr( address, name, value )
-        if address.street1==None and address.street2==None and address.city==None:
-            session = orm.object_session( address )
-            if address in session.new:
-                session.expunge( address )
-                self.addresses.remove( address )
-            else:
-                session.delete( address )
-        
-    @hybrid.hybrid_property
-    def street1( self ):
-        return self._get_address_field( u'street1' )
-    
-    @street1.setter
-    def street1_setter( self, value ):
-        return self._set_address_field( u'street1', value )
-
-    @hybrid.hybrid_property
-    def street2( self ):
-        return self._get_address_field( u'street2' ) 
-    
-    @street2.setter
-    def street2_setter( self, value ):
-        return self._set_address_field( u'street2', value )    
-    
-    @hybrid.hybrid_property
-    def city( self ):
-        return self._get_address_field( u'city' )
-    
-    @city.setter
-    def city_setter( self, value ):
-        return self._set_address_field( u'city', value )
     
     def full_name( self ):
 
@@ -616,17 +634,20 @@ class Addressable(object):
                          target = City ), 
             email = dict( editable = True, 
                           minimal_column_width = 20,
+                          name = _('Email'),
                           address_type = 'email',
                           from_string = lambda s:('email', s),
                           delegate = delegates.VirtualAddressDelegate),
             phone = dict( editable = True, 
                           minimal_column_width = 20,
                           address_type = 'phone',
+                          name = _('Phone'),
                           from_string = lambda s:('phone', s),
                           delegate = delegates.VirtualAddressDelegate ),
             fax = dict( editable = True, 
                         minimal_column_width = 20,
                         address_type = 'fax',
+                        name = _('Fax'),
                         from_string = lambda s:('fax', s),
                         delegate = delegates.VirtualAddressDelegate ), )
         
@@ -671,7 +692,7 @@ class PartyAddress( Entity, Addressable ):
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
-                yield party_address.address        
+                yield party_address.address
 
 class AddressAdmin( PartyAddress.Admin ):
     """Admin with only the Address information and not the Party information"""
@@ -800,10 +821,6 @@ class PartyCategory( Entity ):
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
 
-#Phone = orm.aliased( ContactMechanism )
-#Email = orm.aliased( ContactMechanism )
-#Fax = orm.aliased( ContactMechanism )
-
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')
     verbose_name_plural = _('Parties')
@@ -813,17 +830,13 @@ class PartyAdmin( EntityAdmin ):
     form_size = (700, 700)
     field_attributes = dict(addresses = {'admin':AddressAdmin},
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
-                            #suppliers = {'admin':SupplierCustomer.SupplierAdmin},
-                            #customers = {'admin':SupplierCustomer.CustomerAdmin},
-                            #employers = {'admin':EmployerEmployee.EmployerAdmin},
-                            #employees = {'admin':EmployerEmployee.EmployeeAdmin},
-                            #directed_organizations = {'admin':DirectedDirector.DirectedAdmin},
-                            #directors = {'admin':DirectedDirector.DirectorAdmin},
-                            #shares = {'admin':SharedShareholder.SharedAdmin},
-                            #shareholders = {'admin':SharedShareholder.ShareholderAdmin},
-                            sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
-                            name = dict( minimal_column_width = 50 ),
+                            sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )], name=_('Gender')),
+                            name = dict( minimal_column_width = 50, name=_('Name')),
                             note = dict( delegate = delegates.NoteDelegate ),
+                            first_name = {'name': _('First name')},
+                            last_name = {'name': _('Last name')},
+                            social_security_number = {'name': _('Social security number')},
+                            tax_id = {'name': _('Tax registration')},
                             )
     field_attributes.update( Addressable.Admin.field_attributes )
 
@@ -892,7 +905,7 @@ class PersonAdmin( Party.Admin ):
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                             ] )
-    
+
     def get_query( self ):
         query = super( PersonAdmin, self ).get_query()
         query = query.options( orm.joinedload('contact_mechanisms') )

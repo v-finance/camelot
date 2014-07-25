@@ -499,6 +499,18 @@ class ChangeLogging( Action ):
         LOGGER.info("query Complete in %.02fms" % (total*1000))
 
     @classmethod
+    def begin_transaction(cls, conn):
+        LOGGER.info("begin transaction")
+
+    @classmethod
+    def commit_transaction(cls, conn):
+        LOGGER.info("commit transaction")
+
+    @classmethod
+    def rollback_transaction(cls, conn):
+        LOGGER.info("rollback transaction")
+
+    @classmethod
     def connection_checkout(cls, dbapi_connection, connection_record, 
                             connection_proxy):
         LOGGER.info('checkout connection {0}'.format(id(dbapi_connection)))
@@ -548,6 +560,12 @@ class ChangeLogging( Action ):
                          self.before_cursor_execute)
             event.listen(Engine, 'after_cursor_execute',
                          self.after_cursor_execute)
+            event.listen(Engine, 'begin',
+                         self.begin_transaction)
+            event.listen(Engine, 'commit',
+                         self.commit_transaction)
+            event.listen(Engine, 'rollback',
+                         self.rollback_transaction)
         if options.pool == True:
             event.listen(Pool, 'checkout',
                          self.connection_checkout)

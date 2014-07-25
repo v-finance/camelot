@@ -91,6 +91,9 @@ class StatusTypeMixin(TypeMixin):
 class TypeAdmin(EntityAdmin):
     list_display = ['code', 'description']
     form_display = ['code', 'description']
+    field_attributes = {'code': {'name': _('Code')},
+                        'description': {'name': _('Description')}
+                        }
 
 class StatusTypeAdmin(TypeAdmin):
     pass
@@ -109,6 +112,9 @@ class StatusHistory( object ):
     status_thru_date = schema.Column( types.Date, nullable = True )
     from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
     thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
+    field_attributes = {'from_date': {'name': _('From date')},
+                        'thru_date': {'name': _('Thru date')}
+                        }
 
 class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
@@ -179,7 +185,7 @@ class Status( EntityBuilder ):
             status_type = type( entity.__name__ + 'StatusType', 
                                 (StatusTypeMixin, entity._descriptor.get_top_entity_base(),),
                                 { '__tablename__':self.status_type_table,
-                                  'Admin':status_type_admin } )	 
+                                  'Admin':status_type_admin } )
 
             foreign_key = schema.ForeignKey( status_type.id,
                                              ondelete = 'cascade', 
@@ -361,7 +367,7 @@ class ChangeStatus( Action ):
                     if obj not in model_context.session.new:
                         model_context.session.expire(obj)
                     yield action_steps.UpdateObject(obj)
-                    raise UserException('Concurrent status change',
+                    raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
                 if obj.current_status != new_status:
@@ -385,21 +391,36 @@ class StatusFilter(GroupBoxFilter):
     
     def get_filter_data(self, admin):
         fa = admin.get_field_attributes(self.attribute)
-        options = [ filter_option( name = _('All'),
-                                   value = GroupBoxFilter.All,
-                                   decorator = lambda q:q ) ]
-        
-        enumeration_attribute = '_%s_enumeration'%self.attribute
-        for _id, name in getattr(admin.entity, enumeration_attribute):
-            decorator = self.create_decorator(admin.entity.current_status, 
-                                              fa, name, [])
-            options.append(filter_option( name = name.capitalize(),
-                                          value = name,
-                                          decorator = decorator ))
+        history_type = fa['target']
+        history_admin = admin.get_related_admin(history_type)
+        classification_fa = history_admin.get_field_attributes('classified_by')
 
-        return filter_data( name = fa['name'],
-                            options = options,
-                            default = self.default )
+        target = classification_fa.get('target')
+        if target is not None:
+            choices = [(st, st.code) for st in target.query.all()]
+        else:
+            choices = classification_fa['choices']
+
+        options = [filter_option(name = _('All'),
+                                 value = GroupBoxFilter.All,
+                                 decorator = lambda q:q )]
+
+        current_date = sql.functions.current_date()
+        join = (history_type, sql.and_(history_type.status_from_date <= current_date,
+                                       history_type.status_thru_date >= current_date)
+                )
+
+        for value, name in choices:
+            decorator = self.create_decorator(getattr(history_type,
+                                                      'classified_by',),
+                                              fa, value, [join])
+            options.append(filter_option(name = name,
+                                         value = value,
+                                         decorator = decorator))
+
+        return filter_data(name = fa['name'],
+                           options = options,
+                           default = self.default)
 
 class Type(EntityBuilder):
     """EntityBuilder that adds a related type table to an `Entity`.
@@ -468,6 +489,7 @@ class Type(EntityBuilder):
                                                onupdate = 'cascade')
                 column = schema.Column(PrimaryKey(),
                                        constraint,
+                                       index=True,
                                        nullable=self.nullable)
                 setattr(self.entity, col_name, column )
 
