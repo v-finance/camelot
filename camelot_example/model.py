@@ -142,7 +142,7 @@ class Movie( Entity ):
     class Admin(EntityAdmin):
         # the list_display attribute specifies which entity attributes should
         # be visible in the table view
-        #list_display = ['cover', 'title', 'releasedate', 'rating',]
+        list_display = ['cover', 'title', 'releasedate', 'rating',]
         lines_per_row = 5
         # define filters to be available in the table view
         list_filter = ['genre', ComboBoxFilter('director.full_name')]
