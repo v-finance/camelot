@@ -772,6 +772,7 @@ be specified using the verbose_name attribute.
         to set the field to None
         """
         from sqlalchemy.schema import ColumnDefault
+        from sqlalchemy import orm
         
         if self.is_deleted( object_instance ):
             return False
@@ -800,7 +801,11 @@ be specified using the verbose_name attribute.
                         # avoid trip to database
                         default_value = default.arg
                     else:
-                        default_value = default.execute()
+		        # shouldn't this default be set by SQLA at insertion time
+		        # and skip this field in the validation ??
+		        session = orm.object_session(object_instance)
+		        bind = session.get_bind(mapper=self.mapper)
+                        default_value = bind.execute(default)
                 elif six.callable(default):
                     import inspect
                     args, _varargs, _kwargs, _defs = \
