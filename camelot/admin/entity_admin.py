@@ -37,7 +37,8 @@ from camelot.core.qt import Qt
 
 import six
 
-from sqlalchemy import orm, schema
+from sqlalchemy import orm, schema, sql
+from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 
 class EntityAdmin(ObjectAdmin):
@@ -69,17 +70,17 @@ It has additional class attributes that customise its behaviour.
 
 .. attribute:: copy_deep
 
-   A dictionary of fields that will be deep copied when the user presses the copy
-   button.  This is useful for OneToMany fields.  The key in the dictionary should
-   be the name of the field, and the value is a new dictionary :: 
+    A dictionary of fields that will be deep copied when the user presses the copy
+    button.  This is useful for OneToMany fields.  The key in the dictionary should
+    be the name of the field, and the value is a new dictionary :: 
 
        copy_deep = {'addresses':{}}
 
-   This dictionary can contain fields in the related object that need to be deep 
-   copied as well ::
+    This dictionary can contain fields in the related object that need to be deep 
+    copied as well ::
 
        copy_deep = {'addresses':{'city':{}}}
-   
+
 
 .. attribute:: copy_exclude
 
@@ -212,14 +213,14 @@ and used as a custom action.
                         primary_key_representation
                     )
         return self.get_verbose_name()
-    
+
     def get_search_identifiers(self, obj):
         search_identifiers = {}
-        
+
         search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
         search_identifiers[Qt.EditRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
-        
+
         return search_identifiers                
 
     def get_descriptor_field_attributes(self, field_name):
@@ -229,93 +230,109 @@ and used as a custom action.
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.controls import delegates
         attributes = super(EntityAdmin, self).get_descriptor_field_attributes(field_name)
-	#
-	# Field attributes forced by the field_attributes property
-	#
-	forced_attributes = self.field_attributes.get(field_name, {})
-	#
-	# Get the default field_attributes trough introspection if the
-	# field is a mapped field
-	#
-	from sqlalchemy import orm
-	from sqlalchemy.exc import InvalidRequestError
+        #
+        # Field attributes forced by the field_attributes property
+        #
+        forced_attributes = self.field_attributes.get(field_name, {})
+        #
+        # Get the default field_attributes trough introspection if the
+        # field is a mapped field
+        #
+        from sqlalchemy import orm
+        from sqlalchemy.exc import InvalidRequestError
+        #
+        # See if there is a sqlalchemy descriptor
+        #
+        for cls in self.entity.__mro__:
+            descriptor = cls.__dict__.get(field_name, None)
+            if descriptor is not None:
+                if isinstance(descriptor, hybrid.hybrid_property):
+                    attributes['editable'] = (descriptor.fset is not None)
+                    if (descriptor.expr is not None) and (descriptor.expr != descriptor.fget):
+                        expression = descriptor.expr(self.entity)
+                        print type(expression), unicode(expression)
+                        if isinstance(expression, sql.Select):
+                            sql_attributes = self.get_sql_field_attributes(expression.columns)
+                            attributes.update(sql_attributes)
+                break
+        # @todo : investigate if the property can be fetched from the descriptor
+        #         instead of going through the mapper
+        try:
+            property = self.mapper.get_property(
+                field_name
+            )
+            if isinstance(property, orm.properties.ColumnProperty):
+                columns = property.columns
+                sql_attributes = self.get_sql_field_attributes( columns )
+                attributes.update( sql_attributes )
+            elif isinstance(property, orm.properties.RelationshipProperty):
+                target = forced_attributes.get( 'target',
+                                                property.mapper.class_ )
 
-	try:
-	    property = self.mapper.get_property(
-		field_name
-	    )
-	    if isinstance(property, orm.properties.ColumnProperty):
-		columns = property.columns
-		sql_attributes = self.get_sql_field_attributes( columns )
-		attributes.update( sql_attributes )
-	    elif isinstance(property, orm.properties.RelationshipProperty):
-		target = forced_attributes.get( 'target',
-						property.mapper.class_ )
+                attributes.update( target = target,
+                                   editable = property.viewonly==False,
+                                   nullable = True)
+                foreign_keys = list( property._user_defined_foreign_keys )
+                foreign_keys.extend( list(property._calculated_foreign_keys) )
 
-		attributes.update( target = target,
-				    editable = property.viewonly==False,
-				    nullable = True)
-		foreign_keys = list( property._user_defined_foreign_keys )
-		foreign_keys.extend( list(property._calculated_foreign_keys) )
+                if property.direction == orm.interfaces.ONETOMANY:
+                    attributes.update( direction = 'onetomany' )
+                elif property.direction == orm.interfaces.MANYTOONE:
+                    attributes.update(
+                        #
+                        # @todo: take into account all foreign keys instead
+                        # of only the first one
+                        #
+                        nullable = foreign_keys[0].nullable,
+                        direction = 'manytoone',
+                    )
+                elif property.direction == orm.interfaces.MANYTOMANY:
+                    attributes.update( direction = 'manytomany' )
+                else:
+                    raise Exception('RelationshipProperty has unknown direction')
 
-		if property.direction == orm.interfaces.ONETOMANY:
-		    attributes.update( direction = 'onetomany' )
-		elif property.direction == orm.interfaces.MANYTOONE:
-		    attributes.update(
-			#
-			# @todo: take into account all foreign keys instead
-			# of only the first one
-			#
-			nullable = foreign_keys[0].nullable,
-			direction = 'manytoone',
-		    )
-		elif property.direction == orm.interfaces.MANYTOMANY:
-		    attributes.update( direction = 'manytomany' )
-		else:
-		    raise Exception('RelationshipProperty has unknown direction')
+                if property.direction in (orm.interfaces.ONETOMANY,
+                                          orm.interfaces.MANYTOMANY):
+                    if property.lazy == 'dynamic':
+                        attributes.update(proxy=QueryTableProxy)
 
-		if property.direction in (orm.interfaces.ONETOMANY,
-					  orm.interfaces.MANYTOMANY):
-		    if property.lazy == 'dynamic':
-			attributes.update(proxy=QueryTableProxy)
+                if property.uselist == True:
+                    attributes.update(
+                        delegate = delegates.One2ManyDelegate,
+                        python_type = list,
+                        create_inline = False,
+                    )
+                else:
+                    attributes.update(
+                        delegate = delegates.Many2OneDelegate,
+                        python_type = str,
+                    )
 
-		if property.uselist == True:
-		    attributes.update(
-			delegate = delegates.One2ManyDelegate,
-			python_type = list,
-			create_inline = False,
-		    )
-		else:
-		    attributes.update(
-			delegate = delegates.Many2OneDelegate,
-			python_type = str,
-		    )
+        except InvalidRequestError:
+            #
+            # If the field name is not a property of the mapper, then use
+            # the default stuff
+            #
+            pass
+        return attributes
 
-	except InvalidRequestError:
-	    #
-	    # If the field name is not a property of the mapper, then use
-	    # the default stuff
-	    #
-	    pass
-	return attributes
-		
     def _expand_field_attributes(self, field_attributes, field_name):
         """Given a set field attributes, expand the set with attributes
         derived from the given attributes.
         """
-	#
-	# In case of a text 'target' field attribute, resolve it
-	#
-	from sqlalchemy.orm.mapper import _mapper_registry
-	target = field_attributes.get('target', None)
-	if isinstance(target, six.string_types):
-	    for mapped_class in six.iterkeys(_mapper_registry):
-		if mapped_class.class_.__name__ == target:
-		    field_attributes['target'] = mapped_class.class_
-		    break
-	    else:
-		raise Exception('No mapped class found for target %s'%target)
-	super(EntityAdmin, self)._expand_field_attributes(field_attributes, field_name)
+        #
+        # In case of a text 'target' field attribute, resolve it
+        #
+        from sqlalchemy.orm.mapper import _mapper_registry
+        target = field_attributes.get('target', None)
+        if isinstance(target, six.string_types):
+            for mapped_class in six.iterkeys(_mapper_registry):
+                if mapped_class.class_.__name__ == target:
+                    field_attributes['target'] = mapped_class.class_
+                    break
+            else:
+                raise Exception('No mapped class found for target %s'%target)
+        super(EntityAdmin, self)._expand_field_attributes(field_attributes, field_name)
 
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
@@ -372,7 +389,7 @@ and used as a custom action.
             if not hasattr( attr.impl, 'get_history' ):
                 continue
             (added, unchanged, deleted) = \
-                    attr.impl.get_history( state, dict_ )
+                attr.impl.get_history( state, dict_ )
             if added or deleted:
                 old_value = None
                 if deleted:
@@ -591,5 +608,4 @@ and used as a custom action.
                          relationship_property.key,
                          getattr( obj, relationship_property.key ) )
         return new_obj
-
 

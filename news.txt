@@ -59,6 +59,12 @@ Development
  
  * `nullable` becomes a dynamic field attribute
 
+ * `ObjectAdmin` does introspeciton on properties to see if they have a setter defined
+
+ * `EntityAdmin` does introspection on hybrid attributes to look for default field attributes 
+
+
+
 Release 13.04.13
 ----------------
 
