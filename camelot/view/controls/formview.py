@@ -255,9 +255,12 @@ class FormView(AbstractView):
     
     def _get_title( self, index ):
         obj = self.model._get_object( index )
+        verbose_identifier = ''
+        if obj is not None:
+            verbose_identifier = self.admin.get_verbose_identifier(obj)
         return u'%s %s' % (
             self.title_prefix,
-            self.admin.get_verbose_identifier(obj)
+            verbose_identifier
         )
             
     @QtCore.qt_slot( int )
