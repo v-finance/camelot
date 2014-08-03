@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
 from sqlalchemy import orm, sql
+from sqlalchemy.exc import InvalidRequestError
 
 from .collection_proxy import CollectionProxy
 from camelot.view.model_thread import object_thread, post
@@ -143,8 +144,6 @@ class QueryTableProxy(CollectionProxy):
         the primary keys of the model.  This to impose a string ordening of
         the rows in the model.
         """
-        from sqlalchemy import orm
-        from sqlalchemy.exc import InvalidRequestError
         
         class_attributes_to_sort_by, join = [], None
         mapper = orm.class_mapper(self.admin.entity)
@@ -155,15 +154,23 @@ class QueryTableProxy(CollectionProxy):
             property = None
             field_name = self._columns[column][0]
             class_attribute = getattr(self.admin.entity, field_name)
+
+            #
+            # The class attribute of a hybrid property can be a select
+            # statement
+            #
+
+            if isinstance(class_attribute, sql.Select):
+                if order:
+                    class_attributes_to_sort_by.append(sql.desc(class_attribute))
+                else:
+                    class_attributes_to_sort_by.append(class_attribute)
+
             try:
                 property = mapper.get_property(
                     field_name,
                 )
             except InvalidRequestError:
-                #
-                # If the field name is not a property of the mapper, we cannot
-                # sort it using sql
-                #
                 pass
             
             # If the field is a relation: 
