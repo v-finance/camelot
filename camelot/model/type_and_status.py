@@ -407,6 +407,7 @@ class StatusFilter(GroupBoxFilter):
 
         current_date = sql.functions.current_date()
         join = (history_type, sql.and_(history_type.status_from_date <= current_date,
+                                       history_type.status_for_id == admin.entity.id,
                                        history_type.status_thru_date >= current_date)
                 )
 
