@@ -355,7 +355,7 @@ allow all languages
                 self.not_writable_media_path_label, 13, 1, 1, 4)
             return
 
-        self.media_location_editor.setText(selected)
+        self.media_location_editor.set_value(selected)
 
 
 class EditProfiles(ActionStep):
