@@ -32,6 +32,7 @@ import unittest
 import six
 
 from ..admin.action.application_action import ApplicationActionGuiContext
+from ..admin.entity_admin import EntityAdmin
 from ..core.orm import Session
 from ..core.qt import QtGui, QtCore, Qt
 from ..view import action_steps
@@ -209,17 +210,23 @@ class EntityViewsTest(ModelThreadTestCase):
                 raise Exception()
             
         app_admin = self.get_application_admin()
-        return [app_admin.get_related_admin(c) for c in classes if app_admin.get_related_admin(c)]
+        
+        for cls in classes:
+            admin = app_admin.get_related_admin(cls)
+            if admin is not None:
+                yield admin
 
     def test_table_view(self):
         from camelot.admin.action.base import GuiContext
         from camelot.view.action_steps import OpenTableView
         gui_context = GuiContext()
         for admin in self.get_admins():
-            step = OpenTableView(admin, admin.get_query())
-            widget = step.render(gui_context)
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
+            if isinstance(admin, EntityAdmin):
+                step = OpenTableView(admin, admin.get_query())
+                widget = step.render(gui_context)
+                self.grab_widget(widget, suffix=admin.entity.__name__.lower(),
+                                 subdir='entityviews')
+                self.assertFalse( has_programming_error )
 
     def test_new_view(self):
         from camelot.admin.action.base import GuiContext
