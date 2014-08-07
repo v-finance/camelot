@@ -52,7 +52,7 @@ class LazyProxy(list):
     is queried again.
     """
             
-    def get( self, name, default ):
+    def get( self, name, default=None ):
         """Get an attribute of the proxy, and when not found return default
         as value.  This function behaves the same as the get function of a
         dictionary.
