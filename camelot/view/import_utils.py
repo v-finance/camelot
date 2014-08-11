@@ -66,6 +66,12 @@ class RowData(object):
     def __getattr__(self, attr_name):
         return None
 
+    def __len__(self):
+        return self.columns
+
+    def __getitem__(self, i):
+        return getattr(self, 'column_%i'%i)
+
 def column_name(column):
     """Create a column name starting from an index starting at 0
     eg : column=0 -> name='A'
