@@ -54,6 +54,10 @@ class ChoicesEditor(CustomEditor):
         combobox = QtGui.QComboBox()
         combobox.setObjectName('combobox')
         combobox.activated.connect(self._activated)
+        # the combobox is made editable to be able to display a value in case
+        # the actual value is not in the list of choices
+        combobox.setEditable(True)
+        combobox.setInsertPolicy(QtGui.QComboBox.NoInsert)
         layout.addWidget(combobox)
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
@@ -169,9 +173,8 @@ class ChoicesEditor(CustomEditor):
             # it might happen, that when we set the editor data, the set_choices
             # method has not happened yet or the choices don't contain the value
             # set
-            combobox.setCurrentIndex( -1 )
-            LOGGER.error( u'Could not set value %s in field %s because it is not in the list of choices'%( six.text_type( value ),
-                                                                                                           six.text_type( self.objectName() ) ) )
+            combobox.setCurrentIndex(-1)
+            combobox.setEditText(six.text_type(value))
         self.update_actions()
 
     def get_value(self):
