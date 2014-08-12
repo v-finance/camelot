@@ -86,10 +86,10 @@ All files (*)"""
         paste_button.setObjectName('paste')
         paste_button.setFocusPolicy(Qt.ClickFocus)
         
-        #button_layout.addStretch()
         self.add_actions(self.actions, button_layout)
         button_layout.addWidget(copy_button)
         button_layout.addWidget(paste_button)
+        button_layout.addStretch()
 
         layout.addLayout(button_layout)
         #label_button_layout.addStretch()

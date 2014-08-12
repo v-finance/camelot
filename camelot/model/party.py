@@ -44,7 +44,7 @@ from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
-from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
+from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
 from .authentication import end_of_times
 
@@ -899,7 +899,8 @@ class PersonAdmin( Party.Admin ):
                                                               'street1',
                                                               'street2',
                                                               'city',] ),
-                                                            [WidgetOnlyForm('picture'), ],
+                                                            [WidgetOnlyForm('picture'),
+                                                             Stretch()],
                                                      ] ),
                                                      'comment', ], scrollbars = False ) ),
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
