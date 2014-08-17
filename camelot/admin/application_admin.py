@@ -89,7 +89,6 @@ shortcut confusion and reduce the number of status updates.
     domain = 'python-camelot.com'
 
     version = '1.0'
-    admins = {object: ObjectAdmin}
 
     #
     # actions that will be shared between the toolbar and the main menu
@@ -122,6 +121,7 @@ shortcut confusion and reduce the number of status updates.
         #
         self._object_admin_cache = {}
         self._memento = None
+        self.admins = {object: ObjectAdmin}
         if name is not None:
             self.name = name
         if author is not None:
