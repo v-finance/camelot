@@ -78,7 +78,7 @@ class LazyProxy(list):
         
         try:
             mod = __import__('settings', {}, {}, [''])
-        except ImportError as e:
+        except ImportError:
             return False
         self.append( mod )
         return True
