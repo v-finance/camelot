@@ -96,7 +96,7 @@ be specified using the verbose_name attribute.
 .. attribute:: list_display
 
     a list with the fields that should be displayed in a table view
-    
+
 .. attribute:: lines_per_row
 
     An integer number specifying the height of a row in the table view, expressed
@@ -132,18 +132,18 @@ be specified using the verbose_name attribute.
 
 .. attribute:: list_action
 
-   The :class:`camelot.admin.action.base.Action` that will be triggered when the
-   user selects an item in a list of objects.  This defaults to 
-   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
-   for the current object.
-   
+    The :class:`camelot.admin.action.base.Action` that will be triggered when the
+    user selects an item in a list of objects.  This defaults to 
+    :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
+    for the current object.
+
 .. attribute:: form_close_action
 
     The action triggered when the form window is closed by the operating system or the window manager.  By default this is the
     :class:`camelot.admin.action.form_action.CloseForm` action, which validates
     the form and allows the user to discard the changes when the form is invalid.  To change the form close action in the 
     toolbar, the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions` method should be overwritten.
-    
+
 .. attribute:: save_mode
 
     Specifies when the data should be send from the view to the model and flushed
@@ -172,10 +172,10 @@ be specified using the verbose_name attribute.
 
         class Admin( EntityAdmin ):
             form_actions = [CloseForm()]
-            
+
     These actions will be triggered with a :class:`camelot.admin.action.form_action.FormActionModelContext` as the `model_context` parameter
     in the :meth:`camelot.admin.action.base.Action.model_run` method.
-            
+
 .. attribute:: related_toolbar_actions
 
     list of actions that appear in the toolbar of a `OneToMany` editor.
@@ -184,7 +184,7 @@ be specified using the verbose_name attribute.
 
     the action that is triggered when a drag and drop occured on the table
     view 
-    
+
 **Field attributes**
 
 .. attribute:: field_attributes
@@ -194,9 +194,9 @@ be specified using the verbose_name attribute.
     are propagated to the constructor of the delegate of this field::
 
         class Movie( Entity ):
-        
+
             title = Column( Unicode(50) )
-    
+
             class Admin( EntityAdmin ):
                 list_display = ['title']
                 field_attributes = { 'title' : {'editable':False} }
@@ -212,9 +212,9 @@ be specified using the verbose_name attribute.
     Set this attribute to `maximized` or `minimized` for respective behaviour ::
 
         class Movie( Entity ):
-        
+
             title = Column( Unicode(50) )
-    
+
             class Admin( EntityAdmin ):
                 list_display = ['title']
                 form_state = 'maximized'
@@ -225,9 +225,9 @@ be specified using the verbose_name attribute.
 
     The name of the group in settings in which user dependent settings will
     be stored, defaults to the class name for which this Admin class is used.
-    
+
     """
-    
+
     name = None
     verbose_name = None
     verbose_name_plural = None
@@ -281,13 +281,13 @@ be specified using the verbose_name attribute.
         """ The name of the group in settings in which user dependent settings 
         will be stored, this is either the `name` attribute of this class or, 
         the class name of the class for which this Admin class is used.
-        
+
         :return: a string with the name of the settings group        
         """
         return self.name or self.entity.__name__
 
     def get_verbose_name(self):
-        
+
 #        def uncamelize(text):
 #            def downcase(matchobj):
 #                return "_" + matchobj.group(0).lower()
@@ -304,7 +304,7 @@ be specified using the verbose_name attribute.
             self.verbose_name_plural
             or (self.get_verbose_name() + u's')
         )
-        
+
     def get_icon(self):
         return self.icon
 
@@ -331,17 +331,17 @@ be specified using the verbose_name attribute.
 
     def get_save_mode(self):
         return self.save_mode
-    
+
     def get_settings( self ):
         """A settings object in which settings related to this admin can be
         stored.
-        
+
         :return: a :class:`QtCore.QSettings` object
         """
         settings = self.app_admin.get_settings()
         settings.beginGroup( self.get_name()[:255] )
         return settings
-    
+
     def get_memento( self ):
         return self.app_admin.get_memento()
 
@@ -354,7 +354,7 @@ be specified using the verbose_name attribute.
     def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.
-        
+
         :param obj: the object displayed in the form (Deprecated, use action
             states to make the appearance of actions dynamic on a form)
         :return: a list of :class:`camelot.admin.action.base.Action` objects
@@ -362,14 +362,14 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
-    
+
     def get_form_toolbar_actions( self, toolbar_area ):
         """
         By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
-        
+
         :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
             where the toolbar actions will be positioned
-            
+
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
@@ -379,24 +379,24 @@ be specified using the verbose_name attribute.
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
-        
+
         :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
-            
+
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
-    
+
     def get_list_actions(self):
         return self.list_actions
-    
+
     def get_list_action(self):
         """Get the action that should be triggered when an object is selected
         in a table of objects.
-        
+
         :return: by default returns the `list_action` attribute
         """
         return self.list_action
@@ -410,21 +410,21 @@ be specified using the verbose_name attribute.
         :return: an iterator over objects that depend on obj
         """
         return []
-    
+
     def get_compounding_objects(self, obj):
         """Overwrite this function to generate a list of objects out of which
         `obj` is build.  These objects will be validated if `obj` is 
         validated.  The effect of returning compounding objects will be :
-        
+
           * `obj` will only be valid if all its compounding object
             are valid as well.
-            
+
           * default values will be set for the attributes of the compounding
             objects
-            
+
           * when an object is expired or refreshed, all its compounding objects
             will be expired and refreshed as well
-            
+
         """
         return []
 
@@ -462,7 +462,7 @@ be specified using the verbose_name attribute.
         if not related_admin:
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
-        
+
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
@@ -497,7 +497,7 @@ be specified using the verbose_name attribute.
 
         The returned list has the same order than the requested
         field_names.  A reimplementation of this method can look like::
-        
+
             def get_dynamic_field_attributes(self, obj, field_names):
                 for field_attributes in super( MyAdmin, self ).get_dynamic_field_attributes(obj, field_names):
                     if obj.status == 'finished':
@@ -505,7 +505,7 @@ be specified using the verbose_name attribute.
                     else:
                         field_attributes['editable'] = False
                     yield field_attributes
-                
+
         """
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
@@ -533,44 +533,44 @@ be specified using the verbose_name attribute.
         Returns a set of default field attributes based on introspection
         of the descriptor of a field.  This method is called within 
         `get_field_attributes`.  Overwrite it to handle custom descriptors.
-        
+
         The default implementation checks if the descriptor is a `property`,
         and sets the `editable` field attribute to `True` if the property
         has a setter defined.
-        
+
         :param field_name: the name of the field
         :return: a dictionary with field attributes
         """
         from camelot.view.controls import delegates
-	#
-	# Default attributes for all fields
-	#
-	attributes = dict(
-	    to_string = to_string,
-	    field_name=field_name,
-	    python_type=str,
-	    length=None,
-	    tooltip=None,
-	    background_color=None,
-	    editable=False,
-	    nullable=True,
-	    widget='str',
-	    blank=True,
-	    delegate=delegates.PlainTextDelegate,
-	    validator_list=[],
-	    name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
-	)
-	#
-	# See if there is a descriptor
-	#
-	for cls in self.entity.__mro__:
-	    descriptor = cls.__dict__.get(field_name, None)
-	    if descriptor is not None:
-	        if isinstance(descriptor, property):
-		    attributes['editable'] = (descriptor.fset is not None)
-	        break
-	return attributes
-        
+        #
+        # Default attributes for all fields
+        #
+        attributes = dict(
+            to_string = to_string,
+            field_name=field_name,
+            python_type=str,
+            length=None,
+            tooltip=None,
+            background_color=None,
+            editable=False,
+            nullable=True,
+            widget='str',
+            blank=True,
+            delegate=delegates.PlainTextDelegate,
+            validator_list=[],
+            name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+        )
+        #
+        # See if there is a descriptor
+        #
+        for cls in self.entity.__mro__:
+            descriptor = cls.__dict__.get(field_name, None)
+            if descriptor is not None:
+                if isinstance(descriptor, property):
+                    attributes['editable'] = (descriptor.fset is not None)
+                break
+        return attributes
+
     def get_field_attributes(self, field_name):
         """
         Get the attributes needed to visualize the field field_name.  This
@@ -598,20 +598,20 @@ be specified using the verbose_name attribute.
             return self._field_attributes[field_name]
         except KeyError:
             attributes = self.get_descriptor_field_attributes(field_name)
-	    #
+            #
             # first put the attributes in the cache, and only then start to expand
             # them, to be able to prevent recursion when expanding the attributes
             #
             self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
-	    if 'choices' in forced_attributes:
-	        from camelot.view.controls import delegates
-		attributes['delegate'] = delegates.ComboBoxDelegate
-		attributes['editable'] = True
-		if isinstance(forced_attributes['choices'], list):
-		    choices_dict = dict(forced_attributes['choices'])
-		    attributes['to_string'] = lambda x : choices_dict.get(x, '')
+            if 'choices' in forced_attributes:
+                from camelot.view.controls import delegates
+                attributes['delegate'] = delegates.ComboBoxDelegate
+                attributes['editable'] = True
+                if isinstance(forced_attributes['choices'], list):
+                    choices_dict = dict(forced_attributes['choices'])
+                    attributes['to_string'] = lambda x : choices_dict.get(x, '')
             self._expand_field_attributes(attributes, field_name)
             return attributes
 
@@ -660,7 +660,7 @@ be specified using the verbose_name attribute.
                 minimal_column_width or 0,
                 2 + len(six.text_type(field_attributes['name'])),
                 min(length or 0, 50),
-                )
+            )
         field_attributes['column_width'] = column_width
 
     def get_table( self ):
@@ -669,18 +669,18 @@ be specified using the verbose_name attribute.
         """
         from camelot.admin.table import structure_to_table
         if self.list_display == []:
-	    # take a copy to prevent contamination
-	    self.list_display = list()
-	    # no fields were defined, see if there are properties
-	    for cls in inspect.getmro(self.entity):
-	        for desc_name, desc in cls.__dict__.items():
-		    if desc_name.startswith('__'):
-		        continue
-		    if isinstance(desc, property):
-		        self.list_display.insert(0, desc_name)
+            # take a copy to prevent contamination
+            self.list_display = list()
+            # no fields were defined, see if there are properties
+            for cls in inspect.getmro(self.entity):
+                for desc_name, desc in cls.__dict__.items():
+                    if desc_name.startswith('__'):
+                        continue
+                    if isinstance(desc, property):
+                        self.list_display.insert(0, desc_name)
         table = structure_to_table(self.list_display)
         return table
-    
+
     def get_columns(self):
         """
         The columns to be displayed in the list view, returns a list of pairs
@@ -701,7 +701,7 @@ be specified using the verbose_name attribute.
 
     def get_validator( self, model = None, initial_validation = False ):
         """Get a validator object
-        
+
         :return: a :class:`camelot.admin.validator.object_validator.Validator`
         """
         return self.validator( self, 
@@ -711,14 +711,14 @@ be specified using the verbose_name attribute.
     def get_fields(self):
         fields = self.get_form_display().get_fields()
         fields_and_attributes =  [
-                (field, self.get_field_attributes(field))
-                for field in fields
+            (field, self.get_field_attributes(field))
+            for field in fields
         ]
         return fields_and_attributes
 
     def get_application_admin( self ):
         """Provide access to the :class:`ApplicationAdmin`
-        
+
         :return: the :class:`camelot.admin.application_admin.ApplicationAdmin`
             object for the application.
         """
@@ -757,14 +757,14 @@ be specified using the verbose_name attribute.
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls
         the builtin :func:`setattr` function.
-        
+
         :param obj: the object on which to set the value
         :param field_name: the name of the field, which by default will be used
             as the name of the attribute to set
         :param value: the value to set
         """
         setattr(obj, field_name, value)
-        
+
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object
         :param include_nullable_fields: also set defaults for nullable fields, 
@@ -773,10 +773,10 @@ be specified using the verbose_name attribute.
         """
         from sqlalchemy.schema import ColumnDefault
         from sqlalchemy import orm
-        
+
         if self.is_deleted( object_instance ):
             return False
-        
+
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
         for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
@@ -801,10 +801,10 @@ be specified using the verbose_name attribute.
                         # avoid trip to database
                         default_value = default.arg
                     else:
-		        # shouldn't this default be set by SQLA at insertion time
-		        # and skip this field in the validation ??
-		        session = orm.object_session(object_instance)
-		        bind = session.get_bind(mapper=self.mapper)
+                        # shouldn't this default be set by SQLA at insertion time
+                        # and skip this field in the validation ??
+                        session = orm.object_session(object_instance)
+                        bind = session.get_bind(mapper=self.mapper)
                         default_value = bind.execute(default)
                 elif six.callable(default):
                     import inspect
@@ -831,7 +831,7 @@ be specified using the verbose_name attribute.
                             field,
                             default_value,
                             object_instance.__class__.__name__
-                        ),
+                            ),
                         exc_info=exc
                     )
         for compounding_object in self.get_compounding_objects( object_instance ):
@@ -844,7 +844,7 @@ be specified using the verbose_name attribute.
             emtpy list if the object has no primary key yet or any more.
         """
         return []
-    
+
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
         :param obj: the object for which to get the modifications
@@ -852,7 +852,7 @@ be specified using the verbose_name attribute.
            value
         """
         return dict()
-    
+
     def delete(self, entity_instance):
         """Delete an entity instance"""
         del entity_instance
@@ -860,7 +860,7 @@ be specified using the verbose_name attribute.
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         pass
-    
+
     def expunge(self, entity_instance):
         """Remove this object from the objects being managed"""
         pass
@@ -879,13 +879,12 @@ be specified using the verbose_name attribute.
         :return: True if the object has been deleted from the persistent
             state, False otherwise"""
         return False
-    
+
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False
-    
+
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
-
