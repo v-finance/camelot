@@ -1307,3 +1307,7 @@ msgstr "лет"
 msgid " months"
 msgstr "месяцев"
 
+#, fuzzy
+msgid "Mobile"
+msgstr "мужчина"
+

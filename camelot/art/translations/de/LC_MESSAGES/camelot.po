@@ -1315,3 +1315,7 @@ msgstr " Jahre"
 msgid " months"
 msgstr " Monate"
 
+#, fuzzy
+msgid "Mobile"
+msgstr "männlich"
+

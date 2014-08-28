@@ -1263,3 +1263,5 @@ msgstr ""
 msgid " months"
 msgstr ""
 
+msgid "Mobile"
+msgstr ""
