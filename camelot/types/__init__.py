@@ -42,6 +42,10 @@ from sqlalchemy import types
 from camelot.core.orm import options
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 
+"""
+The `__repr__` method of the types is implemented to be able to use Alembic.
+"""
+
 class PrimaryKey(types.TypeDecorator):
     """Special type that can be used as the column type for a primary key.  This
     type defererring the definition of the actual type of primary key to
@@ -58,7 +62,10 @@ class PrimaryKey(types.TypeDecorator):
     @property
     def python_type(self):
         return options.DEFAULT_AUTO_PRIMARYKEY_TYPE().python_type
-    
+
+    def __repr__(self):
+        return 'PrimaryKey()'
+
 virtual_address = collections.namedtuple('virtual_address',
                                         ['type', 'address'])
 
@@ -113,7 +120,10 @@ class VirtualAddress(types.TypeDecorator):
                     return virtual_address(*split)
             return virtual_address(u'phone',u'')
             
-        return processor  
+        return processor
+
+    def __repr__(self):
+        return 'VirtualAddress()'
 
 class _RegexpTranslator(object):
     
@@ -187,12 +197,18 @@ class Code(types.TypeDecorator):
             return ['' for _p in self.parts]
             
         return processor
-    
+
+    def __repr__(self):
+        return 'Code()'
+
 class IPAddress(Code):
     
     def __init__(self, **kwargs):
         super(IPAddress, self).__init__(parts=['900','900','900','900'])
-    
+
+    def __repr__(self):
+        return 'IPAddress()'
+
 class Rating(types.TypeDecorator):
     """The rating field is an integer field that is visualized as a number of stars that
   can be selected::
@@ -222,7 +238,10 @@ class RichText(types.TypeDecorator):
     @property
     def python_type(self):
         return self.impl.python_type
-     
+
+    def __repr__(self):
+        return 'RichText()'
+
 class Language(types.TypeDecorator):
     """The languages are stored as a string in the database of 
 the form *language*(_*country*), where :
@@ -242,7 +261,10 @@ used too much memory, so now it's implemented using QT.
     @property
     def python_type(self):
         return self.impl.python_type
-        
+
+    def __repr__(self):
+        return 'Language()'
+
 color = collections.namedtuple('color',
                                ('red', 'green', 'blue', 'alpha'))
 
@@ -304,7 +326,10 @@ to convert a color tuple to a QColor.
     @property
     def python_type(self):
         return color
-        
+
+    def __repr__(self):
+        return 'Color()'
+
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
   strings.  This allows efficient storage and querying while preserving readable code.
@@ -377,7 +402,10 @@ class Enumeration(types.TypeDecorator):
     @property
     def python_type(self):
         return str
-    
+
+    def __repr__(self):
+        return 'Enumeration()'
+
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
@@ -453,7 +481,10 @@ class File(types.TypeDecorator):
     @property
     def python_type(self):
         return self.impl.python_type
-    
+
+    def __repr__(self):
+        return 'File()'
+
 class Image(File):
     """Sqlalchemy column type to store images
     
@@ -468,4 +499,7 @@ class Image(File):
     """
   
     stored_file_implementation = StoredImage
+
+    def __repr__(self):
+        return 'Image()'
 
