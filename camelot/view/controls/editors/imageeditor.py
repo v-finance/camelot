@@ -54,19 +54,17 @@ All files (*)"""
             self, parent=parent, storage=storage,
             **kwargs
         )
-        self.setObjectName( field_name )        
+        self.setObjectName( field_name )
 
     def setup_widget(self):
-        layout = QtGui.QVBoxLayout()
-        layout.setSpacing( 0 )
-        label_button_layout = QtGui.QHBoxLayout()
+        layout = QtGui.QHBoxLayout()
         #
         # Setup label
         #
         self.label = QtGui.QLabel(self)
         self.label.installEventFilter(self)
         self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
-        label_button_layout.addWidget(self.label)
+        layout.addWidget(self.label)
         
         self.filename = DecoratedLineEdit( self )
         self.filename.setVisible( False )
@@ -88,19 +86,29 @@ All files (*)"""
         paste_button.setObjectName('paste')
         paste_button.setFocusPolicy(Qt.ClickFocus)
         
-        #button_layout.addStretch()
         self.add_actions(self.actions, button_layout)
         button_layout.addWidget(copy_button)
         button_layout.addWidget(paste_button)
+        button_layout.addStretch()
 
-        label_button_layout.addLayout(button_layout)
-        label_button_layout.addStretch()
-        layout.addLayout( label_button_layout )
-        #layout.addStretch()
+        layout.addLayout(button_layout)
+        #label_button_layout.addStretch()
         self.setLayout( layout )
         self.clear_image()
         QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
         self.clipboard_data_changed()
+
+        # horizontal policy is always expanding, to fill the width of a column
+        # in a form
+        vertical_size_policy = QtGui.QSizePolicy.Expanding
+
+        if self.preview_width != 0:
+            self.label.setMinimumWidth(self.preview_width)
+        if self.preview_height != 0:
+            self.label.setFixedHeight(self.preview_height)
+            vertical_size_policy = QtGui.QSizePolicy.Minimum
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, vertical_size_policy)
+        self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, vertical_size_policy)
         
     @QtCore.qt_slot()
     def clipboard_data_changed(self):
@@ -157,13 +165,19 @@ All files (*)"""
         value = super( ImageEditor, self ).set_value( value )
         if value is not None:
             if value.name != self.file_name:
-                post(
-                    lambda:value.checkout_thumbnail(
-                        self.preview_width,
-                        self.preview_height
-                    ),
-                    self.set_image
-                )
+                if self.preview_height and self.preview_width:
+                    post(
+                        lambda:value.checkout_thumbnail(
+                            self.preview_width,
+                            self.preview_height
+                        ),
+                        self.set_image
+                    )
+                else:
+                    post(
+                        lambda:value.checkout_image(),
+                        self.set_image
+                    )
                 # store the file name of which a previous is shown in the editor,
                 # to ensure the preview is updated when this changes
                 self.file_name = value.name
@@ -175,7 +189,6 @@ All files (*)"""
         self.label.setFrameShape(QtGui.QFrame.Box)
         self.label.setFrameShadow(QtGui.QFrame.Plain)
         self.label.setLineWidth(1)
-        self.label.setFixedSize(self.preview_width, self.preview_height)
 
     def show_fullscreen(self, image):
         lite_box = LiteBoxView(self)

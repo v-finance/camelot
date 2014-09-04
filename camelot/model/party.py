@@ -44,7 +44,7 @@ from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
-from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
+from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
 from .authentication import end_of_times
 
@@ -310,7 +310,7 @@ class Party(Entity, WithAddresses):
     
     @phone.setter
     def phone_setter( self, value ):
-        return self._set_contact_mechanism( u'phone', value )    
+        return self._set_contact_mechanism( u'phone', value )
     
     @phone.expression
     def phone_expression( self ):
@@ -319,15 +319,27 @@ class Party(Entity, WithAddresses):
     @hybrid.hybrid_property
     def fax( self ):
         return self._get_contact_mechanism( u'fax' )
-    
+
     @fax.setter
     def fax_setter( self, value ):
-        return self._set_contact_mechanism( u'fax', value )    
-    
+        return self._set_contact_mechanism( u'fax', value )
+
     @fax.expression
     def fax_expression( self ):
-        return orm.aliased( ContactMechanism ).mechanism 
-    
+        return orm.aliased( ContactMechanism ).mechanism
+
+    @hybrid.hybrid_property
+    def mobile( self ):
+        return self._get_contact_mechanism( u'mobile' )
+
+    @mobile.setter
+    def mobile_setter( self, value ):
+        return self._set_contact_mechanism( u'mobile', value )
+
+    @mobile.expression
+    def mobile_expression( self ):
+        return orm.aliased( ContactMechanism ).mechanism
+
     def full_name( self ):
 
         aliased_organisation = sql.alias( Organization.table )
@@ -644,6 +656,12 @@ class Addressable(object):
                           name = _('Phone'),
                           from_string = lambda s:('phone', s),
                           delegate = delegates.VirtualAddressDelegate ),
+            mobile = dict( editable = True, 
+                           minimal_column_width = 20,
+                           address_type = 'mobile',
+                           name = _('Mobile'),
+                           from_string = lambda s:('mobile', s),
+                           delegate = delegates.VirtualAddressDelegate ),
             fax = dict( editable = True, 
                         minimal_column_width = 20,
                         address_type = 'fax',
@@ -899,7 +917,8 @@ class PersonAdmin( Party.Admin ):
                                                               'street1',
                                                               'street2',
                                                               'city',] ),
-                                                            [WidgetOnlyForm('picture'), ],
+                                                            [WidgetOnlyForm('picture'),
+                                                             Stretch()],
                                                      ] ),
                                                      'comment', ], scrollbars = False ) ),
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',

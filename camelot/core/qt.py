@@ -44,6 +44,7 @@ QtCore = DelayedModule('QtCore')
 QtGui = DelayedModule('QtGui')
 QtWebKit = DelayedModule('QtWebKit')
 QtNetwork = DelayedModule('QtNetwork')
+QtXml = DelayedModule('QtXml')
 
 if qt_api in (None, 'PyQt4'):
     try:

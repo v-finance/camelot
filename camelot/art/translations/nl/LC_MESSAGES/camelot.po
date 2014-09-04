@@ -1,3 +1,4 @@
+
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
@@ -6,13 +7,11 @@ msgstr ""
 "PO-Revision-Date: 2011-08-19 19:24+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: nl <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
-"X-Language: nl\n"
-"X-Source-Language: C\n"
 
 #: camelot/admin/application_admin.py:150
 msgid "Relations"
@@ -109,13 +108,12 @@ msgstr "Controle van de database instellingen"
 #: camelot/admin/action/application_action.py:195
 msgid "Could not connect to database, please check host and port"
 msgstr ""
-"Er kon geen verbinding worden gemaakt met de database, gelieve de servernaam "
-"en poort te verifieren"
+"Er kon geen verbinding worden gemaakt met de database, gelieve de "
+"servernaam en poort te verifieren"
 
 #: camelot/admin/action/application_action.py:196
 msgid "Verify driver, host and port or contact your system administrator"
-msgstr ""
-"Verifieer driver, servernaam en poort of contacteer uw systeembeheerder"
+msgstr "Verifieer driver, servernaam en poort of contacteer uw systeembeheerder"
 
 #: camelot/admin/action/application_action.py:219
 msgid "Use {} profile"
@@ -477,8 +475,8 @@ msgid ""
 "Importing data cannot be undone,\n"
 "are you sure you want to continue"
 msgstr ""
-"Het importeren van gegevens kan niet worden ongedaan gemaakt, bent u zeker "
-"dat u wilt verdergaan"
+"Het importeren van gegevens kan niet worden ongedaan gemaakt, bent u "
+"zeker dat u wilt verdergaan"
 
 #: camelot/admin/action/list_action.py:781
 msgid "Importing data"
@@ -589,8 +587,7 @@ msgstr "%s bestaat niet"
 #: camelot/core/files/storage.py:200 camelot/core/files/storage.py:203
 #: camelot/core/files/storage.py:206
 msgid "Contact your system administrator"
-msgstr ""
-"Verifieer driver, servernaam en poort of contacteer uw systeembeheerder"
+msgstr "Verifieer driver, servernaam en poort of contacteer uw systeembeheerder"
 
 #: camelot/core/files/storage.py:202
 #, python-format
@@ -1012,8 +1009,9 @@ msgid ""
 "Please select a backup file from which to restore the database. <br/>All "
 "data in the database will be overwritten with data from this file"
 msgstr ""
-"Gelieve een backup bestand te selecteren om te restoren.<br/>Alle gegevens "
-"in de database zullen worden overschreven met de data van dit bestand"
+"Gelieve een backup bestand te selecteren om te restoren.<br/>Alle "
+"gegevens in de database zullen worden overschreven met de data van dit "
+"bestand"
 
 #: camelot/view/action_steps/change_object.py:60
 msgid "Please complete"
@@ -1269,3 +1267,8 @@ msgstr "jaren"
 #: camelot/view/controls/editors/monthseditor.py:49
 msgid " months"
 msgstr "maanden"
+
+#, fuzzy
+msgid "Mobile"
+msgstr "GSM"
+
