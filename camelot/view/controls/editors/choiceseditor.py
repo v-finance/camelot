@@ -28,7 +28,7 @@ import six
 
 from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 from camelot.view.proxy import ValueLoading
-from ...art import Icon
+from ...art import Icon, ColorScheme
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
@@ -54,10 +54,6 @@ class ChoicesEditor(CustomEditor):
         combobox = QtGui.QComboBox()
         combobox.setObjectName('combobox')
         combobox.activated.connect(self._activated)
-        # the combobox is made editable to be able to display a value in case
-        # the actual value is not in the list of choices
-        combobox.setEditable(True)
-        combobox.setInsertPolicy(QtGui.QComboBox.NoInsert)
         layout.addWidget(combobox)
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
@@ -88,7 +84,7 @@ class ChoicesEditor(CustomEditor):
 
     def set_choices( self, choices ):
         """
-    :param choices: a list of (value,name) tuples or a list of dicts.
+        :param choices: a list of (value,name) tuples or a list of dicts.
 
         In case a list of tuples is used, name will be displayed in the combobox,
         while value will be used within :meth:`get_value` and :meth:`set_value`.
@@ -104,11 +100,8 @@ class ChoicesEditor(CustomEditor):
         be added.
         """
         combobox = self.findChild(QtGui.QComboBox, 'combobox')
-        current_index = combobox.currentIndex()
-        if current_index >= 0:
-            current_name = six.text_type(combobox.itemText(current_index))
         current_value = self.get_value()
-        current_value_available = False
+        current_display_role = six.text_type(combobox.itemText(combobox.currentIndex()))
         none_available = False
         # set i to -1 to handle case of no available choices
         i = -1
@@ -125,22 +118,15 @@ class ChoicesEditor(CustomEditor):
             else:
                 value = choice[Qt.UserRole]
             self.append_item(model, choice)
-            if value == current_value:
-                current_value_available = True
             if value is None:
                 none_available = True
-        if not current_value_available and current_index > 0:
-            if current_value is None:
-                none_available = True
-            self.append_item(model, {Qt.DisplayRole: current_name,
-                                     Qt.UserRole: current_value})
         if not none_available:
             self.append_item(model, {Qt.DisplayRole: '',
                                      Qt.UserRole: None})
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
         if current_value != ValueLoading:
-            self.set_value( current_value )
+            self.set_value(current_value, current_display_role)
 
     def set_field_attributes(self, **fa):
         super(ChoicesEditor, self).set_field_attributes(**fa)
@@ -157,24 +143,40 @@ class ChoicesEditor(CustomEditor):
         return [(variant_to_py(combobox.itemData(i)),
                  six.text_type(combobox.itemText(i))) for i in range(combobox.count())]
 
-    def set_value(self, value):
+    def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed
-        is the one that matches the value in the list set with set_choices"""
+        is the one that matches the value in the list set with set_choices
+        
+        :param display_role: this is the name used to display the value in case
+            the value is not in the list of choices.  If this is `None`, the string
+            representation of the value is used.
+        """
         value = super(ChoicesEditor, self).set_value(value)
         self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
         if not variant_to_py(self.property('value_loading')) and value != NotImplemented:
             combobox = self.findChild(QtGui.QComboBox, 'combobox')
-            for i in range(combobox.count()):
+            number_of_items = combobox.count()
+            # remove the last item if it was an invalid one
+            if variant_to_py(combobox.itemData(number_of_items-1, Qt.UserRole+1))==True:
+                combobox.removeItem(number_of_items-1)
+                number_of_items -= 1
+            for i in range(number_of_items):
                 if value == variant_to_py(combobox.itemData(i)):
                     combobox.setCurrentIndex(i)
-                    self.update_actions()
-                    return
-            # it might happen, that when we set the editor data, the set_choices
-            # method has not happened yet or the choices don't contain the value
-            # set
-            combobox.setCurrentIndex(-1)
-            combobox.setEditText(six.text_type(value))
+                    break
+            else:
+                # it might happen, that when we set the editor data, the set_choices
+                # method has not happened yet or the choices don't contain the value
+                # set
+                if display_role is None:
+                    display_role = six.text_type(value)
+                self.append_item(combobox.model(),
+                                  {Qt.DisplayRole: display_role,
+                                   Qt.BackgroundRole: QtGui.QBrush(ColorScheme.VALIDATION_ERROR),
+                                   Qt.UserRole: value,
+                                   Qt.UserRole+1: True})
+                combobox.setCurrentIndex(number_of_items)
         self.update_actions()
 
     def get_value(self):
