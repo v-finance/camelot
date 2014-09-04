@@ -539,30 +539,13 @@ be specified using the verbose_name attribute.
         has a setter defined.
 
         :param field_name: the name of the field
-        :return: a dictionary with field attributes
+        :return: a dictionary with field attributes, empty in case no introspection
+            of the attribute was possible
         """
-        from camelot.view.controls import delegates
-        #
-        # Default attributes for all fields
-        #
-        attributes = dict(
-            to_string = to_string,
-            field_name=field_name,
-            python_type=str,
-            length=None,
-            tooltip=None,
-            background_color=None,
-            editable=False,
-            nullable=True,
-            widget='str',
-            blank=True,
-            delegate=delegates.PlainTextDelegate,
-            validator_list=[],
-            name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
-        )
         #
         # See if there is a descriptor
         #
+        attributes = dict()
         for cls in self.entity.__mro__:
             descriptor = cls.__dict__.get(field_name, None)
             if descriptor is not None:
@@ -597,7 +580,27 @@ be specified using the verbose_name attribute.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-            attributes = self.get_descriptor_field_attributes(field_name)
+            from camelot.view.controls import delegates
+            #
+            # Default attributes for all fields
+            #
+            attributes = dict(
+                to_string = to_string,
+                field_name=field_name,
+                python_type=str,
+                length=None,
+                tooltip=None,
+                background_color=None,
+                editable=False,
+                nullable=True,
+                widget='str',
+                blank=True,
+                delegate=delegates.PlainTextDelegate,
+                validator_list=[],
+                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+            )
+            descriptor_attributes = self.get_descriptor_field_attributes(field_name)
+            attributes.update(descriptor_attributes)
             #
             # first put the attributes in the cache, and only then start to expand
             # them, to be able to prevent recursion when expanding the attributes
@@ -608,7 +611,6 @@ be specified using the verbose_name attribute.
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
                 attributes['delegate'] = delegates.ComboBoxDelegate
-                attributes['editable'] = True
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict.get(x, '')
@@ -676,7 +678,7 @@ be specified using the verbose_name attribute.
                 for desc_name, desc in cls.__dict__.items():
                     if desc_name.startswith('__'):
                         continue
-                    if isinstance(desc, property):
+                    if len(self.get_descriptor_field_attributes(desc_name)):
                         self.list_display.insert(0, desc_name)
         table = structure_to_table(self.list_display)
         return table
