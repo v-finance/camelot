@@ -250,11 +250,16 @@ class EntityMeta( DeclarativeMeta ):
             #
             # use default tablename if none set
             #
-            if '__tablename__' not in dict_:
-                dict_['__tablename__'] = classname.lower()
-            if '__mapper_args__' not in dict_:
-                dict_['__mapper_args__'] = dict()
-
+            for base in bases:
+                if hasattr(base, '__tablename__'):
+                    break
+            else:
+                dict_.setdefault('__tablename__', classname.lower())
+            for base in bases:
+                if hasattr(base, '__mapper_args__'):
+                    break
+            else:
+                dict_.setdefault('__mapper_args__', dict())
 
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
 
