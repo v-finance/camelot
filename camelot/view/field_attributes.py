@@ -24,6 +24,8 @@
 
 """Default field attributes for various sqlalchemy column types"""
 
+import itertools
+
 import six
 
 import sqlalchemy.types
@@ -228,7 +230,7 @@ _sqlalchemy_to_python_type_ = {
         'python_type': str,
         'choices': [(v, enumeration_to_string(v)) for v in f.choices],
         'from_string': lambda s:dict((enumeration_to_string(v), v) for v in f.choices)[s],
-        'minimal_column_width':max(len(enumeration_to_string(v)) for v in f.choices),
+        'minimal_column_width':max(itertools.chain((0,), (len(enumeration_to_string(v)) for v in f.choices))),
         'editable': True,
         'nullable': True,
         'widget': 'combobox',

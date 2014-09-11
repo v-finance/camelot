@@ -55,6 +55,7 @@ class EntityDescriptor(object):
     global_counter = 0
 
     def __init__( self, entity_base ):
+        self.processed = False
         self.entity_base = entity_base
         self.parent = None
         self.relationships = []
@@ -148,9 +149,11 @@ class EntityDescriptor(object):
 
     def finalize(self):
         self.call_builders( 'finalize' )
+        mapper = orm.class_mapper(self.entity)
         if self.order_by:
-            mapper = orm.class_mapper( self.entity )
             mapper.order_by = self.translate_order_by( self.order_by )
+        # set some convenience attributes to the Entity
+        setattr(self.entity, 'table', mapper.local_table)
 
     def add_column( self, key, col ):
         setattr( self.entity, key, col )
@@ -250,11 +253,16 @@ class EntityMeta( DeclarativeMeta ):
             #
             # use default tablename if none set
             #
-            if '__tablename__' not in dict_:
-                dict_['__tablename__'] = classname.lower()
-            if '__mapper_args__' not in dict_:
-                dict_['__mapper_args__'] = dict()
-
+            for base in bases:
+                if hasattr(base, '__tablename__'):
+                    break
+            else:
+                dict_.setdefault('__tablename__', classname.lower())
+            for base in bases:
+                if hasattr(base, '__mapper_args__'):
+                    break
+            else:
+                dict_.setdefault('__mapper_args__', dict())
 
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
 

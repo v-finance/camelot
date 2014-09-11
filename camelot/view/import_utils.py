@@ -30,8 +30,9 @@ import string
 
 import six
 
-from ..core.qt import QtCore
+from ..core.qt import QtCore, Qt
 from camelot.view.controls import delegates
+from camelot.admin.action.list_action import DeleteSelection
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
 from camelot.admin.action import Action, RowNumberAction
@@ -342,6 +343,7 @@ class RowDataAdmin(object):
     """
 
     list_action = RowNumberAction()
+    list_actions = [DeleteSelection()]
     
     def __init__(self, admin, column_mappings):
         self.admin = admin
@@ -400,6 +402,10 @@ class RowDataAdmin(object):
 
     def delete(self, obj):
         pass
+
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        if toolbar_area==Qt.RightToolBarArea:
+            return self.list_actions
 
     def get_field_attributes(self, field_name):
         return self._new_field_attributes[field_name]

@@ -82,7 +82,11 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             value = six.text_type(text_input.text())
             if len(value)==0:
-                return self._value
+                # convert an empty string to None, but not if the original value
+                # itself was an empty string
+                if (self._value is not None) and (len(self._value)==0):
+                    return self._value
+                return None
             return value
 
     value = QtCore.qt_property(six.text_type, get_value, set_value)
