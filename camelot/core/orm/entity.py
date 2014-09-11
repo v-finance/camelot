@@ -294,6 +294,19 @@ class EntityMeta( DeclarativeMeta ):
 
 def update_or_create_entity( cls, data, surrogate = True ):
     mapper = orm.class_mapper( cls )
+    if mapper.polymorphic_on is not None:
+        # assume the mapper is polymorphic on a column, otherwise we're unable
+        # to deserialize it anyway
+        polymorphic_property = mapper.get_property_by_column(mapper.polymorphic_on)
+        try:
+            polymorphic_identifier = data[polymorphic_property.key]
+            mapper = mapper.polymorphic_map[polymorphic_identifier]
+        except KeyError:
+            # we can only select a subclass if the polymporthic identifier is
+            # in the data and that identifier is known to the mapper
+            pass
+        cls = mapper.class_
+
     pk_props = mapper.primary_key
 
     # if all pk are present and not None
