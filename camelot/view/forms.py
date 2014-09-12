@@ -28,6 +28,8 @@ well.  Form classes can be used recursive.
 """
 
 import logging
+import types
+
 logger = logging.getLogger( 'camelot.view.forms' )
 
 from ..core.qt import QtCore, QtGui, variant_to_py
@@ -69,11 +71,13 @@ and takes these parameters :
 
     def _get_fields_from_form( self ):
         for field in self:
-            if isinstance( field, Form ):
+            if field is None:
+                continue
+            elif isinstance( field, Form ):
                 for nested_field in  field._get_fields_from_form():
                     yield nested_field
             else:
-                assert isinstance( field, six.string_types )
+                assert isinstance( field, (six.string_types, types.NoneType) )
                 yield field;
 
 
@@ -166,7 +170,9 @@ and takes these parameters :
         has_vertical_expanding_row = False
         for field in self:
             size_policy = None
-            if isinstance( field, Form ):
+            if field is None:
+                c.next_col()
+            elif isinstance( field, Form ):
                 c.next_empty_row()
                 col_span = 2 * columns
                 f = field.render( widgets, parent, False )
