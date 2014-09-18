@@ -54,8 +54,10 @@ class BoolDelegate( six.with_metaclass( DocumentationMetaclass,
             painter.fillRect(option.rect, option.palette.highlight())
         elif not self.editable:
             painter.fillRect(option.rect, option.palette.window())
-            
-        if checked:
+
+        if checked in (ValueLoading, None):
+            check_option.state = option.state | QtGui.QStyle.State_Off
+        elif checked:
             check_option.state = option.state | QtGui.QStyle.State_On
         else:
             check_option.state = option.state | QtGui.QStyle.State_Off
