@@ -327,7 +327,8 @@ be specified using the verbose_name attribute.
         return search_identifiers
 
     def get_entity_admin(self, entity):
-        return self.app_admin.get_entity_admin(entity)
+        """deprecated : use get_related_admin"""
+        return self.app_admin.get_related_admin(entity)
 
     def get_save_mode(self):
         return self.save_mode
@@ -458,7 +459,7 @@ be specified using the verbose_name attribute.
         """
         if cls == self.entity:
             return self
-        related_admin = self.app_admin.get_entity_admin(cls)
+        related_admin = self.app_admin.get_related_admin(cls)
         if not related_admin:
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
