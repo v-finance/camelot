@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from ...core.qt import QtCore
 from ...core.utils import ugettext as _
@@ -40,6 +41,9 @@ class Application( Action ):
             pixmap = self.application_admin.get_splashscreen()
             self.gui_context.progress_dialog = SplashProgress( pixmap )
             gui_context.progress_dialog.show()
+            if sys.platform == 'darwin':
+                # Running on Mac OS X, focus application on launch
+                gui_context.progress_dialog.raise_()
             gui_context.progress_dialog.setLabelText( _('Initialize application') )
             self.set_application_attributes()
             self.gui_context.admin = self.application_admin
