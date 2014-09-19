@@ -122,235 +122,40 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         # so it can be visually reset when the user leaves before the ongoing
         # animation has finished.
         self.originalPosition = None
-
-        # This property holds the state of the selection animation. Since this
-        # animation is only created inside startSelectionAnimation() (to avoid
-        # the increasing amount of performAction() invocations), this variable is
-        # used to continuously store the state of that animation.
-        self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
         self.setMaximumHeight(160)
 
-        # Bounce animation #
-        hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-        hoverAnimationPart1.setObjectName('hoverAnimationPart1')
-        hoverAnimationPart1.setDuration(500)
-        hoverAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-
-        hoverAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
-        hoverAnimationPart2.setObjectName('hoverAnimationPart2')
-        hoverAnimationPart2.setDuration(1500)
-        hoverAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
-
-        hoverAnimation = QtCore.QSequentialAnimationGroup(parent = self)
-        hoverAnimation.setObjectName('hoverAnimation')
-        hoverAnimation.setLoopCount(-1) # Infinite
-        hoverAnimation.addAnimation(hoverAnimationPart1)
-        hoverAnimation.addAnimation(hoverAnimationPart2)
-        ####################
-
-        # Selection animation #
-        selectionAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-        selectionAnimationPart1.setObjectName('selectionAnimationPart1')
-        selectionAnimationPart1.setDuration(200)
-        selectionAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-
-        selectionAnimationPart2 = QtCore.QPropertyAnimation(self, 'size')
-        selectionAnimationPart2.setObjectName('selectionAnimationPart2')
-        selectionAnimationPart2.setDuration(200)
-        selectionAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-
-        selectionAnimation = QtCore.QParallelAnimationGroup(parent = self)
-        selectionAnimation.setObjectName('selectionAnimation')
-        selectionAnimation.addAnimation(selectionAnimationPart1)
-        selectionAnimation.addAnimation(selectionAnimationPart2)
-        # Not working when clicking the white area underneath the ActionButton image.
-        #selectionAnimation.finished.connect(self.resetLayout)
-        #selectionAnimation.finished.connect(self.performAction)
-        selectionAnimation.stateChanged.connect(self.updateSelectionAnimationState)
-        #######################
 
     def set_state( self, state ):
         AbstractActionWidget.set_state( self, state )
         if state.icon:
             self.setPixmap( state.icon.getQPixmap() )
             self.resize( self.pixmap().width(), self.pixmap().height() )
-        if state.notification:
-            # Shake animation #
-            notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-            notificationAnimationPart1.setObjectName('notificationAnimationPart1')
-            notificationAnimationPart1.setDuration(50)
-            notificationAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-
-            notificationAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
-            notificationAnimationPart2.setObjectName('notificationAnimationPart2')
-            notificationAnimationPart2.setDuration(50)
-            notificationAnimationPart2.setEasingCurve(QtCore.QEasingCurve.Linear)
-
-            notificationAnimationPart3 = QtCore.QPropertyAnimation(self, 'pos')
-            notificationAnimationPart3.setObjectName('notificationAnimationPart3')
-            notificationAnimationPart3.setDuration(50)
-            notificationAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
-
-            notificationAnimation = QtCore.QSequentialAnimationGroup(parent = self)
-            notificationAnimation.setObjectName('notificationAnimation')
-            notificationAnimation.setLoopCount(10)
-            notificationAnimation.addAnimation(notificationAnimationPart1)
-            notificationAnimation.addAnimation(notificationAnimationPart2)
-            notificationAnimation.addAnimation(notificationAnimationPart3)
-
-            # Timer is used to simulate a pausing effect of the animation.
-            notificationAnimationTimer = QtCore.QTimer(parent = self)
-            notificationAnimationTimer.setObjectName('notificationAnimationTimer')
-            notificationAnimationTimer.setInterval(1500)
-            notificationAnimationTimer.setSingleShot(True)
-            notificationAnimationTimer.timeout.connect(notificationAnimation.start)
-            notificationAnimation.finished.connect( notificationAnimationTimer.start )
         self.resetLayout()
-
-    def startHoverAnimation(self):
-        hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
-        if hoverAnimationPart1 is not None:
-            hoverAnimationPart1.setStartValue(self.originalPosition)
-            hoverAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(0, -HOVER_ANIMATION_DISTANCE))
-
-        hoverAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart2')
-        if hoverAnimationPart2 is not None:
-            hoverAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(0, -HOVER_ANIMATION_DISTANCE))
-            hoverAnimationPart2.setEndValue(self.originalPosition)
-
-        hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
-        if hoverAnimation is not None:
-            hoverAnimation.start()
-
-    def stopHoverAnimation(self):
-        hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
-        if hoverAnimation is not None:
-            hoverAnimation.stop()
-        if self.originalPosition is not None:
-            self.move(self.originalPosition)
-
-        self.resetLayout()
-
-    def startSelectionAnimation(self):
-        if self.state.notification:
-            notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
-            if notificationAnimation is not None:
-                notificationAnimation.stop()
-        else:
-            hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
-            if hoverAnimation is not None:
-                hoverAnimation.stop()
-
-        self.move(self.originalPosition)
-
-        # Selection animation when clicked #
-        selectionAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart1')
-        selectionAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart2')
-        selectionAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart3')
-        selectionAnimation = self.findChild(QtCore.QParallelAnimationGroup, 'selectionAnimation')
-        if None not in (selectionAnimationPart1, selectionAnimationPart2,
-                        selectionAnimationPart3, selectionAnimation):
-            selectionAnimationPart1.setStartValue(self.originalPosition)
-            selectionAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-HOVER_ANIMATION_DISTANCE, -HOVER_ANIMATION_DISTANCE))
-
-            selectionAnimationPart2.setStartValue(self.size())
-            selectionAnimationPart2.setEndValue(self.size() + QtCore.QSize(40, 40))
-
-            selectionAnimationPart3.setStartValue(1.0)
-            selectionAnimationPart3.setEndValue(0.1)
-
-            self.setScaledContents(True)
-
-            selectionAnimation.start()
-
-    def updateSelectionAnimationState(self, newState, oldState):
-        self.selectionAnimationState = newState
-
-        # Simulate finished signal (see comment in animation buildup code).
-        if oldState == QtCore.QAbstractAnimation.Running and newState == QtCore.QAbstractAnimation.Stopped:
-            self.run_action()
-            self.resetLayout()
 
     def resetLayout(self):
-        if self.state.notification:
-            self.stopNotificationAnimation()
-
         if self.sender() and self.originalPosition:
             self.move(self.originalPosition)
-
         self.setScaledContents(False)
         if self.pixmap():
             self.resize(self.pixmap().width(), self.pixmap().height())
 
-        if self.state.notification and self.originalPosition:
-            self.startNotificationAnimation()
-
     def setInteractive(self, interactive):
         self.interactive = interactive
-
         self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
-
-        if self.state.notification:
-            self.startNotificationAnimation()
 
     def enterEvent(self, event):
         if self.interactive:
-            if self.state.notification:
-                self.stopNotificationAnimation()
-
-            self.startHoverAnimation()
-
             self.entered.emit()
-
         event.ignore()
 
     def leaveEvent(self, event):
         if self.interactive:
-            self.stopHoverAnimation()
-
-            if self.state.notification:
-                self.startNotificationAnimation()
-
             self.left.emit()
-
         event.ignore()
 
     def onContainerMousePressEvent(self, event):
-        # Second part blocks fast consecutive clicks.
-        if self.interactive and self.selectionAnimationState == QtCore.QAbstractAnimation.Stopped:
-            self.startSelectionAnimation()
-
+        self.run_action()
         event.ignore()
-
-    def startNotificationAnimation(self):
-        notificationAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart1')
-        if notificationAnimationPart1 is not None:
-            notificationAnimationPart1.setStartValue(self.originalPosition)
-            notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-NOTIFICATION_ANIMATION_DISTANCE, 0))
-
-        notificationAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart2')
-        if notificationAnimationPart2 is not None:
-            notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-NOTIFICATION_ANIMATION_DISTANCE, 0))
-            notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, 0))
-
-        notificationAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart3')
-        if notificationAnimationPart3 is not None:
-            notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, 0))
-            notificationAnimationPart3.setEndValue(self.originalPosition)
-
-        notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
-        notificationAnimationTimer = self.findChild(QtCore.QTimer, 'notificationAnimationTimer')
-        if notificationAnimation is not None and notificationAnimationTimer is not None:
-            notificationAnimationTimer.start()
-            notificationAnimation.start()
-
-    def stopNotificationAnimation(self):
-        notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
-        notificationAnimationTimer = self.findChild(QtCore.QTimer, 'notificationAnimationTimer')
-
-        if notificationAnimation is not None and notificationAnimationTimer is not None:
-            notificationAnimationTimer.stop()
-            notificationAnimation.stop()
 
 class ActionAction( QtGui.QAction, AbstractActionWidget ):
 

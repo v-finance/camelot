@@ -138,6 +138,7 @@ class NavigationPane(QtGui.QDockWidget):
         super(NavigationPane, self).__init__(parent)
         self._workspace = workspace
         tb = QtGui.QToolBox()
+        tb.setMinimumWidth(220)
         tb.setFrameShape(QtGui.QFrame.NoFrame)
         tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
@@ -163,11 +164,6 @@ class NavigationPane(QtGui.QDockWidget):
             self.setMaximumWidth(0)
             return
         toolbox = self.findChild(QtGui.QWidget, 'toolbox')
-        animation = QtCore.QPropertyAnimation(toolbox, 'minimumWidth', self)
-        animation.setDuration(500)
-        animation.setStartValue(0)
-        animation.setEndValue(220)
-        animation.start()
 
         # performs QToolBox clean up
         # QToolbox won't delete items we have to do it explicitly
