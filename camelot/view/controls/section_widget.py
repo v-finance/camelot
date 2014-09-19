@@ -25,7 +25,7 @@
 """left navigation pane"""
 
 import logging
-logger = logging.getLogger('camelot.view.controls.navpane2')
+logger = logging.getLogger('camelot.view.controls.section_widget')
 
 import six
 
@@ -164,13 +164,9 @@ class NavigationPane(QtGui.QDockWidget):
             return
         toolbox = self.findChild(QtGui.QWidget, 'toolbox')
         animation = QtCore.QPropertyAnimation(toolbox, 'minimumWidth', self)
-        animation.setDuration( 500 )
-        animation.setStartValue( 0 )
-        animation.setEndValue( 220 )
-
-        if self._workspace:
-            animation.finished.connect(self._workspace._background_widget.makeInteractive)
-
+        animation.setDuration(500)
+        animation.setStartValue(0)
+        animation.setEndValue(220)
         animation.start()
 
         # performs QToolBox clean up

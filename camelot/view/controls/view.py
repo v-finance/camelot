@@ -62,6 +62,7 @@ class AbstractView(QtGui.QWidget):
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
 
+
 class TabView(AbstractView):
     """Class to combine multiple views in Tabs and let them behave as one view.
     This class can be used when defining custom create_table_view methods on an

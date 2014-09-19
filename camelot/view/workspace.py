@@ -37,8 +37,6 @@ from camelot.view.controls.action_widget import ( ActionLabel,
                                                   HOVER_ANIMATION_DISTANCE,
                                                   NOTIFICATION_ANIMATION_DISTANCE )
 
-from camelot.view.art import Icon
-
 class DesktopBackground(QtGui.QWidget):
     """
     A custom background widget for the desktop. This widget is contained
@@ -273,23 +271,23 @@ class DesktopWorkspace(QtGui.QWidget):
         self._tab_widget.currentChanged.connect(self._tab_changed)
         layout.addWidget(self._tab_widget)
         
-        # Setup the background widget
-        self._background_widget = DesktopBackground( self.gui_context, self )
-        self._tab_widget.addTab(self._background_widget,
-                                Icon('tango/16x16/actions/go-home.png').getQIcon(),
-                                _('Home'))
-        if tab_bar.tabButton(0, QtGui.QTabBar.RightSide):
-            tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
-        elif tab_bar.tabButton(0, QtGui.QTabBar.LeftSide):
-            # mac for example has the close button on the left side by default
-            tab_bar.tabButton(0, QtGui.QTabBar.LeftSide).hide()
+        ## Setup the background widget
+        #self._background_widget = DesktopBackground( self.gui_context, self )
+        #self._tab_widget.addTab(self._background_widget,
+                                #Icon('tango/16x16/actions/go-home.png').getQIcon(),
+                                #_('Home'))
+        #if tab_bar.tabButton(0, QtGui.QTabBar.RightSide):
+            #tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
+        #elif tab_bar.tabButton(0, QtGui.QTabBar.LeftSide):
+            ## mac for example has the close button on the left side by default
+            #tab_bar.tabButton(0, QtGui.QTabBar.LeftSide).hide()
         
         self.setLayout(layout)
-        self.reload_background_widget()
+        #self.reload_background_widget()
              
-    @QtCore.qt_slot()
-    def reload_background_widget(self):
-        post(self._app_admin.get_actions, self._background_widget.set_actions)
+    #@QtCore.qt_slot()
+    #def reload_background_widget(self):
+        #post(self._app_admin.get_actions, self._background_widget.set_actions)
 
     @QtCore.qt_slot()
     def _change_view_mode(self):
@@ -303,13 +301,12 @@ class DesktopWorkspace(QtGui.QWidget):
         Note that only at-runtime added tabs are being closed, implying
         the immortality of the 'Start' tab.
         """
-        if index > 0:
-            view = self._tab_widget.widget(index)
-            if view:
-                # it's not enough to simply remove the tab, because this
-                # would keep the underlying view widget alive
-                view.deleteLater()
-                self._tab_widget.removeTab(index)
+        view = self._tab_widget.widget(index)
+        if view is not None:
+            # it's not enough to simply remove the tab, because this
+            # would keep the underlying view widget alive
+            view.deleteLater()
+            self._tab_widget.removeTab(index)
 
     @QtCore.qt_slot(int)
     def _tab_changed(self, _index):
@@ -323,55 +320,35 @@ class DesktopWorkspace(QtGui.QWidget):
         :return: The currently active view or None in case of the 'Start' tab.
         """
         i = self._tab_widget.currentIndex()
-        
-        if i == 0: # 'Start' tab
-            return None
-        
         return self._tab_widget.widget(i)
 
     @QtCore.qt_slot(six.text_type)
     def change_title(self, new_title):
         """
         Slot to be called when the tile of a view needs to change.
-        
-        Note: the title of the 'Start' tab cannot be overwritten.
         """
-        # the request of the sender does not work in older pyqt versions
-        # therefore, take the current index, notice this is not correct !!
-        #
-        # sender = self.sender()
-        sender = self.active_view()
-        
-        if sender:
+        sender = self.sender()
+        if sender is not None:
             index = self._tab_widget.indexOf(sender)
-            if index > 0:
-                self._tab_widget.setTabText(index, new_title)
+            self._tab_widget.setTabText(index, new_title)
                 
     @QtCore.qt_slot(QtGui.QIcon)
     def change_icon(self, new_icon):
         """
         Slot to be called when the icon of a view needs to change.
-        
-        Note: the icon of the 'Start' tab cannot be overwritten.
         """
-        # the request of the sender does not work in older pyqt versions
-        # therefore, take the current index, notice this is not correct !!
-        #
-        # sender = self.sender()
-        sender = self.active_view()
-        
-        if sender:
+        sender = self.sender()
+        if sender is not None:
             index = self._tab_widget.indexOf(sender)
-            if index > 0:
-                self._tab_widget.setTabIcon(index, new_icon)
+            self._tab_widget.setTabIcon(index, new_icon)
 
     def set_view(self, view, icon = None, title = '...'):
         """
         Remove the currently active view and replace it with a new view.
         """
         index = self._tab_widget.currentIndex()
-        
-        if index == 0: # 'Start' tab is currently visible.
+        current_view = self._tab_widget.widget(index)
+        if (current_view is None) or (current_view.close() == False):
             self.add_view(view, icon, title)
         else:
             self._tab_close_request(index)
@@ -387,7 +364,7 @@ class DesktopWorkspace(QtGui.QWidget):
         """
         Add a Widget implementing AbstractView to the workspace.
         """
-        assert object_thread( self )
+        assert object_thread(self)
         view.title_changed_signal.connect(self.change_title)
         view.icon_changed_signal.connect(self.change_icon)
         if icon:
