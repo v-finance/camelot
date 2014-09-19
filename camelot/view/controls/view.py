@@ -27,7 +27,6 @@
 import six
 
 from ...core.qt import QtCore, QtGui
-from camelot.view.model_thread import post
 
 class AbstractView(QtGui.QWidget):
     """A string used to format the title of the view ::
@@ -61,40 +60,3 @@ class AbstractView(QtGui.QWidget):
     @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
-
-
-class TabView(AbstractView):
-    """Class to combine multiple views in Tabs and let them behave as one view.
-    This class can be used when defining custom create_table_view methods on an
-    ObjectAdmin class to group multiple table views together in one view."""
-
-    def __init__(self, parent, views=[], admin=None):
-        """:param views: a list of the views to combine"""
-        AbstractView.__init__(self, parent)
-        layout = QtGui.QVBoxLayout()
-        if self.header_widget:
-            self.header = self.header_widget(self, admin)
-        else:
-            self.header = None
-        layout.addWidget(self.header)
-        self._tab_widget = QtGui.QTabWidget(self)
-        self._tab_widget.setObjectName( 'tab_widget' )
-        layout.addWidget(self._tab_widget)
-        self.setLayout(layout)
-
-        def get_views_and_titles():
-            return [(view, view.get_title()) for view in views]
-
-        post(get_views_and_titles, self.set_views_and_titles)
-        post(lambda:self.title_format, self.change_title)
-
-    @QtCore.qt_slot()
-    def refresh(self):
-        """Refresh the data in the current view"""
-        for i in range(self._tab_widget.count()):
-            view = self._tab_widget.widget(i)
-            view.refresh()
-
-    def set_views_and_titles(self, views_and_titles):
-        for view, title in views_and_titles:
-            self._tab_widget.addTab(view, title)
