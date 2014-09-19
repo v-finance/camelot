@@ -37,7 +37,7 @@ from camelot.core.qt import Qt
 
 import six
 
-from sqlalchemy import orm, schema
+from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 
@@ -248,13 +248,17 @@ and used as a custom action.
             if descriptor is not None:
                 if isinstance(descriptor, hybrid.hybrid_property):
                     attributes['editable'] = (descriptor.fset is not None)
-                    # there seems to be an error in this code that maniuplates
-                    # the actual descriptor
-                    #if (descriptor.expr is not None) and (descriptor.expr != descriptor.fget):
-                        #expression = descriptor.expr(self.entity)
-                        #if isinstance(expression, sql.Select):
-                            #sql_attributes = self.get_sql_field_attributes(expression.columns)
-                            #attributes.update(sql_attributes)
+                    if (descriptor.expr is None) or (descriptor.expr == descriptor.fget):
+                        # the descriptor has no expression, stop the introspection
+                        break
+                    # dont try to get the expression from the descriptor, but use
+                    # the 'appropriate' way to get it from the class.  Getting it
+                    # from the descriptor seems to manipulate  the actual descriptor
+                    class_attribute = getattr(self.entity, field_name)
+                    if class_attribute is not None:
+                        if isinstance(class_attribute, sql.Select):
+                            sql_attributes = self.get_sql_field_attributes(class_attribute.columns)
+                            attributes.update(sql_attributes)
                 break
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper

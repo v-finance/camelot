@@ -203,7 +203,7 @@ class WithAddresses(object):
     
     @street2.setter
     def street2_setter( self, value ):
-        return self._set_address_field( u'street2', value )    
+        return self._set_address_field( u'street2', value )
     
     @hybrid.hybrid_property
     def city( self ):
