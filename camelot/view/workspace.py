@@ -36,15 +36,16 @@ from camelot.view.model_thread import object_thread, post
 from camelot.view.controls.action_widget import ( ActionLabel, 
                                                   HOVER_ANIMATION_DISTANCE,
                                                   NOTIFICATION_ANIMATION_DISTANCE )
+from .controls.view import AbstractView
 
-class DesktopBackground(QtGui.QWidget):
+class DesktopBackground(AbstractView):
     """
     A custom background widget for the desktop. This widget is contained
     by the first tab ('Start' tab) of the desktop workspace.
     """
     
-    def __init__( self, gui_context, parent ):
-        super(DesktopBackground, self).__init__( parent )
+    def __init__(self, gui_context):
+        super(DesktopBackground, self).__init__()
         self.gui_context = gui_context
         mainLayout = QtGui.QVBoxLayout()
         
@@ -145,7 +146,7 @@ class DesktopBackground(QtGui.QWidget):
             
     def refresh(self):
         pass
-            
+
 class ActionButtonContainer(QtGui.QWidget):
     def __init__(self, actionButton, parent = None):
         super(ActionButtonContainer, self).__init__(parent)
