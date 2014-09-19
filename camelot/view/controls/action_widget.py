@@ -130,10 +130,6 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
         self.setMaximumHeight(160)
 
-        opacityEffect = QtGui.QGraphicsOpacityEffect(parent = self)
-        opacityEffect.setOpacity(1.0)
-        self.setGraphicsEffect(opacityEffect)
-
         # Bounce animation #
         hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
         hoverAnimationPart1.setObjectName('hoverAnimationPart1')
@@ -163,16 +159,10 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         selectionAnimationPart2.setDuration(200)
         selectionAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
 
-        selectionAnimationPart3 = QtCore.QPropertyAnimation(self.graphicsEffect(), 'opacity')
-        selectionAnimationPart3.setObjectName('selectionAnimationPart3')
-        selectionAnimationPart3.setDuration(200)
-        selectionAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
-
         selectionAnimation = QtCore.QParallelAnimationGroup(parent = self)
         selectionAnimation.setObjectName('selectionAnimation')
         selectionAnimation.addAnimation(selectionAnimationPart1)
         selectionAnimation.addAnimation(selectionAnimationPart2)
-        selectionAnimation.addAnimation(selectionAnimationPart3)
         # Not working when clicking the white area underneath the ActionButton image.
         #selectionAnimation.finished.connect(self.resetLayout)
         #selectionAnimation.finished.connect(self.performAction)
@@ -291,7 +281,6 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         self.setScaledContents(False)
         if self.pixmap():
             self.resize(self.pixmap().width(), self.pixmap().height())
-        self.graphicsEffect().setOpacity(1.0)
 
         if self.state.notification and self.originalPosition:
             self.startNotificationAnimation()

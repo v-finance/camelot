@@ -66,14 +66,10 @@ class DesktopBackground(AbstractView):
         self.setAutoFillBackground(True)
         palette.setBrush(QtGui.QPalette.Window, Qt.white)
         self.setPalette(palette)
-        
-    # This method is invoked when the desktop workspace decides or gets told
-    # that the actions should be updated due to the presence of to be added 
-    # actions. 
-    @QtCore.qt_slot(object)
+
     def set_actions(self, actions):
         """
-        :param actions: a list of EntityActions
+        :param actions: a list of Actions
         """
         #
         # Remove old actions
@@ -271,24 +267,7 @@ class DesktopWorkspace(QtGui.QWidget):
         self._tab_widget.tabCloseRequested.connect(self._tab_close_request)
         self._tab_widget.currentChanged.connect(self._tab_changed)
         layout.addWidget(self._tab_widget)
-        
-        ## Setup the background widget
-        #self._background_widget = DesktopBackground( self.gui_context, self )
-        #self._tab_widget.addTab(self._background_widget,
-                                #Icon('tango/16x16/actions/go-home.png').getQIcon(),
-                                #_('Home'))
-        #if tab_bar.tabButton(0, QtGui.QTabBar.RightSide):
-            #tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
-        #elif tab_bar.tabButton(0, QtGui.QTabBar.LeftSide):
-            ## mac for example has the close button on the left side by default
-            #tab_bar.tabButton(0, QtGui.QTabBar.LeftSide).hide()
-        
         self.setLayout(layout)
-        #self.reload_background_widget()
-             
-    #@QtCore.qt_slot()
-    #def reload_background_widget(self):
-        #post(self._app_admin.get_actions, self._background_widget.set_actions)
 
     @QtCore.qt_slot()
     def _change_view_mode(self):

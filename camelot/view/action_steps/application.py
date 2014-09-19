@@ -80,7 +80,9 @@ class ActionView( ActionStep ):
         self.actions = actions
 
     def render(self, gui_context):
-        return DesktopBackground(gui_context)
+        view = DesktopBackground(gui_context)
+        view.set_actions(self.actions)
+        return view
 
     def gui_run(self, gui_context):
         workspace = gui_context.workspace
