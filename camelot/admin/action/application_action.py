@@ -407,6 +407,7 @@ Restore the database to disk
     tooltip = _('Restore the database from a backup')
     icon = Icon('tango/16x16/devices/drive-harddisk.png')
     backup_mechanism = BackupMechanism
+    shortcut = None
             
     def model_run( self, model_context ):
         from camelot.view.action_steps import UpdateProgress, SelectRestore

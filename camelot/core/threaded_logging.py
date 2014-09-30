@@ -51,6 +51,7 @@ first line support.
 from .qt import QtCore
 
 import getpass
+import json
 import logging
 import sys
 
@@ -133,7 +134,6 @@ class ThreadedAwsHandler(logging.Handler):
         
     def emit(self, record):
         # inspired by the code in logging.handlers.SocketHandler
-        import json
         if len( self._records_to_emit ) >= self._max_cache:
             return
         ei = record.exc_info
@@ -148,7 +148,11 @@ class ThreadedAwsHandler(logging.Handler):
             record.exc_info = None
         record_dict = dict( user=self._user, revision=self._revision )
         record_dict.update( record.__dict__ )
-        self._records_to_emit.append( json.dumps( record_dict ) )
+        try:
+            self._records_to_emit.append( json.dumps( record_dict ) )
+        except Exception:
+            # not all data structures can be JSON serialized
+            pass
         if ei:
             record.exc_info = ei  # for next handler
         
