@@ -109,8 +109,8 @@ class StandaloneWizardPage(QtGui.QDialog):
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         if accept != None:
             ok_button = QtGui.QPushButton( six.text_type( accept ), self )
-            ok_button.setObjectName( 'accept' )            
-            ok_button.pressed.connect( self.accept )   
+            ok_button.setObjectName( 'accept' )
+            ok_button.pressed.connect( self.accept )
             layout.addWidget( ok_button )
         if reject != None:
             cancel_button = QtGui.QPushButton( six.text_type( reject ), self )

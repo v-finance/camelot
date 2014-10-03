@@ -24,6 +24,8 @@
 """Decorators to enhance the docstrings of classes
 """
 
+import six
+
 from sqlalchemy import inspect, orm, util
 
 from ...admin.entity_admin import EntityAdmin
@@ -59,7 +61,7 @@ def document_classes(classes):
                     docstrings.append('foreign key to {}'.format(foreign_key.column))
             choices = attrs.get('choices', None)
             if (choices is not None) and (isinstance(choices, list)):
-                values = [unicode(v) for v, _s in choices]
+                values = [six.text_type(v) for v, _s in choices]
                 docstrings.append('possible values : {}'.format('/'.join(values)))
 
         if len(docstrings):
@@ -70,7 +72,7 @@ def document_classes(classes):
         if isinstance(prop, orm.properties.RelationshipProperty):
             target = prop.mapper.class_
             if target is not None:
-                if isinstance(target, basestring):
+                if isinstance(target, six.string_types):
                     docstrings.append('points to :class:`{0}`'.format(target))
                 else:
                     docstrings.append('points to :class:`{0.__module__}.{0.__name__}`'.format(target))
@@ -86,7 +88,7 @@ def document_classes(classes):
         mapper = inspect(model)
 
         if mapper.mapped_table is not None:
-            mapped_to = unicode(mapper.mapped_table)
+            mapped_to = six.text_type(mapper.mapped_table)
 
         # this is a hack to use the items method of ImmutableProperties, without
         # triggering the PY3K convertor
