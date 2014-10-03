@@ -282,9 +282,9 @@ class Party(Entity, WithAddresses):
                         if value and value[1]:
                             contact_mechanism.mechanism = value
                         else:
-                            session = orm.object_session( party_contact_mechanism )
                             self.contact_mechanisms.remove( party_contact_mechanism )
-                            if party_contact_mechanism.id:
+                            session = orm.object_session( party_contact_mechanism )
+                            if (session is not None) and party_contact_mechanism.id:
                                 session.delete( party_contact_mechanism )
                         return
         if value and value[1]:
