@@ -52,7 +52,7 @@ class TextLineEditor(CustomEditor):
         text_input.setEchoMode(echo_mode or QtGui.QLineEdit.Normal)
         layout.addWidget(text_input)
         if validator is not None:
-            text_input.setValidator(validator(self))
+            text_input.setValidator(validator)
         if length:
             text_input.setMaxLength(length)
         self.setFocusProxy(text_input)
