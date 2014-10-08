@@ -83,6 +83,8 @@ class VirtualAddressEditor(CustomEditor):
         self.combo.setEnabled(editable)
         if address_type:
             self.combo.setVisible(False)
+            idx = camelot.types.VirtualAddress.virtual_address_types.index(address_type)
+            self.combo.setCurrentIndex(idx)
         self.layout.addWidget(self.combo)
         self.editor = DecoratedLineEdit( self )
         self.editor.setEnabled(editable)

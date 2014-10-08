@@ -22,8 +22,6 @@
 #
 #  ============================================================================
 
-import functools
-
 import six
 
 from ...core.qt import QtCore, QtGui
@@ -35,7 +33,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import Icon
-from camelot.view.controls import delegates
+from camelot.view.controls import delegates, editors
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.model_thread import post
@@ -57,6 +55,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   admin,
                   form_display,
                   columns,
+                  form_actions,
+                  accept,
+                  reject,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
@@ -97,9 +98,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper,
                                                          'widget_mapper' )
 
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        cancel_button = QtGui.QPushButton(six.text_type(reject))
         cancel_button.setObjectName( 'cancel' )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
+        ok_button = QtGui.QPushButton(six.text_type(accept))
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
         layout = QtGui.QHBoxLayout()
@@ -116,11 +117,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self._validity_changed( 0 )
 
         # set the actions in the actions panel
-        get_actions = admin.get_form_actions
-        post( functools.update_wrapper( functools.partial( get_actions,
-                                                           None ),
-                                        get_actions ),
-              self.set_actions )
+        self.set_actions(form_actions)
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
@@ -172,7 +169,6 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   admin,
                   parent = None,
                   flags = QtCore.Qt.Window ):
-        from camelot.view.controls import editors
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
@@ -228,11 +224,22 @@ class ChangeObject( ActionStep ):
     :param obj: the object to change
     :param admin: an instance of an admin class to use to edit the
         object, None if the default is to be taken
+
+    .. attribute:: accept
+
+        The text shown in the accept button
+
+    .. attribute:: reject
+
+        The text shown in the reject button
+
     """
 
     def __init__( self, obj, admin=None ):
         self.obj = obj
         self.admin = admin
+        self.accept = _('OK')
+        self.reject = _('Cancel')
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -245,8 +252,13 @@ class ChangeObject( ActionStep ):
         """create the dialog. this method is used to unit test
         the action step."""
         super(ChangeObject, self).gui_run(gui_context)
-        dialog = ChangeObjectDialog(self.obj, self.admin, self.form_display,
-                                    self.columns)
+        dialog = ChangeObjectDialog(self.obj,
+                                    self.admin,
+                                    self.form_display,
+                                    self.columns,
+                                    self.form_actions,
+                                    self.accept,
+                                    self.reject)
         return dialog
 
     def gui_run( self, gui_context ):
@@ -262,6 +274,7 @@ class ChangeObject( ActionStep ):
         self.admin = self.admin or model_context.admin.get_related_admin( cls )
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
+        self.form_actions = self.admin.get_form_actions(None)
         
 class ChangeObjects( ActionStep ):
     """

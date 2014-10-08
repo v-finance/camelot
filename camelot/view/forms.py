@@ -28,7 +28,6 @@ well.  Form classes can be used recursive.
 """
 
 import logging
-import types
 
 logger = logging.getLogger( 'camelot.view.forms' )
 
@@ -77,7 +76,7 @@ and takes these parameters :
                 for nested_field in  field._get_fields_from_form():
                     yield nested_field
             else:
-                assert isinstance( field, (six.string_types, types.NoneType) )
+                assert isinstance( field, (six.string_types)) or (field is None)
                 yield field;
 
 

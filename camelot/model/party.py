@@ -197,6 +197,10 @@ class WithAddresses(object):
     def street1_setter( self, value ):
         return self._set_address_field( u'street1', value )
 
+    @street1.expression
+    def street1_expression(self):
+        return
+
     @hybrid.hybrid_property
     def street2( self ):
         return self._get_address_field( u'street2' ) 
@@ -204,7 +208,11 @@ class WithAddresses(object):
     @street2.setter
     def street2_setter( self, value ):
         return self._set_address_field( u'street2', value )
-    
+
+    @street2.expression
+    def street2_expression(self):
+        return
+
     @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
@@ -212,6 +220,10 @@ class WithAddresses(object):
     @city.setter
     def city_setter( self, value ):
         return self._set_address_field( u'city', value )
+
+    @city.expression
+    def city_expression(self):
+        return
 
     def get_first_address(self):
         raise NotImplementedError()
@@ -225,7 +237,6 @@ class WithAddresses(object):
             return getattr( first_address, name )
 
     def _set_address_field( self, name, value ):
-
         address = self.set_first_address()
         setattr( address, name, value )
         if address.street1==None and address.street2==None and address.city==None:
@@ -282,9 +293,9 @@ class Party(Entity, WithAddresses):
                         if value and value[1]:
                             contact_mechanism.mechanism = value
                         else:
-                            session = orm.object_session( party_contact_mechanism )
                             self.contact_mechanisms.remove( party_contact_mechanism )
-                            if party_contact_mechanism.id:
+                            session = orm.object_session( party_contact_mechanism )
+                            if (session is not None) and party_contact_mechanism.id:
                                 session.delete( party_contact_mechanism )
                         return
         if value and value[1]:

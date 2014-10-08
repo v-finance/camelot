@@ -288,7 +288,8 @@ allow all languages
         self.network_status_label.setStyleSheet('')
         self.toggle_ok_button()
 
-    @QtCore.qt_slot(QtNetwork.QNetworkReply)
+    # this line segfaults on OSX using Python 3.3
+    #@QtCore.qt_slot(QtNetwork.QNetworkReply)
     def update_network_status(self, reply):
         if reply.isFinished():
             error = reply.error()
