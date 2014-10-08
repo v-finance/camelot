@@ -37,6 +37,7 @@ class TextLineEditor(CustomEditor):
                  length = 20,
                  echo_mode = None,
                  field_name = 'text_line',
+                 validator = None,
                  actions = [],
                  **kwargs):
         CustomEditor.__init__(self, parent)
@@ -50,6 +51,8 @@ class TextLineEditor(CustomEditor):
         text_input.editingFinished.connect(self.text_input_editing_finished)
         text_input.setEchoMode(echo_mode or QtGui.QLineEdit.Normal)
         layout.addWidget(text_input)
+        if validator is not None:
+            text_input.setValidator(validator(self))
         if length:
             text_input.setMaxLength(length)
         self.setFocusProxy(text_input)
