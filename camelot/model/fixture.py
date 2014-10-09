@@ -49,11 +49,11 @@ class Fixture( Entity ):
     
     __tablename__ = 'fixture'
     
-    model = Column( Unicode( 256 ), index = True, nullable=False )
+    model = Column( Unicode( 255 ), index = True, nullable=False )
     primary_key = Column( PrimaryKey(), 
                           index = True, nullable=False )
-    fixture_key = Column( Unicode( 256 ), index = True, nullable=False )
-    fixture_class = Column( Unicode( 256 ), index = True, nullable=True )
+    fixture_key = Column( Unicode( 255 ), index = True, nullable=False )
+    fixture_class = Column( Unicode( 255 ), index = True, nullable=True )
 
     @classmethod
     def find_fixture_reference( cls, 
@@ -221,7 +221,7 @@ class FixtureVersion( Entity ):
     __tablename__ = 'fixture_version'
     
     fixture_version = Column( Integer, index = True, nullable=False, default=0 )
-    fixture_class = Column( Unicode( 256 ), index = True, nullable=True,
+    fixture_class = Column( Unicode( 255 ), index = True, nullable=True,
                             primary_key=True )
     
     @classmethod
