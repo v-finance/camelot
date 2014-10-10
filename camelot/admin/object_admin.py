@@ -61,7 +61,8 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'new_message',
                                                 'nullable',
                                                 'precision',
-                                                'directory'])
+                                                'directory',
+                                                'validator'])
 
 
 class ObjectAdmin(object):
