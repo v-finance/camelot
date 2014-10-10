@@ -46,6 +46,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
         if self._font_metrics is None:
             self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
             self._background_color = self.palette().color(self.backgroundRole())
+        self.textChanged.connect(self.text_changed)
 
     def set_minimum_width(self, width):
         """Set the minimum width of the line edit, measured in number of 
@@ -60,7 +61,11 @@ class DecoratedLineEdit(QtGui.QLineEdit):
             self.setMinimumWidth( self._font_metrics.width( width ) )
         else:
             self.setMinimumWidth( self._font_metrics.averageCharWidth() )
-        
+
+    @QtCore.qt_slot(six.text_type)
+    def text_changed(self, text):
+        self.set_valid(self.hasAcceptableInput())
+
     def set_valid(self, valid):
         """Set the validity of the current content of the line edit
         :param valid: True or False
