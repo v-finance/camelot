@@ -30,6 +30,7 @@ from ....core.qt import QtGui, QtCore, Qt, py_to_variant
 
 from .customeditor import CustomEditor, set_background_color_palette
 
+from ...validator import DateValidator
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -45,6 +46,7 @@ class DateEditor(CustomEditor):
                        editable = True,
                        nullable = True, 
                        field_name = 'date',
+                       validator = DateValidator(),
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtGui.QSizePolicy.Preferred,
@@ -52,9 +54,10 @@ class DateEditor(CustomEditor):
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
+        line_edit.setValidator(validator)
         line_edit.setObjectName('date_line_edit')
-        line_edit.set_minimum_width( six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)) )
-        line_edit.setPlaceholderText( QtCore.QDate(2000,1,1).toString(self.date_format) )
+        line_edit.set_minimum_width(six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)))
+        line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))
 
         # The order of creation of this widgets and their parenting
         # seems very sensitive under windows and creates system crashes
@@ -98,8 +101,7 @@ class DateEditor(CustomEditor):
         self.maximum = datetime.date.max
         self.setFocusProxy(line_edit)
 
-        line_edit.editingFinished.connect( self.line_edit_finished )
-        line_edit.textEdited.connect(self.text_edited)
+        line_edit.editingFinished.connect(self.line_edit_finished)
         special_date_menu.triggered.connect(self.set_special_date)
 
     def calendar_widget_activated(self, date):
@@ -135,16 +137,6 @@ class DateEditor(CustomEditor):
             else:
                 line_edit.setText('')
             self.valueChanged.emit()
-
-    def text_edited(self, text ):
-        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
-        if line_edit is not None:
-            try:
-                date_from_string( six.text_type( line_edit.text() ) )
-                line_edit.set_valid(True)
-                self.valueChanged.emit()
-            except ParsingError:
-                line_edit.set_valid(False)
 
     def get_value(self):
         line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
