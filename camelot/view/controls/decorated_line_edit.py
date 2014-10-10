@@ -25,7 +25,9 @@
 import six
 
 from ...core.qt import QtCore, QtGui
+from ..art import ColorScheme
 from .editors.customeditor import draw_tooltip_visualization
+
 
 class DecoratedLineEdit(QtGui.QLineEdit):
     """
@@ -42,7 +44,6 @@ class DecoratedLineEdit(QtGui.QLineEdit):
       
     def __init__(self, parent = None):
         super( DecoratedLineEdit, self ).__init__( parent = parent )
-        self._valid = True
         if self._font_metrics is None:
             self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
             self._background_color = self.palette().color(self.backgroundRole())
@@ -64,20 +65,19 @@ class DecoratedLineEdit(QtGui.QLineEdit):
 
     @QtCore.qt_slot(six.text_type)
     def text_changed(self, text):
-        self.set_valid(self.hasAcceptableInput())
+        self._update_background_color()
 
-    def set_valid(self, valid):
-        """Set the validity of the current content of the line edit
-        :param valid: True or False
-        """
-        if valid!=self._valid:
-            self._valid = valid
-            self._update_background_color()
+    def setValidator(self, validator):
+        if self.validator() != validator:
+            super(DecoratedLineEdit, self).setValidator(validator)
+        # updating the bg color should only be needed when the validat did
+        # actually change, however this seems to break the virtualaddresseditor
+        # when the existing input is invalid
+        self._update_background_color()
 
     def _update_background_color(self):
-        from camelot.view.art import ColorScheme
         palette = self.palette()
-        if self._valid:
+        if self.hasAcceptableInput():
             palette.setColor(self.backgroundRole(), self._background_color)
         else:
             palette.setColor(self.backgroundRole(), ColorScheme.orange_2)
