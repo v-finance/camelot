@@ -30,9 +30,14 @@ from camelot.view.art import Icon
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 import camelot.types
 
-email_validator = QtGui.QRegExpValidator(QtCore.QRegExp(r'^\S+\@\S+\.\S+$'))
-phone_validator = QtGui.QRegExpValidator(QtCore.QRegExp(r'^\+?[0-9\s]+$'))
-any_character_validator =  QtGui.QRegExpValidator(QtCore.QRegExp(r'^.+$'))
+# older versions of PyQt dont allow passing the regesp in the constructor
+# of the validator
+email_validator = QtGui.QRegExpValidator()
+email_validator.setRegExp(QtCore.QRegExp(r'^\S+\@\S+\.\S+$'))
+phone_validator = QtGui.QRegExpValidator()
+phone_validator.setRegExp(QtCore.QRegExp(r'^\+?[0-9\s]+$'))
+any_character_validator =  QtGui.QRegExpValidator()
+any_character_validator.setRegExp(QtCore.QRegExp(r'^.+$'))
 
 validators = {
     'email': email_validator,
