@@ -733,8 +733,17 @@ be specified using the verbose_name attribute.
         possibly appear in a list or a form or for which field attributes have
         been defined
         """
-        fields = dict(self.get_columns())
-        fields.update(dict(self.get_fields()))
+        fields = {}
+        # capture all properties
+        for cls in inspect.getmro(self.entity):
+            for desc_name, desc in cls.__dict__.items():
+                if desc_name.startswith('__'):
+                    continue
+                field_attributes = self.get_descriptor_field_attributes(desc_name)
+                if len(field_attributes):
+                    fields[desc_name] = field_attributes
+        fields.update(self.get_columns())
+        fields.update(self.get_fields())
         return fields
 
     def get_filters(self):
