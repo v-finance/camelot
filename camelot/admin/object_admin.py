@@ -739,9 +739,8 @@ be specified using the verbose_name attribute.
             for desc_name, desc in cls.__dict__.items():
                 if desc_name.startswith('__'):
                     continue
-                field_attributes = self.get_descriptor_field_attributes(desc_name)
-                if len(field_attributes):
-                    fields[desc_name] = field_attributes
+                if len(self.get_descriptor_field_attributes(desc_name)):
+                    fields[desc_name] = self.get_field_attributes(desc_name)
         fields.update(self.get_columns())
         fields.update(self.get_fields())
         return fields
