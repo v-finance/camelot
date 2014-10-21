@@ -138,7 +138,7 @@ All files (*)"""
         return self.storage.checkin_stream( 'clipboard', suffix, stream)
         
     def set_enabled(self, editable=True):
-        self.label.setEnabled(editable)
+        self.setAcceptDrops(editable)
 
     def set_pixmap(self, pixmap):
         self.label.setPixmap(pixmap)
