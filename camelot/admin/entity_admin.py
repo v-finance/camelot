@@ -558,7 +558,7 @@ and used as a custom action.
         or through the field_attributes, this method returns all the fields
         that have been mapped.
         """
-        fields = super( EntityAdmin, self ).get_all_fields_and_attributes()
+        fields = super(EntityAdmin, self).get_all_fields_and_attributes()
         for mapper_property in self.mapper.iterate_properties:
             if isinstance(mapper_property, orm.properties.ColumnProperty):
                 field_name = mapper_property.key

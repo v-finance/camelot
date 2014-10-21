@@ -30,6 +30,7 @@ import six
 from datetime import datetime, time, date
 import decimal
 import re
+import string
 import logging
 import operator
 
@@ -112,7 +113,6 @@ def date_from_string(s):
     s = s.strip()
     if not s:
         return None
-    import string
     f = local_date_format()
     dt = QtCore.QDate.fromString(s, f)
     if not dt.isValid():

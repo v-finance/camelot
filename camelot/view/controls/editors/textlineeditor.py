@@ -37,7 +37,6 @@ class TextLineEditor(CustomEditor):
                  length = 20,
                  echo_mode = None,
                  field_name = 'text_line',
-                 validator = None,
                  actions = [],
                  **kwargs):
         CustomEditor.__init__(self, parent)
@@ -51,8 +50,6 @@ class TextLineEditor(CustomEditor):
         text_input.editingFinished.connect(self.text_input_editing_finished)
         text_input.setEchoMode(echo_mode or QtGui.QLineEdit.Normal)
         layout.addWidget(text_input)
-        if validator is not None:
-            text_input.setValidator(validator)
         if length:
             text_input.setMaxLength(length)
         self.setFocusProxy(text_input)
@@ -97,6 +94,7 @@ class TextLineEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
         text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        validator = kwargs.get('validator')
         if text_input is not None:
             editable = kwargs.get('editable', False)
             value = text_input.text()
@@ -104,6 +102,7 @@ class TextLineEditor(CustomEditor):
             text_input.setText(value)
             text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
             set_background_color_palette(text_input, kwargs.get('background_color'))
+            text_input.setValidator(validator)
 
     def paintEvent(self, event):
         super(TextLineEditor, self).paintEvent(event)
