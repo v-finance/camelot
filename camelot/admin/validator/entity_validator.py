@@ -38,9 +38,8 @@ class EntityValidator(ObjectValidator):
         empty list if object is valid
         """
         session = orm.object_session( obj )
-        if session == None:
-            return []
-        if obj in session.deleted:
-            return []
+        if session is not None:
+            if obj in session.deleted:
+                return []
         return super( EntityValidator, self ).validate_object( obj )
 
