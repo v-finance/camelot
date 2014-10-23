@@ -29,7 +29,7 @@ import logging
 
 import six
 
-from ...core.qt import QtGui
+from ...core.qt import QtGui, variant_to_py
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -487,6 +487,8 @@ class ExportSpreadsheet( ListContextAction ):
         # 
         yield action_steps.UpdateProgress(text=_('Prepare export'))
         admin = model_context.admin
+        settings = admin.get_settings()
+        settings.beginGroup('export_spreadsheet')
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
                          six.iteritems(all_fields) ]
@@ -497,7 +499,12 @@ class ExportSpreadsheet( ListContextAction ):
         for i, default_field in six.moves.zip_longest(column_range,
                                                       admin.get_columns(),
                                                       fillvalue=(None,None)):
-            mappings.append(ColumnMapping(i, [row_data], default_field[0]))
+            previous_field = variant_to_py(settings.value(str(i), ''))
+            if previous_field:
+                field = previous_field
+            else:
+                field = default_field[0]
+            mappings.append(ColumnMapping(i, [row_data], field))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
@@ -505,9 +512,13 @@ class ExportSpreadsheet( ListContextAction ):
         change_mappings.subtitle = _('Specify for each column the field to export')
         yield change_mappings
         columns = []
-        for mapping in mappings:
+        for i, mapping in enumerate(mappings):
             if mapping.field is not None:
+                settings.setValue(str(i), mapping.field)
                 columns.append((mapping.field, all_fields[mapping.field]))
+            else:
+                settings.setValue(str(i), '')
+        settings.endGroup()
         #
         # setup worksheet
         #
