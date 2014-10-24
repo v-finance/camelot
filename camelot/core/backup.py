@@ -159,6 +159,9 @@ class BackupMechanism(object):
         for from_table in from_meta_data.sorted_tables:
             if self.backup_table_filter(from_table):
                 to_table = from_table.tometadata(to_meta_data)
+                to_table.constraints = set()
+                to_table.primary_key = []
+                to_table.foreign_keys = set()
                 from_and_to_tables.append((from_table, to_table))
         to_meta_data.create_all(to_connection)
 
