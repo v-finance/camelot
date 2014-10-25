@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-""":class:`PyQt4.QtGui.QValidator` subclasses to be used in the
+""":class:`QtGui.QValidator` subclasses to be used in the
 editors or other widgets.
 """
 

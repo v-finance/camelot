@@ -677,7 +677,7 @@ be specified using the verbose_name attribute.
             self.list_display = list()
             # no fields were defined, see if there are properties
             for cls in inspect.getmro(self.entity):
-                for desc_name, desc in cls.__dict__.items():
+                for desc_name, desc in six.iteritems(cls.__dict__):
                     if desc_name.startswith('__'):
                         continue
                     if len(self.get_descriptor_field_attributes(desc_name)):
@@ -736,7 +736,7 @@ be specified using the verbose_name attribute.
         fields = {}
         # capture all properties
         for cls in inspect.getmro(self.entity):
-            for desc_name, desc in cls.__dict__.items():
+            for desc_name, desc in six.iteritems(cls.__dict__):
                 if desc_name.startswith('__'):
                     continue
                 if len(self.get_descriptor_field_attributes(desc_name)):
