@@ -107,11 +107,13 @@ class StatusHistory( object ):
     .. attribute:: from_date When a status was enacted or set
     """
 
-    status_datetime = schema.Column( types.Date, nullable = True )
-    status_from_date = schema.Column( types.Date, nullable = True )
-    status_thru_date = schema.Column( types.Date, nullable = True )
-    from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
-    thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
+    status_datetime = schema.Column(types.Date, nullable=True, index=True)
+    status_from_date = schema.Column(types.Date, nullable=True, index=True)
+    status_thru_date = schema.Column(types.Date, nullable=True, index=True)
+    from_date = schema.Column(types.Date, nullable=False, index=True,
+                              default=datetime.date.today)
+    thru_date = schema.Column(types.Date, nullable=False, index=True,
+                              default=end_of_times)
     field_attributes = {'from_date': {'name': _('From date')},
                         'thru_date': {'name': _('Thru date')}
                         }
@@ -194,9 +196,11 @@ class Status( EntityBuilder ):
             status_history = type( entity.__name__ + 'StatusHistory',
                                    ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
                                    {'__tablename__':self.status_history_table,
-                                    'classified_by_id':schema.Column( PrimaryKey(), 
-                                                                      foreign_key, 
-                                                                      nullable = False ),
+                                    'classified_by_id':schema.Column(
+                                        PrimaryKey(),
+                                        foreign_key,
+                                        nullable=False,
+                                        index=True),
                                     'classified_by':orm.relationship( status_type ),
                                     'Admin':status_history_admin, } )
 
@@ -208,8 +212,11 @@ class Status( EntityBuilder ):
             status_history = type( entity.__name__ + 'StatusHistory',
                                    ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
                                    {'__tablename__':self.status_history_table,
-                                    'classified_by':schema.Column( Enumeration( self.enumeration ), 
-                                                                   nullable=False, index=True ),
+                                    'classified_by':schema.Column(
+                                        Enumeration( self.enumeration ), 
+                                        nullable=False,
+                                        index=True
+                                        ),
                                     'Admin':status_history_admin,} )
             setattr( entity, '_%s_enumeration'%name, self.enumeration )
 
@@ -221,10 +228,13 @@ class Status( EntityBuilder ):
         for col in table.primary_key.columns:
             col_name = u'status_for_%s'%col.name
             if not hasattr( self.status_history, col_name ):
-                constraint = schema.ForeignKey( col,
-                                                ondelete = 'cascade', 
-                                                onupdate = 'cascade')
-                column = schema.Column( PrimaryKey(), constraint, nullable = False )
+                constraint = schema.ForeignKey(col,
+                                               ondelete = 'cascade', 
+                                               onupdate = 'cascade')
+                column = schema.Column(PrimaryKey(),
+                                       constraint,
+                                       nullable=False,
+                                       index=True)
                 setattr( self.status_history, col_name, column )
 
     def create_properties( self ):
