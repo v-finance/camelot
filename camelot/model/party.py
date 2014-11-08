@@ -198,14 +198,14 @@ class WithAddresses(object):
         return self._set_address_field( u'street1', value )
 
     @street1.expression
-    def street1(cls):
+    def street1_expression(cls):
         return sql.select([Address.street1],
                           whereclause=cls.first_address_filter(),
                           limit=1)
 
     @hybrid.hybrid_property
     def street2( self ):
-        return self._get_address_field( u'street2' ) 
+        return self._get_address_field( u'street2' )
     
     @street2.setter
     def street2_setter( self, value ):
@@ -218,6 +218,15 @@ class WithAddresses(object):
     @city.setter
     def city_setter( self, value ):
         return self._set_address_field( u'city', value )
+
+    @city.expression
+    def city_expression(cls):
+        return sql.select([GeographicBoundary.code],
+                          whereclause=sql.and_(
+                              GeographicBoundary.id==Address.city_geographicboundary_id,
+                              cls.first_address_filter()
+                              ),
+                          limit=1)
 
     def get_first_address(self):
         raise NotImplementedError()
