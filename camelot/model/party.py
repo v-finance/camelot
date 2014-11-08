@@ -262,6 +262,11 @@ class Party(Entity, WithAddresses):
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
 
+    @classmethod
+    def first_address_filter(cls):
+        return sql.and_(PartyAddress.party_id==cls.id,
+                        PartyAddress.address_id==Address.id)
+
     @property
     def name( self ):
         return ''
