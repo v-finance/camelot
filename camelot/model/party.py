@@ -423,7 +423,7 @@ class Person( Party ):
     def name( self ):
         # we don't use full name in here, because for new objects, full name will be None, since
         # it needs to be fetched from the db first
-        return u'%s %s' % ( self.first_name, self.last_name )
+        return ' '.join([name for name in [self.first_name, self.last_name] if name])
 
     def __unicode__( self ):
         return self.name or ''
