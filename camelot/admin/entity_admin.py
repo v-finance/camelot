@@ -257,8 +257,13 @@ and used as a custom action.
                     class_attribute = getattr(self.entity, field_name)
                     if class_attribute is not None:
                         if isinstance(class_attribute, sql.Select):
-                            sql_attributes = self.get_sql_field_attributes(class_attribute.columns)
-                            attributes.update(sql_attributes)
+                            for k, v in six.iteritems(self.get_sql_field_attributes(class_attribute.columns)):
+                                # the defaults or the nullable status of the column
+                                # does not need to be the default or the nullable
+                                # of the hybrid property
+                                if k in ['default', 'nullable']:
+                                    continue
+                                attributes[k] = v
                 break
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
@@ -377,7 +382,10 @@ and used as a custom action.
         """
         if not self.is_persistent( obj ):
             return None
-        return self.mapper.primary_key_from_instance( obj )
+        # this function is called on compound objects as well, so the
+        # mapper might be different from the mapper related to this admin
+        mapper = orm.object_mapper(obj)
+        return mapper.primary_key_from_instance( obj )
 
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
@@ -493,7 +501,7 @@ and used as a custom action.
                         logger.error( 'could not get modifications from object', exc_info = e )
                     primary_key = self.primary_key( obj_to_flush )
                     if modifications and (None not in primary_key):
-                        change = memento_change( model = six.text_type( self.entity.__name__ ),
+                        change = memento_change( model = six.text_type(type(obj_to_flush).__name__),
                                                  memento_type = 'before_update',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
