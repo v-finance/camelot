@@ -29,7 +29,7 @@ import logging
 
 import six
 
-from ...core.qt import QtGui, variant_to_py
+from ...core.qt import QtGui, variant_to_py, py_to_variant
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -464,6 +464,92 @@ class ToLastRow( AbstractToLast, ToNextRow ):
         item_view = gui_context.item_view
         item_view.selectRow( item_view.model().rowCount() - 1 )
 
+class SaveExportMapping( Action ):
+    """
+    Save the user defined order of columns to export
+    """
+
+    verbose_name = _('Save')
+    tooltip = _('Save the order of the columns for future use')
+
+    def __init__(self, settings):
+        self.settings = settings
+
+    def read_mappings(self):
+        mappings = dict()
+        number_of_mappings = self.settings.beginReadArray('mappings')
+        for i in range(number_of_mappings):
+            self.settings.setArrayIndex(i)
+            name = variant_to_py(self.settings.value('name', py_to_variant(b'')))
+            number_of_columns = self.settings.beginReadArray('columns')
+            columns = list()
+            for j in range(number_of_columns):
+                self.settings.setArrayIndex(j)
+                field = variant_to_py(self.settings.value('field',
+                                                          py_to_variant(b'')))
+                columns.append(field)
+            self.settings.endArray()
+            mappings[name] = columns
+        self.settings.endArray()
+        return mappings
+
+    def write_mappings(self, mappings):
+        self.settings.beginWriteArray('mappings')
+        for i, (name, columns) in enumerate(mappings.items()):
+            self.settings.setArrayIndex(i)
+            self.settings.setValue('name', name)
+            self.settings.beginWriteArray('columns')
+            for j, column in enumerate(columns):
+                self.settings.setArrayIndex(j)
+                self.settings.setValue('field', column)
+            self.settings.endArray()
+        self.settings.endArray()
+
+    def model_run(self, model_context):
+        from ..object_admin import ObjectAdmin
+        from camelot.view import action_steps
+
+        class ExportMappingOptions(object):
+
+            def __init__(self):
+                self.name = None
+
+            class Admin(ObjectAdmin):
+                list_display = ['name']
+                field_attributes = {'name': {'editable': True,
+                                             'nullable': False}}
+
+        if model_context.collection_count:
+            mappings = self.read_mappings()
+            options = ExportMappingOptions()
+            yield action_steps.ChangeObject(options)
+            columns = [column_mapping.field for column_mapping in model_context.get_collection() if column_mapping.field]
+            mappings[options.name] = columns
+            self.write_mappings(mappings)
+
+class RestoreExportMapping( SaveExportMapping ):
+    """
+    Restore the user defined order of columns to export
+    """
+
+    verbose_name = _('Restore')
+    tooltip = _('Restore the previously stored order of the columns')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+
+        mappings = self.read_mappings()
+        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_name = yield action_steps.SelectItem(mapping_names)
+        if mapping_name:
+            fields = mappings[mapping_name]
+            for i, column_mapping in enumerate(model_context.get_collection()):
+                if i<len(fields):
+                    column_mapping.field = fields[i]
+                else:
+                    column_mapping.field = None
+                yield action_steps.UpdateObject(column_mapping)
+
 class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
     
@@ -499,26 +585,20 @@ class ExportSpreadsheet( ListContextAction ):
         for i, default_field in six.moves.zip_longest(column_range,
                                                       admin.get_columns(),
                                                       fillvalue=(None,None)):
-            previous_field = variant_to_py(settings.value(str(i), ''))
-            if previous_field:
-                field = previous_field
-            else:
-                field = default_field[0]
-            mappings.append(ColumnMapping(i, [row_data], field))
+            mappings.append(ColumnMapping(i, [row_data], default_field[0]))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
+        mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
+                                                 RestoreExportMapping(settings)]
         change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
         change_mappings.title = _('Select field')
         change_mappings.subtitle = _('Specify for each column the field to export')
         yield change_mappings
+        settings.endGroup()
         columns = []
         for i, mapping in enumerate(mappings):
             if mapping.field is not None:
-                settings.setValue(str(i), mapping.field)
                 columns.append((mapping.field, all_fields[mapping.field]))
-            else:
-                settings.setValue(str(i), '')
-        settings.endGroup()
         #
         # setup worksheet
         #

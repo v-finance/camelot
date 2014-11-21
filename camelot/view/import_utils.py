@@ -190,9 +190,10 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
     
     list_display = ['column_name', 'field']
     list_actions = []
+    related_toolbar_actions = []
     
     def get_related_toolbar_actions(self, toolbar_area, direction):
-        return []
+        return self.related_toolbar_actions
 
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder( six.Iterator ):

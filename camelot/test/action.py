@@ -56,7 +56,7 @@ class MockModelContext( object ):
         return self.selection
 
     def get_collection( self, yield_per = None ):
-        return [self.obj]
+        return self.get_selection(yield_per=yield_per)
 
     @property
     def session( self ):
