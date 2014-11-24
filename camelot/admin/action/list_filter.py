@@ -38,19 +38,20 @@ from .base import Action, Mode
 
 class FilterMode(Mode):
 
-    def __init__(self, value, verbose_name, decorator):
+    def __init__(self, value, verbose_name, decorator, checked=False):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
         self.decorator = decorator
+        self.checked = checked
 
     def decorate_query(self, query, value):
         return self.decorator(query, value)
 
+class All(object):
+    pass
+
 class Filter(Action):
     """Base class for filters"""
-    
-    class All(object):
-        pass
-    
+
     def __init__(self, attribute, default=All, verbose_name=None):
         """
         :param attribute: the attribute on which to filter, this attribute
@@ -66,21 +67,26 @@ class Filter(Action):
         self.attribute = attribute
         self.default = default
         self.verbose_name = verbose_name
+        self.exclusive = True
 
     def gui_run(self, gui_context, value):
         model = gui_context.item_view.model()
         if model is not None:
             model.set_filter_mode(self, gui_context.mode_name, value)
 
-    def create_decorator(self, col, attributes, value, joins):
+    def create_decorator(self, col, attributes, values, joins):
         
-        def decorator(q, _value):
+        def decorator(q, values):
             if joins:
                 q = q.join(*joins)
             if 'precision' in attributes:
                 delta = pow( 10,  -1*attributes['precision'])
-                return q.filter( sql.and_(col < value+delta, col > value-delta) )
-            return q.filter(col==value)
+                for value in values:
+                    q = q.filter( sql.and_(col < value+delta, col > value-delta) )
+            else:
+                where_clauses = [col==v for v in values]
+                q = q.filter(sql.or_(*where_clauses))
+            return q
           
         return decorator
 
@@ -108,10 +114,6 @@ class Filter(Action):
         query = query.distinct()
 
         modes = list()
-        all_mode = FilterMode(value=Filter.All,
-                               verbose_name=ugettext('All'),
-                               decorator=lambda x, _v:x)
-        state.default_mode = all_mode
 
         for value in query:
             if 'to_string' in attributes:
@@ -123,9 +125,8 @@ class Filter(Action):
             decorator = self.create_decorator(col, attributes, value[0], joins)
             mode = FilterMode(value=value[0],
                               verbose_name=verbose_name,
-                              decorator=decorator)
-            if value[0] == self.default:
-                state.default_mode = mode
+                              decorator=decorator,
+                              checked=((value[0]==self.default) or (self.exclusive==False)))
         
             # option_name name can be of type ugettext_lazy, convert it to unicode
             # to make it sortable
@@ -135,13 +136,29 @@ class Filter(Action):
         # sort outside the query to sort on the verbose name of the value
         modes.sort(key=lambda state:state.verbose_name)
         # put all mode first, no mater of its verbose name
-        modes.insert(0, all_mode)
+        if self.exclusive:
+            all_mode = FilterMode(value=All,
+                                  verbose_name=ugettext('All'),
+                                  decorator=lambda x, _v:x,
+                                  checked=(self.default==All))
+            modes.insert(0, all_mode)
+        else:
+            #if attributes.get('nullable', True):
+            none_mode = FilterMode(value=None,
+                                   verbose_name=ugettext('None'),
+                                   decorator=self.create_decorator(col, attributes, None, joins),
+                                   checked=True)
+            modes.append(none_mode)
         state.modes = modes
         return state
 
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
-    
+
+    def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
+        super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
+        self.exclusive = exclusive
+
     def render(self, gui_context, parent):
         from ...view.controls.filter_widget import FilterWidget
         return FilterWidget(self, gui_context, parent)
@@ -149,7 +166,7 @@ class GroupBoxFilter(Filter):
 
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
-    
+
     def render(self, gui_context, parent):
         from ...view.controls.filter_widget import ComboBoxFilterWidget
         return ComboBoxFilterWidget(self, gui_context, parent)
@@ -234,24 +251,22 @@ class EditorFilter(Filter):
         all_decorator = lambda q,_v:q
         none_decorator = lambda query, _v: query.filter(field==None)
         
-        all_mode = FilterMode(Filter.All, ugettext('All'), all_decorator)
+        all_mode = FilterMode(All, ugettext('All'), all_decorator,
+                              checked=(self.default==All))
         modes = [all_mode,
                  FilterMode(None, ugettext('None'), none_decorator),
                  ]
         
-        default_mode = all_mode
         operators = field_attributes.get('operators', [])
         for operator in operators:
             mode = FilterMode(operator,
                               six.text_type(operator_names[operator]),
-                              self.create_decorator(field, operator)
+                              self.create_decorator(field, operator),
+                              checked=(operator==self._default_operator),
                               )
-            if operator == self._default_operator:
-                default_mode = mode
             modes.append(mode)
 
         state.modes = modes
-        state.default_mode = default_mode
         return state
 
 class ValidDateFilter(Filter):

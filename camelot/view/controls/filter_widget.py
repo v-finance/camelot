@@ -45,6 +45,7 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         self.setFlat(True)
         self.modes = None
         group = QtGui.QButtonGroup(self)
+        group.setExclusive(action.exclusive)
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
         group.buttonClicked[int].connect(self.group_button_clicked)
@@ -62,9 +63,15 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
         mode = self.modes[index]
+        values = []
+        group = self.findChild(QtGui.QButtonGroup)
+        for button in self.findChildren(QtGui.QRadioButton):
+            if button.isChecked():
+                button_id = group.id(button)
+                values.append(self.modes[button_id].name)
         gui_context = self.gui_context.copy()
         gui_context.mode_name = mode
-        self.action.gui_run(gui_context, None)
+        self.action.gui_run(gui_context, values)
 
     def set_state(self, state):
         AbstractActionWidget.set_state(self, state)
@@ -78,7 +85,7 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
             button = QtGui.QRadioButton(six.text_type(mode.verbose_name), self)
             button_layout.addWidget(button)
             group.addButton(button, i)
-            if mode.name == state.default_mode.name:
+            if mode.checked:
                 button.setChecked(True)
 
         layout.addLayout(button_layout)
@@ -118,9 +125,7 @@ class DateFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     @QtCore.qt_slot()
     def editing_finished(self):
         self.run_action()
-        
-    def decorate_query(self, query):
-        return self.query_decorator(query, self.date_editor.get_value())
+
 
 class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     """Flter widget based on a QGroupBox"""
@@ -144,7 +149,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         if combobox is not None:
             current_index = 0
             for i, mode in enumerate(state.modes):
-                if mode.name == state.default_mode.name:
+                if mode.checked == True:
                     current_index = i
                 combobox.insertItem(i,
                                     six.text_type(mode.verbose_name),
@@ -168,11 +173,6 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
             gui_context = self.gui_context.copy()
             gui_context.mode_name = item_data
             self.action.gui_run(gui_context, None)
-
-    def decorate_query(self, query):
-        if self.current_index>=0:
-            return self.filter_data.options[self.current_index].decorator( query )
-        return query
 
 class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
     """Widget that allows applying various filter operators on a field

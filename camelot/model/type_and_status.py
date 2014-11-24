@@ -413,9 +413,10 @@ class StatusFilter(list_filter.GroupBoxFilter):
         else:
             choices = classification_fa['choices']
 
-        select_all = list_filter.FilterMode(value=list_filter.GroupBoxFilter.All,
+        select_all = list_filter.FilterMode(value=list_filter.All,
                                             verbose_name=_('All'),
-                                            decorator=lambda x, _v:x)
+                                            decorator=lambda x, _v:x,
+                                            checked=True)
         state.default_mode = select_all
         state.modes = [select_all]
 
@@ -431,7 +432,8 @@ class StatusFilter(list_filter.GroupBoxFilter):
                                               fa, value, [join])
             mode = list_filter.FilterMode(value=value,
                                           verbose_name=name,
-                                          decorator=decorator)
+                                          decorator=decorator,
+                                          checked=False)
             if value == self.default:
                 state.default_mode = mode
             state.modes.append(mode)
