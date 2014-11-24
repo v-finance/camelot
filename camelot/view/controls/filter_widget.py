@@ -32,7 +32,19 @@ from ...core.qt import QtCore, QtGui, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 from .editors import DateEditor
 
-class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
+class AbstractFilterWidget(AbstractActionWidget):
+    """Overwirte some methods to avoid to many state updates"""
+
+    def current_row_changed(self, _current_row):
+        pass
+        
+    def data_changed(self, _index1, _index2):
+        pass
+
+    def set_menu(self, _state):
+        pass
+
+class FilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """A box containing a filter that can be applied on a table view, this filter is
     based on the distinct values in a certain column"""
 
@@ -49,16 +61,7 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
         group.buttonClicked[int].connect(self.group_button_clicked)
-        AbstractActionWidget.__init__(self, action, gui_context)
-
-    def current_row_changed(self, _current_row):
-        pass
-        
-    def data_changed(self, _index1, _index2):
-        pass
-
-    def set_menu(self, _state):
-        pass
+        AbstractFilterWidget.__init__(self, action, gui_context)
 
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
@@ -74,7 +77,7 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         self.action.gui_run(gui_context, values)
 
     def set_state(self, state):
-        AbstractActionWidget.set_state(self, state)
+        AbstractFilterWidget.set_state(self, state)
         self.setTitle(six.text_type(state.verbose_name))
         group = self.findChild(QtGui.QButtonGroup)
         layout = self.layout()
@@ -91,12 +94,12 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-class DateFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
+class DateFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """Filter widget based on a DateEditor"""
 
     def __init__(self, action, gui_context, parent):
         QtGui.QGroupBox.__init__(self, parent)
-        AbstractActionWidget.__init__(self, action, gui_context)
+        AbstractFilterWidget.__init__(self, action, gui_context)
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
         self.setFlat(True)
@@ -106,33 +109,24 @@ class DateFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         self.date_editor.editingFinished.connect(self.editing_finished)
 
     def set_state(self, state):
-        AbstractActionWidget.set_state(self, state)
+        AbstractFilterWidget.set_state(self, state)
         self.setTitle(six.text_type(state.verbose_name))
         if state.default_mode is None:
             self.date_editor.set_value(None)
         else:
             self.date_editor.set_value(state.default_mode.name)
 
-    def current_row_changed(self, _current_row):
-        pass
-        
-    def data_changed(self, _index1, _index2):
-        pass
-
-    def set_menu(self, _state):
-        pass
-
     @QtCore.qt_slot()
     def editing_finished(self):
         self.run_action()
 
 
-class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
+class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """Flter widget based on a QGroupBox"""
 
     def __init__(self, action, gui_context, parent):
         QtGui.QGroupBox.__init__(self, parent)
-        AbstractActionWidget.__init__(self, action, gui_context)
+        AbstractFilterWidget.__init__(self, action, gui_context)
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 2, 2, 2, 2 )
@@ -143,7 +137,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         combobox.currentIndexChanged.connect(self.group_button_clicked)
 
     def set_state(self, state):
-        AbstractActionWidget.set_state(self, state)
+        AbstractFilterWidget.set_state(self, state)
         self.setTitle(six.text_type(state.verbose_name))
         combobox = self.findChild(QtGui.QComboBox)
         if combobox is not None:
@@ -156,15 +150,6 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
                                     py_to_variant(mode))
             combobox.setCurrentIndex(current_index)
 
-    def current_row_changed(self, _current_row):
-        pass
-        
-    def data_changed(self, _index1, _index2):
-        pass
-
-    def set_menu(self, _state):
-        pass
-
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
         combobox = self.findChild(QtGui.QComboBox)
@@ -174,7 +159,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
             gui_context.mode_name = item_data
             self.action.gui_run(gui_context, None)
 
-class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
+class OperatorWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """Widget that allows applying various filter operators on a field
 
     :param cls: the class on which the filter will be applied
@@ -198,7 +183,7 @@ class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
         layout.setContentsMargins( 2, 2, 2, 2 )
         layout.setSpacing( 2 )
         self.setLayout(layout)
-        AbstractActionWidget.__init__(self, action, gui_context)
+        AbstractFilterWidget.__init__(self, action, gui_context)
 
     def set_state(self, state):
         layout = self.layout()
@@ -280,12 +265,3 @@ class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
         """:return: the current mode"""
         combobox = self.findChild(QtGui.QComboBox)
         return variant_to_py(combobox.itemData(self._index))
-
-    def current_row_changed(self, _current_row):
-        pass
-        
-    def data_changed(self, _index1, _index2):
-        pass
-
-    def set_menu(self, _state):
-        pass
