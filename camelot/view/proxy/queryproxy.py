@@ -234,6 +234,7 @@ class QueryTableProxy(CollectionProxy):
         :param list_filter: a :class:`camelot.admin.action.list_filter.Filter` object
         :param mode: a :class:`camelot.admin.action.list_filter.FilterMode` object
         """
+        print 'set filter', list_filter, mode
         self._filters[list_filter] = mode
         self.refresh()
 
