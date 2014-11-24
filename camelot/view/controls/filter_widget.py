@@ -138,6 +138,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
 
     def set_state(self, state):
         AbstractActionWidget.set_state(self, state)
+        self.setTitle(six.text_type(state.verbose_name))
         combobox = self.findChild(QtGui.QComboBox)
         if combobox is not None:
             current_index = 0

@@ -191,7 +191,9 @@ the default mode.
         :param icon: the icon of the mode
         """
         self.name = name
-        self.verbose_name = verbose_name or name.capitalize()
+        if verbose_name is None:
+            verbose_name = name.capitalize()
+        self.verbose_name = verbose_name
         self.icon = icon
         
     def render( self, parent ):

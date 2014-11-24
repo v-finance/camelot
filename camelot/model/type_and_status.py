@@ -416,7 +416,8 @@ class StatusFilter(list_filter.GroupBoxFilter):
         select_all = list_filter.FilterMode(value=list_filter.GroupBoxFilter.All,
                                             verbose_name=_('All'),
                                             decorator=lambda x:x)
-        state.modes.append(select_all)
+        state.default_mode = select_all
+        state.modes = [select_all]
 
         current_date = sql.functions.current_date()
         join = (history_type, sql.and_(history_type.status_from_date <= current_date,

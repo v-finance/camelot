@@ -109,11 +109,6 @@ class Filter(Action):
                                verbose_name=ugettext('All'),
                                decorator=lambda x:x)
         state.default_mode = all_mode
-        modes.append(all_mode)
-
-        #options = [ filter_option( name = ,
-                                   #value = Filter.All,
-                                   #decorator = lambda q:q ) ]
 
         for value in query:
             if 'to_string' in attributes:
@@ -136,8 +131,9 @@ class Filter(Action):
         state.verbose_name = self.verbose_name or filter_names[0]
         # sort outside the query to sort on the verbose name of the value
         modes.sort(key=lambda state:state.verbose_name)
+        # put all mode first, no mater of its verbose name
+        modes.insert(0, all_mode)
         state.modes = modes
-
         return state
 
 class GroupBoxFilter(Filter):
