@@ -25,6 +25,7 @@
 import itertools
 import logging
 import os
+import sys
 
 logger = logging.getLogger('camelot.admin.application_admin')
 
@@ -278,6 +279,15 @@ shortcut confusion and reduce the number of status updates.
             None if no toolbar should be created.
         """
         if toolbar_area == Qt.TopToolBarArea:
+            if sys.platform.startswith('darwin'):
+                #
+                # NOTE We remove the CloseForm from the toolbar action list
+                #      on Mac because this regularly causes segfaults.
+                #      The user can still close the form with the
+                #      OS close button (i.e. "X").
+                #
+                return [action for action in self.form_toolbar_actions
+                        if type(action) != form_action.CloseForm]
             return self.form_toolbar_actions
 
     def get_main_menu( self ):
