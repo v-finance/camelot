@@ -62,7 +62,9 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
         mode = self.modes[index]
-        self.run_action(mode=mode)
+        gui_context = self.gui_context.copy()
+        gui_context.mode_name = mode
+        self.action.gui_run(gui_context, None)
 
     def set_state(self, state):
         AbstractActionWidget.set_state(self, state)
@@ -81,7 +83,6 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
-
 
 class DateFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     """Filter widget based on a DateEditor"""
@@ -121,7 +122,7 @@ class DateFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     def decorate_query(self, query):
         return self.query_decorator(query, self.date_editor.get_value())
 
-class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
+class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     """Flter widget based on a QGroupBox"""
 
     def __init__(self, action, gui_context, parent):
@@ -164,8 +165,10 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         combobox = self.findChild(QtGui.QComboBox)
         if combobox is not None:
             item_data = variant_to_py(combobox.itemData(index))
-            self.run_action(mode=item_data)
-        
+            gui_context = self.gui_context.copy()
+            gui_context.mode_name = item_data
+            self.action.gui_run(gui_context, None)
+
     def decorate_query(self, query):
         if self.current_index>=0:
             return self.filter_data.options[self.current_index].decorator( query )
@@ -221,9 +224,8 @@ class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
         # ValueLoading
         self._editor.set_value(self.default_value_1)
         self._editor2.set_value(self.default_value_2)
-        editing_finished_slot = self.editor_editing_finished
-        self._editor.editingFinished.connect( editing_finished_slot )
-        self._editor2.editingFinished.connect( editing_finished_slot )
+        self._editor.editingFinished.connect( self.run_action )
+        self._editor2.editingFinished.connect( self.run_action )
         layout.addWidget(self._editor)
         layout.addWidget(self._editor2)
         layout.addStretch()
@@ -232,15 +234,14 @@ class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
         self._editor.hide()
         self._editor2.hide()
         self._index = default_index
-        self._value = self.default_value_1
-        self._value2 = self.default_value_2
         self.update_editors()
 
     def update_editors(self):
         """Show or hide the editors according to the operator
         arity"""
         if self._index >= 2:
-            _, arity = self.get_operator_and_arity()
+            mode = self.get_mode()
+            arity = self.action.get_arity(mode.name)
             self._editor.setEnabled(True)
             if arity > 0:
                 self._editor.setEnabled(True)
@@ -266,27 +267,19 @@ class OperatorWidget(QtGui.QGroupBox, AbstractActionWidget):
         appropriate editors and emit the filter_changed signal """
         self._index = index
         self.update_editors()
-        self.filter_changed_signal.emit()
-        
-    def editor_editing_finished(self):
-        """Whenever one of the editors their value changes, emit
-        the filters changed signal"""
+        self.run_action()
+
+    def run_action(self):
         self._value = self._editor.get_value()
         self._value2 = self._editor2.get_value()
-        self.filter_changed_signal.emit()
+        gui_context = self.gui_context.copy()
+        gui_context.mode_name = self.get_mode()
+        self.action.gui_run(gui_context, self._value, self._value2)
 
-    def get_operator_and_arity(self):
-        """:return: the current operator and its arity"""
+    def get_mode(self):
+        """:return: the current mode"""
         combobox = self.findChild(QtGui.QComboBox)
-        mode = variant_to_py(combobox.itemData(self._index))
-        operator = mode.name
-        try:
-            func_code = six.get_function_code(operator)
-        except AttributeError:
-            arity = 1 # probably a builtin function, assume arity == 1
-        else:
-            arity = func_code.co_argcount - 1
-        return operator, arity
+        return variant_to_py(combobox.itemData(self._index))
 
     def current_row_changed(self, _current_row):
         pass

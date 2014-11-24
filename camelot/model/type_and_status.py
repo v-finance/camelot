@@ -415,7 +415,7 @@ class StatusFilter(list_filter.GroupBoxFilter):
 
         select_all = list_filter.FilterMode(value=list_filter.GroupBoxFilter.All,
                                             verbose_name=_('All'),
-                                            decorator=lambda x:x)
+                                            decorator=lambda x, _v:x)
         state.default_mode = select_all
         state.modes = [select_all]
 

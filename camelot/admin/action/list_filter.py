@@ -42,8 +42,8 @@ class FilterMode(Mode):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
         self.decorator = decorator
 
-    def decorate_query(self, query):
-        return self.decorator(query)
+    def decorate_query(self, query, value):
+        return self.decorator(query, value)
 
 class Filter(Action):
     """Base class for filters"""
@@ -67,14 +67,14 @@ class Filter(Action):
         self.default = default
         self.verbose_name = verbose_name
 
-    def gui_run(self, gui_context):
+    def gui_run(self, gui_context, value):
         model = gui_context.item_view.model()
         if model is not None:
-            model.set_filter_mode(self, gui_context.mode_name)
+            model.set_filter_mode(self, gui_context.mode_name, value)
 
     def create_decorator(self, col, attributes, value, joins):
         
-        def decorator(q):
+        def decorator(q, _value):
             if joins:
                 q = q.join(*joins)
             if 'precision' in attributes:
@@ -110,7 +110,7 @@ class Filter(Action):
         modes = list()
         all_mode = FilterMode(value=Filter.All,
                                verbose_name=ugettext('All'),
-                               decorator=lambda x:x)
+                               decorator=lambda x, _v:x)
         state.default_mode = all_mode
 
         for value in query:
@@ -151,8 +151,8 @@ class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
     
     def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import GroupBoxFilterWidget
-        return GroupBoxFilterWidget(self, gui_context, parent)
+        from ...view.controls.filter_widget import ComboBoxFilterWidget
+        return ComboBoxFilterWidget(self, gui_context, parent)
     
 class EditorFilter(Filter):
     """Filter that presents the user with an editor, allowing the user to enter
@@ -185,6 +185,11 @@ class EditorFilter(Filter):
         return OperatorWidget(self, gui_context, self._default_value_1,
                               self._default_value_2, parent)
 
+    def gui_run(self, gui_context, value1, value2):
+        model = gui_context.item_view.model()
+        if model is not None:
+            model.set_filter_mode(self, gui_context.mode_name, (value1, value2))
+
     def get_arity(self, operator):
         """:return: the current operator and its arity"""
         try:
@@ -205,8 +210,7 @@ class EditorFilter(Filter):
 
         def decorator(query, value):
             arity = self.get_arity(operator)
-            value1, value2 = value
-            values = [self._value, self._value2][:arity]
+            values = list(value)[:arity]
             none_values = sum( v == None for v in values )
             if (operator in order_operators) and none_values > 0:
                 return query
@@ -227,8 +231,8 @@ class EditorFilter(Filter):
         entity = admin.entity
         field = getattr(entity, self._field_name)
 
-        all_decorator = lambda q:q
-        none_decorator = lambda query: query.filter(field==None)
+        all_decorator = lambda q,_v:q
+        none_decorator = lambda query, _v: query.filter(field==None)
         
         all_mode = FilterMode(Filter.All, ugettext('All'), all_decorator)
         modes = [all_mode,
