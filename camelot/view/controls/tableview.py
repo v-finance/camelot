@@ -368,18 +368,18 @@ class HeaderWidget( QtGui.QWidget ):
 
     filters_changed_signal = QtCore.qt_signal()
 
-    def __init__( self, parent, admin ):
+    def __init__( self, gui_context, parent):
         QtGui.QWidget.__init__( self, parent )
         assert object_thread( self )
-        self._admin = admin
+        self.gui_context = gui_context
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         search = self.search_widget( self )
         self.setFocusProxy(search)
         search.expand_search_options_signal.connect(
             self.expand_search_options )
-        title = UserTranslatableLabel( admin.get_verbose_name_plural(),
-                                       self )
+        title = UserTranslatableLabel(self.gui_context.admin.get_verbose_name_plural(),
+                                      self)
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
         widget_layout.addWidget( search )
@@ -402,24 +402,19 @@ class HeaderWidget( QtGui.QWidget ):
         font.setBold( True )
         return font
     
-    def _fill_expanded_search_options(self, columns):
+    def _fill_expanded_search_options(self, filters):
         """Given the columns in the table view, present the user
         with more options to filter rows in the table
         :param columns: a list of tuples with field names and attributes
         """
-        assert object_thread( self )
-        from camelot.view.controls.filter_operator import FilterOperator
+        assert object_thread(self)
         from camelot.view.flowlayout import FlowLayout
         layout = FlowLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 0, 0, 0, 0 )
-        for i, (field, attributes) in enumerate(columns):
-            if 'operators' in attributes and attributes['operators']:
-                widget = FilterOperator( self._admin.entity,
-                                         field, attributes )
-                widget.filter_changed_signal.connect( self._filter_changed )
-                layout.addWidget( widget )
-        #layout.addStretch()
+        for filter_ in filters:
+            widget = filter_.render(self.gui_context, self)
+            layout.addWidget(widget)
         self._expanded_search.setLayout( layout )
         self._expanded_filters_created = True
 
@@ -427,21 +422,13 @@ class HeaderWidget( QtGui.QWidget ):
         assert object_thread( self )
         self.filters_changed_signal.emit()
 
-    def decorate_query(self, query):
-        """Apply expanded filters on the query"""
-        if self._expanded_filters_created:
-            for i in range(self._expanded_search.layout().count()):
-                widget = self._expanded_search.layout().itemAt(i).widget()
-                query = widget.decorate_query(query)
-        return query
-
     @QtCore.qt_slot()
     def expand_search_options(self):
         assert object_thread( self )
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
-                post( self._admin.get_expanded_search_fields, 
-                      self._fill_expanded_search_options )
+                post(self.gui_context.admin.get_expanded_search_filters,
+                     self._fill_expanded_search_options)
             self._expanded_search.show()
         else:
             self._expanded_search.hide()
@@ -502,19 +489,11 @@ class TableView( AbstractView  ):
         super(TableView, self).__init__( parent )
         assert object_thread( self )
         self.admin = admin
+        self.search_text = search_text
         self.application_gui_context = gui_context
         self.gui_context = gui_context
         self.proxy = proxy
         widget_layout = QtGui.QVBoxLayout()
-        if self.header_widget:
-            self.header = self.header_widget( self, admin )
-            widget_layout.addWidget( self.header )
-            self.header.search.search_signal.connect( self.startSearch )
-            self.header.search.cancel_signal.connect( self.cancelSearch )
-            self.header.search.on_arrow_down_signal.connect(self.focusTable)
-            self.setFocusProxy(self.header)
-        else:
-            self.header = None
         widget_layout.setSpacing( 0 )
         widget_layout.setContentsMargins(0, 0, 0, 0)
         splitter = QtGui.QSplitter( self )
@@ -532,6 +511,7 @@ class TableView( AbstractView  ):
         self.table_layout.setSpacing( 0 )
         self.table_layout.setContentsMargins(0, 0, 0, 0)
         self.table = None
+        self.header = None
         self.filters_layout = QtGui.QVBoxLayout()
         self.filters_layout.setSpacing( 0 )
         self.filters_layout.setContentsMargins(0, 0, 0, 0)
@@ -546,14 +526,11 @@ class TableView( AbstractView  ):
         splitter.addWidget(class_tree)
         splitter.addWidget(table_widget)
         splitter.addWidget(filters_widget)
-        self.setLayout( widget_layout )
+        self.setLayout(widget_layout)
+        self.widget_layout = widget_layout
         self.search_filter = lambda q: q
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
         shortcut.activated.connect( self.activate_search )
-        if self.header_widget:
-            self.header.filters_changed_signal.connect( self.rebuild_query )
-            if search_text:
-                self.header.search.search( search_text )
 
     @QtCore.qt_slot()
     def activate_search(self):
@@ -617,7 +594,6 @@ class TableView( AbstractView  ):
         self.table.setObjectName('AdminTableWidget')
         new_model = self.proxy(admin)
         self.table.setModel(new_model)
-        self.header.set_model(new_model)
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
         self.table.keyboard_selection_signal.connect(self.on_keyboard_selection_signal)
         self.table_layout.insertWidget( 1, self.table )
@@ -625,12 +601,26 @@ class TableView( AbstractView  ):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
+        if self.header_widget:
+            if self.header is not None:
+                self.widget_layout.removeWidget(self.header)
+                self.header.deleteLater()
+            self.header = self.header_widget(self.gui_context, self)
+            self.header.set_model(new_model)
+            self.widget_layout.insertWidget(0, self.header)
+            self.header.search.search_signal.connect( self.startSearch )
+            self.header.search.cancel_signal.connect( self.cancelSearch )
+            self.header.search.on_arrow_down_signal.connect(self.focusTable)
+            self.setFocusProxy(self.header)
+            if self.search_text:
+                self.header.search.search(self.search_text)
+        else:
+            self.header = None
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
         assert object_thread( self )
         self.sectionClicked( self.table.currentIndex().row() )
-
 
     def closeEvent( self, event ):
         """reimplements close event"""
@@ -666,9 +656,6 @@ class TableView( AbstractView  ):
 
         def rebuild_query():
             query = self.admin.get_query()
-            # a table view is not required to have a header
-            if self.header:
-                query = self.header.decorate_query(query)
             if self.search_filter:
                 query = self.search_filter( query )
             query_getter = lambda:query
