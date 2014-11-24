@@ -148,6 +148,10 @@ updated state for the widget.
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
 
+.. attribute:: default_mode
+
+    The mode in which an action is triggered, if no mode was selected by the
+    user.  A :class:`Mode` object or `None`.  The default value is `None`.
     """
     
     def __init__( self ):
@@ -158,6 +162,7 @@ updated state for the widget.
         self.visible = True
         self.notification = False
         self.modes = []
+        self.default_mode = None
 
 class Mode( object ):
     """A mode is a way in which an action can be triggered, a print action could

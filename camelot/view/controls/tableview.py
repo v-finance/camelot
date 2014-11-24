@@ -656,7 +656,6 @@ class TableView( AbstractView  ):
     @QtCore.qt_slot()
     def rebuild_query( self ):
         """resets the table model query"""
-        from .filterlist import FilterList
 
         # table can be None during view initialization
         if self.table is None:
@@ -670,9 +669,6 @@ class TableView( AbstractView  ):
             # a table view is not required to have a header
             if self.header:
                 query = self.header.decorate_query(query)
-            filters = self.findChild(FilterList, 'filters')
-            if filters:
-                query = filters.decorate_query( query )
             if self.search_filter:
                 query = self.search_filter( query )
             query_getter = lambda:query
@@ -704,8 +700,8 @@ class TableView( AbstractView  ):
 
     def set_filters(self, filters):
         logger.debug( 'setting filters for tableview' )
-        from camelot.view.controls.filterlist import FilterList
-        filters_widget = self.findChild(FilterList, 'filters')
+        from camelot.view.controls.actionsbox import ActionsBox
+        filters_widget = self.findChild(ActionsBox, 'filters')
         while True:
             item = self.filters_layout.takeAt( 0 )
             if item == None:
@@ -714,15 +710,11 @@ class TableView( AbstractView  ):
             if widget != None:
                 widget.deleteLater()
         if filters:
-            splitter = self.findChild( QtGui.QWidget, 'splitter' )
-            filters_widget = FilterList( filters, parent=splitter )
+            filters_widget = ActionsBox(gui_context=self.gui_context,
+                                        parent=self)
             filters_widget.setObjectName('filters')
-            self.filters_layout.addWidget( filters_widget )
-            filters_widget.filters_changed_signal.connect( self.rebuild_query )
-        #
-        # filters might have default values, so we can only build the queries now
-        #
-        #self.rebuild_query()
+            self.filters_layout.addWidget(filters_widget)
+            filters_widget.set_actions(filters)
         self.filters_layout.addStretch(1)
 
     def set_list_actions( self, actions ):

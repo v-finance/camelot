@@ -54,6 +54,7 @@ import six
 from sqlalchemy import orm, sql, schema, types
 from sqlalchemy.ext import hybrid
 
+from camelot.admin.action import list_filter
 from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
@@ -63,7 +64,6 @@ from camelot.core.orm import Entity
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
-from camelot.view.filters import GroupBoxFilter, filter_data, filter_option
 
 class TypeMixin(object):
     """Mixin class to describe the different types of objects
@@ -389,7 +389,7 @@ class ChangeStatus( Action ):
                     yield action_steps.UpdateObject(obj)
             yield action_steps.FlushSession(model_context.session)
 
-class StatusFilter(GroupBoxFilter):
+class StatusFilter(list_filter.GroupBoxFilter):
     """
     Filter to be used in a table view to enable filtering on the status
     of an object.  This filter will display all available statuses, and as
@@ -399,7 +399,9 @@ class StatusFilter(GroupBoxFilter):
     :param attribute: the attribute that holds the status
     """
     
-    def get_filter_data(self, admin):
+    def get_state(self, model_context):
+        state = Action.get_state(self, model_context)
+        admin = model_context.admin
         fa = admin.get_field_attributes(self.attribute)
         history_type = fa['target']
         history_admin = admin.get_related_admin(history_type)
@@ -411,9 +413,10 @@ class StatusFilter(GroupBoxFilter):
         else:
             choices = classification_fa['choices']
 
-        options = [filter_option(name = _('All'),
-                                 value = GroupBoxFilter.All,
-                                 decorator = lambda q:q )]
+        select_all = list_filter.FilterMode(value=list_filter.GroupBoxFilter.All,
+                                            verbose_name=_('All'),
+                                            decorator=lambda x:x)
+        state.modes.append(select_all)
 
         current_date = sql.functions.current_date()
         join = (history_type, sql.and_(history_type.status_from_date <= current_date,
@@ -425,13 +428,15 @@ class StatusFilter(GroupBoxFilter):
             decorator = self.create_decorator(getattr(history_type,
                                                       'classified_by',),
                                               fa, value, [join])
-            options.append(filter_option(name = name,
-                                         value = value,
-                                         decorator = decorator))
+            mode = list_filter.FilterMode(value=value,
+                                          verbose_name=name,
+                                          decorator=decorator)
+            if value == self.default:
+                state.default_mode = mode
+            state.modes.append(mode)
 
-        return filter_data(name = fa['name'],
-                           options = options,
-                           default = self.default)
+        state.verbose_name = fa['name']
+        return state
 
 class Type(EntityBuilder):
     """EntityBuilder that adds a related type table to an `Entity`.

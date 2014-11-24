@@ -61,7 +61,9 @@ Development
 
  * `ObjectAdmin` does introspeciton on properties to see if they have a setter defined
 
- * `EntityAdmin` does introspection on hybrid attributes to look for default field attributes 
+ * `EntityAdmin` does introspection on hybrid attributes to look for default field attributes
+
+ * `camelot.view.filters` module has been moved to :mod:`camelot.admin.action.list_filter`
 
 
 

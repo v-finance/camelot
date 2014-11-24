@@ -19,12 +19,12 @@ import camelot.types
 from camelot.core.orm import (ManyToOne, OneToMany,
                               ManyToMany, ColumnProperty)
 from camelot.admin.action import Action
+from camelot.admin.action import list_filter
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.view import action_steps
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm, Stretch
 from camelot.view.controls import delegates
-from camelot.view.filters import ComboBoxFilter
 from camelot.view.art import ColorScheme
 
 from camelot_example.change_rating import ChangeRatingAction
@@ -145,7 +145,7 @@ class Movie( Entity ):
         list_display = ['cover', 'title', 'releasedate', 'rating',]
         lines_per_row = 5
         # define filters to be available in the table view
-        list_filter = ['genre', ComboBoxFilter('director.full_name')]
+        list_filter = ['genre', list_filter.ComboBoxFilter('director.full_name')]
         # if the search function needs to look in related object attributes,
         # those should be specified within list_search
         list_search = ['director.full_name']

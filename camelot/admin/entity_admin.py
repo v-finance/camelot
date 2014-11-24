@@ -27,6 +27,7 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
+from camelot.admin.action import list_filter
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.memento import memento_change
@@ -363,14 +364,14 @@ and used as a custom action.
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
-        :return: [(filter, filter_data)]
+        :return: [filter, filter, ...]
         """
-        from camelot.view.filters import structure_to_filter
 
         def filter_generator():
             for structure in self.list_filter:
-                filter = structure_to_filter(structure)
-                yield (filter, filter.get_filter_data(self))
+                if not isinstance(structure, list_filter.Filter):
+                    structure = list_filter.GroupBoxFilter(structure)
+                yield structure
 
         return list(filter_generator())
 

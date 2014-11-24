@@ -38,12 +38,12 @@ import six
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
+from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.core.orm import Entity, ManyToOne
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view import filters
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
 
@@ -91,7 +91,7 @@ class Memento( Entity ):
         list_display = ['creation_date', 'authentication', 'model',
                         'primary_key', ]
         form_display = list_display + ['previous']
-        list_filter = [filters.ComboBoxFilter('model')]
+        list_filter = [list_filter.ComboBoxFilter('model')]
         field_attributes = {'previous':{'target':PreviousAttribute,
                                         'delegate':delegates.One2ManyDelegate,
                                         'python_type':list}

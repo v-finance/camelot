@@ -26,6 +26,7 @@ from ...core.qt import QtGui, QtCore, variant_to_py
 
 import six
 
+from ...admin.action import State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import is_deleted, ugettext
@@ -37,7 +38,6 @@ class AbstractActionWidget( object ):
         """Helper class to construct widget that when triggered run an action.
         This class exists as a base class for custom ActionButton implementations.
         """
-        from camelot.admin.action import State
         self.action = action
         self.gui_context = gui_context
         self.state = State()
@@ -51,10 +51,10 @@ class AbstractActionWidget( object ):
                 selection_model.currentRowChanged.connect(self.current_row_changed)
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
-    def set_state( self, state ):
+    def set_state(self, state):
         self.state = state
-        self.setEnabled( state.enabled )
-        self.setVisible( state.visible )
+        self.setEnabled(state.enabled)
+        self.setVisible(state.visible)
 
     def current_row_changed( self, index1=None, index2=None ):
         post( self.action.get_state,
