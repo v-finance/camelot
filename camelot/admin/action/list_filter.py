@@ -61,6 +61,11 @@ class Filter(Action):
         self.default = default
         self.verbose_name = verbose_name
 
+    def gui_run(self, gui_context):
+        model = gui_context.item_view.model()
+        if model is not None:
+            model.set_filter_mode(self, gui_context.mode_name)
+
     def create_decorator(self, col, attributes, value, joins):
         
         def decorator(q):
@@ -96,11 +101,12 @@ class Filter(Action):
         query = session.query(col).select_from(entity).join(*joins)
         query = query.distinct()
 
+        modes = list()
         all_mode = FilterMode(value=Filter.All,
                                verbose_name=ugettext('All'),
                                decorator=lambda x:x)
         state.default_mode = all_mode
-        state.modes.append(all_mode)
+        modes.append(all_mode)
 
         #options = [ filter_option( name = ,
                                    #value = Filter.All,
@@ -122,11 +128,12 @@ class Filter(Action):
         
             # option_name name can be of type ugettext_lazy, convert it to unicode
             # to make it sortable
-            state.modes.append(mode)
+            modes.append(mode)
 
         state.verbose_name = self.verbose_name or filter_names[0]
         # sort outside the query to sort on the verbose name of the value
-        state.modes.sort(key=lambda state:state.verbose_name)
+        modes.sort(key=lambda state:state.verbose_name)
+        state.modes = modes
 
         return state
 

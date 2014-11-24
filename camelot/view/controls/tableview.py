@@ -714,6 +714,7 @@ class TableView( AbstractView  ):
                                         parent=self)
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget(filters_widget)
+            print 'set filters', [str(f) for f in filters]
             filters_widget.set_actions(filters)
         self.filters_layout.addStretch(1)
 

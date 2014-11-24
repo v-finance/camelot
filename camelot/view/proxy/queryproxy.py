@@ -50,6 +50,8 @@ class QueryTableProxy(CollectionProxy):
             self._query_getter = None
         self._sort_decorator = None
         self._mapper = admin.mapper
+        #the mode set for each filter
+        self._filters = dict()
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
         self._appended_rows = []
@@ -224,6 +226,16 @@ class QueryTableProxy(CollectionProxy):
         assert object_thread( self )
         post( functools.update_wrapper( functools.partial( self._set_sort_decorator, column, order ), self._set_sort_decorator ), 
               self._refresh_content )
+
+    def set_filter_mode(self, list_filter, mode):
+        """
+        Set the filter mode for a specific filter
+
+        :param list_filter: a :class:`camelot.admin.action.list_filter.Filter` object
+        :param mode: a :class:`camelot.admin.action.list_filter.FilterMode` object
+        """
+        self._filters[list_filter] = mode
+        self.refresh()
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new
