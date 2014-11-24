@@ -39,6 +39,9 @@ class FilterMode(Mode):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
         self.decorator = decorator
 
+    def decorate_query(self, query):
+        return self.decorator(query)
+
 class Filter(Action):
     """Base class for filters"""
     

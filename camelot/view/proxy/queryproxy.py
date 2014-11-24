@@ -28,6 +28,8 @@ import functools
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
+import six
+
 from sqlalchemy import orm, sql
 from sqlalchemy.exc import InvalidRequestError
 
@@ -65,12 +67,16 @@ class QueryTableProxy(CollectionProxy):
         if self._sort_decorator == None:
             self._set_sort_decorator()
             
-        def sorted_query_getter( query_getter, sort_decorator ):
-            return sort_decorator( query_getter() )
+        def sorted_query_getter(query_getter, sort_decorator, filters):
+            query = query_getter()
+            for mode in six.itervalues(filters):
+                query = mode.decorate_query(query)
+            return sort_decorator(query)
             
-        return functools.partial( sorted_query_getter,
-                                  self._query_getter,
-                                  self._sort_decorator )
+        return functools.partial(sorted_query_getter,
+                                 self._query_getter,
+                                 self._sort_decorator,
+                                 self._filters)
     
     def _update_unflushed_rows( self ):
         """Does nothing since all rows returned by a query are flushed"""
@@ -234,7 +240,6 @@ class QueryTableProxy(CollectionProxy):
         :param list_filter: a :class:`camelot.admin.action.list_filter.Filter` object
         :param mode: a :class:`camelot.admin.action.list_filter.FilterMode` object
         """
-        print 'set filter', list_filter, mode
         self._filters[list_filter] = mode
         self.refresh()
 

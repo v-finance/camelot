@@ -28,7 +28,7 @@ Widgets that represent Filter Actions
 
 import six
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 from .editors import DateEditor
 
@@ -43,10 +43,11 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         layout.setContentsMargins( 2, 2, 2, 2 )
         self.setLayout( layout )
         self.setFlat(True)
+        self.modes = None
         group = QtGui.QButtonGroup(self)
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
-        group.buttonClicked.connect(self.group_button_clicked)
+        group.buttonClicked[int].connect(self.group_button_clicked)
         AbstractActionWidget.__init__(self, action, gui_context)
 
     def current_row_changed(self, _current_row):
@@ -59,8 +60,9 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         pass
 
     @QtCore.qt_slot(int)
-    def group_button_clicked(self, button):
-        self.run_action(mode=button)
+    def group_button_clicked(self, index):
+        mode = self.modes[index]
+        self.run_action(mode=mode)
 
     def set_state(self, state):
         AbstractActionWidget.set_state(self, state)
@@ -68,7 +70,8 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         group = self.findChild(QtGui.QButtonGroup)
         layout = self.layout()
         button_layout = QtGui.QVBoxLayout()
-        
+        self.modes = state.modes
+
         for i, mode in enumerate(state.modes):
             button = QtGui.QRadioButton(six.text_type(mode.verbose_name), self)
             button_layout.addWidget(button)
@@ -76,15 +79,9 @@ class FilterWidget(QtGui.QGroupBox, AbstractActionWidget):
             if mode.name == state.default_mode.name:
                 button.setChecked(True)
 
-        layout.addLayout( button_layout )
+        layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def decorate_query( self, query ):
-        group = self.findChild(QtGui.QButtonGroup)
-        checked = group.checkedId()
-        if checked>=0:
-            return self.filter_data.options[checked].decorator( query )
-        return query
 
 class DateFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
     """Filter widget based on a DateEditor"""
@@ -147,7 +144,9 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
             for i, mode in enumerate(state.modes):
                 if mode.name == state.default_mode.name:
                     current_index = i
-                combobox.insertItem(i, six.text_type(mode.verbose_name))
+                combobox.insertItem(i,
+                                    six.text_type(mode.verbose_name),
+                                    py_to_variant(mode))
             combobox.setCurrentIndex(current_index)
 
     def current_row_changed(self, _current_row):
@@ -160,8 +159,11 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractActionWidget):
         pass
 
     @QtCore.qt_slot(int)
-    def group_button_clicked(self, button):
-        self.run_action(mode=button)
+    def group_button_clicked(self, index):
+        combobox = self.findChild(QtGui.QComboBox)
+        if combobox is not None:
+            item_data = variant_to_py(combobox.itemData(index))
+            self.run_action(mode=item_data)
         
     def decorate_query(self, query):
         if self.current_index>=0:
