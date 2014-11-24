@@ -26,7 +26,10 @@
 Actions to filter table views
 """
 
+import copy
 import datetime
+
+import six
 
 from sqlalchemy import sql
 
@@ -170,7 +173,7 @@ class EditorFilter(Filter):
                   default_operator = None,
                   default_value_1 = None,
                   default_value_2 = None ):
-        super(EditorFilter, self).__init__(field_name)
+        super(EditorFilter, self).__init__(field_name, verbose_name=verbose_name)
         self._field_name = field_name
         self._verbose_name = verbose_name
         self._default_operator = default_operator
@@ -178,20 +181,74 @@ class EditorFilter(Filter):
         self._default_value_2 = default_value_2
 
     def render(self, gui_context, parent):
-        from ...view.controls.filter_operator import FilterOperator
-        _name, (entity, field_name, field_attributes) = filter_data
-        return FilterOperator(self.gui_context.admin.entity, 
-                              self._field_name,
-                              field_attributes, 
-                              self._default_operator,
-                              self._default_value_1,
-                              self._default_value_2,
-                              parent)
+        from ...view.controls.filter_widget import OperatorWidget
+        return OperatorWidget(self, gui_context, self._default_value_1,
+                              self._default_value_2, parent)
 
-    def get_filter_data(self, admin):
+    def get_arity(self, operator):
+        """:return: the current operator and its arity"""
+        try:
+            func_code = six.get_function_code(operator)
+        except AttributeError:
+            arity = 1 # probably a builtin function, assume arity == 1
+        else:
+            arity = func_code.co_argcount - 1
+        return arity
+
+    def create_decorator(self, column, operator):
+        """
+        :param query: an sqlalchemy query
+        :returns: the input query transformed to take into account the filter of
+        this widget
+        """
+        from camelot.view.field_attributes import order_operators
+
+        def decorator(query, value):
+            arity = self.get_arity(operator)
+            value1, value2 = value
+            values = [self._value, self._value2][:arity]
+            none_values = sum( v == None for v in values )
+            if (operator in order_operators) and none_values > 0:
+                return query
+            return query.filter(operator(column, *values))
+
+        return decorator
+
+    def get_state(self, model_context):
+        from ...view.utils import operator_names
+        state = Action.get_state(self, model_context)
+        admin = model_context.admin
         field_attributes = admin.get_field_attributes(self._field_name)
-        name = self._verbose_name or field_attributes['name']
-        return name, (admin.entity, self._field_name, field_attributes)
+        field_attributes = copy.copy( field_attributes )
+        field_attributes['editable'] = True
+        state.field_attributes = field_attributes
+        state.verbose_name = self.verbose_name or field_attributes['name']
+
+        entity = admin.entity
+        field = getattr(entity, self._field_name)
+
+        all_decorator = lambda q:q
+        none_decorator = lambda query: query.filter(field==None)
+        
+        all_mode = FilterMode(Filter.All, ugettext('All'), all_decorator)
+        modes = [all_mode,
+                 FilterMode(None, ugettext('None'), none_decorator),
+                 ]
+        
+        default_mode = all_mode
+        operators = field_attributes.get('operators', [])
+        for operator in operators:
+            mode = FilterMode(operator,
+                              six.text_type(operator_names[operator]),
+                              self.create_decorator(field, operator)
+                              )
+            if operator == self._default_operator:
+                default_mode = mode
+            modes.append(mode)
+
+        state.modes = modes
+        state.default_mode = default_mode
+        return state
 
 class ValidDateFilter(Filter):
     """Filters entities that are valid a certain date.  This filter will present
