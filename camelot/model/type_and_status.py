@@ -398,12 +398,20 @@ class StatusFilter(list_filter.GroupBoxFilter):
     
     :param attribute: the attribute that holds the status
     """
-    
+
+    def decorate_query(self, query, values):
+        if list_filter.All in values:
+            return query
+        query = query.join(*self.joins)
+        where_clauses = [self.column==v for v in values]
+        query = query.filter(sql.or_(*where_clauses))
+        return query
+
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
         admin = model_context.admin
-        fa = admin.get_field_attributes(self.attribute)
-        history_type = fa['target']
+        self.attributes = admin.get_field_attributes(self.attribute)
+        history_type = self.attributes['target']
         history_admin = admin.get_related_admin(history_type)
         classification_fa = history_admin.get_field_attributes('classified_by')
 
@@ -415,30 +423,26 @@ class StatusFilter(list_filter.GroupBoxFilter):
 
         select_all = list_filter.FilterMode(value=list_filter.All,
                                             verbose_name=_('All'),
-                                            decorator=lambda x, _v:x,
                                             checked=True)
         state.default_mode = select_all
         state.modes = [select_all]
 
         current_date = sql.functions.current_date()
-        join = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                       history_type.status_for_id == admin.entity.id,
-                                       history_type.status_thru_date >= current_date)
-                )
+        self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
+                                             history_type.status_for_id == admin.entity.id,
+                                             history_type.status_thru_date >= current_date)
+                      )
+        self.column = getattr(history_type, 'classified_by')
 
         for value, name in choices:
-            decorator = self.create_decorator(getattr(history_type,
-                                                      'classified_by',),
-                                              fa, value, [join])
             mode = list_filter.FilterMode(value=value,
                                           verbose_name=name,
-                                          decorator=decorator,
                                           checked=False)
             if value == self.default:
                 state.default_mode = mode
             state.modes.append(mode)
 
-        state.verbose_name = fa['name']
+        state.verbose_name = self.attributes['name']
         return state
 
 class Type(EntityBuilder):

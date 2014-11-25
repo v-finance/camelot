@@ -71,6 +71,10 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
         group.buttonClicked[int].connect(self.group_button_clicked)
+        if action.exclusive:
+            self.button_type = QtGui.QRadioButton
+        else:
+            self.button_type = QtGui.QCheckBox
         AbstractFilterWidget.__init__(self, action, gui_context)
 
     @QtCore.qt_slot(int)
@@ -80,7 +84,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def get_value(self):
         values = []
         group = self.findChild(QtGui.QButtonGroup)
-        for button in self.findChildren(QtGui.QRadioButton):
+        for button in self.findChildren(self.button_type):
             if button.isChecked():
                 button_id = group.id(button)
                 values.append(self.modes[button_id].name)
@@ -95,7 +99,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         self.modes = state.modes
 
         for i, mode in enumerate(state.modes):
-            button = QtGui.QRadioButton(six.text_type(mode.verbose_name), self)
+            button = self.button_type(six.text_type(mode.verbose_name), self)
             button_layout.addWidget(button)
             group.addButton(button, i)
             if mode.checked:
