@@ -69,8 +69,8 @@ class QueryTableProxy(CollectionProxy):
             
         def sorted_query_getter(query_getter, sort_decorator, filters):
             query = query_getter()
-            for (mode, value) in six.itervalues(filters):
-                query = mode.decorate_query(query, value)
+            for filter_, value in six.iteritems(filters):
+                query = filter_.decorate_query(query, value)
             return sort_decorator(query)
             
         return functools.partial(sorted_query_getter,
@@ -233,14 +233,14 @@ class QueryTableProxy(CollectionProxy):
         post( functools.update_wrapper( functools.partial( self._set_sort_decorator, column, order ), self._set_sort_decorator ), 
               self._refresh_content )
 
-    def set_filter_mode(self, list_filter, mode, value):
+    def set_filter(self, list_filter, value):
         """
         Set the filter mode for a specific filter
 
         :param list_filter: a :class:`camelot.admin.action.list_filter.Filter` object
-        :param mode: a :class:`camelot.admin.action.list_filter.FilterMode` object
+        :param value: the value on which to filter
         """
-        self._filters[list_filter] = (mode, value)
+        self._filters[list_filter] = value
         self.refresh()
 
     def append(self, o):

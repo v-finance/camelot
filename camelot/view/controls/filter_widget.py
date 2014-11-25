@@ -44,7 +44,17 @@ class AbstractFilterWidget(AbstractActionWidget):
     def set_menu(self, _state):
         pass
 
-class FilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
+    def get_value(self):
+        """:return: a list of selected values"""
+        raise NotImplementedError()
+
+    def run_action(self):
+        gui_context = self.gui_context.copy()
+        value = self.get_value()
+        self.action.gui_run(gui_context, value)
+
+
+class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """A box containing a filter that can be applied on a table view, this filter is
     based on the distinct values in a certain column"""
 
@@ -65,16 +75,16 @@ class FilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
-        mode = self.modes[index]
+        self.run_action()
+
+    def get_value(self):
         values = []
         group = self.findChild(QtGui.QButtonGroup)
         for button in self.findChildren(QtGui.QRadioButton):
             if button.isChecked():
                 button_id = group.id(button)
                 values.append(self.modes[button_id].name)
-        gui_context = self.gui_context.copy()
-        gui_context.mode_name = mode
-        self.action.gui_run(gui_context, values)
+        return values
 
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
@@ -150,16 +160,18 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
                                     py_to_variant(mode))
             combobox.setCurrentIndex(current_index)
 
-    @QtCore.qt_slot(int)
-    def group_button_clicked(self, index):
+    def get_value(self):
         combobox = self.findChild(QtGui.QComboBox)
         if combobox is not None:
-            item_data = variant_to_py(combobox.itemData(index))
-            gui_context = self.gui_context.copy()
-            gui_context.mode_name = item_data
-            self.action.gui_run(gui_context, None)
+            index = combobox.currentIndex()
+            mode = variant_to_py(combobox.itemData(index))
+            return [mode.name]
 
-class OperatorWidget(QtGui.QGroupBox, AbstractFilterWidget):
+    @QtCore.qt_slot(int)
+    def group_button_clicked(self, index):
+        self.run_action()
+
+class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """Widget that allows applying various filter operators on a field
 
     :param cls: the class on which the filter will be applied
@@ -196,7 +208,7 @@ class OperatorWidget(QtGui.QGroupBox, AbstractFilterWidget):
             combobox.insertItem(i,
                                 six.text_type(mode.verbose_name),
                                 py_to_variant(mode))
-            if mode.name == state.default_mode.name:
+            if mode.checked == True:
                 default_index = i
         combobox.setCurrentIndex( default_index )
         combobox.currentIndexChanged.connect( self.combobox_changed )
@@ -209,8 +221,8 @@ class OperatorWidget(QtGui.QGroupBox, AbstractFilterWidget):
         # ValueLoading
         self._editor.set_value(self.default_value_1)
         self._editor2.set_value(self.default_value_2)
-        self._editor.editingFinished.connect( self.run_action )
-        self._editor2.editingFinished.connect( self.run_action )
+        self._editor.editingFinished.connect(self.run_action)
+        self._editor2.editingFinished.connect(self.run_action)
         layout.addWidget(self._editor)
         layout.addWidget(self._editor2)
         layout.addStretch()
@@ -254,14 +266,13 @@ class OperatorWidget(QtGui.QGroupBox, AbstractFilterWidget):
         self.update_editors()
         self.run_action()
 
-    def run_action(self):
-        self._value = self._editor.get_value()
-        self._value2 = self._editor2.get_value()
-        gui_context = self.gui_context.copy()
-        gui_context.mode_name = self.get_mode()
-        self.action.gui_run(gui_context, self._value, self._value2)
-
     def get_mode(self):
-        """:return: the current mode"""
         combobox = self.findChild(QtGui.QComboBox)
-        return variant_to_py(combobox.itemData(self._index))
+        index = combobox.currentIndex()
+        mode = variant_to_py(combobox.itemData(index))
+        return mode
+
+    def get_value(self):
+        mode = self.get_mode()
+        return (mode.name, self._editor.get_value(), self._editor2.get_value())
+

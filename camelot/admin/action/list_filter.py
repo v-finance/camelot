@@ -38,9 +38,8 @@ from .base import Action, Mode
 
 class FilterMode(Mode):
 
-    def __init__(self, value, verbose_name, decorator, checked=False):
+    def __init__(self, value, verbose_name, checked=False):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
-        self.decorator = decorator
         self.checked = checked
 
     def decorate_query(self, query, value):
@@ -68,27 +67,30 @@ class Filter(Action):
         self.default = default
         self.verbose_name = verbose_name
         self.exclusive = True
+        self.joins = None
+        self.column = None
+        self.attributes = None
+        self.filter_names = []
 
     def gui_run(self, gui_context, value):
         model = gui_context.item_view.model()
         if model is not None:
-            model.set_filter_mode(self, gui_context.mode_name, value)
+            model.set_filter(self, value)
 
-    def create_decorator(self, col, attributes, values, joins):
-        
-        def decorator(q, values):
-            if joins:
-                q = q.join(*joins)
-            if 'precision' in attributes:
-                delta = pow( 10,  -1*attributes['precision'])
-                for value in values:
-                    q = q.filter( sql.and_(col < value+delta, col > value-delta) )
-            else:
-                where_clauses = [col==v for v in values]
-                q = q.filter(sql.or_(*where_clauses))
-            return q
-          
-        return decorator
+    def decorate_query(self, query, values):
+        if All in values:
+            return query
+        if self.joins:
+            query = query.join(*self.joins)
+        if 'precision' in self.attributes:
+            delta = pow( 10,  -1*self.attributes['precision'])
+            for value in values:
+                query = query.filter(sql.and_(self.column < value+delta,
+                                              self.column > value-delta))
+        else:
+            where_clauses = [self.column==v for v in values]
+            query = query.filter(sql.or_(*where_clauses))
+        return query
 
     def get_state(self, model_context):
         """
@@ -96,57 +98,55 @@ class Filter(Action):
         """
         state = super(Filter, self).get_state(model_context)
         session = model_context.session
-        filter_names = []
-        joins = []
         entity = model_context.admin.entity
-        related_admin = model_context.admin
-        for field_name in self.attribute.split('.'):
-            attributes = related_admin.get_field_attributes(field_name)
-            filter_names.append(attributes['name'])
-            # @todo: if the filter is not on an attribute of the relation, but on 
-            # the relation itselves
-            if 'target' in attributes:
-                joins.append(getattr(related_admin.entity, field_name))
-                related_admin = attributes['admin']
 
-        col = getattr(related_admin.entity, field_name)
-        query = session.query(col).select_from(entity).join(*joins)
+        if self.joins is None:
+            self.joins = []
+            related_admin = model_context.admin
+            for field_name in self.attribute.split('.'):
+                attributes = related_admin.get_field_attributes(field_name)
+                self.filter_names.append(attributes['name'])
+                # @todo: if the filter is not on an attribute of the relation, but on 
+                # the relation itselves
+                if 'target' in attributes:
+                    self.joins.append(getattr(related_admin.entity, field_name))
+                    related_admin = attributes['admin']
+            self.column = getattr(related_admin.entity, field_name)
+            self.attributes = attributes
+        
+        query = session.query(self.column).select_from(entity).join(*self.joins)
         query = query.distinct()
 
         modes = list()
 
         for value in query:
-            if 'to_string' in attributes:
-                verbose_name = attributes['to_string'](value[0])
+            if 'to_string' in self.attributes:
+                verbose_name = self.attributes['to_string'](value[0])
             else:
                 verbose_name = value[0]
-            if attributes.get('translate_content', False):
+            if self.attributes.get('translate_content', False):
                 verbose_name = ugettext(verbose_name)
-            decorator = self.create_decorator(col, attributes, value[0], joins)
             mode = FilterMode(value=value[0],
                               verbose_name=verbose_name,
-                              decorator=decorator,
                               checked=((value[0]==self.default) or (self.exclusive==False)))
         
             # option_name name can be of type ugettext_lazy, convert it to unicode
             # to make it sortable
             modes.append(mode)
 
-        state.verbose_name = self.verbose_name or filter_names[0]
+        state.verbose_name = self.verbose_name or self.filter_names[0]
         # sort outside the query to sort on the verbose name of the value
         modes.sort(key=lambda state:state.verbose_name)
         # put all mode first, no mater of its verbose name
         if self.exclusive:
             all_mode = FilterMode(value=All,
                                   verbose_name=ugettext('All'),
-                                  decorator=lambda x, _v:x,
                                   checked=(self.default==All))
             modes.insert(0, all_mode)
         else:
             #if attributes.get('nullable', True):
             none_mode = FilterMode(value=None,
                                    verbose_name=ugettext('None'),
-                                   decorator=self.create_decorator(col, attributes, None, joins),
                                    checked=True)
             modes.append(none_mode)
         state.modes = modes
@@ -160,8 +160,8 @@ class GroupBoxFilter(Filter):
         self.exclusive = exclusive
 
     def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import FilterWidget
-        return FilterWidget(self, gui_context, parent)
+        from ...view.controls.filter_widget import GroupBoxFilterWidget
+        return GroupBoxFilterWidget(self, gui_context, parent)
 
 
 class ComboBoxFilter(Filter):
@@ -196,16 +196,12 @@ class EditorFilter(Filter):
         self._default_operator = default_operator
         self._default_value_1 = default_value_1
         self._default_value_2 = default_value_2
+        self.column = None
 
     def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import OperatorWidget
-        return OperatorWidget(self, gui_context, self._default_value_1,
-                              self._default_value_2, parent)
-
-    def gui_run(self, gui_context, value1, value2):
-        model = gui_context.item_view.model()
-        if model is not None:
-            model.set_filter_mode(self, gui_context.mode_name, (value1, value2))
+        from ...view.controls.filter_widget import OperatorFilterWidget
+        return OperatorFilterWidget(self, gui_context, self._default_value_1,
+                                    self._default_value_2, parent)
 
     def get_arity(self, operator):
         """:return: the current operator and its arity"""
@@ -217,23 +213,15 @@ class EditorFilter(Filter):
             arity = func_code.co_argcount - 1
         return arity
 
-    def create_decorator(self, column, operator):
-        """
-        :param query: an sqlalchemy query
-        :returns: the input query transformed to take into account the filter of
-        this widget
-        """
+    def decorate_query(self, query, values):
         from camelot.view.field_attributes import order_operators
-
-        def decorator(query, value):
-            arity = self.get_arity(operator)
-            values = list(value)[:arity]
-            none_values = sum( v == None for v in values )
-            if (operator in order_operators) and none_values > 0:
-                return query
-            return query.filter(operator(column, *values))
-
-        return decorator
+        operator, value_1, value_2 = values
+        arity = self.get_arity(operator)
+        values = [value_1, value_2][:arity]
+        none_values = sum( v == None for v in values )
+        if (operator in order_operators) and none_values > 0:
+            return query
+        return query.filter(operator(self.column, *values))
 
     def get_state(self, model_context):
         from ...view.utils import operator_names
@@ -246,22 +234,18 @@ class EditorFilter(Filter):
         state.verbose_name = self.verbose_name or field_attributes['name']
 
         entity = admin.entity
-        field = getattr(entity, self._field_name)
+        self.column = getattr(entity, self._field_name)
 
-        all_decorator = lambda q,_v:q
-        none_decorator = lambda query, _v: query.filter(field==None)
-        
-        all_mode = FilterMode(All, ugettext('All'), all_decorator,
+        all_mode = FilterMode(All, ugettext('All'),
                               checked=(self.default==All))
         modes = [all_mode,
-                 FilterMode(None, ugettext('None'), none_decorator),
+                 FilterMode(None, ugettext('None')),
                  ]
         
         operators = field_attributes.get('operators', [])
         for operator in operators:
             mode = FilterMode(operator,
                               six.text_type(operator_names[operator]),
-                              self.create_decorator(field, operator),
                               checked=(operator==self._default_operator),
                               )
             modes.append(mode)
@@ -315,5 +299,3 @@ class ValidDateFilter(Filter):
         state.default_mode = mode
         
         return state
-
-
