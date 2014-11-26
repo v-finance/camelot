@@ -42,6 +42,11 @@ class ActionsBox( QtGui.QWidget ):
         super( ActionsBox, self ).__init__( parent )
         self.gui_context = gui_context
 
+    def get_action_widgets(self):
+        layout = self.layout()
+        for i in range(0, layout.count()):
+            yield layout.itemAt(i).widget()
+
     def set_actions( self, actions ):
         LOGGER.debug( 'setting actions' )
         layout = QtGui.QVBoxLayout()

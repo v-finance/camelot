@@ -40,6 +40,7 @@ from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
 from ...core.qt import QtCore, QtGui, Qt, variant_to_py
+from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .inheritance import SubclassTree
 
@@ -632,6 +633,11 @@ class TableView( AbstractView  ):
     def _set_query(self, query_getter):
         assert object_thread( self )
         if isinstance(self.table.model(), QueryTableProxy):
+            # apply the filters on the query, to activate the default filter
+            filters_widget = self.findChild(ActionsBox, 'filters')
+            if filters_widget is not None:
+                for filter_widget in filters_widget.get_action_widgets():
+                    filter_widget.run_action()
             self.table.model().setQuery(query_getter)
         self.table.clearSelection()
 
@@ -687,7 +693,6 @@ class TableView( AbstractView  ):
 
     def set_filters(self, filters):
         logger.debug( 'setting filters for tableview' )
-        from camelot.view.controls.actionsbox import ActionsBox
         filters_widget = self.findChild(ActionsBox, 'filters')
         while True:
             item = self.filters_layout.takeAt( 0 )
@@ -707,7 +712,6 @@ class TableView( AbstractView  ):
     def set_list_actions( self, actions ):
         """sets filters for the tableview"""
         assert object_thread( self )
-        from camelot.view.controls.actionsbox import ActionsBox
         actions_widget = self.findChild(ActionsBox, 'actions')
         if actions:
             actions_widget = ActionsBox( parent = self,
