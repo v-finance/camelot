@@ -22,12 +22,12 @@
 #
 #  ============================================================================
 """
-Camelot unittest framework.  This module contains helper classes and functions
+Camelot unittest helpers.  This module contains helper classes and functions
 to write unittests for Camelot applications.  These are not the unittests for
-Camelot itself.  Those can be found in the /test folder, at the same position 
-as /camelot.
+Camelot itself. 
 """
 
+import logging
 import unittest
 import six
 
@@ -38,8 +38,10 @@ from ..core.qt import QtGui, QtCore, Qt
 from ..view import action_steps
 
 has_programming_error = False
-
 _application_ = []
+
+
+LOGGER = logging.getLogger('camelot.test')
 
 def get_application():
     """Get the singleton QApplication"""
@@ -234,6 +236,8 @@ class EntityViewsTest(ModelThreadTestCase):
         from ..view.action_steps import OpenFormView
         gui_context = GuiContext()
         for admin in self.get_admins():
+            verbose_name = six.text_type(admin.get_verbose_name())
+            LOGGER.debug('create new view for admin {0}'.format(verbose_name))
             # create an object or take one from the db
             obj = None
             new_obj = False
