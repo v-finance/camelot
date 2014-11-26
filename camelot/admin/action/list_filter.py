@@ -216,6 +216,10 @@ class EditorFilter(Filter):
     def decorate_query(self, query, values):
         from camelot.view.field_attributes import order_operators
         operator, value_1, value_2 = values
+        if operator is None:
+            return query.filter(self.column==None)
+        elif operator == All:
+            return query
         arity = self.get_arity(operator)
         values = [value_1, value_2][:arity]
         none_values = sum( v == None for v in values )
