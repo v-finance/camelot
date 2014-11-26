@@ -164,11 +164,10 @@ class QueryTableProxy(CollectionProxy):
             class_attribute = getattr(self.admin.entity, field_name)
 
             #
-            # The class attribute of a hybrid property can be a select
-            # statement
+            # The class attribute of a hybrid property can be an sql clause
             #
 
-            if isinstance(class_attribute, sql.Select):
+            if isinstance(class_attribute, sql.ClauseElement):
                 if order:
                     class_attributes_to_sort_by.append(sql.desc(class_attribute))
                 else:
