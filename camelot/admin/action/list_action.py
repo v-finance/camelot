@@ -336,6 +336,7 @@ class DeleteSelection( EditAction ):
         # this refresh call could be avoided if the removal of an object
         # in the collection through the DeleteObject action step handled this
         gui_context.item_view.model().refresh()
+        gui_context.item_view.clearSelection()
 
     def model_run( self, model_context ):
         from camelot.view import action_steps

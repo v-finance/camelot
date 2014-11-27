@@ -130,3 +130,10 @@ class OpenTableView( UpdateTableView ):
         table_view.change_title(self.title)
         table_view.setFocus(Qt.PopupFocusReason)
 
+
+class ClearSelection(ActionStep):
+    """Deselect all selected items."""
+
+    def gui_run(self, gui_context):
+        if gui_context.item_view is not None:
+            gui_context.item_view.clearSelection()
