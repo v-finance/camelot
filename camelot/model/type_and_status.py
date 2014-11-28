@@ -62,7 +62,7 @@ from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view import action_steps
 
 class TypeMixin(object):
@@ -402,7 +402,7 @@ class StatusFilter(list_filter.GroupBoxFilter):
     def decorate_query(self, query, values):
         if list_filter.All in values:
             return query
-        query = query.join(*self.joins)
+        query = query.outerjoin(*self.joins)
         where_clauses = [self.column==v for v in values]
         query = query.filter(sql.or_(*where_clauses))
         return query
@@ -421,12 +421,8 @@ class StatusFilter(list_filter.GroupBoxFilter):
         else:
             choices = classification_fa['choices']
 
-        select_all = list_filter.FilterMode(value=list_filter.All,
-                                            verbose_name=_('All'),
-                                            checked=True)
-        state.default_mode = select_all
-        state.modes = [select_all]
-
+        state.modes = []
+        modes = []
         current_date = sql.functions.current_date()
         self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
                                              history_type.status_for_id == admin.entity.id,
@@ -435,13 +431,25 @@ class StatusFilter(list_filter.GroupBoxFilter):
         self.column = getattr(history_type, 'classified_by')
 
         for value, name in choices:
-            mode = list_filter.FilterMode(value=value,
-                                          verbose_name=name,
-                                          checked=False)
-            if value == self.default:
-                state.default_mode = mode
-            state.modes.append(mode)
+            mode = list_filter.FilterMode(
+                value=value,
+                verbose_name=name,
+                checked=((self.default==value) or (self.exclusive==False))
+            )
+            modes.append(mode)
 
+        if self.exclusive:
+            all_mode = list_filter.FilterMode(value=list_filter.All,
+                                              verbose_name=ugettext('All'),
+                                              checked=(self.default==list_filter.All))
+            modes.insert(0, all_mode)
+        else:
+            none_mode = list_filter.FilterMode(value=None,
+                                               verbose_name=ugettext('None'),
+                                               checked=True)
+            modes.append(none_mode)
+
+        state.modes = modes
         state.verbose_name = self.attributes['name']
         return state
 

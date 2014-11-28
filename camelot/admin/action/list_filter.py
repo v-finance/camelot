@@ -88,8 +88,8 @@ class Filter(Action):
                 query = query.filter(sql.and_(self.column < value+delta,
                                               self.column > value-delta))
         else:
-            where_clauses = [self.column==v for v in values]
-            query = query.filter(sql.or_(*where_clauses))
+            where_clause = sql.or_(*[self.column==v for v in values])
+            query = query.filter(where_clause)
         return query
 
     def get_state(self, model_context):
