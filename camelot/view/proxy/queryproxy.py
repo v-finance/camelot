@@ -72,11 +72,12 @@ class QueryTableProxy(CollectionProxy):
             for filter_, value in six.iteritems(filters):
                 query = filter_.decorate_query(query, value)
             return sort_decorator(query)
-            
+        
+        # filters might be changed in the gui thread while being iterated
         return functools.partial(sorted_query_getter,
                                  self._query_getter,
                                  self._sort_decorator,
-                                 self._filters)
+                                 self._filters.copy())
     
     def _update_unflushed_rows( self ):
         """Does nothing since all rows returned by a query are flushed"""
