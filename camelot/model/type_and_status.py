@@ -341,6 +341,19 @@ class ChangeStatus( Action ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status
 
+    def get_state(self, model_context):
+        """
+        Disable the change status button in case the object is not yet
+        persisted
+        """
+        state = super(ChangeStatus, self).get_state(model_context)
+        # only check the current object selected, to avoid slowdown in case
+        # many objects are selected
+        obj = model_context.get_object()
+        if obj is not None:
+            state.enabled = model_context.admin.is_persistent(obj)
+        return state
+
     def before_status_change(self, model_context, obj):
         """
         Use this method to implement checks or actions that need to happen
