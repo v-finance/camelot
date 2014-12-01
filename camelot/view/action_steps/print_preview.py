@@ -163,13 +163,14 @@ class PrintPreview( ActionStep ):
         with hide_progress_dialog( gui_context ):
             dialog.exec_()
         
-    def get_pdf( self ):
+    def get_pdf(self, filename=None):
         self.config_printer()
         self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
-        filepath = OpenFile.create_temporary_file('.pdf')
-        self.printer.setOutputFileName(filepath)
+        if filename is None:
+            filename = OpenFile.create_temporary_file('.pdf')
+        self.printer.setOutputFileName(filename)
         self.document.print_(self.printer)
-        return filepath        
+        return filename
 
 class ChartDocument( QtCore.QObject ):
     """Helper class to print matplotlib charts
