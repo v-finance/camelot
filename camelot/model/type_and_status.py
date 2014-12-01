@@ -62,7 +62,7 @@ from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view import action_steps
 
 class TypeMixin(object):
@@ -341,6 +341,19 @@ class ChangeStatus( Action ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status
 
+    def get_state(self, model_context):
+        """
+        Disable the change status button in case the object is not yet
+        persisted
+        """
+        state = super(ChangeStatus, self).get_state(model_context)
+        # only check the current object selected, to avoid slowdown in case
+        # many objects are selected
+        obj = model_context.get_object()
+        if obj is not None:
+            state.enabled = model_context.admin.is_persistent(obj)
+        return state
+
     def before_status_change(self, model_context, obj):
         """
         Use this method to implement checks or actions that need to happen
@@ -402,7 +415,7 @@ class StatusFilter(list_filter.GroupBoxFilter):
     def decorate_query(self, query, values):
         if list_filter.All in values:
             return query
-        query = query.join(*self.joins)
+        query = query.outerjoin(*self.joins)
         where_clauses = [self.column==v for v in values]
         query = query.filter(sql.or_(*where_clauses))
         return query
@@ -421,12 +434,8 @@ class StatusFilter(list_filter.GroupBoxFilter):
         else:
             choices = classification_fa['choices']
 
-        select_all = list_filter.FilterMode(value=list_filter.All,
-                                            verbose_name=_('All'),
-                                            checked=True)
-        state.default_mode = select_all
-        state.modes = [select_all]
-
+        state.modes = []
+        modes = []
         current_date = sql.functions.current_date()
         self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
                                              history_type.status_for_id == admin.entity.id,
@@ -435,13 +444,25 @@ class StatusFilter(list_filter.GroupBoxFilter):
         self.column = getattr(history_type, 'classified_by')
 
         for value, name in choices:
-            mode = list_filter.FilterMode(value=value,
-                                          verbose_name=name,
-                                          checked=False)
-            if value == self.default:
-                state.default_mode = mode
-            state.modes.append(mode)
+            mode = list_filter.FilterMode(
+                value=value,
+                verbose_name=name,
+                checked=((self.default==value) or (self.exclusive==False))
+            )
+            modes.append(mode)
 
+        if self.exclusive:
+            all_mode = list_filter.FilterMode(value=list_filter.All,
+                                              verbose_name=ugettext('All'),
+                                              checked=(self.default==list_filter.All))
+            modes.insert(0, all_mode)
+        else:
+            none_mode = list_filter.FilterMode(value=None,
+                                               verbose_name=ugettext('None'),
+                                               checked=True)
+            modes.append(none_mode)
+
+        state.modes = modes
         state.verbose_name = self.attributes['name']
         return state
 

@@ -221,9 +221,12 @@ class WithAddresses(object):
 
     @city.expression
     def city_expression(cls):
-        return sql.select([GeographicBoundary.code],
+
+        GB = orm.aliased(GeographicBoundary)
+
+        return sql.select([GB.code],
                           whereclause=sql.and_(
-                              GeographicBoundary.id==Address.city_geographicboundary_id,
+                              GB.id==Address.city_geographicboundary_id,
                               cls.first_address_filter()
                               ),
                           limit=1)
