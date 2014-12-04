@@ -546,7 +546,11 @@ class RestoreExportMapping( SaveExportMapping ):
             fields = mappings[mapping_name]
             for i, column_mapping in enumerate(model_context.get_collection()):
                 if i<len(fields):
-                    column_mapping.field = fields[i]
+                    # the stored field might no longer exist
+                    for field, _name in model_context.admin.field_choices:
+                        if field==fields[i]:
+                            column_mapping.field = fields[i]
+                            break
                 else:
                     column_mapping.field = None
                 yield action_steps.UpdateObject(column_mapping)
