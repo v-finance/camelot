@@ -88,7 +88,14 @@ class Filter(Action):
                 query = query.filter(sql.and_(self.column < value+delta,
                                               self.column > value-delta))
         else:
-            where_clause = sql.or_(*[self.column==v for v in values])
+            not_none_values = [v for v in values if v is not None]
+            if len(not_none_values):
+                where_clause = self.column.in_(not_none_values)
+            else:
+                where_clause = False
+            if None in values:
+                where_clause = sql.or_(where_clause,
+                                       self.column==None)
             query = query.filter(where_clause)
         return query
 
