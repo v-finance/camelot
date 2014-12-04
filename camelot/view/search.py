@@ -129,14 +129,18 @@ def create_entity_search_query_decorator( admin, text ):
             for column_name in admin.list_search:
                 path = column_name.split('.')
                 target = admin.entity
+                related_admin = admin
                 for path_segment in path:
-                    mapper = orm.class_mapper(target)
-                    property = mapper.get_property(path_segment)
-                    if isinstance(property, orm.properties.RelationshipProperty):
-                        joins.append(getattr(target, path_segment))
-                        target = property.mapper.class_
+                    # use the field attributes for the introspection, as these
+                    # have detected hybrid properties
+                    fa = related_admin.get_descriptor_field_attributes(path_segment)
+                    instrumented_attribute = getattr(target, path_segment)
+                    if fa.get('target', False):
+                        joins.append(instrumented_attribute)
+                        target = fa['target']
+                        related_admin = related_admin.get_related_admin(target)
                     else:
-                        append_column(property.columns[0], t, subexp)
+                        append_column(instrumented_attribute, t, subexp)
 
             args.append(subexp)
 

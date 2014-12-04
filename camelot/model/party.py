@@ -201,7 +201,7 @@ class WithAddresses(object):
     def street1_expression(cls):
         return sql.select([Address.street1],
                           whereclause=cls.first_address_filter(),
-                          limit=1)
+                          limit=1).as_scalar()
 
     @hybrid.hybrid_property
     def street2( self ):
@@ -224,12 +224,12 @@ class WithAddresses(object):
 
         GB = orm.aliased(GeographicBoundary)
 
-        return sql.select([GB.code],
+        return sql.select([GB.code + ' ' + GB.name],
                           whereclause=sql.and_(
                               GB.id==Address.city_geographicboundary_id,
                               cls.first_address_filter()
                               ),
-                          limit=1)
+                          limit=1).as_scalar()
 
     def get_first_address(self):
         raise NotImplementedError()
