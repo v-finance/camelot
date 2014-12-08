@@ -80,7 +80,7 @@ def column_name(column):
     if column <= 25:
         return string.ascii_uppercase[column];
     else:
-        return column_name((column/26)-1) + column_name(column%26)
+        return column_name((column//26)-1) + column_name(column%26)
 
 class ColumnMapping( object ):
     """
