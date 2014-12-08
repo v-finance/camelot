@@ -30,7 +30,6 @@ import six
 
 from ...core.qt import QtCore, QtGui, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
-from .editors import DateEditor
 
 class AbstractFilterWidget(AbstractActionWidget):
     """Overwirte some methods to avoid to many state updates"""
@@ -107,33 +106,6 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
-
-class DateFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
-    """Filter widget based on a DateEditor"""
-
-    def __init__(self, action, gui_context, parent):
-        QtGui.QGroupBox.__init__(self, parent)
-        AbstractFilterWidget.__init__(self, action, gui_context)
-        layout = QtGui.QVBoxLayout()
-        layout.setSpacing( 2 )
-        self.setFlat(True)
-        self.date_editor = DateEditor(parent=self, nullable=True)
-        layout.addWidget( self.date_editor )
-        self.setLayout( layout )
-        self.date_editor.editingFinished.connect(self.editing_finished)
-
-    def set_state(self, state):
-        AbstractFilterWidget.set_state(self, state)
-        self.setTitle(six.text_type(state.verbose_name))
-        if state.default_mode is None:
-            self.date_editor.set_value(None)
-        else:
-            self.date_editor.set_value(state.default_mode.name)
-
-    @QtCore.qt_slot()
-    def editing_finished(self):
-        self.run_action()
-
 
 class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """Flter widget based on a QGroupBox"""

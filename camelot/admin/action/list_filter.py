@@ -27,13 +27,12 @@ Actions to filter table views
 """
 
 import copy
-import datetime
 
 import six
 
 from sqlalchemy import sql
 
-from ...core.utils import ugettext, ugettext_lazy as _
+from ...core.utils import ugettext
 from .base import Action, Mode
 
 class FilterMode(Mode):
@@ -264,49 +263,4 @@ class EditorFilter(Filter):
         state.modes = modes
         return state
 
-class ValidDateFilter(Filter):
-    """Filters entities that are valid a certain date.  This filter will present
-    a date to the user and filter the entities that have their from date before this
-    date and their end date after this date.  If no date is given, all entities will
-    be shown"""
 
-    def __init__(self, 
-                 from_attribute='from_date',
-                 thru_attribute='thru_date',
-                 verbose_name=_('Valid at'),
-                 default = datetime.date.today ):
-        """
-        :param from_attribute: the name of the attribute representing the from date
-        :param thru_attribute: the name of the attribute representing the thru date
-        :param verbose_name: the displayed name of the filter
-        :param default: a function returning a default date for the filter
-        """
-        super(ValidDateFilter, self).__init__(None, default=default)
-        self._from_attribute = from_attribute
-        self._thru_attribute = thru_attribute
-        self._verbose_name = verbose_name
-        
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import DateFilterWidget
-        return DateFilterWidget(self, gui_context, parent)
-        
-    def get_state(self, model_context):
-        from sqlalchemy.sql import and_
-
-        state = super(ValidDateFilter, self).get_state(model_context)
-        admin = model_context.admin
-        
-        def query_decorator(query, date):
-            e = admin.entity
-            if date:
-                return query.filter(and_(getattr(e, self._from_attribute)<=date,
-                                         getattr(e, self._thru_attribute)>=date))
-            return query
-        
-        mode = FilterMode(verbose_name=None,
-                          value = None,
-                          decorator = query_decorator)
-        state.modes = [mode]
-        state.default_mode = mode
-        
-        return state
