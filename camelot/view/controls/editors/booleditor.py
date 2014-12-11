@@ -68,6 +68,14 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     @QtCore.qt_slot( bool )
     def _state_changed(self, value=None):
         if not self.hasFocus():
+            """
+            Mac OS X's behaviour is not to move focus to a checkbox when it's
+            state is changed. Therefore, the text_input_editing_finished method
+            will not be called on a TextLineEditor when a checkbox is clicked
+            after a text line has been changed, thus leading to a loss of the
+            changes made in the text line. This issue is resolved by forcing
+            the focus to the checkbox here.
+            """
             self.setFocus()
         self.editingFinished.emit()
 
