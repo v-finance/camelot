@@ -67,6 +67,8 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         
     @QtCore.qt_slot( bool )
     def _state_changed(self, value=None):
+        if not self.hasFocus():
+            self.setFocus()
         self.editingFinished.emit()
 
     def sizeHint(self):
