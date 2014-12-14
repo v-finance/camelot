@@ -28,11 +28,12 @@ Widgets that represent Filter Actions
 
 import six
 
+from ...admin.action.list_filter import All
 from ...core.qt import QtCore, QtGui, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 
 class AbstractFilterWidget(AbstractActionWidget):
-    """Overwirte some methods to avoid to many state updates"""
+    """Overwrite some methods to avoid to many state updates"""
 
     def current_row_changed(self, _current_row):
         pass
@@ -83,10 +84,17 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def get_value(self):
         values = []
         group = self.findChild(QtGui.QButtonGroup)
+        all_checked = True
         for button in self.findChildren(self.button_type):
             if button.isChecked():
                 button_id = group.id(button)
                 values.append(self.modes[button_id].name)
+            else:
+                all_checked = False
+        # shortcut, to make sure no actual filtering is done when
+        # all options are checked
+        if all_checked:
+            return [All]
         return values
 
     def set_state(self, state):
