@@ -188,6 +188,22 @@ be specified using the verbose_name attribute.
     that can be used in the field attributes class attribute of an ObjectAdmin 
     or EntityAdmin.
 
+**Searching**
+
+.. attribute:: list_search
+
+    A list of fields that should be searched when the user enters something in
+    the search box in the table view.
+    The field will only be searched when the entered string can be converted to the
+    datatype of the underlying column using the `from_string` field attribute of the
+    column.
+
+.. attribute:: expanded_list_search
+
+    A list of fields that will be searchable through the expanded search.  When set
+    to None, all the fields in list_display will be searchable.  Use this attribute
+    to limit the number of search widgets.  Defaults to None.
+
 **Window state**
 
 .. attribute:: form_state
@@ -225,6 +241,8 @@ be specified using the verbose_name attribute.
     list_action = OpenFormView()
     list_actions = []
     list_size = (600, 600)
+    list_search = []
+    expanded_list_search = None
     form_size = None
     form_actions = []
     related_toolbar_actions = []
@@ -637,6 +655,15 @@ be specified using the verbose_name attribute.
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+
+    def get_search_fields(self):
+        """
+        Generate a list of fields in which to search.  By default this method
+        returns the `list_search` attribute.
+
+        :return: a list with the names of the fields in which to search
+        """
+        return self.list_search
 
     def get_table( self ):
         """The definition of the table to be used in a list view

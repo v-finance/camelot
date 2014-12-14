@@ -67,6 +67,11 @@ Development
 
  * Remove 'delete_mode' and 'save_mode' Admin attributes, as this behavour can is customizable with actions.
 
+ * Remove the 'search_all_fields' Admin attribute, as this behavour can is customizable with the `get_search_fields`
+   method.
+
+ * Add the `get_search_fields` method to the `EntityAdmin` for fine grained customization of the fields to search.
+
 Release 13.04.13
 ----------------
 

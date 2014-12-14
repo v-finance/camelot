@@ -34,7 +34,7 @@ LOGGER = logging.getLogger('camelot.view.search')
 import six
 
 from camelot.types import virtual_address
-from sqlalchemy import sql, orm, schema
+from sqlalchemy import sql
 
 import camelot.types
 
@@ -118,15 +118,7 @@ def create_entity_search_query_decorator( admin, text ):
 
         for t in text.split(' '):
             subexp = []
-            if admin.search_all_fields:
-                mapper = orm.class_mapper( admin.entity )
-                for property in mapper.iterate_properties:
-                    if isinstance( property, orm.properties.ColumnProperty ):
-                        for column in property.columns:
-                            if isinstance( column, schema.Column ):
-                                append_column( column, t, subexp )
-
-            for column_name in admin.list_search:
+            for column_name in admin.get_search_fields():
                 path = column_name.split('.')
                 target = admin.entity
                 related_admin = admin

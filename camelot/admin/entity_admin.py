@@ -99,37 +99,10 @@ If the user interaction during the copy process needs to be customized as well, 
 and used as a custom action.
 
 
-**Searching**
-
-.. attribute:: list_search
-
-    A list of fields that should be searched when the user enters something in
-    the search box in the table view.  By default all fields are
-    searched for which Camelot can do a conversion of the entered string to the
-    datatype of the underlying column.
-
-    For use with one2many, many2one or many2many fields, the same rules as for the
-    list_filter attribute apply
-
-.. attribute:: search_all_fields
-
-    Defaults to True, meaning that by default all searchable fields should be
-    searched.  If this is set to False, one should explicitely set the list_search
-    attribute to enable search.
-
-.. attribute:: expanded_list_search
-
-    A list of fields that will be searchable through the expanded search.  When set
-    to None, all the fields in list_display will be searchable.  Use this attribute
-    to limit the number of search widgets.  Defaults to None.
-
     """
 
-    list_search = []
-    expanded_list_search = None
     copy_deep = {}
     copy_exclude = []
-    search_all_fields = True
     validator = EntityValidator
 
     def __init__(self, app_admin, entity):
@@ -143,6 +116,8 @@ and used as a custom action.
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
+        # caching
+        self._search_fields = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -572,6 +547,19 @@ and used as a custom action.
                 field_name = mapper_property.key
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
+
+    def get_search_fields(self):
+        """
+        Generate a list of fields in which to search.  By default this method
+        returns the fields in the `list_search` attribute as well as the 
+        properties that are mapped to a column in the database.
+
+        :return: a list with the names of the fields in which to search
+        """
+        if self._search_fields is None:
+            self._search_fields = list(self.list_search)
+            self._search_fields.extend(self.mapper.column_attrs.keys())
+        return self._search_fields
 
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new
