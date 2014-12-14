@@ -343,15 +343,6 @@ class DeleteSelection( EditAction ):
         if model_context.selection_count <= 0:
             raise StopIteration
         admin = model_context.admin
-        if model_context.admin.get_delete_mode() == 'on_confirm':
-            buttons = QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-            message = admin.get_delete_message(None)
-            step = action_steps.MessageBox( title = _('Please confirm'),
-                                            text = message,
-                                            standard_buttons = buttons)
-            response = yield step
-            if response == QtGui.QMessageBox.No:
-                raise StopIteration
         objects_to_remove = list( model_context.get_selection() )
         #
         # it might be impossible to determine the depending objects once

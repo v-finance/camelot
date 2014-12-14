@@ -111,8 +111,6 @@ class FormWidget(QtGui.QWidget):
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )
-        if self._admin.get_save_mode()=='on_leave':
-            widget_mapper.setSubmitPolicy(QtGui.QDataWidgetMapper.ManualSubmit)
         widget_layout = QtGui.QHBoxLayout()
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)

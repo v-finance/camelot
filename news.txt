@@ -65,7 +65,7 @@ Development
 
  * `camelot.view.filters` module has been moved to :mod:`camelot.admin.action.list_filter`
 
-
+ * Remove 'delete_mode' and 'save_mode' Admin attributes, as this behavour can is customizable with actions.
 
 Release 13.04.13
 ----------------

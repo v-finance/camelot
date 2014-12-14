@@ -145,24 +145,6 @@ be specified using the verbose_name attribute.
     the form and allows the user to discard the changes when the form is invalid.  To change the form close action in the 
     toolbar, the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions` method should be overwritten.
 
-.. attribute:: save_mode
-
-    Specifies when the data should be send from the view to the model and flushed
-    to the database.  The default mode is 'on_change', meaning that every change
-    in the view will be send immediately to the database.  Other possibilities are :
-
-      * 'on_leave' : the data will be send from the view to the model when the view
-                     is closed, eg. : the form is closed.
-
-.. attribute:: delete_mode
-
-    Indicates if the deletion of an object should be confirmed by the user, defaults
-    to 'on_request', indicating object should be deleted when the user hits the trash
-    button.  Other possibilities are :
-
-      * 'on_confirm' : the user will be asked for confirmation before the delete
-        takes place.
-
 .. attribute:: form_size
 
     a tuple indicating the size of a form view, defaults to (700,500)
@@ -253,8 +235,6 @@ be specified using the verbose_name attribute.
     # Behavioral attributes
     # 
     drop_action = None
-    save_mode = 'on_edit'
-    delete_mode = 'on_request'
 
     TableView = TableView
 
@@ -331,9 +311,6 @@ be specified using the verbose_name attribute.
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
 
-    def get_save_mode(self):
-        return self.save_mode
-
     def get_settings( self ):
         """A settings object in which settings related to this admin can be
         stored.
@@ -346,12 +323,6 @@ be specified using the verbose_name attribute.
 
     def get_memento( self ):
         return self.app_admin.get_memento()
-
-    def get_delete_mode(self):
-        return self.delete_mode
-
-    def get_delete_message(self, obj):
-        return _('Are you sure you want to delete this')
 
     def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
