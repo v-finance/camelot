@@ -29,6 +29,14 @@ with zero delay.  If the data is not yet present in the proxy, dummy data is
 returned and an update signal is emitted when the correct data is available.
 """
 
+#
+# Things to take into account for next version
+#
+# * subsequent calls that require a refresh of the query, should happen when a
+#   lock is hold, to prevent multiple queries or count queries
+#
+# * try to work around the initial count query
+#
 import collections
 import datetime
 import logging
@@ -250,6 +258,7 @@ position in the query.
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self._update_requests = list()
+        self._rowcount_requested = False
         # The rows that have unflushed changes
         self.unflushed_rows = set()
         self._sort_and_filter = SortingRowMapper()
@@ -264,6 +273,7 @@ position in the query.
         if cache_collection_proxy:
             self.setRowCount( cache_collection_proxy.rowCount() )
         else:
+            self._rowcount_requested = True
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
@@ -366,12 +376,19 @@ position in the query.
     def getRowCount( self ):
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
+        locker = QtCore.QMutexLocker(self._mutex)
+        self._rowcount_requested = False
         rows = len( set( self.get_collection() ) )
+        locker.unlock()
         return rows
 
     def refresh( self ):
         assert object_thread( self )
-        post( self.getRowCount, self._refresh_content )
+        locker = QtCore.QMutexLocker(self._mutex)
+        if self._rowcount_requested == False:
+            self._rowcount_requested = True
+            post( self.getRowCount, self._refresh_content )
+        locker.unlock()
 
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
