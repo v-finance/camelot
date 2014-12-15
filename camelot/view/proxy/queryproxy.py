@@ -33,6 +33,7 @@ import six
 from sqlalchemy import orm, sql
 from sqlalchemy.exc import InvalidRequestError
 
+from ...core.qt import QtCore
 from .collection_proxy import CollectionProxy
 from camelot.view.model_thread import object_thread, post
 
@@ -94,6 +95,9 @@ class QueryTableProxy(CollectionProxy):
             self._appended_rows.remove(o)
 
     def getRowCount(self):
+        locker = QtCore.QMutexLocker(self._mutex)
+        self._rowcount_requested = False
+        locker.unlock()
         self._clean_appended_rows()
         if self._query_getter is None:
             return 0
