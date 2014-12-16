@@ -27,7 +27,8 @@ import six
 from ...core.qt import QtCore, QtGui
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
-from camelot.view.controls.abstract_widget import AbstractSearchWidget
+from .abstract_widget import AbstractSearchWidget
+from .decorated_line_edit import DecoratedLineEdit
 
 class SimpleSearchControl(AbstractSearchWidget):
     """A control that displays a single text field in which search keywords can
@@ -63,7 +64,6 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.search_button.clicked.connect( self.emit_expand_search_options )
 
         # Search input
-        from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
         self.search_input = DecoratedLineEdit(self)
         self.search_input.setPlaceholderText(_('Search...'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
