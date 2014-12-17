@@ -552,13 +552,17 @@ and used as a custom action.
         """
         Generate a list of fields in which to search.  By default this method
         returns the fields in the `list_search` attribute as well as the 
-        properties that are mapped to a column in the database.
+        properties that are mapped to a column in the database.  Any property that
+        is not a simple Column might result in very slow searches, so those should
+        be put explicitly in the `list_search` attribute.
 
         :return: a list with the names of the fields in which to search
         """
         if self._search_fields is None:
             self._search_fields = list(self.list_search)
-            self._search_fields.extend(self.mapper.column_attrs.keys())
+            for field_name, col_property in self.mapper.column_attrs.items():
+                if isinstance(col_property.expression, schema.Column):
+                    self._search_fields.append(field_name)
         return self._search_fields
 
     def copy(self, obj, new_obj=None):
