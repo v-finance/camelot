@@ -221,7 +221,9 @@ position in the query.
         
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
-        self._mutex = QtCore.QMutex()
+        # the mutex is recursive to avoid blocking during unittest, when
+        # model and view are used in the same thread
+        self._mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
         self.admin = admin
         self.list_action = admin.list_action
         self.row_model_context = RowModelContext()
