@@ -37,6 +37,10 @@ returned and an update signal is emitted when the correct data is available.
 #
 # * try to work around the initial count query
 #
+# * the proxy should allow adding mapped fields to the objects in the collection
+#   during the lifetime of the proxy, so a single proxy can be reused for multiple
+#   views.
+#
 import collections
 import datetime
 import logging
