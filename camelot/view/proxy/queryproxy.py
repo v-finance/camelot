@@ -33,9 +33,9 @@ import six
 from sqlalchemy import orm, sql
 from sqlalchemy.exc import InvalidRequestError
 
-from ...core.qt import QtCore
+from ...core.qt import QtCore, Qt
+from ..model_thread import object_thread, post
 from .collection_proxy import CollectionProxy
-from camelot.view.model_thread import object_thread, post
 
 class QueryTableProxy(CollectionProxy):
     """The QueryTableProxy contains a limited copy of the data in the SQLAlchemy
@@ -47,10 +47,7 @@ class QueryTableProxy(CollectionProxy):
                  cache_collection_proxy=None):
         """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
         logger.debug('initialize query table')
-        if query is not None:
-            self._query_getter = lambda:query
-        else:
-            self._query_getter = None
+        self._query = query
         self._sort_decorator = None
         self._mapper = admin.mapper
         #the mode set for each filter
@@ -62,23 +59,22 @@ class QueryTableProxy(CollectionProxy):
                                               max_number_of_rows=max_number_of_rows, 
                                               cache_collection_proxy=cache_collection_proxy)     
         
-    def get_query_getter(self):
-        if self._query_getter == None:
+    def get_query(self):
+        """
+        :return: the query used to fetch the data, this is not the same as the
+            one set by `set_value`, as sorting and filters will modify it
+        """
+        query = self._query
+        if query is None:
             return None
-        if self._sort_decorator == None:
+        if self._sort_decorator is None:
             self._set_sort_decorator()
             
-        def sorted_query_getter(query_getter, sort_decorator, filters):
-            query = query_getter()
-            for filter_, value in six.iteritems(filters):
-                query = filter_.decorate_query(query, value)
-            return sort_decorator(query)
-        
         # filters might be changed in the gui thread while being iterated
-        return functools.partial(sorted_query_getter,
-                                 self._query_getter,
-                                 self._sort_decorator,
-                                 self._filters.copy())
+        for filter_, value in six.iteritems(self._filters.copy()):
+            query = filter_.decorate_query(query, value)
+        query = self._sort_decorator(query)
+        return query
     
     def _update_unflushed_rows( self ):
         """Does nothing since all rows returned by a query are flushed"""
@@ -99,35 +95,27 @@ class QueryTableProxy(CollectionProxy):
         self._rowcount_requested = False
         locker.unlock()
         self._clean_appended_rows()
-        if self._query_getter is None:
+        if self._query is None:
             return 0
         # manipulate the query to circumvent the use of subselects and order by
         # clauses
-        query = self.get_query_getter()()
+        query = self.get_query()
         mapper = orm.class_mapper(self.admin.entity)
         select = query.order_by(None).as_scalar()
         select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
         count = query.session.execute(select, mapper=mapper).scalar()
         return count + len(self._appended_rows)
 
-    def setQuery(self, query_getter):
-        """Set the query and refresh the view"""
-        assert object_thread( self )
-        self._query_getter = query_getter
-        self.refresh()
-
     def set_value(self, query):
         """
         :param query: the `Query` to display
         """
-        if query is None:
-            self.setQuery(None)
-        else:
-            self.setQuery(lambda:query)
+        assert object_thread( self )
+        self._query = query
+        self.refresh()
             
     def get_value(self):
-        if self._query_getter is not None:
-            return self._query_getter()
+        return self._query
 
     def get_collection(self):
         """In case the collection is requested of a QueryProxy, we will return
@@ -146,19 +134,19 @@ class QueryTableProxy(CollectionProxy):
            another record than the selected row in the table.
         """
         
-        if not self._query_getter:
+        if self._query is None:
             return []
-        return self.get_query_getter()().all()
+        return self.get_query().all()
     
     def _set_sort_decorator( self, column=None, order=None ):
         """set the sort decorator attribute of this model to a function that
         sorts a query by the given column using the given order.  When no
         arguments are given, use the default sorting, which is according to
-        the primary keys of the model.  This to impose a string ordening of
+        the primary keys of the model.  This to impose a strict ordening of
         the rows in the model.
         """
         
-        class_attributes_to_sort_by, join = [], None
+        order_by, join = [], None
         mapper = orm.class_mapper(self.admin.entity)
         #
         # First sort according the requested column
@@ -173,10 +161,7 @@ class QueryTableProxy(CollectionProxy):
             #
 
             if isinstance(class_attribute, sql.ClauseElement):
-                if order:
-                    class_attributes_to_sort_by.append(sql.desc(class_attribute))
-                else:
-                    class_attributes_to_sort_by.append(class_attribute)
+                order_by.append((class_attribute, order))
 
             try:
                 property = mapper.get_property(
@@ -197,37 +182,44 @@ class QueryTableProxy(CollectionProxy):
                     else:
                         class_attribute = list(property._calculated_foreign_keys)[0]
             if property:
-                if order:
-                    class_attributes_to_sort_by.append( class_attribute.desc() )
-                else:
-                    class_attributes_to_sort_by.append( class_attribute )
-                    
-        #
-        # Next sort according to default sort column if any
-        #
-        if mapper.order_by:
-            class_attributes_to_sort_by.extend( mapper.order_by )
-            
-        #
-        # In the end, sort according to the primary keys of the model, to enforce
-        # a unique order in any case
-        #
-        class_attributes_to_sort_by.extend( mapper.primary_key )
+                order_by.append((class_attribute, order))
                                 
-        def sort_decorator(class_attributes_to_sort_by, join, query):
+        def sort_decorator(order_by, join, query):
+            order_by = list(order_by)
             if join:
                 query = query.outerjoin(join)
             # remove existing order clauses, because they might interfer
             # with the requested order from the user, as the existing order
-            # clause is first in the list
-            if None not in (column, order):
-                query = query.order_by(None)
-            query = query.order_by(*class_attributes_to_sort_by)
+            # clause is first in the list, and put them at the end of the list
+            if query._order_by:
+                for order_by_column in query._order_by:
+                    order_by.append((order_by_column, Qt.AscendingOrder))
+            #
+            # Next sort according to default sort column if any
+            #
+            if mapper.order_by:
+                for mapper_order_by in mapper.order_by:
+                    order_by.append((mapper_order_by, Qt.AscendingOrder))
+            #
+            # In the end, sort according to the primary keys of the model, to enforce
+            # a unique order in any case
+            #
+            for primary_key_column in mapper.primary_key:
+                order_by.append((primary_key_column, Qt.AscendingOrder))
+            query = query.order_by(None)
+            order_by_columns = set()
+            for order_by_column, order in order_by:
+                if order_by_column not in order_by_columns:
+                    if order == Qt.AscendingOrder:
+                        query = query.order_by(order_by_column)
+                    else:
+                        query = query.order_by(sql.desc(order_by_column))
+                    order_by_columns.add(order_by_column)
             return query
         
-        self._sort_decorator = functools.partial( sort_decorator,
-                                                  class_attributes_to_sort_by, 
-                                                  join )
+        self._sort_decorator = functools.partial(sort_decorator,
+                                                 order_by, 
+                                                 join)
         return self._rows
         
     def sort( self, column, order ):
@@ -267,7 +259,7 @@ class QueryTableProxy(CollectionProxy):
         from sqlalchemy import orm
         from sqlalchemy.exc import InvalidRequestError
         
-        query = self.get_query_getter()().offset(offset).limit(limit)
+        query = self.get_query().offset(offset).limit(limit)
         #
         # undefer all columns displayed in the list, to reduce the number
         # of queries
@@ -297,7 +289,7 @@ class QueryTableProxy(CollectionProxy):
                     
     def _extend_cache(self):
         """Extend the cache around the rows under request"""
-        if self._query_getter:
+        if self._query is not None:
             offset, limit = self._offset_and_limit_rows_to_get()
             if limit:
                 columns = self._columns
@@ -359,8 +351,8 @@ class QueryTableProxy(CollectionProxy):
             except KeyError:
                 pass
             # momentary hack for list error that prevents forms to be closed
-            if self._query_getter:
-                res = self.get_query_getter()().offset(row)
+            if self._query is not None:
+                res = self.get_query().offset(row)
                 if isinstance(res, list):
                     res = res[0]
                 # @todo: remove this try catch and find out why it 

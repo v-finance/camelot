@@ -630,7 +630,7 @@ class TableView( AbstractView  ):
         event.accept()
 
     @QtCore.qt_slot(object)
-    def _set_query(self, query_getter):
+    def _set_query(self, query):
         assert object_thread( self )
         if isinstance(self.table.model(), QueryTableProxy):
             # apply the filters on the query, to activate the default filter
@@ -638,7 +638,7 @@ class TableView( AbstractView  ):
             if filters_widget is not None:
                 for filter_widget in filters_widget.get_action_widgets():
                     filter_widget.run_action()
-            self.table.model().setQuery(query_getter)
+            self.table.model().set_value(query)
         self.table.clearSelection()
 
     @QtCore.qt_slot()
@@ -664,8 +664,7 @@ class TableView( AbstractView  ):
             query = self.admin.get_query()
             if self.search_filter:
                 query = self.search_filter( query )
-            query_getter = lambda:query
-            return query_getter
+            return query
 
         post( rebuild_query, self._set_query )
 
