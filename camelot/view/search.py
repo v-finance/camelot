@@ -118,7 +118,7 @@ def create_entity_search_query_decorator( admin, text ):
 
         for t in text.split(' '):
             subexp = []
-            for column_name in admin.get_search_fields():
+            for column_name in admin.get_search_fields(t):
                 path = column_name.split('.')
                 target = admin.entity
                 related_admin = admin

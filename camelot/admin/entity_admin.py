@@ -548,13 +548,17 @@ and used as a custom action.
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
 
-    def get_search_fields(self):
+    def get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the fields in the `list_search` attribute as well as the 
         properties that are mapped to a column in the database.  Any property that
         is not a simple Column might result in very slow searches, so those should
         be put explicitly in the `list_search` attribute.
+
+        :param substring: that part of the complete search string for which
+           the search fields are requested.  This allows analysis of the search
+           string to improve the search behavior
 
         :return: a list with the names of the fields in which to search
         """

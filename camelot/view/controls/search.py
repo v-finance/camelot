@@ -95,8 +95,7 @@ class SimpleSearchControl(AbstractSearchWidget):
     @QtCore.qt_slot(str)
     def _start_search_timer(self, str=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
-        if timer:
-            timer.stop()
+        if timer is not None:
             timer.start()
         
     @QtCore.qt_slot()
@@ -107,15 +106,16 @@ class SimpleSearchControl(AbstractSearchWidget):
     @QtCore.qt_slot(str)
     def emit_search(self, str=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
-        if timer:
+        if timer is not None:
             timer.stop()
         text = six.text_type(self.search_input.text())
+        print 'emit search', text
         self.search_signal.emit( text )
 
     @QtCore.qt_slot()
     def emit_cancel(self):
         timer = self.findChild( QtCore.QTimer, 'timer' )
-        if timer:
+        if timer is not None:
             timer.stop()
         self.search_input.setText('')
         self.cancel_signal.emit()
