@@ -109,7 +109,6 @@ class SimpleSearchControl(AbstractSearchWidget):
         if timer is not None:
             timer.stop()
         text = six.text_type(self.search_input.text())
-        print 'emit search', text
         self.search_signal.emit( text )
 
     @QtCore.qt_slot()
