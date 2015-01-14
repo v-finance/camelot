@@ -114,12 +114,20 @@ class StatusHistory( object ):
                               default=datetime.date.today)
     thru_date = schema.Column(types.Date, nullable=False, index=True,
                               default=end_of_times)
-    field_attributes = {'from_date': {'name': _('From date')},
-                        'thru_date': {'name': _('Thru date')}
-                        }
+
+
+    def sort_key(self):
+        """Key to be used to sort the status histories to get a single
+        status history at a specific date.
+        """
+        mapper = orm.object_mapper(self)
+        return (self.status_from_date, mapper.primary_key_from_instance(self))
 
 class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
+    field_attributes = {'from_date': {'name': _('From date')},
+                        'thru_date': {'name': _('Thru date')}
+                        }
 
     def __unicode__( self ):
         return six.text_type(self.classified_by or u'')
@@ -244,6 +252,9 @@ class Status( EntityBuilder ):
             self.status_history.status_for = self.property
 
 class StatusMixin( object ):
+    """This class adds additional methods to classes that have a status.
+    Such as methods to retrieve and modify the status.
+    """
 
     def get_status_from_date( self, classified_by ):
         """
@@ -252,8 +263,9 @@ class StatusMixin( object ):
             change occured yet
         """
         status_histories = [status_history for status_history in self.status if status_history.classified_by == classified_by]
-        if len( status_histories ):
-            status_histories.sort( key = lambda status_history:status_history.status_from_date, reverse = True )
+        if len(status_histories):
+            status_histories.sort(key=self._status_history.sort_key,
+                                  reverse=True)
             return status_histories[0].status_from_date
 
     def get_status_history_at( self, status_date = None ):
@@ -267,11 +279,10 @@ class StatusMixin( object ):
         """
         if status_date == None:
             status_date = datetime.date.today()
-        # NOTE
-        # Status id's are not taken into account here, so if statusses have the same dates, this method
-        # might not give the expected result.
-        # An option is to order self.status on id, but this needs to be tested, to see if id is set, not None.
-        for status_history in self.status:
+        status_histories = list(self.status)
+        status_histories.sort(key=self._status_history.sort_key,
+                              reverse=True)
+        for status_history in status_histories:
             if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:
                 return status_history
 
@@ -286,7 +297,7 @@ class StatusMixin( object ):
                            whereclause = sql.and_( status_history.status_for_id == status_class.id,
                                                    status_history.status_from_date <= sql.functions.current_date(),
                                                    status_history.status_thru_date >= sql.functions.current_date() ),
-                           from_obj = [status_history.table] ).order_by(status_history.id.desc()).limit(1)
+                           from_obj = [status_history.table] ).order_by(status_history.status_from_date.desc(), status_history.id.desc()).limit(1)
 
     @hybrid.hybrid_property
     def current_status( self ):
