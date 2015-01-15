@@ -106,7 +106,9 @@ class VirtualAddressEditor(CustomEditor):
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        if value:
+        if value is None:
+            self.editor.setText('')
+        else:
             self.editor.setText(value[1])
             idx = camelot.types.VirtualAddress.virtual_address_types.index(self._address_type or value[0])
             self.combo.setCurrentIndex(idx)
@@ -126,7 +128,11 @@ class VirtualAddressEditor(CustomEditor):
             self.update_validator()
 
     def get_value(self):
-        value = (six.text_type(self.combo.currentText()), six.text_type(self.editor.text()))
+        address_value = six.text_type(self.editor.text())
+        if not len(address_value):
+            value = None
+        else:
+            value = (six.text_type(self.combo.currentText()), address_value)
         return CustomEditor.get_value(self) or value
 
     def set_enabled(self, editable=True):
