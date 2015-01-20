@@ -819,7 +819,9 @@ class PartyContactMechanism( Entity ):
                 
     @mechanism.expression 
     def mechanism_expression( self ):
-        return ContactMechanism.mechanism
+        return sql.select(
+            [ContactMechanism.mechanism],
+            whereclause=ContactMechanism.id==self.contact_mechanism_id).as_scalar()
 
     def party_name( self ):
         return sql.select( [Party.full_name],
