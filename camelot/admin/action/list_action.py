@@ -468,6 +468,7 @@ class SaveExportMapping( Action ):
         self.settings = settings
 
     def read_mappings(self):
+        self.settings.sync()
         mappings = dict()
         number_of_mappings = self.settings.beginReadArray('mappings')
         for i in range(number_of_mappings):
@@ -496,6 +497,7 @@ class SaveExportMapping( Action ):
                 self.settings.setValue('field', column)
             self.settings.endArray()
         self.settings.endArray()
+        self.settings.sync()
 
     def model_run(self, model_context):
         from ..object_admin import ObjectAdmin
@@ -533,7 +535,7 @@ class RestoreExportMapping( SaveExportMapping ):
         mappings = self.read_mappings()
         mapping_names = [(k,k) for k in six.iterkeys(mappings)]
         mapping_name = yield action_steps.SelectItem(mapping_names)
-        if mapping_name:
+        if mapping_name is not None:
             fields = mappings[mapping_name]
             for i, column_mapping in enumerate(model_context.get_collection()):
                 if i<len(fields):
@@ -545,6 +547,24 @@ class RestoreExportMapping( SaveExportMapping ):
                 else:
                     column_mapping.field = None
                 yield action_steps.UpdateObject(column_mapping)
+
+class RemoveExportMapping( SaveExportMapping ):
+    """
+    Remove a user defined order of columns to export
+    """
+
+    verbose_name = _('Remove')
+    tooltip = _('Remove the previously stored order of the columns')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+    
+        mappings = self.read_mappings()
+        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_name = yield action_steps.SelectItem(mapping_names)
+        if mapping_name is not None:
+            mappings.pop(mapping_name)
+            self.write_mappings(mappings)
 
 class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
@@ -585,7 +605,8 @@ class ExportSpreadsheet( ListContextAction ):
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
-                                                 RestoreExportMapping(settings)]
+                                                 RestoreExportMapping(settings),
+                                                 RemoveExportMapping(settings)]
         change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
         change_mappings.title = _('Select field')
         change_mappings.subtitle = _('Specify for each column the field to export')
