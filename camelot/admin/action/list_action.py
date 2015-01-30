@@ -572,7 +572,9 @@ class ExportSpreadsheet( ListContextAction ):
     icon = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
-    
+
+    # xlwt options
+    max_width = 10000
     font_name = 'Arial'
     
     def model_run( self, model_context ):
@@ -743,9 +745,9 @@ class ExportSpreadsheet( ListContextAction ):
                 font_specs = dict( font_name = self.font_name, height = 200 )
                 border_specs = dict()
                 if i == 0:
-                    border_specs[ 'left' ] = 0x01                
+                    border_specs[ 'left' ] = 0x01
                 elif i == len( columns ) - 1:
-                    border_specs[ 'right' ] = 0x01  
+                    border_specs[ 'right' ] = 0x01
                 if (row - offset + 1) == model_context.collection_count:
                     border_specs[ 'bottom' ] = 0x01
                 style = get_style( font_specs, 
@@ -754,8 +756,11 @@ class ExportSpreadsheet( ListContextAction ):
                                    format_string )
                 worksheet.write( row, i, value, style )
                 min_width = len( six.text_type( value ) ) * 300
-                worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
-        
+                worksheet.col( i ).width = min(self.max_width, max(
+                    min_width,
+                    worksheet.col( i ).width)
+                )
+
         yield action_steps.UpdateProgress( text = _('Saving file') )
         filename = action_steps.OpenFile.create_temporary_file( '.xls' )
         workbook.save( filename )
