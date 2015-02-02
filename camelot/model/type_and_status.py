@@ -354,15 +354,18 @@ class ChangeStatus( Action ):
 
     def get_state(self, model_context):
         """
-        Disable the change status button in case the object is not yet
-        persisted
+        Disable the change status button in case the object can not yet
+        be validated
         """
         state = super(ChangeStatus, self).get_state(model_context)
         # only check the current object selected, to avoid slowdown in case
         # many objects are selected
         obj = model_context.get_object()
         if obj is not None:
-            state.enabled = model_context.admin.is_persistent(obj)
+            validator = model_context.admin.get_validator()
+            for message in validator.validate_object(obj):
+                state.enabled = False
+                return state
         return state
 
     def before_status_change(self, model_context, obj):
