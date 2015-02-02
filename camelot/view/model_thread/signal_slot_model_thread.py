@@ -34,8 +34,7 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 import six
 
-from ...core.qt import QtCore
-from ...core.utils import pyqt
+from ...core.qt import QtCore, qt_api
 from ...core.threading import synchronized
 from ...view.model_thread import AbstractModelThread, object_thread
 from ...view.controls.exception import register_exception
@@ -47,7 +46,7 @@ from ...view.controls.exception import register_exception
 # https://bugreports.qt-project.org/browse/PYSIDE-17
 #
 
-if pyqt:
+if qt_api.startswith('PySide'):
     wrap_none = lambda x:x
     unwrap_none = lambda x:x
 else:

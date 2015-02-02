@@ -32,37 +32,13 @@ from .qt import QtCore
 
 logger = logging.getLogger('camelot.core.utils')
 
-def is_deleted_pyqt( qobj ):
-    """
-    :param qobj: a :class:`QtCore.QObject`
-    :return: :const:`True` if the qobj was deleted, :const:`False`
-        otherwise
-    """
-    import sip
-    return sip.isdeleted( qobj )
-
-
-def is_deleted_pyside( qobj ):
-    """
-    :param qobj: a :class:`QtCore.QObject`
-    :return: :const:`True` if the qobj was deleted, :const:`False`
-        otherwise
-    """
-    return False
-
-if hasattr(QtCore, 'PYQT_VERSION_STR'):
-    pyqt = True
-    is_deleted = is_deleted_pyqt 
-else:
-    pyqt = False
-    is_deleted = is_deleted_pyside
-    # try to activate the PySide backend of matplotlib
-    # http://www.scipy.org/Cookbook/Matplotlib/PySide
-    try:
-        import matplotlib
-        matplotlib.rcParams['backend.qt4'] = 'PySide'
-    except:
-        pass
+    ## try to activate the PySide backend of matplotlib
+    ## http://www.scipy.org/Cookbook/Matplotlib/PySide
+    #try:
+        #import matplotlib
+        #matplotlib.rcParams['backend.qt4'] = 'PySide'
+    #except:
+        #pass
     
 def create_constant_function(constant):
     return lambda:constant

@@ -56,6 +56,15 @@ if qt_api in (None, 'PyQt4'):
         # the api version is only available after importing QtCore
         variant_api = sip.getapi('QVariant')
         string_api = sip.getapi('QString')
+
+        def is_deleted( qobj ):
+            """
+            :param qobj: a :class:`QtCore.QObject`
+            :return: :const:`True` if the qobj was deleted, :const:`False`
+                otherwise
+            """
+            return sip.isdeleted( qobj )
+
     except ImportError:
         qt_api = None
 
@@ -67,6 +76,15 @@ elif qt_api in (None, 'PySide'):
         QtCore.qt_property = QtCore.Property
         variant_api = 2
         string_api = 2
+
+        def is_deleted( qobj ):
+            """
+            :param qobj: a :class:`QtCore.QObject`
+            :return: :const:`True` if the qobj was deleted, :const:`False`
+                otherwise
+            """
+            return False
+
     except ImportError:
         qt_api = None
 

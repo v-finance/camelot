@@ -53,9 +53,9 @@ from camelot.admin.action.list_action import ListActionModelContext
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...container.collection_container import CollectionContainer
-from ...core.qt import QtCore, QtGui, Qt, py_to_variant, variant_to_py
+from ...core.qt import (QtCore, QtGui, Qt, py_to_variant, variant_to_py,
+                        is_deleted)
 from camelot.core.exception import log_programming_error
-from camelot.core.utils import is_deleted
 from camelot.view.fifo import Fifo
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import object_thread, post

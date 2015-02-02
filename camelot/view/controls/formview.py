@@ -28,7 +28,7 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import QtGui, QtCore, Qt, py_to_variant
+from ...core.qt import QtGui, QtCore, Qt, py_to_variant, is_deleted
 
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -309,12 +309,12 @@ class FormView(AbstractView):
         
     def close_view( self, accept ):
         self.accept_close_event = accept
-        if accept == True:
+        if (accept == True) and not is_deleted(self):
             # clear mapping to prevent data being written again to the model,
             # when the underlying object would be reverted
             form = self.findChild( QtGui.QWidget, 'form' )
-            if form != None:
-                form.clear_mapping()            
+            if form is not None:
+                form.clear_mapping()
         self.close()
 
     def closeEvent(self, event):
