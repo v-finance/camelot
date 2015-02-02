@@ -46,7 +46,7 @@ from ...view.controls.exception import register_exception
 # https://bugreports.qt-project.org/browse/PYSIDE-17
 #
 
-if qt_api.startswith('PySide'):
+if qt_api.startswith('PyQt'):
     wrap_none = lambda x:x
     unwrap_none = lambda x:x
 else:
