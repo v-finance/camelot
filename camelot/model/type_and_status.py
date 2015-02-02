@@ -51,7 +51,7 @@ import datetime
 
 import six
 
-from sqlalchemy import orm, sql, schema, types
+from sqlalchemy import orm, sql, schema, types, inspection
 from sqlalchemy.ext import hybrid
 
 from camelot.admin.action import list_filter
@@ -119,9 +119,24 @@ class StatusHistory( object ):
     def sort_key(self):
         """Key to be used to sort the status histories to get a single
         status history at a specific date.
+
+        The default order is :
+
+        - if status_from_date of history a comes before history b,
+          history a comes before history b
+
+        - if history a has a primary key and history b has no primary key,
+          history a comes before history b
+
+        - if the primary key of history a is smaller than the primary key
+          of history b, history a comes before history b.
+
+        This ensures that the order matches the one of the default sql
+        queries, but it allows changing the status without assigning
+        primary keys yet.
         """
-        mapper = orm.object_mapper(self)
-        return (self.status_from_date, mapper.primary_key_from_instance(self))
+        state = inspection.inspect(self)
+        return (self.status_from_date, state.has_identity, state.identity)
 
 class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
