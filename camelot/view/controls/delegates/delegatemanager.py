@@ -27,7 +27,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, variant_to_py
+from ....core.qt import QtGui, QtCore, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate
 
 class DelegateManager(QtGui.QItemDelegate):
@@ -81,12 +81,15 @@ class DelegateManager(QtGui.QItemDelegate):
     def setEditorData(self, editor, index):
         """Use a custom delegate setEditorData method if it exists"""
         logger.debug('setting editor data for column %s' % index.column())
-        try:
-            delegate = self.get_column_delegate(index.column())
-            delegate.setEditorData(editor, index)
-        except Exception as e:
-            logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
-            logger.error('value that could not be set : %s'%six.text_type(variant_to_py(index.model().data(index, Qt.EditRole))))
+        # the datawidgetmapper has no mechanism to remove a deleted
+        # editor from its list of editors for which the data is set
+        if not is_deleted(editor):
+            try:
+                delegate = self.get_column_delegate(index.column())
+                delegate.setEditorData(editor, index)
+            except Exception as e:
+                logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
+                logger.error('value that could not be set : %s'%six.text_type(variant_to_py(index.model().data(index, Qt.EditRole))))
 
     def setModelData(self, editor, model, index):
         """Use a custom delegate setModelData method if it exists"""
@@ -98,4 +101,13 @@ class DelegateManager(QtGui.QItemDelegate):
         option = QtGui.QStyleOptionViewItem()
         delegate = self.get_column_delegate(index.column())
         return delegate.sizeHint(option, index)
+
+    #def eventFilter(self, *args):
+        #"""The datawidgetmapper installs the delegate as an event filter
+        #on each editor.
+        
+        #TODO : investigate if this is a reliable alternative to implement
+               #commitData instead of the editingFinished signal.
+        #"""
+        #return False
 
