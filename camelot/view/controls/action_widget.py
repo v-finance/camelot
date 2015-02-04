@@ -22,14 +22,14 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtCore, variant_to_py
+from ...core.qt import QtGui, QtCore, variant_to_py, is_deleted
 
 import six
 
 from ...admin.action import State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
-from camelot.core.utils import is_deleted, ugettext
+from camelot.core.utils import ugettext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):

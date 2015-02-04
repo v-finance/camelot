@@ -34,10 +34,12 @@ from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import Icon
 from camelot.view.controls import delegates, editors
+from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
+from camelot.view.proxy.collection_proxy import CollectionProxy
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -63,10 +65,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
-        from camelot.view.controls.formview import FormWidget
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
-
         self.setWindowTitle( admin.get_verbose_name() )
         self.set_banner_logo_pixmap( icon.getQPixmap() )
         self.set_banner_title( six.text_type(title) )
