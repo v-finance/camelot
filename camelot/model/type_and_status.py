@@ -411,9 +411,7 @@ class ChangeStatus( Action ):
                 history_type = obj._status_history
                 history = model_context.session.query(history_type)
                 history = history.filter(history_type.status_for==obj)
-                # Deprecated since version 0.9.0: superseded by Query.
-                # with_for_update().
-                history = history.with_lockmode('update')
+                history = history.with_for_update(nowait=True)
                 history_count = sum(1 for _h in history.yield_per(10))
                 if number_of_statuses != history_count:
                     if obj not in model_context.session.new:
