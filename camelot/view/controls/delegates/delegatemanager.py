@@ -90,6 +90,7 @@ class DelegateManager(QtGui.QItemDelegate):
             except Exception as e:
                 logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
                 logger.error('value that could not be set : %s'%six.text_type(variant_to_py(index.model().data(index, Qt.EditRole))))
+                logger.error('editor that failed %s %s'%(type(editor).__name__, editor.objectName()))
 
     def setModelData(self, editor, model, index):
         """Use a custom delegate setModelData method if it exists"""
