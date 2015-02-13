@@ -29,6 +29,7 @@ context of the `Qt` model-view-delegate framework.
 
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt
+from ..workspace import show_top_level
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
@@ -67,6 +68,13 @@ class OpenFormView( ActionStep ):
         self.title = u' '
         self._columns = admin.get_fields()
         self._form_display = admin.get_form_display()
+
+    def get_objects( self ):
+        """Use this method to get access to the objects to change in unit tests
+
+        :return: the list of objects to display in the form view
+        """
+        return self.objects
 
     def render(self, gui_context):
         from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -117,7 +125,6 @@ class OpenFormView( ActionStep ):
         return form
 
     def gui_run( self, gui_context ):
-        from camelot.view.workspace import show_top_level
         window = gui_context.get_window()
         formview = self.render(gui_context)
         show_top_level(formview, window)
