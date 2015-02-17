@@ -62,7 +62,6 @@ class UpdateTableView( ActionStep ):
     def __init__( self, admin, value ):
         self.admin = admin
         self.value = value
-        self.new_tab = False
         self.title = admin.get_verbose_name_plural()
         if isinstance(value, list):
             self.proxy = CollectionProxy
@@ -110,6 +109,7 @@ class OpenTableView( UpdateTableView ):
         super(OpenTableView, self).__init__(admin, value)
         self.subclasses = admin.get_subclass_tree()
         self.search_text = ''
+        self.new_tab = False
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView

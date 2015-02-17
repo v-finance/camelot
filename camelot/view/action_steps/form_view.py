@@ -121,7 +121,6 @@ class OpenFormView( ActionStep ):
         form.set_actions(self.actions)
         form.set_toolbar_actions(self.top_toolbar_actions)
         self.admin._apply_form_state( form )
-        
         return form
 
     def gui_run( self, gui_context ):
