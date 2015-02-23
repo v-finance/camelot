@@ -56,6 +56,7 @@ if qt_api in (None, 'PyQt4'):
         # the api version is only available after importing QtCore
         variant_api = sip.getapi('QVariant')
         string_api = sip.getapi('QString')
+        is_deleted = sip.isdeleted
     except ImportError:
         qt_api = None
 
@@ -67,6 +68,8 @@ elif qt_api in (None, 'PySide'):
         QtCore.qt_property = QtCore.Property
         variant_api = 2
         string_api = 2
+        is_deleted = lambda _qobj:False
+
     except ImportError:
         qt_api = None
 

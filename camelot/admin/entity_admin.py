@@ -601,9 +601,10 @@ and used as a custom action.
                 for relation in serialized.get(relationship_property.key, []):
                     relation_mapper = orm.class_mapper(target)
                     for primary_key_field in relation_mapper.primary_key:
-                        relation[primary_key_field.name] = None
-        #from pprint import pprint
-        #pprint( serialized )
+                        # remove the primary key field, since setting it
+                        # to None might overwrite a value set at object
+                        # construction time
+                        relation.pop(primary_key_field.name, None)
         #
         # deserialize into the new object
         #

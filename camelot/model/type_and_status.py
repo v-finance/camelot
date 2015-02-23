@@ -263,7 +263,7 @@ class Status( EntityBuilder ):
     def create_properties( self ):
         if not self.property:
             backref = orm.backref(self.name, cascade='all, delete, delete-orphan')
-            self.property = orm.relationship(self.entity, backref = backref)
+            self.property = orm.relationship(self.entity, backref = backref, enable_typechecks=False)
             self.status_history.status_for = self.property
 
 class StatusMixin( object ):
@@ -369,15 +369,18 @@ class ChangeStatus( Action ):
 
     def get_state(self, model_context):
         """
-        Disable the change status button in case the object is not yet
-        persisted
+        Disable the change status button in case the object can not yet
+        be validated
         """
         state = super(ChangeStatus, self).get_state(model_context)
         # only check the current object selected, to avoid slowdown in case
         # many objects are selected
         obj = model_context.get_object()
         if obj is not None:
-            state.enabled = model_context.admin.is_persistent(obj)
+            validator = model_context.admin.get_validator()
+            for message in validator.validate_object(obj):
+                state.enabled = False
+                return state
         return state
 
     def before_status_change(self, model_context, obj):
@@ -408,9 +411,7 @@ class ChangeStatus( Action ):
                 history_type = obj._status_history
                 history = model_context.session.query(history_type)
                 history = history.filter(history_type.status_for==obj)
-                # Deprecated since version 0.9.0: superseded by Query.
-                # with_for_update().
-                history = history.with_lockmode('update')
+                history = history.with_for_update(nowait=True)
                 history_count = sum(1 for _h in history.yield_per(10))
                 if number_of_statuses != history_count:
                     if obj not in model_context.session.new:
