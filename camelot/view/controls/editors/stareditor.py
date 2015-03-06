@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, Qt
+from ....core.qt import QtGui, QtWidgets, Qt
 from .customeditor import CustomEditor
 from camelot.view.art import Icon
 
@@ -49,7 +49,7 @@ class StarEditor( CustomEditor ):
         self.maximum = maximum
         self.buttons = []
         for i in range(self.maximum):
-            button = QtGui.QToolButton(self)
+            button = QtWidgets.QToolButton(self)
             button.setIcon(self.no_star_icon.getQIcon())
             button.setFocusPolicy(Qt.ClickFocus)
             if editable:

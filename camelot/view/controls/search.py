@@ -55,7 +55,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         timer.timeout.connect( self.emit_search )
 
         # Search button
-        self.search_button = QtGui.QToolButton()
+        self.search_button = QtWidgets.QToolButton()
         icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
         self.search_button.setIcon(icon)
         self.search_button.setIconSize(QtCore.QSize(14, 14))
@@ -73,7 +73,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.setFocusProxy(self.search_input)
 
         # Cancel button
-        self.cancel_button = QtGui.QToolButton()
+        self.cancel_button = QtWidgets.QToolButton()
         icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
         self.cancel_button.setIcon(icon)
         self.cancel_button.setIconSize(QtCore.QSize(14, 14))

@@ -63,7 +63,7 @@ class IntegerEditor(CustomEditor):
         spin_box.addAction(action)
         spin_box.setObjectName('spin_box')
         
-        self.calculatorButton = QtGui.QToolButton()
+        self.calculatorButton = QtWidgets.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFocusPolicy(Qt.ClickFocus)

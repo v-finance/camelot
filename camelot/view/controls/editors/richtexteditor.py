@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 from camelot.view.art import Icon
@@ -131,7 +131,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.toolbar.setOrientation(Qt.Horizontal)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
 
-        self.bold_button = QtGui.QToolButton(self)
+        self.bold_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-bold.png').getQIcon()
         self.bold_button.setIcon(icon)
         self.bold_button.setAutoRaise(True)
@@ -142,7 +142,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.bold_button.setToolTip('Bold')
         self.bold_button.clicked.connect(self.set_bold)
 
-        self.italic_button = QtGui.QToolButton(self)
+        self.italic_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-italic.png').getQIcon()
         self.italic_button.setIcon(icon)
         self.italic_button.setAutoRaise(True)
@@ -153,7 +153,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.italic_button.setToolTip('Italic')
         self.italic_button.clicked.connect(self.set_italic)
 
-        self.underline_button = QtGui.QToolButton(self)
+        self.underline_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-underline.png').getQIcon()
         self.underline_button.setIcon(icon)
         self.underline_button.setAutoRaise(True)
@@ -164,7 +164,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.underline_button.setToolTip('Underline')
         self.underline_button.clicked.connect(self.set_underline)
 
-        self.copy_button = QtGui.QToolButton(self)
+        self.copy_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-copy.png').getQIcon()
         self.copy_button.setIcon(icon)
         self.copy_button.setAutoRaise(True)
@@ -173,7 +173,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.copy_button.setToolTip('Copy')
         self.copy_button.clicked.connect(self.textedit.copy)
 
-        self.cut_button = QtGui.QToolButton(self)
+        self.cut_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-cut.png').getQIcon()
         self.cut_button.setIcon(icon)
         self.cut_button.setAutoRaise(True)
@@ -182,7 +182,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.cut_button.clicked.connect(self.textedit.cut)
         self.cut_button.setFocusPolicy( Qt.ClickFocus )
 
-        self.paste_button = QtGui.QToolButton(self)
+        self.paste_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-paste.png').getQIcon()
         self.paste_button.setIcon(icon)
         self.paste_button.setAutoRaise(True)
@@ -191,7 +191,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.paste_button.setToolTip('Paste')
         self.paste_button.clicked.connect(self.textedit.paste)
 
-        self.alignleft_button = QtGui.QToolButton(self)
+        self.alignleft_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-left.png').getQIcon()
         self.alignleft_button.setIcon(icon)
         self.alignleft_button.setAutoRaise(True)
@@ -201,7 +201,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignleft_button.setToolTip('Align left')
         self.alignleft_button.clicked.connect(self.set_alignleft)
 
-        self.aligncenter_button = QtGui.QToolButton(self)
+        self.aligncenter_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-center.png').getQIcon()
         self.aligncenter_button.setIcon(icon)
         self.aligncenter_button.setAutoRaise(True)
@@ -211,7 +211,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.aligncenter_button.setToolTip('Align Center')
         self.aligncenter_button.clicked.connect(self.set_aligncenter)
 
-        self.alignright_button = QtGui.QToolButton(self)
+        self.alignright_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-right.png').getQIcon()
         self.alignright_button.setIcon(icon)
         self.alignright_button.setAutoRaise(True)
@@ -221,7 +221,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignright_button.setToolTip('Align Right')
         self.alignright_button.clicked.connect(self.set_alignright)
 
-        self.zoomin_button = QtGui.QToolButton(self)
+        self.zoomin_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
         self.zoomin_button.setIcon(icon)
         self.zoomin_button.setAutoRaise(True)
@@ -231,7 +231,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.zoomin_button.setToolTip('Zoom in')
         self.zoomin_button.clicked.connect(self.zoomin)
         
-        self.zoomout_button = QtGui.QToolButton(self)
+        self.zoomout_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/list-remove.png').getQIcon()
         self.zoomout_button.setIcon(icon)
         self.zoomout_button.setAutoRaise(True)
@@ -241,7 +241,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.zoomout_button.setToolTip('Zoom out')
         self.zoomout_button.clicked.connect(self.zoomout)
         
-        self.color_button = QtGui.QToolButton(self)
+        self.color_button = QtWidgets.QToolButton(self)
         self.color_button.setAutoRaise(True)
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
         self.color_button.setFocusPolicy( Qt.ClickFocus )

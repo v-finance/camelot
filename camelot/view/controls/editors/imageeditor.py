@@ -75,12 +75,12 @@ All files (*)"""
         button_layout.setSpacing( 0 )
         button_layout.setContentsMargins( 0, 0, 0, 0)
         
-        copy_button = QtGui.QToolButton()
+        copy_button = QtWidgets.QToolButton()
         copy_button.setDefaultAction( ActionFactory.copy(self, self.copy_to_clipboard ) )
         copy_button.setAutoRaise(True)
         copy_button.setFocusPolicy(Qt.ClickFocus)
 
-        paste_button = QtGui.QToolButton()
+        paste_button = QtWidgets.QToolButton()
         paste_button.setDefaultAction( ActionFactory.paste(self, self.paste_from_clipboard ) )
         paste_button.setAutoRaise(True)
         paste_button.setObjectName('paste')

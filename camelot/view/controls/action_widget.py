@@ -218,12 +218,12 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
             self.setIcon( QtGui.QIcon() )
         self.set_menu( state )
 
-class ActionToolbutton(QtGui.QToolButton, AbstractActionWidget):
+class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
     def __init__( self, action, gui_context, parent ):
-        """A :class:`QtGui.QToolButton` that when pressed, will run an
+        """A :class:`QtWidgets.QToolButton` that when pressed, will run an
         action."""
-        QtGui.QToolButton.__init__( self, parent )
+        QtWidgets.QToolButton.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
         self.clicked.connect(self.run_action)
 
@@ -250,7 +250,7 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         AbstractActionWidget.__init__(self, action, gui_context)
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        face = QtGui.QToolButton()
+        face = QtWidgets.QToolButton()
         face.setObjectName('face')
         face.setAutoRaise(True)
         face.clicked.connect(self.face_clicked)
@@ -292,5 +292,5 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         user_name.setText(state.verbose_name)
         groups = self.findChild(QtWidgets.QLabel, 'groups')
         groups.setText(state.tooltip)
-        face = self.findChild(QtGui.QToolButton, 'face')
+        face = self.findChild(QtWidgets.QToolButton, 'face')
         face.setIcon(state.icon.getQIcon())

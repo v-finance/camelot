@@ -26,7 +26,7 @@ import os.path
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
@@ -62,7 +62,7 @@ class LocalFileEditor( CustomEditor ):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        browse_button = QtGui.QToolButton( self )
+        browse_button = QtWidgets.QToolButton( self )
         browse_button.setFocusPolicy( Qt.ClickFocus )
         browse_button.setIcon( self.browse_icon.getQIcon() )
         browse_button.setToolTip( _('Browse') )

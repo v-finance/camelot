@@ -24,7 +24,7 @@
 
 import logging
 
-from ....core.qt import QtGui, QtCore
+from ....core.qt import QtGui, QtWidgets, QtCore
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors.customeditor import AbstractCustomEditor
@@ -80,7 +80,7 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         icon = Icon( 'tango/16x16/actions/document-print-preview.png' ).getQIcon()
         button_layout.addStretch()
         
-        print_button = QtGui.QToolButton()
+        print_button = QtWidgets.QToolButton()
         print_button.setIcon( icon )
         print_button.setAutoRaise( True )
         print_button.setToolTip( _('Print Preview') )
@@ -88,7 +88,7 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         button_layout.addWidget( print_button )
 
         icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
-        copy_button = QtGui.QToolButton()
+        copy_button = QtWidgets.QToolButton()
         copy_button.setIcon( icon )
         copy_button.setAutoRaise( True )
         copy_button.setToolTip( _('Copy to clipboard') )
