@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
@@ -44,34 +44,34 @@ class Calculator(QtGui.QDialog):
 
         #BUTTONS---
 
-        self.equals = QtGui.QPushButton('=', self)
-        self.discount = QtGui.QPushButton('Discount', self)
-        self.save = QtGui.QPushButton('&Save', self)
-        self.cancel = QtGui.QPushButton('Cancel', self)
+        self.equals = QtWidgets.QPushButton('=', self)
+        self.discount = QtWidgets.QPushButton('Discount', self)
+        self.save = QtWidgets.QPushButton('&Save', self)
+        self.cancel = QtWidgets.QPushButton('Cancel', self)
 
-        self.zero = QtGui.QPushButton('0', self)
-        self.one = QtGui.QPushButton('1', self)
-        self.two = QtGui.QPushButton('2', self)
-        self.three = QtGui.QPushButton('3', self)
-        self.four = QtGui.QPushButton('4', self)
-        self.five = QtGui.QPushButton('5', self)
-        self.six = QtGui.QPushButton('6', self)
-        self.seven = QtGui.QPushButton('7', self)
-        self.eight = QtGui.QPushButton('8', self)
-        self.nine = QtGui.QPushButton('9', self)
+        self.zero = QtWidgets.QPushButton('0', self)
+        self.one = QtWidgets.QPushButton('1', self)
+        self.two = QtWidgets.QPushButton('2', self)
+        self.three = QtWidgets.QPushButton('3', self)
+        self.four = QtWidgets.QPushButton('4', self)
+        self.five = QtWidgets.QPushButton('5', self)
+        self.six = QtWidgets.QPushButton('6', self)
+        self.seven = QtWidgets.QPushButton('7', self)
+        self.eight = QtWidgets.QPushButton('8', self)
+        self.nine = QtWidgets.QPushButton('9', self)
 
-        self.clear = QtGui.QPushButton('&Clear', self)
+        self.clear = QtWidgets.QPushButton('&Clear', self)
 
         self.backspace = QtGui.QToolButton()
         icon = Icon('tango/16x16/actions/go-previous.png').getQIcon()
         self.backspace.setIcon(icon)
         self.backspace.setAutoRaise(True)
 
-        self.plus = QtGui.QPushButton('+', self)
-        self.min = QtGui.QPushButton('-', self)
-        self.multiply = QtGui.QPushButton('x', self)
-        self.devide = QtGui.QPushButton('/', self)
-        self.comma = QtGui.QPushButton(',', self)
+        self.plus = QtWidgets.QPushButton('+', self)
+        self.min = QtWidgets.QPushButton('-', self)
+        self.multiply = QtWidgets.QPushButton('x', self)
+        self.devide = QtWidgets.QPushButton('/', self)
+        self.comma = QtWidgets.QPushButton(',', self)
 
         #Button-Connects---
         self.equals.clicked.connect(self.ShowCalculate)
@@ -96,7 +96,7 @@ class Calculator(QtGui.QDialog):
         self.save.clicked.connect(self.SaveValue)
         self.discount.clicked.connect(self.discountClick)
 
-        self.output = QtGui.QLabel(self)
+        self.output = QtWidgets.QLabel(self)
         #self.output.move(3, 8)
 
         mainLayout.addLayout(topLeftLayout)
@@ -129,7 +129,7 @@ class Calculator(QtGui.QDialog):
         self.setLayout(mainLayout)
 
     def keyPressEvent(self, event):
-        #QtGui.QWidget.keyPressEvent(self, event)
+        #QtWidgets.QWidget.keyPressEvent(self, event)
 
         key = event.key()
         if key == QtCore.Qt.Key_S:

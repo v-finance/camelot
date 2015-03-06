@@ -32,7 +32,7 @@ from camelot.view.art import Icon
 
 import six
 
-from ...core.qt import QtGui, QtCore, Qt, q_string, py_to_variant
+from ...core.qt import QtGui, QtCore, QtWidgets, Qt, q_string, py_to_variant
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -47,16 +47,16 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     
     def __init__(self, name, icon=progress_icon):
         QtGui.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
-        label = QtGui.QLabel( six.text_type(name) )
+        label = QtWidgets.QLabel( six.text_type(name) )
         progress_bar = QtGui.QProgressBar()
         progress_bar.setObjectName('progress_bar')
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        cancel_button = QtWidgets.QPushButton( ugettext('Cancel') )
         cancel_button.setObjectName( 'cancel' )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
+        ok_button = QtWidgets.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.clicked.connect( self.accept )
         ok_button.hide()
-        copy_button = QtGui.QPushButton( ugettext('Copy') )
+        copy_button = QtWidgets.QPushButton( ugettext('Copy') )
         copy_button.setObjectName( 'copy' )
         copy_button.clicked.connect( self.copy_clicked )
         copy_button.hide()
@@ -92,7 +92,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     # in QProgressDialog, as the QProgressDialog then manually relayouts
     # the dialog instead of using the normal layouts
     def resizeEvent(self, event):
-        return QtGui.QWidget.resizeEvent(self, event)
+        return QtWidgets.QWidget.resizeEvent(self, event)
     
     @QtCore.qt_slot(bool)
     def copy_clicked(self, checked):
@@ -109,7 +109,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         :param text: a string
         """
         details = self.findChild( QtGui.QListView, 'details' )
-        copy_button = self.findChild( QtGui.QPushButton, 'copy' )
+        copy_button = self.findChild( QtWidgets.QPushButton, 'copy' )
         if copy_button is not None:
             copy_button.show()
         if details is not None:
@@ -133,14 +133,14 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             details.model().clear()
             
     def set_ok_hidden( self, hidden = True ):
-        ok_button = self.findChild( QtGui.QPushButton, 'ok' )
+        ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
         if ok_button:
             ok_button.setHidden( hidden )
             progress_bar.setHidden(not hidden)
 
     def set_cancel_hidden( self, hidden = True ):
-        cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
+        cancel_button = self.findChild( QtWidgets.QPushButton, 'cancel' )
         if cancel_button:
             cancel_button.setHidden( hidden )
 

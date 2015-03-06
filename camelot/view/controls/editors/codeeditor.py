@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from camelot.view.model_thread import object_thread
 
 from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
@@ -102,7 +102,7 @@ class CodeEditor(CustomEditor):
 
     def _get_part_editors( self ):
         for i in range( len( self.parts ) ):
-            part_editor = self.findChild( QtGui.QWidget,
+            part_editor = self.findChild( QtWidgets.QWidget,
                                           'part_%s'%i )
             yield part_editor
             

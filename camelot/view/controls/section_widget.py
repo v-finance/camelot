@@ -29,14 +29,14 @@ logger = logging.getLogger('camelot.view.controls.section_widget')
 
 import six
 
-from ...core.qt import variant_to_py, QtCore, QtGui, Qt
+from ...core.qt import variant_to_py, QtCore, QtGui, QtWidgets, Qt
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.section import Section, SectionItem
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
-class PaneSection(QtGui.QWidget):
+class PaneSection(QtWidgets.QWidget):
 
     def __init__(self, parent, section, workspace):
         super(PaneSection, self).__init__(parent)
@@ -62,7 +62,7 @@ class PaneSection(QtGui.QWidget):
     @QtCore.qt_slot(object)
     def set_items(self, items, parent = None):
         logger.debug('setting items for current navpane section')
-        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        section_tree = self.findChild(QtWidgets.QWidget, 'SectionTree')
         if section_tree:
             if parent == None:
                 # take a copy, so the copy can be extended
@@ -91,7 +91,7 @@ class PaneSection(QtGui.QWidget):
 
     def create_context_menu(self, point):
         logger.debug('creating context menu')
-        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        section_tree = self.findChild(QtWidgets.QWidget, 'SectionTree')
         if section_tree:
             item = section_tree.itemAt(point)
             if item:
@@ -114,7 +114,7 @@ class PaneSection(QtGui.QWidget):
         self._run_current_action()
 
     def _run_current_action( self, mode_name=None ):
-        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        section_tree = self.findChild(QtWidgets.QWidget, 'SectionTree')
         if section_tree:
             item = section_tree.currentItem()
             index = section_tree.indexFromItem(item)
@@ -146,13 +146,13 @@ class NavigationPane(QtGui.QDockWidget):
         tb.setMouseTracking(True)
         
         # hack for removing the dock title bar
-        self.setTitleBarWidget(QtGui.QWidget())
+        self.setTitleBarWidget(QtWidgets.QWidget())
         self.setWidget(tb)
         self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
 
     def wheelEvent(self, wheel_event):
         steps = -1 * wheel_event.delta() / (8 * 15)
-        toolbox = self.findChild(QtGui.QWidget, 'toolbox')
+        toolbox = self.findChild(QtWidgets.QWidget, 'toolbox')
         if steps and toolbox:
             current_index = toolbox.currentIndex()
             toolbox.setCurrentIndex( max( 0, min( current_index + steps, toolbox.count() ) ) )
@@ -163,7 +163,7 @@ class NavigationPane(QtGui.QDockWidget):
         if not sections:
             self.setMaximumWidth(0)
             return
-        toolbox = self.findChild(QtGui.QWidget, 'toolbox')
+        toolbox = self.findChild(QtWidgets.QWidget, 'toolbox')
 
         # performs QToolBox clean up
         # QToolbox won't delete items we have to do it explicitly

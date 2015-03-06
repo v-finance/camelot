@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
 
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
@@ -101,7 +101,7 @@ def DocumentationMetaclass(name, bases, dct):
 color_groups = {True: QtGui.QPalette.Inactive,
                 False: QtGui.QPalette.Disabled}
 
-class CustomDelegate(QtGui.QItemDelegate):
+class CustomDelegate(QtWidgets.QItemDelegate):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -133,7 +133,7 @@ class CustomDelegate(QtGui.QItemDelegate):
 
         editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
         assert editor != None
-        assert isinstance(editor, QtGui.QWidget)
+        assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )
@@ -148,7 +148,7 @@ class CustomDelegate(QtGui.QItemDelegate):
     def commitAndCloseEditor(self):
         editor = self.sender()
         assert editor != None
-        assert isinstance(editor, QtGui.QWidget)
+        assert isinstance(editor, QtWidgets.QWidget)
         self.commitData.emit(editor)
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not

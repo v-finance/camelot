@@ -28,7 +28,7 @@ LOGGER = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
-from ....core.qt import Qt, QtCore, QtGui, variant_to_py
+from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import object_thread, post
@@ -154,14 +154,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
         """
         :return: a :class:`QtGui.QAbstractItemModel` or `None`
         """
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             return table.model()
 
     @QtCore.qt_slot(object)
     def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             delegate = DelegateManager(columns, parent=self)
             table.setItemDelegate(delegate)
@@ -197,7 +197,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 # The segfault seems no longer there after disabling the
 # editor before setting a new model, but the code below
 # seems to have no effect.
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             index = table.model().index( max(0, number_of_rows-1), 0 )
             table.scrollToBottom()
@@ -206,7 +206,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @QtCore.qt_slot( int )
     def trigger_list_action( self, index ):
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
         if self.admin.list_action:

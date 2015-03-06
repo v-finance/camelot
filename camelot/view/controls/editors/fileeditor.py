@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtGui, Qt
+from ....core.qt import QtGui, QtWidgets, Qt
 from ....admin.action import field_action
 from .customeditor import CustomEditor, set_background_color_palette
 
@@ -71,7 +71,7 @@ class FileEditor(CustomEditor):
         self.filename.setFocusPolicy( Qt.ClickFocus )
 
         # Setup layout
-        self.document_label = QtGui.QLabel(self)
+        self.document_label = QtWidgets.QLabel(self)
         self.document_label.setPixmap(self.document_pixmap.getQPixmap())
         self.layout.addWidget(self.document_label)
         self.layout.addWidget(self.filename)

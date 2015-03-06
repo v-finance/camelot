@@ -26,9 +26,9 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 
-class AbstractView(QtGui.QWidget):
+class AbstractView(QtWidgets.QWidget):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
 

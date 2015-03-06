@@ -167,7 +167,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         default operator in unary or binary
     :param default_value_2: a default value for the second editor (in case the
         default operator is binary)
-    :param parent: the parent :obj:`QtGui.QWidget`
+    :param parent: the parent :obj:`QtWidgets.QWidget`
     """
 
     def __init__(self, action, gui_context, default_value_1, default_value_2, parent):

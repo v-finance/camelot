@@ -31,7 +31,7 @@ from camelot.view.action import ActionFactory
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class ImageEditor( FileEditor ):
@@ -61,7 +61,7 @@ All files (*)"""
         #
         # Setup label
         #
-        self.label = QtGui.QLabel(self)
+        self.label = QtWidgets.QLabel(self)
         self.label.installEventFilter(self)
         self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
         layout.addWidget(self.label)
@@ -112,7 +112,7 @@ All files (*)"""
         
     @QtCore.qt_slot()
     def clipboard_data_changed(self):
-        paste_button = self.findChild(QtGui.QWidget, 'paste')
+        paste_button = self.findChild(QtWidgets.QWidget, 'paste')
         if paste_button:
             mime_data = QtGui.QApplication.clipboard().mimeData()
             paste_button.setVisible( mime_data.hasImage() )

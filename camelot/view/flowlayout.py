@@ -39,7 +39,7 @@ class FlowLayout( QtGui.QLayout ):
     
     def __init__( self, parent = None ):
         """
-        :param parent: a `QtGui.QWidget`
+        :param parent: a `QtWidgets.QWidget`
         """
         super(FlowLayout, self).__init__(parent)
         if parent is not None:

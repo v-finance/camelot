@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import (QtGui, QtCore, Qt,
+from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import (CustomEditor, set_background_color_palette,
                            draw_tooltip_visualization)
@@ -151,7 +151,7 @@ class FloatEditor(CustomEditor):
                             QtGui.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
-        action = QtGui.QAction(self)
+        action = QtWidgets.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
         spinBox = CustomDoubleSpinBox(option, parent)

@@ -22,13 +22,13 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, Qt
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.view.art import Pixmap
 from camelot.view.model_thread import get_model_thread
 
 working_pixmap = Pixmap( 'tango/32x32/animations/process-working.png' )
 
-class BusyWidget( QtGui.QLabel ):
+class BusyWidget( QtWidgets.QLabel ):
     """A widget indicating the application is performing some background task.
     The widget acts as an overlay of its parent widget and displays animating
     orbs"""

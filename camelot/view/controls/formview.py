@@ -28,7 +28,7 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import QtGui, QtCore, Qt, py_to_variant, is_deleted
+from ...core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -62,7 +62,7 @@ class FormEditors( object ):
         
     def create_editor( self, field_name, parent ):
         """
-        :return: a :class:`QtGui.QWidget` or `None` if field_name is unknown
+        :return: a :class:`QtWidgets.QWidget` or `None` if field_name is unknown
         """
         index = self._index[field_name]
         model = self._widget_mapper.model()
@@ -99,13 +99,13 @@ class FormEditors( object ):
             editor.set_label(widget_label)
         return widget_label
     
-class FormWidget(QtGui.QWidget):
+class FormWidget(QtWidgets.QWidget):
     """A form widget comes inside a form view"""
 
     changed_signal = QtCore.qt_signal( int )
 
     def __init__(self, admin, model, form_display, columns, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self._admin = admin
         widget_mapper = QtGui.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
@@ -267,7 +267,7 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
-        form = self.findChild(QtGui.QWidget, 'form' )
+        form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
             side_panel_layout = QtGui.QVBoxLayout()
@@ -312,7 +312,7 @@ class FormView(AbstractView):
         if (accept == True) and not is_deleted(self):
             # clear mapping to prevent data being written again to the model,
             # when the underlying object would be reverted
-            form = self.findChild( QtGui.QWidget, 'form' )
+            form = self.findChild( QtWidgets.QWidget, 'form' )
             if form is not None:
                 form.clear_mapping()
         self.close()

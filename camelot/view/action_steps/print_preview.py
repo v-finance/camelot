@@ -40,7 +40,7 @@ class PrintPreviewDialog( QtGui.QPrintPreviewDialog ):
     :param gui_context: the :class:`camelot.admin.action.base.GuiContext` to 
         pass to the actions    
     :param actions: a list of :class:`camelot.admin.action.base.Action` objects
-    :param parent: a :class:`QtGui.QWidget`
+    :param parent: a :class:`QtWidgets.QWidget`
     :param flags: a :class:`Qt.WindowFlags`
     """
     

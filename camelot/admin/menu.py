@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ..core.qt import QtGui
+from ..core.qt import QtGui, QtWidgets
 
 import six
 
@@ -61,7 +61,7 @@ itself, an Action object or None to insert a separator.
             rendered_item = item.render( gui_context, menu )
             if isinstance( rendered_item, QtGui.QMenu ):
                 menu.addMenu( rendered_item )
-            elif isinstance( rendered_item, QtGui.QAction ):
+            elif isinstance( rendered_item, QtWidgets.QAction ):
                 menu.addAction( rendered_item )
             else:
                 raise Exception( 'Cannot handle menu items of type %s'%type( rendered_item ) )

@@ -26,7 +26,7 @@ import datetime
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
 from .customeditor import CustomEditor, set_background_color_palette
 from .dateeditor import DateEditor
 from camelot.view.proxy import ValueLoading
@@ -160,7 +160,7 @@ class DateTimeEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(DateTimeEditor, self).set_field_attributes(**kwargs)
-        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             self.set_enabled(kwargs.get('editable', False))
             line_edit.setToolTip(six.text_type(kwargs.get('tooltip') or ''))

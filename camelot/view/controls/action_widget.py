@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtCore, variant_to_py, is_deleted
+from ...core.qt import QtGui, QtCore, QtWidgets, variant_to_py, is_deleted
 
 import six
 
@@ -99,7 +99,7 @@ class AbstractActionWidget( object ):
 HOVER_ANIMATION_DISTANCE = 20
 NOTIFICATION_ANIMATION_DISTANCE = 8
 
-class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
+class ActionLabel( QtWidgets.QLabel, AbstractActionWidget ):
 
     entered = QtCore.qt_signal()
     left = QtCore.qt_signal()
@@ -109,7 +109,7 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
     actually an animated label.
     """
     def __init__( self, action, gui_context, parent ):
-        QtGui.QLabel.__init__( self, parent )
+        QtWidgets.QLabel.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
 
         self.setObjectName('ActionButton')
@@ -157,10 +157,10 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         self.run_action()
         event.ignore()
 
-class ActionAction( QtGui.QAction, AbstractActionWidget ):
+class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
-        QtGui.QAction.__init__( self, parent )
+        QtWidgets.QAction.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
@@ -183,16 +183,16 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
         self.setVisible( state.visible )
         self.set_menu( state )
 
-class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
+class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
-        """A :class:`QtGui.QPushButton` that when pressed, will run an
+        """A :class:`QtWidgets.QPushButton` that when pressed, will run an
         action.
 
         .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
 
         """
-        QtGui.QPushButton.__init__( self, parent )
+        QtWidgets.QPushButton.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
         self.clicked.connect( self.triggered )
 
@@ -200,7 +200,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     def triggered(self):
         sender = self.sender()
         mode = None
-        if isinstance( sender, QtGui.QAction ):
+        if isinstance( sender, QtWidgets.QAction ):
             mode = six.text_type( variant_to_py(sender.data()) )
         self.run_action( mode )
 
@@ -257,14 +257,14 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         face.setToolTip(ugettext('Change avatar'))
         layout.addWidget(face)
         info_layout = QtGui.QVBoxLayout()
-        user_name = QtGui.QLabel()
+        user_name = QtWidgets.QLabel()
         font = user_name.font()
         font.setBold(True)
         font.setPointSize(10)
         user_name.setFont(font)
         user_name.setObjectName('user_name')
         info_layout.addWidget(user_name)
-        groups = QtGui.QLabel()
+        groups = QtWidgets.QLabel()
         font = groups.font()
         font.setPointSize(8)
         groups.setFont(font)
@@ -288,9 +288,9 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         self.run_action()
 
     def set_state(self, state):
-        user_name = self.findChild(QtGui.QLabel, 'user_name')
+        user_name = self.findChild(QtWidgets.QLabel, 'user_name')
         user_name.setText(state.verbose_name)
-        groups = self.findChild(QtGui.QLabel, 'groups')
+        groups = self.findChild(QtWidgets.QLabel, 'groups')
         groups.setText(state.tooltip)
         face = self.findChild(QtGui.QToolButton, 'face')
         face.setIcon(state.icon.getQIcon())

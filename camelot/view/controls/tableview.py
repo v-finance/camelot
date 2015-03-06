@@ -39,7 +39,7 @@ from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
-from ...core.qt import QtCore, QtGui, Qt, variant_to_py
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .inheritance import SubclassTree
@@ -54,7 +54,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
        column groups.
     :param table_widget: a :class:`QtGui.QTableView` widget of which columns will
        be hidden and shown depending on the selected tab.
-    :param parent: a :class:`QtGui.QWidget`
+    :param parent: a :class:`QtWidgets.QWidget`
     """
     
     def __init__( self, table, table_widget, parent = None ):
@@ -289,7 +289,7 @@ and above the text.
         else:
             super(TableWidget, self).keyPressEvent(e) 
 
-class AdminTableWidget( QtGui.QWidget ):
+class AdminTableWidget( QtWidgets.QWidget ):
     """A table widget that inspects the admin class and changes the behavior
     of the table as specified in the admin class"""
     
@@ -313,14 +313,14 @@ class AdminTableWidget( QtGui.QWidget ):
             table_widget.setDropIndicatorShown( True )
                         
     def __getattr__( self, name ):
-        table_widget = self.findChild( QtGui.QWidget, 'table_widget' )
+        table_widget = self.findChild( QtWidgets.QWidget, 'table_widget' )
         if table_widget != None:
             return getattr( table_widget, name )
         
     def setModel( self, model ):
         assert object_thread( self )
-        table_widget = self.findChild( QtGui.QWidget, 'table_widget' )
-        column_groups = self.findChild( QtGui.QWidget, 'column_groups' )
+        table_widget = self.findChild( QtWidgets.QWidget, 'table_widget' )
+        column_groups = self.findChild( QtWidgets.QWidget, 'column_groups' )
         if table_widget != None:
             model.columnsInserted.connect( column_groups.columns_changed )
             model.columnsRemoved.connect( column_groups.columns_changed )
@@ -329,12 +329,12 @@ class AdminTableWidget( QtGui.QWidget ):
             table_widget.setModel( model )
             column_groups.model_reset()
         
-class RowsWidget( QtGui.QLabel ):
+class RowsWidget( QtWidgets.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
     in the table view"""
 
     def __init__( self, parent=None ):
-        QtGui.QLabel.__init__( self, parent )
+        QtWidgets.QLabel.__init__( self, parent )
         assert object_thread( self )
         self.setFont( self._number_of_rows_font )
         
@@ -360,7 +360,7 @@ class RowsWidget( QtGui.QLabel ):
         self.update_rows_from_model(model)
 
 
-class HeaderWidget( QtGui.QWidget ):
+class HeaderWidget( QtWidgets.QWidget ):
     """HeaderWidget for a tableview, containing the title, the search widget,
     and the number of rows in the table"""
 
@@ -370,7 +370,7 @@ class HeaderWidget( QtGui.QWidget ):
     filters_changed_signal = QtCore.qt_signal()
 
     def __init__( self, gui_context, parent):
-        QtGui.QWidget.__init__( self, parent )
+        QtWidgets.QWidget.__init__( self, parent )
         assert object_thread( self )
         self.gui_context = gui_context
         layout = QtGui.QVBoxLayout()
@@ -389,7 +389,7 @@ class HeaderWidget( QtGui.QWidget ):
         widget_layout.addWidget(number_of_rows)
         layout.addLayout( widget_layout, 0 )
         self._expanded_filters_created = False
-        self._expanded_search = QtGui.QWidget()
+        self._expanded_search = QtWidgets.QWidget()
         self._expanded_search.hide()
         layout.addWidget( self._expanded_search, 1 )
         self.setLayout( layout )
@@ -446,7 +446,7 @@ class TableView( AbstractView  ):
   :param search_text: a predefined search text to put in the search widget
   :param proxy: a class implementing :class:`QtCore.QAbstractTableModel` that 
       will be used as a model for the table view.
-  :param parent: a :class:`QtGui.QWidget` object
+  :param parent: a :class:`QtWidgets.QWidget` object
   
   A generic tableview widget that puts together some other widgets.  The behaviour of this class and
   the resulting interface can be tuned by specifying specific class attributes which define the underlying
@@ -500,14 +500,14 @@ class TableView( AbstractView  ):
         splitter = QtGui.QSplitter( self )
         splitter.setObjectName('splitter')
         widget_layout.addWidget( splitter )
-        table_widget = QtGui.QWidget( self )
+        table_widget = QtWidgets.QWidget( self )
         # make sure the table itself takes expands to fill the available
         # width of the view
         size_policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                                         QtGui.QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(1)
         table_widget.setSizePolicy(size_policy)
-        filters_widget = QtGui.QWidget( self )
+        filters_widget = QtWidgets.QWidget( self )
         self.table_layout = QtGui.QVBoxLayout()
         self.table_layout.setSpacing( 0 )
         self.table_layout.setContentsMargins(0, 0, 0, 0)
@@ -520,7 +520,7 @@ class TableView( AbstractView  ):
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )
         #filters_widget.hide()
-        splitter = self.findChild(QtGui.QWidget, 'splitter' )
+        splitter = self.findChild(QtWidgets.QWidget, 'splitter' )
         class_tree = SubclassTree(self.admin)
         class_tree.setObjectName('class_tree')
         class_tree.subclass_clicked_signal.connect(self.change_admin)
@@ -541,7 +541,7 @@ class TableView( AbstractView  ):
     @QtCore.qt_slot(object)
     def set_subclass_tree(self, subclasses):
         assert object_thread( self )
-        class_tree =  self.findChild(QtGui.QWidget, 'class_tree')
+        class_tree =  self.findChild(QtWidgets.QWidget, 'class_tree')
         if len( subclasses ) > 0:
             class_tree.show()
             class_tree.set_subclasses(subclasses)
@@ -590,7 +590,7 @@ class TableView( AbstractView  ):
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             self.table.model().deleteLater()
-        splitter = self.findChild( QtGui.QWidget, 'splitter' )
+        splitter = self.findChild( QtWidgets.QWidget, 'splitter' )
         self.table = self.AdminTableWidget( self.admin, splitter )
         self.table.setObjectName('AdminTableWidget')
         new_model = self.proxy(admin)

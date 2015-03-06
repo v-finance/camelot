@@ -24,7 +24,7 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -97,9 +97,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper,
                                                          'widget_mapper' )
 
-        cancel_button = QtGui.QPushButton(six.text_type(reject))
+        cancel_button = QtWidgets.QPushButton(six.text_type(reject))
         cancel_button.setObjectName( 'cancel' )
-        ok_button = QtGui.QPushButton(six.text_type(accept))
+        ok_button = QtWidgets.QPushButton(six.text_type(accept))
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
         layout = QtGui.QHBoxLayout()
@@ -133,7 +133,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     @QtCore.qt_slot(int)
     def _validity_changed(self, row):
-        form = self.findChild( QtGui.QWidget, 'form' )
+        form = self.findChild( QtWidgets.QWidget, 'form' )
         if not form:
             return
         model = form.get_model()
@@ -144,8 +144,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         post(is_valid, self._change_complete)
 
     def _change_complete(self, complete):
-        ok_button = self.findChild( QtGui.QPushButton, 'ok' )
-        cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
+        ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
+        cancel_button = self.findChild( QtWidgets.QPushButton, 'cancel' )
         if ok_button != None:
             ok_button.setEnabled( complete )
             ok_button.setDefault( complete )
@@ -189,7 +189,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         layout.addWidget( note )
         self.main_widget().setLayout( layout )
         self.set_default_buttons()
-        ok_button = self.buttons_widget().findChild( QtGui.QPushButton, 'accept' )
+        ok_button = self.buttons_widget().findChild( QtWidgets.QPushButton, 'accept' )
         ok_button.setEnabled( False )
         self.validate_all_rows()
 
@@ -203,8 +203,8 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     @QtCore.qt_slot(int)
     def update_complete(self, row=0):
         complete = (self.validator.number_of_invalid_rows()==0)
-        note = self.findChild( QtGui.QWidget, 'note' )
-        ok = self.findChild( QtGui.QWidget, 'accept' )
+        note = self.findChild( QtWidgets.QWidget, 'note' )
+        ok = self.findChild( QtWidgets.QWidget, 'accept' )
         if note != None and ok != None:
             ok.setEnabled( complete )
             if complete:
@@ -390,8 +390,8 @@ class ChangeFieldDialog( StandaloneWizardPage ):
     def field_changed(self):
         import sqlalchemy.schema
         selected_field = ValueLoading
-        editor = self.findChild( QtGui.QWidget, 'field_choice' )
-        value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+        editor = self.findChild( QtWidgets.QWidget, 'field_choice' )
+        value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
         if editor != None:
             selected_field = editor.get_value()
         if value_editor != None:
@@ -428,7 +428,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
 
     def value_changed(self, value_editor=None):
         if not value_editor:
-            value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+            value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
         if value_editor != None:
             delegate = self.field_attributes[self.field]['delegate']
             value = value_editor.get_value()

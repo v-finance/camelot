@@ -25,7 +25,7 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from ..core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py
+from ..core.qt import Qt, QtGui, QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.section_widget import NavigationPane
@@ -37,7 +37,7 @@ class MainWindow(QtGui.QMainWindow):
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
-    :param parent: a :class:`QtGui.QWidget` object or :class:`None` 
+    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None` 
     
     """
 
@@ -162,9 +162,9 @@ class MainWindow(QtGui.QMainWindow):
                 if qaction == None:
                     rendered = action.render( self.gui_context, toolbar )
                     # both QWidgets and QActions can be put in a toolbar
-                    if isinstance(rendered, QtGui.QWidget):
+                    if isinstance(rendered, QtWidgets.QWidget):
                         toolbar.addWidget(rendered)
-                    elif isinstance(rendered, QtGui.QAction):
+                    elif isinstance(rendered, QtWidgets.QAction):
                         rendered.triggered.connect( self.action_triggered )
                         toolbar.addAction( rendered )
             self.toolbars.append( toolbar )

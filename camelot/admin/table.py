@@ -96,7 +96,7 @@ class Table( object ):
         groups.
         
             :param item_view: a :class:`QtGui.QAbstractItemView` object.
-            :param parent: a :class:`QtGui.QWidget` object
+            :param parent: a :class:`QtWidgets.QWidget` object
         """
         pass
 

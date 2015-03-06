@@ -22,9 +22,9 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtWidgets
 
-class AbstractSearchWidget(QtGui.QWidget):
+class AbstractSearchWidget(QtWidgets.QWidget):
     expand_search_options_signal = QtCore.qt_signal()
     cancel_signal = QtCore.qt_signal()
     search_signal = QtCore.qt_signal(str)

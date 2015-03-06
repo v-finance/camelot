@@ -26,7 +26,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 
 import six
 
@@ -121,17 +121,17 @@ class ItemSelectionDialog(StandaloneWizardPage):
             self.accept()
 
     def set_choices(self, choices):
-        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
         if combobox != None:
             combobox.set_choices(choices)
 
     def get_value(self):
-        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
         if combobox != None:
             return combobox.get_value()
 
     def set_value(self, value):
-        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
         if combobox != None:
             return combobox.set_value(value)
 

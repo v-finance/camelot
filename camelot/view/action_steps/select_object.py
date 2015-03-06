@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, Qt
+from ...core.qt import QtGui, Qt, QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -115,7 +115,7 @@ class SelectObjects( OpenTableView ):
 
     def render(self, gui_context):
         dialog = SelectDialog(gui_context, self.admin, self.search_text, self.proxy)
-        table_view = dialog.findChild(QtGui.QWidget, 'table_view')
+        table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return dialog

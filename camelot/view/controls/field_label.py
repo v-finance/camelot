@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, Qt
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.core.utils import ugettext as _
 from camelot.admin.action.field_action import (ShowFieldAttributes,
                                                FieldActionGuiContext)
@@ -51,7 +51,7 @@ class FieldLabel(UserTranslatableLabel):
             FieldLabel.bold_font = QtGui.QApplication.font()
             FieldLabel.bold_font.setBold(True)
             FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextSingleLine, 'A' ).width()
-        show_field_attributes_action = QtGui.QAction(_('View attributes'), self)
+        show_field_attributes_action = QtWidgets.QAction(_('View attributes'), self)
         show_field_attributes_action.triggered.connect( self.show_field_attributes )
         self.addAction(show_field_attributes_action)
         self._field_name = field_name

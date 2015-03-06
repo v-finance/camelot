@@ -27,7 +27,7 @@ import pkgutil
 
 import six
 
-from ...core.qt import QtCore, QtGui, QtNetwork, Qt
+from ...core.qt import QtCore, QtGui, QtWidgets, QtNetwork, Qt
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -85,25 +85,25 @@ allow all languages
         self.new_network_request()
 
     def create_labels_and_widgets(self):
-        self.profile_label = QtGui.QLabel(_('Profile Name:'))
-        self.dialect_label = QtGui.QLabel(_('Driver:'))
-        self.host_label = QtGui.QLabel(_('Server Host:'))
-        self.port_label = QtGui.QLabel(_('Port:'))
-        self.database_name_label = QtGui.QLabel(_('Database Name:'))
-        self.username_label = QtGui.QLabel(_('Username:'))
-        self.password_label = QtGui.QLabel(_('Password:'))
-        self.media_location_label = QtGui.QLabel(_('Media Location:'))
-        self.language_label = QtGui.QLabel(_('Language:'))
-        self.proxy_host_label = QtGui.QLabel(_('Proxy Host:'))
-        self.proxy_port_label = QtGui.QLabel(_('Port:'))
-        self.proxy_username_label = QtGui.QLabel(_('Proxy Username:'))
-        self.proxy_password_label = QtGui.QLabel(_('Proxy Password:'))
-        self.network_status_label = QtGui.QLabel()
+        self.profile_label = QtWidgets.QLabel(_('Profile Name:'))
+        self.dialect_label = QtWidgets.QLabel(_('Driver:'))
+        self.host_label = QtWidgets.QLabel(_('Server Host:'))
+        self.port_label = QtWidgets.QLabel(_('Port:'))
+        self.database_name_label = QtWidgets.QLabel(_('Database Name:'))
+        self.username_label = QtWidgets.QLabel(_('Username:'))
+        self.password_label = QtWidgets.QLabel(_('Password:'))
+        self.media_location_label = QtWidgets.QLabel(_('Media Location:'))
+        self.language_label = QtWidgets.QLabel(_('Language:'))
+        self.proxy_host_label = QtWidgets.QLabel(_('Proxy Host:'))
+        self.proxy_port_label = QtWidgets.QLabel(_('Port:'))
+        self.proxy_username_label = QtWidgets.QLabel(_('Proxy Username:'))
+        self.proxy_password_label = QtWidgets.QLabel(_('Proxy Password:'))
+        self.network_status_label = QtWidgets.QLabel()
 
-        self.not_accessible_media_path_label = QtGui.QLabel(_('Media location path '\
+        self.not_accessible_media_path_label = QtWidgets.QLabel(_('Media location path '\
             'is not accessible.'))
         self.not_accessible_media_path_label.setStyleSheet('color: red')
-        self.not_writable_media_path_label = QtGui.QLabel(_('Media location path '\
+        self.not_writable_media_path_label = QtWidgets.QLabel(_('Media location path '\
             'is not writable.'))
         self.not_writable_media_path_label.setStyleSheet('color: red')
 
@@ -218,8 +218,8 @@ allow all languages
         self.dialect_editor.editingFinished.connect(self.toggle_ok_button)
 
     def create_buttons(self):
-        self.cancel_button = QtGui.QPushButton(_('Cancel'))
-        self.ok_button = QtGui.QPushButton(_('OK'))
+        self.cancel_button = QtWidgets.QPushButton(_('Cancel'))
+        self.ok_button = QtWidgets.QPushButton(_('OK'))
 
         layout = QtGui.QHBoxLayout()
         layout.setDirection(QtGui.QBoxLayout.RightToLeft)
@@ -230,7 +230,7 @@ allow all languages
 
         self.buttons_widget().setLayout(layout)
 
-        self.browse_button = QtGui.QPushButton(_('Browse'))
+        self.browse_button = QtWidgets.QPushButton(_('Browse'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
 
     def set_tab_order(self):

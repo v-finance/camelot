@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
 from .customeditor import AbstractCustomEditor
 from camelot.core import constants
 from camelot.core.utils import ugettext
@@ -83,7 +83,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         size = QtGui.QComboBox().sizeHint()
         return size
 
-class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
+class TextBoolEditor(QtWidgets.QLabel, AbstractCustomEditor):
     """
     :Parameter:
         color_yes: string
@@ -100,7 +100,7 @@ class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
                  color_yes=None,
                  color_no=None,
                  **kwargs):
-        QtGui.QLabel.__init__(self, parent)
+        QtWidgets.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setEnabled(False)
         self.yes = ugettext(yes)

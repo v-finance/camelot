@@ -31,7 +31,7 @@ import logging
 
 logger = logging.getLogger( 'camelot.view.forms' )
 
-from ..core.qt import QtCore, QtGui, variant_to_py
+from ..core.qt import QtCore, QtGui, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
 import six
@@ -121,17 +121,17 @@ and takes these parameters :
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
-        :param parent: the :class:`QtGui.QWidget` in which the form is placed
+        :param parent: the :class:`QtWidgets.QWidget` in which the form is placed
         :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
             or a child form of another form.  A toplevel form will be expanding,
             while a non toplevel form is only expanding if it contains other
             expanding elements.
 
-        :return: a :class:`QtGui.QWidget` into which the form is rendered
+        :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
         logger.debug( 'rendering %s' % (self.__class__.__name__) )
         from camelot.view.controls.editors.wideeditor import WideEditor
-        form_widget = QtGui.QWidget( parent )
+        form_widget = QtWidgets.QWidget( parent )
         form_layout = QtGui.QGridLayout()
         # where 1 column in the form is a label and a field, so two columns in the grid
         columns = min(self._columns, len(self))
@@ -250,7 +250,7 @@ class Break( Form ):
         super( Break, self ).__init__( [] )
 
 class Label( Form ):
-    """Render a label using a :class:`QtGui.QLabel`"""
+    """Render a label using a :class:`QtWidgets.QLabel`"""
 
     def __init__( self, label, alignment='left', style=None):
         """
@@ -266,9 +266,9 @@ class Label( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         if self.style:
-            widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
+            widget = QtWidgets.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
         else:
-            widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,six.text_type(self.label)) )
+            widget = QtWidgets.QLabel( '<p align="%s">%s</p>' % (self.alignment,six.text_type(self.label)) )
         widget.setSizePolicy( QtGui.QSizePolicy.Preferred,
                               QtGui.QSizePolicy.Fixed )    
         return widget
@@ -291,7 +291,7 @@ the moment the tab is shown.
         #
         for tab_label, tab_form in tabs:
             self._forms.append( tab_form )
-            tab_widget = QtGui.QWidget( self )
+            tab_widget = QtWidgets.QWidget( self )
             self.addTab( tab_widget, six.text_type(tab_label) )
         #
         # render the first tab and continue rendering until we have
@@ -463,7 +463,7 @@ class HBoxForm( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        widget = QtGui.QWidget( parent )
+        widget = QtWidgets.QWidget( parent )
         form_layout = QtGui.QHBoxLayout()
         for form in self.columns:
             f = form.render( widgets, widget, False )
@@ -509,7 +509,7 @@ class VBoxForm( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        widget = QtGui.QWidget( parent )
+        widget = QtWidgets.QWidget( parent )
         form_layout = QtGui.QVBoxLayout()
         for form in self.rows:
             f = form.render( widgets, widget, False )
@@ -566,7 +566,7 @@ class GridForm( Form ):
             row.append(additional_field)
 
     def render( self, widgets, parent = None, toplevel = False ):
-        widget = QtGui.QWidget( parent )
+        widget = QtWidgets.QWidget( parent )
         grid_layout = QtGui.QGridLayout()
         for i, row in enumerate( self._grid ):
             skip = 0
@@ -578,7 +578,7 @@ class GridForm( Form ):
                     field = field.field
                 if isinstance( field, Form ):
                     form = field.render( widgets, parent )
-                    if isinstance( form, QtGui.QWidget ):
+                    if isinstance( form, QtWidgets.QWidget ):
                         grid_layout.addWidget( form, i, col, 1, num )
                     elif isinstance( form, QtGui.QLayoutItem ):
                         grid_layout.addItem( form, i, col, 1, num )
