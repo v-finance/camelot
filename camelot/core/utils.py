@@ -28,7 +28,7 @@ import logging
 
 import six
 
-from .qt import QtCore
+from .qt import QtCore, qtranslate
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -67,12 +67,6 @@ class CollectionGetterFromObjectGetter(object):
 #
 _translations_ = {}
 
-#
-# Encoding used when transferring translation strings from
-# python to qt
-#
-_encoding=QtCore.QCoreApplication.UnicodeUTF8
-
 def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
@@ -93,15 +87,6 @@ def load_translations():
     for source, value in Translation.query.session.execute(query):
         _translations_[source] = value
 
-def _qtranslate(string_to_translate):
-    """Translate a string using the QCoreApplication translation framework
-    :param string_to_translate: a unicode string
-    :return: the translated unicode string if it was possible to translate
-    """
-    return six.text_type(QtCore.QCoreApplication.translate('', 
-                                                           string_to_translate.encode('utf-8'), 
-                                                           encoding=_encoding))
-    
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
@@ -111,11 +96,11 @@ def ugettext(string_to_translate):
     assert isinstance(string_to_translate, six.string_types)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = _qtranslate( string_to_translate )
+        result = qtranslate( string_to_translate )
         #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
-            result2 = _qtranslate( string_to_translate.capitalize() )
+            result2 = qtranslate( string_to_translate.capitalize() )
             if result2 is not string_to_translate.capitalize():
                 result = result2
 

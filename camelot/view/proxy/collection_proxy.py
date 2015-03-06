@@ -54,7 +54,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...container.collection_container import CollectionContainer
 from ...core.qt import (QtCore, QtGui, Qt, py_to_variant, variant_to_py,
-                        is_deleted)
+                        is_deleted, QtModel)
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
 from camelot.view.remote_signals import get_signal_handler
@@ -178,7 +178,7 @@ class RowModelContext(ListActionModelContext):
 
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
-class CollectionProxy(QtGui.QSortFilterProxyModel):
+class CollectionProxy(QtModel.QSortFilterProxyModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtGui.QTableView`  
