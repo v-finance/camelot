@@ -95,7 +95,7 @@ All files (*)"""
         #label_button_layout.addStretch()
         self.setLayout( layout )
         self.clear_image()
-        QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
+        QtWidgets.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
         self.clipboard_data_changed()
 
         # horizontal policy is always expanding, to fill the width of a column
@@ -114,13 +114,13 @@ All files (*)"""
     def clipboard_data_changed(self):
         paste_button = self.findChild(QtWidgets.QWidget, 'paste')
         if paste_button:
-            mime_data = QtGui.QApplication.clipboard().mimeData()
+            mime_data = QtWidgets.QApplication.clipboard().mimeData()
             paste_button.setVisible( mime_data.hasImage() )
             
     @QtCore.qt_slot()
     def paste_from_clipboard(self):
         """Paste an image from the clipboard into the editor"""
-        mime_data = QtGui.QApplication.clipboard().mimeData()
+        mime_data = QtWidgets.QApplication.clipboard().mimeData()
         if mime_data.hasImage():
             byte_array = QtCore.QByteArray()
             buffer = QtCore.QBuffer( byte_array )
@@ -154,7 +154,7 @@ All files (*)"""
             post( self.value.checkout_image, self.set_image_to_clipboard )
         
     def set_image_to_clipboard(self, image):
-        clipboard = QtGui.QApplication.clipboard()
+        clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setImage( image )
 
     def clear_image(self):

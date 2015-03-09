@@ -53,8 +53,8 @@ from camelot.admin.action.list_action import ListActionModelContext
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...container.collection_container import CollectionContainer
-from ...core.qt import (QtCore, QtGui, Qt, py_to_variant, variant_to_py,
-                        is_deleted, QtModel)
+from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets, is_deleted,
+                        py_to_variant, variant_to_py)
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
 from camelot.view.remote_signals import get_signal_handler
@@ -286,11 +286,11 @@ position in the query.
     
     @hybrid_property
     def _header_font( cls ):
-        return QtGui.QApplication.font()
+        return QtWidgets.QApplication.font()
     
     @hybrid_property
     def _header_font_required( cls ):
-        font = QtGui.QApplication.font()
+        font = QtWidgets.QApplication.font()
         font.setBold( True )
         return font
 

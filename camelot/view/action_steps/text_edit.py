@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtCore, QtWidgets
 
 from camelot.admin.action import ActionStep
 from camelot.core.utils import ugettext_lazy as _
@@ -65,7 +65,7 @@ class EditTextDocument( ActionStep ):
     def __init__( self, document ):
         self.document = document
         self.thread = QtCore.QThread.currentThread()
-        self.document.moveToThread( QtGui.QApplication.instance().thread() )
+        self.document.moveToThread( QtWidgets.QApplication.instance().thread() )
         self.window_title = _('Edit text')
         self.title = _('Edit text')
         self.subtitle = _('Press OK when finished')

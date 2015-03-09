@@ -407,8 +407,8 @@ def show_top_level(view, parent):
     # position the new window in the center of the same screen
     # as the parent
     #
-    screen = QtGui.QApplication.desktop().screenNumber(parent)
-    available = QtGui.QApplication.desktop().availableGeometry(screen)
+    screen = QtWidgets.QApplication.desktop().screenNumber(parent)
+    available = QtWidgets.QApplication.desktop().availableGeometry(screen)
 
     point = QtCore.QPoint(available.x() + available.width()/2,
                           available.y() + available.height()/2)

@@ -111,7 +111,7 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
     @QtCore.qt_slot()
     def copy_to_clipboard(self):
         """Copy the chart to the clipboard"""
-        clipboard = QtGui.QApplication.clipboard()
+        clipboard = QtWidgets.QApplication.clipboard()
         pixmap = QtGui.QPixmap.grabWidget( self.canvas )
         clipboard.setPixmap( pixmap )
         

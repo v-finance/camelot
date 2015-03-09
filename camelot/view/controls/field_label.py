@@ -47,8 +47,8 @@ class FieldLabel(UserTranslatableLabel):
         """
         super(FieldLabel, self).__init__(text, parent)
         if FieldLabel.font_width == None:
-            FieldLabel.font = QtGui.QApplication.font()
-            FieldLabel.bold_font = QtGui.QApplication.font()
+            FieldLabel.font = QtWidgets.QApplication.font()
+            FieldLabel.bold_font = QtWidgets.QApplication.font()
             FieldLabel.bold_font.setBold(True)
             FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextSingleLine, 'A' ).width()
         show_field_attributes_action = QtWidgets.QAction(_('View attributes'), self)

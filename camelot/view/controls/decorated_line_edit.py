@@ -45,7 +45,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, parent = None):
         super( DecoratedLineEdit, self ).__init__( parent = parent )
         if self._font_metrics is None:
-            self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+            self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
             self._background_color = self.palette().color(self.backgroundRole())
         self.textChanged.connect(self.text_changed)
 

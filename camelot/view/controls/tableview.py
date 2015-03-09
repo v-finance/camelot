@@ -125,9 +125,9 @@ and above the text.
         self.setSizePolicy( QtGui.QSizePolicy.Expanding, 
                             QtGui.QSizePolicy.Expanding )
         self.horizontalHeader().setClickable( True )
-        self._header_font_required = QtGui.QApplication.font()
+        self._header_font_required = QtWidgets.QApplication.font()
         self._header_font_required.setBold( True )
-        line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
+        line_height = QtGui.QFontMetrics(QtWidgets.QApplication.font()).lineSpacing()
         self._minimal_row_height = line_height * lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
         self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
@@ -340,7 +340,7 @@ class RowsWidget( QtWidgets.QLabel ):
         
     @hybrid_property
     def _number_of_rows_font(cls):
-        return QtGui.QApplication.font()
+        return QtWidgets.QApplication.font()
 
     def set_model(self, model):
         model.layoutChanged.connect(self.update_rows)
@@ -399,7 +399,7 @@ class HeaderWidget( QtWidgets.QWidget ):
 
     @hybrid_property
     def _title_font(cls):
-        font = QtGui.QApplication.font()
+        font = QtWidgets.QApplication.font()
         font.setBold( True )
         return font
     

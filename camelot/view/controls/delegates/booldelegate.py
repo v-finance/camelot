@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import variant_to_py, QtGui, QtCore, Qt
+from ....core.qt import variant_to_py, Qt, QtCore, QtGui, QtWidgets
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.utils import ugettext as _
@@ -63,7 +63,7 @@ class BoolDelegate( six.with_metaclass( DocumentationMetaclass,
             check_option.state = option.state | QtGui.QStyle.State_Off
             
 
-        QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
+        QtWidgets.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
                                                check_option,
                                                painter)
                 

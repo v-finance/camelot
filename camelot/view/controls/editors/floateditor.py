@@ -71,7 +71,7 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
                                              key_event.modifiers(),
                                              QtCore.QString(decimal_point) )
             key_event.accept() # Block 'old' event
-            QtGui.QApplication.sendEvent(self, new_key_event)
+            QtWidgets.QApplication.sendEvent(self, new_key_event)
         # Propagate all other events to the super class
         else:
             super(CustomDoubleSpinBox, self).keyPressEvent(key_event)

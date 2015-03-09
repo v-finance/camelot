@@ -121,7 +121,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         super( CustomDelegate, self ).__init__(parent)
         self.editable = editable
         self.kwargs = kwargs
-        self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+        self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
 

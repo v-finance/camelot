@@ -34,7 +34,7 @@ import string
 import logging
 import operator
 
-from ..core.qt import QtCore, QtGui
+from ..core.qt import QtCore, QtWidgets
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
@@ -277,7 +277,7 @@ def resize_widget_to_screen( widget, fraction = 0.75 ):
     :param widget: the widget to resize
     :param fraction: the fraction of the screen to fill after the resize
     """
-    desktop = QtGui.QApplication.desktop()
+    desktop = QtWidgets.QApplication.desktop()
     available_geometry = desktop.availableGeometry( widget )
     # use the size of the screen instead to set the dialog size
     widget.resize( available_geometry.width() * 0.75, 

@@ -52,7 +52,7 @@ def set_background_color_palette(widget, background_color):
                 palette.setColor(x, y, background_color)
         widget.setPalette( palette )
     else:
-        widget.setPalette( QtGui.QApplication.palette() )
+        widget.setPalette( QtWidgets.QApplication.palette() )
 
 def draw_tooltip_visualization(widget):
     """
