@@ -24,7 +24,7 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 from .abstract_widget import AbstractSearchWidget
@@ -39,7 +39,7 @@ class SimpleSearchControl(AbstractSearchWidget):
 
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(3, 3, 3, 3)
         

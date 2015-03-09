@@ -65,7 +65,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                   **kw ):
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         #
         # Setup table
@@ -117,7 +117,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     @QtCore.qt_slot( object )
     def set_right_toolbar_actions( self, toolbar_actions ):
         if toolbar_actions != None:
-            toolbar = QtGui.QToolBar( self )
+            toolbar = QtWidgets.QToolBar( self )
             toolbar.setOrientation( Qt.Vertical )
             for action in toolbar_actions:
                 qaction = action.render( self.gui_context, toolbar )
@@ -142,7 +142,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         return self.admin.get_columns()
 
     def update_action_status( self ):
-        toolbar = self.findChild( QtGui.QToolBar )
+        toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             model_context = self.gui_context.create_model_context()
             for qaction in toolbar.actions():
@@ -181,7 +181,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # might have changed.
             model.set_value(collection)
             model_context = self.gui_context.create_model_context()
-            for toolbar in self.findChildren( QtGui.QToolBar ):
+            for toolbar in self.findChildren( QtWidgets.QToolBar ):
                 for qaction in toolbar.actions():
                     post( qaction.action.get_state,
                           qaction.set_state,

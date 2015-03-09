@@ -24,7 +24,7 @@
 
 import logging
 
-from ...core.qt import QtGui, QtWidgets
+from ...core.qt import QtWidgets
 
 import six
 
@@ -53,7 +53,7 @@ strictly to the :class:`ModelContext`
 
 .. attribute:: progress_dialog
 
-    an instance of :class:`QtGui.QProgressDialog` or :keyword:`None`
+    an instance of :class:`QtWidgets.QProgressDialog` or :keyword:`None`
     
 .. attribute:: mode_name
 
@@ -355,7 +355,7 @@ direct manipulations of the user interface without a need to access the model.
         from camelot.view.workspace import DesktopBackground
         if isinstance( parent, DesktopBackground ):
             return ActionLabel( self, gui_context, parent )
-        if isinstance( parent, (QtGui.QToolBar, QtGui.QMenu) ):
+        if isinstance( parent, (QtWidgets.QToolBar, QtWidgets.QMenu) ):
             return ActionAction( self, gui_context, parent )
         return ActionPushButton( self, gui_context, parent )
         

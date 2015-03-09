@@ -57,7 +57,7 @@ All files (*)"""
         self.setObjectName( field_name )
 
     def setup_widget(self):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         #
         # Setup label
         #
@@ -71,7 +71,7 @@ All files (*)"""
         #
         # Setup buttons
         #
-        button_layout = QtGui.QVBoxLayout()
+        button_layout = QtWidgets.QVBoxLayout()
         button_layout.setSpacing( 0 )
         button_layout.setContentsMargins( 0, 0, 0, 0)
         
@@ -186,8 +186,8 @@ All files (*)"""
         return value
 
     def draw_border(self):
-        self.label.setFrameShape(QtGui.QFrame.Box)
-        self.label.setFrameShadow(QtGui.QFrame.Plain)
+        self.label.setFrameShape(QtWidgets.QFrame.Box)
+        self.label.setFrameShadow(QtWidgets.QFrame.Plain)
         self.label.setLineWidth(1)
 
     def show_fullscreen(self, image):

@@ -76,7 +76,7 @@ class IntegerEditor(CustomEditor):
         )
         spin_box.editingFinished.connect( self.spinbox_editing_finished )
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(spin_box)

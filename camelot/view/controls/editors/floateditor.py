@@ -32,7 +32,7 @@ from ...art import Icon
 from ...utils import locale
 from ....core import constants
 
-class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
+class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
     
     def __init__(self, option = None, parent = None):
@@ -102,7 +102,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         return partial_input.strip()
     
     def validate(self, qinput, pos):
-        """Method overwritten from :class:`QtGui.QDoubleSpinBox` to handle
+        """Method overwritten from :class:`QtWidgets.QDoubleSpinBox` to handle
         an empty string as a special value for `None`.
         """
         result = super(CustomDoubleSpinBox, self).validate(qinput, pos)
@@ -180,7 +180,7 @@ class FloatEditor(CustomEditor):
 
         self.releaseKeyboard()
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(spinBox)

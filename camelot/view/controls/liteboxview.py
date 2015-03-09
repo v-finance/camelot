@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, Qt
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.view.art import Pixmap
 
 
@@ -41,7 +41,7 @@ def fit_to_screen(pixmap):
         return pixmap.scaled(dw * fit, dh * fit, Qt.KeepAspectRatio)
     return pixmap
 
-class CloseMark(QtGui.QGraphicsPixmapItem):
+class CloseMark(QtWidgets.QGraphicsPixmapItem):
 
     def __init__(self, pixmap=None, hover_pixmap=None, parent=None):
         super(CloseMark, self).__init__(parent)
@@ -77,7 +77,7 @@ class CloseMark(QtGui.QGraphicsPixmapItem):
         view.close()
 
 
-class LiteBoxView(QtGui.QGraphicsView):
+class LiteBoxView(QtWidgets.QGraphicsView):
 
     ALPHA = QtGui.QColor(0, 0, 0, 192)
 
@@ -89,7 +89,7 @@ class LiteBoxView(QtGui.QGraphicsView):
         #self.setAttribute(Qt.WA_DeleteOnClose)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+        self.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
         QtGui.QShortcut( Qt.Key_Escape, self, self.close )
         self.desktopshot = None
 
@@ -114,7 +114,7 @@ class LiteBoxView(QtGui.QGraphicsView):
 
     def show_fullscreen_pixmap(self, pixmap):
         """:param pixmap: a QPixmap"""
-        item = QtGui.QGraphicsPixmapItem(pixmap)
+        item = QtWidgets.QGraphicsPixmapItem(pixmap)
         self.show_fullscreen_item(item)
         
     def show_fullscreen_image(self, image):

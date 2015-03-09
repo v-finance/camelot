@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtCore, QtGui
+from ....core.qt import QtCore, QtGui, QtWidgets
 
 from .customeditor import (CustomEditor, draw_tooltip_visualization,
                            set_background_color_palette)
@@ -41,14 +41,14 @@ class TextLineEditor(CustomEditor):
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins( 0, 0, 0, 0)
         # Search input
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
-        text_input.setEchoMode(echo_mode or QtGui.QLineEdit.Normal)
+        text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.Normal)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
@@ -65,7 +65,7 @@ class TextLineEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self._value = value
-        text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             if value is not None:
                 text_input.setText(six.text_type(value))
@@ -78,7 +78,7 @@ class TextLineEditor(CustomEditor):
         if value_loading is not None:
             return value_loading
 
-        text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             value = six.text_type(text_input.text())
             if len(value)==0:
@@ -93,7 +93,7 @@ class TextLineEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
-        text_input = self.findChild(QtGui.QLineEdit, 'text_input')
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         validator = kwargs.get('validator')
         if text_input is not None:
             editable = kwargs.get('editable', False)

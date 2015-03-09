@@ -24,12 +24,12 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 from ..art import ColorScheme
 from .editors.customeditor import draw_tooltip_visualization
 
 
-class DecoratedLineEdit(QtGui.QLineEdit):
+class DecoratedLineEdit(QtWidgets.QLineEdit):
     """
     A QLineEdit with additional decorations :
     
@@ -87,7 +87,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
         if e.key() == QtCore.Qt.Key_Down:
             self.arrow_down_key_pressed.emit()
         
-        QtGui.QLineEdit.keyPressEvent(self, e)
+        QtWidgets.QLineEdit.keyPressEvent(self, e)
 
     def paintEvent(self, event):
         super(DecoratedLineEdit, self).paintEvent(event)

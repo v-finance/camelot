@@ -25,18 +25,18 @@ import datetime
 
 import six
 
-from ....core.qt import QtGui
+from ....core.qt import QtWidgets
 from .customeditor import AbstractCustomEditor, set_background_color_palette, draw_tooltip_visualization
 from camelot.core import constants
 
-class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
+class TimeEditor(QtWidgets.QTimeEdit, AbstractCustomEditor):
   
     def __init__(self, 
                  parent,
                  editable = True,
                  field_name = 'time',
                  format = constants.camelot_time_format, **kwargs):
-        QtGui.QTimeEdit.__init__(self, parent)
+        QtWidgets.QTimeEdit.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
         self.setDisplayFormat(format)

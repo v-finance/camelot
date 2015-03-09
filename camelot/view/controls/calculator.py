@@ -26,20 +26,20 @@ from ...core.qt import QtCore, QtGui, QtWidgets
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
-class Calculator(QtGui.QDialog):
+class Calculator(QtWidgets.QDialog):
     
     calculation_finished_signal = QtCore.qt_signal(QtCore.QString)
     
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent)
-        mainLayout = QtGui.QVBoxLayout()
-        topLeftLayout = QtGui.QVBoxLayout()
-        topRightLayout = QtGui.QHBoxLayout()
-        bottomRightLayout = QtGui.QHBoxLayout()
+        QtWidgets.QDialog.__init__(self, parent)
+        mainLayout = QtWidgets.QVBoxLayout()
+        topLeftLayout = QtWidgets.QVBoxLayout()
+        topRightLayout = QtWidgets.QHBoxLayout()
+        bottomRightLayout = QtWidgets.QHBoxLayout()
         bottomLayout = QtGui.QGridLayout()
 
         self.setWindowTitle(_('Calculator'))
-        self.input = QtGui.QLineEdit(self)
+        self.input = QtWidgets.QLineEdit(self)
         self.input.textEdited.connect(self.Calculate)
 
         #BUTTONS---
@@ -136,7 +136,7 @@ class Calculator(QtGui.QDialog):
             self.SaveValue()
             return
         else:
-            QtGui.QDialog.keyPressEvent(self, event)
+            QtWidgets.QDialog.keyPressEvent(self, event)
 
     def SaveValue(self):
         self.calculation_finished_signal.emit( self.output.text() )
@@ -169,15 +169,15 @@ class Calculator(QtGui.QDialog):
             return
 
         if input == str(self.output.text()):
-            reply = QtGui.QMessageBox.question(
+            reply = QtWidgets.QMessageBox.question(
                 self,
                 'Message',
                 'Do you want to Save and Quit?',
-                QtGui.QMessageBox.Yes,
-                QtGui.QMessageBox.No
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
             )
 
-            if reply == QtGui.QMessageBox.Yes:
+            if reply == QtWidgets.QMessageBox.Yes:
                 self.SaveValue()
 
         try:

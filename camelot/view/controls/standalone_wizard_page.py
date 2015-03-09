@@ -28,13 +28,13 @@ from ...core.qt import QtGui, QtWidgets, Qt
 from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
 
-class HSeparator(QtGui.QFrame):
+class HSeparator(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(HSeparator, self).__init__(parent)
-        self.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        self.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
 
-class StandaloneWizardPage(QtGui.QDialog):
+class StandaloneWizardPage(QtWidgets.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
@@ -44,7 +44,7 @@ class StandaloneWizardPage(QtGui.QDialog):
 
     def set_layouts(self):
         assert object_thread( self )
-        self._vlayout = QtGui.QVBoxLayout()
+        self._vlayout = QtWidgets.QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)
 
@@ -57,7 +57,7 @@ class StandaloneWizardPage(QtGui.QDialog):
         banner_layout = QtGui.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
         banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignRight)
-        banner_layout.addLayout(QtGui.QVBoxLayout(), 0, 0)
+        banner_layout.addLayout(QtWidgets.QVBoxLayout(), 0, 0)
 
         # TODO: allow banner widget to be supplied
         banner_widget = QtWidgets.QWidget()
@@ -65,7 +65,7 @@ class StandaloneWizardPage(QtGui.QDialog):
 
         self._vlayout.addWidget(banner_widget)
         self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QtGui.QFrame(), 1)
+        self._vlayout.addWidget(QtWidgets.QFrame(), 1)
         self._vlayout.addWidget(HSeparator())
         self._vlayout.addWidget(QtWidgets.QWidget())
         self.setLayout(self._vlayout)
@@ -105,7 +105,7 @@ class StandaloneWizardPage(QtGui.QDialog):
                              done = None ):
         """add an :guilabel:`ok` and a :guilabel:`cancel` button.
         """
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         if accept != None:
             ok_button = QtWidgets.QPushButton( six.text_type( accept ), self )

@@ -62,7 +62,7 @@ class DateEditor(CustomEditor):
         # The order of creation of this widgets and their parenting
         # seems very sensitive under windows and creates system crashes
         # so don't change this without extensive testing on windows
-        special_date_menu = QtGui.QMenu(self)
+        special_date_menu = QtWidgets.QMenu(self)
         calendar_widget_action = QtWidgets.QWidgetAction(special_date_menu)
         self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
         self.calendar_widget.activated.connect(self.calendar_widget_activated)
@@ -86,7 +86,7 @@ class DateEditor(CustomEditor):
         if nullable:
             special_date_menu.addAction(_('Clear'))
 
-        self.hlayout = QtGui.QHBoxLayout()
+        self.hlayout = QtWidgets.QHBoxLayout()
         self.hlayout.addWidget(line_edit)
         self.hlayout.addWidget(self.special_date)
 

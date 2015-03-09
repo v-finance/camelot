@@ -27,7 +27,7 @@ from .customeditor import AbstractCustomEditor
 from camelot.core import constants
 from camelot.core.utils import ugettext
 
-class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
+class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
 
     editingFinished = QtCore.qt_signal()
@@ -39,7 +39,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
                  nullable=True,
                  field_name = 'boolean',
                  **kwargs):
-        QtGui.QCheckBox.__init__(self, parent)
+        QtWidgets.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
         self._nullable = nullable
@@ -80,7 +80,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         self.editingFinished.emit()
 
     def sizeHint(self):
-        size = QtGui.QComboBox().sizeHint()
+        size = QtWidgets.QComboBox().sizeHint()
         return size
 
 class TextBoolEditor(QtWidgets.QLabel, AbstractCustomEditor):

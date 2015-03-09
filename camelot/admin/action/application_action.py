@@ -28,7 +28,7 @@ import time
 import six
 
 from ...core.conf import settings
-from ...core.qt import Qt, QtCore, QtGui, QtWebKit
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtWebKit
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -108,7 +108,7 @@ class SelectProfile( Action ):
     
     :param profile_store: an object of type
         :class:`camelot.core.profile.ProfileStore`
-    :param edit_dialog_class: a :class:`QtGui.QDialog` to display the needed
+    :param edit_dialog_class: a :class:`QtWidgets.QDialog` to display the needed
         fields to store in a profile
     This action is also useable as an action step, which will return the
     selected profile.
@@ -194,7 +194,7 @@ class SelectProfile( Action ):
                         except Exception as e:
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
-                                                                     standard_buttons = QtGui.QMessageBox.Ok )
+                                                                     standard_buttons = QtWidgets.QMessageBox.Ok )
                             exception_box.informative_text = six.text_type(e)
                             yield exception_box
                             edit_profile_name = profile.name
@@ -315,7 +315,7 @@ class ShowAbout( Action ):
     
     def gui_run( self, gui_context ):
         abtmsg = gui_context.admin.get_application_admin().get_about()
-        QtGui.QMessageBox.about( gui_context.workspace, 
+        QtWidgets.QMessageBox.about( gui_context.workspace, 
                                  ugettext('About'), 
                                  six.text_type( abtmsg ) )
         
@@ -664,8 +664,8 @@ class SegmentationFault( Action ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         ok = yield action_steps.MessageBox( text =  'Are you sure you want to segfault the application',
-                                            standard_buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes )
-        if ok == QtGui.QMessageBox.Yes:
+                                            standard_buttons = QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Yes )
+        if ok == QtWidgets.QMessageBox.Yes:
             import faulthandler
             faulthandler._read_null()        
         

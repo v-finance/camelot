@@ -76,7 +76,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         model.set_value([obj])
         model.set_columns(columns)
         validator = model.get_validator()
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(admin=admin,
                                  model=model,
@@ -102,7 +102,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         ok_button = QtWidgets.QPushButton(six.text_type(accept))
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
@@ -122,7 +122,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
     def set_actions(self, actions):
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and layout:
-            side_panel_layout = QtGui.QVBoxLayout()
+            side_panel_layout = QtWidgets.QVBoxLayout()
             actions_widget = ActionsBox( parent = self,
                                          gui_context = self.gui_context )
             actions_widget.setObjectName('actions')
@@ -184,7 +184,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         note = editors.NoteEditor( parent=self )
         note.set_value(None)
         note.setObjectName( 'note' )
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget( table_widget )
         layout.addWidget( note )
         self.main_widget().setLayout( layout )
@@ -264,7 +264,7 @@ class ChangeObject( ActionStep ):
         dialog = self.render( gui_context )
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
-            if result == QtGui.QDialog.Rejected:
+            if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return self.obj
 
@@ -342,7 +342,7 @@ class ChangeObjects( ActionStep ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
-            if result == QtGui.QDialog.Rejected:
+            if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return self.objects
 
@@ -367,7 +367,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         self.banner_widget().setStyleSheet('background-color: white;')
         editor = ChoicesEditor( parent=self )
         editor.setObjectName( 'field_choice' )
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget( editor )
         self.main_widget().setLayout( layout )
 
@@ -470,7 +470,7 @@ class ChangeField( ActionStep ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
-            if result == QtGui.QDialog.Rejected:
+            if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return (dialog.field, dialog.value)
 

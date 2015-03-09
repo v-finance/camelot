@@ -42,7 +42,7 @@ class StarEditor( CustomEditor ):
                             QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
         self.setFocusPolicy(Qt.StrongFocus)
-        layout = QtGui.QHBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 

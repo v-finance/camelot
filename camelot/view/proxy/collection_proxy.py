@@ -181,9 +181,9 @@ class RowModelContext(ListActionModelContext):
 class CollectionProxy(QtModel.QSortFilterProxyModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
-    :class:`QtGui.QTableView`  
+    :class:`QtWidgets.QTableView`  
 
-    The behavior of the :class:`QtGui.QTableView`, such as what happens when the
+    The behavior of the :class:`QtWidgets.QTableView`, such as what happens when the
     user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
     """

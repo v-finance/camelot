@@ -61,7 +61,7 @@ class FileEditor(CustomEditor):
     def setup_widget(self):
         """Called inside init, overwrite this method for custom
         file edit widgets"""
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
 

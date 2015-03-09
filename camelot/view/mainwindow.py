@@ -25,14 +25,14 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from ..core.qt import Qt, QtGui, QtWidgets, QtCore, py_to_variant, variant_to_py
+from ..core.qt import Qt, QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.section_widget import NavigationPane
 
 from camelot.core.utils import ugettext as _
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     """Main window of a Desktop Camelot application
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
@@ -44,7 +44,7 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self, gui_context, parent=None):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
 
         self.toolbars = []
         self.nav_pane = None
@@ -149,7 +149,7 @@ class MainWindow(QtGui.QMainWindow):
             if menu_bar:
                 for qaction in menu_bar.findChildren( ActionAction ):
                     qactions[qaction.action] = qaction
-            toolbar = QtGui.QToolBar( _('Toolbar') )
+            toolbar = QtWidgets.QToolBar( _('Toolbar') )
             self.addToolBar( toolbar_area, toolbar )
             toolbar.setObjectName( 'MainWindowToolBar_%i'%toolbar_area )
             toolbar.setMovable( False )

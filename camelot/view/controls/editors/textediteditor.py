@@ -24,11 +24,11 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore
+from ....core.qt import QtCore, QtWidgets
 from .wideeditor import WideEditor
 from .customeditor import AbstractCustomEditor
 
-class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
+class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
 
     editingFinished = QtCore.qt_signal()
  
@@ -38,7 +38,7 @@ class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
                  editable=True, 
                  field_name = 'text',
                  **kwargs):
-        QtGui.QTextEdit.__init__(self, parent)
+        QtWidgets.QTextEdit.__init__(self, parent)
         self.setObjectName( field_name )
         AbstractCustomEditor.__init__(self)
         self.setReadOnly(not editable)

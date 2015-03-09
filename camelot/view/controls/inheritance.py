@@ -27,7 +27,7 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 
@@ -77,14 +77,14 @@ class SubclassTree( ModelTree ):
         item = self.itemFromIndex(index)
         self.subclass_clicked_signal.emit( item.admin )
 
-class SubclassDialog(QtGui.QDialog):
+class SubclassDialog(QtWidgets.QDialog):
     """A dialog requesting the user to select a subclass"""
     
     def __init__(self, admin, subclass_tree, parent=None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         tree_widget = SubclassTree(admin, self)
         tree_widget.set_subclasses(subclass_tree)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(tree_widget)
         self.setLayout(layout)
         self.selected_subclass = None

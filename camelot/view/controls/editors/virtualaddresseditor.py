@@ -68,9 +68,9 @@ class VirtualAddressEditor(CustomEditor):
                             QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.setContentsMargins( 0, 0, 0, 0)
-        self.combo = QtGui.QComboBox()
+        self.combo = QtWidgets.QComboBox()
         self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
         self.combo.setEnabled(editable)
         self.layout.addWidget(self.combo)

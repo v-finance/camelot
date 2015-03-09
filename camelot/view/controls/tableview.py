@@ -46,13 +46,13 @@ from .inheritance import SubclassTree
 
 from .search import SimpleSearchControl
         
-class ColumnGroupsWidget( QtGui.QTabBar ):
+class ColumnGroupsWidget( QtWidgets.QTabBar ):
     """A tabbar the user can use to select a group of columns within an
     item view.
     
     :param table: a :class:`camelot.admin.table.Table` object, describing the 
        column groups.
-    :param table_widget: a :class:`QtGui.QTableView` widget of which columns will
+    :param table_widget: a :class:`QtWidgets.QTableView` widget of which columns will
        be hidden and shown depending on the selected tab.
     :param parent: a :class:`QtWidgets.QWidget`
     """
@@ -61,7 +61,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
         from camelot.admin.table import ColumnGroup
         super( ColumnGroupsWidget, self ).__init__( parent )
         assert object_thread( self )
-        self.setShape( QtGui.QTabBar.RoundedSouth )
+        self.setShape( QtWidgets.QTabBar.RoundedSouth )
         self.groups = dict()
         self.table_widget = table_widget
         column_index = 0
@@ -96,7 +96,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
                 self.table_widget.setColumnHidden( column_index,
                                                    tab_index != current_index )
 
-class TableWidget( QtGui.QTableView ):
+class TableWidget( QtWidgets.QTableView ):
     """A widget displaying a table, to be used within a TableView.  But it does 
 not rely on the model being Camelot specific, or a Collection Proxy.
 
@@ -114,14 +114,14 @@ and above the text.
     keyboard_selection_signal = QtCore.qt_signal()
 
     def __init__( self, lines_per_row = 1, parent = None ):
-        QtGui.QTableView.__init__( self, parent )
+        QtWidgets.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
         assert object_thread( self )
         self._columns_changed = dict()
-        self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
-                              QtGui.QAbstractItemView.DoubleClicked |
-                              QtGui.QAbstractItemView.CurrentChanged )
+        self.setSelectionBehavior( QtWidgets.QAbstractItemView.SelectRows )
+        self.setEditTriggers( QtWidgets.QAbstractItemView.SelectedClicked |
+                              QtWidgets.QAbstractItemView.DoubleClicked |
+                              QtWidgets.QAbstractItemView.CurrentChanged )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding, 
                             QtGui.QSizePolicy.Expanding )
         self.horizontalHeader().setClickable( True )
@@ -130,8 +130,8 @@ and above the text.
         line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
         self._minimal_row_height = line_height * lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
-        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect(
             self.horizontal_section_clicked )
         self.horizontalHeader().sectionResized.connect( self._save_section_width )
@@ -211,7 +211,7 @@ and above the text.
         #
         # Editor, closed. it should be safe to change the model
         #
-        QtGui.QTableView.setModel( self, model )
+        QtWidgets.QTableView.setModel( self, model )
         register.register( model, self )
         # assign selection model to local variable to keep it alive during method
         # call, or PySide segfaults
@@ -302,14 +302,14 @@ class AdminTableWidget( QtWidgets.QWidget ):
         table_widget.setObjectName( 'table_widget' )
         column_groups = ColumnGroupsWidget( admin.get_table(), table_widget )
         column_groups.setObjectName( 'column_groups' )
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 0 )
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.addWidget( table_widget )
         layout.addWidget( column_groups )
         self.setLayout( layout )
         if admin.drop_action != None:
-            table_widget.setDragDropMode( QtGui.QAbstractItemView.DragDrop )
+            table_widget.setDragDropMode( QtWidgets.QAbstractItemView.DragDrop )
             table_widget.setDropIndicatorShown( True )
                         
     def __getattr__( self, name ):
@@ -373,8 +373,8 @@ class HeaderWidget( QtWidgets.QWidget ):
         QtWidgets.QWidget.__init__( self, parent )
         assert object_thread( self )
         self.gui_context = gui_context
-        layout = QtGui.QVBoxLayout()
-        widget_layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
+        widget_layout = QtWidgets.QHBoxLayout()
         search = self.search_widget( self )
         self.setFocusProxy(search)
         search.expand_search_options_signal.connect(
@@ -494,7 +494,7 @@ class TableView( AbstractView  ):
         self.application_gui_context = gui_context
         self.gui_context = gui_context
         self.proxy = proxy
-        widget_layout = QtGui.QVBoxLayout()
+        widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setSpacing( 0 )
         widget_layout.setContentsMargins(0, 0, 0, 0)
         splitter = QtGui.QSplitter( self )
@@ -508,12 +508,12 @@ class TableView( AbstractView  ):
         size_policy.setHorizontalStretch(1)
         table_widget.setSizePolicy(size_policy)
         filters_widget = QtWidgets.QWidget( self )
-        self.table_layout = QtGui.QVBoxLayout()
+        self.table_layout = QtWidgets.QVBoxLayout()
         self.table_layout.setSpacing( 0 )
         self.table_layout.setContentsMargins(0, 0, 0, 0)
         self.table = None
         self.header = None
-        self.filters_layout = QtGui.QVBoxLayout()
+        self.filters_layout = QtWidgets.QVBoxLayout()
         self.filters_layout.setSpacing( 0 )
         self.filters_layout.setContentsMargins(0, 0, 0, 0)
         self.actions = None

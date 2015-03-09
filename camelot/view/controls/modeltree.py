@@ -27,11 +27,11 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.modeltree')
 
-from ...core.qt import QtGui, Qt
+from ...core.qt import Qt, QtWidgets
 
 from camelot.core.utils import ugettext as _
 
-class ModelItem(QtGui.QTreeWidgetItem):
+class ModelItem(QtWidgets.QTreeWidgetItem):
     """Custom tree item widget"""
 
     def __init__(self, parent, columns_names, section_item):
@@ -53,14 +53,14 @@ class ModelItem(QtGui.QTreeWidgetItem):
     def set_icon(self, icon):
         self.setIcon(self.iconColumn, icon)
         
-class ModelTree(QtGui.QTreeWidget):
+class ModelTree(QtWidgets.QTreeWidget):
     """Custom tree widget"""
 
     def __init__(self, header_labels=[''], parent=None):
         logger.debug('creating new modeltree')
         super(ModelTree, self).__init__(parent)
         # we don't select entire rows
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
         
         # we track mouse movement when no button is pressed
         self.setMouseTracking(True)
@@ -94,7 +94,7 @@ class ModelTree(QtGui.QTreeWidget):
             self.customContextMenuRequested.emit( event.pos() )
             event.accept()
         else:
-            QtGui.QTreeWidget.mousePressEvent(self, event)
+            QtWidgets.QTreeWidget.mousePressEvent(self, event)
 
     def leaveEvent(self, event):
         if not self.modelitems: return

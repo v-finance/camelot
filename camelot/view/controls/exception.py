@@ -25,7 +25,7 @@
 """Functions and widget to represent exceptions to the user"""
 
 import collections
-from ...core.qt import QtGui
+from ...core.qt import QtWidgets
 
 import six
 
@@ -69,7 +69,7 @@ def register_exception(logger, text, exception):
     sio.close()
     return ExceptionInfo(title, text, icon, resolution, detail)
 
-class ExceptionDialog(QtGui.QMessageBox):
+class ExceptionDialog(QtWidgets.QMessageBox):
     """Dialog to display an exception to the user
 
     .. image:: /_static/controls/user_exception.png 
@@ -83,7 +83,7 @@ class ExceptionDialog(QtGui.QMessageBox):
         """
 
         (title, text, icon, resolution, detail) = exception_info
-        super( ExceptionDialog, self ).__init__(QtGui.QMessageBox.Warning,
+        super( ExceptionDialog, self ).__init__(QtWidgets.QMessageBox.Warning,
                                                 six.text_type(title), 
                                                 six.text_type(text))
         self.setInformativeText(six.text_type(resolution or ''))

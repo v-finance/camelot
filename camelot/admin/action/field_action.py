@@ -30,7 +30,7 @@ various actions that are beyond the icons shown in the editors of a form.
 import inspect
 import os
 
-from ...core.qt import Qt, QtGui
+from ...core.qt import Qt, QtWidgets
 from ...core.utils import ugettext_lazy as _
 from ...view.art import Icon
 from .base import Action
@@ -228,11 +228,11 @@ class UploadFile(FieldAction):
             if model_context.field_attributes.get('remove_original'):
                 reply = yield action_steps.MessageBox(
                     text = _('Do you want to remove the original file?'),
-                    icon = QtGui.QMessageBox.Warning,
+                    icon = QtWidgets.QMessageBox.Warning,
                     title = _('The file will be stored.'),
-                    standard_buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes
+                    standard_buttons = QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Yes
                     )
-                if reply == QtGui.QMessageBox.Yes:
+                if reply == QtWidgets.QMessageBox.Yes:
                     remove = True
             yield action_steps.UpdateProgress(text='Attaching file')
             stored_file = storage.checkin(file_name)
@@ -258,11 +258,11 @@ class DetachFile(FieldAction):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        buttons = QtGui.QMessageBox.Yes|QtGui.QMessageBox.No
+        buttons = QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No
         answer = yield action_steps.MessageBox(title=self.message_title,
                                                text=self.message_text,
                                                standard_buttons=buttons)
-        if answer == QtGui.QMessageBox.Yes:
+        if answer == QtWidgets.QMessageBox.Yes:
             yield action_steps.UpdateEditor('value', None, propagate=True)
 
     def get_state(self, model_context):

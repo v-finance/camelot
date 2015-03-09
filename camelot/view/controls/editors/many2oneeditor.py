@@ -26,7 +26,7 @@ from functools import update_wrapper, partial
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
 from camelot.view.model_thread import post, object_thread
@@ -88,7 +88,7 @@ class Many2OneEditor( CustomEditor ):
         self.obj = None
         self._last_highlighted_entity_getter = None
 
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
 

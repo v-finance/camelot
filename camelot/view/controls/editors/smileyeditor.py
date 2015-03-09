@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
 from .customeditor import CustomEditor
 from camelot.view.art import Icon
 
@@ -56,7 +56,7 @@ class SmileyEditor(CustomEditor):
         self.setSizePolicy( QtGui.QSizePolicy.Preferred,
                             QtGui.QSizePolicy.Fixed )        
         self.setObjectName( field_name )
-        self.box = QtGui.QComboBox()
+        self.box = QtWidgets.QComboBox()
         self.box.setFrame(True)
         self.box.setEditable(False)
         self.name_by_position = {0:None}
@@ -70,7 +70,7 @@ class SmileyEditor(CustomEditor):
             self.box.setFixedHeight(self.get_height())
 
         self.setFocusPolicy(Qt.StrongFocus)
-        layout = QtGui.QHBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         self.setAutoFillBackground(True)

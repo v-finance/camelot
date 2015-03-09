@@ -150,7 +150,7 @@ class Code(types.TypeDecorator):
     
     :param parts: a list of input masks specifying the mask for each part,
         eg ``['99', 'AA']``. For valid input masks, see the documentation of
-        :class:`QtGui.QLineEdit`.
+        :class:`QtWidgets.QLineEdit`.
         
     :param separator: a string that will be used to separate the different parts
         in the GUI and in the database

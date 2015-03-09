@@ -26,7 +26,7 @@ import logging
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
 from camelot.view.proxy import ValueLoading
 from ...art import Icon, ColorScheme
 from .customeditor import CustomEditor
@@ -48,10 +48,10 @@ class ChoicesEditor(CustomEditor):
                   **kwargs ):
         super(ChoicesEditor, self).__init__(parent)
         self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        combobox = QtGui.QComboBox()
+        combobox = QtWidgets.QComboBox()
         combobox.setObjectName('combobox')
         combobox.activated.connect(self._activated)
         layout.addWidget(combobox)
@@ -99,7 +99,7 @@ class ChoicesEditor(CustomEditor):
         If there is no item with value `None` in the list of choices, this will
         be added.
         """
-        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         current_value = self.get_value()
         current_display_role = six.text_type(combobox.itemText(combobox.currentIndex()))
         none_available = False
@@ -130,7 +130,7 @@ class ChoicesEditor(CustomEditor):
 
     def set_field_attributes(self, **fa):
         super(ChoicesEditor, self).set_field_attributes(**fa)
-        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         if fa.get('choices') is not None:
             self.set_choices(fa['choices'])
         combobox.setEnabled(fa.get('editable', True))
@@ -139,7 +139,7 @@ class ChoicesEditor(CustomEditor):
         """
     :rtype: a list of (value,name) tuples
     """
-        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         return [(variant_to_py(combobox.itemData(i)),
                  six.text_type(combobox.itemText(i))) for i in range(combobox.count())]
 
@@ -155,7 +155,7 @@ class ChoicesEditor(CustomEditor):
         self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
         if not variant_to_py(self.property('value_loading')) and value != NotImplemented:
-            combobox = self.findChild(QtGui.QComboBox, 'combobox')
+            combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
             number_of_items = combobox.count()
             # remove the last item if it was an invalid one
             if variant_to_py(combobox.itemData(number_of_items-1, Qt.UserRole+1))==True:
@@ -181,7 +181,7 @@ class ChoicesEditor(CustomEditor):
 
     def get_value(self):
         """Get the current value of the combobox"""
-        combobox = self.findChild(QtGui.QComboBox, 'combobox')
+        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         current_index = combobox.currentIndex()
         if current_index >= 0:
             value = variant_to_py(combobox.itemData(combobox.currentIndex()))

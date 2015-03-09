@@ -45,6 +45,7 @@ class MainWindow( ActionStep ):
         from ..mainwindow import MainWindow
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
+        main_window_context.admin = self.admin
         main_window = MainWindow( gui_context=main_window_context )
         gui_context.workspace = main_window_context.workspace
         main_window.setWindowTitle( self.window_title )

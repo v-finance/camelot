@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ..core.qt import QtGui, QtWidgets
+from ..core.qt import QtWidgets
 
 import six
 
@@ -51,15 +51,15 @@ itself, an Action object or None to insert a separator.
     
     def render( self, gui_context, parent ):
         """
-        :return: a :class:`QtGui.QMenu` object
+        :return: a :class:`QtWidgets.QMenu` object
         """
-        menu = QtGui.QMenu( six.text_type( self.get_verbose_name() ), parent )
+        menu = QtWidgets.QMenu( six.text_type( self.get_verbose_name() ), parent )
         for item in self.get_items():
             if item == None:
                 menu.addSeparator()
                 continue
             rendered_item = item.render( gui_context, menu )
-            if isinstance( rendered_item, QtGui.QMenu ):
+            if isinstance( rendered_item, QtWidgets.QMenu ):
                 menu.addMenu( rendered_item )
             elif isinstance( rendered_item, QtWidgets.QAction ):
                 menu.addAction( rendered_item )

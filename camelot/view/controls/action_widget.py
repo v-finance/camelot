@@ -34,7 +34,7 @@ from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
 
-    def __init__( self, action, gui_context ):
+    def init( self, action, gui_context ):
         """Helper class to construct widget that when triggered run an action.
         This class exists as a base class for custom ActionButton implementations.
         """
@@ -89,7 +89,7 @@ class AbstractActionWidget( object ):
         :param state: a `camelot.admin.action.State` object
         """
         if state.modes:
-            menu = QtGui.QMenu()
+            menu = QtWidgets.QMenu()
             for mode in state.modes:
                 mode_action = mode.render( menu )
                 mode_action.triggered.connect( self.triggered )
@@ -110,7 +110,7 @@ class ActionLabel( QtWidgets.QLabel, AbstractActionWidget ):
     """
     def __init__( self, action, gui_context, parent ):
         QtWidgets.QLabel.__init__( self, parent )
-        AbstractActionWidget.__init__( self, action, gui_context )
+        AbstractActionWidget.init( self, action, gui_context )
 
         self.setObjectName('ActionButton')
         self.setMouseTracking(True)
@@ -161,7 +161,7 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
         QtWidgets.QAction.__init__( self, parent )
-        AbstractActionWidget.__init__( self, action, gui_context )
+        AbstractActionWidget.init( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
 
@@ -193,7 +193,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
         """
         QtWidgets.QPushButton.__init__( self, parent )
-        AbstractActionWidget.__init__( self, action, gui_context )
+        AbstractActionWidget.init( self, action, gui_context )
         self.clicked.connect( self.triggered )
 
     @QtCore.qt_slot()
@@ -224,7 +224,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         """A :class:`QtWidgets.QToolButton` that when pressed, will run an
         action."""
         QtWidgets.QToolButton.__init__( self, parent )
-        AbstractActionWidget.__init__( self, action, gui_context )
+        AbstractActionWidget.init( self, action, gui_context )
         self.clicked.connect(self.run_action)
 
     def set_state( self, state ):
@@ -241,14 +241,14 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu( state )
 
-class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
+class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
     """Widget that displays information on the active user"""
 
     def __init__(self, action, gui_context, parent):
         from ..remote_signals import get_signal_handler
-        QtGui.QFrame.__init__(self, parent)
-        AbstractActionWidget.__init__(self, action, gui_context)
-        layout = QtGui.QHBoxLayout()
+        QtWidgets.QFrame.__init__(self, parent)
+        AbstractActionWidget.init(self, action, gui_context)
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         face = QtWidgets.QToolButton()
         face.setObjectName('face')
@@ -256,7 +256,7 @@ class AuthenticationWidget(QtGui.QFrame, AbstractActionWidget):
         face.clicked.connect(self.face_clicked)
         face.setToolTip(ugettext('Change avatar'))
         layout.addWidget(face)
-        info_layout = QtGui.QVBoxLayout()
+        info_layout = QtWidgets.QVBoxLayout()
         user_name = QtWidgets.QLabel()
         font = user_name.font()
         font.setBold(True)

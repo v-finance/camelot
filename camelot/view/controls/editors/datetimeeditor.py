@@ -87,12 +87,12 @@ class DateTimeEditor(CustomEditor):
         import itertools
         self.nullable = nullable
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         self.dateedit = DateEditor(self, editable=editable, nullable=nullable, **kwargs)
         self.dateedit.editingFinished.connect( self.editing_finished )
         layout.addWidget(self.dateedit, 1)
 
-        self.timeedit = QtGui.QComboBox(self)
+        self.timeedit = QtWidgets.QComboBox(self)
         self.timeedit.setEditable(True)
         if not editable:
             self.timeedit.setEnabled(False)

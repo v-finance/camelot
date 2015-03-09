@@ -29,7 +29,7 @@ from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 from camelot.view.art import Icon
 
-class CustomTextEdit(QtGui.QTextEdit):
+class CustomTextEdit(QtWidgets.QTextEdit):
     """
     A TextEdit editor that sends editingFinished events 
     when the text was changed and focus is lost.
@@ -60,7 +60,7 @@ class CustomTextEdit(QtGui.QTextEdit):
         self._changed = state
 
     def setHtml(self, html):
-        QtGui.QTextEdit.setHtml(self, html)
+        QtWidgets.QTextEdit.setHtml(self, html)
         self._changed = False
                 
 class RichTextEditor(CustomEditor, WideEditor):
@@ -71,7 +71,7 @@ class RichTextEditor(CustomEditor, WideEditor):
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
@@ -106,7 +106,7 @@ class RichTextEditor(CustomEditor, WideEditor):
             self.editingFinished.emit()
 
     def set_editable(self, editable):
-        toolbar = self.findChild( QtGui.QToolBar )
+        toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             toolbar.setEnabled(editable)
         self.textedit.setEnabled(editable)
@@ -121,12 +121,12 @@ class RichTextEditor(CustomEditor, WideEditor):
         the user starts editing.
         :param hidden: `True` or `False`
         """
-        toolbar = self.findChild( QtGui.QToolBar )
+        toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             toolbar.setHidden( hidden )
         
     def initToolbar(self):
-        self.toolbar = QtGui.QToolBar(self)
+        self.toolbar = QtWidgets.QToolBar(self)
         self.toolbar.setObjectName( 'toolbar' )
         self.toolbar.setOrientation(Qt.Horizontal)
         self.toolbar.setContentsMargins(0, 0, 0, 0)

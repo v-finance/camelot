@@ -29,7 +29,7 @@ logger = logging.getLogger('camelot.view.controls.section_widget')
 
 import six
 
-from ...core.qt import variant_to_py, QtCore, QtGui, QtWidgets, Qt
+from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.section import Section, SectionItem
 from camelot.view.model_thread import post
@@ -43,13 +43,13 @@ class PaneSection(QtWidgets.QWidget):
         self._items = []
         self._workspace = workspace
         self._section = section
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         section_tree = ModelTree(parent=self)
         # i hate the sunken frame style
-        section_tree.setFrameShape(QtGui.QFrame.NoFrame)
-        section_tree.setFrameShadow(QtGui.QFrame.Plain)
-        section_tree.contextmenu = QtGui.QMenu(self)
+        section_tree.setFrameShape(QtWidgets.QFrame.NoFrame)
+        section_tree.setFrameShadow(QtWidgets.QFrame.Plain)
+        section_tree.contextmenu = QtWidgets.QMenu(self)
         section_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         section_tree.customContextMenuRequested.connect(self.create_context_menu)
         section_tree.setObjectName( 'SectionTree' )
@@ -109,7 +109,7 @@ class PaneSection(QtWidgets.QWidget):
         mode_name = variant_to_py( action.data() )
         self._run_current_action( mode_name )
         
-    @QtCore.qt_slot(QtGui.QTreeWidgetItem, int)
+    @QtCore.qt_slot(QtWidgets.QTreeWidgetItem, int)
     def _item_clicked(self, _item, _column):
         self._run_current_action()
 
@@ -132,14 +132,14 @@ class PaneSection(QtWidgets.QWidget):
             gui_context.admin = self._section.admin
             section_item.get_action().gui_run( gui_context )
                         
-class NavigationPane(QtGui.QDockWidget):
+class NavigationPane(QtWidgets.QDockWidget):
 
     def __init__(self, workspace, parent):
         super(NavigationPane, self).__init__(parent)
         self._workspace = workspace
-        tb = QtGui.QToolBox()
+        tb = QtWidgets.QToolBox()
         tb.setMinimumWidth(220)
-        tb.setFrameShape(QtGui.QFrame.NoFrame)
+        tb.setFrameShape(QtWidgets.QFrame.NoFrame)
         tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
         tb.setObjectName('toolbox')
@@ -148,7 +148,7 @@ class NavigationPane(QtGui.QDockWidget):
         # hack for removing the dock title bar
         self.setTitleBarWidget(QtWidgets.QWidget())
         self.setWidget(tb)
-        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        self.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
 
     def wheelEvent(self, wheel_event):
         steps = -1 * wheel_event.delta() / (8 * 15)

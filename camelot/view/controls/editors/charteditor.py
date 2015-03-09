@@ -36,7 +36,7 @@ PAD_INCHES = 0.1
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
+class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
@@ -53,10 +53,10 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
         
-        chart_frame = QtGui.QFrame( self )
+        chart_frame = QtWidgets.QFrame( self )
         chart_frame.setFrameShape( self.Box )
         chart_frame.setContentsMargins( 1, 1, 1, 1 )
-        chart_frame_layout = QtGui.QHBoxLayout()
+        chart_frame_layout = QtWidgets.QHBoxLayout()
         chart_frame_layout.setContentsMargins( 0, 0, 0, 0)
         chart_frame.setLayout( chart_frame_layout )
 
@@ -70,11 +70,11 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
             dpi=dpi,
             facecolor='#ffffff',
         )
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         self.canvas = FigureCanvas( self.fig )
         chart_frame_layout.addWidget( self.canvas )
         layout.addWidget(chart_frame)
-        button_layout = QtGui.QVBoxLayout()
+        button_layout = QtWidgets.QVBoxLayout()
         button_layout.setSpacing( 0 )
 
         icon = Icon( 'tango/16x16/actions/document-print-preview.png' ).getQIcon()

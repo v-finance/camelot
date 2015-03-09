@@ -27,7 +27,7 @@
 import logging
 LOGGER = logging.getLogger('controls.actionsbox')
 
-from ...core.qt import QtGui, QtWidgets
+from ...core.qt import QtWidgets
 
 class ActionsBox( QtWidgets.QWidget ):
     """A box containing actions to be applied to a view
@@ -49,7 +49,7 @@ class ActionsBox( QtWidgets.QWidget ):
 
     def set_actions( self, actions ):
         LOGGER.debug( 'setting actions' )
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
         for action in actions:
             action_widget = action.render( self.gui_context, self )

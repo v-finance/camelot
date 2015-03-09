@@ -42,7 +42,7 @@ import logging
 
 logger = logging.getLogger('camelot.view.action_step.backup')
 
-class LabelLineEdit( QtGui.QLineEdit ):
+class LabelLineEdit( QtWidgets.QLineEdit ):
     
     _file_name = ''
 
@@ -64,7 +64,7 @@ class LabelLineEdit( QtGui.QLineEdit ):
     def filename(self):
         return self._file_name
 
-class LabelComboBox(QtGui.QComboBox):
+class LabelComboBox(QtWidgets.QComboBox):
     
     _file_name = ''
 
@@ -110,19 +110,19 @@ class SelectDialog( StandaloneWizardPage ):
         # controls
         self._default_radio = QtGui.QRadioButton(ugettext('Default Location'))
         self._custom_radio = QtGui.QRadioButton(ugettext('Custom Location'))
-        self._custom_edit = QtGui.QLineEdit()
+        self._custom_edit = QtWidgets.QLineEdit()
         self._custom_button = QtWidgets.QPushButton(ugettext('Browse...'))
         button_group = QtGui.QButtonGroup(self)
         button_group.addButton(self._default_radio)
         button_group.addButton(self._custom_radio)
 
         # layout
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self._default_radio)
-        self._hlayout = QtGui.QHBoxLayout()
+        self._hlayout = QtWidgets.QHBoxLayout()
         layout.addLayout(self._hlayout)
         layout.addWidget(self._custom_radio)
-        hlayout2 = QtGui.QHBoxLayout()
+        hlayout2 = QtWidgets.QHBoxLayout()
         hlayout2.addWidget(self._custom_edit)
         hlayout2.addWidget(self._custom_button)
         layout.addLayout(hlayout2)        
@@ -139,7 +139,7 @@ class SelectDialog( StandaloneWizardPage ):
         ok_button = QtWidgets.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
@@ -292,7 +292,7 @@ class SelectBackup( ActionStep ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
-            if result == QtGui.QDialog.Rejected:
+            if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return ( dialog.label, dialog.storage )
 

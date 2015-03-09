@@ -30,7 +30,7 @@ import sys
 from camelot.art import resources # Required for tooltip visualization
 resources.__name__ # Dodge PyFlakes' attack
 
-from ..core.qt import QtCore, QtGui
+from ..core.qt import QtCore, QtWidgets
 from ..admin.action.application import Application
 from ..admin.action.application_action import ApplicationActionGuiContext
 
@@ -50,7 +50,7 @@ def main(application_admin):
     
 def main_action(action):
     """
-    Construct a :class:`QtGui.QApplication`, start the event loop and run a
+    Construct a :class:`QtWidgets.QApplication`, start the event loop and run a
     :class:`camelot.admin.action.base.Action` object.
     
     Use this function for complete customization of a Camelot application.  The
@@ -60,7 +60,7 @@ def main_action(action):
     """
     app = QtCore.QCoreApplication.instance()
     if app is None:
-        app = QtGui.QApplication([a for a in sys.argv if a])
+        app = QtWidgets.QApplication([a for a in sys.argv if a])
     gui_context = ApplicationActionGuiContext()
     QtCore.QTimer.singleShot(0, functools.partial(action.gui_run, 
                                                    gui_context))

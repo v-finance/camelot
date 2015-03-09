@@ -49,6 +49,7 @@ QtXml = DelayedModule('QtXml')
 # virtual modules that points to the qt module containing these classes
 QtModel = DelayedModule('QtGui')
 QtWidgets = DelayedModule('QtGui')
+QtPrintSupport = DelayedModule('QtGui')
 
 if qt_api in (None, 'PyQt4', 'PyQt5'):
     try:
@@ -66,6 +67,7 @@ if qt_api in (None, 'PyQt4', 'PyQt5'):
             string_api = 2
             QtModel = DelayedModule('QtCore')
             QtWidgets = DelayedModule('QtWidgets')
+            QtPrintSupport = DelayedModule('QtPrintSupport')
         is_deleted = sip.isdeleted
     except ImportError:
         qt_api = None

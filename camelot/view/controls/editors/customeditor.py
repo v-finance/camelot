@@ -117,12 +117,12 @@ class AbstractCustomEditor(object):
     Get the 'standard' height for a cell
     """
     def get_height(self):
-        height = [QtGui.QLineEdit().sizeHint().height(),
+        height = [QtWidgets.QLineEdit().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
                QtGui.QDateTimeEdit().sizeHint().height(),
                QtGui.QSpinBox().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
-               QtGui.QComboBox().sizeHint().height()]
+               QtWidgets.QComboBox().sizeHint().height()]
 
         finalHeight = max(height)
 

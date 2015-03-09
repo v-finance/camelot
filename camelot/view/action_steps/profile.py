@@ -123,7 +123,7 @@ allow all languages
         layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
         layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
 
-        self.profile_editor = QtGui.QComboBox(self)
+        self.profile_editor = QtWidgets.QComboBox(self)
         self.profile_editor.setEditable(True)
 
         # 32767 is Qt max length for string
@@ -141,7 +141,7 @@ allow all languages
         self.username_editor = TextLineEditor(self)
         self.username_editor.set_value('')
         self.password_editor = TextLineEditor(
-            echo_mode=QtGui.QLineEdit.Password,
+            echo_mode=QtWidgets.QLineEdit.Password,
             parent=self
         )
         self.password_editor.set_value('')
@@ -169,7 +169,7 @@ allow all languages
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_username_editor.set_value('')
         self.proxy_password_editor = TextLineEditor(
-            echo_mode=QtGui.QLineEdit.Password,
+            echo_mode=QtWidgets.QLineEdit.Password,
             parent=self
         )
         self.proxy_password_editor.set_value('')
@@ -221,7 +221,7 @@ allow all languages
         self.cancel_button = QtWidgets.QPushButton(_('Cancel'))
         self.ok_button = QtWidgets.QPushButton(_('OK'))
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setDirection(QtGui.QBoxLayout.RightToLeft)
 
         layout.addWidget(self.cancel_button)
@@ -364,7 +364,7 @@ class EditProfiles(ActionStep):
     settings.
 
     :param profiles: a list of :class:`camelot.core.profile.Profile` objects
-    :param dialog_class: a :class:`QtGui.QDialog` to display the needed
+    :param dialog_class: a :class:`QtWidgets.QDialog` to display the needed
         fields to store in a profile
     :param current_profile`: the name of the current profile, or an empty string
         if there is no current profile.
@@ -388,6 +388,6 @@ class EditProfiles(ActionStep):
     def gui_run(self, gui_context):
         dialog = self.render(gui_context)
         result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
+        if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()
         return dialog.get_profile_info()

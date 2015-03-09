@@ -36,7 +36,7 @@ from ...core.qt import QtGui, QtCore, QtWidgets, Qt, q_string, py_to_variant
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
-class ProgressDialog(QtGui.QProgressDialog):
+class ProgressDialog(QtWidgets.QProgressDialog):
     """
 A Progress Dialog, used during the :meth:`gui_run` of an action.
     
@@ -46,9 +46,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')
     
     def __init__(self, name, icon=progress_icon):
-        QtGui.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
+        QtWidgets.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
         label = QtWidgets.QLabel( six.text_type(name) )
-        progress_bar = QtGui.QProgressBar()
+        progress_bar = QtWidgets.QProgressBar()
         progress_bar.setObjectName('progress_bar')
         cancel_button = QtWidgets.QPushButton( ugettext('Cancel') )
         cancel_button.setObjectName( 'cancel' )
@@ -71,10 +71,10 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         details = QtGui.QListView( parent = self )
         details.setObjectName( 'details' )
         details.hide()
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget( label )
         layout.addWidget( progress_bar )
-        button_layout = QtGui.QHBoxLayout()
+        button_layout = QtWidgets.QHBoxLayout()
         button_layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
@@ -134,7 +134,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             
     def set_ok_hidden( self, hidden = True ):
         ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
-        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         if ok_button:
             ok_button.setHidden( hidden )
             progress_bar.setHidden(not hidden)
@@ -144,9 +144,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         if cancel_button:
             cancel_button.setHidden( hidden )
 
-class SplashProgress( QtGui.QSplashScreen ):
+class SplashProgress( QtWidgets.QSplashScreen ):
     """
-    Wrapper around :class:`QtGui.QSplashScreen` to make it behave as if
+    Wrapper around :class:`QtWidgets.QSplashScreen` to make it behave as if
     it were a progress dialog, this allows reuse of the progress related
     action steps within a splash screen.
     """
@@ -158,8 +158,8 @@ class SplashProgress( QtGui.QSplashScreen ):
         super( SplashProgress, self ).__init__(pixmap)
         # allow the splash screen to keep the application alive, even
         # if the last dialog was closed
-        layout = QtGui.QVBoxLayout()
-        progress_bar = QtGui.QProgressBar(parent=self)
+        layout = QtWidgets.QVBoxLayout()
+        progress_bar = QtWidgets.QProgressBar(parent=self)
         progress_bar.setObjectName('progress_bar')
         layout.addStretch(1)
         layout.addWidget(progress_bar)
@@ -170,15 +170,15 @@ class SplashProgress( QtGui.QSplashScreen ):
         self.setLayout(layout)
         
     def setMaximum( self, maximum ):
-        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setMaximum(maximum)
     
     def setValue( self, value ):
-        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setValue(value)
     
     def setLabelText( self, text ):
-        progress_bar = self.findChild(QtGui.QProgressBar, 'progress_bar')
+        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setFormat(text)
 
     def wasCanceled( self ):

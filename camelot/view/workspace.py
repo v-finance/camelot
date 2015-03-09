@@ -47,7 +47,7 @@ class DesktopBackground(AbstractView):
     def __init__(self, gui_context):
         super(DesktopBackground, self).__init__()
         self.gui_context = gui_context
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QtWidgets.QVBoxLayout()
         
         actionButtonsLayout = QtGui.QGridLayout()
         actionButtonsLayout.setObjectName('actionButtonsLayout')
@@ -147,7 +147,7 @@ class ActionButtonContainer(QtWidgets.QWidget):
     def __init__(self, actionButton, parent = None):
         super(ActionButtonContainer, self).__init__(parent)
         
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QtWidgets.QHBoxLayout()
         # Set some margins to avoid the ActionButton being visually clipped
         # when performing the hoverAnimation.
         mainLayout.setContentsMargins(2*NOTIFICATION_ANIMATION_DISTANCE,
@@ -165,7 +165,7 @@ class ActionButtonInfoWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(ActionButtonInfoWidget, self).__init__(parent)
         
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QtWidgets.QHBoxLayout()
         
         font = self.font()
         font.setPointSize(14)
@@ -212,7 +212,7 @@ class ActionButtonInfoWidget(QtWidgets.QWidget):
         if actionDescriptionLabel is not None:
             actionDescriptionLabel.setText('')
     
-class DesktopTabbar(QtGui.QTabBar):
+class DesktopTabbar(QtWidgets.QTabBar):
 
     change_view_mode_signal = QtCore.qt_signal()
     
@@ -252,12 +252,12 @@ class DesktopWorkspace(QtWidgets.QWidget):
         self.gui_context.workspace = self
         self._app_admin = app_admin
         
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         # Setup the tab widget
-        self._tab_widget = QtGui.QTabWidget( self )
+        self._tab_widget = QtWidgets.QTabWidget( self )
         tab_bar = DesktopTabbar(self._tab_widget)
         tab_bar.setToolTip(_('Double click to (un)maximize'))
         tab_bar.change_view_mode_signal.connect(self._change_view_mode)

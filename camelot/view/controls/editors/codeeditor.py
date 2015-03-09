@@ -29,7 +29,7 @@ from camelot.view.model_thread import object_thread
 
 from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 
-class PartEditor(QtGui.QLineEdit):
+class PartEditor(QtWidgets.QLineEdit):
 
     def __init__(self, mask, max_length, first = False, last = False):
         super(PartEditor, self).__init__()
@@ -70,7 +70,7 @@ class CodeEditor(CustomEditor):
                             QtGui.QSizePolicy.Fixed )        
         self.value = None
         self.parts = parts
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignLeft)

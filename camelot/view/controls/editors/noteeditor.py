@@ -50,7 +50,7 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Minimum )
         self.setContentsMargins(0, 0, 0, 0)
-        self.setFrameStyle(QtGui.QFrame.Box)
+        self.setFrameStyle(QtWidgets.QFrame.Box)
         self.setLineWidth(2)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), color)

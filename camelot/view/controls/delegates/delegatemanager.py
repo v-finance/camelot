@@ -42,7 +42,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
         self._columns = columns
 
     def get_column_delegate(self, column):
-        delegate = self.findChild(QtGui.QAbstractItemDelegate, str(column))
+        delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
             field_name, field_attributes = self._columns[column]
             delegate = field_attributes['delegate'](parent=self, **field_attributes)
@@ -59,7 +59,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _commit_data(self, editor):
         self.commitData.emit(editor)
 
-    @QtCore.qt_slot( QtWidgets.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
+    @QtCore.qt_slot( QtWidgets.QWidget, QtWidgets.QAbstractItemDelegate.EndEditHint )
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 

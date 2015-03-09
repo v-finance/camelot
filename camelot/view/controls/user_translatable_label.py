@@ -63,7 +63,7 @@ within by right clicking on it and selecting the appropriate submenu.
             new_translation, ok = QtGui.QInputDialog.getText(self, 
                                                              _('Change translation'),
                                                              _('Translation'),
-                                                             QtGui.QLineEdit.Normal,
+                                                             QtWidgets.QLineEdit.Normal,
                                                              six.text_type(self._text))
             # when the user presses ok in a blank dialog, the labels
             # should not disappear

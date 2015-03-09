@@ -111,7 +111,7 @@ class FormWidget(QtWidgets.QWidget):
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )
-        widget_layout = QtGui.QHBoxLayout()
+        widget_layout = QtWidgets.QHBoxLayout()
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
         self._index = 0
@@ -212,11 +212,11 @@ class FormView(AbstractView):
                  index, parent = None):
         AbstractView.__init__( self, parent )
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 1 )
         layout.setContentsMargins( 1, 1, 1, 1 )
         layout.setObjectName( 'layout' )
-        form_and_actions_layout = QtGui.QHBoxLayout()
+        form_and_actions_layout = QtWidgets.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
         layout.addLayout( form_and_actions_layout )
             
@@ -270,7 +270,7 @@ class FormView(AbstractView):
         form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
-            side_panel_layout = QtGui.QVBoxLayout()
+            side_panel_layout = QtWidgets.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
             actions_widget = ActionsBox( parent = self, 
@@ -285,7 +285,7 @@ class FormView(AbstractView):
     def set_toolbar_actions(self, actions):
         layout = self.findChild( QtGui.QLayout, 'layout' )
         if layout and actions:
-            toolbar = QtGui.QToolBar()
+            toolbar = QtWidgets.QToolBar()
             for action in actions:
                 qaction = action.render( self.gui_context, toolbar )
                 qaction.triggered.connect( self.action_triggered )

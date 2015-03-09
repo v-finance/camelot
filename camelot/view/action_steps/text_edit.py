@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 
 from camelot.admin.action import ActionStep
 from camelot.core.utils import ugettext_lazy as _
@@ -78,7 +78,7 @@ class EditTextDocument( ActionStep ):
         dialog.set_banner_title( self.title )
         dialog.set_banner_subtitle( self.subtitle )
         main_widget = dialog.main_widget()
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         editor = RichTextEditor()
         editor.set_document( self.document )
         editor.set_toolbar_hidden( False )

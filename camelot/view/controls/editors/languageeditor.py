@@ -24,9 +24,9 @@
 import six
 
 from .customeditor import AbstractCustomEditor
-from ....core.qt import QtGui, QtCore, py_to_variant, variant_to_py
+from ....core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
 
-class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
+class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
     """A ComboBox that shows a list of languages, the editor takes
     as its value the ISO code of the language"""
 
@@ -39,7 +39,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
         that are allowed in the combo box, if the list is empty, all languages
         are allowed (the default)
         """
-        QtGui.QComboBox.__init__(self, parent)
+        QtWidgets.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
         self.index_by_language = dict()
