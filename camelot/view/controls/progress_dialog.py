@@ -39,12 +39,12 @@ LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 class ProgressDialog(QtWidgets.QProgressDialog):
     """
 A Progress Dialog, used during the :meth:`gui_run` of an action.
-    
+
 .. image:: /_static/controls/progress_dialog.png
     """
 
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')
-    
+
     def __init__(self, name, icon=progress_icon):
         QtWidgets.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
         label = QtWidgets.QLabel( six.text_type(name) )
@@ -68,14 +68,14 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         # use a list view to display details, for performance reasons,
         # since this widget will not freeze in case the list of details
         # becomes long
-        details = QtGui.QListView( parent = self )
+        details = QtWidgets.QListView( parent = self )
         details.setObjectName( 'details' )
         details.hide()
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget( label )
         layout.addWidget( progress_bar )
         button_layout = QtWidgets.QHBoxLayout()
-        button_layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        button_layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
         button_layout.addWidget( copy_button )
@@ -87,28 +87,28 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         # opened in an action_step
         self.show() 
         #QtCore.QTimer.singleShot( 1000, self.show )
-    
+
     # This method is overwritten,to undo the overwrite of this method
     # in QProgressDialog, as the QProgressDialog then manually relayouts
     # the dialog instead of using the normal layouts
     def resizeEvent(self, event):
         return QtWidgets.QWidget.resizeEvent(self, event)
-    
+
     @QtCore.qt_slot(bool)
     def copy_clicked(self, checked):
-        details = self.findChild( QtGui.QListView, 'details' )
+        details = self.findChild( QtWidgets.QListView, 'details' )
         if details is None:
             return
         model = details.model()
         if model is not None:
             text = u'\n'.join([six.text_type(s) for s in model.stringList()])
             QtGui.QApplication.clipboard().setText(text)
-            
+
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
         :param text: a string
         """
-        details = self.findChild( QtGui.QListView, 'details' )
+        details = self.findChild( QtWidgets.ListView, 'details' )
         copy_button = self.findChild( QtWidgets.QPushButton, 'copy' )
         if copy_button is not None:
             copy_button.show()
@@ -125,13 +125,13 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             model.setData(model.index(model.rowCount()-1, 0),
                           py_to_variant(text),
                           Qt.DisplayRole)
-        
+
     def clear_details( self ):
         """Clear the detail text"""
-        details = self.findChild( QtGui.QListView, 'details' )
+        details = self.findChild( QtWidgets.QListView, 'details' )
         if details != None:
             details.model().clear()
-            
+
     def set_ok_hidden( self, hidden = True ):
         ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
@@ -153,7 +153,7 @@ class SplashProgress( QtWidgets.QSplashScreen ):
     # don't let splash screen stay on top, this might hinder
     # registration wizards or others that wait for user input
     # while camelot is starting up  
-    
+
     def __init__( self, pixmap ):
         super( SplashProgress, self ).__init__(pixmap)
         # allow the splash screen to keep the application alive, even
@@ -168,33 +168,33 @@ class SplashProgress( QtWidgets.QSplashScreen ):
         # support transparency
         if pixmap.mask(): self.setMask(pixmap.mask())
         self.setLayout(layout)
-        
+
     def setMaximum( self, maximum ):
         progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setMaximum(maximum)
-    
+
     def setValue( self, value ):
         progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setValue(value)
-    
+
     def setLabelText( self, text ):
         progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setFormat(text)
 
     def wasCanceled( self ):
         return False
-        
+
     def clear_details( self ):
         pass
-    
+
     def add_detail( self, text ):
         self.setLabelText(text)
-    
+
     def set_cancel_hidden( self, hidden = True ):
         pass
-    
+
     def set_ok_hidden( self, hidden = True ):
         pass
-    
+
     def exec_(self):
         pass

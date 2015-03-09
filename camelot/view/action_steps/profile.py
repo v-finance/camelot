@@ -222,7 +222,7 @@ allow all languages
         self.ok_button = QtWidgets.QPushButton(_('OK'))
 
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection(QtGui.QBoxLayout.RightToLeft)
+        layout.setDirection(QtWidgets.QBoxLayout.RightToLeft)
 
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.ok_button)

@@ -103,7 +103,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
         layout.addStretch()

@@ -106,7 +106,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         """add an :guilabel:`ok` and a :guilabel:`cancel` button.
         """
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         if accept != None:
             ok_button = QtWidgets.QPushButton( six.text_type( accept ), self )
             ok_button.setObjectName( 'accept' )
