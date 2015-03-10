@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt, variant_to_py
+from ....core.qt import Qt, QtCore, QtGui, QtWidgets, variant_to_py
 
 import six
 
@@ -64,7 +64,7 @@ class SmileyDelegate( six.with_metaclass( DocumentationMetaclass,
                 
         if icon_name:
             pixmap = self.icons_by_name[icon_name].getQPixmap()
-            QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, pixmap)
+            QtWidgets.QApplication.style().drawItemPixmap(painter, rect, 1, pixmap)
 
         painter.restore()
 

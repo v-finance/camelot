@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, variant_to_py
+from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py
 
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
@@ -52,7 +52,7 @@ def set_background_color_palette(widget, background_color):
                 palette.setColor(x, y, background_color)
         widget.setPalette( palette )
     else:
-        widget.setPalette( QtGui.QApplication.palette() )
+        widget.setPalette( QtWidgets.QApplication.palette() )
 
 def draw_tooltip_visualization(widget):
     """
@@ -117,12 +117,12 @@ class AbstractCustomEditor(object):
     Get the 'standard' height for a cell
     """
     def get_height(self):
-        height = [QtGui.QLineEdit().sizeHint().height(),
+        height = [QtWidgets.QLineEdit().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
                QtGui.QDateTimeEdit().sizeHint().height(),
                QtGui.QSpinBox().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
-               QtGui.QComboBox().sizeHint().height()]
+               QtWidgets.QComboBox().sizeHint().height()]
 
         finalHeight = max(height)
 
@@ -131,7 +131,7 @@ class AbstractCustomEditor(object):
     def set_background_color(self, background_color):
         set_background_color_palette( self, background_color )
 
-class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
+class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
     Base class for implementing custom editor widgets.
     This class provides dual state functionality.  Each
@@ -143,7 +143,7 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     valueChanged = QtCore.qt_signal()
 
     def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self

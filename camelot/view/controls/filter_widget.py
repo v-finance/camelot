@@ -29,7 +29,7 @@ Widgets that represent Filter Actions
 import six
 
 from ...admin.action.list_filter import All
-from ...core.qt import QtCore, QtGui, py_to_variant, variant_to_py
+from ...core.qt import QtCore, QtGui, QtWidgets, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 
 class AbstractFilterWidget(AbstractActionWidget):
@@ -60,7 +60,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
     def __init__(self, action, gui_context, parent):
         QtGui.QGroupBox.__init__(self, parent)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 2, 2, 2, 2 )
         self.setLayout( layout )
@@ -74,7 +74,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         if action.exclusive:
             self.button_type = QtGui.QRadioButton
         else:
-            self.button_type = QtGui.QCheckBox
+            self.button_type = QtWidgets.QCheckBox
         AbstractFilterWidget.__init__(self, action, gui_context)
 
     @QtCore.qt_slot(int)
@@ -102,7 +102,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         self.setTitle(six.text_type(state.verbose_name))
         group = self.findChild(QtGui.QButtonGroup)
         layout = self.layout()
-        button_layout = QtGui.QVBoxLayout()
+        button_layout = QtWidgets.QVBoxLayout()
         self.modes = state.modes
 
         for i, mode in enumerate(state.modes):
@@ -121,11 +121,11 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def __init__(self, action, gui_context, parent):
         QtGui.QGroupBox.__init__(self, parent)
         AbstractFilterWidget.__init__(self, action, gui_context)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 2, 2, 2, 2 )
         self.setFlat(True)
-        combobox = QtGui.QComboBox(self)
+        combobox = QtWidgets.QComboBox(self)
         layout.addWidget( combobox )
         self.setLayout(layout)
         combobox.currentIndexChanged.connect(self.group_button_clicked)
@@ -133,7 +133,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
         self.setTitle(six.text_type(state.verbose_name))
-        combobox = self.findChild(QtGui.QComboBox)
+        combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
             current_index = 0
             for i, mode in enumerate(state.modes):
@@ -145,7 +145,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
             combobox.setCurrentIndex(current_index)
 
     def get_value(self):
-        combobox = self.findChild(QtGui.QComboBox)
+        combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
             index = combobox.currentIndex()
             mode = variant_to_py(combobox.itemData(index))
@@ -167,7 +167,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         default operator in unary or binary
     :param default_value_2: a default value for the second editor (in case the
         default operator is binary)
-    :param parent: the parent :obj:`QtGui.QWidget`
+    :param parent: the parent :obj:`QtWidgets.QWidget`
     """
 
     def __init__(self, action, gui_context, default_value_1, default_value_2, parent):
@@ -175,7 +175,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         self.setFlat(True)
         self.default_value_1 = default_value_1
         self.default_value_2 = default_value_2
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins( 2, 2, 2, 2 )
         layout.setSpacing( 2 )
         self.setLayout(layout)
@@ -185,7 +185,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         layout = self.layout()
         self.setTitle(six.text_type(state.verbose_name))
 
-        combobox = QtGui.QComboBox(self)
+        combobox = QtWidgets.QComboBox(self)
         layout.addWidget(combobox)
         default_index = 0
         for i, mode in enumerate(state.modes):
@@ -251,7 +251,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         self.run_action()
 
     def get_mode(self):
-        combobox = self.findChild(QtGui.QComboBox)
+        combobox = self.findChild(QtWidgets.QComboBox)
         index = combobox.currentIndex()
         mode = variant_to_py(combobox.itemData(index))
         return mode

@@ -24,10 +24,10 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore
+from ....core.qt import QtCore, QtWidgets
 from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
-class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
+class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
 
     editingFinished = QtCore.qt_signal()
     
@@ -36,7 +36,7 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
                  text = "<loading>", 
                  field_name = 'label',
                  **kwargs):
-        QtGui.QLabel.__init__(self, parent)
+        QtWidgets.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
 

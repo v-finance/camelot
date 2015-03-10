@@ -34,7 +34,7 @@ import six
 from ..admin.action.application_action import ApplicationActionGuiContext
 from ..admin.entity_admin import EntityAdmin
 from ..core.orm import Session
-from ..core.qt import QtGui, QtCore, Qt
+from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view import action_steps
 
 has_programming_error = False
@@ -49,12 +49,12 @@ def get_application():
         #
         # Uniform style for screenshot generation
         #
-        application = QtGui.QApplication.instance()
+        application = QtWidgets.QApplication.instance()
         if not application:
             import sys
             from camelot.view import art
-            QtGui.QApplication.setStyle('cleanlooks')
-            application = QtGui.QApplication(sys.argv)
+            QtWidgets.QApplication.setStyle('cleanlooks')
+            application = QtWidgets.QApplication(sys.argv)
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
             #try:
@@ -100,7 +100,7 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        QtGui.QApplication.flush()
+        QtWidgets.QApplication.flush()
         widget.repaint()
         inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
         # add a border to the image

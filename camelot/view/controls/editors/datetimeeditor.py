@@ -26,7 +26,7 @@ import datetime
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
 from .customeditor import CustomEditor, set_background_color_palette
 from .dateeditor import DateEditor
 from camelot.view.proxy import ValueLoading
@@ -87,12 +87,12 @@ class DateTimeEditor(CustomEditor):
         import itertools
         self.nullable = nullable
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         self.dateedit = DateEditor(self, editable=editable, nullable=nullable, **kwargs)
         self.dateedit.editingFinished.connect( self.editing_finished )
         layout.addWidget(self.dateedit, 1)
 
-        self.timeedit = QtGui.QComboBox(self)
+        self.timeedit = QtWidgets.QComboBox(self)
         self.timeedit.setEditable(True)
         if not editable:
             self.timeedit.setEnabled(False)
@@ -160,7 +160,7 @@ class DateTimeEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(DateTimeEditor, self).set_field_attributes(**kwargs)
-        line_edit = self.findChild(QtGui.QWidget, 'date_line_edit')
+        line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             self.set_enabled(kwargs.get('editable', False))
             line_edit.setToolTip(six.text_type(kwargs.get('tooltip') or ''))

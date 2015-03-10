@@ -24,12 +24,12 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui, Qt
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.core.utils import ugettext_lazy
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
-class TranslateLabelAction(QtGui.QAction):
+class TranslateLabelAction(QtWidgets.QAction):
     
     translate_icon = Icon( 'tango/16x16/apps/preferences-desktop-locale.png' )
     
@@ -37,7 +37,7 @@ class TranslateLabelAction(QtGui.QAction):
         super(TranslateLabelAction, self).__init__(_('Change translation'), parent)
         self.setIcon(self.translate_icon.getQIcon())
 
-class UserTranslatableLabel(QtGui.QLabel):
+class UserTranslatableLabel(QtWidgets.QLabel):
     """A QLabel that allows the user to translate the text contained 
 within by right clicking on it and selecting the appropriate submenu.
 """
@@ -63,7 +63,7 @@ within by right clicking on it and selecting the appropriate submenu.
             new_translation, ok = QtGui.QInputDialog.getText(self, 
                                                              _('Change translation'),
                                                              _('Translation'),
-                                                             QtGui.QLineEdit.Normal,
+                                                             QtWidgets.QLineEdit.Normal,
                                                              six.text_type(self._text))
             # when the user presses ok in a blank dialog, the labels
             # should not disappear

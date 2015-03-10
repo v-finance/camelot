@@ -33,6 +33,7 @@ from ...admin.action.base import ActionStep
 from ...core.qt import Qt
 from ...view.proxy.collection_proxy import CollectionProxy
 from ...view.proxy.queryproxy import QueryTableProxy
+from ..workspace import show_top_level
 
 
 class Sort( ActionStep ):
@@ -123,10 +124,13 @@ class OpenTableView( UpdateTableView ):
         
     def gui_run( self, gui_context ):
         table_view = self.render(gui_context)
-        if self.new_tab == True:
-            gui_context.workspace.add_view(table_view)
+        if gui_context.workspace is not None:
+            if self.new_tab == True:
+                gui_context.workspace.add_view(table_view)
+            else:
+                gui_context.workspace.set_view(table_view)
         else:
-            gui_context.workspace.set_view(table_view)
+            show_top_level(table_view, None)
         table_view.change_title(self.title)
         table_view.setFocus(Qt.PopupFocusReason)
 

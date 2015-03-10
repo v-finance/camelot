@@ -27,13 +27,13 @@
 import logging
 LOGGER = logging.getLogger('controls.actionsbox')
 
-from ...core.qt import QtGui
+from ...core.qt import QtWidgets
 
-class ActionsBox( QtGui.QWidget ):
+class ActionsBox( QtWidgets.QWidget ):
     """A box containing actions to be applied to a view
 
     :param gui_context: a :class:`camelot.admin.action.base.GuiContext` object
-    :param parent: a :class:`QtGui.QWidget` object
+    :param parent: a :class:`QtWidgets.QWidget` object
     
     """
 
@@ -49,7 +49,7 @@ class ActionsBox( QtGui.QWidget ):
 
     def set_actions( self, actions ):
         LOGGER.debug( 'setting actions' )
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
         for action in actions:
             action_widget = action.render( self.gui_context, self )

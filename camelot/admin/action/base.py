@@ -24,7 +24,7 @@
 
 import logging
 
-from ...core.qt import QtGui
+from ...core.qt import QtWidgets
 
 import six
 
@@ -53,7 +53,7 @@ strictly to the :class:`ModelContext`
 
 .. attribute:: progress_dialog
 
-    an instance of :class:`QtGui.QProgressDialog` or :keyword:`None`
+    an instance of :class:`QtWidgets.QProgressDialog` or :keyword:`None`
     
 .. attribute:: mode_name
 
@@ -76,7 +76,7 @@ strictly to the :class:`ModelContext`
         The window to be used as a reference to position new windows.  Returns
         `None` if there is no window yet.
         
-        :return: a :class:`QtGui.QWidget`
+        :return: a :class:`QtWidgets.QWidget`
         """
         return None
 
@@ -191,13 +191,13 @@ the default mode.
         self.icon = icon
         
     def render( self, parent ):
-        """Create a :class:`QtGui.QAction` that can be used to enable widget
+        """Create a :class:`QtWidgets.QAction` that can be used to enable widget
         to trigger the action in a specific mode.  The data attribute of the
         action will contain the name of the mode.
         
-        :return: a :class:`QtGui.QAction` class to use this mode
+        :return: a :class:`QtWidgets.QAction` class to use this mode
         """
-        action = QtGui.QAction( parent )
+        action = QtWidgets.QAction( parent )
         action.setData( self.name )
         action.setText( six.text_type(self.verbose_name) )
         action.setIconVisibleInMenu( False )
@@ -345,8 +345,8 @@ direct manipulations of the user interface without a need to access the model.
         
         :param gui_context: the context available in the *GUI thread*, a
             subclass of :class:`camelot.action.GuiContext`
-        :param parent: the parent :class:`QtGui.QWidget`
-        :return: a :class:`QtGui.QWidget` which when triggered
+        :param parent: the parent :class:`QtWidgets.QWidget`
+        :return: a :class:`QtWidgets.QWidget` which when triggered
             will execute the :meth:`gui_run` method.
         """
         from camelot.view.controls.action_widget import ( ActionLabel, 
@@ -355,7 +355,7 @@ direct manipulations of the user interface without a need to access the model.
         from camelot.view.workspace import DesktopBackground
         if isinstance( parent, DesktopBackground ):
             return ActionLabel( self, gui_context, parent )
-        if isinstance( parent, (QtGui.QToolBar, QtGui.QMenu) ):
+        if isinstance( parent, (QtWidgets.QToolBar, QtWidgets.QMenu) ):
             return ActionAction( self, gui_context, parent )
         return ActionPushButton( self, gui_context, parent )
         

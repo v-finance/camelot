@@ -28,7 +28,7 @@ LOGGER = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
-from ....core.qt import Qt, QtCore, QtGui, variant_to_py
+from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import object_thread, post
@@ -65,7 +65,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                   **kw ):
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         #
         # Setup table
@@ -117,7 +117,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     @QtCore.qt_slot( object )
     def set_right_toolbar_actions( self, toolbar_actions ):
         if toolbar_actions != None:
-            toolbar = QtGui.QToolBar( self )
+            toolbar = QtWidgets.QToolBar( self )
             toolbar.setOrientation( Qt.Vertical )
             for action in toolbar_actions:
                 qaction = action.render( self.gui_context, toolbar )
@@ -142,7 +142,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         return self.admin.get_columns()
 
     def update_action_status( self ):
-        toolbar = self.findChild( QtGui.QToolBar )
+        toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             model_context = self.gui_context.create_model_context()
             for qaction in toolbar.actions():
@@ -154,14 +154,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
         """
         :return: a :class:`QtGui.QAbstractItemModel` or `None`
         """
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             return table.model()
 
     @QtCore.qt_slot(object)
     def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             delegate = DelegateManager(columns, parent=self)
             table.setItemDelegate(delegate)
@@ -181,7 +181,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # might have changed.
             model.set_value(collection)
             model_context = self.gui_context.create_model_context()
-            for toolbar in self.findChildren( QtGui.QToolBar ):
+            for toolbar in self.findChildren( QtWidgets.QToolBar ):
                 for qaction in toolbar.actions():
                     post( qaction.action.get_state,
                           qaction.set_state,
@@ -197,7 +197,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 # The segfault seems no longer there after disabling the
 # editor before setting a new model, but the code below
 # seems to have no effect.
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             index = table.model().index( max(0, number_of_rows-1), 0 )
             table.scrollToBottom()
@@ -206,7 +206,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @QtCore.qt_slot( int )
     def trigger_list_action( self, index ):
-        table = self.findChild(QtGui.QWidget, 'table')
+        table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
         if self.admin.list_action:

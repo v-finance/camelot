@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
 from camelot.view.controls.editors.customeditor import ValueLoading
@@ -59,7 +59,7 @@ class MonthsEditor(CustomEditor):
         self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.years_spinbox)
         layout.addWidget(self.months_spinbox)
         layout.setContentsMargins(0, 0, 0, 0)

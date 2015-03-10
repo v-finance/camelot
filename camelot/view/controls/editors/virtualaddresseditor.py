@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -68,9 +68,9 @@ class VirtualAddressEditor(CustomEditor):
                             QtGui.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.setContentsMargins( 0, 0, 0, 0)
-        self.combo = QtGui.QComboBox()
+        self.combo = QtWidgets.QComboBox()
         self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
         self.combo.setEnabled(editable)
         self.layout.addWidget(self.combo)
@@ -85,7 +85,7 @@ class VirtualAddressEditor(CustomEditor):
         self.setFocusProxy(self.editor)
         self.editable = editable
         nullIcon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
-        self.label = QtGui.QToolButton()
+        self.label = QtWidgets.QToolButton()
         self.label.setIcon(nullIcon)
         self.label.setAutoRaise(True)
         self.label.setEnabled(False)

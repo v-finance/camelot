@@ -24,17 +24,17 @@
 
 import six 
 
-from ...core.qt import QtGui, Qt
+from ...core.qt import QtGui, QtWidgets, Qt
 from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
 
-class HSeparator(QtGui.QFrame):
+class HSeparator(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(HSeparator, self).__init__(parent)
-        self.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        self.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
 
-class StandaloneWizardPage(QtGui.QDialog):
+class StandaloneWizardPage(QtWidgets.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
@@ -44,7 +44,7 @@ class StandaloneWizardPage(QtGui.QDialog):
 
     def set_layouts(self):
         assert object_thread( self )
-        self._vlayout = QtGui.QVBoxLayout()
+        self._vlayout = QtWidgets.QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)
 
@@ -56,18 +56,18 @@ class StandaloneWizardPage(QtGui.QDialog):
 
         banner_layout = QtGui.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
-        banner_layout.addWidget(QtGui.QLabel(), 0, 1, Qt.AlignRight)
-        banner_layout.addLayout(QtGui.QVBoxLayout(), 0, 0)
+        banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignRight)
+        banner_layout.addLayout(QtWidgets.QVBoxLayout(), 0, 0)
 
         # TODO: allow banner widget to be supplied
-        banner_widget = QtGui.QWidget()
+        banner_widget = QtWidgets.QWidget()
         banner_widget.setLayout(banner_layout)
 
         self._vlayout.addWidget(banner_widget)
         self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QtGui.QFrame(), 1)
+        self._vlayout.addWidget(QtWidgets.QFrame(), 1)
         self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QtGui.QWidget())
+        self._vlayout.addWidget(QtWidgets.QWidget())
         self.setLayout(self._vlayout)
 
     def banner_widget(self):
@@ -92,11 +92,11 @@ class StandaloneWizardPage(QtGui.QDialog):
         self.banner_logo_holder().setPixmap(pixmap)
 
     def set_banner_title(self, title):
-        title_widget = QtGui.QLabel('<dt><b>%s</b></dt>' % title)
+        title_widget = QtWidgets.QLabel('<dt><b>%s</b></dt>' % title)
         self.banner_text_layout().insertWidget(0, title_widget)
 
     def set_banner_subtitle(self, subtitle):
-        subtitle_widget = QtGui.QLabel('<dd>%s</dd>' % subtitle)
+        subtitle_widget = QtWidgets.QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
 
     def set_default_buttons( self,
@@ -105,15 +105,15 @@ class StandaloneWizardPage(QtGui.QDialog):
                              done = None ):
         """add an :guilabel:`ok` and a :guilabel:`cancel` button.
         """
-        layout = QtGui.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout = QtWidgets.QHBoxLayout()
+        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         if accept != None:
-            ok_button = QtGui.QPushButton( six.text_type( accept ), self )
+            ok_button = QtWidgets.QPushButton( six.text_type( accept ), self )
             ok_button.setObjectName( 'accept' )
             ok_button.pressed.connect( self.accept )
             layout.addWidget( ok_button )
         if reject != None:
-            cancel_button = QtGui.QPushButton( six.text_type( reject ), self )
+            cancel_button = QtWidgets.QPushButton( six.text_type( reject ), self )
             cancel_button.setObjectName( 'reject' )
             cancel_button.pressed.connect( self.reject )
             layout.addWidget( cancel_button )

@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import variant_to_py, QtGui, QtCore, Qt
+from ....core.qt import Qt, QtCore, QtGui, QtWidgets, variant_to_py
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.art import Icon
@@ -62,7 +62,7 @@ class StarDelegate( six.with_metaclass( DocumentationMetaclass,
                 painter.fillRect(option.rect, option.palette.window())
         if stars not in (None, ValueLoading):
             pixmap = self.star_icon.getQPixmap()
-            style = QtGui.QApplication.style()
+            style = QtWidgets.QApplication.style()
             for i in range( self.maximum ):
                 if i+1<=stars:
                     style.drawItemPixmap( painter, rect, 1, pixmap )

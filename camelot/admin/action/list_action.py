@@ -29,7 +29,7 @@ import logging
 
 import six
 
-from ...core.qt import QtGui, variant_to_py, py_to_variant
+from ...core.qt import QtGui, QtWidgets, variant_to_py, py_to_variant
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -124,7 +124,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
     .. attribute:: item_view
     
-       the :class:`QtGui.QAbstractItemView` class that relates to the table 
+       the :class:`QtWidgets.QAbstractItemView` class that relates to the table 
        view on which the widget will be placed.
        
     .. attribute:: view
@@ -866,7 +866,7 @@ class ImportFromFile( EditAction ):
             #
             # Ask confirmation
             #
-            yield action_steps.MessageBox( icon = QtGui.QMessageBox.Warning, 
+            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Warning, 
                                            title = _('Proceed with import'), 
                                            text = _('Importing data cannot be undone,\n'
                                                     'are you sure you want to continue') )

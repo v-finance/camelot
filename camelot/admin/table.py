@@ -95,8 +95,8 @@ class Table( object ):
         Create a tab widget that allows the user to switch between column 
         groups.
         
-            :param item_view: a :class:`QtGui.QAbstractItemView` object.
-            :param parent: a :class:`QtGui.QWidget` object
+            :param item_view: a :class:`QtWidgets.QAbstractItemView` object.
+            :param parent: a :class:`QtWidgets.QWidget` object
         """
         pass
 

@@ -26,7 +26,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from ...core.qt import QtCore, QtGui
+from ...core.qt import QtCore, QtWidgets
 
 import six
 
@@ -82,7 +82,7 @@ class SelectSubclass(ActionStep):
             return self.admin
         dialog = self.render()
         result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
+        if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()
         return dialog.selected_subclass
 
@@ -108,7 +108,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
                                                    parent = parent )
         self.autoaccept = autoaccept
         self.set_default_buttons()
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         combobox = editors.ChoicesEditor()
         combobox.setObjectName( 'combobox' )
         combobox.editingFinished.connect( self._combobox_activated )
@@ -121,17 +121,17 @@ class ItemSelectionDialog(StandaloneWizardPage):
             self.accept()
 
     def set_choices(self, choices):
-        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
         if combobox != None:
             combobox.set_choices(choices)
 
     def get_value(self):
-        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
         if combobox != None:
             return combobox.get_value()
 
     def set_value(self, value):
-        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
         if combobox != None:
             return combobox.set_value(value)
 
@@ -165,7 +165,7 @@ class SelectItem( ActionStep ):
     def gui_run(self, gui_context):
         dialog = self.render()
         result = dialog.exec_()
-        if result == QtGui.QDialog.Rejected:
+        if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()
         return dialog.get_value()
 
@@ -221,15 +221,15 @@ class CloseView( ActionStep ):
 
 class MessageBox( ActionStep ):
     """
-    Popup a :class:`QtGui.QMessageBox` and send it result back.  The arguments
-    of this action are the same as those of the :class:`QtGui.QMessageBox`
+    Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
+    of this action are the same as those of the :class:`QtWidgets.QMessageBox`
     constructor.
 
     :param text: the text to be displayed within the message box
-    :param icon: one of the :class:`QtGui.QMessageBox.Icon` constants
+    :param icon: one of the :class:`QtWidgets.QMessageBox.Icon` constants
     :param title: the window title of the message box
     :param standard_buttons: the buttons to be displayed on the message box,
-        out of the :class:`QtGui.QMessageBox.StandardButton` enumeration. by
+        out of the :class:`QtWidgets.QMessageBox.StandardButton` enumeration. by
         default an :guilabel:`Ok` and a button :guilabel:`Cancel` will be shown.
 
     When the :guilabel:`Cancel` button is pressed, this action step will raise
@@ -239,11 +239,11 @@ class MessageBox( ActionStep ):
 
     """
 
-    default_buttons = QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
+    default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
 
     def __init__( self,
                   text,
-                  icon = QtGui.QMessageBox.Information,
+                  icon = QtWidgets.QMessageBox.Information,
                   title = _('Message'),
                   standard_buttons = default_buttons ):
         self.icon = icon
@@ -256,7 +256,7 @@ class MessageBox( ActionStep ):
     def render( self ):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box =  QtGui.QMessageBox( self.icon,
+        message_box =  QtWidgets.QMessageBox( self.icon,
                                           self.title,
                                           self.text,
                                           self.standard_buttons )
@@ -267,7 +267,7 @@ class MessageBox( ActionStep ):
     def gui_run( self, gui_context ):
         message_box = self.render()
         result = message_box.exec_()
-        if result == QtGui.QMessageBox.Cancel:
+        if result == QtWidgets.QMessageBox.Cancel:
             raise CancelRequest()
         return result
 

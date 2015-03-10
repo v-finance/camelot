@@ -25,7 +25,7 @@
 """The action module contains various QAction classes, representing commands
 that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 
-from ..core.qt import QtGui
+from ..core.qt import QtGui, QtWidgets
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
@@ -53,9 +53,9 @@ class ActionFactory(object):
         #signal = kw.get('signal', 'triggered()')
         widgetaction = kw.get('widgetaction', False)
         if widgetaction:
-            action = QtGui.QWidgetAction(parent)
+            action = QtWidgets.QWidgetAction(parent)
         else:
-            action = QtGui.QAction(parent)
+            action = QtWidgets.QAction(parent)
         action.setText(text)
         if actionicon:
             action.setIcon(actionicon.getQIcon())

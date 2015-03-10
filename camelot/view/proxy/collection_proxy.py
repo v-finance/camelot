@@ -53,8 +53,8 @@ from camelot.admin.action.list_action import ListActionModelContext
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...container.collection_container import CollectionContainer
-from ...core.qt import (QtCore, QtGui, Qt, py_to_variant, variant_to_py,
-                        is_deleted)
+from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets, is_deleted,
+                        py_to_variant, variant_to_py)
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
 from camelot.view.remote_signals import get_signal_handler
@@ -178,12 +178,12 @@ class RowModelContext(ListActionModelContext):
 
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
-class CollectionProxy(QtGui.QSortFilterProxyModel):
+class CollectionProxy(QtModel.QSortFilterProxyModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
-    :class:`QtGui.QTableView`  
+    :class:`QtWidgets.QTableView`  
 
-    The behavior of the :class:`QtGui.QTableView`, such as what happens when the
+    The behavior of the :class:`QtWidgets.QTableView`, such as what happens when the
     user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
     """
@@ -286,11 +286,11 @@ position in the query.
     
     @hybrid_property
     def _header_font( cls ):
-        return QtGui.QApplication.font()
+        return QtWidgets.QApplication.font()
     
     @hybrid_property
     def _header_font_required( cls ):
-        font = QtGui.QApplication.font()
+        font = QtWidgets.QApplication.font()
         font.setBold( True )
         return font
 

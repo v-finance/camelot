@@ -26,7 +26,7 @@ from math import floor
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.art import Icon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
@@ -52,7 +52,7 @@ class IntegerEditor(CustomEditor):
         self.setObjectName( field_name )
         self.setSizePolicy( QtGui.QSizePolicy.Preferred,
                             QtGui.QSizePolicy.Fixed )        
-        action = QtGui.QAction(self)
+        action = QtWidgets.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
         
@@ -63,7 +63,7 @@ class IntegerEditor(CustomEditor):
         spin_box.addAction(action)
         spin_box.setObjectName('spin_box')
         
-        self.calculatorButton = QtGui.QToolButton()
+        self.calculatorButton = QtWidgets.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFocusPolicy(Qt.ClickFocus)
@@ -76,7 +76,7 @@ class IntegerEditor(CustomEditor):
         )
         spin_box.editingFinished.connect( self.spinbox_editing_finished )
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(spin_box)

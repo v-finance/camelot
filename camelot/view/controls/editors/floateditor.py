@@ -24,7 +24,7 @@
 
 import six
 
-from ....core.qt import (QtGui, QtCore, Qt,
+from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import (CustomEditor, set_background_color_palette,
                            draw_tooltip_visualization)
@@ -32,7 +32,7 @@ from ...art import Icon
 from ...utils import locale
 from ....core import constants
 
-class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
+class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
     
     def __init__(self, option = None, parent = None):
@@ -71,7 +71,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
                                              key_event.modifiers(),
                                              QtCore.QString(decimal_point) )
             key_event.accept() # Block 'old' event
-            QtGui.QApplication.sendEvent(self, new_key_event)
+            QtWidgets.QApplication.sendEvent(self, new_key_event)
         # Propagate all other events to the super class
         else:
             super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
@@ -102,7 +102,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         return partial_input.strip()
     
     def validate(self, qinput, pos):
-        """Method overwritten from :class:`QtGui.QDoubleSpinBox` to handle
+        """Method overwritten from :class:`QtWidgets.QDoubleSpinBox` to handle
         an empty string as a special value for `None`.
         """
         result = super(CustomDoubleSpinBox, self).validate(qinput, pos)
@@ -151,7 +151,7 @@ class FloatEditor(CustomEditor):
                             QtGui.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
-        action = QtGui.QAction(self)
+        action = QtWidgets.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
         spinBox = CustomDoubleSpinBox(option, parent)
@@ -163,7 +163,7 @@ class FloatEditor(CustomEditor):
         spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
         spinBox.addAction(action)
-        self.calculatorButton = QtGui.QToolButton()
+        self.calculatorButton = QtWidgets.QToolButton()
         self.calculatorButton.setIcon( self.calculator_icon.getQIcon() )
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
@@ -180,7 +180,7 @@ class FloatEditor(CustomEditor):
 
         self.releaseKeyboard()
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(spinBox)

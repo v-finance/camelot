@@ -28,7 +28,7 @@ import logging
 
 import six
 
-from ..core.qt import QtCore, QtGui
+from ..core.qt import QtCore, QtWidgets
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog
@@ -42,7 +42,7 @@ def hide_progress_dialog( gui_context ):
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.progress_dialog
     original_state = None
-    if isinstance( progress_dialog, QtGui.QWidget ):
+    if isinstance( progress_dialog, QtWidgets.QWidget ):
         original_state = progress_dialog.isHidden()
     try:
         if original_state == False:

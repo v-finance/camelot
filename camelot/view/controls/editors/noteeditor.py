@@ -24,13 +24,13 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore
+from ....core.qt import QtGui, QtCore, QtWidgets
 from camelot.view.art import ColorScheme
 from .customeditor import AbstractCustomEditor
 
 color = ColorScheme.yellow_1
 
-class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
+class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
     """An editor that behaves like a note, the editor hides itself when
     there is no text to display.  The default background color of the not
     is yellow, but can be changed through the `background_color` field
@@ -43,14 +43,14 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
                   parent = None,
                   field_name = 'note',
                   **kwargs ):
-        QtGui.QLabel.__init__( self, parent )
+        QtWidgets.QLabel.__init__( self, parent )
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
         self.setTextFormat( QtCore.Qt.RichText )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Minimum )
         self.setContentsMargins(0, 0, 0, 0)
-        self.setFrameStyle(QtGui.QFrame.Box)
+        self.setFrameStyle(QtWidgets.QFrame.Box)
         self.setLineWidth(2)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), color)

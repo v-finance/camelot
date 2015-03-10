@@ -31,7 +31,7 @@ import logging
 
 logger = logging.getLogger( 'camelot.view.forms' )
 
-from ..core.qt import QtCore, QtGui, variant_to_py
+from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
 import six
@@ -121,18 +121,18 @@ and takes these parameters :
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
-        :param parent: the :class:`QtGui.QWidget` in which the form is placed
+        :param parent: the :class:`QtWidgets.QWidget` in which the form is placed
         :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
             or a child form of another form.  A toplevel form will be expanding,
             while a non toplevel form is only expanding if it contains other
             expanding elements.
 
-        :return: a :class:`QtGui.QWidget` into which the form is rendered
+        :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
         logger.debug( 'rendering %s' % (self.__class__.__name__) )
         from camelot.view.controls.editors.wideeditor import WideEditor
-        form_widget = QtGui.QWidget( parent )
-        form_layout = QtGui.QGridLayout()
+        form_widget = QtWidgets.QWidget( parent )
+        form_layout = QtWidgets.QGridLayout()
         # where 1 column in the form is a label and a field, so two columns in the grid
         columns = min(self._columns, len(self))
         # make sure all columns have the same width
@@ -175,17 +175,17 @@ and takes these parameters :
                 c.next_empty_row()
                 col_span = 2 * columns
                 f = field.render( widgets, parent, False )
-                if isinstance( f, QtGui.QLayout ):
+                if isinstance( f, QtWidgets.QLayout ):
                     #
                     # this should maybe be recursive ??
                     #
                     for layout_item_index in range( f.count() ):
                         layout_item = f.itemAt( layout_item_index )
                         layout_item_widget = layout_item.widget()
-                        if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtGui.QSizePolicy.Expanding:
+                        if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
                             has_vertical_expanding_row = True
                     form_layout.addLayout( f, c.row, c.col, row_span, col_span )
-                elif isinstance( f, QtGui.QLayoutItem ):
+                elif isinstance( f, QtWidgets.QLayoutItem ):
                     form_layout.addItem( f )
                 else:
                     form_layout.addWidget( f, c.row, c.col, row_span, col_span )
@@ -216,7 +216,7 @@ and takes these parameters :
                     size_policy = editor.sizePolicy()
                 else:
                     log_programming_error( logger, 'widgets should contain a widget for field %s'%six.text_type(field) )
-            if size_policy and size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
+            if size_policy and size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
                 has_vertical_expanding_row = True
 
         if (not has_vertical_expanding_row) and toplevel and form_layout.rowCount():
@@ -227,16 +227,16 @@ and takes these parameters :
             form_layout.setContentsMargins( 0, 0, 0, 0 )
   
         if toplevel or has_vertical_expanding_row:
-            form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                                       QtGui.QSizePolicy.Expanding )
+            form_widget.setSizePolicy( QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Expanding )
         form_widget.setLayout( form_layout )
 
         if self._scrollbars:
-            scroll_area = QtGui.QScrollArea( parent )
+            scroll_area = QtWidgets.QScrollArea( parent )
             # we should inherit parent's background color
             scroll_area.setWidget( form_widget )
             scroll_area.setWidgetResizable( True )
-            scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
+            scroll_area.setFrameStyle( QtWidgets.QFrame.NoFrame )
             return scroll_area
 
         logger.debug( 'end rendering %s' % self.__class__.__name__ )
@@ -250,7 +250,7 @@ class Break( Form ):
         super( Break, self ).__init__( [] )
 
 class Label( Form ):
-    """Render a label using a :class:`QtGui.QLabel`"""
+    """Render a label using a :class:`QtWidgets.QLabel`"""
 
     def __init__( self, label, alignment='left', style=None):
         """
@@ -266,14 +266,14 @@ class Label( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         if self.style:
-            widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
+            widget = QtWidgets.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
         else:
-            widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,six.text_type(self.label)) )
-        widget.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                              QtGui.QSizePolicy.Fixed )    
+            widget = QtWidgets.QLabel( '<p align="%s">%s</p>' % (self.alignment,six.text_type(self.label)) )
+        widget.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                              QtWidgets.QSizePolicy.Fixed )    
         return widget
 
-class DelayedTabWidget( QtGui.QTabWidget ):
+class DelayedTabWidget( QtWidgets.QTabWidget ):
     """Helper class for :class:`TabForm` to delay the creation of tabs to
 the moment the tab is shown.
     """
@@ -291,7 +291,7 @@ the moment the tab is shown.
         #
         for tab_label, tab_form in tabs:
             self._forms.append( tab_form )
-            tab_widget = QtGui.QWidget( self )
+            tab_widget = QtWidgets.QWidget( self )
             self.addTab( tab_widget, six.text_type(tab_label) )
         #
         # render the first tab and continue rendering until we have
@@ -302,7 +302,7 @@ the moment the tab is shown.
         for i in range( len(tabs) ):
             self.render_tab( i )
             if sum(self._vertical_expanding):
-                self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+                self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
                 #
                 # if one of the tabs is expanding, the others should have spacer
                 # items to stretch
@@ -324,13 +324,13 @@ the moment the tab is shown.
         if layout != None:
             # this tab has been rendered before
             return
-        layout = QtGui.QVBoxLayout( tab_widget )
+        layout = QtWidgets.QVBoxLayout( tab_widget )
         tab_form = self._forms[index]
         tab_form_widget = tab_form.render( self._widgets, tab_widget, False )
         layout.addWidget( tab_form_widget )
         tab_widget.setLayout( layout )
         size_policy = tab_form_widget.sizePolicy()
-        if size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
+        if size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
             self._vertical_expanding[index] = True
         else:
             self._vertical_expanding[index] = False
@@ -342,7 +342,7 @@ the moment the tab is shown.
 
 class TabForm( Form ):
     """
-Render forms within a :class:`QtGui.QTabWidget`::
+Render forms within a :class:`QtWidgets.QTabWidget`::
 
     from = TabForm([('First tab', ['title', 'short_description']),
                     ('Second tab', ['director', 'release_date'])])
@@ -426,7 +426,7 @@ Render forms within a :class:`QtGui.QTabWidget`::
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = DelayedTabWidget( widgets, self.tabs, parent )
-        widget.setTabPosition( getattr(QtGui.QTabWidget, self.position) )                
+        widget.setTabPosition( getattr(QtWidgets.QTabWidget, self.position) )                
         return widget
 
 class HBoxForm( Form ):
@@ -463,13 +463,13 @@ class HBoxForm( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        widget = QtGui.QWidget( parent )
-        form_layout = QtGui.QHBoxLayout()
+        widget = QtWidgets.QWidget( parent )
+        form_layout = QtWidgets.QHBoxLayout()
         for form in self.columns:
             f = form.render( widgets, widget, False )
-            if isinstance( f, QtGui.QLayout ):
+            if isinstance( f, QtWidgets.QLayout ):
                 form_layout.addLayout( f )
-            elif isinstance( f, QtGui.QLayoutItem ):
+            elif isinstance( f, QtWidgets.QLayoutItem ):
                 form_layout.addItem( f )
             else:
                 form_layout.addWidget( f )
@@ -509,13 +509,13 @@ class VBoxForm( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        widget = QtGui.QWidget( parent )
-        form_layout = QtGui.QVBoxLayout()
+        widget = QtWidgets.QWidget( parent )
+        form_layout = QtWidgets.QVBoxLayout()
         for form in self.rows:
             f = form.render( widgets, widget, False )
-            if isinstance( f, QtGui.QLayout ):
+            if isinstance( f, QtWidgets.QLayout ):
                 form_layout.addLayout( f )
-            elif isinstance( f, QtGui.QLayoutItem ):
+            elif isinstance( f, QtWidgets.QLayoutItem ):
                 form_layout.addItem( f )
             else:
                 form_layout.addWidget( f )
@@ -566,8 +566,8 @@ class GridForm( Form ):
             row.append(additional_field)
 
     def render( self, widgets, parent = None, toplevel = False ):
-        widget = QtGui.QWidget( parent )
-        grid_layout = QtGui.QGridLayout()
+        widget = QtWidgets.QWidget( parent )
+        grid_layout = QtWidgets.QGridLayout()
         for i, row in enumerate( self._grid ):
             skip = 0
             for j, field in enumerate( row ):
@@ -578,11 +578,11 @@ class GridForm( Form ):
                     field = field.field
                 if isinstance( field, Form ):
                     form = field.render( widgets, parent )
-                    if isinstance( form, QtGui.QWidget ):
+                    if isinstance( form, QtWidgets.QWidget ):
                         grid_layout.addWidget( form, i, col, 1, num )
-                    elif isinstance( form, QtGui.QLayoutItem ):
+                    elif isinstance( form, QtWidgets.QLayoutItem ):
                         grid_layout.addItem( form, i, col, 1, num )
-                    elif isinstance( form, QtGui.QLayout ):
+                    elif isinstance( form, QtWidgets.QLayout ):
                         grid_layout.addLayout( form, i, col, 1, num )
                     skip += num - 1
                 else:
@@ -617,7 +617,7 @@ class Stretch( Form ):
         super( Stretch, self ).__init__( [] )
         
     def render( self, widgets, parent = None, toplevel = False ):
-        return QtGui.QSpacerItem( 0, 0, vPolicy = QtGui.QSizePolicy.Expanding )
+        return QtWidgets.QSpacerItem( 0, 0, vPolicy = QtWidgets.QSizePolicy.Expanding )
 
 class GroupBoxForm( Form ):
     """
@@ -638,8 +638,8 @@ class GroupBoxForm( Form ):
         Form.__init__( self, content, scrollbars, columns=columns )
 
     def render( self, widgets, parent = None, toplevel = False ):
-        widget = QtGui.QGroupBox( six.text_type(self.title), parent )
-        layout = QtGui.QVBoxLayout()
+        widget = QtWidgets.QGroupBox( six.text_type(self.title), parent )
+        layout = QtWidgets.QVBoxLayout()
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )
         widget.setLayout( layout )

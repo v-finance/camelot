@@ -27,22 +27,22 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, variant_to_py, is_deleted
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate
 
-class DelegateManager(QtGui.QItemDelegate):
+class DelegateManager(QtWidgets.QItemDelegate):
     """Manages custom delegates, should not be used by the application
   developer
   """
 
     def __init__(self, columns, parent=None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtWidgets.QItemDelegate.__init__(self, parent)
         # set a delegate for the vertical header
         self.insert_column_delegate(-1, PlainTextDelegate(parent=self))
         self._columns = columns
 
     def get_column_delegate(self, column):
-        delegate = self.findChild(QtGui.QAbstractItemDelegate, str(column))
+        delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
             field_name, field_attributes = self._columns[column]
             delegate = field_attributes['delegate'](parent=self, **field_attributes)
@@ -59,7 +59,7 @@ class DelegateManager(QtGui.QItemDelegate):
     def _commit_data(self, editor):
         self.commitData.emit(editor)
 
-    @QtCore.qt_slot( QtGui.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
+    @QtCore.qt_slot( QtWidgets.QWidget, QtWidgets.QAbstractItemDelegate.EndEditHint )
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
@@ -75,7 +75,7 @@ class DelegateManager(QtGui.QItemDelegate):
             editor = delegate.createEditor(parent, option, index)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
-            return QtGui.QWidget( parent = parent ) 
+            return QtWidgets.QWidget( parent = parent ) 
         return editor
 
     def setEditorData(self, editor, index):

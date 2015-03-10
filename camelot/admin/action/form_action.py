@@ -24,7 +24,7 @@
 
 import six
 
-from ...core.qt import QtGui
+from ...core.qt import QtGui, QtWidgets
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
@@ -222,11 +222,11 @@ class CloseForm( Action ):
             # if the object is not valid, request the user what to do
             #
             message = action_steps.MessageBox( '\n'.join( messages ),
-                                               QtGui.QMessageBox.Warning,
+                                               QtWidgets.QMessageBox.Warning,
                                                _('Invalid form'),
-                                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard )
+                                               QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Discard )
             reply = yield message
-            if reply == QtGui.QMessageBox.Discard:
+            if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObject( obj )

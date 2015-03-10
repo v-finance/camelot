@@ -6,7 +6,7 @@ Qt compatibility module.  This module hides the differences in behavior between 
     * PyQt4 and PyQt5
 
 To switch between different Qt bindings, set the `CAMELOT_QT_API` environment
-variable to either `PyQt4` or `PySide`.
+variable to either `PyQt4`, `PySide` or experimental `PyQt5`.
 
 """
 
@@ -46,16 +46,28 @@ QtWebKit = DelayedModule('QtWebKit')
 QtNetwork = DelayedModule('QtNetwork')
 QtXml = DelayedModule('QtXml')
 
-if qt_api in (None, 'PyQt4'):
+# virtual modules that points to the qt module containing these classes
+QtModel = DelayedModule('QtGui')
+QtWidgets = DelayedModule('QtGui')
+QtPrintSupport = DelayedModule('QtGui')
+
+if qt_api in (None, 'PyQt4', 'PyQt5'):
     try:
-        qt_api = 'PyQt4'
+        qt_api = qt_api or 'PyQt4'
         import sip
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
         QtCore.qt_property = QtCore.pyqtProperty
         # the api version is only available after importing QtCore
-        variant_api = sip.getapi('QVariant')
-        string_api = sip.getapi('QString')
+        if qt_api == 'PyQt4':
+            variant_api = sip.getapi('QVariant')
+            string_api = sip.getapi('QString')
+        else:
+            variant_api = 2
+            string_api = 2
+            QtModel = DelayedModule('QtCore')
+            QtWidgets = DelayedModule('QtWidgets')
+            QtPrintSupport = DelayedModule('QtPrintSupport')
         is_deleted = sip.isdeleted
     except ImportError:
         qt_api = None
@@ -185,6 +197,33 @@ elif string_api==1:
     q_string_endswith = QtCore.QString.endsWith
 else:
     raise Exception('Unsupported QString API')
+
+if qt_api in ('PyQt4', 'PySide'):
+
+    #
+    # Encoding used when transferring translation strings from
+    # python to qt
+    #
+    _encoding=QtCore.QCoreApplication.UnicodeUTF8
+
+    def qtranslate(string_to_translate):
+        """Translate a string using the QCoreApplication translation framework
+        :param string_to_translate: a unicode string
+        :return: the translated unicode string if it was possible to translate
+        """
+        return six.text_type(QtCore.QCoreApplication.translate('', 
+                                                               string_to_translate.encode('utf-8'), 
+                                                               encoding=_encoding))
+
+else:
+
+    def qtranslate(string_to_translate):
+        """Translate a string using the QCoreApplication translation framework
+        :param string_to_translate: a unicode string
+        :return: the translated unicode string if it was possible to translate
+        """
+        return six.text_type(QtCore.QCoreApplication.translate('', 
+                                                               string_to_translate.encode('utf-8'),))
 
 __all__ = [
     QtCore.__name__,

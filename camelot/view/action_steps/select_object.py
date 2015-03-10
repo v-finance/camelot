@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, Qt
+from ...core.qt import Qt, QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -79,11 +79,11 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
             new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
         return new_subclasses
 
-class SelectDialog(QtGui.QDialog):
+class SelectDialog(QtWidgets.QDialog):
     
     def __init__(self, gui_context, admin, search_text, proxy, parent = None):
         super( SelectDialog, self ).__init__( parent )
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
         self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
@@ -115,7 +115,7 @@ class SelectObjects( OpenTableView ):
 
     def render(self, gui_context):
         dialog = SelectDialog(gui_context, self.admin, self.search_text, self.proxy)
-        table_view = dialog.findChild(QtGui.QWidget, 'table_view')
+        table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return dialog
@@ -123,7 +123,7 @@ class SelectObjects( OpenTableView ):
     def gui_run( self, gui_context ):
         dialog = self.render(gui_context)
         with hide_progress_dialog(gui_context):
-            if dialog.exec_() == QtGui.QDialog.Rejected:
+            if dialog.exec_() == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return dialog.objects
 

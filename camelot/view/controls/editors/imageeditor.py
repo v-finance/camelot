@@ -31,7 +31,7 @@ from camelot.view.action import ActionFactory
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class ImageEditor( FileEditor ):
@@ -57,11 +57,11 @@ All files (*)"""
         self.setObjectName( field_name )
 
     def setup_widget(self):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         #
         # Setup label
         #
-        self.label = QtGui.QLabel(self)
+        self.label = QtWidgets.QLabel(self)
         self.label.installEventFilter(self)
         self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
         layout.addWidget(self.label)
@@ -71,16 +71,16 @@ All files (*)"""
         #
         # Setup buttons
         #
-        button_layout = QtGui.QVBoxLayout()
+        button_layout = QtWidgets.QVBoxLayout()
         button_layout.setSpacing( 0 )
         button_layout.setContentsMargins( 0, 0, 0, 0)
         
-        copy_button = QtGui.QToolButton()
+        copy_button = QtWidgets.QToolButton()
         copy_button.setDefaultAction( ActionFactory.copy(self, self.copy_to_clipboard ) )
         copy_button.setAutoRaise(True)
         copy_button.setFocusPolicy(Qt.ClickFocus)
 
-        paste_button = QtGui.QToolButton()
+        paste_button = QtWidgets.QToolButton()
         paste_button.setDefaultAction( ActionFactory.paste(self, self.paste_from_clipboard ) )
         paste_button.setAutoRaise(True)
         paste_button.setObjectName('paste')
@@ -95,7 +95,7 @@ All files (*)"""
         #label_button_layout.addStretch()
         self.setLayout( layout )
         self.clear_image()
-        QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
+        QtWidgets.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
         self.clipboard_data_changed()
 
         # horizontal policy is always expanding, to fill the width of a column
@@ -112,15 +112,15 @@ All files (*)"""
         
     @QtCore.qt_slot()
     def clipboard_data_changed(self):
-        paste_button = self.findChild(QtGui.QWidget, 'paste')
+        paste_button = self.findChild(QtWidgets.QWidget, 'paste')
         if paste_button:
-            mime_data = QtGui.QApplication.clipboard().mimeData()
+            mime_data = QtWidgets.QApplication.clipboard().mimeData()
             paste_button.setVisible( mime_data.hasImage() )
             
     @QtCore.qt_slot()
     def paste_from_clipboard(self):
         """Paste an image from the clipboard into the editor"""
-        mime_data = QtGui.QApplication.clipboard().mimeData()
+        mime_data = QtWidgets.QApplication.clipboard().mimeData()
         if mime_data.hasImage():
             byte_array = QtCore.QByteArray()
             buffer = QtCore.QBuffer( byte_array )
@@ -154,7 +154,7 @@ All files (*)"""
             post( self.value.checkout_image, self.set_image_to_clipboard )
         
     def set_image_to_clipboard(self, image):
-        clipboard = QtGui.QApplication.clipboard()
+        clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setImage( image )
 
     def clear_image(self):
@@ -186,8 +186,8 @@ All files (*)"""
         return value
 
     def draw_border(self):
-        self.label.setFrameShape(QtGui.QFrame.Box)
-        self.label.setFrameShadow(QtGui.QFrame.Plain)
+        self.label.setFrameShape(QtWidgets.QFrame.Box)
+        self.label.setFrameShadow(QtWidgets.QFrame.Plain)
         self.label.setLineWidth(1)
 
     def show_fullscreen(self, image):

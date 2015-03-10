@@ -29,7 +29,7 @@ import six
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
-from ..core.qt import QtCore, QtGui, Qt
+from ..core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread import object_thread, post
@@ -47,7 +47,7 @@ class DesktopBackground(AbstractView):
     def __init__(self, gui_context):
         super(DesktopBackground, self).__init__()
         self.gui_context = gui_context
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QtWidgets.QVBoxLayout()
         
         actionButtonsLayout = QtGui.QGridLayout()
         actionButtonsLayout.setObjectName('actionButtonsLayout')
@@ -105,7 +105,7 @@ class DesktopBackground(AbstractView):
     @QtCore.qt_slot()
     def onActionButtonEntered(self):
         actionButton = self.sender()
-        actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
+        actionButtonInfoWidget = self.findChild(QtWidgets.QWidget, 'actionButtonInfoWidget')
         if actionButtonInfoWidget is not None:
             # @todo : get state should be called with a model context as first
             #         argument
@@ -115,7 +115,7 @@ class DesktopBackground(AbstractView):
        
     @QtCore.qt_slot()
     def onActionButtonLeft(self):
-        actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
+        actionButtonInfoWidget = self.findChild(QtWidgets.QWidget, 'actionButtonInfoWidget')
         if actionButtonInfoWidget is not None:
             actionButtonInfoWidget.resetInfo()
         
@@ -143,11 +143,11 @@ class DesktopBackground(AbstractView):
     def refresh(self):
         pass
 
-class ActionButtonContainer(QtGui.QWidget):
+class ActionButtonContainer(QtWidgets.QWidget):
     def __init__(self, actionButton, parent = None):
         super(ActionButtonContainer, self).__init__(parent)
         
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QtWidgets.QHBoxLayout()
         # Set some margins to avoid the ActionButton being visually clipped
         # when performing the hoverAnimation.
         mainLayout.setContentsMargins(2*NOTIFICATION_ANIMATION_DISTANCE,
@@ -161,22 +161,22 @@ class ActionButtonContainer(QtGui.QWidget):
         # Send this event to the ActionButton that is contained by this widget.
         self.layout().itemAt(0).widget().onContainerMousePressEvent(event)
             
-class ActionButtonInfoWidget(QtGui.QWidget):
+class ActionButtonInfoWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(ActionButtonInfoWidget, self).__init__(parent)
         
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QtWidgets.QHBoxLayout()
         
         font = self.font()
         font.setPointSize(14)
         
-        actionNameLabel = QtGui.QLabel()
+        actionNameLabel = QtWidgets.QLabel()
         actionNameLabel.setFont(font)
         actionNameLabel.setFixedSize(250, 50)
         actionNameLabel.setAlignment(Qt.AlignCenter)
         actionNameLabel.setObjectName('actionNameLabel')
         
-        actionDescriptionLabel = QtGui.QLabel()
+        actionDescriptionLabel = QtWidgets.QLabel()
         actionDescriptionLabel.setFixedSize(250, 200)
         actionDescriptionLabel.setObjectName('actionDescriptionLabel')
 
@@ -187,11 +187,11 @@ class ActionButtonInfoWidget(QtGui.QWidget):
 
     @QtCore.qt_slot( object )
     def setInfoFromState(self, state):
-        actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
+        actionNameLabel = self.findChild(QtWidgets.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
             actionNameLabel.setText( six.text_type( state.verbose_name ) )
         
-        actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
+        actionDescriptionLabel = self.findChild(QtWidgets.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
             tooltip = six.text_type( state.tooltip or '' )
             actionDescriptionLabel.setText(tooltip)
@@ -204,15 +204,15 @@ class ActionButtonInfoWidget(QtGui.QWidget):
                 actionDescriptionLabel.setFixedWidth(0)
             
     def resetInfo(self):
-        actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
+        actionNameLabel = self.findChild(QtWidgets.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
             actionNameLabel.setText('')
         
-        actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
+        actionDescriptionLabel = self.findChild(QtWidgets.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
             actionDescriptionLabel.setText('')
     
-class DesktopTabbar(QtGui.QTabBar):
+class DesktopTabbar(QtWidgets.QTabBar):
 
     change_view_mode_signal = QtCore.qt_signal()
     
@@ -226,7 +226,7 @@ class DesktopTabbar(QtGui.QTabBar):
         
         return QtCore.QSize(minimumWidth, originalSizeHint.height())
 
-class DesktopWorkspace(QtGui.QWidget):
+class DesktopWorkspace(QtWidgets.QWidget):
     """
     A tab based workspace that can be used by views to display themselves.
     
@@ -241,7 +241,7 @@ class DesktopWorkspace(QtGui.QWidget):
     The widget class to be used as the view for the uncloseable 'Start' tab.
     """
 
-    view_activated_signal = QtCore.qt_signal(QtGui.QWidget)
+    view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
     change_view_mode_signal = QtCore.qt_signal()
     last_view_closed_signal = QtCore.qt_signal()
 
@@ -252,12 +252,12 @@ class DesktopWorkspace(QtGui.QWidget):
         self.gui_context.workspace = self
         self._app_admin = app_admin
         
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         # Setup the tab widget
-        self._tab_widget = QtGui.QTabWidget( self )
+        self._tab_widget = QtWidgets.QTabWidget( self )
         tab_bar = DesktopTabbar(self._tab_widget)
         tab_bar.setToolTip(_('Double click to (un)maximize'))
         tab_bar.change_view_mode_signal.connect(self._change_view_mode)
@@ -407,8 +407,8 @@ def show_top_level(view, parent):
     # position the new window in the center of the same screen
     # as the parent
     #
-    screen = QtGui.QApplication.desktop().screenNumber(parent)
-    available = QtGui.QApplication.desktop().availableGeometry(screen)
+    screen = QtWidgets.QApplication.desktop().screenNumber(parent)
+    available = QtWidgets.QApplication.desktop().availableGeometry(screen)
 
     point = QtCore.QPoint(available.x() + available.width()/2,
                           available.y() + available.height()/2)
