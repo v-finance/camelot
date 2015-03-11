@@ -75,7 +75,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
             self.button_type = QtGui.QRadioButton
         else:
             self.button_type = QtWidgets.QCheckBox
-        AbstractFilterWidget.__init__(self, action, gui_context)
+        AbstractFilterWidget.init(self, action, gui_context)
 
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
@@ -120,7 +120,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
     def __init__(self, action, gui_context, parent):
         QtGui.QGroupBox.__init__(self, parent)
-        AbstractFilterWidget.__init__(self, action, gui_context)
+        AbstractFilterWidget.init(self, action, gui_context)
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 2, 2, 2, 2 )
@@ -179,7 +179,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         layout.setContentsMargins( 2, 2, 2, 2 )
         layout.setSpacing( 2 )
         self.setLayout(layout)
-        AbstractFilterWidget.__init__(self, action, gui_context)
+        AbstractFilterWidget.init(self, action, gui_context)
 
     def set_state(self, state):
         layout = self.layout()
