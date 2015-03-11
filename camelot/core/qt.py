@@ -68,6 +68,8 @@ if qt_api in (None, 'PyQt4', 'PyQt5'):
             QtModel = DelayedModule('QtCore')
             QtWidgets = DelayedModule('QtWidgets')
             QtPrintSupport = DelayedModule('QtPrintSupport')
+            QtQml = DelayedModule('QtQml')
+            QtQuick = DelayedModule('QtQuick')
         is_deleted = sip.isdeleted
     except ImportError:
         qt_api = None
