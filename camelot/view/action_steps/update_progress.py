@@ -47,6 +47,7 @@ updated.
     appended to the text already there
 :param clear_details: clear the details text already there before putting 
     the new detail text.
+:param title: the text to be displayed in the window's title bar
 :param blocking: wait until the user presses `OK`, for example to review the
     details.
 """

@@ -138,6 +138,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         if ok_button:
             ok_button.setHidden( hidden )
             progress_bar.setHidden(not hidden)
+            self.setWindowTitle(ugettext('Completed'))
 
     def set_cancel_hidden( self, hidden = True ):
         cancel_button = self.findChild( QtWidgets.QPushButton, 'cancel' )
