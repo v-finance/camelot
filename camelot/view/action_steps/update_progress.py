@@ -57,6 +57,7 @@ updated.
                   text=None, 
                   detail=None, 
                   clear_details=False,
+                  title=None,
                   blocking=False ):
         super(UpdateProgress, self).__init__()
         self._value = value
@@ -64,6 +65,7 @@ updated.
         self._text = text
         self._detail = detail
         self._clear_details = clear_details
+        self._title = title
         self.blocking = blocking
         
     def __unicode__( self ):
@@ -88,6 +90,8 @@ updated.
                 progress_dialog.clear_details()
             if self._detail is not None:
                 progress_dialog.add_detail( self._detail )
+            if self._title is not None:
+                progress_dialog.setWindowTitle(self._title)
             if self.blocking:
                 progress_dialog.set_ok_hidden( False )
                 progress_dialog.exec_()
