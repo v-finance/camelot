@@ -50,6 +50,8 @@ updated.
 :param title: the text to be displayed in the window's title bar
 :param blocking: wait until the user presses `OK`, for example to review the
     details.
+:param enlarge: increase the size of the window to two thirds of the screen,
+    useful when there are a lot of details displayed.
 """
     
     def __init__( self,
@@ -59,7 +61,8 @@ updated.
                   detail=None, 
                   clear_details=False,
                   title=None,
-                  blocking=False ):
+                  blocking=False,
+                  enlarge=False):
         super(UpdateProgress, self).__init__()
         self._value = value
         self._maximum = maximum
@@ -68,6 +71,7 @@ updated.
         self._clear_details = clear_details
         self._title = title
         self.blocking = blocking
+        self.enlarge = enlarge
         
     def __unicode__( self ):
         return _detail_format.format(self._value or 0, self._maximum or 0, self)
@@ -87,12 +91,14 @@ updated.
             progress_dialog.set_cancel_hidden(not self.cancelable)
             if self._text is not None:
                 progress_dialog.setLabelText( six.text_type(self._text) )
-            if self._clear_details == True:
+            if self._clear_details is True:
                 progress_dialog.clear_details()
             if self._detail is not None:
                 progress_dialog.add_detail( self._detail )
             if self._title is not None:
                 progress_dialog.title = self._title
+            if self.enlarge:
+                progress_dialog.enlarge()
             if self.blocking:
                 progress_dialog.set_ok_hidden( False )
                 progress_dialog.exec_()

@@ -142,6 +142,15 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         if details != None:
             details.model().clear()
 
+    def enlarge(self):
+        """ Increase the size of the dialog window """
+        desktop = QtWidgets.QApplication.desktop()
+        geo = desktop.availableGeometry(self)
+        self.resize(geo.width() * 0.75, geo.height() * 0.75)
+        frame = self.frameGeometry()
+        frame.moveCenter(geo.center())
+        self.move(frame.topLeft())
+
     def set_ok_hidden( self, hidden = True ):
         ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
