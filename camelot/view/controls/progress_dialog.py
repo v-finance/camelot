@@ -64,7 +64,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         self.setBar( progress_bar )
         self.setLabel( label )
         self.setCancelButton( cancel_button )
-        self.setWindowTitle( ugettext('Please wait') )
+        self._window_title = ugettext('Please wait')
+        self.setWindowTitle(self._window_title)
         # use a list view to display details, for performance reasons,
         # since this widget will not freeze in case the list of details
         # becomes long
@@ -87,6 +88,15 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         # opened in an action_step
         self.show() 
         #QtCore.QTimer.singleShot( 1000, self.show )
+
+    @property
+    def title(self):
+        return self._window_title
+
+    @title.setter
+    def title(self, value):
+        self._window_title = value
+        self.setWindowTitle(value)
 
     # This method is overwritten,to undo the overwrite of this method
     # in QProgressDialog, as the QProgressDialog then manually relayouts
@@ -138,12 +148,13 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         if ok_button:
             ok_button.setHidden( hidden )
             progress_bar.setHidden(not hidden)
-            self.setWindowTitle(ugettext('Completed'))
+            self.setWindowTitle(self.title if hidden else ugettext('Completed'))
 
     def set_cancel_hidden( self, hidden = True ):
         cancel_button = self.findChild( QtWidgets.QPushButton, 'cancel' )
         if cancel_button:
             cancel_button.setHidden( hidden )
+
 
 class SplashProgress( QtWidgets.QSplashScreen ):
     """

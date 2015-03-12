@@ -92,7 +92,7 @@ updated.
             if self._detail is not None:
                 progress_dialog.add_detail( self._detail )
             if self._title is not None:
-                progress_dialog.setWindowTitle(self._title)
+                progress_dialog.title = self._title
             if self.blocking:
                 progress_dialog.set_ok_hidden( False )
                 progress_dialog.exec_()
