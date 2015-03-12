@@ -118,7 +118,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         """Add detail text to the list of details in the progress dialog
         :param text: a string
         """
-        details = self.findChild( QtWidgets.ListView, 'details' )
+        details = self.findChild( QtWidgets.QListView, 'details' )
         copy_button = self.findChild( QtWidgets.QPushButton, 'copy' )
         if copy_button is not None:
             copy_button.show()
