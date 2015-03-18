@@ -116,6 +116,9 @@ class StatusHistory( object ):
                               default=end_of_times)
 
 
+    def __unicode__( self ):
+        return six.text_type(self.classified_by or u'')
+
     def sort_key(self):
         """Key to be used to sort the status histories to get a single
         status history at a specific date.
@@ -144,9 +147,6 @@ class StatusHistoryAdmin( EntityAdmin ):
                         'thru_date': {'name': _('Thru date')}
                         }
 
-    def __unicode__( self ):
-        return six.text_type(self.classified_by or u'')
-    
     def get_depending_objects(self, obj):
         if obj.status_for is not None:
             yield obj.status_for
