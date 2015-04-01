@@ -794,60 +794,56 @@ be specified using the verbose_name attribute.
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
         for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
-            has_default = False
-            try:
-                default = attributes['default']
-                has_default = True
-            except KeyError:
-                pass
-            if has_default:
-                #
-                # prevent the setting of a default value when one has been
-                # set already
-                #
-                value = getattr(object_instance, field)
-                if value not in (None, []):
-                    # False is a legitimate value for Booleans, but a 
-                    # one-to-many field might have a default value as well
-                    continue
-                if isinstance(default, ColumnDefault):
-                    if default.is_scalar:
-                        # avoid trip to database
-                        default_value = default.arg
-                    else:
-                        # shouldn't this default be set by SQLA at insertion time
-                        # and skip this field in the validation ??
-                        session = orm.object_session(object_instance)
-                        bind = session.get_bind(mapper=self.mapper)
-                        default_value = bind.execute(default)
-                elif six.callable(default):
-                    import inspect
-                    args, _varargs, _kwargs, _defs = \
-                        inspect.getargspec(default)
-                    if len(args):
-                        default_value = default(object_instance)
-                    else:
-                        default_value = default()
+            default = attributes.get('default')
+            if default is None:
+                continue
+            #
+            # prevent the setting of a default value when one has been
+            # set already
+            #
+            value = getattr(object_instance, field)
+            if value not in (None, []):
+                # False is a legitimate value for Booleans, but a 
+                # one-to-many field might have a default value as well
+                continue
+            if isinstance(default, ColumnDefault):
+                if default.is_scalar:
+                    # avoid trip to database
+                    default_value = default.arg
                 else:
-                    default_value = default
-                logger.debug(
-                    'set default for %s to %s' % (
-                        field,
-                        six.text_type(default_value)
-                    )
+                    # shouldn't this default be set by SQLA at insertion time
+                    # and skip this field in the validation ??
+                    session = orm.object_session(object_instance)
+                    bind = session.get_bind(mapper=self.mapper)
+                    default_value = bind.execute(default)
+            elif six.callable(default):
+                import inspect
+                args, _varargs, _kwargs, _defs = \
+                    inspect.getargspec(default)
+                if len(args):
+                    default_value = default(object_instance)
+                else:
+                    default_value = default()
+            else:
+                default_value = default
+            logger.debug(
+                'set default for %s to %s' % (
+                    field,
+                    six.text_type(default_value)
                 )
-                try:
-                    setattr(object_instance, field, default_value)
-                except AttributeError as exc:
-                    logger.error(
-                        'Programming Error : could not set'
-                        ' attribute %s to %s on %s' % (
-                            field,
-                            default_value,
-                            object_instance.__class__.__name__
-                            ),
-                        exc_info=exc
-                    )
+            )
+            try:
+                setattr(object_instance, field, default_value)
+            except AttributeError as exc:
+                logger.error(
+                    'Programming Error : could not set'
+                    ' attribute %s to %s on %s' % (
+                        field,
+                        default_value,
+                        object_instance.__class__.__name__
+                        ),
+                    exc_info=exc
+                )
         for compounding_object in self.get_compounding_objects( object_instance ):
             self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
 
