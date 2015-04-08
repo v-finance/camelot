@@ -1015,7 +1015,7 @@ msgstr ""
 
 #: camelot/view/action_steps/change_object.py:60
 msgid "Please complete"
-msgstr "Gelieve ter vervolledigen"
+msgstr "Gelieve te vervolledigen"
 
 #: camelot/view/action_steps/change_object.py:61
 msgid "Complete the form and press the OK button"
@@ -1043,7 +1043,7 @@ msgstr "Selecteren"
 
 #: camelot/view/action_steps/gui.py:154
 msgid "Please select"
-msgstr "Gelieve ter vervolledigen"
+msgstr "Gelieve te selecteren"
 
 #: camelot/view/action_steps/gui.py:155
 msgid "Make a selection and press the OK button"
