@@ -33,12 +33,15 @@ from ..decorated_line_edit import DecoratedLineEdit
 
 class TextLineEditor(CustomEditor):
 
+    _font_width = None
+
     def __init__(self,
                  parent,
                  length=20,
                  echo_mode=None,
                  field_name='text_line',
                  actions=[],
+                 column_width=None,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy(QtGui.QSizePolicy.Preferred,
@@ -59,6 +62,20 @@ class TextLineEditor(CustomEditor):
         self._value = None
         self.add_actions(actions, layout)
         self.setLayout(layout)
+
+        if column_width is not None:
+            if self._font_width is None:
+                font_metrics = QtGui.QFontMetrics(self.font())
+                self._font_width = font_metrics.averageCharWidth()
+            self.size_hint_width = column_width * self._font_width
+        else:
+            self.size_hint_width = None
+
+    def sizeHint(self):
+        size_hint = super(TextLineEditor, self).sizeHint()
+        if self.size_hint_width is not None:
+            size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
+        return size_hint
 
     @QtCore.qt_slot()
     def text_input_editing_finished(self):
