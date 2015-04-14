@@ -30,20 +30,22 @@ from .customeditor import (CustomEditor, draw_tooltip_visualization,
                            set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
 
+
 class TextLineEditor(CustomEditor):
 
     def __init__(self,
                  parent,
-                 length = 20,
-                 echo_mode = None,
-                 field_name = 'text_line',
-                 actions = [],
+                 length=20,
+                 echo_mode=None,
+                 field_name='text_line',
+                 actions=[],
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred,
+                           QtGui.QSizePolicy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins( 0, 0, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         # Search input
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
@@ -61,7 +63,7 @@ class TextLineEditor(CustomEditor):
     @QtCore.qt_slot()
     def text_input_editing_finished(self):
         self.editingFinished.emit()
-        
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self._value = value
@@ -81,10 +83,10 @@ class TextLineEditor(CustomEditor):
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             value = six.text_type(text_input.text())
-            if len(value)==0:
-                # convert an empty string to None, but not if the original value
-                # itself was an empty string
-                if (self._value is not None) and (len(self._value)==0):
+            if len(value) == 0:
+                # convert an empty string to None, but not if the original
+                # value itself was an empty string
+                if (self._value is not None) and (len(self._value) == 0):
                     return self._value
                 return None
             return value
@@ -101,13 +103,12 @@ class TextLineEditor(CustomEditor):
             text_input.setEnabled(editable)
             text_input.setText(value)
             text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-            set_background_color_palette(text_input, kwargs.get('background_color'))
+            set_background_color_palette(text_input,
+                                         kwargs.get('background_color'))
             text_input.setValidator(validator)
 
     def paintEvent(self, event):
         super(TextLineEditor, self).paintEvent(event)
-        
+
         if self.toolTip():
             draw_tooltip_visualization(self)
-
-
