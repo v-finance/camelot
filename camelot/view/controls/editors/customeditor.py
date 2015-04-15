@@ -29,6 +29,7 @@ from camelot.view.proxy import ValueLoading
 from ...model_thread import post
 from ..action_widget import ActionToolbutton
 
+
 def set_background_color_palette(widget, background_color):
     """
     Set the palette of a widget to have a cerain background color.
@@ -40,19 +41,23 @@ def set_background_color_palette(widget, background_color):
     # in all states on all platforms (Mac, Linux, Win XP, Win Vista, Win 7)
     #
     if background_color not in (None, ValueLoading):
-        palette = QtGui.QPalette( widget.palette() )
-        for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
+        palette = QtGui.QPalette(widget.palette())
+        for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive,
+                  QtGui.QPalette.Disabled]:
             #
-            # backgroundRole : role that is used to render the background, If role is QPalette.NoRole,
-            #                  then the widget inherits its parent's background role
+            # backgroundRole : role that is used to render the background, If
+            #                  role is QPalette.NoRole, then the widget
+            #                  inherits its parent's background role
             # Window : general background color
             # Base : background color for text entry widgets
             #
-            for y in [widget.backgroundRole(), QtGui.QPalette.Window, QtGui.QPalette.Base]:
+            for y in [widget.backgroundRole(), QtGui.QPalette.Window,
+                      QtGui.QPalette.Base]:
                 palette.setColor(x, y, background_color)
-        widget.setPalette( palette )
+        widget.setPalette(palette)
     else:
-        widget.setPalette( QtWidgets.QApplication.palette() )
+        widget.setPalette(QtWidgets.QApplication.palette())
+
 
 def draw_tooltip_visualization(widget):
     """
@@ -60,7 +65,9 @@ def draw_tooltip_visualization(widget):
     :param widget: a QWidget
     """
     painter = QtGui.QPainter(widget)
-    painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
+    painter.drawPixmap(QtCore.QPoint(0, 0),
+                       QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
+
 
 class AbstractCustomEditor(object):
     """
@@ -70,17 +77,16 @@ class AbstractCustomEditor(object):
 
     Guidelines for implementing CustomEditors :
 
-    * When an editor consists of multiple widgets, one widget must be the focusProxy
-      of the editor, to have that widget immediately activated when the user single
-      clicks in the table view.
+    * When an editor consists of multiple widgets, one widget must be the
+      focusProxy of the editor, to have that widget immediately activated when
+      the user single clicks in the table view.
 
-    * When an editor has widgets that should not get selected when the user tabs
-      through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
-      widgets.
+    * When an editor has widgets that should not get selected when the user
+      tabs through the editor, setFocusPolicy(Qt.ClickFocus) should be called
+      on those widgets.
 
     * Editor should set their size policy, for most editor this means their
       vertical size policy should be  `QtGui.QSizePolicy.Fixed`
-
     """
 
     def __init__(self):
@@ -106,7 +112,7 @@ class AbstractCustomEditor(object):
 
     def get_field_attributes(self):
         return self.field_attributes
-    
+
     def set_field_attributes(self, **kwargs):
         self.set_background_color(kwargs.get('background_color', None))
         self.field_attributes = kwargs
@@ -117,19 +123,16 @@ class AbstractCustomEditor(object):
     Get the 'standard' height for a cell
     """
     def get_height(self):
-        height = [QtWidgets.QLineEdit().sizeHint().height(),
-               QtGui.QDateEdit().sizeHint().height(),
-               QtGui.QDateTimeEdit().sizeHint().height(),
-               QtGui.QSpinBox().sizeHint().height(),
-               QtGui.QDateEdit().sizeHint().height(),
-               QtWidgets.QComboBox().sizeHint().height()]
-
-        finalHeight = max(height)
-
-        return finalHeight
+        return max(QtWidgets.QLineEdit().sizeHint().height(),
+                   QtGui.QDateEdit().sizeHint().height(),
+                   QtGui.QDateTimeEdit().sizeHint().height(),
+                   QtGui.QSpinBox().sizeHint().height(),
+                   QtGui.QDateEdit().sizeHint().height(),
+                   QtWidgets.QComboBox().sizeHint().height())
 
     def set_background_color(self, background_color):
-        set_background_color_palette( self, background_color )
+        set_background_color_palette(self, background_color)
+
 
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
