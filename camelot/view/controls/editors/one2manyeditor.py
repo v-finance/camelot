@@ -51,9 +51,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
     actual data to the editor
     """
 
-    _font_height = None
-    _font_width = None
-
     def __init__(self,
                  admin=None,
                  parent=None,
@@ -63,7 +60,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  column_width=None,
                  proxy=None,
                  **kw):
-        CustomEditor.__init__(self, parent)
+        CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -75,18 +72,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # parent set by layout manager
         table = AdminTableWidget(admin, self)
         table.setObjectName('table')
-        if self._font_height is None:
-            font_metrics = QtGui.QFontMetrics(self.font())
-            self._font_height = font_metrics.height()
-            self._font_width = font_metrics.averageCharWidth()
         layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding,
                            QtGui.QSizePolicy.Expanding)
         self.setMinimumHeight((self._font_height + 5) * 5)
-        if column_width is not None:
-            self.size_hint_width = column_width * self._font_width
-        else:
-            self.size_hint_width = None
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
@@ -107,12 +96,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
              self.set_right_toolbar_actions,
              args=(Qt.RightToolBarArea, self.direction))
         post(self.get_columns, self.set_columns)
-
-    def sizeHint(self):
-        size_hint = super(One2ManyEditor, self).sizeHint()
-        if self.size_hint_width is not None:
-            size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
-        return size_hint
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, toolbar_actions):

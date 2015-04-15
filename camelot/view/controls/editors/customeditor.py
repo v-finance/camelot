@@ -145,11 +145,24 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
 
-    def __init__(self, parent):
+    _font_height = None
+    _font_width = None
+
+    def __init__(self, parent, column_width=None):
         QtWidgets.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self
+
+        if CustomEditor._font_width is None:
+            font_metrics = QtGui.QFontMetrics(self.font())
+            CustomEditor._font_height = font_metrics.height()
+            CustomEditor._font_width = font_metrics.averageCharWidth()
+
+        if column_width is None:
+            self.size_hint_width = None
+        else:
+            self.size_hint_width = column_width * CustomEditor._font_width
 
     def paintEvent(self, event):
         super(CustomEditor, self).paintEvent(event)
@@ -167,3 +180,9 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         for action_action in self.findChildren(ActionToolbutton):
             post(action_action.action.get_state, action_action.set_state,
                  args=(model_context,))
+
+    def sizeHint(self):
+        size_hint = super(CustomEditor, self).sizeHint()
+        if self.size_hint_width is not None:
+            size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
+        return size_hint
