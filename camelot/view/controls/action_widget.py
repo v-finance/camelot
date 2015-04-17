@@ -89,7 +89,7 @@ class AbstractActionWidget( object ):
         :param state: a `camelot.admin.action.State` object
         """
         if state.modes:
-            menu = QtWidgets.QMenu()
+            menu = QtWidgets.QMenu(self)
             for mode in state.modes:
                 mode_action = mode.render( menu )
                 mode_action.triggered.connect( self.triggered )
