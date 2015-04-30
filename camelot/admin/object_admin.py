@@ -305,7 +305,8 @@ be specified using the verbose_name attribute.
         for the user, eg : the primary key of an object.  This verbose identifier can
         be used to generate a title for a form view of an object.
         """
-        return u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+        return u'%s: %s' % (self.get_verbose_name(),
+                            self.get_verbose_object_name(obj))
 
     def get_verbose_object_name(self, obj):
         """
