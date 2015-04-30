@@ -238,7 +238,7 @@ class Many2OneEditor( CustomEditor ):
         def get_instance_representation( obj, propagate ):
             """Get a representation of the instance"""
             if obj is not None:
-                return (six.text_type(obj), propagate)
+                return (self.admin.get_verbose_object_name(obj), propagate)
             return (None, propagate)
 
         post( update_wrapper( partial( get_instance_representation,

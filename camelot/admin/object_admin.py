@@ -286,14 +286,7 @@ be specified using the verbose_name attribute.
         return self.name or self.entity.__name__
 
     def get_verbose_name(self):
-
-#        def uncamelize(text):
-#            def downcase(matchobj):
-#                return "_" + matchobj.group(0).lower()
-#            if text:
-#                text = text[0].lower() + re.sub(r'([A-Z])', downcase, text[1:])
-#            return text 
-
+        """ The name of the associated entity. """
         return six.text_type(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
@@ -313,6 +306,12 @@ be specified using the verbose_name attribute.
         be used to generate a title for a form view of an object.
         """
         return u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+
+    def get_verbose_object_name(self, obj):
+        """
+        Textual representation of the current object.
+        """
+        return six.text_type(obj)
 
     def get_search_identifiers(self, obj):
         """Create a dict of identifiers to be used in search boxes.
