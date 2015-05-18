@@ -372,9 +372,9 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         self.main_widget().setLayout( layout )
 
         def field_changeable(attributes):
-            if not attributes['editable']:
+            if not attributes.get('editable', False):
                 return False
-            if attributes['delegate'] in (delegates.One2ManyDelegate,):
+            if attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
                 return False
             return True
 
