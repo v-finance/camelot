@@ -53,7 +53,7 @@ class ObjectValidator(QtCore.QObject):
         super(ObjectValidator, self).__init__()
         self.admin = admin
         self.model = model
-        self._invalid_rows = set()
+        self._invalid_rows = dict()
         self._related_validators = dict()
         self._all_fields = None
         self._all_field_field_attributes = dict()
@@ -79,7 +79,7 @@ class ObjectValidator(QtCore.QObject):
             self.isValid(row)
 
     def validate_invalid_rows(self):
-        for row in copy.copy(self._invalid_rows):
+        for row in copy.copy(six.iterkeys(self._invalid_rows)):
             self.isValid(row)
 
     def validate_object( self, obj ):
@@ -146,7 +146,10 @@ class ObjectValidator(QtCore.QObject):
         :return: the row number of the first invalid row (where the first row
             has number 0)
         """
-        return min(self._invalid_rows)
+        return min(six.iterkeys(self._invalid_rows))
+
+    def get_messages(self, row):
+        return self._invalid_rows.get(row, [])
 
     def isValid(self, row):
         """Verify if a row in a model is 'valid' meaning it could be flushed to
@@ -165,11 +168,11 @@ class ObjectValidator(QtCore.QObject):
             )
         valid = (len(messages) == 0)
         if not valid:
+            self._invalid_rows[row] = messages
             if row not in self._invalid_rows:
-                self._invalid_rows.add(row)
                 self.validity_changed_signal.emit( row )
         elif row in self._invalid_rows:
-            self._invalid_rows.remove(row)
+            self._invalid_rows.pop(row, None)
             self.validity_changed_signal.emit( row )
         logger.debug('valid : %s' % valid)
         return valid

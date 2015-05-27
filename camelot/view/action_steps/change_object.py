@@ -214,6 +214,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 notes = [
                     ugettext('Please correct row {0} before proceeding.').format(first_row),
                     ]
+                notes.extend(self.validator.get_messages(first_row-1))
                 note.set_value(u'<br>'.join(notes))
 
 class ChangeObject( ActionStep ):
