@@ -228,7 +228,7 @@ def to_string( value ):
     return six.text_type( value )
 
 def enumeration_to_string(value):
-    return ugettext(six.text_type(value or u'').replace('_', ' ').capitalize())
+    return ugettext(six.text_type(value or u'').replace('_', ' ')).capitalize()
 
 operator_names = {
     operator.eq : _( u'=' ),
