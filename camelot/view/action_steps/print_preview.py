@@ -53,18 +53,14 @@ class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
             qaction = action.render( self.gui_context, toolbar )
             qaction.triggered.connect( self.action_triggered )
             toolbar.addAction( qaction )
-        self.paintRequested.connect( self.paint_on_printer )
-            
+
     @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context ) 
         preview_widget = self.findChild( QtGui.QPrintPreviewWidget )
         preview_widget.updatePreview()
-        
-    @QtCore.qt_slot( QtPrintSupport.QPrinter )
-    def paint_on_printer( self, printer ):
-        self.gui_context.document.print_( printer )
+
 
 class PrintPreview( ActionStep ):
     """
@@ -143,6 +139,9 @@ class PrintPreview( ActionStep ):
             self.printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
         return self.printer
 
+    def paint_on_printer( self, printer ):
+        self.document.print_(printer)
+
     def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
         the action step."""
@@ -153,6 +152,7 @@ class PrintPreview( ActionStep ):
                                      gui_context, 
                                      actions = [EditDocument()],
                                      flags = QtCore.Qt.Window )
+        dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
         resize_widget_to_screen( dialog )
@@ -169,7 +169,7 @@ class PrintPreview( ActionStep ):
         if filename is None:
             filename = OpenFile.create_temporary_file('.pdf')
         self.printer.setOutputFileName(filename)
-        self.document.print_(self.printer)
+        self.paint_on_printer(self.printer)
         return filename
 
 class ChartDocument( QtCore.QObject ):
