@@ -28,18 +28,19 @@ from ....core.qt import QtCore, QtWidgets
 from .wideeditor import WideEditor
 from .customeditor import AbstractCustomEditor
 
+
 class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
 
     editingFinished = QtCore.qt_signal()
- 
-    def __init__(self, 
-                 parent, 
-                 length=20, 
-                 editable=True, 
-                 field_name = 'text',
+
+    def __init__(self,
+                 parent,
+                 length=20,
+                 editable=True,
+                 field_name='text',
                  **kwargs):
         QtWidgets.QTextEdit.__init__(self, parent)
-        self.setObjectName( field_name )
+        self.setObjectName(field_name)
         AbstractCustomEditor.__init__(self)
         self.setReadOnly(not editable)
 
@@ -53,10 +54,9 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
 
     def get_value(self):
         val = AbstractCustomEditor.get_value(self)
-        if val is not None: # we need to distinguish between None
-            return val      # and other falsy values
+        if val is not None:  # we need to distinguish between None
+            return val       # and other falsy values
         return six.text_type(self.toPlainText())
-
 
     def set_enabled(self, editable=True):
         self.setEnabled(editable)
