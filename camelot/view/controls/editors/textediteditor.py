@@ -45,11 +45,10 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
-        #if value:
-        #    self.setText(six.text_type(value))
-        #else:
-        #    self.setText('')
-        self.setText(six.text_type(value))
+        if value is not None:
+            self.setText(six.text_type(value))
+        else:
+            self.setText('')
         return value
 
     def get_value(self):
@@ -61,4 +60,3 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
 
     def set_enabled(self, editable=True):
         self.setEnabled(editable)
-
