@@ -372,7 +372,11 @@ class RowsWidget(QtWidgets.QLabel):
 
     def update_rows_from_model(self, model):
         rows = model.rowCount()
-        self.setText(_('(%i rows, %i selected)') % (rows, self.selected_count))
+        if self.selected_count == 0:
+            self.setText(_('(%i rows)') % rows)
+        else:
+            self.setText(_('(%i rows, %i selected)') % (rows,
+                                                        self.selected_count))
 
     @QtCore.qt_slot()
     def update_rows(self, *args):
