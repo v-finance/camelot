@@ -336,10 +336,12 @@ class RowsWidget(QtWidgets.QLabel):
     in the table view
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, gui_context, parent=None):
         QtWidgets.QLabel.__init__(self, parent)
         assert object_thread(self)
+        self.gui_context = gui_context
         self.setFont(self._number_of_rows_font)
+        self.selected_count = 0
 
     @hybrid_property
     def _number_of_rows_font(cls):
@@ -350,11 +352,25 @@ class RowsWidget(QtWidgets.QLabel):
         model.modelReset.connect(self.update_rows)
         model.rowsInserted.connect(self.update_rows)
         model.rowsRemoved.connect(self.update_rows)
+        selection_model = self.gui_context.item_view.selectionModel()
+        selection_model.selectionChanged.connect(self.selection_changed)
         self.update_rows_from_model(model)
+
+    @QtCore.qt_slot(object)
+    def selection_changed(self, selected, deselected):
+        def count(selection):
+            selection_count = 0
+            for i in range(len(selection)):
+                selection_range = selection[i]
+                rows_range = (selection_range.top(), selection_range.bottom())
+                selection_count += (rows_range[1] - rows_range[0]) + 1
+            return selection_count
+        self.selected_count += count(selected) - count(deselected)
+        self.update_rows_from_model(self.gui_context.view.get_model())
 
     def update_rows_from_model(self, model):
         rows = model.rowCount()
-        self.setText(_('(%i rows)') % rows)
+        self.setText(_('(%i rows, %i selected)') % (rows, self.selected_count))
 
     @QtCore.qt_slot()
     def update_rows(self, *args):
@@ -364,8 +380,10 @@ class RowsWidget(QtWidgets.QLabel):
 
 
 class HeaderWidget(QtWidgets.QWidget):
-    """HeaderWidget for a tableview, containing the title, the search widget,
-    and the number of rows in the table"""
+    """
+    HeaderWidget for a tableview, containing the title, the search widget,
+    and the number of rows in the table
+    """
 
     search_widget = SimpleSearchControl
     rows_widget = RowsWidget
@@ -387,7 +405,7 @@ class HeaderWidget(QtWidgets.QWidget):
         title.setFont(self._title_font)
         widget_layout.addWidget(title)
         widget_layout.addWidget(search)
-        number_of_rows = self.rows_widget(parent=self)
+        number_of_rows = self.rows_widget(gui_context, parent=self)
         number_of_rows.setObjectName('number_of_rows')
         widget_layout.addWidget(number_of_rows)
         layout.addLayout(widget_layout, 0)
