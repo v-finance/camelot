@@ -328,16 +328,19 @@ class AdminTableWidget( QtWidgets.QWidget ):
             model.modelReset.connect( column_groups.model_reset )
             table_widget.setModel( model )
             column_groups.model_reset()
-        
-class RowsWidget( QtWidgets.QLabel ):
-    """Widget that is part of the header widget, displaying the number of rows
-    in the table view"""
 
-    def __init__( self, parent=None ):
-        QtWidgets.QLabel.__init__( self, parent )
-        assert object_thread( self )
-        self.setFont( self._number_of_rows_font )
-        
+
+class RowsWidget(QtWidgets.QLabel):
+    """
+    Widget that is part of the header widget, displaying the number of rows
+    in the table view
+    """
+
+    def __init__(self, parent=None):
+        QtWidgets.QLabel.__init__(self, parent)
+        assert object_thread(self)
+        self.setFont(self._number_of_rows_font)
+
     @hybrid_property
     def _number_of_rows_font(cls):
         return QtWidgets.QApplication.font()
@@ -348,19 +351,19 @@ class RowsWidget( QtWidgets.QLabel ):
         model.rowsInserted.connect(self.update_rows)
         model.rowsRemoved.connect(self.update_rows)
         self.update_rows_from_model(model)
-    
+
     def update_rows_from_model(self, model):
         rows = model.rowCount()
-        self.setText(_('(%i rows)')%rows)
-        
+        self.setText(_('(%i rows)') % rows)
+
     @QtCore.qt_slot()
     def update_rows(self, *args):
-        assert object_thread( self )
+        assert object_thread(self)
         model = self.sender()
         self.update_rows_from_model(model)
 
 
-class HeaderWidget( QtWidgets.QWidget ):
+class HeaderWidget(QtWidgets.QWidget):
     """HeaderWidget for a tableview, containing the title, the search widget,
     and the number of rows in the table"""
 
@@ -369,40 +372,39 @@ class HeaderWidget( QtWidgets.QWidget ):
 
     filters_changed_signal = QtCore.qt_signal()
 
-    def __init__( self, gui_context, parent):
-        QtWidgets.QWidget.__init__( self, parent )
-        assert object_thread( self )
+    def __init__(self, gui_context, parent):
+        QtWidgets.QWidget.__init__(self, parent)
+        assert object_thread(self)
         self.gui_context = gui_context
         layout = QtWidgets.QVBoxLayout()
         widget_layout = QtWidgets.QHBoxLayout()
-        search = self.search_widget( self )
+        search = self.search_widget(self)
         self.setFocusProxy(search)
         search.expand_search_options_signal.connect(
-            self.expand_search_options )
-        title = UserTranslatableLabel(self.gui_context.admin.get_verbose_name_plural(),
-                                      self)
-        title.setFont( self._title_font )
-        widget_layout.addWidget( title )
-        widget_layout.addWidget( search )
+            self.expand_search_options)
+        title = UserTranslatableLabel(
+            self.gui_context.admin.get_verbose_name_plural(), self)
+        title.setFont(self._title_font)
+        widget_layout.addWidget(title)
+        widget_layout.addWidget(search)
         number_of_rows = self.rows_widget(parent=self)
         number_of_rows.setObjectName('number_of_rows')
         widget_layout.addWidget(number_of_rows)
-        layout.addLayout( widget_layout, 0 )
+        layout.addLayout(widget_layout, 0)
         self._expanded_filters_created = False
         self._expanded_search = QtWidgets.QWidget()
         self._expanded_search.hide()
-        layout.addWidget( self._expanded_search, 1 )
-        self.setLayout( layout )
-        self.setSizePolicy( QtGui.QSizePolicy.Minimum, 
-                            QtGui.QSizePolicy.Fixed )
+        layout.addWidget(self._expanded_search, 1)
+        self.setLayout(layout)
+        self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
         self.search = search
 
     @hybrid_property
     def _title_font(cls):
         font = QtWidgets.QApplication.font()
-        font.setBold( True )
+        font.setBold(True)
         return font
-    
+
     def _fill_expanded_search_options(self, filters):
         """Given the columns in the table view, present the user
         with more options to filter rows in the table
@@ -411,21 +413,21 @@ class HeaderWidget( QtWidgets.QWidget ):
         assert object_thread(self)
         from camelot.view.flowlayout import FlowLayout
         layout = FlowLayout()
-        layout.setSpacing( 2 )
-        layout.setContentsMargins( 0, 0, 0, 0 )
+        layout.setSpacing(2)
+        layout.setContentsMargins(0, 0, 0, 0)
         for filter_ in filters:
             widget = filter_.render(self.gui_context, self)
             layout.addWidget(widget)
-        self._expanded_search.setLayout( layout )
+        self._expanded_search.setLayout(layout)
         self._expanded_filters_created = True
 
     def _filter_changed(self):
-        assert object_thread( self )
+        assert object_thread(self)
         self.filters_changed_signal.emit()
 
     @QtCore.qt_slot()
     def expand_search_options(self):
-        assert object_thread( self )
+        assert object_thread(self)
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
                 post(self.gui_context.admin.get_expanded_search_filters,
@@ -433,11 +435,12 @@ class HeaderWidget( QtWidgets.QWidget ):
             self._expanded_search.show()
         else:
             self._expanded_search.hide()
-    
+
     def set_model(self, model):
         number_of_rows = self.findChild(self.rows_widget, 'number_of_rows')
         number_of_rows.set_model(model)
-    
+
+
 class TableView( AbstractView  ):
     """
   :param gui_context: a :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
