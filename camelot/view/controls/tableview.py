@@ -344,21 +344,23 @@ class RowsWidget(QtWidgets.QLabel):
         self.gui_context = gui_context
         self.setFont(self._number_of_rows_font)
         self.selected_count = 0
+        self.gui_context.view.model_changed.connect(self.model_changed)
 
     @hybrid_property
     def _number_of_rows_font(cls):
         return QtWidgets.QApplication.font()
 
-    def set_model(self, model):
+    @QtCore.qt_slot(QtCore.QAbstractItemModel, AdminTableWidget)
+    def model_changed(self, model, table):
         model.layoutChanged.connect(self.update_rows)
         model.modelReset.connect(self.update_rows)
         model.rowsInserted.connect(self.update_rows)
         model.rowsRemoved.connect(self.update_rows)
-        selection_model = self.gui_context.item_view.selectionModel()
+        selection_model = table.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)
         self.update_rows_from_model(model)
 
-    @QtCore.qt_slot(object)
+    @QtCore.qt_slot(QtGui.QItemSelection, QtGui.QItemSelection)
     def selection_changed(self, selected, deselected):
         def count(selection):
             selection_count = 0
@@ -461,10 +463,6 @@ class HeaderWidget(QtWidgets.QWidget):
         else:
             self._expanded_search.hide()
 
-    def set_model(self, model):
-        number_of_rows = self.findChild(self.rows_widget, 'number_of_rows')
-        number_of_rows.set_model(model)
-
 
 class TableView(AbstractView):
     """
@@ -509,6 +507,9 @@ class TableView(AbstractView):
     header_widget = HeaderWidget
     AdminTableWidget = AdminTableWidget
 
+    model_changed = QtCore.qt_signal(QtCore.QAbstractItemModel,
+                                     AdminTableWidget)
+
     def __init__(self,
                  gui_context,
                  admin,
@@ -547,7 +548,6 @@ class TableView(AbstractView):
         self.actions = None
         table_widget.setLayout(self.table_layout)
         filters_widget.setLayout(self.filters_layout)
-        #filters_widget.hide()
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         class_tree = SubclassTree(self.admin)
         class_tree.setObjectName('class_tree')
@@ -561,6 +561,17 @@ class TableView(AbstractView):
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                    self)
         shortcut.activated.connect(self.activate_search)
+
+        self.gui_context.admin = self.admin
+        self.gui_context.view = self
+        self.header = self.header_widget(self.gui_context, self)
+        self.widget_layout.insertWidget(0, self.header)
+        self.header.search.search_signal.connect(self.startSearch)
+        self.header.search.cancel_signal.connect(self.cancelSearch)
+        self.header.search.on_arrow_down_signal.connect(self.focusTable)
+        self.setFocusProxy(self.header)
+        if self.search_text:
+            self.header.search.search(self.search_text)
 
     @QtCore.qt_slot()
     def activate_search(self):
@@ -620,7 +631,8 @@ class TableView(AbstractView):
         if self.table:
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
-            self.table.model().deleteLater()
+            if self.table.model() is not None:
+                self.table.model().deleteLater()
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         self.table = self.AdminTableWidget(self.admin, splitter)
         self.table.setObjectName('AdminTableWidget')
@@ -635,21 +647,7 @@ class TableView(AbstractView):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
-        if self.header_widget:
-            if self.header is not None:
-                self.widget_layout.removeWidget(self.header)
-                self.header.deleteLater()
-            self.header = self.header_widget(self.gui_context, self)
-            self.header.set_model(new_model)
-            self.widget_layout.insertWidget(0, self.header)
-            self.header.search.search_signal.connect(self.startSearch)
-            self.header.search.cancel_signal.connect(self.cancelSearch)
-            self.header.search.on_arrow_down_signal.connect(self.focusTable)
-            self.setFocusProxy(self.header)
-            if self.search_text:
-                self.header.search.search(self.search_text)
-        else:
-            self.header = None
+        self.model_changed.emit(new_model, self.table)
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
