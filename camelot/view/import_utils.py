@@ -250,13 +250,11 @@ class XlsReader( six.Iterator ):
     
     def __init__( self, filename ):
         import xlrd
-        # assume a single sheet xls doc
-        formatting_info = True
-        # xlsx does not yet support formatting info
-        if filename.endswith('.xlsx'):
-            formatting_info = False
-        workbook = xlrd.open_workbook( filename,
-                                       formatting_info = formatting_info )
+        try:
+            workbook = xlrd.open_workbook(filename, formatting_info=True)
+        except NotImplementedError:
+            # xlsx does not yet support formatting info
+            workbook = xlrd.open_workbook(filename)
         self.xf_list = workbook.xf_list
         self.datemode = workbook.datemode
         self.format_map = workbook.format_map

@@ -342,7 +342,7 @@ class Enumeration(types.TypeDecorator):
     class Movie(Entity):
       title = Column( Unicode(60), nullable = False )
       state = Column( camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
-                      index = True, nullable = False, default = 'planning' )
+                      index = True, nullable = False, default = 'planned' )
   
   .. image:: /_static/editors/ChoicesEditor_editable.png  
   
