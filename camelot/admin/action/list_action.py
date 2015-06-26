@@ -848,9 +848,7 @@ class ImportFromFile( EditAction ):
             # in the field attributes
             #
             all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
-                         six.iteritems(admin.get_all_fields_and_attributes())
-                         if entity_fa.get('editable', True)
-                         ]
+                         six.iteritems(admin.get_all_fields_and_attributes())]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
             for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
                                                           default_fields):
