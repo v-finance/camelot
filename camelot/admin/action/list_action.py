@@ -841,9 +841,16 @@ class ImportFromFile( EditAction ):
             default_fields = [field for field, fa in admin.get_columns() 
                               if fa.get('editable', True)]
             mappings = []
+            # 
+            # it should be possible to select not editable fields, to be able to
+            # import foreign keys, these are not editable by default, it might
+            # be better to explicitly allow foreign keys, but this info is not
+            # in the field attributes
+            #
             all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
                          six.iteritems(admin.get_all_fields_and_attributes())
-                          if entity_fa.get('editable', True)]
+                         if entity_fa.get('editable', True)
+                         ]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
             for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
                                                           default_fields):
