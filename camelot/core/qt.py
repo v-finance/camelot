@@ -227,6 +227,23 @@ else:
         return six.text_type(QtCore.QCoreApplication.translate('', 
                                                                string_to_translate.encode('utf-8'),))
 
+
+def qmsghandler(msg_type, msg_log_context, msg_string):
+    """ Logging handler to redirect messages from Qt to Python """
+    log_levels = {
+        0: logging.DEBUG,
+        1: logging.WARN,
+        2: logging.ERROR,
+        3: logging.FATAL,
+    }
+    log_level = log_levels.get(msg_type)
+    if log_level is not None:
+        LOGGER.log(log_level, msg_string)
+    else:
+        LOGGER.log(logging.ERROR, 'Received message with unknown log level')
+
+QtCore.qInstallMessageHandler(qmsghandler)
+
 __all__ = [
     QtCore.__name__,
     QtGui.__name__,
@@ -235,4 +252,4 @@ __all__ = [
     py_to_variant.__name__,
     valid_variant.__name__,
     variant_to_py.__name__,
-    ]
+]
