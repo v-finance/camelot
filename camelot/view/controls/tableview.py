@@ -37,7 +37,7 @@ from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
+from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .inheritance import SubclassTree
@@ -360,7 +360,9 @@ class RowsWidget(QtWidgets.QLabel):
         selection_model.selectionChanged.connect(self.selection_changed)
         self.update_rows_from_model(model)
 
-    @QtCore.qt_slot(QtGui.QItemSelection, QtGui.QItemSelection)
+    # Using QtModel because QItemSelection resides in QtGui in Qt4 and in
+    # QtCore in Qt5
+    @QtCore.qt_slot(QtModel.QItemSelection, QtModel.QItemSelection)
     def selection_changed(self, selected, deselected):
         def count(selection):
             selection_count = 0
