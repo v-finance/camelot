@@ -90,26 +90,43 @@ class ActionView( ActionStep ):
         view = self.render(gui_context)
         workspace.set_view(view, title=self.title)
 
-class InstallTranslator( ActionStep ):
+
+class InstallTranslator(ActionStep):
     """
     Install a translator in the application.  Ownership of the translator will
     be moved to the application.
-    
+
     :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
         object
 
     """
-    
-    def __init__( self,
-                  admin ):
+
+    def __init__(self, admin):
         self.admin = admin
-        
-    def gui_run( self, gui_context ):
+
+    def gui_run(self, gui_context):
         app = QtCore.QCoreApplication.instance()
         translator = self.admin.get_translator()
         if isinstance(translator, list):
             for t in translator:
                 t.setParent(app)
-                app.installTranslator( t )
+                app.installTranslator(t)
         else:
-            app.installTranslator( translator )
+            app.installTranslator(translator)
+
+
+class RemoveTranslators(ActionStep):
+    """
+    Unregister all previously installed translators from the application.
+
+    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
+        object
+    """
+
+    def __init__(self, admin):
+        self.admin = admin
+
+    def gui_run(self, gui_context):
+        app = QtCore.QCoreApplication.instance()
+        for active_translator in app.findChildren(QtCore.QTranslator):
+            app.removeTranslator(active_translator)

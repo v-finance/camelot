@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from .application import ActionView, MainWindow, InstallTranslator, Exit
+from .application import ActionView, MainWindow, InstallTranslator, Exit, RemoveTranslators
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -65,6 +65,7 @@ __all__ = [
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
+    RemoveTranslators.__name__,
     SaveFile.__name__,
     SelectBackup.__name__,
     SelectDirectory.__name__,
