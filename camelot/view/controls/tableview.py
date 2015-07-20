@@ -543,7 +543,6 @@ class TableView(AbstractView):
         self.table_layout.setSpacing(0)
         self.table_layout.setContentsMargins(0, 0, 0, 0)
         self.table = None
-        self.header = None
         self.filters_layout = QtWidgets.QVBoxLayout()
         self.filters_layout.setSpacing(0)
         self.filters_layout.setContentsMargins(0, 0, 0, 0)
@@ -566,19 +565,20 @@ class TableView(AbstractView):
 
         self.gui_context.admin = self.admin
         self.gui_context.view = self
-        self.header = self.header_widget(self.gui_context, self)
-        self.widget_layout.insertWidget(0, self.header)
-        self.header.search.search_signal.connect(self.startSearch)
-        self.header.search.cancel_signal.connect(self.cancelSearch)
-        self.header.search.on_arrow_down_signal.connect(self.focusTable)
-        self.setFocusProxy(self.header)
+        header = self.header_widget(self.gui_context, self)
+        self.widget_layout.insertWidget(0, header)
+        header.search.search_signal.connect(self.startSearch)
+        header.search.cancel_signal.connect(self.cancelSearch)
+        header.search.on_arrow_down_signal.connect(self.focusTable)
+        self.setFocusProxy(header)
         if self.search_text:
-            self.header.search.search(self.search_text)
+            header.search.search(self.search_text)
 
     @QtCore.qt_slot()
     def activate_search(self):
         assert object_thread(self)
-        self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
+        header = self.findChild(self.header_widget)
+        header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     @QtCore.qt_slot(object)
     def set_subclass_tree(self, subclasses):
