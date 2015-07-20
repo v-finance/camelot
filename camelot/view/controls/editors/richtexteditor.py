@@ -74,8 +74,8 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
-        self.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                            QtGui.QSizePolicy.Expanding )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding,
+                            QtWidgets.QSizePolicy.Expanding )
 
         self.textedit = CustomTextEdit(self)
 

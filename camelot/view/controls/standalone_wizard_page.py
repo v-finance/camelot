@@ -22,17 +22,19 @@
 #
 #  ============================================================================
 
-import six 
+import six
 
-from ...core.qt import QtGui, QtWidgets, Qt
+from ...core.qt import QtWidgets, Qt
 from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
+
 
 class HSeparator(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(HSeparator, self).__init__(parent)
         self.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
+
 
 class StandaloneWizardPage(QtWidgets.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
@@ -54,7 +56,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         # therefor commented out
         #self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
 
-        banner_layout = QtGui.QGridLayout()
+        banner_layout = QtWidgets.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
         banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignRight)
         banner_layout.addLayout(QtWidgets.QVBoxLayout(), 0, 0)
@@ -119,4 +121,3 @@ class StandaloneWizardPage(QtWidgets.QDialog):
             layout.addWidget( cancel_button )
         layout.addStretch()
         self.buttons_widget().setLayout( layout )
-
