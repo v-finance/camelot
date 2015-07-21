@@ -91,20 +91,43 @@ class QueryTableProxy(CollectionProxy):
             self._appended_rows.remove(o)
 
     def getRowCount(self):
+        #
+        # wait for a while until the rowcount requests array doesn't change any
+        # more
+        #
+        previous_length = 0
         locker = QtCore.QMutexLocker(self._mutex)
-        self._rowcount_requested = False
+        while previous_length != len(self._rowcount_requests):
+            previous_length = len(self._rowcount_requests)
+            locker.unlock()
+            QtCore.QThread.msleep(5)
+            locker.relock()
+        self._rowcount_requests.pop()
+        number_of_rowcount_requests = len(self._rowcount_requests)
         locker.unlock()
-        self._clean_appended_rows()
-        if self._query is None:
-            return 0
-        # manipulate the query to circumvent the use of subselects and order by
-        # clauses
-        query = self.get_query()
-        mapper = orm.class_mapper(self.admin.entity)
-        select = query.order_by(None).as_scalar()
-        select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
-        count = query.session.execute(select, mapper=mapper).scalar()
-        return count + len(self._appended_rows)
+        #
+        # the actual count will only be done when handling the last requests
+        # earlier requests return None asap, to allow other tasks in the queue
+        # to continue, since those tasks might generate other row count requests
+        #
+        if number_of_rowcount_requests == 0:
+            # this is the last request on its way, do the counting now
+            self._clean_appended_rows()
+            if self._query is None:
+                rows = 0
+            else:
+                # manipulate the query to circumvent the use of subselects and order by
+                # clauses
+                query = self.get_query()
+                mapper = orm.class_mapper(self.admin.entity)
+                select = query.order_by(None).as_scalar()
+                select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
+                count = query.session.execute(select, mapper=mapper).scalar()
+                rows = count + len(self._appended_rows)
+        else:
+            # other row count reqests are on their way, do nothing now
+            rows = None
+        return rows
 
     def set_value(self, query):
         """
@@ -236,8 +259,10 @@ class QueryTableProxy(CollectionProxy):
         :param list_filter: a :class:`camelot.admin.action.list_filter.Filter` object
         :param value: the value on which to filter
         """
+        previous_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
-        self.refresh()
+        if value != previous_value:
+            self.refresh()
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new

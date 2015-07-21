@@ -244,7 +244,7 @@ position in the query.
         self.flush_changes = flush_changes
         self.mt = get_model_thread()
         # Set database connection and load data
-        self._rows = 0
+        self._rows = None
         self._columns = []
         self._static_field_attributes = []
         self._max_number_of_rows = max_number_of_rows
@@ -264,7 +264,7 @@ position in the query.
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self._update_requests = list()
-        self._rowcount_requested = False
+        self._rowcount_requests = list()
         # The rows that have unflushed changes
         self.unflushed_rows = set()
         self._sort_and_filter = SortingRowMapper()
@@ -278,9 +278,6 @@ position in the query.
 #    # in that way the number of rows is requested as well
         if cache_collection_proxy:
             self.setRowCount( cache_collection_proxy.rowCount() )
-        else:
-            self._rowcount_requested = True
-            post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
     
@@ -315,6 +312,9 @@ position in the query.
         return QtCore.QModelIndex()
     
     def rowCount( self, index = None ):
+        if self._rows is None:
+            self.refresh()
+            return 0
         return self._rows
     
     def hasChildren( self, parent ):
@@ -383,17 +383,21 @@ position in the query.
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
         locker = QtCore.QMutexLocker(self._mutex)
-        self._rowcount_requested = False
-        rows = len( set( self.get_collection() ) )
+        self._rowcount_requests.pop()
+        if len(self._rowcount_requests) == 0:
+            # this is the last request on its way, do the counting now
+            rows = len( set( self.get_collection() ) )
+        else:
+            # other row count reqests are on their way, do nothing now
+            rows = None
         locker.unlock()
         return rows
 
     def refresh( self ):
         assert object_thread( self )
         locker = QtCore.QMutexLocker(self._mutex)
-        if self._rowcount_requested == False:
-            self._rowcount_requested = True
-            post( self.getRowCount, self._refresh_content )
+        self._rowcount_requests.append(True)
+        post( self.getRowCount, self._refresh_content )
         locker.unlock()
 
     @QtCore.qt_slot(int)
@@ -501,12 +505,15 @@ position in the query.
         #         probably do nothing
         return
 
-    @QtCore.qt_slot(int)
+    @QtCore.qt_slot(object)
     def setRowCount( self, rows ):
         """Callback method to set the number of rows
         @param rows the new number of rows
         """
         assert object_thread( self )
+        if rows == None:
+            # other row counts are on their way, ignore this one
+            return
         self._rows = rows
         self.layoutChanged.emit()
 
