@@ -178,7 +178,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         model = table_widget.get_model()
         self.validator = model.get_validator()
         self.validator.validity_changed_signal.connect( self.update_complete )
-        model.layoutChanged.connect( self.validate_all_rows )
+        model.layoutChanged.connect(self.validate_all_rows)
         table_widget.set_value(objects)
         table_widget.setObjectName( 'table_widget' )
         note = editors.NoteEditor( parent=self )
@@ -191,11 +191,10 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.set_default_buttons()
         ok_button = self.buttons_widget().findChild( QtWidgets.QPushButton, 'accept' )
         ok_button.setEnabled( False )
-        self.validate_all_rows()
 
     @QtCore.qt_slot()
     def validate_all_rows(self):
-        post( self.validator.validate_all_rows, self._all_rows_validated)
+        post(self.validator.validate_all_rows, self._all_rows_validated)
 
     def _all_rows_validated(self, *args):
         self.update_complete( 0 )

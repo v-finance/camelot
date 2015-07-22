@@ -821,22 +821,23 @@ position in the query.
                     pass
                 changed = value_changed or changed
             if changed:
-                if self.flush_changes and self.validator.isValid( row ):
-                    # save the state before the update
-                    was_persistent =admin.is_persistent(o)
-                    try:
-                        admin.flush( o )
-                    except DatabaseError as e:
-                        #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
-                        self.logger.error( 'Programming Error, could not flush object', exc_info = e )
-                    locker.relock()
-                    try:
-                        self.unflushed_rows.remove( row )
-                    except KeyError:
-                        pass
-                    locker.unlock()
-                    if was_persistent is False:
-                        self.rsh.sendEntityCreate(self, o)
+                if self.flush_changes:
+                    if self.validator.isValid( row ):
+                        # save the state before the update
+                        was_persistent =admin.is_persistent(o)
+                        try:
+                            admin.flush( o )
+                        except DatabaseError as e:
+                            #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
+                            self.logger.error( 'Programming Error, could not flush object', exc_info = e )
+                        locker.relock()
+                        try:
+                            self.unflushed_rows.remove( row )
+                        except KeyError:
+                            pass
+                        locker.unlock()
+                        if was_persistent is False:
+                            self.rsh.sendEntityCreate(self, o)
                 # update the cache
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done

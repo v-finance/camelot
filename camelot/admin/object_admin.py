@@ -705,14 +705,13 @@ be specified using the verbose_name attribute.
         return [(field, self.get_field_attributes(field))
                 for field in table.get_fields() ]
 
-    def get_validator( self, model = None, initial_validation = False ):
+    def get_validator( self, model = None):
         """Get a validator object
 
         :return: a :class:`camelot.admin.validator.object_validator.Validator`
         """
         return self.validator( self, 
-                               model = model, 
-                               initial_validation = initial_validation )
+                               model = model )
 
     def get_fields(self):
         fields = self.get_form_display().get_fields()

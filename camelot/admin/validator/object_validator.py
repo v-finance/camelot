@@ -30,7 +30,6 @@ logger = logging.getLogger('camelot.admin.validator.object_validator')
 import six
 
 from ...core.qt import QtCore
-from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
 
 
@@ -42,7 +41,7 @@ class ObjectValidator(QtCore.QObject):
 
     validity_changed_signal = QtCore.qt_signal(int)
 
-    def __init__(self, admin, model = None, initial_validation = False):
+    def __init__(self, admin, model = None):
         """
         :param model: a collection proxy the validator should inspect, or None
             if only the `validate_object` method is going to get used.
@@ -58,9 +57,6 @@ class ObjectValidator(QtCore.QObject):
         self._all_fields = None
         self._all_field_field_attributes = dict()
 
-        if initial_validation:
-            post(self.validate_all_rows)
-
     def get_related_validator( self, cls ):
         """Get the validator for another Class
         :param cls: the `Class` for which to get the validator
@@ -75,7 +71,7 @@ class ObjectValidator(QtCore.QObject):
 
     def validate_all_rows(self):
         """Force validation of all rows in the model"""
-        for row in range(self.model.getRowCount()):
+        for row in range(self.model.rowCount()):
             self.isValid(row)
 
     def validate_invalid_rows(self):
@@ -167,13 +163,17 @@ class ObjectValidator(QtCore.QObject):
                 exc_info=e
             )
         valid = (len(messages) == 0)
+        # check the status of the row before modifiying the
+        # invalid rows
+        row_in_invalid_rows = (row in self._invalid_rows)
         if not valid:
             self._invalid_rows[row] = messages
-            if row not in self._invalid_rows:
-                self.validity_changed_signal.emit( row )
-        elif row in self._invalid_rows:
+        else:
             self._invalid_rows.pop(row, None)
-            self.validity_changed_signal.emit( row )
+        # check the status after modifying the invalid rows and emit a signal
+        # if the status of the row has changed
+        if row_in_invalid_rows != (row in self._invalid_rows):
+            self.validity_changed_signal.emit(row)
         logger.debug('valid : %s' % valid)
         return valid
 
