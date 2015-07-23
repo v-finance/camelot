@@ -413,16 +413,18 @@ position in the query.
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
-        locker = QtCore.QMutexLocker(self._mutex)
-        self.display_cache = Fifo( 10 * self.max_number_of_rows )
-        self.edit_cache = Fifo( 10 * self.max_number_of_rows )
-        self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
-        self.action_state_cache = Fifo( 10 * self.max_number_of_rows )
-        self.rows_under_request = set()
-        self.unflushed_rows = set()
-        # once the cache has been cleared, no updates ought to be accepted
-        self._update_requests = list()
-        locker.unlock()
+        # if rows is None, other requests are on their way
+        if rows is not None:
+            locker = QtCore.QMutexLocker(self._mutex)
+            self.display_cache = Fifo( 10 * self.max_number_of_rows )
+            self.edit_cache = Fifo( 10 * self.max_number_of_rows )
+            self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
+            self.action_state_cache = Fifo( 10 * self.max_number_of_rows )
+            self.rows_under_request = set()
+            self.unflushed_rows = set()
+            # once the cache has been cleared, no updates ought to be accepted
+            self._update_requests = list()
+            locker.unlock()
         self.setRowCount( rows )
 
     def set_value(self, collection):
@@ -529,7 +531,7 @@ position in the query.
             self.layoutChanged.emit()
         elif rows != 0:
             self.dataChanged.emit( self.index( 0, 0 ),
-                                   self.index( rows, self.columnCount() - 1 ) )
+                                   self.index( rows-1, self.columnCount() - 1 ) )
 
     def get_static_field_attributes(self):
         return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
@@ -889,7 +891,6 @@ position in the query.
             # might return intermediary values such as ValueLoading ??
             if self._get_field_attribute_value(index, 'editable') != True:
                 return
-
             locker = QtCore.QMutexLocker( self._mutex )
             flushed = ( index.row() not in self.unflushed_rows )
             self.unflushed_rows.add( index.row() )
@@ -1042,6 +1043,7 @@ position in the query.
     def _extend_cache( self ):
         """Extend the cache around the rows under request"""
         offset, limit = self._offset_and_limit_rows_to_get()
+        
         if limit:
             columns = self._columns
             collection = self.get_collection()
@@ -1062,7 +1064,7 @@ position in the query.
                 # stop when the end of the collection is reached, no matter
                 # what the request was
                 pass
-        return ( offset, limit )
+        self._cache_extended(offset, limit)
 
     def _get_object( self, sorted_row_number ):
         """Get the object corresponding to row
@@ -1080,9 +1082,11 @@ position in the query.
             pass
         return None
 
-    @QtCore.qt_slot(tuple)
-    def _cache_extended( self, interval ):
-        offset, limit = interval
+    def _cache_extended( self, offset, limit ):
+        """
+        Remove the range within offset, limit from rows under request, this should
+        happen in the model thread, since they are consumed here
+        """
         locker = QtCore.QMutexLocker(self._mutex)
         self.rows_under_request.difference_update( set( range( offset, offset + limit + 1) ) )
         locker.unlock()
@@ -1107,7 +1111,7 @@ position in the query.
             return data
         except KeyError:
             locker = QtCore.QMutexLocker(self._mutex)
-            if row not in self.rows_under_request:    
+            if row not in self.rows_under_request:
                 self.rows_under_request.add( row )
                 #
                 # unlock before posting to model thread, since in the
@@ -1115,7 +1119,7 @@ position in the query.
                 # acquire the lock
                 #
                 locker.unlock()
-                post( self._extend_cache, self._cache_extended )
+                post( self._extend_cache )
             return empty_row_data
 
     def remove( self, o ):
@@ -1144,7 +1148,7 @@ position in the query.
         :return: the new number of rows in the collection
         
         """
-        rows = self._rows
+        rows = (self._rows or 0)
         row = max( rows - 1, 0 )
         self._rows_about_to_be_inserted_signal.emit( row, row )
         self.append( obj )

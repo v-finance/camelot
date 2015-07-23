@@ -358,8 +358,8 @@ class QueryTableProxy(CollectionProxy):
                 if offset+limit >= rows_in_query:
                     for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
                         obj = self._get_object(row)
-                        self._add_data(columns, row, obj)                
-            return (offset, limit)
+                        self._add_data(columns, row, obj)
+            self._cache_extended(offset, limit)
 
     def _get_object(self, row):
         """Get the object corresponding to row.  If row is smaller than 0
