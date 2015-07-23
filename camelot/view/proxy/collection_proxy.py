@@ -380,10 +380,20 @@ position in the query.
         return has_unflushed_rows
 
     def getRowCount( self ):
+        #
+        # wait for a while until the rowcount requests array doesn't change any
+        # more
+        #
+        previous_length = 0
+        locker = QtCore.QMutexLocker(self._mutex)
+        while previous_length != len(self._rowcount_requests):
+            previous_length = len(self._rowcount_requests)
+            locker.unlock()
+            QtCore.QThread.msleep(5)
+            locker.relock()
+        self._rowcount_requests.pop()
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
-        locker = QtCore.QMutexLocker(self._mutex)
-        self._rowcount_requests.pop()
         if len(self._rowcount_requests) == 0:
             # this is the last request on its way, do the counting now
             rows = len( set( self.get_collection() ) )
@@ -514,8 +524,12 @@ position in the query.
         if rows == None:
             # other row counts are on their way, ignore this one
             return
-        self._rows = rows
-        self.layoutChanged.emit()
+        if self._rows != rows:
+            self._rows = rows
+            self.layoutChanged.emit()
+        elif rows != 0:
+            self.dataChanged.emit( self.index( 0, 0 ),
+                                   self.index( rows, self.columnCount() - 1 ) )
 
     def get_static_field_attributes(self):
         return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
