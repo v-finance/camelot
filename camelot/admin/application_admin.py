@@ -409,7 +409,9 @@ shortcut confusion and reduce the number of status updates.
             pass
         return art.read('stylesheet/office2007_blue.qss').decode('utf-8')
 
-    def _load_translator_from_file( self, 
+
+    @classmethod
+    def _load_translator_from_file( cls, 
                                     module_name, 
                                     file_name, 
                                     directory = '', 
