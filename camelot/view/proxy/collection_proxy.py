@@ -311,6 +311,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             timer.stop()
             if self._rows is None:
                 post(self.getRowCount, self._refresh_content)
+            if self.rows_under_request:
+                post(self._extend_cache)
 
     def hasChildren( self, parent ):
         assert object_thread( self )
@@ -994,17 +996,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         continuous range of rows that should be fetched.
         :return: (offset, limit)
         """
-        offset, limit, previous_length, i = 0, 0, 0, 0
-        #
-        # wait for a while until the rows under request don't change any
-        # more
-        #
+        offset, limit, i = 0, 0, 0
         locker = QtCore.QMutexLocker(self._mutex)
-        while previous_length != len(self.rows_under_request):
-            previous_length = len(self.rows_under_request)
-            locker.unlock()
-            QtCore.QThread.msleep(5)
-            locker.relock()
         #
         # now filter out all rows that have been put in the cache
         # the gui thread didn't know about
@@ -1016,7 +1009,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 rows_already_there.add(row)
         rows_to_get.difference_update( rows_already_there )
         rows_to_get = list(rows_to_get)
-        locker.unlock()        
+        locker.unlock()
         #
         # see if there is anything left to do
         #
@@ -1108,14 +1101,11 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         except KeyError:
             locker = QtCore.QMutexLocker(self._mutex)
             if row not in self.rows_under_request:
-                self.rows_under_request.add( row )
-                #
-                # unlock before posting to model thread, since in the
-                # single threaded mode, the model thread function needs to
-                # acquire the lock
-                #
-                locker.unlock()
-                post( self._extend_cache )
+                self.rows_under_request.add(row)
+                timer = self.findChild(QtCore.QTimer, 'timer')
+                if (timer is not None) and (not timer.isActive()):
+                    timer.start()
+            locker.unlock()
             return empty_row_data
 
     def remove( self, o ):
