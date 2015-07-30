@@ -93,10 +93,9 @@ class OpenFormView( ActionStep ):
                 # form is opened to look for an object that was in the list
                 model = QueryTableProxy(
                     gui_context.admin,
-                    query = related_model.get_query(),
                     max_number_of_rows = 1,
-                    cache_collection_proxy = related_model,
                 )
+                model.set_value(related_model.get_query(), cache_collection_proxy=related_model)
             else:
                 # no cache or sorting information is transferred
                 model = CollectionProxy(

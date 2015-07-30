@@ -33,7 +33,7 @@ import six
 from sqlalchemy import orm, sql
 from sqlalchemy.exc import InvalidRequestError
 
-from ...core.qt import QtCore, Qt
+from ...core.qt import Qt
 from ..model_thread import object_thread, post
 from .collection_proxy import CollectionProxy
 
@@ -43,11 +43,9 @@ class QueryTableProxy(CollectionProxy):
     QTableView
     """
 
-    def __init__(self, admin, query=None, max_number_of_rows=10, 
-                 cache_collection_proxy=None):
-        """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
+    def __init__(self, admin, max_number_of_rows=10):
         logger.debug('initialize query table')
-        self._query = query
+        # if a cache is given, the query should be given as well
         self._sort_decorator = None
         self._mapper = admin.mapper
         #the mode set for each filter
@@ -56,15 +54,14 @@ class QueryTableProxy(CollectionProxy):
         #database, and as such cannot be a result of the query
         self._appended_rows = []
         super(QueryTableProxy, self).__init__(admin,
-                                              max_number_of_rows=max_number_of_rows, 
-                                              cache_collection_proxy=cache_collection_proxy)     
+                                              max_number_of_rows=max_number_of_rows)
         
     def get_query(self):
         """
         :return: the query used to fetch the data, this is not the same as the
             one set by `set_value`, as sorting and filters will modify it
         """
-        query = self._query
+        query = self.get_value()
         if query is None:
             return None
         if self._sort_decorator is None:
@@ -75,7 +72,13 @@ class QueryTableProxy(CollectionProxy):
             query = filter_.decorate_query(query, value)
         query = self._sort_decorator(query)
         return query
-    
+
+    def get_collection(self, yield_per=None):
+        query = self.get_query()
+        if query is None:
+            return []
+        return query.yield_per(yield_per)
+
     def _update_unflushed_rows( self ):
         """Does nothing since all rows returned by a query are flushed"""
         pass
@@ -91,76 +94,21 @@ class QueryTableProxy(CollectionProxy):
             self._appended_rows.remove(o)
 
     def getRowCount(self):
-        #
-        # wait for a while until the rowcount requests array doesn't change any
-        # more
-        #
-        previous_length = 0
-        locker = QtCore.QMutexLocker(self._mutex)
-        while previous_length != len(self._rowcount_requests):
-            previous_length = len(self._rowcount_requests)
-            locker.unlock()
-            QtCore.QThread.msleep(5)
-            locker.relock()
-        self._rowcount_requests.pop()
-        number_of_rowcount_requests = len(self._rowcount_requests)
-        locker.unlock()
-        #
-        # the actual count will only be done when handling the last requests
-        # earlier requests return None asap, to allow other tasks in the queue
-        # to continue, since those tasks might generate other row count requests
-        #
-        if number_of_rowcount_requests == 0:
-            # this is the last request on its way, do the counting now
-            self._clean_appended_rows()
-            if self._query is None:
-                rows = 0
-            else:
-                # manipulate the query to circumvent the use of subselects and order by
-                # clauses
-                query = self.get_query()
-                mapper = orm.class_mapper(self.admin.entity)
-                select = query.order_by(None).as_scalar()
-                select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
-                count = query.session.execute(select, mapper=mapper).scalar()
-                rows = count + len(self._appended_rows)
-        else:
-            # other row count reqests are on their way, do nothing now
+        self._clean_appended_rows()
+        if self.get_value() is None:
             rows = None
+        else:
+            # manipulate the query to circumvent the use of subselects and order by
+            # clauses
+            query = self.get_query()
+            mapper = orm.class_mapper(self.admin.entity)
+            select = query.order_by(None).as_scalar()
+            select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
+            count = query.session.execute(select, mapper=mapper).scalar()
+            rows = count + len(self._appended_rows)
         return rows
 
-    def set_value(self, query):
-        """
-        :param query: the `Query` to display
-        """
-        assert object_thread( self )
-        self._query = query
-        self.refresh()
-            
-    def get_value(self):
-        return self._query
 
-    def get_collection(self):
-        """In case the collection is requested of a QueryProxy, we will return
-        a collection getter for a collection that reuses the data already queried by
-        the collection proxy, and available in the cache.
-         
-        We do this to :
-        
-        1. Prevent an unneeded query when the collection is used to fetch an object already
-           fetched by the query proxy (eg when a form is opened on a table view)
-           
-        2. To make sure the index of an object in the query proxy is the same as the index
-           in the returned collection.  Should we do the same query twice (once to fill the
-           query proxy, and once to fill the returned collection), the same object might appear
-           in a different row.  eg when a form is opened in a table view, the form contains 
-           another record than the selected row in the table.
-        """
-        
-        if self._query is None:
-            return []
-        return self.get_query().all()
-    
     def _set_sort_decorator( self, column=None, order=None ):
         """set the sort decorator attribute of this model to a function that
         sorts a query by the given column using the given order.  When no
@@ -262,7 +210,8 @@ class QueryTableProxy(CollectionProxy):
         previous_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
         if value != previous_value:
-            self.refresh()
+            self._reset()
+            self.layoutChanged.emit()
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new
@@ -314,7 +263,7 @@ class QueryTableProxy(CollectionProxy):
                     
     def _extend_cache(self):
         """Extend the cache around the rows under request"""
-        if self._query is not None:
+        if self.get_value() is not None:
             offset, limit = self._offset_and_limit_rows_to_get()
             if limit:
                 columns = self._columns
@@ -376,7 +325,7 @@ class QueryTableProxy(CollectionProxy):
             except KeyError:
                 pass
             # momentary hack for list error that prevents forms to be closed
-            if self._query is not None:
+            if self._value is not None:
                 res = self.get_query().offset(row)
                 if isinstance(res, list):
                     res = res[0]

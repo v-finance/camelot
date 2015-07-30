@@ -201,17 +201,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                   admin,
                   max_number_of_rows = 10, 
                   flush_changes = True,
-                  cache_collection_proxy = None,
                   ):
         """
 :param admin: the admin interface for the items in the collection
 
-:param cache_collection_proxy: the CollectionProxy on which this CollectionProxy
-will reuse the cache. Passing a cache has the advantage that objects that were
-present in the original cache will remain at the same row in the new cache
-This is used when a form is created from a tableview.  Because between the last
-query of the tableview, and the first of the form, the object might have changed
-position in the query.
 """
         super(CollectionProxy, self).__init__()
         assert object_thread( self )
@@ -224,7 +217,7 @@ position in the query.
         self.setSourceModel(self.source_model)
         
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
-        self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
+        self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
         # the mutex is recursive to avoid blocking during unittest, when
         # model and view are used in the same thread
         self._mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
@@ -240,33 +233,25 @@ position in the query.
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
         self.validator = admin.get_validator(self)
-        self._collection = []
+        self._value = None
         self.flush_changes = flush_changes
         self.mt = get_model_thread()
-        # Set database connection and load data
-        self._rows = None
+        #
+        # The timer reduced the number of times the model thread is
+        # triggered, by waiting for the next gui event before triggering
+        # the model
+        #
+        timer = QtCore.QTimer(self)
+        timer.setInterval(5)
+        timer.setSingleShot(True)
+        timer.setObjectName('timer')
+        timer.timeout.connect(self.timeout_slot)
+
         self._columns = []
         self._static_field_attributes = []
         self._max_number_of_rows = max_number_of_rows
-        max_cache = 10 * self.max_number_of_rows
-        if cache_collection_proxy:
-            cached_entries = len( cache_collection_proxy.display_cache )
-            max_cache = max( cached_entries, max_cache )
-            self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
-            self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
-            self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
-            self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
-        else:        
-            self.display_cache = Fifo( max_cache )
-            self.edit_cache = Fifo( max_cache )
-            self.attributes_cache = Fifo( max_cache )
-            self.action_state_cache = Fifo( max_cache )
-        # The rows in the table for which a cache refill is under request
-        self.rows_under_request = set()
-        self._update_requests = list()
-        self._rowcount_requests = list()
-        # The rows that have unflushed changes
-        self.unflushed_rows = set()
+
+        self._reset()
         self._sort_and_filter = SortingRowMapper()
         self.row_changed_signal.connect( self._emit_changes )
         self._rows_about_to_be_inserted_signal.connect( self._rows_about_to_be_inserted, Qt.QueuedConnection )
@@ -274,10 +259,8 @@ position in the query.
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
 #    # the initial collection might contain unflushed rows
-        post( self._update_unflushed_rows )
+        post(self._update_unflushed_rows)
 #    # in that way the number of rows is requested as well
-        if cache_collection_proxy:
-            self.setRowCount( cache_collection_proxy.rowCount() )
         self.logger.debug( 'initialization finished' )
 
     
@@ -312,11 +295,23 @@ position in the query.
         return QtCore.QModelIndex()
     
     def rowCount( self, index = None ):
+        self.logger.debug('row count requested, returned {0}'.format(self._rows))
         if self._rows is None:
-            self.refresh()
+            timer = self.findChild(QtCore.QTimer, 'timer')
+            if (timer is not None) and (not timer.isActive()):
+                timer.start()
             return 0
         return self._rows
-    
+
+    @QtCore.qt_slot()
+    def timeout_slot(self):
+        self.logger.debug('timout slot')
+        timer = self.findChild(QtCore.QTimer, 'timer')
+        if timer is not None:
+            timer.stop()
+            if self._rows is None:
+                post(self.getRowCount, self._refresh_content)
+
     def hasChildren( self, parent ):
         assert object_thread( self )
         return False
@@ -367,9 +362,11 @@ position in the query.
     def _update_unflushed_rows( self ):
         """Verify all rows to see if some of them should be added to the
         unflushed rows"""
-        for i, e in enumerate( self.get_collection() ):
-            if hasattr(e, 'id') and not e.id:
-                self.unflushed_rows.add( i )
+        value = self.get_value()
+        if value is not None:
+            for i, e in enumerate( self.get_value() ):
+                if hasattr(e, 'id') and not e.id:
+                    self.unflushed_rows.add(i)
 
     def hasUnflushedRows( self ):
         """The model has rows that have not been flushed to the database yet,
@@ -380,69 +377,82 @@ position in the query.
         return has_unflushed_rows
 
     def getRowCount( self ):
-        #
-        # wait for a while until the rowcount requests array doesn't change any
-        # more
-        #
-        previous_length = 0
         locker = QtCore.QMutexLocker(self._mutex)
-        while previous_length != len(self._rowcount_requests):
-            previous_length = len(self._rowcount_requests)
-            locker.unlock()
-            QtCore.QThread.msleep(5)
-            locker.relock()
-        self._rowcount_requests.pop()
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
-        if len(self._rowcount_requests) == 0:
-            # this is the last request on its way, do the counting now
-            rows = len( set( self.get_collection() ) )
-        else:
-            # other row count reqests are on their way, do nothing now
-            rows = None
+        rows = len( set( self.get_value() ) )
         locker.unlock()
         return rows
-
-    def refresh( self ):
-        assert object_thread( self )
-        locker = QtCore.QMutexLocker(self._mutex)
-        self._rowcount_requests.append(True)
-        post( self.getRowCount, self._refresh_content )
-        locker.unlock()
 
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
         # if rows is None, other requests are on their way
-        if rows is not None:
-            locker = QtCore.QMutexLocker(self._mutex)
-            self.display_cache = Fifo( 10 * self.max_number_of_rows )
-            self.edit_cache = Fifo( 10 * self.max_number_of_rows )
-            self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
-            self.action_state_cache = Fifo( 10 * self.max_number_of_rows )
-            self.rows_under_request = set()
-            self.unflushed_rows = set()
-            # once the cache has been cleared, no updates ought to be accepted
-            self._update_requests = list()
-            locker.unlock()
-        self.setRowCount( rows )
+        if rows is None:
+            return
+        ## if number of rows has not changed, only emit data changed ??
+        #self.dataChanged.emit( self.index( 0, 0 ),
+                               #self.index( rows-1, self.columnCount() - 1 ) )
+        self._reset()
+        self._rows = rows
+        self.layoutChanged.emit()
 
-    def set_value(self, collection):
+    def refresh(self):
+        self._reset()
+        self.layoutChanged.emit()
+
+    def _reset(self, cache_collection_proxy=None):
         """
-        :param collection: the list of objects to display
+        reset all shared state and cache
         """
-        if collection is None:
-            collection = []
-        elif isinstance(collection, CollectionContainer):
-            collection = collection._collection
-        self._collection = collection
-        self.refresh()
+        self.logger.debug('reset state and cache')
+        max_cache = 10 * self.max_number_of_rows
+        locker = QtCore.QMutexLocker(self._mutex)
+        if cache_collection_proxy is not None:
+            cached_entries = len( cache_collection_proxy.display_cache )
+            max_cache = max( cached_entries, max_cache )
+            self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
+            self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
+            self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
+            self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
+            self._rows = cache_collection_proxy.rowCount()
+        else:
+            self.display_cache = Fifo( max_cache )
+            self.edit_cache = Fifo( max_cache )
+            self.attributes_cache = Fifo( max_cache )
+            self.action_state_cache = Fifo( max_cache )
+            self._rows = None
+        # The rows in the table for which a cache refill is under request
+        self.rows_under_request = set()
+        self.unflushed_rows = set()
+        # once the cache has been cleared, no updates ought to be accepted
+        self._update_requests = list()
+        locker.unlock()
+
+    def set_value(self, value, cache_collection_proxy=None):
+        """
+        :param value: the collection of objects to display or None
+        :param cache_collection_proxy: the CollectionProxy on which this CollectionProxy
+        will reuse the cache. Passing a cache has the advantage that objects that were
+        present in the original cache will remain at the same row in the new cache
+        This is used when a form is created from a tableview.  Because between the last
+        query of the tableview, and the first of the form, the object might have changed
+        position in the query.
+        """
+        if isinstance(value, CollectionContainer):
+            value = value._collection
+        self._value = value
+        self._reset(cache_collection_proxy)
+        self.layoutChanged.emit()
     
     def get_value(self):
-        return self._collection
+        return self._value
 
-    def get_collection( self ):
-        return self._collection
+    def get_collection(self, yield_per=None):
+        value = self.get_value()
+        if value is None:
+            return []
+        return value
 
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
@@ -516,22 +526,6 @@ position in the query.
         # @todo : decide what to do when a new entity has been created,
         #         probably do nothing
         return
-
-    @QtCore.qt_slot(object)
-    def setRowCount( self, rows ):
-        """Callback method to set the number of rows
-        @param rows the new number of rows
-        """
-        assert object_thread( self )
-        if rows == None:
-            # other row counts are on their way, ignore this one
-            return
-        if self._rows != rows:
-            self._rows = rows
-            self.layoutChanged.emit()
-        elif rows != 0:
-            self.dataChanged.emit( self.index( 0, 0 ),
-                                   self.index( rows-1, self.columnCount() - 1 ) )
 
     def get_static_field_attributes(self):
         return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
@@ -639,7 +633,7 @@ position in the query.
         def create_sort(column, order):
 
             def sort():
-                unsorted_collection = [(i,o) for i,o in enumerate(self.get_collection())]
+                unsorted_collection = [(i,o) for i,o in enumerate(self.get_value())]
                 field_name = self._columns[column][0]
                 
                 # handle the case of one of the values being None
@@ -759,6 +753,7 @@ position in the query.
         #
         # Handle the requests
         #
+        self.logger.debug('handle update {0} requests'.format(previous_length))
         return_list = []
         grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
@@ -869,6 +864,7 @@ position in the query.
                 except KeyError:
                     pass
                 locker.unlock()
+        self.logger.debug('{0} rows changed in update'.format(len(return_list)))
         return return_list
 
     def setData( self, index, value, role = Qt.EditRole ):
@@ -881,16 +877,16 @@ position in the query.
         #
         # prevent data of being set in rows not actually in this model
         #
+        
         if (not index.isValid()) or (index.model()!=self):
             return False
-        
         if role == Qt.EditRole:
-
             # if the field is not editable, don't waste any time and get out of here
             # editable should be explicitely True, since the _get_field_attribute_value
             # might return intermediary values such as ValueLoading ??
             if self._get_field_attribute_value(index, 'editable') != True:
                 return
+            self.logger.debug('set data ({0},{1})'.format(index.row(), index.column()))
             locker = QtCore.QMutexLocker( self._mutex )
             flushed = ( index.row() not in self.unflushed_rows )
             self.unflushed_rows.add( index.row() )
@@ -1046,7 +1042,7 @@ position in the query.
         
         if limit:
             columns = self._columns
-            collection = self.get_collection()
+            collection = self.get_value()
             skipped_rows = 0
             try:
                 for i in range(offset, min( offset + limit + 1,
@@ -1077,7 +1073,7 @@ position in the query.
         except KeyError:
             pass
         try:
-            return self.get_collection()[self.map_to_source(sorted_row_number)]
+            return self.get_value()[self.map_to_source(sorted_row_number)]
         except IndexError:
             pass
         return None
@@ -1123,13 +1119,13 @@ position in the query.
             return empty_row_data
 
     def remove( self, o ):
-        collection = self.get_collection()
+        collection = self.get_value()
         if o in collection:
             collection.remove( o )
             self._rows -= 1
 
     def append( self, o ):
-        collection = self.get_collection()
+        collection = self.get_value()
         if o not in collection:
             collection.append( o )
 
