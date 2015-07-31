@@ -299,27 +299,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             return 0
         return self._rows
 
-    @QtCore.qt_slot()
-    def timeout_slot(self):
-        self.logger.debug('timout slot')
-        timer = self.findChild(QtCore.QTimer, 'timer')
-        if timer is not None:
-            timer.stop()
-            if self._rows is None:
-                post(self.getRowCount, self._refresh_content)
-            if self._update_requests:
-                post(self._handle_update_requests)
-            if self.rows_under_request:
-                post(self._extend_cache)
-
-    def _start_timer(self):
-        """
-        Start the timer if it is not yet active.
-        """
-        timer = self.findChild(QtCore.QTimer, 'timer')
-        if (timer is not None) and (not timer.isActive()):
-            timer.start()
-
     def hasChildren( self, parent ):
         assert object_thread( self )
         return False
@@ -353,7 +332,37 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     #
     # end of drag and drop related functions
     #
-    
+
+    #
+    # begin functions that handle the timer
+    # to group requests to the model thread
+    #
+
+    @QtCore.qt_slot()
+    def timeout_slot(self):
+        self.logger.debug('timout slot')
+        timer = self.findChild(QtCore.QTimer, 'timer')
+        if timer is not None:
+            timer.stop()
+            if self._rows is None:
+                post(self.getRowCount, self._refresh_content)
+            if self._update_requests:
+                post(self._handle_update_requests)
+            if self.rows_under_request:
+                post(self._extend_cache)
+
+    def _start_timer(self):
+        """
+        Start the timer if it is not yet active.
+        """
+        timer = self.findChild(QtCore.QTimer, 'timer')
+        if (timer is not None) and (not timer.isActive()):
+            timer.start()
+
+    #
+    # end of timer functions
+    #
+
     @property
     def max_number_of_rows(self):
         """The maximum number of rows to be displayed at once"""
