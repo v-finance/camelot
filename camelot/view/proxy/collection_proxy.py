@@ -258,8 +258,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
-#    # the initial collection might contain unflushed rows
-        post(self._update_unflushed_rows)
 #    # in that way the number of rows is requested as well
         self.logger.debug( 'initialization finished' )
 
@@ -368,15 +366,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         """Converts a sorted row number to a row number of the source
         collection"""
         return self._sort_and_filter[sorted_row_number]
-
-    def _update_unflushed_rows( self ):
-        """Verify all rows to see if some of them should be added to the
-        unflushed rows"""
-        value = self.get_value()
-        if value is not None:
-            for i, e in enumerate( self.get_value() ):
-                if hasattr(e, 'id') and not e.id:
-                    self.unflushed_rows.add(i)
 
     def hasUnflushedRows( self ):
         """The model has rows that have not been flushed to the database yet,

@@ -79,10 +79,6 @@ class QueryTableProxy(CollectionProxy):
             return []
         return query.yield_per(yield_per)
 
-    def _update_unflushed_rows( self ):
-        """Does nothing since all rows returned by a query are flushed"""
-        pass
-    
     def _clean_appended_rows(self):
         """Remove those rows from appended rows that have been flushed"""
         flushed_rows = []

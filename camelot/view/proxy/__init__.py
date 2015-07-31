@@ -38,6 +38,6 @@ class ValueLoading(object):
 
 # Refactor plan
 # - implement changed object signal handling to operate on sets
-# - object signals should be invoked in the model thread
+# - object signals should be invoked in the gui thread
 # - replace _get_object with _get_objects(from, thru, yield_per),
 #   which replaces get_collection
