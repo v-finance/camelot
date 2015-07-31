@@ -297,9 +297,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def rowCount( self, index = None ):
         self.logger.debug('row count requested, returned {0}'.format(self._rows))
         if self._rows is None:
-            timer = self.findChild(QtCore.QTimer, 'timer')
-            if (timer is not None) and (not timer.isActive()):
-                timer.start()
+            self._start_timer()
             return 0
         return self._rows
 
@@ -311,8 +309,18 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             timer.stop()
             if self._rows is None:
                 post(self.getRowCount, self._refresh_content)
+            if self._update_requests:
+                post(self._handle_update_requests)
             if self.rows_under_request:
                 post(self._extend_cache)
+
+    def _start_timer(self):
+        """
+        Start the timer if it is not yet active.
+        """
+        timer = self.findChild(QtCore.QTimer, 'timer')
+        if (timer is not None) and (not timer.isActive()):
+            timer.start()
 
     def hasChildren( self, parent ):
         assert object_thread( self )
@@ -735,17 +743,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             return value.get(field_attribute, None)
 
     def _handle_update_requests(self):
-        #
-        # wait for a while until the update requests array doesn't change any
-        # more
-        #
-        previous_length = 0
         locker = QtCore.QMutexLocker(self._mutex)
-        while previous_length != len(self._update_requests):
-            previous_length = len(self._update_requests)
-            locker.unlock()
-            QtCore.QThread.msleep(5)
-            locker.relock()
         #
         # Copy the update requests and clear the list of requests
         #
@@ -755,7 +753,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         #
         # Handle the requests
         #
-        self.logger.debug('handle update {0} requests'.format(previous_length))
+        self.logger.debug('handle update {0} requests'.format(len(update_requests)))
         return_list = []
         grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
@@ -894,8 +892,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.unflushed_rows.add( index.row() )
             self._update_requests.append( (flushed, index.row(), index.column(), value) )
             locker.unlock()
-            post( self._handle_update_requests )
-
+            self._start_timer()
         return True
 
     # @todo : it seems Qt regulary crashes when dataChanged is emitted
@@ -1102,9 +1099,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             locker = QtCore.QMutexLocker(self._mutex)
             if row not in self.rows_under_request:
                 self.rows_under_request.add(row)
-                timer = self.findChild(QtCore.QTimer, 'timer')
-                if (timer is not None) and (not timer.isActive()):
-                    timer.start()
+                self._start_timer()
             locker.unlock()
             return empty_row_data
 
