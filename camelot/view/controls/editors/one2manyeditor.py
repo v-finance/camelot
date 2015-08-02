@@ -171,7 +171,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                     post(qaction.action.get_state,
                          qaction.set_state,
                          args=(model_context, ))
-            #post( model._extend_cache, self.update_delegates )
 
     def activate_editor(self, number_of_rows):
         assert object_thread(self)

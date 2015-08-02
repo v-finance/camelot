@@ -73,7 +73,9 @@ class FormActionModelContext( ApplicationActionModelContext ):
             is displayed yet
         """
         if self.current_row != None:
-            return self._model._get_object( self.current_row )
+            for obj in self._model.get_slice(self.current_row,
+                                             self.current_row+1):
+                return obj
     
     def get_collection( self, yield_per = None ):
         """
@@ -81,7 +83,7 @@ class FormActionModelContext( ApplicationActionModelContext ):
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self._model.get_collection():
+        for obj in self._model.get_slice(0, self.collection_count, yield_per):
             yield obj
             
     def get_selection( self, yield_per = None ):
@@ -96,9 +98,8 @@ class FormActionModelContext( ApplicationActionModelContext ):
             form and does not yield anything if no object is displayed yet
             in the form.
         """
-        if self.current_row != None:
-            yield self._model._get_object( self.current_row )
-        
+        yield self.get_object()
+
 class FormActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a form.  On top of the attributes of the 
     :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
@@ -131,7 +132,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
     def create_model_context( self ):
         context = super( FormActionGuiContext, self ).create_model_context()
         context._model = self.widget_mapper.model()
-        context.collection_count = context._model.rowCount()
         context.current_row = self.widget_mapper.currentIndex()
         return context
         

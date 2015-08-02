@@ -98,24 +98,26 @@ class ListActionModelContext( ApplicationActionModelContext ):
         # change, while the selection remains the same, so we should
         # be careful when using the collection to generate selection data
         for (first_row, last_row) in self.selected_rows:
-            for row in range( first_row, last_row + 1 ):
-                yield self._model._get_object( row )
-    
+            for obj in self._model.get_slice(first_row, last_row + 1, yield_per):
+                yield obj
+
     def get_collection( self, yield_per = None ):
         """
         :param yield_per: an integer number giving a hint on how many objects
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self._model.get_collection():
+        for obj in self._model.get_slice(0, self.collection_count, yield_per):
             yield obj
             
     def get_object( self ):
         """
         :return: the object displayed in the current row or None
         """
-        if self.current_row is not None:
-            return self._model._get_object( self.current_row )
+        if self.current_row != None:
+            for obj in self._model.get_slice(self.current_row,
+                                             self.current_row+1):
+                return obj
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a table view.  On top of the attributes of the 

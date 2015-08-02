@@ -154,9 +154,9 @@ class ObjectValidator(QtCore.QObject):
         messages = []
         logger.debug('isValid for row %s' % row)
         try:
-            entity_instance = self.model._get_object(row)
-            if entity_instance is not None:
-                messages = self.validate_object(entity_instance)
+            for obj in self.model.get_slice(row, row+1):
+                if obj is not None:
+                    messages = self.validate_object(obj)
         except Exception as e:
             logger.error(
                 'programming error while validating object',

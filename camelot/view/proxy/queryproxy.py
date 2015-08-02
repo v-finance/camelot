@@ -73,12 +73,6 @@ class QueryTableProxy(CollectionProxy):
         query = self._sort_decorator(query)
         return query
 
-    def get_collection(self, yield_per=None):
-        query = self.get_query()
-        if query is None:
-            return []
-        return query.yield_per(yield_per)
-
     def _clean_appended_rows(self):
         """Remove those rows from appended rows that have been flushed"""
         flushed_rows = []
@@ -257,10 +251,9 @@ class QueryTableProxy(CollectionProxy):
                 
         return query.all()
                     
-    def _extend_cache(self):
+    def _extend_cache(self, offset, limit):
         """Extend the cache around the rows under request"""
         if self.get_value() is not None:
-            offset, limit = self._offset_and_limit_rows_to_get()
             if limit:
                 columns = self._columns
                 #
@@ -275,7 +268,7 @@ class QueryTableProxy(CollectionProxy):
                 rows_in_cache = 0
                 for row in range(offset, offset + limit):
                     try:
-                        cached_obj =  self.edit_cache.get_entity_at_row(row)                        
+                        cached_obj =  self.edit_cache.get_entity_at_row(row)
                         self._add_data( columns, row, cached_obj)
                         rows_in_cache += 1
                     except KeyError:
@@ -297,38 +290,13 @@ class QueryTableProxy(CollectionProxy):
                             pass
                         if self._skip_row(row, obj) == False:
                             self._add_data(columns, row, obj)
+                self._clean_appended_rows()
                 rows_in_query = (self._rows - len(self._appended_rows))
                 # Verify if rows that have not yet been flushed have been 
                 # requested
                 if offset+limit >= rows_in_query:
                     for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
-                        obj = self._get_object(row)
+                        obj = self._appended_rows[row - rows_in_query]
                         self._add_data(columns, row, obj)
-            self._cache_extended(offset, limit)
 
-    def _get_object(self, row):
-        """Get the object corresponding to row.  If row is smaller than 0
-        (in case of an invalid widget mapper), None is returned as an object"""
-        if ( self._rows > 0 ) and  ( self._rows > row >= 0 ):
-            self._clean_appended_rows()
-            rows_in_query = (self._rows - len(self._appended_rows))
-            if row >= rows_in_query:
-                return self._appended_rows[row - rows_in_query]
-            # first try to get the primary key out of the cache, if it's not
-            # there, query the collection_getter
-            try:
-                return self.edit_cache.get_entity_at_row(row)
-            except KeyError:
-                pass
-            # momentary hack for list error that prevents forms to be closed
-            if self._value is not None:
-                res = self.get_query().offset(row)
-                if isinstance(res, list):
-                    res = res[0]
-                # @todo: remove this try catch and find out why it 
-                # sometimes fails
-                try:
-                    return res.limit(1).first()
-                except:
-                    pass
 

@@ -349,7 +349,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             if self._update_requests:
                 post(self._handle_update_requests)
             if self.rows_under_request:
-                post(self._extend_cache)
+                post(self.__extend_cache)
 
     def _start_timer(self):
         """
@@ -455,12 +455,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     
     def get_value(self):
         return self._value
-
-    def get_collection(self, yield_per=None):
-        value = self.get_value()
-        if value is None:
-            return []
-        return value
 
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
@@ -759,7 +753,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         admin = self.admin
         for row, request_group in six.iteritems(grouped_requests):
             #
-            # don't use _get_object, but only update objects which are in the
+            # don't use get_slice, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the
             # one that was edited
             #
@@ -1024,10 +1018,13 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             raise e
         return (offset, limit)
 
-    def _extend_cache( self ):
-        """Extend the cache around the rows under request"""
+    def __extend_cache(self):
         offset, limit = self._offset_and_limit_rows_to_get()
-        
+        self._extend_cache(offset, limit)
+        self._cache_extended(offset, limit)
+
+    def _extend_cache(self, offset, limit):
+        """Extend the cache around the rows under request"""
         if limit:
             columns = self._columns
             collection = self.get_value()
@@ -1048,23 +1045,53 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 # stop when the end of the collection is reached, no matter
                 # what the request was
                 pass
-        self._cache_extended(offset, limit)
 
-    def _get_object( self, sorted_row_number ):
-        """Get the object corresponding to row
-        :return: the object at row row or None if the row index is invalid
+    def get_slice(self, i, j, yield_per=None):
         """
-        try:
-            # first try to get the primary key out of the cache, if it's not
-            # there, query the collection_getter
-            return self.edit_cache.get_entity_at_row( sorted_row_number )
-        except KeyError:
-            pass
-        try:
-            return self.get_value()[self.map_to_source(sorted_row_number)]
-        except IndexError:
-            pass
-        return None
+        Get an iterator over a number of objects mapped between two rows in the
+        proxy.
+
+        The requested row numbers should be positive and smaller than the number
+        of rows, or an :attr:`IndexError` will be raised.  The row numbers are
+        the row numbers after sorting and filtering, so their relative order
+        corresponds to the row numbers showed in the item view.
+
+        :param i: the row number of the first object in the slice
+        :param j: the row number of the first object not in the slice
+        :param yield_per: an integer number giving a hint on how many objects
+            should fetched from the database at the same time
+        :return: an iterator over the objects in the slice
+
+        The number of objects returned by the iterator is not guaranteed to be
+        `j-i` since the underlying collection might have been modified without
+        the proxy being aware of it.
+
+        This method guarantees temporary consistency with the view, meaning that
+        while the iterator returns an object, that object will be in the same
+        row in the view.  However when the iterator returns the next object,
+        there is no guarantee any more over the row of the previous object.
+        """
+
+        if self._rows is not None:
+            row_count = self._rows
+        else:
+            row_count = self.getRowCount()
+        if not (0<=i<=row_count):
+            raise IndexError('first row not in range', i, 0, row_count)
+        if not (0<=j<=row_count):
+            raise IndexError('last row not in range', j, 0, row_count)
+        for row in xrange(i, j):
+            try:
+                obj = self.edit_cache.get_entity_at_row(row)
+            except KeyError:
+                self._extend_cache(row, row+self.edit_cache.max_entries)
+                try:
+                    obj = self.edit_cache.get_entity_at_row(row)
+                except KeyError:
+                    # there is no data available to extend the cache any
+                    # more
+                    break
+            yield obj
 
     def _cache_extended( self, offset, limit ):
         """

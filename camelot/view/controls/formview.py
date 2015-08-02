@@ -252,10 +252,10 @@ class FormView(AbstractView):
         self.model.refresh()
     
     def _get_title( self, index ):
-        obj = self.model._get_object( index )
         verbose_identifier = ''
-        if obj is not None:
-            verbose_identifier = self.admin.get_verbose_identifier(obj)
+        for obj in self.model.get_slice(index, index+1):
+            if obj is not None:
+                verbose_identifier = self.admin.get_verbose_identifier(obj)
         return u'%s %s' % (
             self.title_prefix,
             verbose_identifier
