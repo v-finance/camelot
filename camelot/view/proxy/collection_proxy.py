@@ -176,6 +176,51 @@ class RowModelContext(ListActionModelContext):
     def get_object( self ):
         return self.obj
 
+class Update(object):
+
+    def __init__(self, objects):
+        self.objects = objects
+
+    def model_run(self, proxy):
+        for obj in self.objects:
+            try:
+                row = proxy.display_cache.get_row_by_entity(obj)
+            except KeyError:
+                continue
+            #
+            # Because the entity is updated, it might no longer be in our
+            # collection, therefore, make sure we don't access the collection
+            # to strip data of the entity
+            #
+            columns = proxy._columns
+            proxy._add_data(columns, row, obj)
+
+    def gui_run(self, item_model):
+        pass
+
+class Deleted(object):
+
+    def __init__(self, objects, item_model):
+        self.objects = objects
+        self.rows = None
+        self.item_model = item_model
+
+    def model_run(self, proxy):
+        for obj in self.objects:
+            try:
+                proxy.display_cache.get_row_by_entity( obj )
+            except KeyError:
+                continue
+            proxy.remove( obj )
+            proxy.display_cache.delete_by_entity( obj )
+            proxy.attributes_cache.delete_by_entity( obj )
+            proxy.edit_cache.delete_by_entity( obj )
+            proxy.action_state_cache.delete_by_entity( obj )
+        self.rows = proxy._rows
+
+    def gui_run(self, item_model):
+        self.item_model._refresh_content(self.rows)
+
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
 class CollectionProxy(QtModel.QSortFilterProxyModel):
@@ -350,6 +395,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 post(self._handle_update_requests)
             if self.rows_under_request:
                 post(self.__extend_cache)
+            if self._crud_requests:
+                for request in self._crud_requests:
+                    post(request.model_run, request.gui_run, args=(self,))
+                self._crud_requests = list()
 
     def _start_timer(self):
         """
@@ -433,6 +482,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self.unflushed_rows = set()
+        self._crud_requests = list()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         locker.unlock()
@@ -466,68 +516,43 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.dataChanged.emit( self.index( row, 0 ),
                                self.index( row, self.columnCount() - 1 ) )
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_update( self, sender, entity ):
+    @QtCore.qt_slot(object, tuple)
+    def objects_updated(self, sender, objects):
         """Handles the entity signal, indicating that the model is out of
-        date"""
-        assert object_thread( self )
-        self.logger.debug( '%s %s received entity update signal' % \
-                     ( self.__class__.__name__, self.admin.get_verbose_name() ) )
+        date
+        """
+        assert object_thread(self)
         if sender != self:
-            try:
-                row = self.display_cache.get_row_by_entity( entity )
-            except KeyError:
-                self.logger.debug( 'entity not in cache' )
-                return
-            #
-            # Because the entity is updated, it might no longer be in our
-            # collection, therefore, make sure we don't access the collection
-            # to strip data of the entity
-            #
-            def create_entity_update(row, entity):
+            self.logger.debug(
+                'received {0} objects updated'.format(len(objects))
+            )
+            self._crud_requests.append(Update(objects))
+            self._start_timer()
 
-                def entity_update():
-                    columns = self._columns
-                    self._add_data(columns, row, entity)
-
-                return entity_update
-
-            post( create_entity_update(row, entity) )
-        else:
-            self.logger.debug( 'duplicate update' )
-
-    @QtCore.qt_slot( object, object )
-    def handle_entity_delete( self, sender, obj ):
+    @QtCore.qt_slot(object, tuple)
+    def objects_deleted(self, sender, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        self.logger.debug( 'received entity delete signal' )
         if sender != self:
-            try:
-                self.display_cache.get_row_by_entity( obj )
-            except KeyError:
-                self.logger.debug( 'entity not in cache' )
-                return
+            self.logger.debug(
+                'received {0} objects deleted'.format(len(objects))
+            )
+            self._crud_requests.append(Deleted(objects, self))
+            self._start_timer()
 
-            def entity_remove( obj ):
-                self.remove( obj )
-                self.display_cache.delete_by_entity( obj )
-                self.attributes_cache.delete_by_entity( obj )
-                self.edit_cache.delete_by_entity( obj )
-                self.action_state_cache.delete_by_entity( obj )
-                return self._rows
-
-            post( entity_remove, self._refresh_content, args=(obj,) )
-
-    @QtCore.qt_slot( object, object )
-    def handle_entity_create( self, sender, entity ):
+    @QtCore.qt_slot(object, tuple)
+    def objects_created(self, sender, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        self.logger.debug( 'received entity create signal' )
-        # @todo : decide what to do when a new entity has been created,
-        #         probably do nothing
-        return
+        if sender != self:
+            self.logger.debug(
+                'received {0} objects created'.format(len(objects))
+            )
+            # @todo : decide what to do when a new entity has been created,
+            #         maybe look if the object is in the underlying collection, and
+            #         if so, update the view
 
     def get_static_field_attributes(self):
         return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
@@ -840,13 +865,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                             pass
                         locker.unlock()
                         if was_persistent is False:
-                            self.rsh.sendEntityCreate(self, o)
+                            self.rsh.send_objects_created(self, (o,))
                 # update the cache
+                self.logger.debug('update cache')
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
-                self.rsh.sendEntityUpdate( self, o )
-                for depending_obj in admin.get_depending_objects( o ):
-                    self.rsh.sendEntityUpdate( self, depending_obj )
+                self.logger.debug('send objects updated signals')
+                self.rsh.send_objects_updated(self, o)
+                self.rsh.send_objects_updated(self, tuple(admin.get_depending_objects(o)))
                 return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
             elif flushed:
                 locker.relock()
@@ -1161,8 +1187,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # defaults might depend on object being part of a collection
         if not self.admin.is_persistent(obj):
             self.unflushed_rows.add( row )
-        for depending_obj in self.admin.get_depending_objects( obj ):
-            self.rsh.sendEntityUpdate( self, depending_obj )
+        self.rsh.send_objects_updated(self, tuple(self.admin.get_depending_objects(obj)))
         self._rows = rows + 1
         #
         # update the cache, so the object can be retrieved

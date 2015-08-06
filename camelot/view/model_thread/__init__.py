@@ -55,6 +55,12 @@ def object_thread( self ):
     """
     return self.thread() == QtCore.QThread.currentThread()
 
+def gui_thread():
+    """function to verify if a call is made in the GUI thread of the application
+    """
+    app = QtCore.QApplication.instance()
+    return object_thread(app)
+
 class AbstractModelThread(QtCore.QThread):
     """Abstract implementation of a model thread class
     Thread in which the model runs, all requests to the model should be

@@ -357,12 +357,10 @@ class Refresh( Action ):
         import sqlalchemy.exc as sa_exc
         from camelot.core.orm import Session
         from camelot.view import action_steps
-        from camelot.view.remote_signals import get_signal_handler
         LOGGER.debug('session refresh requested')
         progress_db_message = ugettext('Reload data from database')
         progress_view_message = ugettext('Update screens')
         session = Session()
-        signal_handler = get_signal_handler()
         refreshed_objects = []
         expunged_objects = []
         #
@@ -387,10 +385,8 @@ class Refresh( Action ):
                                                    session_items, 
                                                    progress_db_message )
         yield action_steps.UpdateProgress( text = progress_view_message )
-        for obj in refreshed_objects:
-            signal_handler.sendEntityUpdate( self, obj )
-        for obj in expunged_objects:
-            signal_handler.sendEntityDelete( self, obj )
+        yield action_steps.UpdateObjects(refreshed_objects)
+        yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
 
 class Restore(Refresh):
