@@ -174,21 +174,26 @@ class Many2OneEditor( CustomEditor ):
         obj = index.data(Qt.EditRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_update( self, sender, entity ):
-        if entity is self.get_value():
-            self.set_object(entity, False)
+    @QtCore.qt_slot(object, tuple)
+    def objects_updated(self, sender, objects):
+        value = self.get_value()
+        for obj in objects:
+            if obj is value:
+                self.set_object(obj, False)
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_delete( self, sender, entity ):
-        if entity is self.get_value():
-            self.set_object(None, False)
+    @QtCore.qt_slot(object, tuple)
+    def objects_deleted(self, sender, objects):
+        value = self.get_value()
+        for obj in objects:
+            if obj is value:
+                self.set_object(None, False)
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_create( self, sender, entity ):
-        if entity is self.new_value:
-            self.new_value = None
-            self.set_object(entity)
+    @QtCore.qt_slot(object, tuple)
+    def objects_created(self, sender, objects):
+        for obj in objects:
+            if obj is self.new_value:
+                self.new_value = None
+                self.set_object(obj)
 
     def search_input_editing_finished(self):
         if self.obj is None:
