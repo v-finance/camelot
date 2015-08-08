@@ -127,9 +127,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             # model with the real data should live in the model thread, and
             # this should only be a proxy
             if details.isHidden():
-                details.show()
                 model = QtGui.QStringListModel( parent = self )
                 details.setModel( model )
+                details.show()
             model = details.model()
             model.insertRow(model.rowCount())
             model.setData(model.index(model.rowCount()-1, 0),
@@ -139,8 +139,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     def clear_details( self ):
         """Clear the detail text"""
         details = self.findChild( QtWidgets.QListView, 'details' )
-        if details != None:
-            details.model().clear()
+        if details is not None:
+            details.hide()
 
     def enlarge(self):
         """ Increase the size of the dialog window """
