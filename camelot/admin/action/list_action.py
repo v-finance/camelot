@@ -373,7 +373,7 @@ class DeleteSelection( EditAction ):
         
     def handle_object( self, model_context, obj ):
         from camelot.view import action_steps
-        yield action_steps.DeleteObject( obj )
+        yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete( obj )
 
 class AbstractToPrevious(object):

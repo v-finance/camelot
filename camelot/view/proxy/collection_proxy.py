@@ -193,16 +193,16 @@ class Update(object):
             #
             columns = proxy._columns
             proxy._add_data(columns, row, obj)
+        return self
 
     def gui_run(self, item_model):
         pass
 
 class Deleted(object):
 
-    def __init__(self, objects, item_model):
+    def __init__(self, objects):
         self.objects = objects
         self.rows = None
-        self.item_model = item_model
 
     def model_run(self, proxy):
         for obj in self.objects:
@@ -216,9 +216,10 @@ class Deleted(object):
             proxy.edit_cache.delete_by_entity( obj )
             proxy.action_state_cache.delete_by_entity( obj )
         self.rows = proxy._rows
+        return self
 
     def gui_run(self, item_model):
-        self.item_model._refresh_content(self.rows)
+        item_model._refresh_content(self.rows)
 
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
@@ -238,8 +239,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     
     # it looks as QtCore.QModelIndex cannot be serialized for cross
     # thread signals
-    _rows_about_to_be_inserted_signal = QtCore.qt_signal( int, int )
-    _rows_inserted_signal = QtCore.qt_signal( int, int )
+    _rows_about_to_be_inserted_signal = QtCore.qt_signal(int, int)
+    _rows_inserted_signal = QtCore.qt_signal(int, int)
+    _objects_updated_signal = QtCore.qt_signal(tuple)
+    _objects_created_signal = QtCore.qt_signal(tuple)
 
     def __init__( self,
                   admin,
@@ -298,8 +301,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset()
         self._sort_and_filter = SortingRowMapper()
         self.row_changed_signal.connect( self._emit_changes )
-        self._rows_about_to_be_inserted_signal.connect( self._rows_about_to_be_inserted, Qt.QueuedConnection )
-        self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
+        self._rows_about_to_be_inserted_signal.connect(self._rows_about_to_be_inserted, Qt.QueuedConnection)
+        self._rows_inserted_signal.connect(self._rows_inserted, Qt.QueuedConnection)
+        self._objects_updated_signal.connect(self._send_objects_updated, Qt.QueuedConnection)
+        self._objects_created_signal.connect(self._send_objects_created, Qt.QueuedConnection)
         self._crud_signal_handler = CrudSignalHandler()
         self._crud_signal_handler.connect_signals( self )
 #    # in that way the number of rows is requested as well
@@ -396,7 +401,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 post(self.__extend_cache)
             if self._crud_requests:
                 for request in self._crud_requests:
-                    post(request.model_run, request.gui_run, args=(self,))
+                    post(request.model_run, self._crud_update, args=(self,))
                 self._crud_requests = list()
 
     def _start_timer(self):
@@ -452,6 +457,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset()
         self._rows = rows
         self.layoutChanged.emit()
+
+    @QtCore.qt_slot(object)
+    def _crud_update(self, crud_request):
+        crud_request.gui_run(self)
 
     def refresh(self):
         self._reset()
@@ -537,7 +546,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
             )
-            self._crud_requests.append(Deleted(objects, self))
+            self._crud_requests.append(Deleted(objects))
             self._start_timer()
 
     @QtCore.qt_slot(object, tuple)
@@ -864,14 +873,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                             pass
                         locker.unlock()
                         if was_persistent is False:
-                            self.rsh.send_objects_created(self, (o,))
+                            self._objects_created_signal.emit((o,))
                 # update the cache
                 self.logger.debug('update cache')
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
                 self.logger.debug('send objects updated signals')
-                self.rsh.send_objects_updated(self, o)
-                self.rsh.send_objects_updated(self, tuple(admin.get_depending_objects(o)))
+                self._objects_updated_signal.emit((o,))
+                self._objects_updated_signal.emit(tuple(admin.get_depending_objects(o)))
                 return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
             elif flushed:
                 locker.relock()
@@ -1172,6 +1181,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def _rows_inserted( self, _first, _last ):
         self.endInsertRows()
         
+    @QtCore.qt_slot(tuple)
+    def _send_objects_updated(self, objects):
+        self._crud_signal_handler.send_objects_updated(self, objects)
+
+    @QtCore.qt_slot(tuple)
+    def _send_objects_created(self, objects):
+        self._crud_signal_handler.send_objects_created(self, objects)
+
     def append_object(self, obj):
         """Append an object to this collection
         
@@ -1186,7 +1203,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # defaults might depend on object being part of a collection
         if not self.admin.is_persistent(obj):
             self.unflushed_rows.add( row )
-        self.rsh.send_objects_updated(self, tuple(self.admin.get_depending_objects(obj)))
+        self._objects_updated_signal.emit(tuple(self.admin.get_depending_objects(obj)))
         self._rows = rows + 1
         #
         # update the cache, so the object can be retrieved
