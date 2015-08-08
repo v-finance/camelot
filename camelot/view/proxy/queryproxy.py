@@ -83,7 +83,7 @@ class QueryTableProxy(CollectionProxy):
         for o in flushed_rows:
             self._appended_rows.remove(o)
 
-    def getRowCount(self):
+    def get_row_count(self):
         self._clean_appended_rows()
         if self.get_value() is None:
             rows = None

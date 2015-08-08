@@ -44,6 +44,7 @@ returned and an update signal is emitted when the correct data is available.
 import collections
 import datetime
 import logging
+import sys
 
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
@@ -221,6 +222,18 @@ class Deleted(object):
     def gui_run(self, item_model):
         item_model._refresh_content(self.rows)
 
+class RowCount(object):
+
+    def __init__(self):
+        self.rows = 0
+
+    def model_run(self, proxy):
+        self.rows = proxy.get_row_count()
+        return self
+
+    def gui_run(self, item_model):
+        item_model._refresh_content(self.rows)
+
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
 class CollectionProxy(QtModel.QSortFilterProxyModel):
@@ -342,11 +355,16 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         return QtCore.QModelIndex()
     
     def rowCount( self, index = None ):
-        self.logger.debug('row count requested, returned {0}'.format(self._rows))
-        if self._rows is None:
-            self._start_timer()
+        rows = super(CollectionProxy, self).rowCount()
+        self.logger.debug('row count requested, returned {0}'.format(rows))
+        if rows == 0:
+            root_item = self.source_model.invisibleRootItem()
+            if not root_item.isEnabled():
+                if not isinstance(self._last_request(), RowCount):
+                    self._crud_requests.append(RowCount())
+                    self._start_timer()
             return 0
-        return self._rows
+        return rows
 
     def hasChildren( self, parent ):
         assert object_thread( self )
@@ -393,8 +411,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             timer.stop()
-            if self._rows is None:
-                post(self.getRowCount, self._refresh_content)
             if self._update_requests:
                 post(self._handle_update_requests)
             if self.rows_under_request:
@@ -412,6 +428,12 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         if (timer is not None) and (not timer.isActive()):
             timer.start()
 
+    def _last_request(self):
+        """
+        :return: the last crud request issued, or `None` if the queue is empty
+        """
+        if len(self._crud_requests):
+            return self._crud_requests[-1]
     #
     # end of timer functions
     #
@@ -437,7 +459,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.logger.debug( 'hasUnflushed rows : %s' % has_unflushed_rows )
         return has_unflushed_rows
 
-    def getRowCount( self ):
+    def get_row_count( self ):
         locker = QtCore.QMutexLocker(self._mutex)
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
@@ -448,13 +470,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
-        # if rows is None, other requests are on their way
-        if rows is None:
-            return
-        ## if number of rows has not changed, only emit data changed ??
-        #self.dataChanged.emit( self.index( 0, 0 ),
-                               #self.index( rows-1, self.columnCount() - 1 ) )
-        self._reset()
+        assert isinstance(rows, int)
+        self._reset(row_count=rows)
         self._rows = rows
         self.layoutChanged.emit()
 
@@ -466,12 +483,13 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset()
         self.layoutChanged.emit()
 
-    def _reset(self, cache_collection_proxy=None):
+    def _reset(self, cache_collection_proxy=None, row_count=None):
         """
         reset all shared state and cache
         """
         self.logger.debug('reset state and cache')
         max_cache = 10 * self.max_number_of_rows
+        root_item = self.source_model.invisibleRootItem()
         locker = QtCore.QMutexLocker(self._mutex)
         if cache_collection_proxy is not None:
             cached_entries = len( cache_collection_proxy.display_cache )
@@ -480,13 +498,16 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
             self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
             self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
-            self._rows = cache_collection_proxy.rowCount()
+            self.source_model.setRowCount(cache_collection_proxy.rowCount())
+            self._rows = self.source_model.rowCount()
         else:
             self.display_cache = Fifo( max_cache )
             self.edit_cache = Fifo( max_cache )
             self.attributes_cache = Fifo( max_cache )
             self.action_state_cache = Fifo( max_cache )
-            self._rows = None
+            self.source_model.setRowCount(row_count or 0)
+            root_item.setEnabled(row_count != None)
+            self._rows = row_count
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self.unflushed_rows = set()
@@ -1106,10 +1127,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         there is no guarantee any more over the row of the previous object.
         """
 
-        if self._rows is not None:
-            row_count = self._rows
-        else:
-            row_count = self.getRowCount()
+        # for now, dont get the actual number of rows, as this might be too
+        # slow
+        row_count = sys.maxint
         if not (0<=i<=row_count):
             raise IndexError('first row not in range', i, 0, row_count)
         if not (0<=j<=row_count):

@@ -233,9 +233,9 @@ class CloseForm( Action ):
             if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
-                    yield action_steps.UpdateObject( obj )
+                    yield action_steps.UpdateObjects((obj,))
                 else:
-                    yield action_steps.DeleteObject( obj )
+                    yield action_steps.DeleteObjects((obj,))
                     admin.expunge( obj )
                 # only close the form after the object has been discarded or
                 # deleted, to avoid yielding action steps after the widget mapper
