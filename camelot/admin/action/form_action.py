@@ -65,18 +65,16 @@ class FormActionModelContext( ApplicationActionModelContext ):
         self.admin = None
         self.current_row = None
         self.collection_count = 0
-        self.selection_count = 1
+        self.selection_count = 0
         
     def get_object( self ):
         """
         :return: the object currently displayed in the form, None if no object
             is displayed yet
         """
-        if self.current_row != None:
-            for obj in self._model.get_slice(self.current_row,
-                                             self.current_row+1):
-                return obj
-    
+        for obj in self.get_selection():
+            return obj
+
     def get_collection( self, yield_per = None ):
         """
         :param yield_per: an integer number giving a hint on how many objects
@@ -98,7 +96,10 @@ class FormActionModelContext( ApplicationActionModelContext ):
             form and does not yield anything if no object is displayed yet
             in the form.
         """
-        yield self.get_object()
+        if self.selection_count:
+            for obj in self._model.get_slice(self.current_row,
+                                             self.current_row+1):
+                yield obj
 
 class FormActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a form.  On top of the attributes of the 
@@ -132,7 +133,10 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
     def create_model_context( self ):
         context = super( FormActionGuiContext, self ).create_model_context()
         context._model = self.widget_mapper.model()
-        context.current_row = self.widget_mapper.currentIndex()
+        current_index = self.widget_mapper.currentIndex()
+        if current_index >= 0:
+            context.current_row = current_index
+            context.selection_count = 1
         return context
         
     def copy( self, base_class = None ):

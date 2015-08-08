@@ -39,5 +39,4 @@ class ValueLoading(object):
 # Refactor plan
 # - remove 'get_title' from the formview, and handle the title changes in the
 #   actions or the action steps
-# - implement changed object signal handling to operate on sets
-# - object signals should be invoked in the gui thread
+

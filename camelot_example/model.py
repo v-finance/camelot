@@ -65,11 +65,12 @@ class BurnToDisk( Action ):
         """Turn the burn to disk button on, only if the title of the
         movie is entered"""
         state = super( BurnToDisk, self ).get_state( model_context )
-        obj = model_context.get_object()
-        if obj and obj.title:
-            state.enabled = True
-        else:
-            state.enabled = False
+        for obj in model_context.get_selection():
+            if obj.title:
+                state.enabled = True
+            else:
+                state.enabled = False
+                break
         return state
     
 # begin short movie definition
