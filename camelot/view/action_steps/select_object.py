@@ -63,6 +63,10 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
 
     list_action = ConfirmSelection()
 
+    def __init__(self, original_admin, show_subclasses):
+        super(SelectAdminDecorator, self).__init__(original_admin)
+        self.show_subclasses = show_subclasses
+
     def get_list_actions(self, *a, **kwa):
         return [CancelSelection(), ConfirmSelection()]
     
@@ -73,10 +77,11 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
     
     def get_subclass_tree(self):
         new_subclasses = []
-        subclasses = self._original_admin.get_subclass_tree()
-        for admin, tree in subclasses:
-            new_admin = SelectAdminDecorator(admin)
-            new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
+        if self.show_subclasses == True:
+            subclasses = self._original_admin.get_subclass_tree()
+            for admin, tree in subclasses:
+                new_admin = SelectAdminDecorator(admin)
+                new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
         return new_subclasses
 
 class SelectDialog(QtWidgets.QDialog):
@@ -108,9 +113,14 @@ class SelectObjects( OpenTableView ):
     """
 
     def __init__(self, admin, search_text=None, value=None):
+        show_subclasses = False
         if value is None:
             value = admin.get_query()
-        super(SelectObjects, self).__init__(SelectAdminDecorator(admin), value)
+            # only able to construct subclass query whern
+            # the default query is used
+            show_subclasses = True
+        select_admin = SelectAdminDecorator(admin, show_subclasses)
+        super(SelectObjects, self).__init__(select_admin, value)
         self.search_text = search_text
 
     def render(self, gui_context):
