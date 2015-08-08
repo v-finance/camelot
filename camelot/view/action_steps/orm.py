@@ -42,7 +42,7 @@ Or use introspection of the SQLAlchemy session to update the GUI :
 """
 
 from camelot.admin.action.base import ActionStep
-from camelot.view.remote_signals import get_signal_handler
+from ..crud_signals import CrudSignalHandler
 
 class AbstractCrudSignal(ActionStep):
 
@@ -53,13 +53,13 @@ class AbstractCrudSignal(ActionStep):
 
     def gui_run(self, gui_context):
         super(AbstractCrudSignal, self).gui_run(gui_context)
-        signal_handler = get_signal_handler()
+        crud_signal_handler = CrudSignalHandler()
         if len(self.objects_deleted):
-            signal_handler.send_objects_deleted(self, self.objects_deleted)
+            crud_signal_handler.send_objects_deleted(self, self.objects_deleted)
         if len(self.objects_updated):
-            signal_handler.send_objects_updated(self, self.objects_updated)
+            crud_signal_handler.send_objects_updated(self, self.objects_updated)
         if len(self.objects_created):
-            signal_handler.send_objects_created(self, self.objects_created)
+            crud_signal_handler.send_objects_created(self, self.objects_created)
 
 class FlushSession(AbstractCrudSignal):
     """Flushes the session and informs the GUI about the

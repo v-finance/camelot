@@ -58,7 +58,7 @@ def object_thread( self ):
 def gui_thread():
     """function to verify if a call is made in the GUI thread of the application
     """
-    app = QtCore.QApplication.instance()
+    app = QtCore.QCoreApplication.instance()
     return object_thread(app)
 
 class AbstractModelThread(QtCore.QThread):

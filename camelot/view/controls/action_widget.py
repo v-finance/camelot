@@ -29,6 +29,7 @@ import six
 from ...admin.action import State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
+from ..crud_signals import CrudSignalHandler
 from camelot.core.utils import ugettext
 from camelot.view.model_thread import post
 
@@ -245,7 +246,6 @@ class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
     """Widget that displays information on the active user"""
 
     def __init__(self, action, gui_context, parent):
-        from ..remote_signals import get_signal_handler
         QtWidgets.QFrame.__init__(self, parent)
         AbstractActionWidget.init(self, action, gui_context)
         layout = QtWidgets.QHBoxLayout()
@@ -274,14 +274,15 @@ class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
         info_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(info_layout)
         self.setLayout(layout)
-        signal_handler = get_signal_handler()
-        signal_handler.entity_update_signal.connect(self.entity_update)
+        signal_handler = CrudSignalHandler()
+        signal_handler.objects_updated.connect(self.objects_updated)
 
-    @QtCore.qt_slot(object, object)
-    def entity_update(self, sender, entity):
+    @QtCore.qt_slot(object, tuple)
+    def objects_updated(self, sender, objects):
         from ...model.authentication import AuthenticationMechanism
-        if isinstance(entity, AuthenticationMechanism):
-            self.current_row_changed(0)
+        for obj in objects:
+            if isinstance(obj, AuthenticationMechanism):
+                self.current_row_changed(0)
 
     @QtCore.qt_slot(bool)
     def face_clicked(self, state):

@@ -29,9 +29,9 @@ import six
 from ....core.qt import QtGui, QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
+from ...crud_signals import CrudSignalHandler
 from camelot.view.model_thread import post, object_thread
 from camelot.view.search import create_entity_search_query_decorator
-from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
@@ -118,7 +118,7 @@ class Many2OneEditor( CustomEditor ):
         self.layout.addWidget(self.search_input)
         self.setLayout(self.layout)
         self.add_actions(actions, self.layout)
-        get_signal_handler().connect_signals(self)
+        CrudSignalHandler().connect_signals(self)
 
     def set_field_attributes(self, **kwargs):
         super(Many2OneEditor, self).set_field_attributes(**kwargs)

@@ -55,11 +55,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
+from ..crud_signals import CrudSignalHandler
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
-from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import object_thread, post
-
 from camelot.core.files.storage import StoredImage
 
 
@@ -301,8 +300,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.row_changed_signal.connect( self._emit_changes )
         self._rows_about_to_be_inserted_signal.connect( self._rows_about_to_be_inserted, Qt.QueuedConnection )
         self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
-        self.rsh = get_signal_handler()
-        self.rsh.connect_signals( self )
+        self._crud_signal_handler = CrudSignalHandler()
+        self._crud_signal_handler.connect_signals( self )
 #    # in that way the number of rows is requested as well
         self.logger.debug( 'initialization finished' )
 
