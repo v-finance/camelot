@@ -64,7 +64,11 @@ class ListActionModelContext( ApplicationActionModelContext ):
     .. attribute:: session
     
         The session to which the objects in the list belong.
-        
+
+    .. attribute:: proxy
+
+        A proxy with access to the list displayed
+
     .. attribute:: field_attributes
     
         The field attributes of the field to which the list relates, for example
@@ -80,7 +84,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
     
     def __init__( self ):
         super( ListActionModelContext, self ).__init__()
-        self._model = None
+        self.proxy = None
         self.admin = None
         self.current_row = None
         self.selection_count = 0
@@ -98,7 +102,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         # change, while the selection remains the same, so we should
         # be careful when using the collection to generate selection data
         for (first_row, last_row) in self.selected_rows:
-            for obj in self._model.get_slice(first_row, last_row + 1, yield_per):
+            for obj in self.proxy.get_slice(first_row, last_row + 1, yield_per):
                 yield obj
 
     def get_collection( self, yield_per = None ):
@@ -107,7 +111,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self._model.get_slice(0, self.collection_count, yield_per):
+        for obj in self.proxy.get_slice(0, self.collection_count, yield_per):
             yield obj
             
     def get_object( self ):
@@ -115,8 +119,8 @@ class ListActionModelContext( ApplicationActionModelContext ):
         :return: the object displayed in the current row or None
         """
         if self.current_row != None:
-            for obj in self._model.get_slice(self.current_row,
-                                             self.current_row+1):
+            for obj in self.proxy.get_slice(self.current_row,
+                                            self.current_row+1):
                 return obj
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
@@ -183,7 +187,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.collection_count = collection_count
         context.selected_rows = selected_rows
         context.current_row = current_row
-        context._model = model
+        context.proxy = model
         return context
         
     def copy( self, base_class = None ):
@@ -215,7 +219,7 @@ class CallMethod( Action ):
     def model_run( self, model_context ):
         from camelot.view.action_steps import ( UpdateProgress, 
                                                 FlushSession,
-                                                UpdateObject )
+                                                UpdateObjects )
         step = max( 1, model_context.selection_count / 100 )
         for i, obj in enumerate( model_context.get_selection() ):
             if i%step == 0:
@@ -223,8 +227,8 @@ class CallMethod( Action ):
             self.method( obj )
             # the object might have changed without the need to be flushed
             # to the database
-            yield UpdateObject( obj )
-        yield FlushSession( model_context.session )
+            yield UpdateObjects((obj,))
+        yield FlushSession(model_context.session)
         
     def get_state( self, model_context ):
         state = super( CallMethod, self ).get_state( model_context )
@@ -311,13 +315,20 @@ class DuplicateSelection( EditAction ):
     
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        for i, obj in enumerate( model_context.get_selection() ):
-            yield action_steps.UpdateProgress( i, 
-                                               model_context.selection_count,
-                                               self.verbose_name )
-            new_object = model_context.admin.copy( obj )
-            model_context._model.append_object( new_object )
-        yield action_steps.FlushSession( model_context.session )
+        admin = model_context.admin
+        new_objects = list()
+        updated_objects = set()
+        for i, obj in enumerate(model_context.get_selection()):
+            yield action_steps.UpdateProgress(i, 
+                                              model_context.selection_count,
+                                              self.verbose_name )
+            new_object = admin.copy(obj)
+            model_context.proxy.append(new_object)
+            new_objects.append(new_object)
+            updated_objects.update(set(admin.get_depending_objects(new_object)))
+        yield action_steps.CreateObjects(new_objects)
+        yield action_steps.UpdateObjects(updated_objects)
+        yield action_steps.FlushSession(model_context.session)
             
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
@@ -367,8 +378,7 @@ class DeleteSelection( EditAction ):
                 pass
             for step in self.handle_object( model_context, obj ):
                 yield step
-        for depending_obj in depending_objects:
-            yield action_steps.UpdateObject( depending_obj )
+        yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
         
     def handle_object( self, model_context, obj ):
@@ -548,7 +558,7 @@ class RestoreExportMapping( SaveExportMapping ):
                             break
                 else:
                     column_mapping.field = None
-                yield action_steps.UpdateObject(column_mapping)
+            yield action_steps.UpdateObjects(model_context.get_collection())
 
 class RemoveExportMapping( SaveExportMapping ):
     """
@@ -881,7 +891,7 @@ class ImportFromFile( EditAction ):
             # import the temporary objects into real objects
             #
             with model_context.session.begin():
-                for i,row in enumerate( collection ):
+                for i,row in enumerate(collection):
                     new_entity_instance = admin.entity()
                     for field_name, attributes in row_data_admin.get_columns():
                         try:
@@ -897,7 +907,7 @@ class ImportFromFile( EditAction ):
                     admin.add( new_entity_instance )
                     # in case the model is a collection proxy, the new objects should
                     # be appended
-                    model_context._model.append( new_entity_instance )
+                    model_context.proxy.append(new_entity_instance)
                     yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
                 yield action_steps.FlushSession( model_context.session )
             yield action_steps.Refresh()
@@ -925,10 +935,10 @@ class ReplaceFieldContents( EditAction ):
                     if dynamic_fa.get('editable', True) == False:
                         raise UserException(self.message, resolution=self.resolution)
                     setattr( obj, field_name, value )
-                    # dont rely on the session to update the gui, since the objects
-                    # might not be in a session
-                    yield action_steps.UpdateObject(obj)
-                yield action_steps.FlushSession( model_context.session )
+                # dont rely on the session to update the gui, since the objects
+                # might not be in a session
+                yield action_steps.UpdateObjects(model_context.get_selection())
+                yield action_steps.FlushSession(model_context.session)
         
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
@@ -941,13 +951,14 @@ class AddExistingObject( EditAction ):
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
-        objs_to_add = yield action_steps.SelectObjects( model_context.admin )
+        objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
                 if obj_to_add == obj:
                     raise StopIteration()
-            model_context._model.append_object( obj_to_add )
-        yield action_steps.FlushSession( object_session( obj_to_add ) )
+            model_context.proxy.append(obj_to_add)
+        yield action_steps.UpdateObjects(objs_to_add)
+        yield action_steps.FlushSession(object_session(obj_to_add))
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
@@ -970,20 +981,23 @@ class AddNewObject( EditAction ):
         new_object = admin.entity()
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        model_context._model.append_object(new_object)
+        model_context.proxy.append(new_object)
         # Give the default fields their value
         admin.set_defaults(new_object)
-        # if the object is valid, flush it
+        # if the object is valid, flush it, but in ancy case inform the gui
+        # the object has been created
+        yield action_steps.CreateObjects((new_object,))
         if not len(admin.get_validator().validate_object(new_object)):
             yield action_steps.FlushSession(model_context.session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
-        for depending_obj in admin.get_depending_objects( new_object ):
-            yield action_steps.UpdateObject(depending_obj)
+        yield action_steps.UpdateObjects(
+            tuple(admin.get_depending_objects(new_object))
+        )
         if create_inline is False:
             yield action_steps.OpenFormView([new_object], admin)
 
-class RemoveSelection( DeleteSelection ):
+class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""
     
     shortcut = None
@@ -992,7 +1006,7 @@ class RemoveSelection( DeleteSelection ):
     icon = Icon( 'tango/16x16/actions/list-remove.png' )
             
     def handle_object( self, model_context, obj ):
-        model_context._model.remove( obj )
+        model_context.proxy.remove( obj )
         # no StopIteration, since the supergenerator needs to
         # continue to flush the session
         yield None

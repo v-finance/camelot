@@ -225,14 +225,30 @@ class Deleted(object):
 class RowCount(object):
 
     def __init__(self):
-        self.rows = 0
+        self.rows = None
 
     def model_run(self, proxy):
         self.rows = proxy.get_row_count()
         return self
 
     def gui_run(self, item_model):
-        item_model._refresh_content(self.rows)
+        if self.rows is not None:
+            item_model._refresh_content(self.rows)
+
+class Created(RowCount):
+
+    def __init__(self, objects):
+        super(Created, self).__init__()
+        self.objects = objects
+
+    def model_run(self, proxy):
+        # assume rows already contains the new object
+        rows = proxy.get_row_count()
+        for obj in self.objects:
+            if proxy.contains(obj):
+                self.rows = rows
+                break
+        return self
 
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
@@ -247,13 +263,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     """
 
     row_changed_signal = QtCore.qt_signal(int, int, int)
-    exception_signal = QtCore.qt_signal(object)
-    rows_removed_signal = QtCore.qt_signal()
-    
+
     # it looks as QtCore.QModelIndex cannot be serialized for cross
     # thread signals
-    _rows_about_to_be_inserted_signal = QtCore.qt_signal(int, int)
-    _rows_inserted_signal = QtCore.qt_signal(int, int)
     _objects_updated_signal = QtCore.qt_signal(tuple)
     _objects_created_signal = QtCore.qt_signal(tuple)
 
@@ -314,8 +326,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset()
         self._sort_and_filter = SortingRowMapper()
         self.row_changed_signal.connect( self._emit_changes )
-        self._rows_about_to_be_inserted_signal.connect(self._rows_about_to_be_inserted, Qt.QueuedConnection)
-        self._rows_inserted_signal.connect(self._rows_inserted, Qt.QueuedConnection)
         self._objects_updated_signal.connect(self._send_objects_updated, Qt.QueuedConnection)
         self._objects_created_signal.connect(self._send_objects_created, Qt.QueuedConnection)
         self._crud_signal_handler = CrudSignalHandler()
@@ -579,9 +589,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            # @todo : decide what to do when a new entity has been created,
-            #         maybe look if the object is in the underlying collection, and
-            #         if so, update the view
+            self._crud_requests.append(Created(objects))
+            self._start_timer()
 
     def get_static_field_attributes(self):
         return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
@@ -1193,14 +1202,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         if o not in collection:
             collection.append( o )
 
-    @QtCore.qt_slot( int, int )
-    def _rows_about_to_be_inserted( self, first, last ):
-        self.beginInsertRows( QtCore.QModelIndex(), first, last )
-        
-    @QtCore.qt_slot( int, int )
-    def _rows_inserted( self, _first, _last ):
-        self.endInsertRows()
-        
+    def contains(self, obj):
+        collection = self.get_value()
+        return (obj in collection)
+
     @QtCore.qt_slot(tuple)
     def _send_objects_updated(self, objects):
         self._crud_signal_handler.send_objects_updated(self, objects)
@@ -1208,30 +1213,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     @QtCore.qt_slot(tuple)
     def _send_objects_created(self, objects):
         self._crud_signal_handler.send_objects_created(self, objects)
-
-    def append_object(self, obj):
-        """Append an object to this collection
-        
-        :param obj: the object to be added to the collection
-        :return: the new number of rows in the collection
-        
-        """
-        rows = (self._rows or 0)
-        row = max( rows - 1, 0 )
-        self._rows_about_to_be_inserted_signal.emit( row, row )
-        self.append( obj )
-        # defaults might depend on object being part of a collection
-        if not self.admin.is_persistent(obj):
-            self.unflushed_rows.add( row )
-        self._objects_updated_signal.emit(tuple(self.admin.get_depending_objects(obj)))
-        self._rows = rows + 1
-        #
-        # update the cache, so the object can be retrieved
-        #
-        columns = self._columns
-        self._add_data( columns, rows, obj )
-        self._rows_inserted_signal.emit( row, row )
-        return self._rows
 
     def get_admin( self ):
         """Get the admin object associated with this model"""

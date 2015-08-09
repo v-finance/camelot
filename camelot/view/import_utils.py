@@ -123,7 +123,7 @@ class ShowNext(Action):
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
             mapping.set_preview_row(mapping.get_preview_row()+1)
-            yield action_steps.UpdateObject(mapping)
+        yield action_steps.UpdateObjects(model_context.get_collection())
 
 class ShowPrevious(Action):
     
@@ -132,7 +132,7 @@ class ShowPrevious(Action):
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
             mapping.set_preview_row(mapping.get_preview_row()-1)
-            yield action_steps.UpdateObject(mapping)
+        yield action_steps.UpdateObjects(model_context.get_collection())
 
 class MatchNames(Action):
     """Use the data in the current row to determine field names"""
@@ -152,7 +152,7 @@ class MatchNames(Action):
                 mapping.field = field
             else:
                 mapping.field = None
-            yield action_steps.UpdateObject(mapping)
+        yield action_steps.UpdateObjects(model_context.get_collection())
 
 class ColumnMappingAdmin(ObjectAdmin):
     """Admin class that allows the user to manipulate the column mappings
