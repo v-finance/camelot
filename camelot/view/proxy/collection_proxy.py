@@ -367,7 +367,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def rowCount( self, index = None ):
         rows = super(CollectionProxy, self).rowCount()
         self.logger.debug('row count requested, returned {0}'.format(rows))
-        if rows == 0:
+        if (rows == 0) and (self._value is not None):
             root_item = self.source_model.invisibleRootItem()
             if not root_item.isEnabled():
                 if not isinstance(self._last_request(), RowCount):
