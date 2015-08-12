@@ -141,5 +141,24 @@ class CreateObjects(AbstractCrudSignal):
     def get_objects(self):
         return self.objects_created
 
+class UpdateObject(UpdateObjects):
+    """For backwards compatibility, don't use, use UpdateObjects"""
+
+    def __init__(self, obj):
+        super(UpdateObject, self).__init__((obj,))
+
+class DeleteObject(DeleteObjects):
+    """For backwards compatibility, don't use, use DeleteObjects"""
+
+    def __init__(self, obj):
+        super(DeleteObject, self).__init__((obj,))
+
+class CreateObject(CreateObjects):
+    """For backwards compatibility, don't use, use CreateObjects"""
+
+    def __init__(self, obj):
+        super(CreateObject, self).__init__((obj,))
+
+
 
 

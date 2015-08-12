@@ -32,7 +32,8 @@ from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
 from .item_view import Sort, OpenTableView, UpdateTableView
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
-from .orm import CreateObjects, DeleteObjects, FlushSession, UpdateObjects
+from .orm import (CreateObject, CreateObjects, DeleteObject, DeleteObjects,
+                  FlushSession, UpdateObject, UpdateObjects)
 from .print_preview import ( PrintChart, PrintHtml, PrintPreview,
                              PrintJinjaTemplate )
 from .select_file import SelectFile, SelectDirectory, SaveFile
@@ -46,7 +47,9 @@ __all__ = [
     ChangeObject.__name__,
     ChangeObjects.__name__,
     CloseView.__name__,
+    CreateObject.__name__,
     CreateObjects.__name__,
+    DeleteObject.__name__,
     DeleteObjects.__name__,
     EditTextDocument.__name__,
     Exit.__name__,
@@ -82,6 +85,7 @@ __all__ = [
     ToNextForm.__name__,
     ToPreviousForm.__name__,
     UpdateEditor.__name__,
+    UpdateObject.__name__,
     UpdateObjects.__name__,
     UpdateProgress.__name__,
     UpdateTableView.__name__,
