@@ -480,7 +480,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
-        assert isinstance(rows, int)
+        assert isinstance(rows, six.integer_types)
         self._reset(row_count=rows)
         self._rows = rows
         self.layoutChanged.emit()
