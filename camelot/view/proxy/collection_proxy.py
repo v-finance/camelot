@@ -607,6 +607,11 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         font_metrics = QtGui.QFontMetrics(self._header_font_required)
         char_width = font_metrics.averageCharWidth()
         source_model = self.sourceModel()
+        #
+        # increase the number of columns at once, since this is slow, and
+        # setHorizontalHeaderItem will increase the number of columns one by one
+        #
+        source_model.setColumnCount(len(self._columns))
         for i, (field_name, fa) in enumerate( self._columns ):
             verbose_name = six.text_type(fa['name'])
             header_item = QtGui.QStandardItem()
@@ -628,7 +633,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             header_item.setData( py_to_variant( QtCore.QSize( width, self._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
             source_model.setHorizontalHeaderItem( i, header_item )
-        
         self.settings.endGroup()
         self.settings.endGroup()
         self.endResetModel()
