@@ -426,32 +426,49 @@ class Profiler( Action ):
     verbose_name = _('Profiler start/stop')
     
     def __init__(self):
-        self.profile = None
-    
+        self.model_profile = None
+        self.gui_profile = None
+
+    def gui_run(self, gui_context):
+        import cProfile
+        if self.gui_profile is None:
+            self.gui_profile = cProfile.Profile()
+            self.gui_profile.enable()
+        else:
+            self.gui_profile.disable()
+        super(Profiler, self).gui_run(gui_context)
+
     def model_run(self, model_context):
         from ...view import action_steps
         from six import StringIO
         import cProfile
         import pstats
-        if self.profile is None:
+        if self.model_profile is None:
             yield action_steps.MessageBox('Start profiler')
-            self.profile = cProfile.Profile()
-            self.profile.enable()
+            self.model_profile = cProfile.Profile()
+            self.model_profile.enable()
         else:
             yield action_steps.UpdateProgress(text='Creating statistics')
-            self.profile.disable()
-            stream = StringIO()
-            stats = pstats.Stats(self.profile, stream=stream)
-            self.profile = None
-            stats.sort_stats('cumulative')
-            yield action_steps.UpdateProgress(text='Create report')
-            stats.print_stats()
-            stream.seek(0)
-            yield action_steps.OpenStream(stream)
-            filename = action_steps.OpenFile.create_temporary_file('.prof')
-            stats.dump_stats(filename)
-            yield action_steps.MessageBox(
-                'Profile stored in {0}'.format(filename))
+            self.model_profile.disable()
+            profiles = [('model', self.model_profile), ('gui', self.gui_profile)]
+            self.model_profile = None
+            self.gui_profile = None
+            for label, profile in profiles:
+                stream = StringIO()
+                stats = pstats.Stats(profile, stream=stream)
+                stats.sort_stats('cumulative')
+                yield action_steps.UpdateProgress(
+                    text='Create {0} report'.format(label)
+                )
+                stats.print_stats()
+                stream.seek(0)
+                yield action_steps.OpenStream(stream)
+                filename = action_steps.OpenFile.create_temporary_file(
+                    '{0}.prof'.format(label)
+                )
+                stats.dump_stats(filename)
+                yield action_steps.MessageBox(
+                    'Profile stored in {0}'.format(filename))
             
 class Exit( Action ):
     """Exit the application"""
