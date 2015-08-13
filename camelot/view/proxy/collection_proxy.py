@@ -648,7 +648,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._columns = columns
         post(self.get_static_field_attributes, self.set_static_field_attributes)
 
-    def setHeaderData( self, section, orientation, value, role ):
+    def setHeaderData(self, section, orientation, value, role):
         assert object_thread( self )
         if orientation == Qt.Horizontal:
             if role == Qt.SizeHintRole:
@@ -659,10 +659,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                                         width )
                 self.settings.endGroup()
                 self.settings.endGroup()
-        return super( CollectionProxy, self ).setHeaderData( section,
-                                                             orientation,
-                                                             value,
-                                                             role )
+        source_model = self.sourceModel()
+        source_model.setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
