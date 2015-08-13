@@ -263,7 +263,10 @@ class FormView(AbstractView):
             
     @QtCore.qt_slot( int )
     def update_title(self, current_index ):
-        post( self._get_title, self.change_title, args=(current_index,) )
+        if current_index >= 0:
+            post( self._get_title, self.change_title, args=(current_index,) )
+        else:
+            self.change_title(u'')
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
