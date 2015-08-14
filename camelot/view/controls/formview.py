@@ -107,7 +107,7 @@ class FormWidget(QtWidgets.QWidget):
     def __init__(self, admin, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
         self._admin = admin
-        widget_mapper = QtGui.QDataWidgetMapper(self)
+        widget_mapper = QtWidgets.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )
@@ -122,7 +122,7 @@ class FormWidget(QtWidgets.QWidget):
         self.create_widgets(widget_mapper, columns, form_display, admin)
 
     def set_model(self, model):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if model is not None:
             model.dataChanged.connect(self._data_changed)
             model.layoutChanged.connect(self._layout_changed)
@@ -134,12 +134,12 @@ class FormWidget(QtWidgets.QWidget):
                 register.register( model, widget_mapper )
                 
     def get_model(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if widget_mapper is not None:
             return widget_mapper.model()
 
     def clear_mapping(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if widget_mapper:
             widget_mapper.clearMapping()
 
@@ -154,7 +154,7 @@ class FormWidget(QtWidgets.QWidget):
 
     @QtCore.qt_slot()
     def _layout_changed(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
@@ -168,17 +168,17 @@ class FormWidget(QtWidgets.QWidget):
         
     def set_index(self, index):
         self._index = index
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.setCurrentIndex(self._index)
 
     def get_index(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             return widget_mapper.currentIndex()
 
     def submit(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.submit()
 
@@ -236,7 +236,7 @@ class FormView(AbstractView):
         self.gui_context.workspace = self
         self.gui_context.admin = admin
         self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper, 
+        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper, 
                                                          'widget_mapper' )
         self.setLayout( layout )
         self.change_title(title)
