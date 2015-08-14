@@ -285,6 +285,60 @@ class Sort(RowCount):
         self.rows = len(unsorted_collection)
         return self
 
+class SetColumns(object):
+
+    def __init__(self, columns):
+        self.columns = columns
+        self.static_field_attributes = None
+
+    def model_run(self, proxy):
+        self.static_field_attributes = list(
+            proxy.admin.get_static_field_attributes(
+                [c[0] for c in self.columns]
+            )
+        )
+        return self
+
+    def gui_run(self, item_model):
+        item_model._static_field_attributes = self.static_field_attributes
+        item_model.beginResetModel()
+        item_model.settings.beginGroup( 'column_width' )
+        item_model.settings.beginGroup( '0' )
+        #
+        # this loop can take a while to complete
+        #
+        font_metrics = QtGui.QFontMetrics(item_model._header_font_required)
+        char_width = font_metrics.averageCharWidth()
+        source_model = item_model.sourceModel()
+        #
+        # increase the number of columns at once, since this is slow, and
+        # setHorizontalHeaderItem will increase the number of columns one by one
+        #
+        source_model.setColumnCount(len(self.columns))
+        for i, (field_name, fa) in enumerate(self.columns):
+            verbose_name = six.text_type(fa['name'])
+            header_item = QtGui.QStandardItem()
+            set_header_data = header_item.setData
+            #
+            # Set the header data
+            #
+            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
+            if fa.get( 'nullable', True ) == False:
+                set_header_data(item_model._header_font_required, Qt.FontRole)
+            else:
+                set_header_data(item_model._header_font, Qt.FontRole)
+
+            settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
+            if settings_width > 0:
+                width = settings_width
+            else:
+                width = fa['column_width'] * char_width
+            header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
+                                 Qt.SizeHintRole )
+            source_model.setHorizontalHeaderItem( i, header_item )
+        item_model.settings.endGroup()
+        item_model.settings.endGroup()
+        item_model.endResetModel()
 
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
@@ -358,6 +412,13 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._columns = []
         self._static_field_attributes = []
         self._max_number_of_rows = max_number_of_rows
+
+        # The rows in the table for which a cache refill is under request
+        self.rows_under_request = set()
+        self.unflushed_rows = set()
+        # once the cache has been cleared, no updates ought to be accepted
+        self._update_requests = list()
+        self._crud_requests = list()
 
         self._reset()
         self._sort_and_filter = SortingRowMapper()
@@ -533,6 +594,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         reset all shared state and cache
         """
         self.logger.debug('reset state and cache')
+        # make sure all pending requests are handled before removing things
+        self.timeout_slot()
+        # end
         max_cache = 10 * self.max_number_of_rows
         root_item = self.source_model.invisibleRootItem()
         locker = QtCore.QMutexLocker(self._mutex)
@@ -554,7 +618,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self.unflushed_rows = set()
-        self._crud_requests = list()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         locker.unlock()
@@ -615,61 +678,17 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self._crud_requests.append(Created(objects))
             self._start_timer()
 
-    def get_static_field_attributes(self):
-        return list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
-    
-    @QtCore.qt_slot(object)
-    def set_static_field_attributes(self, static_fa):
-        self._static_field_attributes = static_fa
-        self.beginResetModel()
-        self.settings.beginGroup( 'column_width' )
-        self.settings.beginGroup( '0' )
-        #
-        # this loop can take a while to complete
-        #
-        font_metrics = QtGui.QFontMetrics(self._header_font_required)
-        char_width = font_metrics.averageCharWidth()
-        source_model = self.sourceModel()
-        #
-        # increase the number of columns at once, since this is slow, and
-        # setHorizontalHeaderItem will increase the number of columns one by one
-        #
-        source_model.setColumnCount(len(self._columns))
-        for i, (field_name, fa) in enumerate( self._columns ):
-            verbose_name = six.text_type(fa['name'])
-            header_item = QtGui.QStandardItem()
-            set_header_data = header_item.setData
-            #
-            # Set the header data
-            #
-            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
-            if fa.get( 'nullable', True ) == False:
-                set_header_data(self._header_font_required, Qt.FontRole)
-            else:
-                set_header_data(self._header_font, Qt.FontRole)
-
-            settings_width = int( variant_to_py( self.settings.value( field_name, 0 ) ) )
-            if settings_width > 0:
-                width = settings_width
-            else:
-                width = fa['column_width'] * char_width
-            header_item.setData( py_to_variant( QtCore.QSize( width, self._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
-            source_model.setHorizontalHeaderItem( i, header_item )
-        self.settings.endGroup()
-        self.settings.endGroup()
-        self.endResetModel()
-
     def set_columns(self, columns):
         """Callback method to set the columns
 
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
         returned by the `get_columns` method of the `EntityAdmin` class
         """
-        assert object_thread( self )
         self.logger.debug( 'set_columns' )
+        assert object_thread( self )
         self._columns = columns
-        post(self.get_static_field_attributes, self.set_static_field_attributes)
+        self._crud_requests.append(SetColumns(columns))
+        self._start_timer()
 
     def setHeaderData(self, section, orientation, value, role):
         assert object_thread( self )
