@@ -564,7 +564,7 @@ and used as a custom action.
         """
         if self._search_fields is None:
             self._search_fields = list(self.list_search)
-            for field_name, col_property in self.mapper.column_attrs.items():
+            for field_name, col_property in six.iteritems(self.mapper.column_attrs):
                 if isinstance(col_property.expression, schema.Column):
                     self._search_fields.append(field_name)
         return self._search_fields
