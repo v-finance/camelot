@@ -149,8 +149,11 @@ class FormWidget(QtWidgets.QWidget):
             
     @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex  )
     def _data_changed(self, index_from, index_to):
-        #@TODO: only revert if this form is in the changed range
-        self._layout_changed()
+        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
+        if widget_mapper:
+            current_index = widget_mapper.currentIndex()
+            if (current_index >= index_from.row()) and (current_index <= index_to.row()):
+                self.changed_signal.emit(current_index)
 
     @QtCore.qt_slot()
     def _layout_changed(self):
