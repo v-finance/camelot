@@ -565,14 +565,6 @@ class TableView(AbstractView):
 
         self.gui_context.admin = self.admin
         self.gui_context.view = self
-        header = self.header_widget(self.gui_context, self)
-        self.widget_layout.insertWidget(0, header)
-        header.search.search_signal.connect(self.startSearch)
-        header.search.cancel_signal.connect(self.cancelSearch)
-        header.search.on_arrow_down_signal.connect(self.focusTable)
-        self.setFocusProxy(header)
-        if self.search_text:
-            header.search.search(self.search_text)
 
     @QtCore.qt_slot()
     def activate_search(self):
@@ -650,6 +642,19 @@ class TableView(AbstractView):
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
         self.model_changed.emit(new_model, self.table)
+        header = self.findChild(QtWidgets.QWidget, 'header_widget')
+        if header is not None:
+            header.deleteLater()
+        header = self.header_widget(self.gui_context, self)
+        header.setObjectName('header_widget')
+        self.widget_layout.insertWidget(0, header)
+        header.search.search_signal.connect(self.startSearch)
+        header.search.cancel_signal.connect(self.cancelSearch)
+        header.search.on_arrow_down_signal.connect(self.focusTable)
+        self.setFocusProxy(header)
+        if self.search_text:
+            header.search.search(self.search_text)
+            self.search_text = None
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
