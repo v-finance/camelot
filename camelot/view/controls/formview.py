@@ -150,7 +150,7 @@ class FormWidget(QtWidgets.QWidget):
     @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex  )
     def _data_changed(self, index_from, index_to):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
+        if widget_mapper is not None:
             current_index = widget_mapper.currentIndex()
             if (current_index >= index_from.row()) and (current_index <= index_to.row()):
                 self.changed_signal.emit(current_index)
@@ -158,7 +158,7 @@ class FormWidget(QtWidgets.QWidget):
     @QtCore.qt_slot()
     def _layout_changed(self):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
+        if widget_mapper is not None:
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
                 widget_mapper.setCurrentIndex(self._index)
