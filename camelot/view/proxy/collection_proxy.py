@@ -216,7 +216,7 @@ class Deleted(object):
             proxy.attributes_cache.delete_by_entity( obj )
             proxy.edit_cache.delete_by_entity( obj )
             proxy.action_state_cache.delete_by_entity( obj )
-        self.rows = proxy._rows
+        self.rows = proxy.get_row_count()
         return self
 
     def gui_run(self, item_model):
@@ -482,7 +482,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         assert object_thread( self )
         assert isinstance(rows, six.integer_types)
         self._reset(row_count=rows)
-        self._rows = rows
         self.layoutChanged.emit()
 
     @QtCore.qt_slot(object)
@@ -509,7 +508,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
             self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
             self.source_model.setRowCount(cache_collection_proxy.rowCount())
-            self._rows = self.source_model.rowCount()
         else:
             self.display_cache = Fifo( max_cache )
             self.edit_cache = Fifo( max_cache )
@@ -517,7 +515,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.action_state_cache = Fifo( max_cache )
             self.source_model.setRowCount(row_count or 0)
             root_item.setEnabled(row_count != None)
-            self._rows = row_count
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self.unflushed_rows = set()
@@ -544,16 +541,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     
     def get_value(self):
         return self._value
-
-    def handleRowUpdate( self, row ):
-        """Handles the update of a row when this row might be out of date"""
-        assert object_thread( self )
-        self.display_cache.delete_by_row( row )
-        self.edit_cache.delete_by_row( row )
-        self.attributes_cache.delete_by_row( row )
-        self.action_state_cache.delete_by_row( row )
-        self.dataChanged.emit( self.index( row, 0 ),
-                               self.index( row, self.columnCount() - 1 ) )
 
     @QtCore.qt_slot(object, tuple)
     def objects_updated(self, sender, objects):
@@ -1197,7 +1184,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         collection = self.get_value()
         if o in collection:
             collection.remove( o )
-            self._rows -= 1
 
     def append( self, o ):
         collection = self.get_value()

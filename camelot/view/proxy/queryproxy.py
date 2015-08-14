@@ -50,6 +50,7 @@ class QueryTableProxy(CollectionProxy):
         self._mapper = admin.mapper
         #the mode set for each filter
         self._filters = dict()
+        self._rows = None
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
         self._appended_rows = []
@@ -95,6 +96,7 @@ class QueryTableProxy(CollectionProxy):
             select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
             count = query.session.execute(select, mapper=mapper).scalar()
             rows = count + len(self._appended_rows)
+        self._rows = rows
         return rows
 
 
@@ -293,6 +295,8 @@ class QueryTableProxy(CollectionProxy):
                         if self._skip_row(row, obj) == False:
                             self._add_data(columns, row, obj)
                 self._clean_appended_rows()
+                if self._rows is None:
+                    self.get_row_count()
                 rows_in_query = (self._rows - len(self._appended_rows))
                 # Verify if rows that have not yet been flushed have been 
                 # requested
