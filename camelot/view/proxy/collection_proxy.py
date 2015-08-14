@@ -250,6 +250,42 @@ class Created(RowCount):
                 break
         return self
 
+class Sort(RowCount):
+
+    def __init__(self, column, order):
+        super(Sort, self).__init__()
+        self.column = column
+        self.order = order
+
+    def model_run(self, proxy):
+        unsorted_collection = [(i,o) for i,o in enumerate(proxy.get_value())]
+        field_name = proxy._columns[self.column][0]
+        # handle the case of one of the values being None
+        def compare_none( line_1, line_2 ):
+            key_1, key_2 = None, None
+            try:
+                key_1 = getattr( line_1[1], field_name )
+            except Exception as e:
+                logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
+            try:
+                key_2 = getattr( line_2[1], field_name )
+            except Exception as e:
+                logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
+            if key_1 == None and key_2 == None:
+                return 0
+            if key_1 == None:
+                return -1
+            if key_2 == None:
+                return 1
+            return cmp( key_1, key_2 )
+
+        unsorted_collection.sort( cmp = compare_none, reverse = self.order )
+        for j,(i,_o) in enumerate(unsorted_collection):
+            proxy._sort_and_filter[j] = i
+        self.rows = len(unsorted_collection)
+        return self
+
+
 # QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
 # QIdentityProxyModel is missing from PySide
 class CollectionProxy(QtModel.QSortFilterProxyModel):
@@ -683,40 +719,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         assert object_thread( self )
-
-        def create_sort(column, order):
-
-            def sort():
-                unsorted_collection = [(i,o) for i,o in enumerate(self.get_value())]
-                field_name = self._columns[column][0]
-                
-                # handle the case of one of the values being None
-                def compare_none( line_1, line_2 ):
-                    key_1, key_2 = None, None
-                    try:
-                        key_1 = getattr( line_1[1], field_name )
-                    except Exception as e:
-                        logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
-                    try:
-                        key_2 = getattr( line_2[1], field_name )
-                    except Exception as e:
-                        logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
-                    if key_1 == None and key_2 == None:
-                        return 0
-                    if key_1 == None:
-                        return -1
-                    if key_2 == None:
-                        return 1
-                    return cmp( key_1, key_2 )
-                    
-                unsorted_collection.sort( cmp = compare_none, reverse = order )
-                for j,(i,_o) in enumerate(unsorted_collection):
-                    self._sort_and_filter[j] = i
-                return len(unsorted_collection)
-
-            return sort
-
-        post(create_sort(column, order), self._refresh_content)
+        self._crud_requests.append(Sort(column, order))
+        self._start_timer()
 
     def data( self, index, role = Qt.DisplayRole):
         """:return: the data at index for the specified role
