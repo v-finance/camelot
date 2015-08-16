@@ -257,6 +257,7 @@ class QueryTableProxy(CollectionProxy):
                     
     def _extend_cache(self, offset, limit):
         """Extend the cache around the rows under request"""
+        self.logger.debug('extend cache from {0} with {1} rows'.format(offset, limit))
         if self.get_value() is not None:
             if limit:
                 columns = self._columns
@@ -276,7 +277,7 @@ class QueryTableProxy(CollectionProxy):
                         self._add_data( columns, row, cached_obj)
                         rows_in_cache += 1
                     except KeyError:
-                        break
+                        continue
                 #
                 # query the remaining rows
                 #
