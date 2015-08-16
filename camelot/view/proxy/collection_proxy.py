@@ -476,7 +476,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
-        self.unflushed_rows = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         self.__crud_requests = collections.deque()
@@ -691,7 +690,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.source_model.setRowCount(row_count or 0)
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
-        self.unflushed_rows = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         locker.unlock()
@@ -897,8 +895,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.logger.debug('handle update {0} requests'.format(len(update_requests)))
         return_list = []
         grouped_requests = collections.defaultdict( list )
-        for flushed, row, column, value in update_requests:
-            grouped_requests[row].append( (flushed, column, value) )
+        for row, column, value in update_requests:
+            grouped_requests[row].append( (column, value) )
         admin = self.admin
         for row, request_group in six.iteritems(grouped_requests):
             #
@@ -907,14 +905,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             # one that was edited
             #
             o = self.edit_cache.get_entity_at_row( row )
-            if not o:
+            if o is None:
                 # the object might have been deleted from the collection while the editor
                 # was still open
-                self.logger.debug( 'this object is no longer in the collection' )
-                try:
-                    self.unflushed_rows.remove( row )
-                except KeyError:
-                    pass
                 continue
             #
             # the object might have been deleted while an editor was open
@@ -922,7 +915,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             if admin.is_deleted( o ):
                 continue
             changed = False
-            for flushed, column, value in request_group:
+            for column, value in request_group:
                 attribute, field_attributes = self._columns[column]
 
                 from sqlalchemy.exc import DatabaseError
@@ -980,14 +973,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                         try:
                             admin.flush( o )
                         except DatabaseError as e:
-                            #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
+                            #@todo: when flushing fails ??
                             self.logger.error( 'Programming Error, could not flush object', exc_info = e )
-                        locker.relock()
-                        try:
-                            self.unflushed_rows.remove( row )
-                        except KeyError:
-                            pass
-                        locker.unlock()
                         if was_persistent is False:
                             self._objects_created_signal.emit((o,))
                 # update the cache
@@ -998,14 +985,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 self._objects_updated_signal.emit((o,))
                 self._objects_updated_signal.emit(tuple(admin.get_depending_objects(o)))
                 return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
-            elif flushed:
-                locker.relock()
-                self.logger.debug( 'old value equals new value, no need to flush this object' )
-                try:
-                    self.unflushed_rows.remove( row )
-                except KeyError:
-                    pass
-                locker.unlock()
         self.logger.debug('{0} rows changed in update'.format(len(return_list)))
         return return_list
 
@@ -1029,9 +1008,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 return
             self.logger.debug('set data ({0},{1})'.format(index.row(), index.column()))
             locker = QtCore.QMutexLocker( self._mutex )
-            flushed = ( index.row() not in self.unflushed_rows )
-            self.unflushed_rows.add( index.row() )
-            self._update_requests.append( (flushed, index.row(), index.column(), value) )
+            self._update_requests.append( (index.row(), index.column(), value) )
             locker.unlock()
             self._start_timer()
         return True
