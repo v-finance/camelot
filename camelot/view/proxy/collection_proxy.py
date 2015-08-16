@@ -235,6 +235,9 @@ class RowCount(object):
         if self.rows is not None:
             item_model._refresh_content(self.rows)
 
+    def __repr__(self):
+        return '{0.__class__.__name__}(rows={0.rows})'.format(self)
+
 class Created(RowCount):
 
     def __init__(self, objects):
@@ -288,14 +291,15 @@ class Sort(RowCount):
 class SetColumns(object):
 
     def __init__(self, columns):
-        self.columns = columns
+        self.columns = [c[0] for c in columns]
         self.static_field_attributes = None
+
+    def __repr__(self):
+        return 'SetColumns(columns=["{0}", ...])'.format(self.columns[0])
 
     def model_run(self, proxy):
         self.static_field_attributes = list(
-            proxy.admin.get_static_field_attributes(
-                [c[0] for c in self.columns]
-            )
+            proxy.admin.get_static_field_attributes(self.columns)
         )
         return self
 
@@ -315,7 +319,8 @@ class SetColumns(object):
         # setHorizontalHeaderItem will increase the number of columns one by one
         #
         source_model.setColumnCount(len(self.columns))
-        for i, (field_name, fa) in enumerate(self.columns):
+        for i, (field_name, fa) in enumerate(zip(self.columns,
+                                                 self.static_field_attributes)):
             verbose_name = six.text_type(fa['name'])
             header_item = QtGui.QStandardItem()
             set_header_data = header_item.setData
@@ -418,7 +423,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.unflushed_rows = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
-        self._crud_requests = list()
+        self.__crud_requests = collections.deque()
 
         self._reset()
         self._sort_and_filter = SortingRowMapper()
@@ -464,12 +469,12 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def rowCount( self, index = None ):
         rows = super(CollectionProxy, self).rowCount()
         self.logger.debug('row count requested, returned {0}'.format(rows))
-        if (rows == 0) and (self._value is not None):
+        # no need to count rows when there is no value or there are no columns
+        if (rows == 0) and (self._value is not None) and (self._static_field_attributes):
             root_item = self.source_model.invisibleRootItem()
             if not root_item.isEnabled():
                 if not isinstance(self._last_request(), RowCount):
-                    self._crud_requests.append(RowCount())
-                    self._start_timer()
+                    self._append_request(RowCount())
             return 0
         return rows
 
@@ -522,10 +527,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 post(self._handle_update_requests)
             if self.rows_under_request:
                 post(self.__extend_cache)
-            if self._crud_requests:
-                for request in self._crud_requests:
-                    post(request.model_run, self._crud_update, args=(self,))
-                self._crud_requests = list()
+            while len(self.__crud_requests):
+                request = self.__crud_requests.popleft()
+                self.logger.debug('post request {0}'.format(request))
+                post(request.model_run, self._crud_update, args=(self,))
 
     def _start_timer(self):
         """
@@ -539,8 +544,19 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         """
         :return: the last crud request issued, or `None` if the queue is empty
         """
-        if len(self._crud_requests):
-            return self._crud_requests[-1]
+        if len(self.__crud_requests):
+            return self.__crud_requests[-1]
+
+    def _append_request(self, request):
+        """
+        Always use this method to add CRUD requests to the queue, since it
+        will make sure no request is added to the queue while handling the
+        feedback from a request.
+        """
+        self.logger.debug('append request {0}'.format(request))
+        self.__crud_requests.append(request)
+        self._start_timer()
+
     #
     # end of timer functions
     #
@@ -583,7 +599,15 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
     @QtCore.qt_slot(object)
     def _crud_update(self, crud_request):
-        crud_request.gui_run(self)
+        self.logger.debug('begin update {0}'.format(crud_request))
+        try:
+            crud_request.gui_run(self)
+            self.logger.debug('end update {0}'.format(crud_request))
+        except Exception as e:
+            self.logger.error('exception during update {0}'.format(crud_request),
+                              exc_info=e
+                              )
+        
 
     def refresh(self):
         self._reset()
@@ -593,14 +617,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         """
         reset all shared state and cache
         """
-        self.logger.debug('reset state and cache')
         # make sure all pending requests are handled before removing things
-        self.timeout_slot()
+        # wont work since _reset is called within the handling of crud requests
+        # self.timeout_slot()
         # end
         max_cache = 10 * self.max_number_of_rows
-        root_item = self.source_model.invisibleRootItem()
         locker = QtCore.QMutexLocker(self._mutex)
         if cache_collection_proxy is not None:
+            self.logger.debug('_reset state from cache')
             cached_entries = len( cache_collection_proxy.display_cache )
             max_cache = max( cached_entries, max_cache )
             self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
@@ -609,12 +633,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
             self.source_model.setRowCount(cache_collection_proxy.rowCount())
         else:
+            self.logger.debug('_reset state')
             self.display_cache = Fifo( max_cache )
             self.edit_cache = Fifo( max_cache )
             self.attributes_cache = Fifo( max_cache )
             self.action_state_cache = Fifo( max_cache )
-            self.source_model.setRowCount(row_count or 0)
+            root_item = self.source_model.invisibleRootItem()
             root_item.setEnabled(row_count != None)
+            self.source_model.setRowCount(row_count or 0)
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self.unflushed_rows = set()
@@ -651,7 +677,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._crud_requests.append(Update(objects))
+            self._append_request(Update(objects))
             self._start_timer()
 
     @QtCore.qt_slot(object, tuple)
@@ -663,7 +689,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
             )
-            self._crud_requests.append(Deleted(objects))
+            self._append_request(Deleted(objects))
             self._start_timer()
 
     @QtCore.qt_slot(object, tuple)
@@ -675,7 +701,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._crud_requests.append(Created(objects))
+            self._append_request(Created(objects))
             self._start_timer()
 
     def set_columns(self, columns):
@@ -687,7 +713,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.logger.debug( 'set_columns' )
         assert object_thread( self )
         self._columns = columns
-        self._crud_requests.append(SetColumns(columns))
+        self._append_request(SetColumns(columns))
         self._start_timer()
 
     def setHeaderData(self, section, orientation, value, role):
@@ -738,7 +764,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         assert object_thread( self )
-        self._crud_requests.append(Sort(column, order))
+        self._append_request(Sort(column, order))
         self._start_timer()
 
     def data( self, index, role = Qt.DisplayRole):
@@ -998,6 +1024,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         :param obj: the object from which to strip the data
         """
         action_state = None
+        logger.debug('_add data for row {0}'.format(row))
         if not self.admin.is_deleted( obj ):
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
@@ -1196,6 +1223,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 raise KeyError
             return data
         except KeyError:
+            logger.debug( 'data in row {0} not yet loaded row'.format(row))
             locker = QtCore.QMutexLocker(self._mutex)
             if row not in self.rows_under_request:
                 self.rows_under_request.add(row)
