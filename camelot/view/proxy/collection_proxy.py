@@ -295,9 +295,12 @@ class SetData(object):
     def __init__(self, updates):
         # Copy the update requests and clear the list of requests
         self.updates = [u for u in updates]
+        self.created_objects = None
+        self.updated_objects = None
 
     def model_run(self, proxy):
         grouped_requests = collections.defaultdict( list )
+        updated_objects, created_objects = set(), set()
         for row, column, value in self.updates:
             grouped_requests[row].append( (column, value) )
         admin = proxy.admin
@@ -379,18 +382,20 @@ class SetData(object):
                             #@todo: when flushing fails ??
                             proxy.logger.error( 'Programming Error, could not flush object', exc_info = e )
                         if was_persistent is False:
-                            proxy._objects_created_signal.emit((o,))
+                            created_objects.add(o)
                 # update the cache
                 proxy.logger.debug('update cache')
                 proxy._add_data(proxy._columns, row, o)
-                #@todo: update should only be sent remotely when flush was done
-                proxy.logger.debug('send objects updated signals')
-                proxy._objects_updated_signal.emit((o,))
-                proxy._objects_updated_signal.emit(tuple(admin.get_depending_objects(o)))
+                updated_objects.add(o)
+                updated_objects.update(set(admin.get_depending_objects(o)))
+        self.created_objects = tuple(created_objects)
+        self.updated_objects = tuple(updated_objects)
         return self
 
     def gui_run(self, item_model):
-        pass
+        signal_handler = item_model._crud_signal_handler
+        signal_handler.send_objects_created(item_model, self.created_objects)
+        signal_handler.send_objects_updated(item_model, self.updated_objects)
 
 class Created(RowCount):
 
@@ -515,8 +520,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
     # it looks as QtCore.QModelIndex cannot be serialized for cross
     # thread signals
-    _objects_updated_signal = QtCore.qt_signal(tuple)
-    _objects_created_signal = QtCore.qt_signal(tuple)
 
     def __init__( self,
                   admin,
@@ -581,8 +584,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset()
         self._sort_and_filter = SortingRowMapper()
         self.row_changed_signal.connect( self._emit_changes )
-        self._objects_updated_signal.connect(self._send_objects_updated, Qt.QueuedConnection)
-        self._objects_created_signal.connect(self._send_objects_created, Qt.QueuedConnection)
         self._crud_signal_handler = CrudSignalHandler()
         self._crud_signal_handler.connect_signals( self )
 #    # in that way the number of rows is requested as well
@@ -1206,14 +1207,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def contains(self, obj):
         collection = self.get_value()
         return (obj in collection)
-
-    @QtCore.qt_slot(tuple)
-    def _send_objects_updated(self, objects):
-        self._crud_signal_handler.send_objects_updated(self, objects)
-
-    @QtCore.qt_slot(tuple)
-    def _send_objects_created(self, objects):
-        self._crud_signal_handler.send_objects_created(self, objects)
 
     def get_admin( self ):
         """Get the admin object associated with this model"""
