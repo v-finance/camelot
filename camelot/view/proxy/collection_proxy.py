@@ -32,14 +32,10 @@ returned and an update signal is emitted when the correct data is available.
 #
 # Things to take into account for next version
 #
-# * subsequent calls that require a refresh of the query, should happen when a
-#   lock is hold, to prevent multiple queries or count queries
-#
 # * try to work around the initial count query
 #
 # * the proxy should allow adding mapped fields to the objects in the collection
-#   during the lifetime of the proxy, so a single proxy can be reused for multiple
-#   views.
+#   during the lifetime of the proxy
 #
 import collections
 import datetime
@@ -293,6 +289,108 @@ class RowData(object):
 
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
+
+class SetData(object):
+
+    def __init__(self, updates):
+        # Copy the update requests and clear the list of requests
+        self.updates = [u for u in updates]
+
+    def model_run(self, proxy):
+        grouped_requests = collections.defaultdict( list )
+        for row, column, value in self.updates:
+            grouped_requests[row].append( (column, value) )
+        admin = proxy.admin
+        for row, request_group in six.iteritems(grouped_requests):
+            #
+            # don't use get_slice, but only update objects which are in the
+            # cache, otherwise it is not sure that the object updated is the
+            # one that was edited
+            #
+            o = proxy.edit_cache.get_entity_at_row( row )
+            if o is None:
+                # the object might have been deleted from the collection while the editor
+                # was still open
+                continue
+            #
+            # the object might have been deleted while an editor was open
+            # 
+            if admin.is_deleted( o ):
+                continue
+            changed = False
+            for column, value in request_group:
+                attribute, field_attributes = proxy._columns[column]
+
+                from sqlalchemy.exc import DatabaseError
+                new_value = value()
+                proxy.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+    
+                if new_value == ValueLoading:
+                    continue
+
+                old_value = getattr( o, attribute )
+                value_changed = ( new_value != old_value )
+                #
+                # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
+                # old and new value to know if the object was changed, so we'll
+                # consider it changed anyway
+                #
+                direction = field_attributes.get( 'direction', None )
+                if direction in ( 'manytomany', 'onetomany' ):
+                    value_changed = True
+                if value_changed is not True:
+                    continue
+                #
+                # now check if this column is editable, since editable might be
+                # dynamic and change after every change of the object
+                #
+                fields = [attribute]
+                for fa in admin.get_dynamic_field_attributes(o, fields):
+                    # if editable is not in the field_attributes dict, it wasn't
+                    # dynamic but static, so earlier checks should have 
+                    # intercepted this change
+                    if fa.get('editable', True) == True:
+                        # interrupt inner loop, so outer loop can be continued
+                        break
+                else:
+                    continue
+                # update the model
+                try:
+                    admin.set_field_value(o, attribute, new_value)
+                    #
+                    # setting this attribute, might trigger a default function 
+                    # to return a value, that was not returned before
+                    #
+                    admin.set_defaults( o, include_nullable_fields=False )
+                except AttributeError as e:
+                    proxy.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
+                except TypeError:
+                    # type error can be raised in case we try to set to a collection
+                    pass
+                changed = value_changed or changed
+            if changed:
+                if proxy.flush_changes:
+                    if proxy.validator.isValid( row ):
+                        # save the state before the update
+                        was_persistent =admin.is_persistent(o)
+                        try:
+                            admin.flush( o )
+                        except DatabaseError as e:
+                            #@todo: when flushing fails ??
+                            proxy.logger.error( 'Programming Error, could not flush object', exc_info = e )
+                        if was_persistent is False:
+                            proxy._objects_created_signal.emit((o,))
+                # update the cache
+                proxy.logger.debug('update cache')
+                proxy._add_data(proxy._columns, row, o)
+                #@todo: update should only be sent remotely when flush was done
+                proxy.logger.debug('send objects updated signals')
+                proxy._objects_updated_signal.emit((o,))
+                proxy._objects_updated_signal.emit(tuple(admin.get_depending_objects(o)))
+        return self
+
+    def gui_run(self, item_model):
+        pass
 
 class Created(RowCount):
 
@@ -579,7 +677,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         if timer is not None:
             timer.stop()
             if self._update_requests:
-                post(self._handle_update_requests)
+                self._append_request(SetData(self._update_requests))
+                self._update_requests = list()
             if self.rows_under_request:
                 self._append_request(RowData(self.rows_under_request))
             while len(self.__crud_requests):
@@ -880,113 +979,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             if value is ValueLoading:
                 return None
             return value.get(field_attribute, None)
-
-    def _handle_update_requests(self):
-        locker = QtCore.QMutexLocker(self._mutex)
-        #
-        # Copy the update requests and clear the list of requests
-        #
-        update_requests = [u for u in self._update_requests]
-        self._update_requests = []
-        locker.unlock()
-        #
-        # Handle the requests
-        #
-        self.logger.debug('handle update {0} requests'.format(len(update_requests)))
-        return_list = []
-        grouped_requests = collections.defaultdict( list )
-        for row, column, value in update_requests:
-            grouped_requests[row].append( (column, value) )
-        admin = self.admin
-        for row, request_group in six.iteritems(grouped_requests):
-            #
-            # don't use get_slice, but only update objects which are in the
-            # cache, otherwise it is not sure that the object updated is the
-            # one that was edited
-            #
-            o = self.edit_cache.get_entity_at_row( row )
-            if o is None:
-                # the object might have been deleted from the collection while the editor
-                # was still open
-                continue
-            #
-            # the object might have been deleted while an editor was open
-            # 
-            if admin.is_deleted( o ):
-                continue
-            changed = False
-            for column, value in request_group:
-                attribute, field_attributes = self._columns[column]
-
-                from sqlalchemy.exc import DatabaseError
-                new_value = value()
-                self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-    
-                if new_value == ValueLoading:
-                    continue
-
-                old_value = getattr( o, attribute )
-                value_changed = ( new_value != old_value )
-                #
-                # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
-                # old and new value to know if the object was changed, so we'll
-                # consider it changed anyway
-                #
-                direction = field_attributes.get( 'direction', None )
-                if direction in ( 'manytomany', 'onetomany' ):
-                    value_changed = True
-                if value_changed is not True:
-                    continue
-                #
-                # now check if this column is editable, since editable might be
-                # dynamic and change after every change of the object
-                #
-                fields = [attribute]
-                for fa in admin.get_dynamic_field_attributes(o, fields):
-                    # if editable is not in the field_attributes dict, it wasn't
-                    # dynamic but static, so earlier checks should have 
-                    # intercepted this change
-                    if fa.get('editable', True) == True:
-                        # interrupt inner loop, so outer loop can be continued
-                        break
-                else:
-                    continue
-                # update the model
-                try:
-                    admin.set_field_value(o, attribute, new_value)
-                    #
-                    # setting this attribute, might trigger a default function 
-                    # to return a value, that was not returned before
-                    #
-                    admin.set_defaults( o, include_nullable_fields=False )
-                except AttributeError as e:
-                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
-                except TypeError:
-                    # type error can be raised in case we try to set to a collection
-                    pass
-                changed = value_changed or changed
-            if changed:
-                if self.flush_changes:
-                    if self.validator.isValid( row ):
-                        # save the state before the update
-                        was_persistent =admin.is_persistent(o)
-                        try:
-                            admin.flush( o )
-                        except DatabaseError as e:
-                            #@todo: when flushing fails ??
-                            self.logger.error( 'Programming Error, could not flush object', exc_info = e )
-                        if was_persistent is False:
-                            self._objects_created_signal.emit((o,))
-                # update the cache
-                self.logger.debug('update cache')
-                self._add_data(self._columns, row, o)
-                #@todo: update should only be sent remotely when flush was done
-                self.logger.debug('send objects updated signals')
-                self._objects_updated_signal.emit((o,))
-                self._objects_updated_signal.emit(tuple(admin.get_depending_objects(o)))
-                return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
-        self.logger.debug('{0} rows changed in update'.format(len(return_list)))
-        return return_list
 
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to

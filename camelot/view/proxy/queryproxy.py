@@ -305,5 +305,3 @@ class QueryTableProxy(CollectionProxy):
                     for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
                         obj = self._appended_rows[row - rows_in_query]
                         self._add_data(columns, row, obj)
-
-
