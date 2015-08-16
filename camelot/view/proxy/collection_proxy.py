@@ -238,6 +238,62 @@ class RowCount(object):
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
+class RowData(object):
+
+    def __init__(self, rows):
+        self.rows = rows
+        self.difference = None
+
+    def offset_and_limit_rows_to_get(self, proxy):
+        """From the current set of rows to get, find the first
+        continuous range of rows that should be fetched.
+        :return: (offset, limit)
+        """
+        offset, limit, i = 0, 0, 0
+        locker = QtCore.QMutexLocker(proxy._mutex)
+        #
+        # now filter out all rows that have been put in the cache
+        # the gui thread didn't know about
+        #
+        rows_to_get = self.rows
+        rows_already_there = set()
+        for row in rows_to_get:
+            if proxy.edit_cache.has_data_at_row(row):
+                rows_already_there.add(row)
+        rows_to_get.difference_update( rows_already_there )
+        rows_to_get = list(rows_to_get)
+        locker.unlock()
+        #
+        # see if there is anything left to do
+        #
+        try:
+            if len(rows_to_get):
+                rows_to_get.sort()
+                offset = rows_to_get[0]
+                #
+                # find first discontinuity
+                #
+                for i in range(offset, rows_to_get[-1]+1):
+                    if rows_to_get[i-offset] != i:
+                        break
+                limit = i - offset + 1
+        except IndexError as e:
+            logger.error('index error with rows_to_get %s'%six.text_type(rows_to_get), exc_info=e)
+            raise e
+        return (offset, limit)
+
+    def model_run(self, proxy):
+        offset, limit = self.offset_and_limit_rows_to_get(proxy)
+        proxy._extend_cache(offset, limit)
+        self.difference = set( range( offset, offset + limit + 1) )
+        return self
+
+    def gui_run(self, item_model):
+        item_model.rows_under_request.difference_update(self.difference)
+
+    def __repr__(self):
+        return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
+
 class Created(RowCount):
 
     def __init__(self, objects):
@@ -526,7 +582,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             if self._update_requests:
                 post(self._handle_update_requests)
             if self.rows_under_request:
-                post(self.__extend_cache)
+                self._append_request(RowData(self.rows_under_request))
             while len(self.__crud_requests):
                 request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0}'.format(request))
@@ -1083,49 +1139,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             pass
         return False
 
-    def _offset_and_limit_rows_to_get( self ):
-        """From the current set of rows to get, find the first
-        continuous range of rows that should be fetched.
-        :return: (offset, limit)
-        """
-        offset, limit, i = 0, 0, 0
-        locker = QtCore.QMutexLocker(self._mutex)
-        #
-        # now filter out all rows that have been put in the cache
-        # the gui thread didn't know about
-        #
-        rows_to_get = self.rows_under_request
-        rows_already_there = set()
-        for row in rows_to_get:
-            if self.edit_cache.has_data_at_row(row):
-                rows_already_there.add(row)
-        rows_to_get.difference_update( rows_already_there )
-        rows_to_get = list(rows_to_get)
-        locker.unlock()
-        #
-        # see if there is anything left to do
-        #
-        try:
-            if len(rows_to_get):
-                rows_to_get.sort()
-                offset = rows_to_get[0]
-                #
-                # find first discontinuity
-                #
-                for i in range(offset, rows_to_get[-1]+1):
-                    if rows_to_get[i-offset] != i:
-                        break
-                limit = i - offset + 1
-        except IndexError as e:
-            logger.error('index error with rows_to_get %s'%six.text_type(rows_to_get), exc_info=e)
-            raise e
-        return (offset, limit)
-
-    def __extend_cache(self):
-        offset, limit = self._offset_and_limit_rows_to_get()
-        self._extend_cache(offset, limit)
-        self._cache_extended(offset, limit)
-
     def _extend_cache(self, offset, limit):
         """Extend the cache around the rows under request"""
         if limit:
@@ -1195,15 +1208,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                     break
             yield obj
 
-    def _cache_extended( self, offset, limit ):
-        """
-        Remove the range within offset, limit from rows under request, this should
-        happen in the model thread, since they are consumed here
-        """
-        locker = QtCore.QMutexLocker(self._mutex)
-        self.rows_under_request.difference_update( set( range( offset, offset + limit + 1) ) )
-        locker.unlock()
-
     def _get_row_data( self, row, cache ):
         """Get the data which is to be visualized at a certain row of the
         table, if needed, post a refill request the cache to get the object
@@ -1224,11 +1228,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             return data
         except KeyError:
             logger.debug( 'data in row {0} not yet loaded row'.format(row))
-            locker = QtCore.QMutexLocker(self._mutex)
             if row not in self.rows_under_request:
                 self.rows_under_request.add(row)
                 self._start_timer()
-            locker.unlock()
             return empty_row_data
 
     def remove( self, o ):
