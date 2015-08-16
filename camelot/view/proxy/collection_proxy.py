@@ -50,7 +50,7 @@ from camelot.admin.action.list_action import ListActionModelContext
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...container.collection_container import CollectionContainer
-from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets, is_deleted,
+from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
 from ..crud_signals import CrudSignalHandler
 from camelot.core.exception import log_programming_error
@@ -176,6 +176,7 @@ class Update(object):
 
     def __init__(self, objects):
         self.objects = objects
+        self.changed_ranges = []
 
     def model_run(self, proxy):
         for obj in self.objects:
@@ -189,11 +190,18 @@ class Update(object):
             # to strip data of the entity
             #
             columns = proxy._columns
-            proxy._add_data(columns, row, obj)
+            self.changed_ranges.extend(proxy._add_data(columns, row, obj))
         return self
 
     def gui_run(self, item_model):
-        pass
+        for row, from_column, thru_column in self.changed_ranges:
+            # emit the headerDataChanged signal, to ensure the row icon is
+            # updated
+            item_model.headerDataChanged.emit(Qt.Vertical, row, row)
+            if thru_column >= from_column:
+                top_left = item_model.index(row, from_column)
+                bottom_right = item_model.index(row, thru_column)
+                item_model.dataChanged.emit(top_left, bottom_right)
 
 class Deleted(object):
 
@@ -234,11 +242,13 @@ class RowCount(object):
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
-class RowData(object):
+class RowData(Update):
 
     def __init__(self, rows):
+        super(RowData, self).__init__(None)
         self.rows = rows
         self.difference = None
+        self.changed_ranges = []
 
     def offset_and_limit_rows_to_get(self, proxy):
         """From the current set of rows to get, find the first
@@ -280,19 +290,21 @@ class RowData(object):
 
     def model_run(self, proxy):
         offset, limit = self.offset_and_limit_rows_to_get(proxy)
-        proxy._extend_cache(offset, limit)
+        self.changed_ranges.extend(proxy._extend_cache(offset, limit))
         self.difference = set( range( offset, offset + limit + 1) )
         return self
 
     def gui_run(self, item_model):
         item_model.rows_under_request.difference_update(self.difference)
+        super(RowData, self).gui_run(item_model)
 
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
 
-class SetData(object):
+class SetData(Update):
 
     def __init__(self, updates):
+        super(SetData, self).__init__(None)
         # Copy the update requests and clear the list of requests
         self.updates = [u for u in updates]
         self.created_objects = None
@@ -385,7 +397,7 @@ class SetData(object):
                             created_objects.add(o)
                 # update the cache
                 proxy.logger.debug('update cache')
-                proxy._add_data(proxy._columns, row, o)
+                self.changed_ranges.extend(proxy._add_data(proxy._columns, row, o))
                 updated_objects.add(o)
                 updated_objects.update(set(admin.get_depending_objects(o)))
         self.created_objects = tuple(created_objects)
@@ -393,6 +405,7 @@ class SetData(object):
         return self
 
     def gui_run(self, item_model):
+        super(SetData, self).gui_run(item_model)
         signal_handler = item_model._crud_signal_handler
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
@@ -516,11 +529,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
     """
 
-    row_changed_signal = QtCore.qt_signal(int, int, int)
-
-    # it looks as QtCore.QModelIndex cannot be serialized for cross
-    # thread signals
-
     def __init__( self,
                   admin,
                   max_number_of_rows = 10, 
@@ -583,7 +591,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
         self._reset()
         self._sort_and_filter = SortingRowMapper()
-        self.row_changed_signal.connect( self._emit_changes )
         self._crud_signal_handler = CrudSignalHandler()
         self._crud_signal_handler.connect_signals( self )
 #    # in that way the number of rows is requested as well
@@ -1006,20 +1013,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self._start_timer()
         return True
 
-    # @todo : it seems Qt regulary crashes when dataChanged is emitted
-    #         don't do the emit inside a slot, but rework the CollectionProxy
-    #         to behave as an action that yields all it's updates
-    @QtCore.qt_slot(int, int, int)
-    def _emit_changes( self, row, from_column, thru_column ):
-        assert object_thread( self )
-        # emit the headerDataChanged signal, to ensure the row icon is
-        # updated
-        self.headerDataChanged.emit(Qt.Vertical, row, row)
-        if thru_column >= from_column:
-            top_left = self.index(row, from_column)
-            bottom_right = self.index(row, thru_column)
-            self.dataChanged.emit(top_left, bottom_right)
-
     def flags( self, index ):
         """Returns the item flags for the given index"""
         assert object_thread( self )
@@ -1039,8 +1032,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         :param columns: the columns of which to strip data
         :param row: the row in the cache into which to add data
         :param obj: the object from which to strip the data
+        :return: the changes to the item model
         """
         action_state = None
+        changed_ranges = []
         logger.debug('_add data for row {0}'.format(row))
         if not self.admin.is_deleted( obj ):
             row_data = strip_data_from_object( obj, columns )
@@ -1069,11 +1064,11 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # it might be that the CollectionProxy is deleted on the Qt side of
         # the application
         #
-        if not is_deleted( self ) and row != None:
+        if row is not None:
             if len( changed_columns ) == len( columns ):
                 # this is new data or everything has changed, dont waste any
                 # time to fine grained updates
-                self.row_changed_signal.emit( row, 0, len( columns ) - 1 )
+                changed_ranges.append((row, 0, len( columns ) - 1))
             elif len( changed_columns ):
                 changed_columns = sorted( changed_columns )
                 next_changed_columns = changed_columns[1:] + [None]
@@ -1081,13 +1076,12 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 for changed_column, next_column in zip( changed_columns,
                                                         next_changed_columns ):
                     if next_column != changed_column + 1:
-                        self.row_changed_signal.emit( row, 
-                                                      from_column, 
-                                                      changed_column )
+                        changed_ranges.append((row, from_column, changed_column))
                         from_column = next_column
             else:
                 # only the header changed
-                self.row_changed_signal.emit( row, 1, 0 )
+                changed_ranges.append((row, 1, 0))
+        return changed_ranges
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is already in the cache, but at a
@@ -1102,6 +1096,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
     def _extend_cache(self, offset, limit):
         """Extend the cache around the rows under request"""
+        changed_ranges = []
         if limit:
             columns = self._columns
             collection = self.get_value()
@@ -1116,12 +1111,13 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                         if self._skip_row(i, obj):
                             skipped_rows = skipped_rows + 1
                         else:
-                            self._add_data(columns, i, obj)
+                            changed_ranges.extend(self._add_data(columns, i, obj))
                             object_found = True
             except IndexError:
                 # stop when the end of the collection is reached, no matter
                 # what the request was
                 pass
+        return changed_ranges
 
     def get_slice(self, i, j, yield_per=None):
         """

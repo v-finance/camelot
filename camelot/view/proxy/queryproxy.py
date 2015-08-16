@@ -258,6 +258,7 @@ class QueryTableProxy(CollectionProxy):
     def _extend_cache(self, offset, limit):
         """Extend the cache around the rows under request"""
         self.logger.debug('extend cache from {0} with {1} rows'.format(offset, limit))
+        changed_ranges = []
         if self.get_value() is not None:
             if limit:
                 columns = self._columns
@@ -274,7 +275,8 @@ class QueryTableProxy(CollectionProxy):
                 for row in range(offset, offset + limit):
                     try:
                         cached_obj =  self.edit_cache.get_entity_at_row(row)
-                        self._add_data( columns, row, cached_obj)
+                        changed_ranges.extend(
+                            self._add_data(columns, row, cached_obj))
                         rows_in_cache += 1
                     except KeyError:
                         continue
@@ -294,7 +296,8 @@ class QueryTableProxy(CollectionProxy):
                         except KeyError:
                             pass
                         if self._skip_row(row, obj) == False:
-                            self._add_data(columns, row, obj)
+                            changed_ranges.extend(
+                                self._add_data(columns, row, obj))
                 self._clean_appended_rows()
                 if self._rows is None:
                     self.get_row_count()
@@ -304,4 +307,6 @@ class QueryTableProxy(CollectionProxy):
                 if offset+limit >= rows_in_query:
                     for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
                         obj = self._appended_rows[row - rows_in_query]
-                        self._add_data(columns, row, obj)
+                        changed_ranges.extend(
+                            self._add_data(columns, row, obj))
+        return changed_ranges
