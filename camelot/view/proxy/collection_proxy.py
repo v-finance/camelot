@@ -630,14 +630,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         collection"""
         return self._sort_and_filter[sorted_row_number]
 
-    def hasUnflushedRows( self ):
-        """The model has rows that have not been flushed to the database yet,
-        because the row is invalid
-        """
-        has_unflushed_rows = ( len( self.unflushed_rows ) > 0 )
-        self.logger.debug( 'hasUnflushed rows : %s' % has_unflushed_rows )
-        return has_unflushed_rows
-
     def get_row_count( self ):
         locker = QtCore.QMutexLocker(self._mutex)
         # make sure we don't count an object twice if it is twice
@@ -1027,7 +1019,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         #
         # prevent data of being set in rows not actually in this model
         #
-        
         if (not index.isValid()) or (index.model()!=self):
             return False
         if role == Qt.EditRole:
