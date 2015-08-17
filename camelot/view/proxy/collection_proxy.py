@@ -467,7 +467,10 @@ class SetColumns(object):
         self.static_field_attributes = None
 
     def __repr__(self):
-        return 'SetColumns(columns=["{0}", ...])'.format(self.columns[0])
+        return '{0.__class__.__name__}(columns=[{1}...])'.format(
+            self,
+            ', '.join(self.columns[:2])
+        )
 
     def model_run(self, proxy):
         self.static_field_attributes = list(
