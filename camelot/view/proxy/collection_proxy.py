@@ -58,6 +58,11 @@ from camelot.view.fifo import Fifo
 from camelot.view.model_thread import object_thread, post
 from camelot.core.files.storage import StoredImage
 
+#
+# Custom Roles
+#
+FieldAttributesRole = Qt.UserRole
+ObjectRole = Qt.UserRole + 1
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent
@@ -136,6 +141,9 @@ class EmptyRowData( object ):
         return ValueLoading
 
 empty_row_data = EmptyRowData()
+
+invalid_data = py_to_variant()
+invalid_field_attributes_data = py_to_variant({})
 
 class SortingRowMapper( dict ):
     """Class mapping rows of a collection 1:1 without sorting
@@ -929,22 +937,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         yet been fetched from the underlying model.  It will then send
         a request to the model thread to fetch this data.  Once the data
         is readily available, the dataChanged signal will be emitted
-
-        Using Qt.UserRole as a role will return all the field attributes
-        of the index.
-        
-        Using Qt.UserRole+1 will return the object of which an attribute
-        is displayed in that specific cell
-        
         """
         assert object_thread( self )
-        if not index.isValid() or \
-           not ( 0 <= index.row() < self.rowCount( index ) ) or \
-           not ( 0 <= index.column() < self.columnCount() ):
-            if role == Qt.UserRole:
-                return py_to_variant({})
+        if (not index.isValid()) or (index.model()!=self):
+            if role == FieldAttributesRole:
+                return invalid_field_attributes_data
             else:
-                return py_to_variant()
+                return invalid_data
+
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
                 cache = self.edit_cache
@@ -967,13 +967,13 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))
         elif role == Qt.BackgroundRole:
             return py_to_variant(self._get_field_attribute_value(index, 'background_color') or py_to_variant())
-        elif role == Qt.UserRole:
+        elif role == FieldAttributesRole:
             field_attributes = ProxyDict(self._static_field_attributes[index.column()])
             dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
             if dynamic_field_attributes != ValueLoading:
                 field_attributes.update( dynamic_field_attributes )
             return py_to_variant(field_attributes)
-        elif role == Qt.UserRole + 1:
+        elif role == ObjectRole:
             try:
                 return py_to_variant( self.edit_cache.get_entity_at_row( index.row() ) )
             except KeyError:
