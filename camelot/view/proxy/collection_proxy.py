@@ -63,6 +63,7 @@ from camelot.core.files.storage import StoredImage
 #
 FieldAttributesRole = Qt.UserRole
 ObjectRole = Qt.UserRole + 1
+PreviewRole = Qt.UserRole + 2
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent
@@ -202,14 +203,13 @@ class Update(object):
         return self
 
     def gui_run(self, item_model):
-        for row, from_column, thru_column in self.changed_ranges:
+        root_item = item_model.source_model.invisibleRootItem()
+        for row, items in self.changed_ranges:
             # emit the headerDataChanged signal, to ensure the row icon is
             # updated
             item_model.headerDataChanged.emit(Qt.Vertical, row, row)
-            if thru_column >= from_column:
-                top_left = item_model.index(row, from_column)
-                bottom_right = item_model.index(row, thru_column)
-                item_model.dataChanged.emit(top_left, bottom_right)
+            for column, item in items:
+                root_item.setChild(row, column, item)
 
 class Deleted(object):
 
@@ -945,40 +945,60 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             else:
                 return invalid_data
 
-        if role in (Qt.EditRole, Qt.DisplayRole):
-            if role == Qt.EditRole:
-                cache = self.edit_cache
-            else:
-                cache = self.display_cache
-            data = self._get_row_data( index.row(), cache )
-            value = data[index.column()]
-            if isinstance(value, datetime.datetime):
-                # Putting a python datetime into a Qt Variant and returning
-                # it to a PyObject seems to be buggy, therefore we chop the
-                # microseconds
-                if value:
-                    value = QtCore.QDateTime(value.year, value.month,
-                                             value.day, value.hour,
-                                             value.minute, value.second)
-            elif isinstance(value, (list, dict)):
-                value = CollectionContainer(value)
-            return py_to_variant( value )
-        elif role == Qt.ToolTipRole:
-            return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))
-        elif role == Qt.BackgroundRole:
-            return py_to_variant(self._get_field_attribute_value(index, 'background_color') or py_to_variant())
-        elif role == FieldAttributesRole:
-            field_attributes = ProxyDict(self._static_field_attributes[index.column()])
-            dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-            if dynamic_field_attributes != ValueLoading:
-                field_attributes.update( dynamic_field_attributes )
-            return py_to_variant(field_attributes)
-        elif role == ObjectRole:
-            try:
-                return py_to_variant( self.edit_cache.get_entity_at_row( index.row() ) )
-            except KeyError:
-                return py_to_variant( ValueLoading )
-        return py_to_variant()
+        root_item = self.source_model.invisibleRootItem()
+        child_item = root_item.child(index.row(), index.column())
+
+        if child_item is None:
+            row = index.row()
+            if row not in self.rows_under_request:
+                self.rows_under_request.add(row)
+                self._start_timer()
+            if role == FieldAttributesRole:
+                return py_to_variant(
+                    ProxyDict(self._static_field_attributes[index.column()])
+                )
+            return py_to_variant(ValueLoading)
+
+        # the standard implementation uses EditRole as DisplayRole
+        if role == Qt.DisplayRole:
+            role = PreviewRole
+
+        return child_item.data(role)
+
+        #if role in (Qt.EditRole, Qt.DisplayRole):
+            #if role == Qt.EditRole:
+                #cache = self.edit_cache
+            #else:
+                #cache = self.display_cache
+            #data = self._get_row_data( index.row(), cache )
+            #value = data[index.column()]
+            #if isinstance(value, datetime.datetime):
+                ## Putting a python datetime into a Qt Variant and returning
+                ## it to a PyObject seems to be buggy, therefore we chop the
+                ## microseconds
+                #if value:
+                    #value = QtCore.QDateTime(value.year, value.month,
+                                             #value.day, value.hour,
+                                             #value.minute, value.second)
+            #elif isinstance(value, (list, dict)):
+                #value = CollectionContainer(value)
+            #return py_to_variant( value )
+        #elif role == Qt.ToolTipRole:
+            #return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))
+        #elif role == Qt.BackgroundRole:
+            #return py_to_variant(self._get_field_attribute_value(index, 'background_color') or py_to_variant())
+        #elif role == FieldAttributesRole:
+            #field_attributes = ProxyDict(self._static_field_attributes[index.column()])
+            #dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
+            #if dynamic_field_attributes != ValueLoading:
+                #field_attributes.update( dynamic_field_attributes )
+            #return py_to_variant(field_attributes)
+        #elif role == ObjectRole:
+            #try:
+                #return py_to_variant( self.edit_cache.get_entity_at_row( index.row() ) )
+            #except KeyError:
+                #return py_to_variant( ValueLoading )
+        #return py_to_variant()
 
     def _get_field_attribute_value(self, index, field_attribute):
         """Get the values for the static and the dynamic field attributes at once
@@ -1033,7 +1053,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def _add_data(self, columns, row, obj):
         """Add data from object o at a row in the cache
         :param columns: the columns of which to strip data
-        :param row: the row in the cache into which to add data
+        :param r"ow: the row in the cache into which to add data
         :param obj: the object from which to strip the data
         :return: the changes to the item model
         """
@@ -1063,27 +1083,17 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         changed_columns.update( self.attributes_cache.add_data(row, obj, dynamic_field_attributes ) )
         self.action_state_cache.add_data(row, obj, [action_state] )
         locker.unlock()
-        #
-        # it might be that the CollectionProxy is deleted on the Qt side of
-        # the application
-        #
         if row is not None:
-            if len( changed_columns ) == len( columns ):
-                # this is new data or everything has changed, dont waste any
-                # time to fine grained updates
-                changed_ranges.append((row, 0, len( columns ) - 1))
-            elif len( changed_columns ):
-                changed_columns = sorted( changed_columns )
-                next_changed_columns = changed_columns[1:] + [None]
-                from_column = changed_columns[0]
-                for changed_column, next_column in zip( changed_columns,
-                                                        next_changed_columns ):
-                    if next_column != changed_column + 1:
-                        changed_ranges.append((row, from_column, changed_column))
-                        from_column = next_column
-            else:
-                # only the header changed
-                changed_ranges.append((row, 1, 0))
+            items = []
+            for column in changed_columns:
+                field_attributes = dynamic_field_attributes[column]
+                field_attributes.update(self._static_field_attributes[column])
+                item = QtModel.QStandardItem()
+                item.setData(py_to_variant(row_data[column]), Qt.EditRole)
+                item.setData(py_to_variant(ProxyDict(field_attributes)), FieldAttributesRole)
+                item.setData(py_to_variant(unicode_row_data[column]), PreviewRole)
+                items.append((column, item))
+            changed_ranges.append((row, items))
         return changed_ranges
 
     def _skip_row(self, row, obj):
