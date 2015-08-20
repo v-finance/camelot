@@ -963,41 +963,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
         return child_item.data(role)
 
-        #if role in (Qt.EditRole, Qt.DisplayRole):
-            #if role == Qt.EditRole:
-                #cache = self.edit_cache
-            #else:
-                #cache = self.display_cache
-            #data = self._get_row_data( index.row(), cache )
-            #value = data[index.column()]
-            #if isinstance(value, datetime.datetime):
-                ## Putting a python datetime into a Qt Variant and returning
-                ## it to a PyObject seems to be buggy, therefore we chop the
-                ## microseconds
-                #if value:
-                    #value = QtCore.QDateTime(value.year, value.month,
-                                             #value.day, value.hour,
-                                             #value.minute, value.second)
-            #elif isinstance(value, (list, dict)):
-                #value = CollectionContainer(value)
-            #return py_to_variant( value )
-        #elif role == Qt.ToolTipRole:
-            #return py_to_variant(self._get_field_attribute_value(index, 'tooltip'))
-        #elif role == Qt.BackgroundRole:
-            #return py_to_variant(self._get_field_attribute_value(index, 'background_color') or py_to_variant())
-        #elif role == FieldAttributesRole:
-            #field_attributes = ProxyDict(self._static_field_attributes[index.column()])
-            #dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-            #if dynamic_field_attributes != ValueLoading:
-                #field_attributes.update( dynamic_field_attributes )
-            #return py_to_variant(field_attributes)
-        #elif role == ObjectRole:
-            #try:
-                #return py_to_variant( self.edit_cache.get_entity_at_row( index.row() ) )
-            #except KeyError:
-                #return py_to_variant( ValueLoading )
-        #return py_to_variant()
-
     def _get_field_attribute_value(self, index, field_attribute):
         """Get the values for the static and the dynamic field attributes at once
         :return: the value of the field attribute"""
@@ -1086,9 +1051,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 field_attributes = dynamic_field_attributes[column]
                 field_attributes.update(self._static_field_attributes[column])
                 item = QtModel.QStandardItem()
-                item.setData(py_to_variant(row_data[column]), Qt.EditRole)
+                value = row_data[column]
+                if isinstance(value, (list, dict)):
+                    value = CollectionContainer(value)
+                item.setData(py_to_variant(value), Qt.EditRole)
                 item.setData(py_to_variant(ProxyDict(field_attributes)), FieldAttributesRole)
                 item.setData(py_to_variant(unicode_row_data[column]), PreviewRole)
+                item.setData(py_to_variant(field_attributes.get('tooltip')), Qt.ToolTipRole)
+                item.setData(py_to_variant(field_attributes.get('background_color')), Qt.BackgroundRole)
                 items.append((column, item))
             verbose_identifier = self.admin.get_verbose_identifier(obj)
             header_item = QtModel.QStandardItem()
