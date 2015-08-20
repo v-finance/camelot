@@ -957,6 +957,8 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # the standard implementation uses EditRole as DisplayRole
         if role == Qt.DisplayRole:
             role = PreviewRole
+        elif role == ObjectRole:
+            return self.headerData(index.row(), Qt.Vertical, role)
 
         return child_item.data(role)
 
@@ -1088,6 +1090,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 item.setData(py_to_variant(unicode_row_data[column]), PreviewRole)
                 items.append((column, item))
             header_item = QtModel.QStandardItem()
+            header_item.setData(py_to_variant(obj), ObjectRole)
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
                 header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
