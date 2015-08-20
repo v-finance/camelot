@@ -28,11 +28,12 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
+from ...core.qt import (QtGui, QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
+                        variant_to_py)
 
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.view.model_thread import post
+from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view import register
@@ -124,7 +125,7 @@ class FormWidget(QtWidgets.QWidget):
     def set_model(self, model):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if model is not None:
-            model.dataChanged.connect(self._data_changed)
+            model.headerDataChanged.connect(self._header_data_changed)
             model.layoutChanged.connect(self._layout_changed)
             model.modelReset.connect(self._model_reset)
             model.rowsInserted.connect(self._layout_changed)
@@ -146,14 +147,16 @@ class FormWidget(QtWidgets.QWidget):
     @QtCore.qt_slot()
     def _model_reset(self):
         self._layout_changed()
-            
-    @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex  )
-    def _data_changed(self, index_from, index_to):
-        widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper is not None:
-            current_index = widget_mapper.currentIndex()
-            if (current_index >= index_from.row()) and (current_index <= index_to.row()):
-                self.changed_signal.emit(current_index)
+    
+
+    @QtCore.qt_slot(int, int, int)
+    def _header_data_changed(self, orientation, first, last):
+        if orientation == Qt.Vertical:
+            widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
+            if widget_mapper is not None:
+                current_index = widget_mapper.currentIndex()
+                if (current_index >= first) and (current_index <= last):
+                    self.changed_signal.emit(current_index)
 
     @QtCore.qt_slot()
     def _layout_changed(self):
@@ -254,20 +257,13 @@ class FormView(AbstractView):
         """Refresh the data in the current view"""
         self.model.refresh()
     
-    def _get_title( self, index ):
-        verbose_identifier = ''
-        for obj in self.model.get_slice(index, index+1):
-            if obj is not None:
-                verbose_identifier = self.admin.get_verbose_identifier(obj)
-        return u'%s %s' % (
-            self.title_prefix,
-            verbose_identifier
-        )
-            
     @QtCore.qt_slot( int )
     def update_title(self, current_index ):
-        if current_index >= 0:
-            post( self._get_title, self.change_title, args=(current_index,) )
+        verbose_identifier = variant_to_py(self.model.headerData(
+            current_index, Qt.Vertical, VerboseIdentifierRole
+        ))
+        if verbose_identifier is not None:
+            self.change_title(u'%s %s'%(self.title_prefix,verbose_identifier))
         else:
             self.change_title(u'')
 

@@ -64,6 +64,7 @@ from camelot.core.files.storage import StoredImage
 FieldAttributesRole = Qt.UserRole
 ObjectRole = Qt.UserRole + 1
 PreviewRole = Qt.UserRole + 2
+VerboseIdentifierRole = Qt.UserRole + 3
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent
@@ -1089,12 +1090,15 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 item.setData(py_to_variant(ProxyDict(field_attributes)), FieldAttributesRole)
                 item.setData(py_to_variant(unicode_row_data[column]), PreviewRole)
                 items.append((column, item))
+            verbose_identifier = self.admin.get_verbose_identifier(obj)
             header_item = QtModel.QStandardItem()
             header_item.setData(py_to_variant(obj), ObjectRole)
+            header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
                 header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
                 header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
+                
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
