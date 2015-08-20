@@ -204,9 +204,10 @@ class Update(object):
 
     def gui_run(self, item_model):
         root_item = item_model.source_model.invisibleRootItem()
-        for row, items in self.changed_ranges:
+        for row, header_item, items in self.changed_ranges:
             # emit the headerDataChanged signal, to ensure the row icon is
             # updated
+            item_model.source_model.setVerticalHeaderItem(row, header_item)
             item_model.headerDataChanged.emit(Qt.Vertical, row, row)
             for column, item in items:
                 root_item.setChild(row, column, item)
@@ -227,7 +228,6 @@ class Deleted(object):
             proxy.display_cache.delete_by_entity( obj )
             proxy.attributes_cache.delete_by_entity( obj )
             proxy.edit_cache.delete_by_entity( obj )
-            proxy.action_state_cache.delete_by_entity( obj )
         self.rows = proxy.get_row_count()
         return self
 
@@ -795,14 +795,12 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
             self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
             self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
-            self.action_state_cache = cache_collection_proxy.action_state_cache.shallow_copy( max_cache )
             self.source_model.setRowCount(cache_collection_proxy.rowCount())
         else:
             self.logger.debug('_reset state')
             self.display_cache = Fifo( max_cache )
             self.edit_cache = Fifo( max_cache )
             self.attributes_cache = Fifo( max_cache )
-            self.action_state_cache = Fifo( max_cache )
             root_item = self.source_model.invisibleRootItem()
             root_item.setEnabled(row_count != None)
             self.source_model.setRowCount(row_count or 0)
@@ -906,23 +904,15 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 # return a fixed value
                 #
                 return py_to_variant(self.vertical_header_size)
-            #
-            # get icon from action state
-            #
-            action_state = self._get_row_data( section, self.action_state_cache )[0]
-            if action_state not in (None, ValueLoading):
-                icon = action_state.icon
-                if icon is not None:
-                    if role == Qt.DecorationRole:
-                        return icon.getQPixmap()
-                verbose_name = action_state.verbose_name
-                if verbose_name is not None:
-                    if role == Qt.DisplayRole:
-                        return py_to_variant(six.text_type(verbose_name))
-                tooltip = action_state.tooltip
-                if tooltip is not None:
-                    if role == Qt.ToolTipRole:
-                        return py_to_variant(six.text_type(tooltip))
+            source_model = self.sourceModel()
+            item = source_model.verticalHeaderItem(section)
+            if item is None:
+                if section not in self.rows_under_request:
+                    self.rows_under_request.add(section)
+                    self._start_timer()
+                return py_to_variant(None)
+            return item.data(role)
+
         return self.sourceModel().headerData(section, orientation, role)
 
     def sort( self, column, order ):
@@ -1081,7 +1071,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         changed_columns.update( self.edit_cache.add_data( row, obj, row_data ) )
         changed_columns.update( self.display_cache.add_data( row, obj, unicode_row_data ) )
         changed_columns.update( self.attributes_cache.add_data(row, obj, dynamic_field_attributes ) )
-        self.action_state_cache.add_data(row, obj, [action_state] )
         locker.unlock()
         if row is not None:
             items = []
@@ -1093,7 +1082,13 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 item.setData(py_to_variant(ProxyDict(field_attributes)), FieldAttributesRole)
                 item.setData(py_to_variant(unicode_row_data[column]), PreviewRole)
                 items.append((column, item))
-            changed_ranges.append((row, items))
+            header_item = QtModel.QStandardItem()
+            if action_state is not None:
+                header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
+                header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
+                if action_state.icon is not None:
+                    header_item.setData(py_to_variant(action_state.icon.getQPixmap()), Qt.DecorationRole)
+            changed_ranges.append((row, header_item, items))
         return changed_ranges
 
     def _skip_row(self, row, obj):
