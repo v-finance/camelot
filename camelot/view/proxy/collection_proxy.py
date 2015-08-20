@@ -911,7 +911,12 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                     self.rows_under_request.add(section)
                     self._start_timer()
                 return py_to_variant(None)
-            return item.data(role)
+            if role == Qt.DecorationRole:
+                icon = variant_to_py(item.data(role))
+                if icon is not None:
+                    return py_to_variant(icon.getQPixmap())
+            else:
+                return item.data(role)
 
         return self.sourceModel().headerData(section, orientation, role)
 
@@ -1086,8 +1091,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
                 header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
-                if action_state.icon is not None:
-                    header_item.setData(py_to_variant(action_state.icon.getQPixmap()), Qt.DecorationRole)
+                header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
