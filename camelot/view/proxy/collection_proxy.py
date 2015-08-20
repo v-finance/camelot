@@ -206,10 +206,7 @@ class Update(object):
     def gui_run(self, item_model):
         root_item = item_model.source_model.invisibleRootItem()
         for row, header_item, items in self.changed_ranges:
-            # emit the headerDataChanged signal, to ensure the row icon is
-            # updated
             item_model.source_model.setVerticalHeaderItem(row, header_item)
-            item_model.headerDataChanged.emit(Qt.Vertical, row, row)
             for column, item in items:
                 root_item.setChild(row, column, item)
 
@@ -1023,10 +1020,11 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         action_state = None
         changed_ranges = []
         logger.debug('_add data for row {0}'.format(row))
+        # @todo static field attributes should be cached ??
         if not self.admin.is_deleted( obj ):
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
-            static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
+            static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
             unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
             if self.list_action:
                 self.row_model_context.obj = obj
@@ -1035,7 +1033,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         else:
             row_data = [None] * len(columns)
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
-            static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
+            static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
             unicode_row_data = [u''] * len(columns)
         # keep track of the columns that changed, to limit the
         # number of editors/cells that need to be updated
@@ -1048,8 +1046,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         if row is not None:
             items = []
             for column in changed_columns:
-                field_attributes = dynamic_field_attributes[column]
-                field_attributes.update(self._static_field_attributes[column])
+                # copy to make sure the original dict can be compared in subsequent
+                # calls
+                field_attributes = dict(dynamic_field_attributes[column])
+                field_attributes.update(static_field_attributes[column])
                 item = QtModel.QStandardItem()
                 value = row_data[column]
                 if isinstance(value, (list, dict)):
