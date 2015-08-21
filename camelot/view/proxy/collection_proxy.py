@@ -182,7 +182,16 @@ class RowModelContext(ListActionModelContext):
     def get_object( self ):
         return self.obj
 
-class Update(object):
+class UpdateMixin(object):
+
+    def gui_run(self, item_model):
+        root_item = item_model.source_model.invisibleRootItem()
+        for row, header_item, items in self.changed_ranges:
+            item_model.source_model.setVerticalHeaderItem(row, header_item)
+            for column, item in items:
+                root_item.setChild(row, column, item)
+
+class Update(UpdateMixin):
 
     def __init__(self, objects):
         self.objects = objects
@@ -202,13 +211,6 @@ class Update(object):
             columns = proxy._columns
             self.changed_ranges.extend(proxy._add_data(columns, row, obj))
         return self
-
-    def gui_run(self, item_model):
-        root_item = item_model.source_model.invisibleRootItem()
-        for row, header_item, items in self.changed_ranges:
-            item_model.source_model.setVerticalHeaderItem(row, header_item)
-            for column, item in items:
-                root_item.setChild(row, column, item)
 
 class Deleted(object):
 
@@ -416,19 +418,20 @@ class SetData(Update):
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
 
-class Created(RowCount):
+class Created(UpdateMixin):
 
     def __init__(self, objects):
         super(Created, self).__init__()
         self.objects = objects
+        self.changed_ranges = []
 
     def model_run(self, proxy):
         # assume rows already contains the new object
         rows = proxy.get_row_count()
         for obj in self.objects:
-            if proxy.contains(obj):
-                self.rows = rows
-                break
+            row = proxy._index(obj)
+            self.changed_ranges.extend(proxy._add_data(proxy._columns, row, obj))
+            self.rows = rows
         return self
 
 class Sort(RowCount):
@@ -701,7 +704,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             while len(self.__crud_requests):
                 request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0}'.format(request))
-                post(request.model_run, self._crud_update, args=(self,))
+                post(request.model_run, self._crud_update, args=(self,), exception=self._crud_exception)
 
     def _start_timer(self):
         """
@@ -760,6 +763,10 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset(row_count=rows)
         self.layoutChanged.emit()
 
+    @QtCore.qt_slot(object)
+    def _crud_exception(self, exception_info):
+        self.logger.error('CRUD exception')
+        
     @QtCore.qt_slot(object)
     def _crud_update(self, crud_request):
         self.logger.debug('begin update {0}'.format(crud_request))
@@ -1192,9 +1199,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         if o not in collection:
             collection.append( o )
 
-    def contains(self, obj):
+    def _index(self, obj):
         collection = self.get_value()
-        return (obj in collection)
+        return collection.index(obj)
 
     def get_admin( self ):
         """Get the admin object associated with this model"""

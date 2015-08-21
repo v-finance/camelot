@@ -211,8 +211,8 @@ class QueryTableProxy(CollectionProxy):
         if not persistent:
             self._appended_rows.append(obj)
 
-    def contains(self, obj):
-        return (obj in self._appended_rows)
+    def _index(self, obj):
+        return self._rows + self._appended_rows.index(obj)
 
     def remove(self, o):
         if o in self._appended_rows:
