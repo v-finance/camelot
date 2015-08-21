@@ -86,19 +86,15 @@ class QueryTableProxy(CollectionProxy):
     def get_row_count(self):
         self._clean_appended_rows()
         if self.get_value() is None:
-            rows = None
-        else:
-            # manipulate the query to circumvent the use of subselects and order by
-            # clauses
-            query = self.get_query()
-            mapper = orm.class_mapper(self.admin.entity)
-            select = query.order_by(None).as_scalar()
-            select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
-            count = query.session.execute(select, mapper=mapper).scalar()
-            rows = count + len(self._appended_rows)
-        self._rows = rows
-        return rows
-
+            return None
+        # manipulate the query to circumvent the use of subselects and order by
+        # clauses
+        query = self.get_query()
+        mapper = orm.class_mapper(self.admin.entity)
+        select = query.order_by(None).as_scalar()
+        select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
+        self._rows = query.session.execute(select, mapper=mapper).scalar()
+        return self._rows + len(self._appended_rows)
 
     def _set_sort_decorator( self, column=None, order=None ):
         """set the sort decorator attribute of this model to a function that
@@ -255,7 +251,7 @@ class QueryTableProxy(CollectionProxy):
                 
         return query.all()
                     
-    def _extend_cache(self, offset, limit):
+    def _extend_cache(self, offset, limit, data):
         """Extend the cache around the rows under request"""
         self.logger.debug('extend cache from {0} with {1} rows'.format(offset, limit))
         changed_ranges = []
@@ -276,7 +272,7 @@ class QueryTableProxy(CollectionProxy):
                     try:
                         cached_obj =  self.edit_cache.get_entity_at_row(row)
                         changed_ranges.extend(
-                            self._add_data(columns, row, cached_obj))
+                            self._add_data(columns, row, cached_obj, data))
                         rows_in_cache += 1
                     except KeyError:
                         continue
@@ -297,7 +293,7 @@ class QueryTableProxy(CollectionProxy):
                             pass
                         if self._skip_row(row, obj) == False:
                             changed_ranges.extend(
-                                self._add_data(columns, row, obj))
+                                self._add_data(columns, row, obj, data))
                 self._clean_appended_rows()
                 if self._rows is None:
                     self.get_row_count()
@@ -308,5 +304,5 @@ class QueryTableProxy(CollectionProxy):
                     for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
                         obj = self._appended_rows[row - rows_in_query]
                         changed_ranges.extend(
-                            self._add_data(columns, row, obj))
+                            self._add_data(columns, row, obj, data))
         return changed_ranges
