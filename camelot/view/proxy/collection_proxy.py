@@ -786,6 +786,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # end
         max_cache = 10 * self.max_number_of_rows
         locker = QtCore.QMutexLocker(self._mutex)
+        # is this the best way to reset the standard items ? maybe it's much
+        # easier to replace the source model all at once
+        self.source_model.setRowCount(0)
         if cache_collection_proxy is not None:
             self.logger.debug('_reset state from cache')
             cached_entries = len( cache_collection_proxy.display_cache )
