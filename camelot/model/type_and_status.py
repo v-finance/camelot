@@ -361,27 +361,14 @@ class ChangeStatus( Action ):
     :param new_status: the new status of the object
     :param verbose_name: the name of the action
 
+    Before changing the status, the validity of the object will be checked.
+    This state of the action does not depend on the validity of the object, as
+    this might slow down list views too much.
     """
 
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status
-
-    def get_state(self, model_context):
-        """
-        Disable the change status button in case the object can not yet
-        be validated
-        """
-        state = super(ChangeStatus, self).get_state(model_context)
-        # only check the current object selected, to avoid slowdown in case
-        # many objects are selected
-        obj = model_context.get_object()
-        if obj is not None:
-            validator = model_context.admin.get_validator()
-            for message in validator.validate_object(obj):
-                state.enabled = False
-                return state
-        return state
 
     def before_status_change(self, model_context, obj):
         """
@@ -404,6 +391,10 @@ class ChangeStatus( Action ):
             subclass
         """
         new_status = new_status or self.new_status
+        validator = model_context.admin.get_validator()
+        for obj in model_context.get_selection():
+            for message in validator.validate_object(obj):
+                raise UserException(message)
         with model_context.session.begin():
             for obj in model_context.get_selection():
                 # the number of status changes as seen in the UI

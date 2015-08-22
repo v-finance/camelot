@@ -344,19 +344,19 @@ class RowsWidget(QtWidgets.QLabel):
         self.gui_context = gui_context
         self.setFont(self._number_of_rows_font)
         self.selected_count = 0
-        self.gui_context.view.model_changed.connect(self.model_changed)
+        self.set_item_view(gui_context.item_view)
 
     @hybrid_property
     def _number_of_rows_font(cls):
         return QtWidgets.QApplication.font()
 
-    @QtCore.qt_slot(QtCore.QAbstractItemModel, AdminTableWidget)
-    def model_changed(self, model, table):
+    def set_item_view(self,item_view):
+        model = item_view.model()
         model.layoutChanged.connect(self.update_rows)
         model.modelReset.connect(self.update_rows)
         model.rowsInserted.connect(self.update_rows)
         model.rowsRemoved.connect(self.update_rows)
-        selection_model = table.selectionModel()
+        selection_model = item_view.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)
         self.update_rows_from_model(model)
 
@@ -509,9 +509,6 @@ class TableView(AbstractView):
     header_widget = HeaderWidget
     AdminTableWidget = AdminTableWidget
 
-    model_changed = QtCore.qt_signal(QtCore.QAbstractItemModel,
-                                     AdminTableWidget)
-
     def __init__(self,
                  gui_context,
                  admin,
@@ -641,7 +638,6 @@ class TableView(AbstractView):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
-        self.model_changed.emit(new_model, self.table)
         header = self.findChild(QtWidgets.QWidget, 'header_widget')
         if header is not None:
             header.deleteLater()
