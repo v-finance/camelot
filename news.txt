@@ -39,7 +39,8 @@ Development
    * :class:`camelot.view.action_steps.form_view.ToNextForm`
    * :class:`camelot.view.action_steps.form_view.ToPreviousForm`
  
- * Reworked import/export action to handle tables with many columns
+ * Reworked import/export action to handle tables with many columns and allow the
+   user to customize the imported and exported columns.
  
  * New database profiles api in :class:`camelot.core.profile.ProfileStore`
  
@@ -53,7 +54,7 @@ Development
  * See :ref:`migrate-latest` for documentation on how to upgrade an 
    existing Camelot project to the latest version.
  
- * Tested with SQLAlchemy 0.9.4
+ * Tested with SQLAlchemy 1.0.8
  
  * Removed the `ColoredFloatDelegate` as it is not a basic type of editor
  
@@ -71,6 +72,10 @@ Development
    method.
 
  * Add the `get_search_fields` method to the `EntityAdmin` for fine grained customization of the fields to search.
+ 
+ * The tableview shows the number of selected rows.
+ 
+ * `QValidator` classes can be used as a dynamic field attribute for text fields.
 
 Release 13.04.13
 ----------------
