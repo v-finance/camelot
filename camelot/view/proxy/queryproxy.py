@@ -50,6 +50,7 @@ class QueryTableProxy(CollectionProxy):
         self._mapper = admin.mapper
         #the mode set for each filter
         self._filters = dict()
+        #this is the cached value of the count query
         self._rows = None
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
@@ -57,7 +58,7 @@ class QueryTableProxy(CollectionProxy):
         super(QueryTableProxy, self).__init__(admin,
                                               max_number_of_rows=max_number_of_rows)
         
-    def get_query(self):
+    def get_query(self, order_clause=True):
         """
         :return: the query used to fetch the data, this is not the same as the
             one set by `set_value`, as sorting and filters will modify it
@@ -65,40 +66,36 @@ class QueryTableProxy(CollectionProxy):
         query = self.get_value()
         if query is None:
             return None
-        if self._sort_decorator is None:
+
+        if order_clause and (self._sort_decorator is None):
             self._set_sort_decorator()
             
         # filters might be changed in the gui thread while being iterated
         for filter_, value in six.iteritems(self._filters.copy()):
             query = filter_.decorate_query(query, value)
-        query = self._sort_decorator(query)
+
+        if order_clause:
+            query = self._sort_decorator(query)
+
         return query
 
-    def _clean_appended_rows(self):
-        """Remove those rows from appended rows that have been flushed"""
-        flushed_rows = []
-        for o in self._appended_rows:
-            if self.admin.is_persistent(o):
-                flushed_rows.append(o)
-        for o in flushed_rows:
-            self._appended_rows.remove(o)
-
     def get_row_count(self):
-        self._clean_appended_rows()
         if self.get_value() is None:
-            rows = None
-        else:
+            return None
+        if self._rows is None:
             # manipulate the query to circumvent the use of subselects and order by
             # clauses
-            query = self.get_query()
+            query = self.get_query(order_clause=False)
             mapper = orm.class_mapper(self.admin.entity)
             select = query.order_by(None).as_scalar()
             select = select.with_only_columns([sql.func.count(mapper.primary_key[0])])
-            count = query.session.execute(select, mapper=mapper).scalar()
-            rows = count + len(self._appended_rows)
-        self._rows = rows
-        return rows
+            self._rows = query.session.execute(select, mapper=mapper).scalar()
+        return self._rows + len(self._appended_rows)
 
+    def set_value(self, value, cache_collection_proxy=None):
+        super(QueryTableProxy, self).set_value(value, cache_collection_proxy=cache_collection_proxy)
+        self._rows = None
+        self._appended_rows = []
 
     def _set_sort_decorator( self, column=None, order=None ):
         """set the sort decorator attribute of this model to a function that
@@ -182,7 +179,7 @@ class QueryTableProxy(CollectionProxy):
         self._sort_decorator = functools.partial(sort_decorator,
                                                  order_by, 
                                                  join)
-        return self._rows
+        return self.get_row_count()
         
     def sort( self, column, order ):
         """Overwrites the :meth:`QAbstractItemModel.sort` method
@@ -201,6 +198,7 @@ class QueryTableProxy(CollectionProxy):
         previous_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
         if value != previous_value:
+            self._rows = None
             self._reset()
             self.layoutChanged.emit()
 
@@ -217,7 +215,8 @@ class QueryTableProxy(CollectionProxy):
     def remove(self, o):
         if o in self._appended_rows:
             self._appended_rows.remove(o)
-        self._rows = self._rows - 1
+        else:
+            self._rows = self._rows - 1
 
     def _get_collection_range( self, offset, limit ):
         """Get the objects in a certain range of the collection
@@ -298,10 +297,8 @@ class QueryTableProxy(CollectionProxy):
                         if self._skip_row(row, obj) == False:
                             changed_ranges.extend(
                                 self._add_data(columns, row, obj))
-                self._clean_appended_rows()
-                if self._rows is None:
-                    self.get_row_count()
-                rows_in_query = (self._rows - len(self._appended_rows))
+                row_count = self.get_row_count()
+                rows_in_query = row_count - len(self._appended_rows)
                 # Verify if rows that have not yet been flushed have been 
                 # requested
                 if offset+limit >= rows_in_query:
