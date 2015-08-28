@@ -210,6 +210,10 @@ class QueryTableProxy(CollectionProxy):
             self._appended_rows.append(obj)
 
     def _index(self, obj):
+        try:
+            return self.display_cache.get_row_by_entity(obj)
+        except KeyError:
+            pass
         return self._rows + self._appended_rows.index(obj)
 
     def remove(self, o):
