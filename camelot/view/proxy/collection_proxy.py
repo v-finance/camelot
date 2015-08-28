@@ -943,17 +943,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
         return child_item.data(role)
 
-    def _get_field_attribute_value(self, index, field_attribute):
-        """Get the values for the static and the dynamic field attributes at once
-        :return: the value of the field attribute"""
-        try:
-            return self._static_field_attributes[index.column()][field_attribute]
-        except KeyError:
-            value = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-            if value is ValueLoading:
-                return None
-            return value.get(field_attribute, None)
-
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
         be set
@@ -978,20 +967,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
             locker.unlock()
             self._start_timer()
         return True
-
-    def flags( self, index ):
-        """Returns the item flags for the given index"""
-        assert object_thread( self )
-        if not index.isValid() or \
-           not ( 0 <= index.row() <= self.rowCount( index ) ) or \
-           not ( 0 <= index.column() <= self.columnCount() ):
-            return Qt.NoItemFlags
-        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        if self._get_field_attribute_value(index, 'editable'):
-            flags = flags | Qt.ItemIsEditable
-        if self.admin.drop_action != None:
-            flags = flags | Qt.ItemIsDropEnabled
-        return flags
 
     def _add_data(self, columns, row, obj, data):
         """Add data from object o at a row in the cache
