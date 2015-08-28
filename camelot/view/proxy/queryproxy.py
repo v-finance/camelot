@@ -92,8 +92,8 @@ class QueryTableProxy(CollectionProxy):
             self._rows = query.session.execute(select, mapper=mapper).scalar()
         return self._rows + len(self._appended_rows)
 
-    def set_value(self, value, cache_collection_proxy=None):
-        super(QueryTableProxy, self).set_value(value, cache_collection_proxy=cache_collection_proxy)
+    def set_value(self, value):
+        super(QueryTableProxy, self).set_value(value)
         self._rows = None
         self._appended_rows = []
 
@@ -302,7 +302,7 @@ class QueryTableProxy(CollectionProxy):
                 # Verify if rows that have not yet been flushed have been 
                 # requested
                 if offset+limit >= rows_in_query:
-                    for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
+                    for row in range(max(rows_in_query, offset), min(offset+limit, row_count)):
                         obj = self._appended_rows[row - rows_in_query]
                         changed_ranges.extend(
                             self._add_data(columns, row, obj, data))
