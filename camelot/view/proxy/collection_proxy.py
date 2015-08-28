@@ -200,8 +200,8 @@ class Update(UpdateMixin):
     def model_run(self, proxy):
         for obj in self.objects:
             try:
-                row = proxy.display_cache.get_row_by_entity(obj)
-            except KeyError:
+                row = proxy._index(obj)
+            except ValueError:
                 continue
             #
             # Because the entity is updated, it might no longer be in our
@@ -394,7 +394,6 @@ class SetData(Update):
                         if was_persistent is False:
                             created_objects.add(o)
                 # update the cache
-                proxy.logger.debug('update cache')
                 self.changed_ranges.extend(proxy._add_data(proxy._columns, row, o, True))
                 updated_objects.add(o)
                 updated_objects.update(set(admin.get_depending_objects(o)))
