@@ -335,7 +335,7 @@ class SetData(Update):
                 attribute, field_attributes = proxy._columns[column]
 
                 from sqlalchemy.exc import DatabaseError
-                new_value = value()
+                new_value = variant_to_py(value)
                 proxy.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
     
                 if new_value == ValueLoading:

@@ -26,7 +26,6 @@ import six
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
 
-from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
 
@@ -176,11 +175,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_value(value)
 
     def setModelData(self, editor, model, index):
-        if isinstance(model, QtGui.QStandardItemModel):
-            val = py_to_variant(editor.get_value())
-        else:
-            val = create_constant_function(editor.get_value())
-        model.setData(index, val)
+        model.setData(index, py_to_variant(editor.get_value()))
 
     def paint(self, painter, option, index):
         painter.save()
