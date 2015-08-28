@@ -209,7 +209,7 @@ class Update(UpdateMixin):
             # to strip data of the entity
             #
             columns = proxy._columns
-            self.changed_ranges.extend(proxy._add_data(columns, row, obj))
+            self.changed_ranges.extend(proxy._add_data(columns, row, obj, True))
         return self
 
 class Deleted(object):
@@ -254,7 +254,7 @@ class RowData(Update):
 
     def __init__(self, rows):
         super(RowData, self).__init__(None)
-        self.rows = rows
+        self.rows = set(rows)
         self.difference = None
         self.changed_ranges = []
 
@@ -265,17 +265,7 @@ class RowData(Update):
         """
         offset, limit, i = 0, 0, 0
         locker = QtCore.QMutexLocker(proxy._mutex)
-        #
-        # now filter out all rows that have been put in the cache
-        # the gui thread didn't know about
-        #
-        rows_to_get = self.rows
-        rows_already_there = set()
-        for row in rows_to_get:
-            if proxy.edit_cache.has_data_at_row(row):
-                rows_already_there.add(row)
-        rows_to_get.difference_update( rows_already_there )
-        rows_to_get = list(rows_to_get)
+        rows_to_get = list(self.rows)
         locker.unlock()
         #
         # see if there is anything left to do
@@ -298,7 +288,7 @@ class RowData(Update):
 
     def model_run(self, proxy):
         offset, limit = self.offset_and_limit_rows_to_get(proxy)
-        self.changed_ranges.extend(proxy._extend_cache(offset, limit))
+        self.changed_ranges.extend(proxy._extend_cache(offset, limit, True))
         self.difference = set( range( offset, offset + limit + 1) )
         return self
 
@@ -405,7 +395,7 @@ class SetData(Update):
                             created_objects.add(o)
                 # update the cache
                 proxy.logger.debug('update cache')
-                self.changed_ranges.extend(proxy._add_data(proxy._columns, row, o))
+                self.changed_ranges.extend(proxy._add_data(proxy._columns, row, o, True))
                 updated_objects.add(o)
                 updated_objects.update(set(admin.get_depending_objects(o)))
         self.created_objects = tuple(created_objects)
@@ -418,7 +408,7 @@ class SetData(Update):
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
 
-class Created(UpdateMixin):
+class Created(RowCount, UpdateMixin):
 
     def __init__(self, objects):
         super(Created, self).__init__()
@@ -429,10 +419,18 @@ class Created(UpdateMixin):
         # assume rows already contains the new object
         rows = proxy.get_row_count()
         for obj in self.objects:
-            row = proxy._index(obj)
-            self.changed_ranges.extend(proxy._add_data(proxy._columns, row, obj))
+            try:
+                row = proxy._index(obj)
+            except ValueError:
+                continue
+            # rows should only be not None when a created object was in the cache
             self.rows = rows
+            self.changed_ranges.extend(proxy._add_data(proxy._columns, row, obj, True))
         return self
+
+    def gui_run(self, item_model):
+        RowCount.gui_run(self, item_model)
+        UpdateMixin.gui_run(self, item_model)
 
 class Sort(RowCount):
 
@@ -783,7 +781,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self._reset()
         self.layoutChanged.emit()
 
-    def _reset(self, cache_collection_proxy=None, row_count=None):
+    def _reset(self, row_count=None):
         """
         reset all shared state and cache
         """
@@ -796,42 +794,27 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         # is this the best way to reset the standard items ? maybe it's much
         # easier to replace the source model all at once
         self.source_model.setRowCount(0)
-        if cache_collection_proxy is not None:
-            self.logger.debug('_reset state from cache')
-            cached_entries = len( cache_collection_proxy.display_cache )
-            max_cache = max( cached_entries, max_cache )
-            self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
-            self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
-            self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
-            self.source_model.setRowCount(cache_collection_proxy.rowCount())
-        else:
-            self.logger.debug('_reset state')
-            self.display_cache = Fifo( max_cache )
-            self.edit_cache = Fifo( max_cache )
-            self.attributes_cache = Fifo( max_cache )
-            root_item = self.source_model.invisibleRootItem()
-            root_item.setEnabled(row_count != None)
-            self.source_model.setRowCount(row_count or 0)
+        self.logger.debug('_reset state')
+        self.display_cache = Fifo( max_cache )
+        self.edit_cache = Fifo( max_cache )
+        self.attributes_cache = Fifo( max_cache )
+        root_item = self.source_model.invisibleRootItem()
+        root_item.setEnabled(row_count != None)
+        self.source_model.setRowCount(row_count or 0)
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         locker.unlock()
 
-    def set_value(self, value, cache_collection_proxy=None):
+    def set_value(self, value):
         """
         :param value: the collection of objects to display or None
-        :param cache_collection_proxy: the CollectionProxy on which this CollectionProxy
-        will reuse the cache. Passing a cache has the advantage that objects that were
-        present in the original cache will remain at the same row in the new cache
-        This is used when a form is created from a tableview.  Because between the last
-        query of the tableview, and the first of the form, the object might have changed
-        position in the query.
         """
         if isinstance(value, CollectionContainer):
             value = value._collection
         self._value = value
-        self._reset(cache_collection_proxy)
+        self._reset()
         self.layoutChanged.emit()
     
     def get_value(self):
@@ -905,7 +888,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         information out of them
         """
         assert object_thread( self )
-        if orientation == Qt.Vertical:
+        if (orientation == Qt.Vertical) and (section >= 0):
             if role == Qt.SizeHintRole:
                 #
                 # sizehint role is requested, for every row, so we have to
@@ -953,7 +936,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
 
         if child_item is None:
             row = index.row()
-            if row not in self.rows_under_request:
+            if (row not in self.rows_under_request) and (row >= 0):
                 self.rows_under_request.add(row)
                 self._start_timer()
             if role == FieldAttributesRole:
@@ -995,9 +978,9 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             return False
         if role == Qt.EditRole:
             # if the field is not editable, don't waste any time and get out of here
-            # editable should be explicitely True, since the _get_field_attribute_value
-            # might return intermediary values such as ValueLoading ??
-            if self._get_field_attribute_value(index, 'editable') != True:
+            # editable should be explicitely
+            field_attributes = variant_to_py(self.data(index, FieldAttributesRole))
+            if field_attributes.get('editable') != True:
                 return
             self.logger.debug('set data ({0},{1})'.format(index.row(), index.column()))
             locker = QtCore.QMutexLocker( self._mutex )
@@ -1020,18 +1003,19 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             flags = flags | Qt.ItemIsDropEnabled
         return flags
 
-    def _add_data(self, columns, row, obj):
+    def _add_data(self, columns, row, obj, data):
         """Add data from object o at a row in the cache
         :param columns: the columns of which to strip data
         :param r"ow: the row in the cache into which to add data
         :param obj: the object from which to strip the data
+        :param data: fill the data cache, otherwise only fills the header cache
         :return: the changes to the item model
         """
         action_state = None
         changed_ranges = []
         logger.debug('_add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
-        if not self.admin.is_deleted( obj ):
+        if (not self.admin.is_deleted( obj ) and data==True):
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
             static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
@@ -1093,12 +1077,15 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             pass
         return False
 
-    def _extend_cache(self, offset, limit):
-        """Extend the cache around the rows under request"""
+    def _extend_cache(self, offset, limit, data):
+        """Extend the cache around the rows under request
+        
+        :param data: fill the data cache, otherwise only fills the header cache
+        """
         changed_ranges = []
-        if limit:
+        collection = self.get_value()
+        if (limit > 0) and (collection is not None):
             columns = self._columns
-            collection = self.get_value()
             skipped_rows = 0
             try:
                 for i in range(offset, min( offset + limit + 1,
@@ -1110,7 +1097,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                         if self._skip_row(i, obj):
                             skipped_rows = skipped_rows + 1
                         else:
-                            changed_ranges.extend(self._add_data(columns, i, obj))
+                            changed_ranges.extend(self._add_data(columns, i, obj, data))
                             object_found = True
             except IndexError:
                 # stop when the end of the collection is reached, no matter
@@ -1155,7 +1142,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             try:
                 obj = self.edit_cache.get_entity_at_row(row)
             except KeyError:
-                self._extend_cache(row, row+self.edit_cache.max_entries)
+                self._extend_cache(row, row+self.edit_cache.max_entries, False)
                 try:
                     obj = self.edit_cache.get_entity_at_row(row)
                 except KeyError:
@@ -1163,31 +1150,6 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                     # more
                     break
             yield obj
-
-    def _get_row_data( self, row, cache ):
-        """Get the data which is to be visualized at a certain row of the
-        table, if needed, post a refill request the cache to get the object
-        and its neighbours in the cache, meanwhile, return an empty object
-        :param row: the row of the table for which to get the data
-        :param cache: the cache out of which to get row data
-        :return: row_data
-        """
-        assert row >= 0
-        try:
-            data = cache.get_data_at_row( row )
-            #
-            # check if data is None, then the cache was a copy of previous
-            # cache, and the data should be refetched
-            #
-            if data is None:
-                raise KeyError
-            return data
-        except KeyError:
-            logger.debug( 'data in row {0} not yet loaded row'.format(row))
-            if row not in self.rows_under_request:
-                self.rows_under_request.add(row)
-                self._start_timer()
-            return empty_row_data
 
     def remove( self, o ):
         collection = self.get_value()

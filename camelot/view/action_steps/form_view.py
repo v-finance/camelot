@@ -28,8 +28,9 @@ context of the `Qt` model-view-delegate framework.
 """
 
 from ...admin.action.base import ActionStep
-from ...core.qt import Qt
+from ...core.qt import Qt, variant_to_py
 from ..workspace import show_top_level
+from ..proxy.collection_proxy import ObjectRole, CollectionProxy
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
@@ -77,42 +78,25 @@ class OpenFormView( ActionStep ):
         return self.objects
 
     def render(self, gui_context):
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.controls.formview import FormView
 
-        if self.objects is None:
+        objects = self.objects
+        if objects is None:
             related_model = gui_context.item_view.model()
-            #
-            # depending on the type of related model, create a new model
-            #
-            row = gui_context.item_view.currentIndex().row()
-            if isinstance( related_model, QueryTableProxy ):
-                # here the query and the cache are passed to the proxy
-                # constructor to prevent an additional query when a
-                # form is opened to look for an object that was in the list
-                model = QueryTableProxy(
-                    gui_context.admin,
-                    max_number_of_rows = 1,
-                )
-                model.set_value(related_model.get_query(), cache_collection_proxy=related_model)
-            else:
-                # no cache or sorting information is transferred
-                model = CollectionProxy(
-                    gui_context.admin,
-                    max_number_of_rows = 1,
-                )
-                # get the unsorted row
-                row = related_model.map_to_source( row )
-                model.set_value(related_model.get_value())
+            # Always create a simple collection proxy, even if the original model
+            # was a query proxy, since relating two models to each other and
+            # making sure the correct row is shown in the form involves too many
+            # edge cases.
+            related_row = gui_context.item_view.currentIndex().row()
+            obj = related_model.headerData(related_row, Qt.Vertical, ObjectRole)
+            objects = [variant_to_py(obj)]
+            row = 0
         else:
             row = self.row
-            model = CollectionProxy(
-                self.admin,
-                max_number_of_rows=10
-            )
-            model.set_value(self.objects)
+
+        model = CollectionProxy(self.admin, max_number_of_rows=10)
         model.set_columns(self._columns)
+        model.set_value(objects)
 
         form = FormView(title=self.title, admin=self.admin, model=model,
                         columns=self._columns, form_display=self._form_display,

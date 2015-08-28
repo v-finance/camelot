@@ -83,8 +83,8 @@ class QueryTableProxy(CollectionProxy):
         if self.get_value() is None:
             return None
         if self._rows is None:
-            # manipulate the query to circumvent the use of subselects and order by
-            # clauses
+        # manipulate the query to circumvent the use of subselects and order by
+        # clauses
             query = self.get_query(order_clause=False)
             mapper = orm.class_mapper(self.admin.entity)
             select = query.order_by(None).as_scalar()
@@ -254,7 +254,7 @@ class QueryTableProxy(CollectionProxy):
                 
         return query.all()
                     
-    def _extend_cache(self, offset, limit):
+    def _extend_cache(self, offset, limit, data):
         """Extend the cache around the rows under request"""
         self.logger.debug('extend cache from {0} with {1} rows'.format(offset, limit))
         changed_ranges = []
@@ -275,7 +275,7 @@ class QueryTableProxy(CollectionProxy):
                     try:
                         cached_obj =  self.edit_cache.get_entity_at_row(row)
                         changed_ranges.extend(
-                            self._add_data(columns, row, cached_obj))
+                            self._add_data(columns, row, cached_obj, data))
                         rows_in_cache += 1
                     except KeyError:
                         continue
@@ -296,7 +296,7 @@ class QueryTableProxy(CollectionProxy):
                             pass
                         if self._skip_row(row, obj) == False:
                             changed_ranges.extend(
-                                self._add_data(columns, row, obj))
+                                self._add_data(columns, row, obj, data))
                 row_count = self.get_row_count()
                 rows_in_query = row_count - len(self._appended_rows)
                 # Verify if rows that have not yet been flushed have been 
@@ -305,5 +305,5 @@ class QueryTableProxy(CollectionProxy):
                     for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
                         obj = self._appended_rows[row - rows_in_query]
                         changed_ranges.extend(
-                            self._add_data(columns, row, obj))
+                            self._add_data(columns, row, obj, data))
         return changed_ranges
