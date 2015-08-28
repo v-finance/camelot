@@ -185,9 +185,9 @@ class RowModelContext(ListActionModelContext):
 class UpdateMixin(object):
 
     def gui_run(self, item_model):
-        root_item = item_model.source_model.invisibleRootItem()
+        root_item = item_model.invisibleRootItem()
         for row, header_item, items in self.changed_ranges:
-            item_model.source_model.setVerticalHeaderItem(row, header_item)
+            item_model.setVerticalHeaderItem(row, header_item)
             for column, item in items:
                 root_item.setChild(row, column, item)
 
@@ -495,12 +495,11 @@ class SetColumns(object):
         #
         font_metrics = QtGui.QFontMetrics(item_model._header_font_required)
         char_width = font_metrics.averageCharWidth()
-        source_model = item_model.sourceModel()
         #
         # increase the number of columns at once, since this is slow, and
         # setHorizontalHeaderItem will increase the number of columns one by one
         #
-        source_model.setColumnCount(len(self.columns))
+        item_model.setColumnCount(len(self.columns))
         for i, (field_name, fa) in enumerate(zip(self.columns,
                                                  self.static_field_attributes)):
             verbose_name = six.text_type(fa['name'])
@@ -522,14 +521,13 @@ class SetColumns(object):
                 width = fa['column_width'] * char_width
             header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
                                  Qt.SizeHintRole )
-            source_model.setHorizontalHeaderItem( i, header_item )
+            item_model.setHorizontalHeaderItem( i, header_item )
         item_model.settings.endGroup()
         item_model.settings.endGroup()
         item_model.endResetModel()
 
-# QIdentityProxyModel should be used instead of QSortFilterProxyModel, but
-# QIdentityProxyModel is missing from PySide
-class CollectionProxy(QtModel.QSortFilterProxyModel):
+
+class CollectionProxy(QtModel.QStandardItemModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtWidgets.QTableView`  
@@ -551,13 +549,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         super(CollectionProxy, self).__init__()
         assert object_thread( self )
         from camelot.view.model_thread import get_model_thread
-        #
-        # The source model will contain the actual data stripped from the
-        # objects in the collection.
-        #
-        self.source_model = QtGui.QStandardItemModel()
-        self.setSourceModel(self.source_model)
-        
+
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
         # the mutex is recursive to avoid blocking during unittest, when
@@ -642,7 +634,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         self.logger.debug('row count requested, returned {0}'.format(rows))
         # no need to count rows when there is no value or there are no columns
         if (rows == 0) and (self._value is not None) and (self._static_field_attributes):
-            root_item = self.source_model.invisibleRootItem()
+            root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
                 if not isinstance(self._last_request(), RowCount):
                     self._append_request(RowCount())
@@ -741,7 +733,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
     def get_validator(self):
         return self.validator
 
-    def map_to_source(self, sorted_row_number):
+    def _map_to_source(self, sorted_row_number):
         """Converts a sorted row number to a row number of the source
         collection"""
         return self._sort_and_filter[sorted_row_number]
@@ -793,14 +785,14 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
         locker = QtCore.QMutexLocker(self._mutex)
         # is this the best way to reset the standard items ? maybe it's much
         # easier to replace the source model all at once
-        self.source_model.setRowCount(0)
+        self.setRowCount(0)
         self.logger.debug('_reset state')
         self.display_cache = Fifo( max_cache )
         self.edit_cache = Fifo( max_cache )
         self.attributes_cache = Fifo( max_cache )
-        root_item = self.source_model.invisibleRootItem()
+        root_item = self.invisibleRootItem()
         root_item.setEnabled(row_count != None)
-        self.source_model.setRowCount(row_count or 0)
+        self.setRowCount(row_count or 0)
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         # once the cache has been cleared, no updates ought to be accepted
@@ -880,8 +872,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                                         width )
                 self.settings.endGroup()
                 self.settings.endGroup()
-        source_model = self.sourceModel()
-        source_model.setHeaderData(section, orientation, value, role)
+        return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
@@ -895,8 +886,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
                 # return a fixed value
                 #
                 return py_to_variant(self.vertical_header_size)
-            source_model = self.sourceModel()
-            item = source_model.verticalHeaderItem(section)
+            item = self.verticalHeaderItem(section)
             if item is None:
                 if section not in self.rows_under_request:
                     self.rows_under_request.add(section)
@@ -909,7 +899,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             else:
                 return item.data(role)
 
-        return self.sourceModel().headerData(section, orientation, role)
+        return super(CollectionProxy, self).headerData(section, orientation, role)
 
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
@@ -931,7 +921,7 @@ class CollectionProxy(QtModel.QSortFilterProxyModel):
             else:
                 return invalid_data
 
-        root_item = self.source_model.invisibleRootItem()
+        root_item = self.invisibleRootItem()
         child_item = root_item.child(index.row(), index.column())
 
         if child_item is None:
