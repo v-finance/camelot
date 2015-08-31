@@ -264,9 +264,7 @@ class RowData(Update):
         :return: (offset, limit)
         """
         offset, limit, i = 0, 0, 0
-        locker = QtCore.QMutexLocker(proxy._mutex)
         rows_to_get = list(self.rows)
-        locker.unlock()
         #
         # see if there is anything left to do
         #
@@ -311,19 +309,18 @@ class SetData(Update):
     def model_run(self, proxy):
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects = set(), set()
-        for row, column, value in self.updates:
-            grouped_requests[row].append( (column, value) )
+        for row, obj, column, value in self.updates:
+            grouped_requests[(row, obj)].append((column, value))
         admin = proxy.admin
-        for row, request_group in six.iteritems(grouped_requests):
+        for (row, obj), request_group in six.iteritems(grouped_requests):
             #
             # don't use get_slice, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the
             # one that was edited
             #
-            o = proxy.edit_cache.get_entity_at_row( row )
-            if o is None:
-                # the object might have been deleted from the collection while the editor
-                # was still open
+            o = proxy.edit_cache.get_entity_at_row(row)
+            if not (o is obj):
+                proxy.logger.warn('model view inconsistency')
                 continue
             #
             # the object might have been deleted while an editor was open
@@ -956,14 +953,16 @@ class CollectionProxy(QtModel.QStandardItemModel):
             return False
         if role == Qt.EditRole:
             # if the field is not editable, don't waste any time and get out of here
-            # editable should be explicitely
             field_attributes = variant_to_py(self.data(index, FieldAttributesRole))
             if field_attributes.get('editable') != True:
                 return
-            self.logger.debug('set data ({0},{1})'.format(index.row(), index.column()))
-            locker = QtCore.QMutexLocker( self._mutex )
-            self._update_requests.append( (index.row(), index.column(), value) )
-            locker.unlock()
+            row = index.row()
+            column = index.column()
+            obj = variant_to_py(self.headerData(row, Qt.Vertical, ObjectRole))
+            if obj is None:
+                return
+            self.logger.debug('set data ({0},{1})'.format(row, column))
+            self._update_requests.append((row, obj, column, value))
             self._start_timer()
         return True
 
