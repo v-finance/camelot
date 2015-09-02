@@ -22,10 +22,15 @@
 #
 #  ============================================================================
 
+from ....core.utils import ugettext
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor
 
 class ColorEditor(CustomEditor):
+    """
+    This editor alows the user to select a color.  When the selected color is
+    completely transparent, the value of the editor will be None.
+    """
 
     def __init__(self, parent=None, editable=True, field_name='color', **kwargs):
         CustomEditor.__init__(self, parent)
@@ -68,7 +73,7 @@ class ColorEditor(CustomEditor):
 
     def setColor(self, color):
         pixmap = QtGui.QPixmap(16, 16)
-        if color:
+        if color is not None:
             pixmap.fill(color)
         else:
             pixmap.fill(Qt.transparent)
@@ -76,13 +81,22 @@ class ColorEditor(CustomEditor):
         self._color = color
 
     def buttonClicked(self, raised):
-        if self._color:
-            color = QtGui.QColorDialog.getColor(self._color)
+        options = QtGui.QColorDialog.ShowAlphaChannel
+        if self._color is None:
+            color = Qt.white
         else:
-            color = QtGui.QColorDialog.getColor()
-        if color.isValid() and color!=self._color:
-            self.setColor(color)
-            self.editingFinished.emit()
+            color = self._color
+        color = QtGui.QColorDialog.getColor(
+            color, self.parent(), ugettext('Select Color'),
+            options,
+        )
+        if color.isValid():
+            # transparant colors become None
+            if color.alpha() == 0:
+                self.setColor(None)
+            else:
+                self.setColor(color)
+        self.editingFinished.emit()
 
 
 
