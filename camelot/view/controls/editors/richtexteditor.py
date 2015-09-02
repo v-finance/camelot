@@ -79,15 +79,15 @@ class RichTextEditor(CustomEditor, WideEditor):
 
         self.textedit = CustomTextEdit(self)
 
-        self.initToolbar() # Has to be invoked before the connect's below.
-        self.toolbar.hide() # Should only be visible when textedit is focused.
+        toolbar = self.initToolbar() # Has to be invoked before the connect's below.
+        toolbar.hide() # Should only be visible when textedit is focused.
         
         self.textedit.editingFinished.connect(self.emit_editing_finished)
-        self.textedit.receivedFocus.connect(self.toolbar.show)
+        self.textedit.receivedFocus.connect(toolbar.show)
         self.textedit.setAcceptRichText(True)
         
         # Layout
-        self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(toolbar)
         self.layout.addWidget(self.textedit)
         self.setLayout(self.layout)
 
@@ -95,10 +95,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setFontWeight(QtGui.QFont.Normal)
         self.textedit.setFontItalic(False)
         self.textedit.setFontUnderline(False)
-        #self.textedit.setFocus(Qt.OtherFocusReason)
-        self.update_alignment()
-        self.textedit.currentCharFormatChanged.connect(self.update_format)
-        self.textedit.cursorPositionChanged.connect(self.update_text)
+
 
     @QtCore.qt_slot()
     def emit_editing_finished(self):
@@ -126,239 +123,154 @@ class RichTextEditor(CustomEditor, WideEditor):
             toolbar.setHidden( hidden )
         
     def initToolbar(self):
-        self.toolbar = QtWidgets.QToolBar(self)
-        self.toolbar.setObjectName( 'toolbar' )
-        self.toolbar.setOrientation(Qt.Horizontal)
-        self.toolbar.setContentsMargins(0, 0, 0, 0)
+        toolbar = QtWidgets.QToolBar(self)
+        toolbar.setObjectName( 'toolbar' )
+        toolbar.setOrientation(Qt.Horizontal)
+        toolbar.setContentsMargins(0, 0, 0, 0)
 
-        self.bold_button = QtWidgets.QToolButton(self)
+        bold_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-bold.png').getQIcon()
-        self.bold_button.setIcon(icon)
-        self.bold_button.setAutoRaise(True)
-        self.bold_button.setCheckable(True)
-        self.bold_button.setFocusPolicy( Qt.ClickFocus )
-        self.bold_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
-        self.bold_button.setToolTip('Bold')
-        self.bold_button.clicked.connect(self.set_bold)
+        bold_button.setIcon(icon)
+        bold_button.setMaximumSize(QtCore.QSize(20, 20))
+        bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
+        bold_button.setToolTip('Bold')
+        bold_button.clicked.connect(self.set_bold)
 
-        self.italic_button = QtWidgets.QToolButton(self)
+        italic_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-italic.png').getQIcon()
-        self.italic_button.setIcon(icon)
-        self.italic_button.setAutoRaise(True)
-        self.italic_button.setCheckable(True)
-        self.italic_button.setFocusPolicy( Qt.ClickFocus )
-        self.italic_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
-        self.italic_button.setToolTip('Italic')
-        self.italic_button.clicked.connect(self.set_italic)
+        italic_button.setIcon(icon)
+        italic_button.setMaximumSize(QtCore.QSize(20, 20))
+        italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
+        italic_button.setToolTip('Italic')
+        italic_button.clicked.connect(self.set_italic)
 
-        self.underline_button = QtWidgets.QToolButton(self)
+        underline_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-underline.png').getQIcon()
-        self.underline_button.setIcon(icon)
-        self.underline_button.setAutoRaise(True)
-        self.underline_button.setCheckable(True)
-        self.underline_button.setFocusPolicy( Qt.ClickFocus )
-        self.underline_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
-        self.underline_button.setToolTip('Underline')
-        self.underline_button.clicked.connect(self.set_underline)
+        underline_button.setIcon(icon)
+        underline_button.setMaximumSize(QtCore.QSize(20, 20))
+        underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
+        underline_button.setToolTip('Underline')
+        underline_button.clicked.connect(self.set_underline)
 
-        self.copy_button = QtWidgets.QToolButton(self)
+        copy_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-copy.png').getQIcon()
-        self.copy_button.setIcon(icon)
-        self.copy_button.setAutoRaise(True)
-        self.copy_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.copy_button.setFocusPolicy( Qt.ClickFocus )
-        self.copy_button.setToolTip('Copy')
-        self.copy_button.clicked.connect(self.textedit.copy)
+        copy_button.setIcon(icon)
+        copy_button.setMaximumSize(QtCore.QSize(20, 20))
+        copy_button.setToolTip('Copy')
+        copy_button.clicked.connect(self.textedit.copy)
 
-        self.cut_button = QtWidgets.QToolButton(self)
+        cut_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-cut.png').getQIcon()
-        self.cut_button.setIcon(icon)
-        self.cut_button.setAutoRaise(True)
-        self.cut_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.cut_button.setToolTip('Cut')
-        self.cut_button.clicked.connect(self.textedit.cut)
-        self.cut_button.setFocusPolicy( Qt.ClickFocus )
+        cut_button.setIcon(icon)
+        cut_button.setMaximumSize(QtCore.QSize(20, 20))
+        cut_button.setToolTip('Cut')
+        cut_button.clicked.connect(self.textedit.cut)
 
-        self.paste_button = QtWidgets.QToolButton(self)
+        paste_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-paste.png').getQIcon()
-        self.paste_button.setIcon(icon)
-        self.paste_button.setAutoRaise(True)
-        self.paste_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.paste_button.setFocusPolicy( Qt.ClickFocus )
-        self.paste_button.setToolTip('Paste')
-        self.paste_button.clicked.connect(self.textedit.paste)
+        paste_button.setIcon(icon)
+        paste_button.setMaximumSize(QtCore.QSize(20, 20))
+        paste_button.setToolTip('Paste')
+        paste_button.clicked.connect(self.textedit.paste)
 
-        self.alignleft_button = QtWidgets.QToolButton(self)
+        alignleft_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-left.png').getQIcon()
-        self.alignleft_button.setIcon(icon)
-        self.alignleft_button.setAutoRaise(True)
-        self.alignleft_button.setCheckable(True)
-        self.alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.alignleft_button.setFocusPolicy( Qt.ClickFocus )
-        self.alignleft_button.setToolTip('Align left')
-        self.alignleft_button.clicked.connect(self.set_alignleft)
+        alignleft_button.setIcon(icon)
+        alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
+        alignleft_button.setToolTip('Align left')
+        alignleft_button.clicked.connect(self.set_alignleft)
 
-        self.aligncenter_button = QtWidgets.QToolButton(self)
+        aligncenter_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-center.png').getQIcon()
-        self.aligncenter_button.setIcon(icon)
-        self.aligncenter_button.setAutoRaise(True)
-        self.aligncenter_button.setCheckable(True)
-        self.aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.aligncenter_button.setFocusPolicy( Qt.ClickFocus )
-        self.aligncenter_button.setToolTip('Align Center')
-        self.aligncenter_button.clicked.connect(self.set_aligncenter)
+        aligncenter_button.setIcon(icon)
+        aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
+        aligncenter_button.setToolTip('Align Center')
+        aligncenter_button.clicked.connect(self.set_aligncenter)
 
-        self.alignright_button = QtWidgets.QToolButton(self)
+        alignright_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-right.png').getQIcon()
-        self.alignright_button.setIcon(icon)
-        self.alignright_button.setAutoRaise(True)
-        self.alignright_button.setCheckable(True)
-        self.alignright_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.alignright_button.setFocusPolicy( Qt.ClickFocus )
-        self.alignright_button.setToolTip('Align Right')
-        self.alignright_button.clicked.connect(self.set_alignright)
+        alignright_button.setIcon(icon)
+        alignright_button.setMaximumSize(QtCore.QSize(20, 20))
+        alignright_button.setToolTip('Align Right')
+        alignright_button.clicked.connect(self.set_alignright)
 
-        self.zoomin_button = QtWidgets.QToolButton(self)
+        zoomin_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
-        self.zoomin_button.setIcon(icon)
-        self.zoomin_button.setAutoRaise(True)
-        self.zoomin_button.setCheckable(True)
-        self.zoomin_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.zoomin_button.setFocusPolicy( Qt.ClickFocus )
-        self.zoomin_button.setToolTip('Zoom in')
-        self.zoomin_button.clicked.connect(self.zoomin)
+        zoomin_button.setIcon(icon)
+        zoomin_button.setMaximumSize(QtCore.QSize(20, 20))
+        zoomin_button.setToolTip('Zoom in')
+        zoomin_button.clicked.connect(self.zoomin)
         
-        self.zoomout_button = QtWidgets.QToolButton(self)
+        zoomout_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/list-remove.png').getQIcon()
-        self.zoomout_button.setIcon(icon)
-        self.zoomout_button.setAutoRaise(True)
-        self.zoomout_button.setCheckable(True)
-        self.zoomout_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.zoomout_button.setFocusPolicy( Qt.ClickFocus )
-        self.zoomout_button.setToolTip('Zoom out')
-        self.zoomout_button.clicked.connect(self.zoomout)
+        zoomout_button.setIcon(icon)
+        zoomout_button.setMaximumSize(QtCore.QSize(20, 20))
+        zoomout_button.setToolTip('Zoom out')
+        zoomout_button.clicked.connect(self.zoomout)
         
-        self.color_button = QtWidgets.QToolButton(self)
-        self.color_button.setAutoRaise(True)
-        self.color_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.color_button.setFocusPolicy( Qt.ClickFocus )
-        self.color_button.setToolTip('Color')
-        self.color_button.clicked.connect(self.set_color)
+        color_button = QtWidgets.QToolButton(self)
+        color_button.setMaximumSize(QtCore.QSize(20, 20))
+        color_button.setToolTip('Color')
+        pixmap = QtGui.QPixmap(16, 16)
+        pixmap.fill(QtGui.QColor('black'))
+        color_button.setIcon(QtGui.QIcon(pixmap))
+        color_button.clicked.connect(self.set_color)
 
-        self.toolbar.addWidget(self.copy_button)
-        self.toolbar.addWidget(self.cut_button)
-        self.toolbar.addWidget(self.paste_button)
-        self.toolbar.addSeparator()
-        self.toolbar.addWidget(self.bold_button)
-        self.toolbar.addWidget(self.italic_button)
-        self.toolbar.addWidget(self.underline_button)
-        self.toolbar.addSeparator()
-        self.toolbar.addWidget(self.alignleft_button)
-        self.toolbar.addWidget(self.aligncenter_button)
-        self.toolbar.addWidget(self.alignright_button)
-        self.toolbar.addSeparator()
-        self.toolbar.addWidget(self.color_button)
-        self.toolbar.addSeparator()
-        self.toolbar.addWidget(self.zoomin_button)
-        self.toolbar.addWidget(self.zoomout_button)
+        toolbar.addWidget(copy_button)
+        toolbar.addWidget(cut_button)
+        toolbar.addWidget(paste_button)
+        toolbar.addSeparator()
+        toolbar.addWidget(bold_button)
+        toolbar.addWidget(italic_button)
+        toolbar.addWidget(underline_button)
+        toolbar.addSeparator()
+        toolbar.addWidget(alignleft_button)
+        toolbar.addWidget(aligncenter_button)
+        toolbar.addWidget(alignright_button)
+        toolbar.addSeparator()
+        toolbar.addWidget(color_button)
+        toolbar.addSeparator()
+        toolbar.addWidget(zoomin_button)
+        toolbar.addWidget(zoomout_button)
+        return toolbar
 
     #
     # Button methods
     #
     def set_bold(self):
-        if self.bold_button.isChecked():
-            self.textedit.setFocus(Qt.OtherFocusReason)
+        font = self.textedit.currentFont()
+        if not font.bold():
             self.textedit.setFontWeight(QtGui.QFont.Bold)
         else:
-            self.textedit.setFocus(Qt.OtherFocusReason)
             self.textedit.setFontWeight(QtGui.QFont.Normal)
 
     def set_italic(self, bool):
-        if bool:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setFontItalic(True)
-        else:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setFontItalic(False)
+        font = self.textedit.currentFont()
+        self.textedit.setFontItalic(not font.italic())
 
     def set_underline(self, bool):
-        if bool:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setFontUnderline(True)
-        else:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setFontUnderline(False)
+        font = self.textedit.currentFont()
+        self.textedit.setFontUnderline(not font.underline())
 
     def zoomin( self ):
         self.textedit.zoomIn()
-        self.textedit.setFocus(Qt.OtherFocusReason)
 
     def zoomout( self ):
         self.textedit.zoomOut()
-        self.textedit.setFocus(Qt.OtherFocusReason)
 
     def set_alignleft(self, bool):
-        if bool:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setAlignment(Qt.AlignLeft)
-        self.update_alignment(Qt.AlignLeft)
+        self.textedit.setAlignment(Qt.AlignLeft)
 
     def set_aligncenter(self, bool):
-        if bool:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setAlignment(Qt.AlignCenter)
-        self.update_alignment(Qt.AlignCenter)
+        self.textedit.setAlignment(Qt.AlignCenter)
 
     def set_alignright(self, bool):
-        if bool:
-            self.textedit.setFocus(Qt.OtherFocusReason)
-            self.textedit.setAlignment(Qt.AlignRight)
-        self.update_alignment(Qt.AlignRight)
-
-    def update_alignment(self, al=None):
-        if al is None:
-            al = self.textedit.alignment()
-        if al == Qt.AlignLeft:
-            self.alignleft_button.setChecked(True)
-            self.aligncenter_button.setChecked(False)
-            self.alignright_button.setChecked(False)
-        elif al == Qt.AlignCenter:
-            self.aligncenter_button.setChecked(True)
-            self.alignleft_button.setChecked(False)
-            self.alignright_button.setChecked(False)
-        elif al == Qt.AlignRight:
-            self.alignright_button.setChecked(True)
-            self.alignleft_button.setChecked(False)
-            self.aligncenter_button.setChecked(False)
+        self.textedit.setAlignment(Qt.AlignRight)
 
     def set_color(self):
         color = QtGui.QColorDialog.getColor(self.textedit.textColor())
         if color.isValid():
-            self.textedit.setFocus(Qt.OtherFocusReason)
             self.textedit.setTextColor(color)
-            pixmap = QtGui.QPixmap(16, 16)
-            pixmap.fill(color)
-            self.color_button.setIcon(QtGui.QIcon(pixmap))
-
-    def update_color(self):
-        color = self.textedit.textColor()
-        pixmap = QtGui.QPixmap(16, 16)
-        pixmap.fill(color)
-        self.color_button.setIcon(QtGui.QIcon(pixmap))
-
-    def update_format(self, format):
-        font = format.font()
-        self.bold_button.setChecked(font.bold())
-        self.italic_button.setChecked(font.italic())
-        self.underline_button.setChecked(font.underline())
-        self.update_alignment(self.textedit.alignment())
-
-    def update_text(self):
-        self.update_alignment()
-        self.update_color()
 
     def get_value(self):
         from xml.dom import minidom
@@ -368,7 +280,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def set_document( self, document ):
         """
-        :param document: a :class:`QtGui.QTextDocument` object.        
+        :param document: a :class:`QtGui.QTextDocument` object.
         """
         self.textedit.setDocument( document )
         
@@ -376,9 +288,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         value = CustomEditor.set_value(self, value)
         if value!=None:
             if six.text_type(self.textedit.toHtml())!=value:
-                self.update_alignment()
                 self.textedit.setHtml(value)
-                self.update_color()
         else:
             self.textedit.clear()
 

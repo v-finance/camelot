@@ -564,7 +564,8 @@ and used as a custom action.
         """
         if self._search_fields is None:
             self._search_fields = list(self.list_search)
-            for field_name, col_property in self.mapper.column_attrs.items():
+            # list to avoid p3k fixes
+            for field_name, col_property in list(self.mapper.column_attrs.items()):
                 if isinstance(col_property.expression, schema.Column):
                     self._search_fields.append(field_name)
         return self._search_fields
