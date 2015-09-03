@@ -125,7 +125,9 @@ class ThreadedAwsHandler(logging.Handler):
                 # getfilesystemencoding() still returns 'mbcs', as this is the encoding that applications 
                 # should use when they explicitly want to convert Unicode strings 
                 # to byte strings that are equivalent when used as file names.
-                self._user = getpass.getuser().decode('mbcs')
+                self._user = getpass.getuser()
+                if not isinstance(self._user, str):
+                    self._user = self._user.decode('mbcs')
             else:
                 self._user = getpass.getuser()
         except Exception:
