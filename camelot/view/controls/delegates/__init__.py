@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 from .delegatemanager import DelegateManager
-from .booldelegate import BoolDelegate, TextBoolDelegate
+from .booldelegate import BoolDelegate
 from .chartdelegate import ChartDelegate
 from .colordelegate import ColorDelegate
 from .comboboxdelegate import ComboBoxDelegate
@@ -54,7 +54,6 @@ from .monthsdelegate import MonthsDelegate
 __all__ = [
     DelegateManager.__name__,
     BoolDelegate.__name__,
-    TextBoolDelegate.__name__,
     ChartDelegate.__name__,
     ColorDelegate.__name__,
     ComboBoxDelegate.__name__,

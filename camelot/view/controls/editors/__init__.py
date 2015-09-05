@@ -38,7 +38,7 @@ ValueLoading until set_value is called with another argument.
 
 """
 
-from .booleditor import BoolEditor, TextBoolEditor
+from .booleditor import BoolEditor
 from .charteditor import ChartEditor
 from .choiceseditor import ChoicesEditor
 from .coloreditor import ColorEditor
@@ -92,7 +92,6 @@ __all__ = [
     TimeEditor.__name__,
     VirtualAddressEditor.__name__,
     SmileyEditor.__name__,
-    TextBoolEditor.__name__,
     TextEditEditor.__name__,
     WideEditor.__name__,
 ]
