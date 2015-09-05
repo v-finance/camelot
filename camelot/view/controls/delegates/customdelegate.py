@@ -177,6 +177,14 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
 
+    def get_display_data(self, edit_data, field_attributes):
+        """
+        This method is used by the proxy to convert the value of an attribute
+        to the data for the DisplayRole in the standard item model.  The result of
+        this call can be used by the paint method of the delegate.
+        """
+        return None
+
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
