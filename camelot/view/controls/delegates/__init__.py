@@ -26,7 +26,6 @@ from .booldelegate import BoolDelegate
 from .chartdelegate import ChartDelegate
 from .colordelegate import ColorDelegate
 from .comboboxdelegate import ComboBoxDelegate
-from .currencydelegate import CurrencyDelegate
 from .customdelegate import CustomDelegate
 from .datedelegate import DateDelegate
 from .datetimedelegate import DateTimeDelegate
@@ -57,7 +56,6 @@ __all__ = [
     ChartDelegate.__name__,
     ColorDelegate.__name__,
     ComboBoxDelegate.__name__,
-    CurrencyDelegate.__name__,
     CustomDelegate.__name__,
     DateDelegate.__name__,
     DateTimeDelegate.__name__,
