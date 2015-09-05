@@ -213,13 +213,11 @@ class CustomDelegate(QtWidgets.QItemDelegate):
             vertical_align = Qt.AlignTop
 
         field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
-        tooltip = None
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
             background_color = field_attributes.get( 'background_color', None )
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
-            tooltip = field_attributes.get( 'tooltip', None )
 
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
@@ -229,9 +227,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
             painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.Base) )
             fontColor = option.palette.color(color_group, QtGui.QPalette.Text)
         
-        # The tooltip has to be drawn after the fillRect()'s of above.
-        if tooltip:
-            painter.drawPixmap(rect.x(), rect.y(), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
 
         if prefix:
             text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )

@@ -59,16 +59,6 @@ def set_background_color_palette(widget, background_color):
         widget.setPalette(QtWidgets.QApplication.palette())
 
 
-def draw_tooltip_visualization(widget):
-    """
-    Draws a small visual indication in the top-left corner of a widget.
-    :param widget: a QWidget
-    """
-    painter = QtGui.QPainter(widget)
-    painter.drawPixmap(QtCore.QPoint(0, 0),
-                       QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
-
-
 class AbstractCustomEditor(object):
     """
     Helper class to be used to build custom editors.
@@ -163,11 +153,6 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             self.size_hint_width = None
         else:
             self.size_hint_width = column_width * CustomEditor._font_width
-
-    def paintEvent(self, event):
-        super(CustomEditor, self).paintEvent(event)
-        if self.toolTip():
-            draw_tooltip_visualization(self)
 
     def add_actions(self, actions, layout):
         for action in actions:

@@ -26,8 +26,7 @@ import six
 
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
-from .customeditor import (CustomEditor, set_background_color_palette,
-                           draw_tooltip_visualization)
+from .customeditor import CustomEditor, set_background_color_palette
 from ...art import Icon
 from ...utils import locale
 from ....core import constants
@@ -123,11 +122,6 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         if len(self.stripped(text))==0:
             return self.minimum()
         return super(CustomDoubleSpinBox, self).valueFromText(text)
-        
-    def paintEvent(self, event):
-        super(CustomDoubleSpinBox, self).paintEvent(event)
-        if self.toolTip():
-            draw_tooltip_visualization(self)
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator button.  

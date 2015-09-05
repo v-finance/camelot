@@ -27,7 +27,7 @@ import six
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from camelot.view.model_thread import object_thread
 
-from .customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
+from .customeditor import CustomEditor, set_background_color_palette
 
 class PartEditor(QtWidgets.QLineEdit):
 
@@ -47,11 +47,6 @@ class PartEditor(QtWidgets.QLineEdit):
         super(PartEditor, self).focusOutEvent(event)
         if self.isModified():
             self.editingFinished.emit()
-        
-    def paintEvent(self, event):
-        super(PartEditor, self).paintEvent(event)
-        if self.firstPart and self.toolTip():
-            draw_tooltip_visualization(self)
 
     @QtCore.qt_slot(str)
     def text_edited(self, text):

@@ -26,8 +26,7 @@ import six
 
 from ....core.qt import QtCore, QtGui, QtWidgets
 
-from .customeditor import (CustomEditor, draw_tooltip_visualization,
-                           set_background_color_palette)
+from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
 
 
@@ -107,9 +106,3 @@ class TextLineEditor(CustomEditor):
             set_background_color_palette(text_input,
                                          kwargs.get('background_color'))
             text_input.setValidator(validator)
-
-    def paintEvent(self, event):
-        super(TextLineEditor, self).paintEvent(event)
-
-        if self.toolTip():
-            draw_tooltip_visualization(self)
