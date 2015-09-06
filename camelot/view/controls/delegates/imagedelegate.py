@@ -22,7 +22,8 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant
+from ....core.item_model import PreviewRole
 from ....view.controls import editors
 from ....view.proxy import ValueLoading
 from .filedelegate import FileDelegate
@@ -37,14 +38,21 @@ class ImageDelegate(FileDelegate):
     
     editor = editors.ImageEditor
     margin = 2
-    
+
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(ImageDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            thumbnail = value.checkout_thumbnail(100, 100)
+            item.setData(py_to_variant(thumbnail), PreviewRole)
+        return item
+
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        
         data = index.data(Qt.DisplayRole)
         if data not in (None, ValueLoading):
-            pixmap = QtGui.QPixmap(index.data(Qt.DisplayRole))
+            pixmap = QtGui.QPixmap(data)
         
             if pixmap.width() > 0 and pixmap.height() > 0:
                 rect = option.rect

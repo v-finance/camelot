@@ -29,7 +29,8 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import six
 
-from ....core.qt import Qt, variant_to_py
+from ....core.item_model import PreviewRole
+from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
@@ -37,6 +38,16 @@ class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
                                             CustomDelegate ) ):
     
     editor = editors.ChoicesEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(ComboBoxDelegate, cls).get_standard_item(locale, value, fa_values)
+        choices = fa_values.get('choices', [])
+        for key, verbose in choices:
+            if key == value:
+                item.setData(py_to_variant(six.text_type(verbose)), PreviewRole)
+                break
+        return item
 
     def setEditorData(self, editor, index):
         value = variant_to_py(index.data(Qt.EditRole))

@@ -109,10 +109,7 @@ class ObjectValidator(QtCore.QObject):
                     if 'delegate' not in attributes:
                         raise Exception('no delegate specified for %s'%(field))
                     is_null = False
-                    if value==None:
-                        is_null = True
-                    elif (attributes['delegate'] == delegates.CodeDelegate or issubclass(attributes['delegate'],delegates.CodeDelegate)) and \
-                         (sum(len(c) for c in value) == 0):
+                    if value is None:
                         is_null = True
                     elif (attributes['delegate'] == delegates.PlainTextDelegate or issubclass(attributes['delegate'],delegates.PlainTextDelegate)) and (len(value) == 0):
                         is_null = True

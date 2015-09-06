@@ -52,25 +52,13 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
+from ...core.item_model import (ProxyDict, VerboseIdentifierRole, ObjectRole,
+                                FieldAttributesRole, PreviewRole)
 from ..crud_signals import CrudSignalHandler
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
 from camelot.view.model_thread import object_thread, post
-from camelot.core.files.storage import StoredImage
 
-#
-# Custom Roles
-#
-FieldAttributesRole = Qt.UserRole
-ObjectRole = Qt.UserRole + 1
-PreviewRole = Qt.UserRole + 2
-VerboseIdentifierRole = Qt.UserRole + 3
-
-class ProxyDict(dict):
-    """Subclass of dictionary to fool the Qt Variant object and prevent
-    it from converting dictionary keys to whatever Qt object, but keep
-    everything python"""
-    pass
 
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
@@ -103,27 +91,15 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
     for field_data, static_attributes, dynamic_attributes in zip( stripped_data, static_field_attributes, dynamic_field_attributes ):
         unicode_data = u''
         try:
-            choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
-            if 'unicode_format' in static_attributes:
-                unicode_format = static_attributes['unicode_format']
-                if field_data != None:
-                    unicode_data = unicode_format( field_data )
-            elif choices:
-                unicode_data = field_data
-                for key, value in choices:
-                    if key == field_data:
-                        unicode_data = value
-            elif isinstance( field_data, list ):
-                unicode_data = u'.'.join( [six.text_type( e ) for e in field_data] )
-            elif isinstance( field_data, datetime.datetime ):
+
+            if isinstance( field_data, datetime.datetime ):
                 # datetime should come before date since datetime is a subtype of date
                 if field_data.year >= 1900:
                     unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
             elif isinstance( field_data, datetime.date ):
                 if field_data.year >= 1900:
                     unicode_data = field_data.strftime( '%d/%m/%Y' )
-            elif isinstance( field_data, StoredImage):
-                unicode_data = field_data.checkout_thumbnail(100, 100)
+
             elif field_data != None:
                 unicode_data = six.text_type( field_data )
         except (Exception, RuntimeError, TypeError, NameError) as e:
@@ -566,6 +542,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         self._value = None
         self.flush_changes = flush_changes
         self.mt = get_model_thread()
+        self.locale = QtCore.QLocale()
         #
         # The timer reduced the number of times the model thread is
         # triggered, by waiting for the next gui event before triggering
@@ -1002,20 +979,15 @@ class CollectionProxy(QtModel.QStandardItemModel):
         locker.unlock()
         if row is not None:
             items = []
+            locale = self.locale
             for column in changed_columns:
                 # copy to make sure the original dict can be compared in subsequent
                 # calls
                 field_attributes = dict(dynamic_field_attributes[column])
                 field_attributes.update(static_field_attributes[column])
-                item = QtModel.QStandardItem()
+                delegate = field_attributes['delegate']
                 value = row_data[column]
-                if isinstance(value, (list, dict)):
-                    value = CollectionContainer(value)
-                item.setData(py_to_variant(value), Qt.EditRole)
-                item.setData(py_to_variant(ProxyDict(field_attributes)), FieldAttributesRole)
-                item.setData(py_to_variant(unicode_row_data[column]), PreviewRole)
-                item.setData(py_to_variant(field_attributes.get('tooltip')), Qt.ToolTipRole)
-                item.setData(py_to_variant(field_attributes.get('background_color')), Qt.BackgroundRole)
+                item = delegate.get_standard_item(locale, value, field_attributes)
                 items.append((column, item))
             verbose_identifier = self.admin.get_verbose_identifier(obj)
             header_item = QtModel.QStandardItem()
@@ -1025,7 +997,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
                 header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
                 header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
-                
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 

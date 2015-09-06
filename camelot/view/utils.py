@@ -178,9 +178,6 @@ def datetime_from_string(s):
     return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 
                     dt.time().hour(), dt.time().minute(), dt.time().second())
 
-def code_from_string(s, separator):
-    return s.split(separator)
-
 def int_from_string(s):
     value = float_from_string(s)
     if value != None:

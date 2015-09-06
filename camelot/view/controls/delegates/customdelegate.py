@@ -24,7 +24,9 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
+from ....core.qt import (QtGui, QtCore, QtModel, QtWidgets, Qt,
+                         py_to_variant, variant_to_py)
+from ....core.item_model import ProxyDict, FieldAttributesRole
 
 from camelot.view.proxy import ValueLoading
 
@@ -124,6 +126,29 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
 
+    @classmethod
+    def get_standard_item(cls, locale, value, field_attributes_values):
+        """
+        This method is used by the proxy to convert the value of a field
+        to the data for the standard item model.  The result of this call can be
+        used by the methods of the delegate.
+        
+        :param value: the value of the field on the object
+        :param field_attributes_values: the values of the field attributes on the
+           object
+        
+        :return: a `QStandardItem` object
+        """
+        item = QtModel.QStandardItem()
+        item.setData(py_to_variant(value), Qt.EditRole)
+        item.setData(py_to_variant(ProxyDict(field_attributes_values)),
+                     FieldAttributesRole)
+        item.setData(py_to_variant(field_attributes_values.get('tooltip')),
+                     Qt.ToolTipRole)
+        item.setData(py_to_variant(field_attributes_values.get('background_color')),
+                     Qt.BackgroundRole)
+        return item
+
     def createEditor(self, parent, option, index):
         """
         :param option: use an option with version 5 to indicate the widget
@@ -177,14 +202,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
 
-    def get_display_data(self, edit_data, field_attributes):
-        """
-        This method is used by the proxy to convert the value of an attribute
-        to the data for the DisplayRole in the standard item model.  The result of
-        this call can be used by the paint method of the delegate.
-        """
-        return None
-
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
@@ -220,7 +237,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         if rect.height() > 2 * self._height:
             vertical_align = Qt.AlignTop
 
-        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
+        field_attributes = variant_to_py(index.data(Qt.UserRole))
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
             background_color = field_attributes.get( 'background_color', None )

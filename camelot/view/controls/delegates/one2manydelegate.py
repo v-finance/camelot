@@ -24,7 +24,8 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt
+from ....container.collection_container import CollectionContainer
+from ....core.qt import variant_to_py, Qt, py_to_variant
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -42,6 +43,13 @@ class One2ManyDelegate( six.with_metaclass( DocumentationMetaclass,
         super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )
         logger.debug( 'create one2manycolumn delegate' )
         self.kwargs = kwargs
+
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(One2ManyDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(py_to_variant(CollectionContainer(value)), Qt.EditRole)
+        return item
 
     def createEditor( self, parent, option, index ):
         logger.debug( 'create a one2many editor' )
