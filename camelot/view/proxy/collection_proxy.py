@@ -866,6 +866,10 @@ class CollectionProxy(QtModel.QStandardItemModel):
         root_item = self.invisibleRootItem()
         child_item = root_item.child(index.row(), index.column())
 
+        # the standard implementation uses EditRole as DisplayRole
+        if role == Qt.DisplayRole:
+            role = PreviewRole
+
         if child_item is None:
             row = index.row()
             if (row not in self.rows_under_request) and (row >= 0):
@@ -875,12 +879,12 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 return py_to_variant(
                     ProxyDict(self._static_field_attributes[index.column()])
                 )
+            elif role == PreviewRole:
+                return py_to_variant('')
             return py_to_variant(ValueLoading)
 
-        # the standard implementation uses EditRole as DisplayRole
-        if role == Qt.DisplayRole:
-            role = PreviewRole
-        elif role == ObjectRole:
+
+        if role == ObjectRole:
             return self.headerData(index.row(), Qt.Vertical, role)
 
         return child_item.data(role)
