@@ -64,7 +64,7 @@ class MonthsDelegate( six.with_metaclass( DocumentationMetaclass,
             if years:
                 value_str = value_str + ugettext('%i years ')%(years)
             if months:
-                value_str = value_str + ugettext('%i months')%(months)        
+                value_str = value_str + ugettext('%i months')%(months)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

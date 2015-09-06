@@ -24,11 +24,10 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt
+from ....core.item_model import PreviewRole
+from ....core.qt import variant_to_py
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
-from camelot.core.utils import ugettext
 
 class TextEditDelegate( six.with_metaclass( DocumentationMetaclass, 
                                             CustomDelegate) ):
@@ -40,16 +39,11 @@ class TextEditDelegate( six.with_metaclass( DocumentationMetaclass,
                   parent = None,
                   **kwargs ):
         CustomDelegate.__init__( self, parent, **kwargs )
-    
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            value_str = ugettext(value)
 
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(TextEditDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(variant_to_py(six.text_type(value)), PreviewRole)
+        return item
 

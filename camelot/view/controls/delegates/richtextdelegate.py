@@ -22,14 +22,14 @@
 #
 #  ============================================================================
 
-from ....core.qt import Qt, variant_to_py
+from ....core.item_model import PreviewRole
+from ....core.qt import py_to_variant
 
 import six
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
-from ...proxy import ValueLoading
 
 class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
                                             CustomDelegate ) ):
@@ -43,20 +43,11 @@ class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
         self.editable = editable
         self._height = self._height * 10
         self._width = self._width * 3
-    
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = six.text_type(variant_to_py(index.model().data(index, Qt.EditRole)))
 
-        value_str = u''
-        if value not in (None, ValueLoading):
-            value_str = ' '.join(text_from_richtext(value))[:256]
-
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
-    
-
-
-
-
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(RichTextDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            value_str = u' '.join(text_from_richtext(value))[:256]
+            item.setData(py_to_variant(six.text_type(value_str)), PreviewRole)
+        return item

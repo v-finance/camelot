@@ -26,8 +26,8 @@ import logging
 
 import six
 
-from ....core.qt import Qt, variant_to_py
-from ...proxy import ValueLoading
+from ....core.qt import py_to_variant
+from ....core.item_model import PreviewRole
 from .. import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -58,14 +58,13 @@ class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
         self._kwargs = kwargs
         self._width = self._width * 2
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.data(Qt.DisplayRole))
-        if value in (None, ValueLoading):
-            value = ''
-        self.paint_text(painter, option, index, six.text_type(value) )
-        painter.restore()
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(Many2OneDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            value_str = fa_values['admin'].get_verbose_identifier(value)
+            item.setData(py_to_variant(value_str), PreviewRole)
+        return item
 
     def createEditor(self, parent, option, index):
         editor = editors.Many2OneEditor( self.admin,
@@ -76,10 +75,5 @@ class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
-
-#  def sizeHint(self, option, index):
-#    return self._dummy_editor.sizeHint()
-
-
 
 

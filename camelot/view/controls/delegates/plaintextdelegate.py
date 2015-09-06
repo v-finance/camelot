@@ -27,14 +27,12 @@ logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
 import six
 
-from ....core.qt import variant_to_py, Qt
+from ....core.item_model import PreviewRole
+from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
 
-from camelot.core.utils import ugettext
-
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 DEFAULT_COLUMN_WIDTH = 20
 
@@ -54,18 +52,11 @@ class PlainTextDelegate( six.with_metaclass( DocumentationMetaclass,
         char_width = self._font_metrics.averageCharWidth()
         self._width = char_width * min( DEFAULT_COLUMN_WIDTH, length or DEFAULT_COLUMN_WIDTH )
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            if self._translate_content:
-                value_str = ugettext( six.text_type(value) )
-            else:
-                value_str = six.text_type(value)
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(PlainTextDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+        return item
 
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
 

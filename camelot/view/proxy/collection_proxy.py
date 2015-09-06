@@ -38,7 +38,6 @@ returned and an update signal is emitted when the correct data is available.
 #   during the lifetime of the proxy
 #
 import collections
-import datetime
 import logging
 import sys
 
@@ -80,36 +79,6 @@ def strip_data_from_object( obj, columns ):
                                    exc_info = e )
         finally:
             row_data.append( field_value )
-    return row_data
-
-def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynamic_field_attributes ):
-    """Extract for each field in the row data a 'visible' form of
-    data"""
-
-    row_data = []
-
-    for field_data, static_attributes, dynamic_attributes in zip( stripped_data, static_field_attributes, dynamic_field_attributes ):
-        unicode_data = u''
-        try:
-
-            if isinstance( field_data, datetime.datetime ):
-                # datetime should come before date since datetime is a subtype of date
-                if field_data.year >= 1900:
-                    unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
-            elif isinstance( field_data, datetime.date ):
-                if field_data.year >= 1900:
-                    unicode_data = field_data.strftime( '%d/%m/%Y' )
-
-            elif field_data != None:
-                unicode_data = six.text_type( field_data )
-        except (Exception, RuntimeError, TypeError, NameError) as e:
-            log_programming_error( logger,
-                                   "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
-                                                                                                        obj.__class__.__name__),
-                                   exc_info = e )
-        finally:
-            row_data.append( unicode_data )
-
     return row_data
 
 from camelot.view.proxy import ValueLoading
@@ -959,7 +928,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
             row_data = strip_data_from_object( obj, columns )
             dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
             static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
-            unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
             if self.list_action:
                 self.row_model_context.obj = obj
                 self.row_model_context.current_row = row
@@ -968,13 +936,11 @@ class CollectionProxy(QtModel.QStandardItemModel):
             row_data = [None] * len(columns)
             dynamic_field_attributes =  [{'editable':False}] * len(columns)
             static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
-            unicode_row_data = [u''] * len(columns)
         # keep track of the columns that changed, to limit the
         # number of editors/cells that need to be updated
         changed_columns = set()
         locker = QtCore.QMutexLocker( self._mutex )
         changed_columns.update( self.edit_cache.add_data( row, obj, row_data ) )
-        changed_columns.update( self.display_cache.add_data( row, obj, unicode_row_data ) )
         changed_columns.update( self.attributes_cache.add_data(row, obj, dynamic_field_attributes ) )
         locker.unlock()
         if row is not None:
