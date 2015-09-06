@@ -31,7 +31,6 @@ Those fields are stored in the :mod:`camelot.types` module.
 """
 import collections
 import logging
-import string
 
 logger = logging.getLogger('camelot.types')
 
@@ -124,90 +123,6 @@ class VirtualAddress(types.TypeDecorator):
 
     def __repr__(self):
         return 'VirtualAddress()'
-
-class _RegexpTranslator(object):
-    
-    def __getitem__(self, ch):
-        if chr(ch) in '<>!':
-            return None
-        return ch
-
-if six.PY3:
-    _translator = _RegexpTranslator()
-else:
-    _translator = string.maketrans('', '')
-
-class Code(types.TypeDecorator):
-    """SQLAlchemy column type to store codes.  Where a code is a list of strings
-    on which a regular expression can be enforced.
-  
-    This column type accepts and returns a list of strings and stores them as a
-    string joined with points.
-  
-    eg: ``['08', 'AB']`` is stored as ``08.AB``
-    
-    .. image:: /_static/editors/CodeEditor_editable.png
-    
-    :param parts: a list of input masks specifying the mask for each part,
-        eg ``['99', 'AA']``. For valid input masks, see the documentation of
-        :class:`QtWidgets.QLineEdit`.
-        
-    :param separator: a string that will be used to separate the different parts
-        in the GUI and in the database
-        
-    :param length: the size of the underlying string field in the database, if no
-        length is specified, it will be calculated  from the parts
-    """
-    
-    impl = types.Unicode
-       
-    @property
-    def python_type(self):
-        return tuple
-    
-    def __init__(self, parts=['AB'], separator=u'.', length = None, **kwargs):
-        self.parts = parts
-        self.separator = separator
-        max_length = sum(len(part.translate(_translator)) for part in parts) + len(parts)*len(self.separator)
-        types.TypeDecorator.__init__( self, length = length or max_length, **kwargs )
-        
-    def bind_processor(self, dialect):
-  
-        impl_processor = self.impl.bind_processor(dialect)
-        if not impl_processor:
-            impl_processor = lambda x:x
-          
-        def processor(value):
-            if value is not None:
-                value = self.separator.join(value)
-            return impl_processor(value)
-          
-        return processor
-    
-    def result_processor(self, dialect, coltype=None):
-      
-        impl_processor = self.impl.result_processor(dialect, coltype)
-        if not impl_processor:
-            impl_processor = lambda x:x
-      
-        def processor(value):
-    
-            if value:
-                return value.split(self.separator)
-            return ['' for _p in self.parts]
-            
-        return processor
-
-    def __repr__(self):
-        return 'Code()'
-
-class IPAddress(Code):
-    
-    def __init__(self, **kwargs):
-        super(IPAddress, self).__init__(parts=['900','900','900','900'])
-
-    def __repr__(self):
-        return 'IPAddress()'
 
 class Rating(types.TypeDecorator):
     """The rating field is an integer field that is visualized as a number of stars that
