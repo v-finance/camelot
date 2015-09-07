@@ -53,6 +53,7 @@ from .qt import QtCore
 import getpass
 import json
 import logging
+import six
 import sys
 
 LOGGER = logging.getLogger('camelot.core.logging')
@@ -125,7 +126,9 @@ class ThreadedAwsHandler(logging.Handler):
                 # getfilesystemencoding() still returns 'mbcs', as this is the encoding that applications 
                 # should use when they explicitly want to convert Unicode strings 
                 # to byte strings that are equivalent when used as file names.
-                self._user = getpass.getuser().decode('mbcs')
+                self._user = getpass.getuser()
+                if six.PY2:
+                    self._user = self._user.decode('mbcs')
             else:
                 self._user = getpass.getuser()
         except Exception:
