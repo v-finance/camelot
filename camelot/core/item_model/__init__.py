@@ -7,6 +7,10 @@ of `QObject`, but pure Python helper classes.
 
 from ..qt import Qt
 
+from .list_proxy import ListModelProxy
+from .proxy import AbstractModelProxy
+from .query_proxy import QueryModelProxy
+
 #
 # Custom Roles
 #
@@ -20,3 +24,10 @@ class ProxyDict(dict):
     it from converting dictionary keys to whatever Qt object, but keep
     everything python"""
     pass
+
+__all__ = [
+    AbstractModelProxy.__name__,
+    ListModelProxy.__name__,
+    ProxyDict.__name__,
+    QueryModelProxy.__name__,
+]
