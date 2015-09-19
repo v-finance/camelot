@@ -25,7 +25,7 @@
 import six
 
 from ....core.item_model import PreviewRole
-from ....core.qt import variant_to_py, Qt, QtCore, py_to_variant
+from ....core.qt import Qt, QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
@@ -36,6 +36,7 @@ class DateDelegate( six.with_metaclass( DocumentationMetaclass,
     """Custom delegate for date values"""
     
     editor = editors.DateEditor
+    horizontal_align = Qt.AlignRight
     
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
@@ -49,15 +50,5 @@ class DateDelegate( six.with_metaclass( DocumentationMetaclass,
             value_str = six.text_type(locale.toString(value, QtCore.QLocale.ShortFormat))
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
-            item.setData('', PreviewRole)
+            item.setData(py_to_variant(six.text_type()), PreviewRole)
         return item
-
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.data(PreviewRole))
-        self.paint_text(painter, option, index, value, horizontal_align=Qt.AlignRight )
-        painter.restore()
-
-
-

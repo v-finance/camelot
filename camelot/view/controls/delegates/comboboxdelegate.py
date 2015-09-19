@@ -32,7 +32,6 @@ import six
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
                                             CustomDelegate ) ):
@@ -47,6 +46,13 @@ class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
             if key == value:
                 item.setData(py_to_variant(six.text_type(verbose)), PreviewRole)
                 break
+        else:
+            if value is None:
+                item.setData(py_to_variant(six.text_type()), PreviewRole)
+            else:
+                # the model has a value that is not in the list of choices,
+                # still try to display it
+                item.setData(py_to_variant(six.text_type(value)), PreviewRole)
         return item
 
     def setEditorData(self, editor, index):
@@ -55,12 +61,4 @@ class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
         editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.data(Qt.DisplayRole))
-        if value in (None, ValueLoading):
-            value = ''
-        self.paint_text(painter, option, index, six.text_type(value) )
-        painter.restore()
 

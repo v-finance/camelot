@@ -25,7 +25,7 @@
 import six
 
 from ....core.item_model import PreviewRole
-from ....core.qt import variant_to_py
+from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
@@ -44,6 +44,6 @@ class TextEditDelegate( six.with_metaclass( DocumentationMetaclass,
     def get_standard_item(cls, locale, value, fa_values):
         item = super(TextEditDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
-            item.setData(variant_to_py(six.text_type(value)), PreviewRole)
+            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
         return item
 

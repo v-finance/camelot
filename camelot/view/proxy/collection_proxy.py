@@ -833,7 +833,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 if section not in self.rows_under_request:
                     self.rows_under_request.add(section)
                     self._start_timer()
-                return py_to_variant(None)
+                return invalid_data
             if role == Qt.DecorationRole:
                 icon = variant_to_py(item.data(role))
                 if icon is not None:
@@ -879,8 +879,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 return py_to_variant(
                     ProxyDict(self._static_field_attributes[index.column()])
                 )
-            elif role == PreviewRole:
-                return py_to_variant('')
+            elif role in (PreviewRole, ObjectRole):
+                return invalid_data
             return py_to_variant(ValueLoading)
 
 

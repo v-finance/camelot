@@ -24,10 +24,10 @@
 
 import six
 
-from ....core.qt import variant_to_py, QtGui, Qt
+from ....core.qt import py_to_variant
+from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 class FileDelegate( six.with_metaclass( DocumentationMetaclass,
                                         CustomDelegate ) ):
@@ -36,13 +36,16 @@ class FileDelegate( six.with_metaclass( DocumentationMetaclass,
     """
     
     editor = editors.FileEditor
-    
-    def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
-        value =  variant_to_py(index.model().data(index, Qt.EditRole))
-        text = ''
-        if value not in (None, ValueLoading):
-            text = value.verbose_name
-        self.paint_text(painter, option, index, text)
+
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(FileDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(py_to_variant(value.verbose_name), PreviewRole)
+        else:
+            item.setData(py_to_variant(six.text_type()), PreviewRole)
+        return item
+
 
 
 

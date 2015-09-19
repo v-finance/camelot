@@ -26,7 +26,7 @@ import six
 
 from ....core.qt import (QtGui, QtCore, QtModel, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.item_model import ProxyDict, FieldAttributesRole
+from ....core.item_model import ProxyDict, FieldAttributesRole, PreviewRole
 
 from camelot.view.proxy import ValueLoading
 
@@ -112,6 +112,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
+    horizontal_align = Qt.AlignLeft
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
@@ -132,7 +133,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         This method is used by the proxy to convert the value of a field
         to the data for the standard item model.  The result of this call can be
         used by the methods of the delegate.
-        
+
+        :param locale: the `QLocale` to be used to display locale dependent values
         :param value: the value of the field on the object
         :param field_attributes_values: the values of the field attributes on the
            object
@@ -205,14 +207,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_py(index.model().data(index, Qt.DisplayRole))
-
-        if value in (None, ValueLoading):
-            value_str = ''
-        else:
-            value_str = six.text_type( value )
-
-        self.paint_text( painter, option, index, value_str )
+        value = variant_to_py(index.model().data(index, PreviewRole))
+        self.paint_text(painter, option, index, value or six.text_type())
         painter.restore()
 
     def paint_text(
@@ -223,7 +219,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         text,
         margin_left=0,
         margin_right=0,
-        horizontal_align=Qt.AlignLeft,
+        horizontal_align=None,
         vertical_align=Qt.AlignVCenter
     ):
         """Paint unicode text into the given rect defined by option, and fill the rect with
@@ -263,7 +259,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                          rect.y() + 2,
                          rect.width() - 4 - (margin_left + margin_right),
                          rect.height() - 4, # not -10, because the row might not be high enough for this
-                         vertical_align | horizontal_align,
+                         vertical_align | (horizontal_align or self.horizontal_align),
                          text)
 
 
