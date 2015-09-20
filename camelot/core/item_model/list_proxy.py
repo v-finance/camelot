@@ -37,6 +37,14 @@ class ListModelProxy(AbstractModelProxy, dict):
     def __len__(self):
         return len(self._objects)
 
+    def append(self, obj):
+        if obj not in self._objects:
+            self._objects.append(obj)
+
+    def remove(self, obj):
+        if obj in self._objects:
+            self._objects.remove(obj)
+
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
         size = maxsize

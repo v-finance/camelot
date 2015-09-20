@@ -37,6 +37,28 @@ class QueryModelProxy(ListModelProxy):
             self._length = query.session.execute(select, mapper=mapper).scalar()
         return self._length + len(self._objects)
 
+    def append(self, obj):
+        if obj in self._objects:
+            return
+        # a new object cannot be in the query, so no need to check it
+        if obj in self._query.session.new:
+            self._objects.append(obj)
+            return
+        # if the object is indexed, no need either to check it
+
+        # check if the object is in the query
+        mapper = self._query._mapper_zero()
+        primary_key = mapper.primary_key_from_instance(obj)
+        if self.get_query(order_clause=False).get(primary_key) is not None:
+            return
+        self._objects.append(obj)
+
+    def remove(self, obj):
+        if obj in self._objects:
+            self._objects.remove(obj)
+        elif self._length is not None:
+            self._length = self._length - 1
+
     def get_query(self, order_clause=True):
         """
         :return: the query used to fetch the data, this is not the same as the
