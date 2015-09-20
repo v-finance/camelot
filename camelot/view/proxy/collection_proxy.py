@@ -39,9 +39,8 @@ returned and an update signal is emitted when the correct data is available.
 #
 import collections
 import logging
-import sys
 
-logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
+logger = logging.getLogger(__name__)
 
 import six
 
@@ -52,7 +51,7 @@ from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (ProxyDict, VerboseIdentifierRole, ObjectRole,
-                                FieldAttributesRole, PreviewRole)
+                                FieldAttributesRole, PreviewRole, ListModelProxy)
 from ..crud_signals import CrudSignalHandler
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
@@ -92,16 +91,6 @@ empty_row_data = EmptyRowData()
 invalid_data = py_to_variant()
 invalid_field_attributes_data = py_to_variant({})
 
-class SortingRowMapper( dict ):
-    """Class mapping rows of a collection 1:1 without sorting
-    and filtering, unless a mapping has been defined explicitly"""
-
-    def __getitem__(self, row):
-        try:
-            return super(SortingRowMapper, self).__getitem__(row)
-        except KeyError:
-            return row
-
 class RowModelContext(ListActionModelContext):
     """A list action model context for a single row.  This context is used
     to get the state of the list action on a row
@@ -138,14 +127,15 @@ class UpdateMixin(object):
 
 class Update(UpdateMixin):
 
-    def __init__(self, objects):
+    def __init__(self, proxy, objects):
+        self.proxy = proxy
         self.objects = objects
         self.changed_ranges = []
 
-    def model_run(self, proxy):
+    def model_run(self, item_model):
         for obj in self.objects:
             try:
-                row = proxy._index(obj)
+                row = self.proxy.index(obj)
             except ValueError:
                 continue
             #
@@ -153,27 +143,28 @@ class Update(UpdateMixin):
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
             #
-            columns = proxy._columns
-            self.changed_ranges.extend(proxy._add_data(columns, row, obj, True))
+            columns = item_model._columns
+            self.changed_ranges.extend(item_model._add_data(columns, row, obj, True))
         return self
 
 class Deleted(object):
 
-    def __init__(self, objects):
+    def __init__(self, proxy, objects):
+        self.proxy = proxy
         self.objects = objects
         self.rows = None
 
-    def model_run(self, proxy):
+    def model_run(self, item_model):
         for obj in self.objects:
             try:
-                proxy.display_cache.get_row_by_entity( obj )
+                item_model.display_cache.get_row_by_entity(obj)
             except KeyError:
                 continue
-            proxy.remove( obj )
-            proxy.display_cache.delete_by_entity( obj )
-            proxy.attributes_cache.delete_by_entity( obj )
-            proxy.edit_cache.delete_by_entity( obj )
-        self.rows = proxy.get_row_count()
+            self.proxy.remove(obj)
+            item_model.display_cache.delete_by_entity( obj )
+            item_model.attributes_cache.delete_by_entity( obj )
+            item_model.edit_cache.delete_by_entity( obj )
+        self.rows = len(self.proxy)
         return self
 
     def gui_run(self, item_model):
@@ -181,11 +172,12 @@ class Deleted(object):
 
 class RowCount(object):
 
-    def __init__(self):
+    def __init__(self, proxy):
+        self.proxy = proxy
         self.rows = None
 
     def model_run(self, proxy):
-        self.rows = proxy.get_row_count()
+        self.rows = len(self.proxy)
         return self
 
     def gui_run(self, item_model):
@@ -197,13 +189,13 @@ class RowCount(object):
 
 class RowData(Update):
 
-    def __init__(self, rows):
-        super(RowData, self).__init__(None)
+    def __init__(self, proxy, rows):
+        super(RowData, self).__init__(proxy, None)
         self.rows = set(rows)
         self.difference = None
         self.changed_ranges = []
 
-    def offset_and_limit_rows_to_get(self, proxy):
+    def offset_and_limit_rows_to_get(self):
         """From the current set of rows to get, find the first
         continuous range of rows that should be fetched.
         :return: (offset, limit)
@@ -229,43 +221,39 @@ class RowData(Update):
             raise e
         return (offset, limit)
 
-    def model_run(self, proxy):
-        offset, limit = self.offset_and_limit_rows_to_get(proxy)
-        self.changed_ranges.extend(proxy._extend_cache(offset, limit, True))
-        self.difference = set( range( offset, offset + limit + 1) )
+    def model_run(self, item_model):
+        offset, limit = self.offset_and_limit_rows_to_get()
+        self.objects = list(self.proxy[offset:offset+limit])
+        super(RowData, self).model_run(item_model)
         return self
-
-    def gui_run(self, item_model):
-        item_model.rows_under_request.difference_update(self.difference)
-        super(RowData, self).gui_run(item_model)
 
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
 
 class SetData(Update):
 
-    def __init__(self, updates):
-        super(SetData, self).__init__(None)
+    def __init__(self, proxy, updates):
+        super(SetData, self).__init__(proxy, None)
         # Copy the update requests and clear the list of requests
         self.updates = [u for u in updates]
         self.created_objects = None
         self.updated_objects = None
 
-    def model_run(self, proxy):
+    def model_run(self, item_model):
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects = set(), set()
         for row, obj, column, value in self.updates:
             grouped_requests[(row, obj)].append((column, value))
-        admin = proxy.admin
+        admin = item_model.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
             #
             # don't use get_slice, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the
             # one that was edited
             #
-            o = proxy.edit_cache.get_entity_at_row(row)
+            o = item_model.edit_cache.get_entity_at_row(row)
             if not (o is obj):
-                proxy.logger.warn('model view inconsistency')
+                item_model.logger.warn('model view inconsistency')
                 continue
             #
             # the object might have been deleted while an editor was open
@@ -274,11 +262,11 @@ class SetData(Update):
                 continue
             changed = False
             for column, value in request_group:
-                attribute, field_attributes = proxy._columns[column]
+                attribute, field_attributes = item_model._columns[column]
 
                 from sqlalchemy.exc import DatabaseError
                 new_value = variant_to_py(value)
-                proxy.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+                item_model.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
     
                 if new_value == ValueLoading:
                     continue
@@ -318,25 +306,25 @@ class SetData(Update):
                     #
                     admin.set_defaults( o, include_nullable_fields=False )
                 except AttributeError as e:
-                    proxy.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
+                    item_model.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
                 except TypeError:
                     # type error can be raised in case we try to set to a collection
                     pass
                 changed = value_changed or changed
             if changed:
-                if proxy.flush_changes:
-                    if proxy.validator.isValid( row ):
+                if item_model.flush_changes:
+                    if item_model.validator.isValid( row ):
                         # save the state before the update
                         was_persistent =admin.is_persistent(o)
                         try:
                             admin.flush( o )
                         except DatabaseError as e:
                             #@todo: when flushing fails ??
-                            proxy.logger.error( 'Programming Error, could not flush object', exc_info = e )
+                            item_model.logger.error( 'Programming Error, could not flush object', exc_info = e )
                         if was_persistent is False:
                             created_objects.add(o)
                 # update the cache
-                self.changed_ranges.extend(proxy._add_data(proxy._columns, row, o, True))
+                self.changed_ranges.extend(item_model._add_data(item_model._columns, row, o, True))
                 updated_objects.add(o)
                 updated_objects.update(set(admin.get_depending_objects(o)))
         self.created_objects = tuple(created_objects)
@@ -351,22 +339,22 @@ class SetData(Update):
 
 class Created(RowCount, UpdateMixin):
 
-    def __init__(self, objects):
-        super(Created, self).__init__()
+    def __init__(self, proxy, objects):
+        super(Created, self).__init__(proxy)
         self.objects = objects
         self.changed_ranges = []
 
-    def model_run(self, proxy):
+    def model_run(self, item_model):
         # assume rows already contains the new object
-        rows = proxy.get_row_count()
+        rows = len(self.proxy)
         for obj in self.objects:
             try:
-                row = proxy._index(obj)
+                row = self.proxy.index(obj)
             except ValueError:
                 continue
             # rows should only be not None when a created object was in the cache
             self.rows = rows
-            self.changed_ranges.extend(proxy._add_data(proxy._columns, row, obj, True))
+            self.changed_ranges.extend(item_model._add_data(item_model._columns, row, obj, True))
         return self
 
     def gui_run(self, item_model):
@@ -375,8 +363,8 @@ class Created(RowCount, UpdateMixin):
 
 class Sort(RowCount):
 
-    def __init__(self, column, order):
-        super(Sort, self).__init__()
+    def __init__(self, proxy, column, order):
+        super(Sort, self).__init__(proxy)
         self.column = column
         self.order = order
 
@@ -534,7 +522,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
         self.__crud_requests = collections.deque()
 
         self._reset()
-        self._sort_and_filter = SortingRowMapper()
         self._crud_signal_handler = CrudSignalHandler()
         self._crud_signal_handler.connect_signals( self )
 #    # in that way the number of rows is requested as well
@@ -579,7 +566,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
                 if not isinstance(self._last_request(), RowCount):
-                    self._append_request(RowCount())
+                    self._append_request(RowCount(self._value))
             return 0
         return rows
 
@@ -592,29 +579,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
     #
     # end or reimplementation
-    #
-    
-    #
-    # begin functions related to drag and drop
-    #
-    
-    def mimeTypes( self ):
-        assert object_thread( self )
-        if self.admin.drop_action != None:
-            return self.admin.drop_action.drop_mime_types
-        
-    def supportedDropActions( self ):
-        assert object_thread( self )
-        if self.admin.drop_action != None:
-            return Qt.CopyAction | Qt.MoveAction | Qt.LinkAction
-        return None
-    
-    def dropMimeData( self, mime_data, action, row, column, parent ):
-        assert object_thread( self )
-        return True
-    
-    #
-    # end of drag and drop related functions
     #
 
     #
@@ -629,10 +593,10 @@ class CollectionProxy(QtModel.QStandardItemModel):
         if timer is not None:
             timer.stop()
             if self._update_requests:
-                self._append_request(SetData(self._update_requests))
+                self._append_request(SetData(self._value, self._update_requests))
                 self._update_requests = list()
             if self.rows_under_request:
-                self._append_request(RowData(self.rows_under_request))
+                self._append_request(RowData(self._value, self.rows_under_request))
             while len(self.__crud_requests):
                 request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0}'.format(request))
@@ -667,26 +631,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
     # end of timer functions
     #
 
-    @property
-    def max_number_of_rows(self):
-        """The maximum number of rows to be displayed at once"""
-        return self._max_number_of_rows
-
     def get_validator(self):
         return self.validator
-
-    def _map_to_source(self, sorted_row_number):
-        """Converts a sorted row number to a row number of the source
-        collection"""
-        return self._sort_and_filter[sorted_row_number]
-
-    def get_row_count( self ):
-        locker = QtCore.QMutexLocker(self._mutex)
-        # make sure we don't count an object twice if it is twice
-        # in the list, since this will drive the cache nuts
-        rows = len( set( self.get_value() ) )
-        locker.unlock()
-        return rows
 
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
@@ -723,13 +669,12 @@ class CollectionProxy(QtModel.QStandardItemModel):
         # wont work since _reset is called within the handling of crud requests
         # self.timeout_slot()
         # end
-        max_cache = 10 * self.max_number_of_rows
+        max_cache = 10 * self._max_number_of_rows
         locker = QtCore.QMutexLocker(self._mutex)
         # is this the best way to reset the standard items ? maybe it's much
         # easier to replace the source model all at once
         self.setRowCount(0)
         self.logger.debug('_reset state')
-        self.display_cache = Fifo( max_cache )
         self.edit_cache = Fifo( max_cache )
         self.attributes_cache = Fifo( max_cache )
         root_item = self.invisibleRootItem()
@@ -747,7 +692,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         if isinstance(value, CollectionContainer):
             value = value._collection
-        self._value = value
+        self._value = ListModelProxy(value)
         self._reset()
         self.layoutChanged.emit()
     
@@ -764,7 +709,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._append_request(Update(objects))
+            self._append_request(Update(self._value, objects))
             self._start_timer()
 
     @QtCore.qt_slot(object, tuple)
@@ -776,7 +721,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
             )
-            self._append_request(Deleted(objects))
+            self._append_request(Deleted(self._value, objects))
             self._start_timer()
 
     @QtCore.qt_slot(object, tuple)
@@ -788,7 +733,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(objects))
+            self._append_request(Created(self._value, objects))
             self._start_timer()
 
     def set_columns(self, columns):
@@ -846,7 +791,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         assert object_thread( self )
-        self._append_request(Sort(column, order))
+        self._append_request(Sort(self._value, column, order))
         self._start_timer()
 
     def data( self, index, role = Qt.DisplayRole):
@@ -970,106 +915,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
-    def _skip_row(self, row, obj):
-        """:return: True if the object obj is already in the cache, but at a
-        different row then row.  If this is the case, this object should not
-        be put in the cache at row, and this row should be skipped alltogether.
-        """
-        try:
-            return self.edit_cache.get_row_by_entity(obj)!=row
-        except KeyError:
-            pass
-        return False
-
-    def _extend_cache(self, offset, limit, data):
-        """Extend the cache around the rows under request
-        
-        :param data: fill the data cache, otherwise only fills the header cache
-        """
-        changed_ranges = []
-        collection = self.get_value()
-        if (limit > 0) and (collection is not None):
-            columns = self._columns
-            skipped_rows = 0
-            try:
-                for i in range(offset, min( offset + limit + 1,
-                                            len( collection ) ) ):
-                    object_found = False
-                    while not object_found:
-                        unsorted_row = self._sort_and_filter[i]
-                        obj = collection[unsorted_row+skipped_rows]
-                        if self._skip_row(i, obj):
-                            skipped_rows = skipped_rows + 1
-                        else:
-                            changed_ranges.extend(self._add_data(columns, i, obj, data))
-                            object_found = True
-            except IndexError:
-                # stop when the end of the collection is reached, no matter
-                # what the request was
-                pass
-        return changed_ranges
-
-    def get_slice(self, i, j, yield_per=None):
-        """
-        Get an iterator over a number of objects mapped between two rows in the
-        proxy.
-
-        The requested row numbers should be positive and smaller than the number
-        of rows, or an :attr:`IndexError` will be raised.  The row numbers are
-        the row numbers after sorting and filtering, so their relative order
-        corresponds to the row numbers showed in the item view.
-
-        :param i: the row number of the first object in the slice
-        :param j: the row number of the first object not in the slice
-        :param yield_per: an integer number giving a hint on how many objects
-            should fetched from the database at the same time
-        :return: an iterator over the objects in the slice
-
-        The number of objects returned by the iterator is not guaranteed to be
-        `j-i` since the underlying collection might have been modified without
-        the proxy being aware of it.
-
-        This method guarantees temporary consistency with the view, meaning that
-        while the iterator returns an object, that object will be in the same
-        row in the view.  However when the iterator returns the next object,
-        there is no guarantee any more over the row of the previous object.
-        """
-
-        # for now, dont get the actual number of rows, as this might be too
-        # slow
-        row_count = sys.maxint
-        if not (0<=i<=row_count):
-            raise IndexError('first row not in range', i, 0, row_count)
-        if not (0<=j<=row_count):
-            raise IndexError('last row not in range', j, 0, row_count)
-        for row in xrange(i, j):
-            try:
-                obj = self.edit_cache.get_entity_at_row(row)
-            except KeyError:
-                self._extend_cache(row, row+self.edit_cache.max_entries, False)
-                try:
-                    obj = self.edit_cache.get_entity_at_row(row)
-                except KeyError:
-                    # there is no data available to extend the cache any
-                    # more
-                    break
-            yield obj
-
-    def remove( self, o ):
-        collection = self.get_value()
-        if o in collection:
-            collection.remove( o )
-
-    def append( self, o ):
-        collection = self.get_value()
-        if o not in collection:
-            collection.append( o )
-
-    def _index(self, obj):
-        collection = self.get_value()
-        return collection.index(obj)
-
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
-

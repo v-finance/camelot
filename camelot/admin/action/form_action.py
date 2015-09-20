@@ -53,7 +53,12 @@ class FormActionModelContext( ApplicationActionModelContext ):
     .. attribute:: session
     
         The session to which the objects in the list belong.
-        
+
+    .. attribute:: proxy
+
+        A :class:`camelot.core.item_model.AbstractModelProxy` object that gives
+        access to the objects in the list
+
     The :attr:`selection_count` attribute allows the 
     :meth:`model_run` to quickly evaluate the size of the collection without 
     calling the potetially time consuming method :meth:`get_collection`.
@@ -61,7 +66,7 @@ class FormActionModelContext( ApplicationActionModelContext ):
     
     def __init__( self ):
         super( FormActionModelContext, self ).__init__()
-        self._model = None
+        self.proxy = None
         self.admin = None
         self.current_row = None
         self.collection_count = 0
@@ -81,7 +86,7 @@ class FormActionModelContext( ApplicationActionModelContext ):
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self._model.get_slice(0, self.collection_count, yield_per):
+        for obj in self.proxy[0, self.collection_count]:
             yield obj
             
     def get_selection( self, yield_per = None ):
@@ -97,8 +102,7 @@ class FormActionModelContext( ApplicationActionModelContext ):
             in the form.
         """
         if self.selection_count:
-            for obj in self._model.get_slice(self.current_row,
-                                             self.current_row+1):
+            for obj in self.proxy[self.current_row:self.current_row+1]:
                 yield obj
 
 class FormActionGuiContext( ApplicationActionGuiContext ):
@@ -132,7 +136,7 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context( self ):
         context = super( FormActionGuiContext, self ).create_model_context()
-        context._model = self.widget_mapper.model()
+        context.proxy = self.widget_mapper.model().get_value()
         current_index = self.widget_mapper.currentIndex()
         if current_index >= 0:
             context.current_row = current_index

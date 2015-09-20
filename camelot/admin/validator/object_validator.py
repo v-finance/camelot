@@ -151,7 +151,7 @@ class ObjectValidator(QtCore.QObject):
         messages = []
         logger.debug('isValid for row %s' % row)
         try:
-            for obj in self.model.get_slice(row, row+1):
+            for obj in self.model.get_value()[row:row+1]:
                 if obj is not None:
                     messages = self.validate_object(obj)
         except Exception as e:

@@ -67,7 +67,8 @@ class ListActionModelContext( ApplicationActionModelContext ):
 
     .. attribute:: proxy
 
-        A proxy with access to the list displayed
+        A :class:`camelot.core.item_model.AbstractModelProxy` object that gives
+        access to the objects in the list
 
     .. attribute:: field_attributes
     
@@ -102,7 +103,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         # change, while the selection remains the same, so we should
         # be careful when using the collection to generate selection data
         for (first_row, last_row) in self.selected_rows:
-            for obj in self.proxy.get_slice(first_row, last_row + 1, yield_per):
+            for obj in self.proxy[first_row:last_row + 1]:
                 yield obj
 
     def get_collection( self, yield_per = None ):
@@ -111,7 +112,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self.proxy.get_slice(0, self.collection_count, yield_per):
+        for obj in self.proxy[0:self.collection_count]:
             yield obj
             
     def get_object( self ):
@@ -119,8 +120,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         :return: the object displayed in the current row or None
         """
         if self.current_row != None:
-            for obj in self.proxy.get_slice(self.current_row,
-                                            self.current_row+1):
+            for obj in self.proxy[self.current_row:self.current_row+1]:
                 return obj
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
@@ -187,7 +187,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.collection_count = collection_count
         context.selected_rows = selected_rows
         context.current_row = current_row
-        context.proxy = model
+        context.proxy = model.get_value()
         return context
         
     def copy( self, base_class = None ):

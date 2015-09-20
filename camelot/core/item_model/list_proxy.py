@@ -45,6 +45,14 @@ class ListModelProxy(AbstractModelProxy, dict):
         if obj in self._objects:
             self._objects.remove(obj)
 
+    def index(self, obj):
+        try:
+            return self._indexed_objects[obj]
+        except KeyError:
+            i = self._objects.index(obj)
+            self._indexed_objects[i] = obj
+            return i
+
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
         size = maxsize
