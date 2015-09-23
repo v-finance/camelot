@@ -246,19 +246,14 @@ class SetData(Update):
             grouped_requests[(row, obj)].append((column, value))
         admin = item_model.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
-            #
-            # don't use get_slice, but only update objects which are in the
-            # cache, otherwise it is not sure that the object updated is the
-            # one that was edited
-            #
-            o = item_model.edit_cache.get_entity_at_row(row)
+            o = list(self.proxy[row:row+1])[0]
             if not (o is obj):
                 item_model.logger.warn('model view inconsistency')
                 continue
             #
             # the object might have been deleted while an editor was open
             # 
-            if admin.is_deleted( o ):
+            if admin.is_deleted(obj):
                 continue
             changed = False
             for column, value in request_group:
@@ -271,7 +266,7 @@ class SetData(Update):
                 if new_value == ValueLoading:
                     continue
 
-                old_value = getattr( o, attribute )
+                old_value = getattr(obj, attribute )
                 value_changed = ( new_value != old_value )
                 #
                 # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
@@ -288,7 +283,7 @@ class SetData(Update):
                 # dynamic and change after every change of the object
                 #
                 fields = [attribute]
-                for fa in admin.get_dynamic_field_attributes(o, fields):
+                for fa in admin.get_dynamic_field_attributes(obj, fields):
                     # if editable is not in the field_attributes dict, it wasn't
                     # dynamic but static, so earlier checks should have 
                     # intercepted this change
@@ -299,12 +294,12 @@ class SetData(Update):
                     continue
                 # update the model
                 try:
-                    admin.set_field_value(o, attribute, new_value)
+                    admin.set_field_value(obj, attribute, new_value)
                     #
                     # setting this attribute, might trigger a default function 
                     # to return a value, that was not returned before
                     #
-                    admin.set_defaults( o, include_nullable_fields=False )
+                    admin.set_defaults(obj, include_nullable_fields=False )
                 except AttributeError as e:
                     item_model.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
                 except TypeError:
@@ -315,18 +310,18 @@ class SetData(Update):
                 if item_model.flush_changes:
                     if item_model.validator.isValid( row ):
                         # save the state before the update
-                        was_persistent =admin.is_persistent(o)
+                        was_persistent =admin.is_persistent(obj)
                         try:
-                            admin.flush( o )
+                            admin.flush(obj)
                         except DatabaseError as e:
                             #@todo: when flushing fails ??
                             item_model.logger.error( 'Programming Error, could not flush object', exc_info = e )
                         if was_persistent is False:
-                            created_objects.add(o)
+                            created_objects.add(obj)
                 # update the cache
-                self.changed_ranges.extend(item_model._add_data(item_model._columns, row, o, True))
-                updated_objects.add(o)
-                updated_objects.update(set(admin.get_depending_objects(o)))
+                self.changed_ranges.extend(item_model._add_data(item_model._columns, row,obj, True))
+                updated_objects.add(obj)
+                updated_objects.update(set(admin.get_depending_objects(obj)))
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
         return self
