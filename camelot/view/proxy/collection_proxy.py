@@ -368,32 +368,10 @@ class Sort(RowCount):
         self.column = column
         self.order = order
 
-    def model_run(self, proxy):
-        unsorted_collection = [(i,o) for i,o in enumerate(proxy.get_value())]
-        field_name = proxy._columns[self.column][0]
-        # handle the case of one of the values being None
-        def compare_none( line_1, line_2 ):
-            key_1, key_2 = None, None
-            try:
-                key_1 = getattr( line_1[1], field_name )
-            except Exception as e:
-                logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
-            try:
-                key_2 = getattr( line_2[1], field_name )
-            except Exception as e:
-                logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
-            if key_1 == None and key_2 == None:
-                return 0
-            if key_1 == None:
-                return -1
-            if key_2 == None:
-                return 1
-            return cmp( key_1, key_2 )
-
-        unsorted_collection.sort( cmp = compare_none, reverse = self.order )
-        for j,(i,_o) in enumerate(unsorted_collection):
-            proxy._sort_and_filter[j] = i
-        self.rows = len(unsorted_collection)
+    def model_run(self, item_view):
+        field_name = item_view._columns[self.column][0]
+        self.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
+        self.rows = len(self.proxy)
         return self
 
 class SetColumns(object):

@@ -36,8 +36,8 @@ class AbstractModelProxy(object):
         Apply an order on the objects retrieved by the proxy.  This order is not
         applied on the model itself.
 
-        :key: the key to be used to sort the objects, use None to disable a
-            previous sort.
+        :key: the name of the attribute to sort the objects on, use None to
+            disable a previous sort.
         """
         raise NotImplementedError()
 

@@ -1,6 +1,9 @@
+import logging
 from sys import maxsize
 
 from .proxy import AbstractModelProxy
+
+LOGGER = logging.getLogger(__name__)
 
 class TwoWayDict(dict):
 
@@ -20,6 +23,7 @@ class SortingRowMapper( dict ):
             return super(SortingRowMapper, self).__getitem__(row)
         except KeyError:
             return row
+
 
 class ListModelProxy(AbstractModelProxy, dict):
     """
@@ -52,6 +56,28 @@ class ListModelProxy(AbstractModelProxy, dict):
             i = self._objects.index(obj)
             self._indexed_objects[i] = obj
             return i
+
+    def sort(self, key=None, reverse=False):
+        self._indexed_objects = TwoWayDict()
+        self._sort_and_filter = SortingRowMapper()
+
+        if key is None:
+            return
+
+        def get_key(obj):
+            value = None
+            try:
+                value = getattr(obj, key)
+            except Exception as e:
+                LOGGER.error('could not get attribute %s from object'%key,
+                             exc_info=e)
+            # handle the case of one of the values being None
+            return (value is not None, value)
+
+        indexed_keys = [(get_key(obj),i) for i,obj in enumerate(self._objects)]
+        indexed_keys.sort(reverse=reverse)
+        for j,(_key,i) in enumerate(indexed_keys):
+            self._sort_and_filter[j] = i
 
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
