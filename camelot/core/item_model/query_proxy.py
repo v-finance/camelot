@@ -5,8 +5,7 @@ import six
 
 from sqlalchemy import orm, sql, exc
 
-from ..qt import Qt
-from .list_proxy import ListModelProxy
+from .list_proxy import ListModelProxy, TwoWayDict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +36,10 @@ class QueryModelProxy(ListModelProxy):
             self._length = query.session.execute(select, mapper=mapper).scalar()
         return self._length + len(self._objects)
 
+    def sort(self, key=None, reverse=False):
+        self._indexed_objects = TwoWayDict()
+        self._sort_decorator = self._get_sort_decorator(key, reverse)
+
     def append(self, obj):
         if obj in self._objects:
             return
@@ -52,6 +55,14 @@ class QueryModelProxy(ListModelProxy):
         if self.get_query(order_clause=False).get(primary_key) is not None:
             return
         self._objects.append(obj)
+
+    def index(self, obj):
+        try:
+            return self._indexed_objects[obj]
+        except KeyError:
+            i = self._objects.index(obj)
+            self._indexed_objects[i+self._length] = obj
+            return i+self._length
 
     def remove(self, obj):
         if obj in self._objects:
@@ -92,10 +103,9 @@ class QueryModelProxy(ListModelProxy):
                     obj = self._objects[row - rows_in_query]
                     self._indexed_objects[row] = obj
 
-    def _get_sort_decorator( self, column=None, order=None ):
-        """set the sort decorator attribute of this model to a function that
-        sorts a query by the given column using the given order.  When no
-        arguments are given, use the default sorting, which is according to
+    def _get_sort_decorator( self, key=None, reverse=None ):
+        """
+        When no arguments are given, use the default sorting, which is according to
         the primary keys of the model.  This to impose a strict ordening of
         the rows in the model.
         """
@@ -106,21 +116,20 @@ class QueryModelProxy(ListModelProxy):
         #
         # First sort according the requested column
         #
-        if None not in (column, order):
+        if None not in (key, reverse):
             property = None
-            field_name = self._columns[column][0]
-            class_attribute = getattr(self.admin.entity, field_name)
+            class_attribute = getattr(mapper.class_, key)
 
             #
             # The class attribute of a hybrid property can be an sql clause
             #
 
             if isinstance(class_attribute, sql.ClauseElement):
-                order_by.append((class_attribute, order))
+                order_by.append((class_attribute, reverse))
 
             try:
                 property = mapper.get_property(
-                    field_name,
+                    key,
                 )
             except exc.InvalidRequestError:
                 pass
@@ -132,12 +141,12 @@ class QueryModelProxy(ListModelProxy):
                 target = property.mapper
                 if target:
                     if target.order_by:
-                        join = field_name
+                        join = key
                         class_attribute = target.order_by[0]
                     else:
                         class_attribute = list(property._calculated_foreign_keys)[0]
             if property:
-                order_by.append((class_attribute, order))
+                order_by.append((class_attribute, reverse))
                                 
         def sort_decorator(order_by, join, query):
             order_by = list(order_by)
@@ -148,24 +157,24 @@ class QueryModelProxy(ListModelProxy):
             # clause is first in the list, and put them at the end of the list
             if query._order_by:
                 for order_by_column in query._order_by:
-                    order_by.append((order_by_column, Qt.AscendingOrder))
+                    order_by.append((order_by_column, False))
             #
             # Next sort according to default sort column if any
             #
             if mapper.order_by:
                 for mapper_order_by in mapper.order_by:
-                    order_by.append((mapper_order_by, Qt.AscendingOrder))
+                    order_by.append((mapper_order_by, False))
             #
             # In the end, sort according to the primary keys of the model, to enforce
             # a unique order in any case
             #
             for primary_key_column in mapper.primary_key:
-                order_by.append((primary_key_column, Qt.AscendingOrder))
+                order_by.append((primary_key_column, False))
             query = query.order_by(None)
             order_by_columns = set()
             for order_by_column, order in order_by:
                 if order_by_column not in order_by_columns:
-                    if order == Qt.AscendingOrder:
+                    if order == False:
                         query = query.order_by(order_by_column)
                     else:
                         query = query.order_by(sql.desc(order_by_column))

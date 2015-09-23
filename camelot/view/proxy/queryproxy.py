@@ -24,12 +24,10 @@
 
 """Proxies representing the results of a query"""
 
-import functools
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
 from ...core.item_model import QueryModelProxy
-from ..model_thread import object_thread, post
 from .collection_proxy import CollectionProxy
 
 class QueryTableProxy(CollectionProxy):
@@ -42,13 +40,6 @@ class QueryTableProxy(CollectionProxy):
         self._value = QueryModelProxy(value)
         self._reset()
         self.layoutChanged.emit()
-
-    def sort( self, column, order ):
-        """Overwrites the :meth:`QAbstractItemModel.sort` method
-        """
-        assert object_thread( self )
-        post( functools.update_wrapper( functools.partial( self._set_sort_decorator, column, order ), self._set_sort_decorator ), 
-              self._refresh_content )
 
     def set_filter(self, list_filter, value):
         """
