@@ -41,20 +41,6 @@ class QueryTableProxy(CollectionProxy):
         self._reset()
         self.layoutChanged.emit()
 
-    def set_filter(self, list_filter, value):
-        """
-        Set the filter mode for a specific filter
-
-        :param list_filter: a :class:`camelot.admin.action.list_filter.Filter` object
-        :param value: the value on which to filter
-        """
-        previous_value = self._filters.get(list_filter)
-        self._filters[list_filter] = value
-        if value != previous_value:
-            self._rows = None
-            self._reset()
-            self.layoutChanged.emit()
-
     def _get_collection_range( self, offset, limit ):
         """Get the objects in a certain range of the collection
         :return: an iterator over the objects in the collection, starting at 

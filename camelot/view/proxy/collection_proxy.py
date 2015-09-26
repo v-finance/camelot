@@ -187,6 +187,20 @@ class RowCount(object):
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
+class Filter(RowCount):
+
+    def __init__(self, proxy, action, old_value, new_value):
+        super(Filter, self).__init__(proxy)
+        self.action = action
+        self.old_value = old_value
+        self.new_value = new_value
+
+    def model_run(self, proxy):
+        if self.old_value != self.new_value:
+            self.proxy.filter(self.action, self.new_value)
+            super(Filter, self).model_run(proxy)
+        return self
+
 class RowData(Update):
 
     def __init__(self, proxy, rows):
@@ -492,6 +506,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         self.rows_under_request = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
+        self._filters = dict()
         self.__crud_requests = collections.deque()
 
         self._reset()
@@ -666,11 +681,24 @@ class CollectionProxy(QtModel.QStandardItemModel):
         if isinstance(value, CollectionContainer):
             value = value._collection
         self._value = ListModelProxy(value)
+        self._filters = dict()
         self._reset()
         self.layoutChanged.emit()
     
     def get_value(self):
         return self._value
+
+    def set_filter(self, list_filter, value):
+        """
+        Set the filter mode for a specific filter
+
+        :param list_filter: a :class:`camelot.admin.action.list_filter.Filter`
+           object
+        :param value: the value on which to filter
+        """
+        old_value = self._filters.get(list_filter)
+        self._filters[list_filter] = value
+        self._append_request(Filter(self._value, list_filter, old_value, value))
 
     @QtCore.qt_slot(object, tuple)
     def objects_updated(self, sender, objects):

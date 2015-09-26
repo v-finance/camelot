@@ -79,6 +79,11 @@ class ListModelProxy(AbstractModelProxy, dict):
         for j,(_key,i) in enumerate(indexed_keys):
             self._sort_and_filter[j] = i
 
+    def filter(self, key=None, value=None):
+        self._filters[key] = value
+        self._length = None
+        self._indexed_objects = TwoWayDict()
+
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
         size = maxsize
