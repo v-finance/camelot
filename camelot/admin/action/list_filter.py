@@ -342,7 +342,7 @@ class SearchFilter(Filter):
                 if arg is not None:
                     arg = sql.and_(c != None, arg)
                     args.append(arg)
-    
+
             for t in text.split(' '):
                 subexp = []
                 for column_name in self.admin.get_search_fields(t):
@@ -366,7 +366,7 @@ class SearchFilter(Filter):
             for join in joins:
                 query = query.outerjoin(join)
 
-                subqueries = (sql.or_(*arg) for arg in args)
-                query = query.filter(sql.and_(*subqueries))
+            subqueries = (sql.or_(*arg) for arg in args)
+            query = query.filter(sql.and_(*subqueries))
 
         return query
