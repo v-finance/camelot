@@ -82,12 +82,6 @@ def strip_data_from_object( obj, columns ):
 
 from camelot.view.proxy import ValueLoading
 
-class EmptyRowData( object ):
-    def __getitem__( self, column ):
-        return ValueLoading
-
-empty_row_data = EmptyRowData()
-
 invalid_data = py_to_variant()
 invalid_field_attributes_data = py_to_variant({})
 
