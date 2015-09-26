@@ -51,7 +51,7 @@ from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (ProxyDict, VerboseIdentifierRole, ObjectRole,
-                                FieldAttributesRole, PreviewRole, ListModelProxy)
+                                FieldAttributesRole, PreviewRole)
 from ..crud_signals import CrudSignalHandler
 from camelot.core.exception import log_programming_error
 from camelot.view.fifo import Fifo
@@ -674,7 +674,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         if isinstance(value, CollectionContainer):
             value = value._collection
-        self._value = ListModelProxy(value)
+        self._value = self.admin.get_proxy(value)
         self._filters = dict()
         self._reset()
         self.layoutChanged.emit()

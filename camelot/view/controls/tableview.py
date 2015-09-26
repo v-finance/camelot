@@ -32,13 +32,13 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
 from camelot.admin.action.list_filter import SearchFilter
 from camelot.core.utils import ugettext as _
-from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
+from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .inheritance import SubclassTree
@@ -514,7 +514,6 @@ class TableView(AbstractView):
                  gui_context,
                  admin,
                  search_text=None,
-                 proxy=QueryTableProxy,
                  parent=None):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
@@ -522,7 +521,6 @@ class TableView(AbstractView):
         self.search_text = search_text
         self.application_gui_context = gui_context
         self.gui_context = gui_context
-        self.proxy = proxy
         widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
@@ -627,7 +625,7 @@ class TableView(AbstractView):
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         self.table = self.AdminTableWidget(self.admin, splitter)
         self.table.setObjectName('AdminTableWidget')
-        new_model = self.proxy(admin)
+        new_model = CollectionProxy(admin)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
@@ -663,18 +661,6 @@ class TableView(AbstractView):
         assert object_thread(self)
         logger.debug('tableview closed')
         event.accept()
-
-    @QtCore.qt_slot(object)
-    def _set_query(self, query):
-        assert object_thread(self)
-        if isinstance(self.table.model(), QueryTableProxy):
-            # apply the filters on the query, to activate the default filter
-            filters_widget = self.findChild(ActionsBox, 'filters')
-            if filters_widget is not None:
-                for filter_widget in filters_widget.get_action_widgets():
-                    filter_widget.run_action()
-            self.table.model().set_value(query)
-        self.table.clearSelection()
 
     @QtCore.qt_slot()
     def refresh(self):

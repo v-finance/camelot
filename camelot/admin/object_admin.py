@@ -28,6 +28,7 @@ import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import QtCore, Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
@@ -313,6 +314,13 @@ be specified using the verbose_name attribute.
         Textual representation of the current object.
         """
         return six.text_type(obj)
+
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        return ListModelProxy(objects)
 
     def get_search_identifiers(self, obj):
         """Create a dict of identifiers to be used in search boxes.

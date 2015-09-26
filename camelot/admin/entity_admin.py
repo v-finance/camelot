@@ -27,6 +27,8 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
+from ..core.item_model import QueryModelProxy
+
 from camelot.admin.action import list_filter
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -172,6 +174,15 @@ and used as a custom action.
         """
         return Session().query( self.entity )
 
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        if isinstance(objects, orm.Query):
+            return QueryModelProxy(objects)
+        return super(EntityAdmin, self).get_proxy(objects)
+
     def get_verbose_identifier(self, obj):
         if obj:
             primary_key = self.mapper.primary_key_from_instance(obj)
@@ -203,7 +214,6 @@ and used as a custom action.
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
         """
-        from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.controls import delegates
         attributes = super(EntityAdmin, self).get_descriptor_field_attributes(field_name)
         #
@@ -280,7 +290,7 @@ and used as a custom action.
                 if property.direction in (orm.interfaces.ONETOMANY,
                                           orm.interfaces.MANYTOMANY):
                     if property.lazy == 'dynamic':
-                        attributes.update(proxy=QueryTableProxy)
+                        attributes.update(proxy=QueryModelProxy)
 
                 if property.uselist == True:
                     attributes.update(

@@ -27,12 +27,8 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
-from sqlalchemy.orm import Query
-
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt
-from ...view.proxy.collection_proxy import CollectionProxy
-from ...view.proxy.queryproxy import QueryTableProxy
 from ..workspace import show_top_level
 
 
@@ -64,12 +60,6 @@ class UpdateTableView( ActionStep ):
         self.admin = admin
         self.value = value
         self.title = admin.get_verbose_name_plural()
-        if isinstance(value, list):
-            self.proxy = CollectionProxy
-        elif isinstance(value, Query):
-            self.proxy = QueryTableProxy
-        else:
-            raise Exception('Unhandled value type : {0}'.format(type(value)))
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
         self.columns = self.admin.get_columns()
@@ -116,8 +106,7 @@ class OpenTableView( UpdateTableView ):
         from camelot.view.controls.tableview import TableView
         table_view = TableView(gui_context, 
                                self.admin, 
-                               self.search_text,
-                               proxy = self.proxy)
+                               self.search_text)
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return table_view
