@@ -70,10 +70,6 @@ def create_entity_search_query_decorator( admin, text ):
                 pass
             elif issubclass(c.type.__class__, camelot.types.Enumeration):
                 pass
-            elif issubclass(c.type.__class__, camelot.types.Code):
-                codes = [u'%%%s%%'%s for s in text.split(c.type.separator)]
-                codes = codes + ['%']*(len(c.type.parts) - len(codes))
-                arg = c.like( codes )
             elif issubclass(python_type, virtual_address):
                 arg = c.like(virtual_address('%', '%'+text+'%'))
             elif issubclass(c.type.__class__, camelot.types.Image):
