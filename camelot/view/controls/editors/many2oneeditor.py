@@ -29,9 +29,9 @@ import six
 from ....core.qt import QtGui, QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
+from ....admin.action.list_filter import SearchFilter
 from ...crud_signals import CrudSignalHandler
 from camelot.view.model_thread import post, object_thread
-from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
@@ -118,6 +118,7 @@ class Many2OneEditor( CustomEditor ):
         self.layout.addWidget(self.search_input)
         self.setLayout(self.layout)
         self.add_actions(actions, self.layout)
+        self.search_filter = SearchFilter(admin)
         CrudSignalHandler().connect_signals(self)
 
     def set_field_attributes(self, **kwargs):
@@ -148,16 +149,15 @@ class Many2OneEditor( CustomEditor ):
 
         :return: a list of tuples of (dict_of_object_representation, object)
         """
-        search_decorator = create_entity_search_query_decorator(
-            self.admin, text
-        )
-        if search_decorator:
-            sresult = [
-                self.admin.get_search_identifiers(e)
-                for e in search_decorator(self.admin.get_query()).limit(20)
-            ]
-            return text, sresult
-        return text, []
+        query = self.admin.get_query()
+        query = self.search_filter.decorate_query(query, text)
+
+        sresult = [
+            self.admin.get_search_identifiers(e)
+            for e in query.limit(20).all()
+        ]
+        return text, sresult
+
 
     def display_search_completions(self, prefix_and_completions):
         assert object_thread( self )

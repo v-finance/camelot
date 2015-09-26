@@ -30,6 +30,7 @@ import six
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
+from camelot.admin.action.list_filter import SearchFilter
 from camelot.core.utils import ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
@@ -555,7 +556,7 @@ class TableView(AbstractView):
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
-        self.search_filter = lambda q: q
+        self.search_filter = None
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                    self)
         shortcut.activated.connect(self.activate_search)
@@ -608,7 +609,6 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.set_value(value)
-            self.rebuild_query()
 
     @QtCore.qt_slot(object)
     def set_admin(self, admin):
@@ -648,6 +648,7 @@ class TableView(AbstractView):
         header.search.cancel_signal.connect(self.cancelSearch)
         header.search.on_arrow_down_signal.connect(self.focusTable)
         self.setFocusProxy(header)
+        self.search_filter = SearchFilter(admin)
         if self.search_text:
             header.search.search(self.search_text)
             self.search_text = None
@@ -683,42 +684,21 @@ class TableView(AbstractView):
         if model is not None:
             model.refresh()
 
-    @QtCore.qt_slot()
-    def rebuild_query(self):
-        """resets the table model query"""
-
-        # table can be None during view initialization
-        if self.table is None:
-            return
-
-        if not isinstance(self.table.model(), QueryTableProxy):
-            return
-
-        def rebuild_query():
-            query = self.admin.get_query()
-            if self.search_filter:
-                query = self.search_filter(query)
-            return query
-
-        post(rebuild_query, self._set_query)
-
     @QtCore.qt_slot(str)
     def startSearch(self, text):
         """rebuilds query based on filtering text"""
         assert object_thread(self)
-        from camelot.view.search import create_entity_search_query_decorator
         logger.debug('search %s' % text)
-        self.search_filter = create_entity_search_query_decorator(
-            self.admin, six.text_type(text))
-        self.rebuild_query()
+        model = self.get_model()
+        if model is not None:
+            model.set_filter(self.search_filter, six.text_type(text))
 
     @QtCore.qt_slot()
     def cancelSearch(self):
         """resets search filtering to default"""
         assert object_thread(self)
         logger.debug('cancel search')
-        self.search_filter = lambda q: q
-        self.rebuild_query()
+        self.startSearch('')
 
     def set_columns(self, columns):
         delegate = DelegateManager(columns, parent=self)
