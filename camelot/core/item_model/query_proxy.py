@@ -92,8 +92,9 @@ class QueryModelProxy(ListModelProxy):
                 # find a free index for the object
                 while self._indexed_objects.get(free_index) not in (None, obj):
                     free_index += 1
-                # check if the object is not present with another index
-                if self._indexed_objects.get(obj) in (None, free_index):
+                # check if the object is not present with another index,
+                # if the object is at the free index, nothing needs to happen
+                if self._indexed_objects.get(obj) is None:
                     self._indexed_objects[free_index] = obj
             row_count = len(self)
             rows_in_query = row_count - len(self._objects)
