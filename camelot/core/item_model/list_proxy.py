@@ -34,6 +34,7 @@ class ListModelProxy(AbstractModelProxy, dict):
         """
         :param objects: a list of objects
         """
+        assert isinstance(objects, list)
         self._objects = objects
         self._indexed_objects = TwoWayDict()
         self._sort_and_filter = SortingRowMapper()
