@@ -29,6 +29,7 @@ Widgets that represent Filter Actions
 import six
 
 from ...admin.action.list_filter import All
+from ...core.utils import ugettext
 from ...core.qt import QtCore, QtGui, QtWidgets, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 
@@ -60,7 +61,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
     def __init__(self, action, gui_context, parent):
         QtGui.QGroupBox.__init__(self, parent)
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 2, 2, 2, 2 )
         self.setLayout( layout )
@@ -71,14 +72,30 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
         group.buttonClicked[int].connect(self.group_button_clicked)
-        if action.exclusive:
+        if action.exclusive == True:
             self.button_type = QtGui.QRadioButton
         else:
             self.button_type = QtWidgets.QCheckBox
+            all_button = self.button_type(ugettext('All'), self)
+            all_button.setObjectName('all_button')
+            all_button.toggled.connect(self.all_button_toggled)
+            layout.addWidget(all_button)
         AbstractFilterWidget.init(self, action, gui_context)
+
+    @QtCore.qt_slot(bool)
+    def all_button_toggled(self, checked):
+        for button in self.findChildren(self.button_type):
+            button.setChecked(checked)
+        self.group_button_clicked(0)
 
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
+        value = self.get_value()
+        all_button = self.findChild(QtWidgets.QAbstractButton, 'all_button')
+        if all_button is not None:
+            all_button.blockSignals(True)
+            all_button.setChecked(All in value)
+            all_button.blockSignals(False)
         self.run_action()
 
     def get_value(self):
@@ -86,11 +103,12 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         group = self.findChild(QtGui.QButtonGroup)
         all_checked = True
         for button in self.findChildren(self.button_type):
-            if button.isChecked():
-                button_id = group.id(button)
-                values.append(self.modes[button_id].name)
-            else:
-                all_checked = False
+            if button.objectName() != 'all_button':
+                if button.isChecked():
+                    button_id = group.id(button)
+                    values.append(self.modes[button_id].name)
+                else:
+                    all_checked = False
         # shortcut, to make sure no actual filtering is done when
         # all options are checked
         if all_checked:
