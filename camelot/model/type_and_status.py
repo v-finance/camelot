@@ -433,6 +433,8 @@ class StatusFilter(list_filter.GroupBoxFilter):
     def decorate_query(self, query, values):
         if list_filter.All in values:
             return query
+        if (len(values) == 0) and (self.exclusive==False):
+            return query.filter(self.column==None)
         query = query.outerjoin(*self.joins)
         where_clauses = [self.column==v for v in values]
         query = query.filter(sql.or_(*where_clauses))

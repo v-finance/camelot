@@ -113,9 +113,9 @@ class VirtualAddressEditor(CustomEditor):
             idx = camelot.types.VirtualAddress.virtual_address_types.index(self._address_type or value[0])
             self.combo.setCurrentIndex(idx)
             icon = Icon('tango/16x16/devices/printer.png').getQIcon()
-            if str(self.combo.currentText()) == 'fax':
+            if six.text_type(self.combo.currentText()) == 'fax':
                 icon = Icon('tango/16x16/devices/printer.png').getQIcon()
-            if str(self.combo.currentText()) == 'email':
+            if six.text_type(self.combo.currentText()) == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
                 self.label.setIcon(icon)
                 self.label.setEnabled( self.editable )
@@ -160,8 +160,8 @@ class VirtualAddressEditor(CustomEditor):
 
     def emit_editing_finished(self):
         self.value = []
-        self.value.append(str(self.combo.currentText()))
-        self.value.append(str(self.editor.text()))
+        self.value.append(six.text_type(self.combo.currentText()))
+        self.value.append(six.text_type(self.editor.text()))
         self.set_value(self.value)
         # emiting editingFinished without a value for the mechanism itself will lead to
         # integrity errors
