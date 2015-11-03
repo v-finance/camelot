@@ -51,8 +51,12 @@ class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
         self.gui_context = gui_context
         for action in actions:
             qaction = action.render( self.gui_context, toolbar )
+            # it seems that the action is garbage collected when
+            # the parent remains the toolbar of the dialog, so
+            # change the parent to the dialog itself
+            qaction.setParent(self)
             qaction.triggered.connect( self.action_triggered )
-            toolbar.addAction( qaction )
+            toolbar.addAction(qaction)
 
     @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
