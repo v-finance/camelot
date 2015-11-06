@@ -47,6 +47,10 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
     .. attribute:: document
     
         the :class:`QtGui.QTextDocument` upon which this action is acting
+
+    .. attribute:: view
+    
+        the view that displays the document
         
     """
     
@@ -55,6 +59,7 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
     def __init__( self ):
         super( DocumentActionGuiContext, self ).__init__()
         self.document = None
+        self.view = None
         
     def copy( self, base_class=None ):
         new_context = super( DocumentActionGuiContext, self ).copy( base_class )
