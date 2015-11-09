@@ -34,7 +34,7 @@ from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
 from .print_preview import ( PrintChart, PrintHtml, PrintPreview,
-                             PrintJinjaTemplate )
+                             PrintJinjaTemplate, UpdatePrintPreview )
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .text_edit import EditTextDocument
@@ -83,6 +83,7 @@ __all__ = [
     ToPreviousForm.__name__,
     UpdateEditor.__name__,
     UpdateObject.__name__,
+    UpdatePrintPreview.__name__,
     UpdateProgress.__name__,
     UpdateTableView.__name__,
     WordJinjaTemplate.__name__,

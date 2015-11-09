@@ -64,6 +64,7 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
     def copy( self, base_class=None ):
         new_context = super( DocumentActionGuiContext, self ).copy( base_class )
         new_context.document = self.document
+        new_context.view = self.view
         return new_context
     
     def create_model_context( self ):
@@ -79,5 +80,6 @@ class EditDocument( Action ):
     
     def model_run( self, model_context ):
         from ...view import action_steps
-        edit = action_steps.EditTextDocument( model_context.document )
+        edit = action_steps.EditTextDocument(model_context.document)
         yield edit
+        yield action_steps.UpdatePrintPreview()
