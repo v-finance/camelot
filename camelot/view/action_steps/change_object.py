@@ -388,7 +388,6 @@ class ChangeFieldDialog( StandaloneWizardPage ):
 
     @QtCore.qt_slot()
     def field_changed(self):
-        import sqlalchemy.schema
         selected_field = ValueLoading
         editor = self.findChild( QtWidgets.QWidget, 'field_choice' )
         value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
@@ -411,33 +410,14 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             value_editor.set_field_attributes( **static_field_attributes )
             self.main_widget().layout().addWidget( value_editor )
             value_editor.editingFinished.connect( self.value_changed )
-            # try to set sensible defaults for value
-            if isinstance(delegate, delegates.Many2OneDelegate):
-                value_editor.set_value(lambda:None)
-            else:
-                default = static_field_attributes.get('default', None)
-                choices = static_field_attributes.get('choices', None)
-                if default != None and not isinstance(default, sqlalchemy.schema.ColumnDefault):
-                    value_editor.set_value( default )
-                elif choices and len(choices):
-                    value_editor.set_value( choices[0][0] )
-                else:
-                    value_editor.set_value( None )
-            # force the value editor, since the previous one is still around
+            value_editor.set_value(None)
             self.value_changed( value_editor )
 
     def value_changed(self, value_editor=None):
         if not value_editor:
             value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
         if value_editor != None:
-            delegate = self.field_attributes[self.field]['delegate']
-            value = value_editor.get_value()
-            # make sure a value is always callable
-            if issubclass(delegate, delegates.Many2OneDelegate):
-                value_getter = value
-            else:
-                value_getter = lambda:value
-            self.value = value_getter
+            self.value = value_editor.get_value()
 
 class ChangeField( ActionStep ):
     """
