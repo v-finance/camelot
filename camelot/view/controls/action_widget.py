@@ -46,6 +46,7 @@ class AbstractActionWidget( object ):
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         if isinstance( gui_context, ListActionGuiContext ):
             gui_context.item_view.model().dataChanged.connect(self.data_changed)
+            #gui_context.item_view.model().modelReset.connect(self.model_reset)
             selection_model = gui_context.item_view.selectionModel()
             if selection_model is not None:
                 selection_model.currentRowChanged.connect(self.current_row_changed)
@@ -99,8 +100,12 @@ class AbstractActionWidget( object ):
             self.setMenu( menu )
 
     # not named triggered to avoid confusion with standard Qt slot
-    def action_triggered(self):
-        sender = self.sender()
+    def action_triggered_by(self, sender):
+        """
+        action_triggered should be a slot, so it cannot be defined in the
+        abstract widget, the slot should get the sender and call
+        action_triggered_by
+        """
         mode = None
         if isinstance( sender, QtWidgets.QAction ):
             mode = six.text_type( variant_to_py(sender.data()) )
@@ -220,6 +225,10 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
             self.setIcon( QtGui.QIcon() )
         self.set_menu( state )
 
+    @QtCore.qt_slot()
+    def action_triggered(self):
+        self.action_triggered_by(self.sender())
+
 class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
     def __init__( self, action, gui_context, parent ):
@@ -242,6 +251,10 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         else:
             self.setToolTip( '' )
         self.set_menu( state )
+
+    @QtCore.qt_slot()
+    def action_triggered(self):
+        self.action_triggered_by(self.sender())
 
 class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
     """Widget that displays information on the active user"""
