@@ -51,7 +51,6 @@ class VirtualAddressEditor(CustomEditor):
 
     def __init__(self,
                  parent = None,
-                 editable = True,
                  address_type = None,
                  field_name = 'virtual_address',
                  **kwargs):
@@ -72,10 +71,8 @@ class VirtualAddressEditor(CustomEditor):
         self.layout.setContentsMargins( 0, 0, 0, 0)
         self.combo = QtWidgets.QComboBox()
         self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
-        self.combo.setEnabled(editable)
         self.layout.addWidget(self.combo)
         self.editor = DecoratedLineEdit(self)
-        self.editor.setEnabled(editable)
         self.editor.set_minimum_width(30)
         if address_type:
             self.combo.setVisible(False)
@@ -83,7 +80,6 @@ class VirtualAddressEditor(CustomEditor):
             self.combo.setCurrentIndex(idx)
         self.layout.addWidget(self.editor)
         self.setFocusProxy(self.editor)
-        self.editable = editable
         nullIcon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
         self.label = QtWidgets.QToolButton()
         self.label.setIcon(nullIcon)
@@ -118,12 +114,10 @@ class VirtualAddressEditor(CustomEditor):
             if six.text_type(self.combo.currentText()) == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
                 self.label.setIcon(icon)
-                self.label.setEnabled( self.editable )
                 self.label.show()
             else:
                 self.label.hide()
                 self.label.setIcon(icon)
-                self.label.setEnabled(self.editable)
                 self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
             self.update_validator()
 
