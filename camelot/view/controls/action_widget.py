@@ -180,6 +180,10 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
 
+    @QtCore.qt_slot()
+    def action_triggered(self):
+        self.action_triggered_by(self.sender())
+
     @QtCore.qt_slot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
