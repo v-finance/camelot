@@ -50,6 +50,8 @@ class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
         toolbar = self.findChild( QtWidgets.QToolBar )
         self.gui_context = gui_context
         self.gui_context.view = self
+        # keep reference to printer alive as long as the dialog exists
+        self.printer = printer
         for action in actions:
             qaction = action.render(self.gui_context, toolbar)
             # it seems that the action is garbage collected when
