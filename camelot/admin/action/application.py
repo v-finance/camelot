@@ -49,7 +49,7 @@ class Application( Action ):
             self.set_application_attributes()
             self.gui_context.admin = self.application_admin
             super( Application, self ).gui_run( gui_context )
-            if pixmap is not None:
+            if gui_context.progress_dialog is not None:
                 gui_context.progress_dialog.close()
         except Exception as e:
             from ...view.controls import exception
