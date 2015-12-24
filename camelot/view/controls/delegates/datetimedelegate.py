@@ -28,8 +28,8 @@ from camelot.view.controls import editors
 
 import six
 
-class DateTimeDelegate( six.with_metaclass( DocumentationMetaclass,
-                                            CustomDelegate) ):
+@six.add_metaclass(DocumentationMetaclass)
+class DateTimeDelegate(CustomDelegate):
     
     editor = editors.DateTimeEditor
     

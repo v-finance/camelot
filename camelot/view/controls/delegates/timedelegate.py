@@ -31,8 +31,8 @@ from camelot.view.controls import editors
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
-class TimeDelegate( six.with_metaclass( DocumentationMetaclass,
-                                        CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class TimeDelegate(CustomDelegate):
    
     editor = editors.TimeEditor
       

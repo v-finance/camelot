@@ -33,8 +33,8 @@ from ....core.qt import Qt, variant_to_py
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class ComboBoxDelegate( six.with_metaclass( DocumentationMetaclass,
-                                            CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class ComboBoxDelegate(CustomDelegate):
     
     editor = editors.ChoicesEditor
 

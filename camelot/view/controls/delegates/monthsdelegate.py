@@ -30,8 +30,8 @@ from camelot.view.controls.delegates.customdelegate import CustomDelegate, Docum
 from camelot.core.utils import ugettext
 from camelot.view.proxy import ValueLoading
 
-class MonthsDelegate( six.with_metaclass( DocumentationMetaclass,
-                                            CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class MonthsDelegate(CustomDelegate):
     """MonthsDelegate
 
     custom delegate for showing and editing months and years

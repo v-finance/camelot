@@ -31,8 +31,8 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 
-class One2ManyDelegate( six.with_metaclass( DocumentationMetaclass,
-                                            CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class One2ManyDelegate(CustomDelegate):
     """Custom delegate for many 2 one relations
   
   .. image:: /_static/onetomany.png

@@ -29,9 +29,9 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class CodeDelegate( six.with_metaclass( DocumentationMetaclass, 
-                                        CustomDelegate) ):
-      
+@six.add_metaclass(DocumentationMetaclass)
+class CodeDelegate(CustomDelegate):
+
     editor = editors.CodeEditor
     
     def __init__(self, parent=None, parts=[], separator=u'.', **kwargs):

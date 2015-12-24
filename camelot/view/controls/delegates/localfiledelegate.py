@@ -34,8 +34,8 @@ from .customdelegate import DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class LocalFileDelegate( six.with_metaclass( DocumentationMetaclass,
-                                             CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class LocalFileDelegate(CustomDelegate):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """

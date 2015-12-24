@@ -33,8 +33,8 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
-class Many2OneDelegate( six.with_metaclass( DocumentationMetaclass,
-                                            CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class Many2OneDelegate(CustomDelegate):
     """Custom delegate for many 2 one relations
 
   .. image:: /_static/manytoone.png

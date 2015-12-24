@@ -30,8 +30,8 @@ from camelot.view.controls import editors
 from camelot.view.art import Icon
 from camelot.view.proxy import ValueLoading
 
-class StarDelegate( six.with_metaclass( DocumentationMetaclass, 
-                                        CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class StarDelegate(CustomDelegate):
     """Delegate for integer values from ( default from 1 to 5)(Rating Delegate)  
     """
   

@@ -30,8 +30,8 @@ from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import ugettext
 
-class TextEditDelegate( six.with_metaclass( DocumentationMetaclass, 
-                                            CustomDelegate) ):
+@six.add_metaclass(DocumentationMetaclass)
+class TextEditDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
   
     editor = editors.TextEditEditor

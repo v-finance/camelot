@@ -30,8 +30,8 @@ from camelot.view.controls import editors
 from camelot.core.utils import ugettext as _
 from camelot.view.proxy import ValueLoading
 
-class BoolDelegate( six.with_metaclass( DocumentationMetaclass,
-                                        CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class BoolDelegate(CustomDelegate):
     """Custom delegate for boolean values"""
     
     editor = editors.BoolEditor

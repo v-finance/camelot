@@ -30,8 +30,8 @@ from camelot.view.controls import editors
 from camelot.core import constants
 from camelot.view.proxy import ValueLoading
 
-class FloatDelegate( six.with_metaclass( DocumentationMetaclass,
-                                         CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class FloatDelegate(CustomDelegate):
     """Custom delegate for float values"""
 
     editor = editors.FloatEditor
