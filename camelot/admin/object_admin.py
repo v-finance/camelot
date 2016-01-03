@@ -275,7 +275,7 @@ be specified using the verbose_name attribute.
         return 'Admin %s' % str(self.entity.__name__)
 
     def __repr__(self):
-        return 'ObjectAdmin(%s)' % str(self.entity.__name__)
+        return '{0.__name__}({1.__name__})'.format(type(self), self.entity)
 
     def get_name(self):
         """ The name of the group in settings in which user dependent settings 

@@ -92,11 +92,11 @@ class RowModelContext(ListActionModelContext):
     
     def __init__( self ):
         super( RowModelContext, self ).__init__()
-        self.model = None
+        self.proxy = None
         self.admin = None
         self.edit_cache = ValueCache(100)
         self.attributes_cache = ValueCache(100)
-        self.static_field_attributes = None
+        self.static_field_attributes = []
         self.current_row = None
         self.selection_count = 0
         self.collection_count = 0
@@ -170,11 +170,12 @@ class UpdateMixin(object):
     
     def gui_run(self, item_model):
         root_item = item_model.invisibleRootItem()
-        logger.debug('update {0} rows'.format(len(self.changed_ranges)))
+        logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
         for row, header_item, items in self.changed_ranges:
             item_model.setVerticalHeaderItem(row, header_item)
             for column, item in items:
                 root_item.setChild(row, column, item)
+        logger.debug('end gui update {0} rows'.format(len(self.changed_ranges)))
 
 class Update(UpdateMixin):
 
@@ -254,7 +255,7 @@ class RowData(Update):
 
     def __init__(self, rows):
         super(RowData, self).__init__(None)
-        self.rows = set(rows)
+        self.rows = rows
         self.difference = None
         self.changed_ranges = []
 
@@ -290,6 +291,11 @@ class RowData(Update):
         super(RowData, self).model_run(model_context)
         return self
 
+    def gui_run(self, item_model):
+        super(RowData, self).gui_run(item_model)
+        for row in self.rows:
+            item_model._rows_under_request.pop(row, None)
+            
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
 
@@ -472,9 +478,9 @@ class SetColumns(object):
         # setHorizontalHeaderItem will increase the number of columns one by one
         #
         item_model.setColumnCount(len(self.columns))
-        for i, (field_name, fa) in enumerate(zip(self.columns,
-                                                 self.static_field_attributes)):
+        for i, fa in enumerate(self.static_field_attributes):
             verbose_name = six.text_type(fa['name'])
+            field_name = fa['field_name']
             header_item = QtGui.QStandardItem()
             set_header_data = header_item.setData
             #
@@ -551,7 +557,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
         self._max_number_of_rows = max_number_of_rows
-        self._model_context = None
+        self._model_context = RowModelContext()
+        self._model_context.admin = admin
         self._model_thread = get_model_thread()
         #
         # The timer reduced the number of times the model thread is
@@ -563,13 +570,9 @@ class CollectionProxy(QtModel.QStandardItemModel):
         timer.setSingleShot(True)
         timer.setObjectName('timer')
         timer.timeout.connect(self.timeout_slot)
-        
 
-        # The rows in the table for which a cache refill is under request
-        self.rows_under_request = set()
-        # once the cache has been cleared, no updates ought to be accepted
-        self._update_requests = list()
         self._filters = dict()
+        self._columns = list()
         self.__crud_requests = collections.deque()
 
         self._reset()
@@ -646,8 +649,16 @@ class CollectionProxy(QtModel.QStandardItemModel):
             if self._update_requests:
                 self._append_request(SetData(self._update_requests))
                 self._update_requests = list()
-            if self.rows_under_request:
-                self._append_request(RowData(self.rows_under_request))
+            if self._rows_under_request:
+                rows_to_request = set(
+                    k for k,v in six.iteritems(
+                        self._rows_under_request
+                        ) if v==False
+                )
+                if len(rows_to_request):
+                    self._append_request(RowData(rows_to_request))
+                    for row in rows_to_request:
+                        self._rows_under_request[row] = True
             while len(self.__crud_requests):
                 model_context, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0}'.format(request))
@@ -722,8 +733,9 @@ class CollectionProxy(QtModel.QStandardItemModel):
         # clear the request state before changing the model, changing the
         # model will trigger signals, filling the state again
         #
-        # The rows in the table for which a cache refill is under request
-        self.rows_under_request = set()
+        # A dictionary where the key is the row for which data is requested,
+        # and the value indicating if the request has been send
+        self._rows_under_request = dict()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         # make sure all pending requests are handled before removing things
@@ -744,14 +756,18 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         if isinstance(value, CollectionContainer):
             value = value._collection
-        self._model_context = RowModelContext()
-        self._model_context.admin = self.admin
-        self._model_context.proxy = self.admin.get_proxy(value)
+        model_context = RowModelContext()
+        model_context.admin = self.admin
+        model_context.proxy = self.admin.get_proxy(value)
         # todo : remove the concept of a validator
-        self._model_context.validator = self.admin.get_validator()
-        #self._model_context.cache = self
+        model_context.validator = self.admin.get_validator()
+        self._model_context = model_context
         self._filters = dict()
         self._reset()
+        # the columns might be set before the value, but they might be running
+        # in the model thread for a different model context as well, so
+        # resubmit the set columns task for this model context
+        self._append_request(SetColumns(self._columns))
         self.layoutChanged.emit()
     
     def get_value(self):
@@ -812,6 +828,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         self.logger.debug( 'set_columns' )
         assert object_thread( self )
+        self._columns = columns
         self._append_request(SetColumns(columns))
 
     def setHeaderData(self, section, orientation, value, role):
@@ -836,8 +853,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 return py_to_variant(self.vertical_header_size)
             item = self.verticalHeaderItem(section)
             if item is None:
-                if section not in self.rows_under_request:
-                    self.rows_under_request.add(section)
+                if section not in self._rows_under_request:
+                    self._rows_under_request[section]= False
                     self._start_timer()
                 return invalid_data
             if role == Qt.DecorationRole:
@@ -869,16 +886,15 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 return invalid_data
 
         root_item = self.invisibleRootItem()
-        child_item = root_item.child(index.row(), index.column())
-
+        row = index.row()
+        child_item = root_item.child(row, index.column())
         # the standard implementation uses EditRole as DisplayRole
         if role == Qt.DisplayRole:
             role = PreviewRole
 
         if child_item is None:
-            row = index.row()
-            if (row not in self.rows_under_request) and (row >= 0):
-                self.rows_under_request.add(row)
+            if (row not in self._rows_under_request) and (row >= 0):
+                self._rows_under_request[row] = False
                 self._start_timer()
             if role == FieldAttributesRole:
                 #return py_to_variant(
@@ -891,7 +907,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
 
         if role == ObjectRole:
-            return self.headerData(index.row(), Qt.Vertical, role)
+            return self.headerData(row, Qt.Vertical, role)
 
         return child_item.data(role)
 
