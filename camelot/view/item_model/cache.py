@@ -22,9 +22,6 @@
 #
 #  ============================================================================
 
-"""Module containing the FIFO cache used in the collection proxy to store
-the data that is passed between the model and the gui thread"""
-
 from copy import copy
 
 _fill = object()
@@ -32,8 +29,14 @@ _no_data = (None,None)
 
 import six
 
-class Fifo(object):
-    """Fifo, is the actual cache containing a limited set of copies of row data
+class ValueCache(object):
+    """
+    The ValueCache keeps track of the values of object attributes.
+
+    This cache is used to track which values have changed and for which
+    an update of the gui is needed.
+
+    Fifo, is the actual cache containing a limited set of copies of row data
     so the data in Fifo, is always immediately accessible to the gui thread,
     with zero delay as you scroll down the table view, Fifo is filled and
     refilled with data queried from the database
@@ -69,7 +72,7 @@ class Fifo(object):
     def shallow_copy(self, max_entries):
         """Copy the cache without the actual data but with the references
         to which object is stored in which row"""
-        new_fifo = Fifo(max_entries)
+        new_fifo = type(self)(max_entries)
         new_fifo.entities = copy( self.entities )
         # None is to distinguish between a list of data and no data
         new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in six.iteritems(self.data_by_rows) )

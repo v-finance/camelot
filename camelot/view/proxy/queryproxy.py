@@ -27,7 +27,6 @@
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from ...core.item_model import QueryModelProxy
 from .collection_proxy import CollectionProxy
 
 class QueryTableProxy(CollectionProxy):
@@ -35,11 +34,6 @@ class QueryTableProxy(CollectionProxy):
     model, which is fetched from the database to be used as the model for a
     QTableView
     """
-
-    def set_value(self, value):
-        self._value = QueryModelProxy(value)
-        self._reset()
-        self.layoutChanged.emit()
 
     def _get_collection_range( self, offset, limit ):
         """Get the objects in a certain range of the collection

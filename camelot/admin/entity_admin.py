@@ -287,11 +287,6 @@ and used as a custom action.
                 else:
                     raise Exception('RelationshipProperty has unknown direction')
 
-                if property.direction in (orm.interfaces.ONETOMANY,
-                                          orm.interfaces.MANYTOMANY):
-                    if property.lazy == 'dynamic':
-                        attributes.update(proxy=QueryModelProxy)
-
                 if property.uselist == True:
                     attributes.update(
                         delegate = delegates.One2ManyDelegate,

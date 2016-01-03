@@ -73,9 +73,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.banner_widget().setStyleSheet('background-color: white;')
 
         model = CollectionProxy(admin)
-        model.set_value([obj])
-        model.set_columns(columns)
-        validator = model.get_validator()
+
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(admin=admin,
@@ -84,7 +82,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                                  columns=columns,
                                  parent=self)
         layout.addWidget( form_widget )
-        validator.validity_changed_signal.connect( self._validity_changed )
+        model.validity_changed.connect(self.validity_changed_slot)
         form_widget.setObjectName( 'form' )
         if hasattr(admin, 'form_size') and admin.form_size:
             form_widget.setMinimumSize(admin.form_size[0], admin.form_size[1])
@@ -111,12 +109,11 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         admin._apply_form_state( self )
-
-        # do inital validation, so the validity changed signal is valid
-        self._validity_changed( 0 )
-
         # set the actions in the actions panel
         self.set_actions(form_actions)
+        # set the value last, so the validity can be updated
+        model.set_value([obj])
+        model.set_columns(columns)
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
@@ -131,17 +128,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
-    @QtCore.qt_slot(int)
-    def _validity_changed(self, row):
-        form = self.findChild( QtWidgets.QWidget, 'form' )
-        if not form:
-            return
-        model = form.get_model()
-
-        def is_valid():
-            return model.get_validator().isValid(0)
-
-        post(is_valid, self._change_complete)
+    @QtCore.qt_slot(int, int, six.text_type)
+    def validity_changed_slot(self, row, col, message):
+        self._change_complete(row < 0)
 
     def _change_complete(self, complete):
         ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
@@ -176,8 +165,10 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             create_inline = True,
         )
         model = table_widget.get_model()
-        self.validator = model.get_validator()
-        self.validator.validity_changed_signal.connect( self.update_complete )
+        # @todo : dialog should update itself when the to object becomes valid
+        #         or invalid
+        #self.validator = model.get_validator()
+        #self.validator.validity_changed_signal.connect( self.update_complete )
         model.layoutChanged.connect(self.validate_all_rows)
         table_widget.set_value(objects)
         table_widget.setObjectName( 'table_widget' )

@@ -50,11 +50,11 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
-from ...core.item_model import (ProxyDict, VerboseIdentifierRole, ObjectRole,
+from ...core.item_model import (VerboseIdentifierRole, ObjectRole,
                                 FieldAttributesRole, PreviewRole)
 from ..crud_signals import CrudSignalHandler
+from ..item_model.cache import ValueCache
 from camelot.core.exception import log_programming_error
-from camelot.view.fifo import Fifo
 from camelot.view.model_thread import object_thread, post
 
 
@@ -70,9 +70,9 @@ def strip_data_from_object( obj, columns ):
     for _i, col in enumerate( columns ):
         field_value = None
         try:
-            field_value = getattr( obj, col[0] )
+            field_value = getattr( obj, col )
         except (Exception, RuntimeError, TypeError, NameError) as e:
-            message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
+            message = "could not get field '%s' of object of type %s"%(col, obj.__class__.__name__)
             log_programming_error( logger, 
                                    message,
                                    exc_info = e )
@@ -94,12 +94,16 @@ class RowModelContext(ListActionModelContext):
         super( RowModelContext, self ).__init__()
         self.model = None
         self.admin = None
+        self.edit_cache = ValueCache(100)
+        self.attributes_cache = ValueCache(100)
+        self.static_field_attributes = None
         self.current_row = None
         self.selection_count = 0
         self.collection_count = 0
         self.selected_rows = []
         self.field_attributes = dict()
         self.obj = None
+        self.locale = QtCore.QLocale()
         
     def get_selection( self, yield_per = None ):
         return []
@@ -112,8 +116,61 @@ class RowModelContext(ListActionModelContext):
 
 class UpdateMixin(object):
 
+    def add_data(self, model_context, row, obj, data):
+        """Add data from object o at a row in the cache
+        :param row: the row in the cache into which to add data
+        :param obj: the object from which to strip the data
+        :param data: fill the data cache, otherwise only fills the header cache
+        :return: the changes to the item model
+        """
+        admin = model_context.admin
+        static_field_attributes = model_context.static_field_attributes
+        columns = [fa['field_name'] for fa in model_context.static_field_attributes]
+        action_state = None
+        changed_ranges = []
+        logger.debug('_add data for row {0}'.format(row))
+        # @todo static field attributes should be cached ??
+        if (not admin.is_deleted( obj ) and data==True):
+            row_data = strip_data_from_object( obj, columns )
+            dynamic_field_attributes = list(admin.get_dynamic_field_attributes(obj, columns))
+            if admin.list_action:
+                model_context.obj = obj
+                model_context.current_row = row
+                action_state = admin.list_action.get_state(model_context)
+        else:
+            row_data = [None] * len(columns)
+            dynamic_field_attributes =  [{'editable':False}] * len(columns)
+        # keep track of the columns that changed, to limit the
+        # number of editors/cells that need to be updated
+        changed_columns = set()
+        changed_columns.update(model_context.edit_cache.add_data(row, obj, row_data))
+        changed_columns.update(model_context.attributes_cache.add_data(row, obj, dynamic_field_attributes))
+        if row is not None:
+            items = []
+            locale = model_context.locale
+            for column in changed_columns:
+                # copy to make sure the original dict can be compared in subsequent
+                # calls
+                field_attributes = dict(dynamic_field_attributes[column])
+                field_attributes.update(static_field_attributes[column])
+                delegate = field_attributes['delegate']
+                value = row_data[column]
+                item = delegate.get_standard_item(locale, value, field_attributes)
+                items.append((column, item))
+            verbose_identifier = admin.get_verbose_identifier(obj)
+            header_item = QtModel.QStandardItem()
+            header_item.setData(py_to_variant(obj), ObjectRole)
+            header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
+            if action_state is not None:
+                header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
+                header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
+                header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
+            changed_ranges.append((row, header_item, items))
+        return changed_ranges
+    
     def gui_run(self, item_model):
         root_item = item_model.invisibleRootItem()
+        logger.debug('update {0} rows'.format(len(self.changed_ranges)))
         for row, header_item, items in self.changed_ranges:
             item_model.setVerticalHeaderItem(row, header_item)
             for column, item in items:
@@ -121,15 +178,14 @@ class UpdateMixin(object):
 
 class Update(UpdateMixin):
 
-    def __init__(self, proxy, objects):
-        self.proxy = proxy
+    def __init__(self, objects):
         self.objects = objects
         self.changed_ranges = []
 
-    def model_run(self, item_model):
+    def model_run(self, model_context):
         for obj in self.objects:
             try:
-                row = self.proxy.index(obj)
+                row = model_context.proxy.index(obj)
             except ValueError:
                 continue
             #
@@ -137,27 +193,23 @@ class Update(UpdateMixin):
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
             #
-            columns = item_model._columns
-            self.changed_ranges.extend(item_model._add_data(columns, row, obj, True))
+            self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
         return self
 
 class Deleted(object):
 
-    def __init__(self, proxy, objects):
-        self.proxy = proxy
+    def __init__(self, objects):
         self.objects = objects
         self.rows = None
 
-    def model_run(self, item_model):
+    def model_run(self, model_context):
         for obj in self.objects:
             try:
-                item_model.display_cache.get_row_by_entity(obj)
+                model_context.cache.get_row_by_entity(obj)
             except KeyError:
                 continue
-            self.proxy.remove(obj)
-            item_model.display_cache.delete_by_entity( obj )
-            item_model.attributes_cache.delete_by_entity( obj )
-            item_model.edit_cache.delete_by_entity( obj )
+            model_context.proxy.remove(obj)
+            model_context.cache.delete_by_entity(obj)
         self.rows = len(self.proxy)
         return self
 
@@ -166,12 +218,15 @@ class Deleted(object):
 
 class RowCount(object):
 
-    def __init__(self, proxy):
-        self.proxy = proxy
+    def __init__(self):
         self.rows = None
 
-    def model_run(self, proxy):
-        self.rows = len(self.proxy)
+    def model_run(self, model_context):
+        self.rows = len(model_context.proxy)
+        # clear the whole cache, there might be more efficient means to 
+        # do this
+        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
+        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
         return self
 
     def gui_run(self, item_model):
@@ -183,22 +238,22 @@ class RowCount(object):
 
 class Filter(RowCount):
 
-    def __init__(self, proxy, action, old_value, new_value):
-        super(Filter, self).__init__(proxy)
+    def __init__(self, action, old_value, new_value):
+        super(Filter, self).__init__()
         self.action = action
         self.old_value = old_value
         self.new_value = new_value
 
-    def model_run(self, proxy):
+    def model_run(self, model_context):
         if self.old_value != self.new_value:
-            self.proxy.filter(self.action, self.new_value)
-            super(Filter, self).model_run(proxy)
+            model_context.proxy.filter(self.action, self.new_value)
+            super(Filter, self).model_run(model_context)
         return self
 
 class RowData(Update):
 
-    def __init__(self, proxy, rows):
-        super(RowData, self).__init__(proxy, None)
+    def __init__(self, rows):
+        super(RowData, self).__init__(None)
         self.rows = set(rows)
         self.difference = None
         self.changed_ranges = []
@@ -229,10 +284,10 @@ class RowData(Update):
             raise e
         return (offset, limit)
 
-    def model_run(self, item_model):
+    def model_run(self, model_context):
         offset, limit = self.offset_and_limit_rows_to_get()
-        self.objects = list(self.proxy[offset:offset+limit])
-        super(RowData, self).model_run(item_model)
+        self.objects = list(model_context.proxy[offset:offset+limit])
+        super(RowData, self).model_run(model_context)
         return self
 
     def __repr__(self):
@@ -240,23 +295,23 @@ class RowData(Update):
 
 class SetData(Update):
 
-    def __init__(self, proxy, updates):
-        super(SetData, self).__init__(proxy, None)
+    def __init__(self, updates):
+        super(SetData, self).__init__(None)
         # Copy the update requests and clear the list of requests
         self.updates = [u for u in updates]
         self.created_objects = None
         self.updated_objects = None
 
-    def model_run(self, item_model):
+    def model_run(self, model_context):
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects = set(), set()
         for row, obj, column, value in self.updates:
             grouped_requests[(row, obj)].append((column, value))
-        admin = item_model.admin
+        admin = model_context.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
-            o = list(self.proxy[row:row+1])[0]
+            o = list(model_context.proxy[row:row+1])[0]
             if not (o is obj):
-                item_model.logger.warn('model view inconsistency')
+                logger.warn('model view inconsistency')
                 continue
             #
             # the object might have been deleted while an editor was open
@@ -265,23 +320,24 @@ class SetData(Update):
                 continue
             changed = False
             for column, value in request_group:
-                attribute, field_attributes = item_model._columns[column]
+                static_field_attributes = model_context.static_field_attributes[column]
+                field_name = static_field_attributes['field_name']
 
                 from sqlalchemy.exc import DatabaseError
                 new_value = variant_to_py(value)
-                item_model.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+                logger.debug( 'set data for row %s;col %s' % ( row, column ) )
     
                 if new_value == ValueLoading:
                     continue
 
-                old_value = getattr(obj, attribute )
+                old_value = getattr(obj, field_name )
                 value_changed = ( new_value != old_value )
                 #
                 # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
                 # old and new value to know if the object was changed, so we'll
                 # consider it changed anyway
                 #
-                direction = field_attributes.get( 'direction', None )
+                direction = static_field_attributes.get( 'direction', None )
                 if direction in ( 'manytomany', 'onetomany' ):
                     value_changed = True
                 if value_changed is not True:
@@ -290,7 +346,7 @@ class SetData(Update):
                 # now check if this column is editable, since editable might be
                 # dynamic and change after every change of the object
                 #
-                fields = [attribute]
+                fields = [field_name]
                 for fa in admin.get_dynamic_field_attributes(obj, fields):
                     # if editable is not in the field_attributes dict, it wasn't
                     # dynamic but static, so earlier checks should have 
@@ -302,32 +358,33 @@ class SetData(Update):
                     continue
                 # update the model
                 try:
-                    admin.set_field_value(obj, attribute, new_value)
+                    admin.set_field_value(obj, field_name, new_value)
                     #
                     # setting this attribute, might trigger a default function 
                     # to return a value, that was not returned before
                     #
                     admin.set_defaults(obj, include_nullable_fields=False )
                 except AttributeError as e:
-                    item_model.logger.error( u"Can't set attribute %s to %s" % ( attribute, six.text_type( new_value ) ), exc_info = e )
+                    logger.error( u"Can't set attribute %s to %s" % ( field_name, six.text_type( new_value ) ), exc_info = e )
                 except TypeError:
                     # type error can be raised in case we try to set to a collection
                     pass
                 changed = value_changed or changed
             if changed:
-                if item_model.flush_changes:
-                    if item_model.validator.isValid( row ):
-                        # save the state before the update
-                        was_persistent =admin.is_persistent(obj)
-                        try:
-                            admin.flush(obj)
-                        except DatabaseError as e:
-                            #@todo: when flushing fails ??
-                            item_model.logger.error( 'Programming Error, could not flush object', exc_info = e )
-                        if was_persistent is False:
-                            created_objects.add(obj)
+                for message in model_context.validator.validate_object(obj):
+                    break
+                else:
+                    # save the state before the update
+                    was_persistent = admin.is_persistent(obj)
+                    try:
+                        admin.flush(obj)
+                    except DatabaseError as e:
+                        #@todo: when flushing fails ??
+                        logger.error( 'Programming Error, could not flush object', exc_info = e )
+                    if was_persistent is False:
+                        created_objects.add(obj)
                 # update the cache
-                self.changed_ranges.extend(item_model._add_data(item_model._columns, row,obj, True))
+                self.changed_ranges.extend(self.add_data(model_context, row,obj, True))
                 updated_objects.add(obj)
                 updated_objects.update(set(admin.get_depending_objects(obj)))
         self.created_objects = tuple(created_objects)
@@ -342,22 +399,22 @@ class SetData(Update):
 
 class Created(RowCount, UpdateMixin):
 
-    def __init__(self, proxy, objects):
-        super(Created, self).__init__(proxy)
+    def __init__(self, objects):
+        super(Created, self).__init__()
         self.objects = objects
         self.changed_ranges = []
 
-    def model_run(self, item_model):
+    def model_run(self, model_context):
         # assume rows already contains the new object
-        rows = len(self.proxy)
+        rows = len(model_context.proxy)
         for obj in self.objects:
             try:
-                row = self.proxy.index(obj)
+                row = model_context.proxy.index(obj)
             except ValueError:
                 continue
             # rows should only be not None when a created object was in the cache
             self.rows = rows
-            self.changed_ranges.extend(item_model._add_data(item_model._columns, row, obj, True))
+            self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
         return self
 
     def gui_run(self, item_model):
@@ -366,16 +423,19 @@ class Created(RowCount, UpdateMixin):
 
 class Sort(RowCount):
 
-    def __init__(self, proxy, column, order):
-        super(Sort, self).__init__(proxy)
+    def __init__(self, column, order):
+        super(Sort, self).__init__()
         self.column = column
         self.order = order
 
-    def model_run(self, item_view):
-        field_name = item_view._columns[self.column][0]
-        self.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
-        self.rows = len(self.proxy)
+    def model_run(self, model_context):
+        field_name = model_context.static_field_attributes[self.column]['field_name']
+        model_context.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
+        super(Sort, self).model_run(model_context)
         return self
+
+    def __repr__(self):
+        return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
 
 class SetColumns(object):
 
@@ -389,14 +449,16 @@ class SetColumns(object):
             ', '.join(self.columns[:2])
         )
 
-    def model_run(self, proxy):
-        self.static_field_attributes = list(
-            proxy.admin.get_static_field_attributes(self.columns)
+    def model_run(self, model_context):
+        model_context.static_field_attributes = list(
+            model_context.admin.get_static_field_attributes(self.columns)
         )
+        # creating the header items should be done here instead of in the gui
+        # run
+        self.static_field_attributes = model_context.static_field_attributes
         return self
 
     def gui_run(self, item_model):
-        item_model._static_field_attributes = self.static_field_attributes
         item_model.beginResetModel()
         item_model.settings.beginGroup( 'column_width' )
         item_model.settings.beginGroup( '0' )
@@ -436,7 +498,27 @@ class SetColumns(object):
         item_model.settings.endGroup()
         item_model.endResetModel()
 
+class SetHeaderData(object):
 
+    def __init__(self, column, width):
+        self.column = column
+        self.width = width
+        self.field_name = None
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({0.column}, {0.width})'.format(self)
+
+    def model_run(self, model_context):
+        self.field_name = model_context.static_field_attributes[self.column]['field_name']
+        return self
+
+    def gui_run(self, item_model):
+        item_model.settings.beginGroup('column_width')
+        item_model.settings.beginGroup('0')
+        item_model.settings.setValue(self.field_name, self.width)
+        item_model.settings.endGroup()
+        item_model.settings.endGroup()
+        
 class CollectionProxy(QtModel.QStandardItemModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
@@ -447,28 +529,20 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
     """
 
-    def __init__( self,
-                  admin,
-                  max_number_of_rows = 10, 
-                  flush_changes = True,
-                  ):
-        """
-:param admin: the admin interface for the items in the collection
+    validity_changed = QtCore.qt_signal(int, int, six.text_type)
 
-"""
+    def __init__(self, admin, max_number_of_rows=10):
+        """
+        :param admin: the admin interface for the items in the collection
+        """
         super(CollectionProxy, self).__init__()
         assert object_thread( self )
         from camelot.view.model_thread import get_model_thread
 
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
-        # the mutex is recursive to avoid blocking during unittest, when
-        # model and view are used in the same thread
-        self._mutex = QtCore.QMutex(QtCore.QMutex.Recursive)
         self.admin = admin
-        self.list_action = admin.list_action
-        self.row_model_context = RowModelContext()
-        self.row_model_context.admin = admin
+        self._list_action = admin.list_action
         self.settings = self.admin.get_settings()
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
@@ -476,11 +550,9 @@ class CollectionProxy(QtModel.QStandardItemModel):
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
-        self.validator = admin.get_validator(self)
-        self._value = None
-        self.flush_changes = flush_changes
-        self.mt = get_model_thread()
-        self.locale = QtCore.QLocale()
+        self._max_number_of_rows = max_number_of_rows
+        self._model_context = None
+        self._model_thread = get_model_thread()
         #
         # The timer reduced the number of times the model thread is
         # triggered, by waiting for the next gui event before triggering
@@ -491,10 +563,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         timer.setSingleShot(True)
         timer.setObjectName('timer')
         timer.timeout.connect(self.timeout_slot)
-
-        self._columns = []
-        self._static_field_attributes = []
-        self._max_number_of_rows = max_number_of_rows
+        
 
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
@@ -544,11 +613,11 @@ class CollectionProxy(QtModel.QStandardItemModel):
         rows = super(CollectionProxy, self).rowCount()
         self.logger.debug('row count requested, returned {0}'.format(rows))
         # no need to count rows when there is no value or there are no columns
-        if (rows == 0) and (self._value is not None) and (self._static_field_attributes):
+        if (rows == 0) and (self._model_context is not None) and self.columnCount():
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
                 if not isinstance(self._last_request(), RowCount):
-                    self._append_request(RowCount(self._value))
+                    self._append_request(RowCount())
             return 0
         return rows
 
@@ -575,14 +644,14 @@ class CollectionProxy(QtModel.QStandardItemModel):
         if timer is not None:
             timer.stop()
             if self._update_requests:
-                self._append_request(SetData(self._value, self._update_requests))
+                self._append_request(SetData(self._update_requests))
                 self._update_requests = list()
             if self.rows_under_request:
-                self._append_request(RowData(self._value, self.rows_under_request))
+                self._append_request(RowData(self.rows_under_request))
             while len(self.__crud_requests):
-                request = self.__crud_requests.popleft()
+                model_context, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0}'.format(request))
-                post(request.model_run, self._crud_update, args=(self,), exception=self._crud_exception)
+                post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
 
     def _start_timer(self):
         """
@@ -597,24 +666,25 @@ class CollectionProxy(QtModel.QStandardItemModel):
         :return: the last crud request issued, or `None` if the queue is empty
         """
         if len(self.__crud_requests):
-            return self.__crud_requests[-1]
+            return self.__crud_requests[-1][-1]
 
     def _append_request(self, request):
         """
         Always use this method to add CRUD requests to the queue, since it
-        will make sure no request is added to the queue while handling the
-        feedback from a request.
+        will make sure :
+        - no request is added to the queue while handling the
+          feedback from a request.
+        - the timer for handling the requests is started
+        - the request is associated with the current model context
         """
         self.logger.debug('append request {0}'.format(request))
-        self.__crud_requests.append(request)
+        self.__crud_requests.append((self._model_context, request))
         self._start_timer()
 
     #
     # end of timer functions
     #
 
-    def get_validator(self):
-        return self.validator
 
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
@@ -647,26 +717,26 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         reset all shared state and cache
         """
-        # make sure all pending requests are handled before removing things
-        # wont work since _reset is called within the handling of crud requests
-        # self.timeout_slot()
-        # end
-        max_cache = 10 * self._max_number_of_rows
-        locker = QtCore.QMutexLocker(self._mutex)
-        # is this the best way to reset the standard items ? maybe it's much
-        # easier to replace the source model all at once
-        self.setRowCount(0)
-        self.logger.debug('_reset state')
-        self.edit_cache = Fifo( max_cache )
-        self.attributes_cache = Fifo( max_cache )
-        root_item = self.invisibleRootItem()
-        root_item.setEnabled(row_count != None)
-        self.setRowCount(row_count or 0)
+        self.logger.debug('_reset begin')
+        #
+        # clear the request state before changing the model, changing the
+        # model will trigger signals, filling the state again
+        #
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
-        locker.unlock()
+        # make sure all pending requests are handled before removing things
+        # wont work since _reset is called within the handling of crud requests
+        # self.timeout_slot()
+        #
+        # is this the best way to reset the standard items ? maybe it's much
+        # easier to replace the source model all at once
+        self.setRowCount(0)
+        root_item = self.invisibleRootItem()
+        root_item.setEnabled(row_count != None)
+        self.setRowCount(row_count or 0)
+        self.logger.debug('_reset end')
 
     def set_value(self, value):
         """
@@ -674,13 +744,18 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         if isinstance(value, CollectionContainer):
             value = value._collection
-        self._value = self.admin.get_proxy(value)
+        self._model_context = RowModelContext()
+        self._model_context.admin = self.admin
+        self._model_context.proxy = self.admin.get_proxy(value)
+        # todo : remove the concept of a validator
+        self._model_context.validator = self.admin.get_validator()
+        #self._model_context.cache = self
         self._filters = dict()
         self._reset()
         self.layoutChanged.emit()
     
     def get_value(self):
-        return self._value
+        return self._model_context.proxy
 
     def set_filter(self, list_filter, value):
         """
@@ -692,11 +767,12 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         old_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
-        self._append_request(Filter(self._value, list_filter, old_value, value))
+        self._append_request(Filter(list_filter, old_value, value))
 
     @QtCore.qt_slot(object, tuple)
     def objects_updated(self, sender, objects):
         """Handles the entity signal, indicating that the model is out of
+            )
         date
         """
         assert object_thread(self)
@@ -704,8 +780,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._append_request(Update(self._value, objects))
-            self._start_timer()
+            self._append_request(Update(objects))
 
     @QtCore.qt_slot(object, tuple)
     def objects_deleted(self, sender, objects):
@@ -715,9 +790,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
         if sender != self:
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
-            )
-            self._append_request(Deleted(self._value, objects))
-            self._start_timer()
+                )
+            self._append_request(Deleted(objects))
 
     @QtCore.qt_slot(object, tuple)
     def objects_created(self, sender, objects):
@@ -728,8 +802,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(self._value, objects))
-            self._start_timer()
+            self._append_request(Created(objects))
 
     def set_columns(self, columns):
         """Callback method to set the columns
@@ -739,21 +812,14 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         self.logger.debug( 'set_columns' )
         assert object_thread( self )
-        self._columns = columns
         self._append_request(SetColumns(columns))
-        self._start_timer()
 
     def setHeaderData(self, section, orientation, value, role):
         assert object_thread( self )
         if orientation == Qt.Horizontal:
             if role == Qt.SizeHintRole:
                 width = value.width()
-                self.settings.beginGroup( 'column_width' )
-                self.settings.beginGroup( '0' )
-                self.settings.setValue( self._columns[section][1]['field_name'], 
-                                        width )
-                self.settings.endGroup()
-                self.settings.endGroup()
+                self._append_request(SetHeaderData(section, width))
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):
@@ -786,8 +852,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         assert object_thread( self )
-        self._append_request(Sort(self._value, column, order))
-        self._start_timer()
+        self._append_request(Sort(column, order))
 
     def data( self, index, role = Qt.DisplayRole):
         """:return: the data at index for the specified role
@@ -816,9 +881,10 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 self.rows_under_request.add(row)
                 self._start_timer()
             if role == FieldAttributesRole:
-                return py_to_variant(
-                    ProxyDict(self._static_field_attributes[index.column()])
-                )
+                #return py_to_variant(
+                    #ProxyDict(self._static_field_attributes[index.column()])
+                #)
+                return invalid_field_attributes_data
             elif role in (PreviewRole, ObjectRole):
                 return invalid_data
             return py_to_variant(ValueLoading)
@@ -856,60 +922,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self._start_timer()
         return True
 
-    def _add_data(self, columns, row, obj, data):
-        """Add data from object o at a row in the cache
-        :param columns: the columns of which to strip data
-        :param r"ow: the row in the cache into which to add data
-        :param obj: the object from which to strip the data
-        :param data: fill the data cache, otherwise only fills the header cache
-        :return: the changes to the item model
-        """
-        action_state = None
-        changed_ranges = []
-        logger.debug('_add data for row {0}'.format(row))
-        # @todo static field attributes should be cached ??
-        if (not self.admin.is_deleted( obj ) and data==True):
-            row_data = strip_data_from_object( obj, columns )
-            dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
-            static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
-            if self.list_action:
-                self.row_model_context.obj = obj
-                self.row_model_context.current_row = row
-                action_state = self.list_action.get_state(self.row_model_context)
-        else:
-            row_data = [None] * len(columns)
-            dynamic_field_attributes =  [{'editable':False}] * len(columns)
-            static_field_attributes = list(self.admin.get_static_field_attributes( (c[0] for c in columns) ))
-        # keep track of the columns that changed, to limit the
-        # number of editors/cells that need to be updated
-        changed_columns = set()
-        locker = QtCore.QMutexLocker( self._mutex )
-        changed_columns.update( self.edit_cache.add_data( row, obj, row_data ) )
-        changed_columns.update( self.attributes_cache.add_data(row, obj, dynamic_field_attributes ) )
-        locker.unlock()
-        if row is not None:
-            items = []
-            locale = self.locale
-            for column in changed_columns:
-                # copy to make sure the original dict can be compared in subsequent
-                # calls
-                field_attributes = dict(dynamic_field_attributes[column])
-                field_attributes.update(static_field_attributes[column])
-                delegate = field_attributes['delegate']
-                value = row_data[column]
-                item = delegate.get_standard_item(locale, value, field_attributes)
-                items.append((column, item))
-            verbose_identifier = self.admin.get_verbose_identifier(obj)
-            header_item = QtModel.QStandardItem()
-            header_item.setData(py_to_variant(obj), ObjectRole)
-            header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
-            if action_state is not None:
-                header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
-                header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
-                header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
-            changed_ranges.append((row, header_item, items))
-        return changed_ranges
-
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
+
