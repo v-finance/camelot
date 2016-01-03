@@ -424,6 +424,8 @@ class Created(RowCount, UpdateMixin):
             # rows should only be not None when a created object was in the cache
             self.rows = rows
             self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
+        if rows is not None:
+            super(Created, self).model_run(model_context)
         return self
 
     def gui_run(self, item_model):
