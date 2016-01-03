@@ -197,25 +197,6 @@ class Update(UpdateMixin):
             self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
         return self
 
-class Deleted(object):
-
-    def __init__(self, objects):
-        self.objects = objects
-        self.rows = None
-
-    def model_run(self, model_context):
-        for obj in self.objects:
-            try:
-                model_context.cache.get_row_by_entity(obj)
-            except KeyError:
-                continue
-            model_context.proxy.remove(obj)
-            model_context.cache.delete_by_entity(obj)
-        self.rows = len(self.proxy)
-        return self
-
-    def gui_run(self, item_model):
-        item_model._refresh_content(self.rows)
 
 class RowCount(object):
 
@@ -236,6 +217,28 @@ class RowCount(object):
 
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
+
+
+class Deleted(RowCount):
+
+    def __init__(self, objects):
+        super(Deleted, self).__init__()
+        self.objects = objects
+
+    def model_run(self, model_context):
+        for obj in self.objects:
+            try:
+                model_context.edit_cache.get_row_by_entity(obj)
+            except KeyError:
+                continue
+            model_context.proxy.remove(obj)
+            model_context.edit_cache.delete_by_entity(obj)
+            model_context.attributes_cache.delete_by_entity(obj)
+        self.rows = len(model_context.proxy)
+        return self
+
+    def gui_run(self, item_model):
+        item_model._refresh_content(self.rows)
 
 class Filter(RowCount):
 
