@@ -162,6 +162,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def set_value(self, collection):
         collection = CustomEditor.set_value(self, collection)
+        if collection is None:
+            collection = []
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current
