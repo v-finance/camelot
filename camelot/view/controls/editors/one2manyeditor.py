@@ -104,8 +104,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
             toolbar.setOrientation(Qt.Vertical)
             for action in toolbar_actions:
                 qaction = action.render(self.gui_context, toolbar)
-                qaction.triggered.connect(self.action_triggered)
-                toolbar.addAction(qaction)
+                if isinstance(qaction, QtWidgets.QWidget):
+                    toolbar.addWidget(qaction)
+                else:
+                    qaction.triggered.connect(self.action_triggered)
+                    toolbar.addAction(qaction)
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created

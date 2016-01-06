@@ -47,6 +47,10 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
     .. attribute:: document
     
         the :class:`QtGui.QTextDocument` upon which this action is acting
+
+    .. attribute:: view
+    
+        the view that displays the document
         
     """
     
@@ -55,10 +59,12 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
     def __init__( self ):
         super( DocumentActionGuiContext, self ).__init__()
         self.document = None
+        self.view = None
         
     def copy( self, base_class=None ):
         new_context = super( DocumentActionGuiContext, self ).copy( base_class )
         new_context.document = self.document
+        new_context.view = self.view
         return new_context
     
     def create_model_context( self ):
@@ -74,5 +80,6 @@ class EditDocument( Action ):
     
     def model_run( self, model_context ):
         from ...view import action_steps
-        edit = action_steps.EditTextDocument( model_context.document )
+        edit = action_steps.EditTextDocument(model_context.document)
         yield edit
+        yield action_steps.UpdatePrintPreview()

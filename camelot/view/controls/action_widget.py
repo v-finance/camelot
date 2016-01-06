@@ -47,6 +47,7 @@ class AbstractActionWidget( object ):
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         if isinstance( gui_context, ListActionGuiContext ):
             gui_context.item_view.model().dataChanged.connect(self.data_changed)
+            #gui_context.item_view.model().modelReset.connect(self.model_reset)
             selection_model = gui_context.item_view.selectionModel()
             if selection_model is not None:
                 selection_model.currentRowChanged.connect(self.current_row_changed)
@@ -90,12 +91,26 @@ class AbstractActionWidget( object ):
         :param state: a `camelot.admin.action.State` object
         """
         if state.modes:
-            menu = QtWidgets.QMenu(self)
+            # self is not always a QWidget, so QMenu is created without
+            # parent
+            menu = QtWidgets.QMenu()
             for mode in state.modes:
-                mode_action = mode.render( menu )
-                mode_action.triggered.connect( self.triggered )
-                menu.addAction( mode_action )
+                mode_action = mode.render(menu)
+                mode_action.triggered.connect(self.action_triggered)
+                menu.addAction(mode_action)
             self.setMenu( menu )
+
+    # not named triggered to avoid confusion with standard Qt slot
+    def action_triggered_by(self, sender):
+        """
+        action_triggered should be a slot, so it cannot be defined in the
+        abstract widget, the slot should get the sender and call
+        action_triggered_by
+        """
+        mode = None
+        if isinstance( sender, QtWidgets.QAction ):
+            mode = six.text_type( variant_to_py(sender.data()) )
+        self.run_action( mode )
 
 HOVER_ANIMATION_DISTANCE = 20
 NOTIFICATION_ANIMATION_DISTANCE = 8
@@ -166,6 +181,10 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
 
+    @QtCore.qt_slot()
+    def action_triggered(self):
+        self.action_triggered_by(self.sender())
+
     @QtCore.qt_slot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
@@ -195,15 +214,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         """
         QtWidgets.QPushButton.__init__( self, parent )
         AbstractActionWidget.init( self, action, gui_context )
-        self.clicked.connect( self.triggered )
-
-    @QtCore.qt_slot()
-    def triggered(self):
-        sender = self.sender()
-        mode = None
-        if isinstance( sender, QtWidgets.QAction ):
-            mode = six.text_type( variant_to_py(sender.data()) )
-        self.run_action( mode )
+        self.clicked.connect(self.action_triggered)
 
     @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex )
     def data_changed( self, index1, index2 ):
@@ -218,6 +229,10 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         else:
             self.setIcon( QtGui.QIcon() )
         self.set_menu( state )
+
+    @QtCore.qt_slot()
+    def action_triggered(self):
+        self.action_triggered_by(self.sender())
 
 class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
@@ -241,6 +256,10 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         else:
             self.setToolTip( '' )
         self.set_menu( state )
+
+    @QtCore.qt_slot()
+    def action_triggered(self):
+        self.action_triggered_by(self.sender())
 
 class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
     """Widget that displays information on the active user"""

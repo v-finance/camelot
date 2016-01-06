@@ -49,18 +49,34 @@ class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
         super( PrintPreviewDialog, self ).__init__( printer, parent, flags )
         toolbar = self.findChild( QtWidgets.QToolBar )
         self.gui_context = gui_context
+        self.gui_context.view = self
+        # keep reference to printer alive as long as the dialog exists
+        self.printer = printer
         for action in actions:
-            qaction = action.render( self.gui_context, toolbar )
-            qaction.triggered.connect( self.action_triggered )
-            toolbar.addAction( qaction )
+            qaction = action.render(self.gui_context, toolbar)
+            # it seems that the action is garbage collected when
+            # the parent remains the toolbar of the dialog, so
+            # change the parent to the dialog itself
+            qaction.setParent(self)
+            qaction.triggered.connect(self.action_triggered)
+            toolbar.addAction(qaction)
 
     @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context ) 
-        preview_widget = self.findChild( QtGui.QPrintPreviewWidget )
-        preview_widget.updatePreview()
 
+
+class UpdatePrintPreview(ActionStep):
+    """
+    Force the print preview dialog to update itself.
+
+    To be used inside a document action
+    """
+
+    def gui_run(self, gui_context):
+        preview_widget = gui_context.view.findChild(QtGui.QPrintPreviewWidget)
+        preview_widget.updatePreview()
 
 class PrintPreview( ActionStep ):
     """
@@ -106,6 +122,11 @@ class PrintPreview( ActionStep ):
         
         the :class:`QtGui.QTextDocument` holding the document that will be shown in the print
         preview
+        
+    .. attribute:: actions
+    
+        the list of additional document actions to be displayed in the toolbar of the
+        print preview
     
     .. image:: /_static/simple_report.png
         """
@@ -121,23 +142,23 @@ class PrintPreview( ActionStep ):
         self.margin_unit = QtPrintSupport.QPrinter.Millimeter
         self.page_size = None
         self.page_orientation = None
+        self.actions = [EditDocument()]
 
-    def get_printer( self ):
-        if not self.printer:
-            self.printer = QtPrintSupport.QPrinter()
-        if not self.printer.isValid():
-            self.printer.setOutputFormat( QtPrintSupport.QPrinter.PdfFormat )
-        return self.printer
+    def get_printer(self):
+        if self.printer is not None:
+            return self.printer
+        printer = QtPrintSupport.QPrinter()
+        if not printer.isValid():
+            printer.setOutputFormat( QtPrintSupport.QPrinter.PdfFormat )
+        return printer
 
-    def config_printer( self ):
-        self.printer = self.get_printer()
-        if self.page_size != None:
-            self.printer.setPageSize( self.page_size )
-        if self.page_orientation != None:
-            self.printer.setOrientation( self.page_orientation )
+    def config_printer(self, printer):
+        if self.page_size is not None:
+            printer.setPageSize( self.page_size )
+        if self.page_orientation is not None:
+            printer.setOrientation( self.page_orientation )
         if None not in [self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit]:
-            self.printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
-        return self.printer
+            printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
 
     def paint_on_printer( self, printer ):
         self.document.print_(printer)
@@ -145,13 +166,14 @@ class PrintPreview( ActionStep ):
     def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
         the action step."""
-        self.config_printer()
         gui_context = gui_context.copy( DocumentActionGuiContext )
         gui_context.document = self.document
-        dialog = PrintPreviewDialog( self.printer, 
-                                     gui_context, 
-                                     actions = [EditDocument()],
-                                     flags = QtCore.Qt.Window )
+        printer = self.get_printer()
+        self.config_printer(printer)
+        dialog = PrintPreviewDialog(printer,
+                                    gui_context,
+                                    actions = self.actions,
+                                    flags = QtCore.Qt.Window)
         dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
@@ -164,12 +186,13 @@ class PrintPreview( ActionStep ):
             dialog.exec_()
         
     def get_pdf(self, filename=None):
-        self.config_printer()
-        self.printer.setOutputFormat( QtPrintSupport.QPrinter.PdfFormat )
+        printer = QtPrintSupport.QPrinter()
+        printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
+        self.config_printer(printer)
         if filename is None:
             filename = OpenFile.create_temporary_file('.pdf')
-        self.printer.setOutputFileName(filename)
-        self.paint_on_printer(self.printer)
+        printer.setOutputFileName(filename)
+        self.paint_on_printer(printer)
         return filename
 
 class ChartDocument( QtCore.QObject ):

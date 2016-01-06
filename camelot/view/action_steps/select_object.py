@@ -73,14 +73,16 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
     
     def get_related_admin(self, cls):
         admin = self._original_admin.get_related_admin(cls)
-        return SelectAdminDecorator(admin)
+        # this admin will end up in the model context of the next
+        # step
+        return admin
     
     def get_subclass_tree(self):
         new_subclasses = []
         if self.show_subclasses == True:
             subclasses = self._original_admin.get_subclass_tree()
             for admin, tree in subclasses:
-                new_admin = SelectAdminDecorator(admin)
+                new_admin = SelectAdminDecorator(admin, True)
                 new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
         return new_subclasses
 
