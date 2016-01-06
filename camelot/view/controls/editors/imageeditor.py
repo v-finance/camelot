@@ -106,7 +106,7 @@ All files (*)"""
             self.label.setMinimumWidth(self.preview_width)
         if self.preview_height != 0:
             self.label.setFixedHeight(self.preview_height)
-            vertical_size_policy = QtGui.QSizePolicy.Minimum
+            vertical_size_policy = QtGui.QSizePolicy.Fixed
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, vertical_size_policy)
         self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, vertical_size_policy)
         

@@ -31,8 +31,8 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
 
-class RichTextDelegate( six.with_metaclass( DocumentationMetaclass,
-                                            CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class RichTextDelegate(CustomDelegate):
     """Custom delegate for rich text (HTML) string values
   """
     

@@ -3,5 +3,5 @@ Jinja2==2.7.2
 chardet==2.2.1 
 xlwt-future==0.8.0
 xlrd==0.9.3
-six==1.6.1
+six==1.10.0
 pycrypto==2.6.1

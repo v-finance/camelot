@@ -31,8 +31,8 @@ from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
 
-class DateDelegate( six.with_metaclass( DocumentationMetaclass,
-                                        CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class DateDelegate(CustomDelegate):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor

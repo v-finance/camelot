@@ -126,7 +126,7 @@ class BackupMechanism(object):
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a backup.
         
-        :param from_engine: a :class:`sqlalchemy.engine.Engine` object that
+        :param from_engine: a :class:`sqlalchemy.engine.Connectable` object that
             provides a connection to the database to be backed up.
         """
         import os
@@ -159,6 +159,7 @@ class BackupMechanism(object):
         for from_table in from_meta_data.sorted_tables:
             if self.backup_table_filter(from_table):
                 to_table = from_table.tometadata(to_meta_data)
+                to_table.schema = None
                 to_table.constraints = set()
                 to_table.primary_key = []
                 to_table.foreign_keys = set()
@@ -166,7 +167,8 @@ class BackupMechanism(object):
         to_meta_data.create_all(to_connection)
 
         number_of_tables = len(from_and_to_tables)
-        with from_engine.begin() as from_connection:
+        from_connection = from_engine.connect()
+        with from_connection.begin():
             for i,(from_table, to_table) in enumerate(from_and_to_tables):
                 yield (i, number_of_tables + 1, _('Copy data of table %s')%from_table.name)
                 self.copy_table_data(from_table, to_table,

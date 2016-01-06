@@ -88,4 +88,6 @@ class ExceptionDialog(QtWidgets.QMessageBox):
                                                 six.text_type(text))
         self.setInformativeText(six.text_type(resolution or ''))
         self.setDetailedText(six.text_type(detail or ''))
+        if icon is not None:
+            self.setIconPixmap(icon.getQPixmap())
 

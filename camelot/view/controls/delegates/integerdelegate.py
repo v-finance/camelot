@@ -34,8 +34,8 @@ if six.PY3:
 else:
     long_int = six.integer_types[-1]
 
-class IntegerDelegate( six.with_metaclass( DocumentationMetaclass,
-                                           CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class IntegerDelegate(CustomDelegate):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor

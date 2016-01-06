@@ -36,8 +36,8 @@ from camelot.view.controls import editors
 
 DEFAULT_COLUMN_WIDTH = 20
 
-class PlainTextDelegate( six.with_metaclass( DocumentationMetaclass,
-                                             CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
 
     editor = editors.TextLineEditor

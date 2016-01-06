@@ -32,7 +32,7 @@ from camelot.view.proxy import ValueLoading
 
 
 def DocumentationMetaclass(name, bases, dct):
-    dct['__doc__'] = dct.get('__doc__','') + """
+    dct['__doc__'] = (dct.get('__doc__') or '') + """
 
 .. _delegate-%s:
 

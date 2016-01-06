@@ -29,8 +29,8 @@ from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-class TextEditDelegate( six.with_metaclass( DocumentationMetaclass, 
-                                            CustomDelegate) ):
+@six.add_metaclass(DocumentationMetaclass)
+class TextEditDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
   
     editor = editors.TextEditEditor

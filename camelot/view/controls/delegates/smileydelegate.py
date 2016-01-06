@@ -29,8 +29,8 @@ import six
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from ..editors.smileyeditor import SmileyEditor, default_icons
 
-class SmileyDelegate( six.with_metaclass( DocumentationMetaclass,
-                                          CustomDelegate ) ):
+@six.add_metaclass(DocumentationMetaclass)
+class SmileyDelegate(CustomDelegate):
     """Delegate for Smiley's
   """
     

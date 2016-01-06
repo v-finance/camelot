@@ -28,8 +28,8 @@ from ....core.qt import variant_to_py, Qt, QtGui
 from .customdelegate import DocumentationMetaclass, CustomDelegate
 from camelot.view.proxy import ValueLoading
 
-class IntervalsDelegate( six.with_metaclass( DocumentationMetaclass,
-                                             CustomDelegate) ):
+@six.add_metaclass(DocumentationMetaclass)
+class IntervalsDelegate(CustomDelegate):
     """Custom delegate for visualizing camelot.container.IntervalsContainer
   data:
   """

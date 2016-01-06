@@ -226,12 +226,8 @@ class Status( EntityBuilder ):
                                         index=True),
                                     'classified_by':orm.relationship( status_type ),
                                     'Admin':status_history_admin, } )
-
-            self.status_type = status_type
-            setattr( entity, '_%s_type'%name, self.status_type )
-
         else:
-
+            status_type = None
             status_history = type( entity.__name__ + 'StatusHistory',
                                    ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
                                    {'__tablename__':self.status_history_table,
@@ -243,8 +239,15 @@ class Status( EntityBuilder ):
                                     'Admin':status_history_admin,} )
             setattr( entity, '_%s_enumeration'%name, self.enumeration )
 
+        self.status_type = status_type
         self.status_history = status_history
+        setattr( entity, '_%s_type'%name, status_type )
         setattr( entity, '_%s_history'%name, self.status_history )
+
+    def create_tables(self):
+        self.status_history.__table__.schema = self.entity.__table__.schema
+        if self.status_type is not None:
+            self.status_type.__table__.schema = self.entity.__table__.schema
 
     def create_non_pk_cols( self ):
         table = orm.class_mapper( self.entity ).local_table
