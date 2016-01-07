@@ -96,6 +96,9 @@ class AbstractCustomEditor(object):
 
     def set_label(self, label):
         self.field_label = label
+        # set label might be called after a set_field_attributes, so
+        # immediately update the attributes of the label
+        self.field_label.set_field_attributes(**self.field_attributes)
 
     def set_value(self, value):
         if value is ValueLoading:

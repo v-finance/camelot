@@ -193,12 +193,12 @@ and takes these parameters :
                 c.next_row()
             else:
                 editor = widgets.create_editor( field, form_widget )
-                if editor != None:
+                if editor is not None:
                     if isinstance( editor, WideEditor ):
                         c.next_empty_row()
                         col_span = 2 * columns
                         label = widgets.create_label( field, editor, form_widget )
-                        if label:
+                        if label is not None:
                             form_layout.addWidget( label, c.row, c.col, row_span, col_span )
                             c.next_row()
                         form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
@@ -209,7 +209,7 @@ and takes these parameters :
                     else:
                         col_span = 1
                         label = widgets.create_label( field, editor, form_widget )
-                        if label:
+                        if label is not None:
                             form_layout.addWidget( label, c.row, c.col, row_span, col_span )
                         form_layout.addWidget( editor, c.row, c.col + 1, row_span, col_span )
                         c.next_col()
