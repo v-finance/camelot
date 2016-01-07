@@ -73,6 +73,7 @@ class FieldLabel(UserTranslatableLabel):
         self._field_attributes = kwargs
         # required fields font is bold
         nullable = kwargs.get('nullable', True)
+        self.setVisible(kwargs.get('visible', True))
         if not nullable:
             self.setFont(self.bold_font)
         else:
