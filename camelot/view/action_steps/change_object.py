@@ -24,7 +24,7 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -39,7 +39,7 @@ from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.proxy.collection_proxy import CollectionProxy, ValidRole
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -82,7 +82,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                                  columns=columns,
                                  parent=self)
         layout.addWidget( form_widget )
-        model.validity_changed.connect(self.validity_changed_slot)
+        model.headerDataChanged.connect(self.header_data_changed)
         form_widget.setObjectName( 'form' )
         if hasattr(admin, 'form_size') and admin.form_size:
             form_widget.setMinimumSize(admin.form_size[0], admin.form_size[1])
@@ -99,13 +99,13 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         cancel_button.setObjectName( 'cancel' )
         ok_button = QtWidgets.QPushButton(six.text_type(accept))
         ok_button.setObjectName( 'ok' )
-        ok_button.setEnabled( False )
         layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
         layout.addStretch()
         self.buttons_widget().setLayout( layout )
+        self._change_complete(False)
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         admin._apply_form_state( self )
@@ -128,17 +128,20 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
-    @QtCore.qt_slot(int, int, six.text_type)
-    def validity_changed_slot(self, row, col, message):
-        self._change_complete(row < 0)
+    @QtCore.qt_slot(int, int, int)
+    def header_data_changed(self, orientation, first, last):
+        if orientation == Qt.Vertical:
+            model = self.sender()
+            valid = variant_to_py(model.headerData(0, orientation, ValidRole))
+            self._change_complete(valid or False)
 
     def _change_complete(self, complete):
         ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         cancel_button = self.findChild( QtWidgets.QPushButton, 'cancel' )
-        if ok_button != None:
+        if ok_button is not None:
             ok_button.setEnabled( complete )
             ok_button.setDefault( complete )
-        if cancel_button != None:
+        if cancel_button is not None:
             ok_button.setDefault( not complete )
 
 class ChangeObjectsDialog( StandaloneWizardPage ):

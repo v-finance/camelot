@@ -100,7 +100,7 @@ assert string_api
 def _py_to_variant_1( obj=None ):
     """Convert a Python object to a :class:`QtCore.QVariant` object
     """
-    if obj==None:
+    if obj is None:
         return QtCore.QVariant()
     return QtCore.QVariant(obj)
 

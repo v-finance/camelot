@@ -546,8 +546,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
     """
 
-    validity_changed = QtCore.qt_signal(int, int, six.text_type)
-
     def __init__(self, admin, max_number_of_rows=10):
         """
         :param admin: the admin interface for the items in the collection
