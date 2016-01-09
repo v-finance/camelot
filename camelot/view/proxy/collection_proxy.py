@@ -51,7 +51,7 @@ from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (VerboseIdentifierRole, ObjectRole,
-                                FieldAttributesRole, PreviewRole)
+                                FieldAttributesRole, PreviewRole, ValidRole)
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from camelot.core.exception import log_programming_error
@@ -158,9 +158,15 @@ class UpdateMixin(object):
                 item = delegate.get_standard_item(locale, value, field_attributes)
                 items.append((column, item))
             verbose_identifier = admin.get_verbose_identifier(obj)
+            valid = False
+            for message in model_context.validator.validate_object(obj):
+                break
+            else:
+                valid = True
             header_item = QtModel.QStandardItem()
             header_item.setData(py_to_variant(obj), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
+            header_item.setData(py_to_variant(valid), ValidRole)
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
                 header_item.setData(py_to_variant(row+1), Qt.DisplayRole)

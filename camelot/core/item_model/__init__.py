@@ -18,6 +18,7 @@ FieldAttributesRole = Qt.UserRole
 ObjectRole = Qt.UserRole + 1
 PreviewRole = Qt.UserRole + 2
 VerboseIdentifierRole = Qt.UserRole + 3
+ValidRole = Qt.UserRole + 4
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent
