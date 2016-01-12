@@ -22,7 +22,6 @@
 #
 #  ============================================================================
 
-import copy
 import logging
 
 logger = logging.getLogger('camelot.admin.validator.object_validator')
@@ -39,8 +38,6 @@ class ObjectValidator(QtCore.QObject):
     `validate_object` method to change it's behaviour.
     """
 
-    validity_changed_signal = QtCore.qt_signal(int)
-
     def __init__(self, admin, model = None):
         """
         :param model: a collection proxy the validator should inspect, or None
@@ -52,7 +49,6 @@ class ObjectValidator(QtCore.QObject):
         super(ObjectValidator, self).__init__()
         self.admin = admin
         self.model = model
-        self._invalid_rows = dict()
         self._related_validators = dict()
         self._all_fields = None
         self._all_field_field_attributes = dict()
@@ -68,15 +64,6 @@ class ObjectValidator(QtCore.QObject):
             validator = self.admin.get_related_admin( cls ).get_validator()
             self._related_validators[cls] = validator
             return validator
-
-    def validate_all_rows(self):
-        """Force validation of all rows in the model"""
-        for row in range(self.model.rowCount()):
-            self.isValid(row)
-
-    def validate_invalid_rows(self):
-        for row in copy.copy(six.iterkeys(self._invalid_rows)):
-            self.isValid(row)
 
     def validate_object( self, obj ):
         """
@@ -127,50 +114,3 @@ class ObjectValidator(QtCore.QObject):
                 messages.extend( related_validator.validate_object( compound_obj ) )
             logger.debug(u'messages : %s'%(u','.join(messages)))
         return messages
-
-    def number_of_invalid_rows(self):
-        """
-        :return: the number of invalid rows in a model, as they have been verified
-        """
-        return len(self._invalid_rows)
-
-    def get_first_invalid_row(self):
-        """
-        :return: the row number of the first invalid row (where the first row
-            has number 0)
-        """
-        return min(six.iterkeys(self._invalid_rows))
-
-    def get_messages(self, row):
-        return self._invalid_rows.get(row, [])
-
-    def isValid(self, row):
-        """Verify if a row in a model is 'valid' meaning it could be flushed to
-        the database
-        """
-        messages = []
-        logger.debug('isValid for row %s' % row)
-        try:
-            for obj in self.model.get_value()[row:row+1]:
-                if obj is not None:
-                    messages = self.validate_object(obj)
-        except Exception as e:
-            logger.error(
-                'programming error while validating object',
-                exc_info=e
-            )
-        valid = (len(messages) == 0)
-        # check the status of the row before modifiying the
-        # invalid rows
-        row_in_invalid_rows = (row in self._invalid_rows)
-        if not valid:
-            self._invalid_rows[row] = messages
-        else:
-            self._invalid_rows.pop(row, None)
-        # check the status after modifying the invalid rows and emit a signal
-        # if the status of the row has changed
-        if row_in_invalid_rows != (row in self._invalid_rows):
-            self.validity_changed_signal.emit(row)
-        logger.debug('valid : %s' % valid)
-        return valid
-
