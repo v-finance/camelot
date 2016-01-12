@@ -37,7 +37,6 @@ from camelot.view.controls import delegates, editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy, ValidRole
 
@@ -167,12 +166,9 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             parent = self,
             create_inline = True,
         )
+        self.invalid_rows = set()
         model = table_widget.get_model()
-        # @todo : dialog should update itself when the to object becomes valid
-        #         or invalid
-        #self.validator = model.get_validator()
-        #self.validator.validity_changed_signal.connect( self.update_complete )
-        model.layoutChanged.connect(self.validate_all_rows)
+        model.headerDataChanged.connect(self.header_data_changed)
         table_widget.set_value(objects)
         table_widget.setObjectName( 'table_widget' )
         note = editors.NoteEditor( parent=self )
@@ -183,31 +179,37 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         layout.addWidget( note )
         self.main_widget().setLayout( layout )
         self.set_default_buttons()
-        ok_button = self.buttons_widget().findChild( QtWidgets.QPushButton, 'accept' )
-        ok_button.setEnabled( False )
+        self.update_complete()
 
-    @QtCore.qt_slot()
-    def validate_all_rows(self):
-        post(self.validator.validate_all_rows, self._all_rows_validated)
+    @QtCore.qt_slot(int, int, int)
+    def header_data_changed(self, orientation, first, last):
+        if orientation == Qt.Vertical:
+            model = self.sender()
+            for row in xrange(first, last+1):
+                valid = variant_to_py(model.headerData(row, orientation, ValidRole))
+                if (valid==True) and (row in self.invalid_rows):
+                    self.invalid_rows.remove(row)
+                    self.update_complete()
+                elif (valid==False) and (row not in self.invalid_rows):
+                    self.invalid_rows.add(row)
+                    self.update_complete()
+                elif (valid==False) and (row==min(self.invalid_rows)):
+                    self.update_complete()
 
-    def _all_rows_validated(self, *args):
-        self.update_complete( 0 )
-
-    @QtCore.qt_slot(int)
-    def update_complete(self, row=0):
-        complete = (self.validator.number_of_invalid_rows()==0)
+    def update_complete(self):
+        complete = (len(self.invalid_rows)==0)
         note = self.findChild( QtWidgets.QWidget, 'note' )
         ok = self.findChild( QtWidgets.QWidget, 'accept' )
         if note != None and ok != None:
-            ok.setEnabled( complete )
+            ok.setEnabled(complete)
             if complete:
                 note.set_value( None )
             else:
-                first_row = self.validator.get_first_invalid_row() + 1
+                first_row = min(self.invalid_rows) + 1
                 notes = [
                     ugettext('Please correct row {0} before proceeding.').format(first_row),
                     ]
-                notes.extend(self.validator.get_messages(first_row-1))
+                #notes.extend(self.validator.get_messages(first_row-1))
                 note.set_value(u'<br>'.join(notes))
 
 class ChangeObject( ActionStep ):
