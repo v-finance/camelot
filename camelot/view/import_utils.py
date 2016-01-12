@@ -359,6 +359,9 @@ class RowDataAdmin(object):
     def get_columns(self):
         return self._columns
 
+    def get_verbose_identifier(self, obj):
+        return six.text_type()
+
     def __getattr__(self, attr):
         return getattr(self.admin, attr)
 
@@ -410,8 +413,13 @@ class RowDataAdmin(object):
         return self._new_field_attributes[field_name]
 
     def get_static_field_attributes(self, field_names):
-        for _field_name in field_names:
-            yield {'editable':True}
+        for field_name in field_names:
+            attributes = self.get_field_attributes(field_name)
+            yield {'editable':True,
+                   'name': attributes['name'],
+                   'delegate': attributes['delegate'],
+                   'column_width': attributes['column_width'],
+                   'field_name': field_name}
 
     def get_dynamic_field_attributes(self, obj, field_names):
         for field_name in field_names:
@@ -435,7 +443,7 @@ class RowDataAdmin(object):
     def new_field_attributes(self, original_field):
         from camelot.view.controls import delegates
 
-        original_field_attributes = self.admin.get_field_attributes( original_field )
+        original_field_attributes = self.admin.get_field_attributes(original_field)
         attributes = dict(original_field_attributes)
         attributes['delegate'] = delegates.PlainTextDelegate
         attributes['python_type'] = str
