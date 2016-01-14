@@ -1,6 +1,8 @@
 import logging
 from sys import maxsize
 
+from six.moves import xrange
+
 from .proxy import AbstractModelProxy
 
 LOGGER = logging.getLogger(__name__)
