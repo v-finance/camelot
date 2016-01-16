@@ -173,8 +173,8 @@ class UpdateMixin(object):
                 header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
-    
-    def gui_run(self, item_model):
+
+    def update_item_model(self, item_model):
         root_item = item_model.invisibleRootItem()
         logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
         for row, header_item, items in self.changed_ranges:
@@ -203,6 +203,8 @@ class Update(UpdateMixin):
             self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
         return self
 
+    def gui_run(self, item_model):
+        self.update_item_model(item_model)
 
 class RowCount(object):
 
@@ -225,25 +227,33 @@ class RowCount(object):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
 
-class Deleted(RowCount):
+class Deleted(RowCount, UpdateMixin):
 
     def __init__(self, objects):
         super(Deleted, self).__init__()
         self.objects = objects
+        self.changed_ranges = []
 
     def model_run(self, model_context):
         for obj in self.objects:
             try:
-                model_context.edit_cache.get_row_by_entity(obj)
+                row = model_context.edit_cache.get_row_by_entity(obj)
             except KeyError:
                 continue
             model_context.proxy.remove(obj)
             model_context.edit_cache.delete_by_entity(obj)
             model_context.attributes_cache.delete_by_entity(obj)
+            # update the header to signal the object became valid
+            header_item = QtModel.QStandardItem()
+            header_item.setData(py_to_variant(None), ObjectRole)
+            header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
+            header_item.setData(py_to_variant(True), ValidRole)
+            self.changed_ranges.append((row, header_item, tuple()))
         self.rows = len(model_context.proxy)
         return self
 
     def gui_run(self, item_model):
+        self.update_item_model(item_model)
         item_model._refresh_content(self.rows)
 
 class Filter(RowCount):
@@ -436,7 +446,7 @@ class Created(RowCount, UpdateMixin):
 
     def gui_run(self, item_model):
         RowCount.gui_run(self, item_model)
-        UpdateMixin.gui_run(self, item_model)
+        self.update_item_model(item_model)
 
 class Sort(RowCount):
 
