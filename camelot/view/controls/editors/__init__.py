@@ -59,7 +59,6 @@ from .stareditor import StarEditor
 from .textlineeditor import TextLineEditor
 from .timeeditor import TimeEditor
 from .virtualaddresseditor import VirtualAddressEditor
-from .smileyeditor import SmileyEditor
 from .textediteditor import TextEditEditor
 from .wideeditor import WideEditor
 from .noteeditor import NoteEditor
@@ -91,7 +90,6 @@ __all__ = [
     TextLineEditor.__name__,
     TimeEditor.__name__,
     VirtualAddressEditor.__name__,
-    SmileyEditor.__name__,
     TextEditEditor.__name__,
     WideEditor.__name__,
 ]
