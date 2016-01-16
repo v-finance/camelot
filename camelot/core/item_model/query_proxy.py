@@ -96,6 +96,13 @@ class QueryModelProxy(ListModelProxy):
                 # if the object is at the free index, nothing needs to happen
                 if self._indexed_objects.get(obj) is None:
                     self._indexed_objects[free_index] = obj
+                # if the object is in _objects, remove it from there, since
+                # it is in the query as well, while keeping the total length
+                # of the collection invariant
+                if obj in self._objects:
+                    self._objects.remove(obj)
+                    if self._length is not None:
+                        self._length = self._length + 1
             row_count = len(self)
             rows_in_query = row_count - len(self._objects)
             # Verify if rows not in the query have been requested
