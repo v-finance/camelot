@@ -1,7 +1,7 @@
 import logging
 from sys import maxsize
 
-from six.moves import xrange
+from six import moves
 
 from .proxy import AbstractModelProxy
 
@@ -99,7 +99,7 @@ class ListModelProxy(AbstractModelProxy, dict):
         if not (0<=sl.stop<=size):
             raise IndexError('stop of slice not in range', sl.stop, 0, size)
         limit = min(size-sl.start, sl.stop-sl.start)
-        for i in xrange(sl.start, sl.stop):
+        for i in moves.xrange(sl.start, sl.stop):
             try:
                 obj = self._indexed_objects[i]
             except KeyError:

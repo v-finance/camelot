@@ -23,6 +23,7 @@
 #  ============================================================================
 
 import six
+from six import moves
 
 from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
 
@@ -185,7 +186,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Vertical:
             model = self.sender()
-            for row in xrange(first, last+1):
+            for row in moves.xrange(first, last+1):
                 valid = variant_to_py(model.headerData(row, orientation, ValidRole))
                 if (valid==True) and (row in self.invalid_rows):
                     self.invalid_rows.remove(row)
