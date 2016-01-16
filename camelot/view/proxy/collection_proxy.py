@@ -50,8 +50,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
-from ...core.item_model import (VerboseIdentifierRole, ObjectRole,
-                                FieldAttributesRole, PreviewRole, ValidRole)
+from ...core.item_model import (
+    VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
+    ValidRole, ValidMessageRole
+)
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from camelot.core.exception import log_programming_error
@@ -163,10 +165,12 @@ class UpdateMixin(object):
                 break
             else:
                 valid = True
+                message = None
             header_item = QtModel.QStandardItem()
             header_item.setData(py_to_variant(obj), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
             header_item.setData(py_to_variant(valid), ValidRole)
+            header_item.setData(py_to_variant(message), ValidMessageRole)
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
                 header_item.setData(py_to_variant(row+1), Qt.DisplayRole)

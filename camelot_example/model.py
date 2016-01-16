@@ -194,7 +194,6 @@ class Movie( Entity ):
                                                           <tr><td>4 stars</td><td>Very good</td></tr>
                                                           <tr><td>5 stars</td><td>Awesome !</td></tr>
                                                        </table>'''),
-                                smiley=dict(delegate=delegates.SmileyDelegate),
                                 script=dict(remove_original=True))
 
     def __unicode__(self):

@@ -29,6 +29,7 @@ from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
@@ -39,7 +40,7 @@ from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy, ValidRole
+from camelot.view.proxy.collection_proxy import CollectionProxy
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -180,7 +181,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         layout.addWidget( note )
         self.main_widget().setLayout( layout )
         self.set_default_buttons()
-        self.update_complete()
+        self.update_complete(model)
 
     @QtCore.qt_slot(int, int, int)
     def header_data_changed(self, orientation, first, last):
@@ -190,14 +191,14 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 valid = variant_to_py(model.headerData(row, orientation, ValidRole))
                 if (valid==True) and (row in self.invalid_rows):
                     self.invalid_rows.remove(row)
-                    self.update_complete()
+                    self.update_complete(model)
                 elif (valid==False) and (row not in self.invalid_rows):
                     self.invalid_rows.add(row)
-                    self.update_complete()
+                    self.update_complete(model)
                 elif (valid==False) and (row==min(self.invalid_rows)):
-                    self.update_complete()
+                    self.update_complete(model)
 
-    def update_complete(self):
+    def update_complete(self, model):
         complete = (len(self.invalid_rows)==0)
         note = self.findChild( QtWidgets.QWidget, 'note' )
         ok = self.findChild( QtWidgets.QWidget, 'accept' )
@@ -206,12 +207,11 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             if complete:
                 note.set_value( None )
             else:
-                first_row = min(self.invalid_rows) + 1
-                notes = [
-                    ugettext('Please correct row {0} before proceeding.').format(first_row),
-                    ]
-                #notes.extend(self.validator.get_messages(first_row-1))
-                note.set_value(u'<br>'.join(notes))
+                row = min(self.invalid_rows)
+                note.set_value(u'{0}<br/>{1}'.format(
+                    ugettext(u'Please correct row {0} before proceeding.').format(row+1),
+                    variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
+                ))
 
 class ChangeObject( ActionStep ):
     """
