@@ -18,7 +18,11 @@ class TwoWayDict(dict):
 
 class SortingRowMapper( dict ):
     """Class mapping rows of a collection 1:1 without sorting
-    and filtering, unless a mapping has been defined explicitly"""
+    and filtering, unless a mapping has been defined explicitly
+    
+    where the key is the is the index in the sorted row,
+    and the value is the index in the unsorted list of objects.
+    """
 
     def __getitem__(self, row):
         try:
@@ -37,8 +41,12 @@ class ListModelProxy(AbstractModelProxy, dict):
         :param objects: a list of objects
         """
         assert isinstance(objects, list)
+        # the unsorted, unfiltered list of objects
         self._objects = objects
+        # mapping of the sorted and filtered row numbers to the objects
         self._indexed_objects = TwoWayDict()
+        # mapping of the sorted and filtered row numbers to the index in the
+        # unsorted and unfiltered list
         self._sort_and_filter = SortingRowMapper()
 
     def __len__(self):
@@ -50,6 +58,9 @@ class ListModelProxy(AbstractModelProxy, dict):
 
     def remove(self, obj):
         if obj in self._objects:
+            # clear sort and filter, this could probably happen more efficient
+            self._indexed_objects = TwoWayDict()
+            self._sort_and_filter = SortingRowMapper()
             self._objects.remove(obj)
 
     def index(self, obj):

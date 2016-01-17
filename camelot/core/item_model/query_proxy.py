@@ -5,7 +5,7 @@ import six
 
 from sqlalchemy import orm, sql, exc
 
-from .list_proxy import ListModelProxy, TwoWayDict
+from .list_proxy import ListModelProxy, TwoWayDict, SortingRowMapper
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,6 +69,9 @@ class QueryModelProxy(ListModelProxy):
             self._objects.remove(obj)
         elif self._length is not None:
             self._length = self._length - 1
+        # clear sort and filter, this could probably happen more efficient
+        self._indexed_objects = TwoWayDict()
+        self._sort_and_filter = SortingRowMapper()
 
     def get_query(self, order_clause=True):
         """
