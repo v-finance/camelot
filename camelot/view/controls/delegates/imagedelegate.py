@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt, py_to_variant
+from ....core.qt import QtGui, QtCore, Qt, py_to_variant, variant_to_py
 from ....core.item_model import PreviewRole
 from ....view.controls import editors
 from ....view.proxy import ValueLoading
@@ -50,9 +50,9 @@ class ImageDelegate(FileDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        data = index.data(Qt.DisplayRole)
+        data = index.data(PreviewRole)
         if data not in (None, ValueLoading):
-            pixmap = QtGui.QPixmap(data)
+            pixmap = QtGui.QPixmap(variant_to_py(data))
         
             if pixmap.width() > 0 and pixmap.height() > 0:
                 rect = option.rect
