@@ -159,6 +159,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     def __init__( self,
                   objects,
                   admin,
+                  invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
@@ -168,7 +169,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             parent = self,
             create_inline = True,
         )
-        self.invalid_rows = set()
+        self.invalid_rows = invalid_rows
         model = table_widget.get_model()
         model.headerDataChanged.connect(self.header_data_changed)
         table_widget.set_value(objects)
@@ -278,6 +279,10 @@ class ChangeObjects( ActionStep ):
 
     :param objects: a list of objects to change
     :param admin: an instance of an admin class to use to edit the objects.
+    :param validate: validate all objects before allowing the user to change
+        them.  If objects are not validated before showing them, only the
+        visible objects will be validated.  But validation of all  objects might
+        take a lot of time.
 
     .. image:: /_static/listactions/import_from_file_preview.png
 
@@ -302,13 +307,21 @@ class ChangeObjects( ActionStep ):
 
     """
 
-    def __init__( self, objects, admin ):
+    def __init__(self, objects, admin, validate=True):
         self.objects = objects
         self.admin = admin
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
         self.icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
+        self.invalid_rows = set()
+        if validate==True:
+            validator = self.admin.get_validator()
+            for row, obj in enumerate(objects):
+                for message in validator.validate_object(obj):
+                    self.invalid_rows.add(row)
+                    break
+                
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
@@ -320,8 +333,9 @@ class ChangeObjects( ActionStep ):
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        dialog = ChangeObjectsDialog( self.objects,
-                                      self.admin )
+        dialog = ChangeObjectsDialog(self.objects,
+                                     self.admin,
+                                     self.invalid_rows)
         dialog.setWindowTitle( six.text_type( self.window_title ) )
         dialog.set_banner_title( six.text_type( self.title ) )
         dialog.set_banner_subtitle( six.text_type( self.subtitle ) )

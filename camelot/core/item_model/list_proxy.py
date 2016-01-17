@@ -125,8 +125,12 @@ class ListModelProxy(AbstractModelProxy, dict):
                         unsorted_row = self._sort_and_filter[i]
                         obj = self._objects[unsorted_row+skipped_rows]
                         # check if the object is not present with another index
-                        if self._indexed_objects.get(obj) not in (None, i):
-                            skipped_rows = skipped_rows + 1
+                        index = self._indexed_objects.get(obj)
+                        if index is not None:
+                            # when index equals i, the row doesn't needs to be
+                            # skipped, but neither should it be indexed again
+                            if index != i:
+                                skipped_rows = skipped_rows + 1
                         else:
                             self._indexed_objects[i] = obj
                             object_found = True
