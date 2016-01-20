@@ -29,7 +29,7 @@ import logging
 
 import six
 
-from ...core.qt import QtGui, QtWidgets, variant_to_py, py_to_variant
+from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -59,7 +59,15 @@ class ListActionModelContext( ApplicationActionModelContext ):
         
     .. attribute:: current_row
     
-        the current row in the list
+        the current row in the list if a cell is active
+    
+    .. attribute:: current_column
+    
+        the current column in the table if a cell is active
+    
+    .. attribute:: current_field_name
+    
+        the name of the field displayed in the current column
         
     .. attribute:: session
     
@@ -83,6 +91,8 @@ class ListActionModelContext( ApplicationActionModelContext ):
         self._model = None
         self.admin = None
         self.current_row = None
+        self.current_column = None
+        self.current_field_name = None
         self.selection_count = 0
         self.collection_count = 0
         self.selected_rows = []
@@ -158,7 +168,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
-        current_row = None
+        current_row, current_column, current_field_name = None, None, None
         model = None
         collection_count = 0
         selection_count = 0
@@ -167,9 +177,16 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
             current_index = self.item_view.currentIndex()
             if current_index.isValid():
                 current_row = current_index.row()
+                current_column = current_index.column()
             model = self.item_view.model()
             if model is not None:
                 collection_count = model.rowCount()
+                if current_column is not None:
+                    current_field_name = variant_to_py(
+                        model.headerData(
+                            current_column, Qt.Horizontal, Qt.UserRole
+                        )
+                    )
             if self.item_view.selectionModel() is not None:
                 selection = self.item_view.selectionModel().selection()
                 for i in range( len( selection ) ):
@@ -181,6 +198,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.collection_count = collection_count
         context.selected_rows = selected_rows
         context.current_row = current_row
+        context.current_column = current_column
+        context.current_field_name = current_field_name
         context._model = model
         return context
         
@@ -909,10 +928,14 @@ class ReplaceFieldContents( EditAction ):
     icon = Icon('tango/16x16/actions/edit-find-replace.png')
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
+    shortcut = QtGui.QKeySequence.Replace
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        field_name, value = yield action_steps.ChangeField( model_context.admin )
+        field_name, value = yield action_steps.ChangeField(
+            model_context.admin,
+            field_name = model_context.current_field_name
+        )
         yield action_steps.UpdateProgress( text = _('Replacing field') )
         dynamic_field_attributes = model_context.admin.get_dynamic_field_attributes
         with model_context.session.begin():

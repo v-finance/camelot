@@ -353,12 +353,13 @@ class ChangeFieldDialog( StandaloneWizardPage ):
     def __init__( self,
                   admin,
                   field_attributes,
+                  field_name,
                   parent = None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeFieldDialog, self).__init__( '', parent, flags )
         from camelot.view.controls.editors import ChoicesEditor
         self.field_attributes = field_attributes
-        self.field = None
+        self.field = field_name
         self.value = None
         self.static_field_attributes = admin.get_static_field_attributes
         self.setWindowTitle( admin.get_verbose_name_plural() )
@@ -381,10 +382,14 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes) if field_changeable(attributes)]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
-        editor.set_value( None )
+        editor.set_value(self.field)
         self.field_changed()
         editor.editingFinished.connect( self.field_changed )
         self.set_default_buttons()
+        if self.field is not None:
+            value_editor = self.findChild(QtWidgets.QWidget, 'value_editor')
+            if value_editor is not None:
+                value_editor.setFocus()
 
     @QtCore.qt_slot()
     def field_changed(self):
@@ -428,14 +433,16 @@ class ChangeField( ActionStep ):
     :param admin: the admin of the object of which to change the field
     :param field_attributes: a list of field attributes of the fields that
         can be changed.  If `None` is given, all fields are shown.
+    :param field_name: the name of the selected field when opening the dialog
 
     This action step returns a tuple with the name of the selected field, and
     its new value.
     """
 
-    def __init__(self, admin, field_attributes = None ):
+    def __init__(self, admin, field_attributes = None, field_name=None):
         super( ChangeField, self ).__init__()
         self.admin = admin
+        self.field_name = field_name
         if field_attributes == None:
             field_attributes = admin.get_all_fields_and_attributes()
         self.field_attributes = field_attributes
@@ -443,8 +450,9 @@ class ChangeField( ActionStep ):
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        return ChangeFieldDialog( self.admin,
-                                  self.field_attributes )
+        return ChangeFieldDialog(
+            self.admin, self.field_attributes, self.field_name
+        )
 
     def gui_run( self, gui_context ):
         dialog = self.render()
