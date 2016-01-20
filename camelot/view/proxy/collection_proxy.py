@@ -555,7 +555,8 @@ position in the query.
             #
             # Set the header data
             #
-            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
+            set_header_data(py_to_variant(field_name), Qt.UserRole)
+            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(self._header_font_required, Qt.FontRole)
             else:
