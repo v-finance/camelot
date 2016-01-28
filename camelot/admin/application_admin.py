@@ -31,7 +31,9 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 import six
 
+from .entity_admin import EntityAdmin
 from .object_admin import ObjectAdmin
+from ..core.orm import Entity
 from ..core.qt import Qt, QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
@@ -115,14 +117,15 @@ shortcut confusion and reduce the number of status updates.
                        application_action.RuntimeInfo() ]
 
     def __init__(self, name=None, author=None, domain=None):
-        """Construct an ApplicationAdmin object and register it as the 
-        prefered ApplicationAdmin to use througout the application"""
         #
         # Cache created ObjectAdmin objects
         #
         self._object_admin_cache = {}
         self._memento = None
-        self.admins = {object: ObjectAdmin}
+        self.admins = {
+            object: ObjectAdmin,
+            Entity: EntityAdmin,
+        }
         if name is not None:
             self.name = name
         if author is not None:
