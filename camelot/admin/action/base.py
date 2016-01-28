@@ -367,6 +367,7 @@ direct manipulations of the user interface without a need to access the model.
             of type :class:`GuiContext`
             
         """
+        from ..application_admin import ApplicationAdmin
         from camelot.view.controls.progress_dialog import ProgressDialog
         progress_dialog = None
         # only create a progress dialog if there is none yet, or if the
@@ -374,11 +375,13 @@ direct manipulations of the user interface without a need to access the model.
         LOGGER.debug( 'action gui run started' )
         if gui_context.progress_dialog and gui_context.progress_dialog.wasCanceled():
             gui_context.progress_dialog = None
-        if gui_context.progress_dialog == None:
+        if gui_context.progress_dialog is None:
             LOGGER.debug( 'create new progress dialog' )
             progress_dialog = ProgressDialog( six.text_type( self.verbose_name ) )
             gui_context.progress_dialog = progress_dialog
             #progress_dialog.show()
+        if gui_context.admin is None:
+            gui_context.admin = ApplicationAdmin()
         super(Action, self).gui_run( gui_context )
         # only close the progress dialog if it was created here
         if progress_dialog != None:
