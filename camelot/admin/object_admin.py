@@ -761,9 +761,7 @@ be specified using the verbose_name attribute.
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
             return structure_to_form(self.form_display)
-        if self.list_display:
-            return Form( self.get_table().get_fields() )
-        return Form([])
+        return Form( self.get_table().get_fields() )
 
     def _apply_form_state(self, widget):
         """apply the consequences of the form_state class attribute
