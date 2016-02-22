@@ -91,7 +91,8 @@ class FormEditors( object ):
             widget_label = FieldLabel(
                 field_name,
                 field_attributes['name'],
-                self._admin
+                self._admin,
+                parent,
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):
