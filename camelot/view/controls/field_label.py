@@ -58,10 +58,10 @@ class FieldLabel(UserTranslatableLabel):
         self._admin = admin
         self._field_attributes = dict()
         
-    def sizeHint( self ):
-        size_hint = super(FieldLabel, self).sizeHint()
-        size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
-        return size_hint
+    #def sizeHint( self ):
+        #size_hint = super(FieldLabel, self).sizeHint()
+        #size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
+        #return size_hint
     
     def get_value(self):
         return None
