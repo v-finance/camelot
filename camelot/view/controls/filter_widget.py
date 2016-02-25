@@ -137,6 +137,8 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
+        # run the filter action to apply the initial filter on the list
+        self.run_action()
 
 class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """Flter widget based on a QGroupBox"""
@@ -165,6 +167,8 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
                 combobox.insertItem(i,
                                     six.text_type(mode.verbose_name),
                                     py_to_variant(mode))
+            # setting the current index will trigger the run of the action to
+            # apply the initial filter
             combobox.setCurrentIndex(current_index)
 
     def get_value(self):
