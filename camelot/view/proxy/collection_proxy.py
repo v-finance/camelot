@@ -43,15 +43,16 @@ returned and an update signal is emitted when the correct data is available.
 #   during the lifetime of the proxy
 #
 import collections
+import itertools
 import logging
 
 logger = logging.getLogger(__name__)
 
 import six
 
-from camelot.admin.action.list_action import ListActionModelContext
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...admin.action.list_action import ListActionModelContext
 from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
@@ -274,10 +275,17 @@ class Filter(RowCount):
         self.new_value = new_value
 
     def model_run(self, model_context):
+        # comparison of old and new value can only happen in the model thread
         if self.old_value != self.new_value:
             model_context.proxy.filter(self.action, self.new_value)
-            super(Filter, self).model_run(model_context)
+        super(Filter, self).model_run(model_context)
         return self
+
+    def __repr__(self):
+        return '{0.__class__.__name__}(action={1})'.format(
+            self,
+            type(self.action).__name__
+        )
 
 class RowData(Update):
 
@@ -601,6 +609,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
         self._filters = dict()
         self._columns = list()
+        self.__crud_request_counter = itertools.count()
         self.__crud_requests = collections.deque()
 
         self._reset()
@@ -642,7 +651,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
     
     def rowCount( self, index = None ):
         rows = super(CollectionProxy, self).rowCount()
-        self.logger.debug('row count requested, returned {0}'.format(rows))
         # no need to count rows when there is no value or there are no columns
         if (rows == 0) and (self._model_context is not None) and self.columnCount():
             root_item = self.invisibleRootItem()
@@ -688,8 +696,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
                     for row in rows_to_request:
                         self._rows_under_request[row] = True
             while len(self.__crud_requests):
-                model_context, request = self.__crud_requests.popleft()
-                self.logger.debug('post request {0}'.format(request))
+                model_context, request_id, request = self.__crud_requests.popleft()
+                self.logger.debug('post request {0} {1}'.format(request_id, request))
                 post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
 
     def _start_timer(self):
@@ -716,8 +724,9 @@ class CollectionProxy(QtModel.QStandardItemModel):
         - the timer for handling the requests is started
         - the request is associated with the current model context
         """
-        self.logger.debug('append request {0}'.format(request))
-        self.__crud_requests.append((self._model_context, request))
+        request_id = six.next(self.__crud_request_counter)
+        self.logger.debug('append request {0} {1}'.format(request_id, request))
+        self.__crud_requests.append((self._model_context, request_id, request))
         self._start_timer()
 
     #
@@ -749,6 +758,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         
 
     def refresh(self):
+        self.logger.debug('refresh called')
         self._reset()
         self.layoutChanged.emit()
 
@@ -756,7 +766,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         reset all shared state and cache
         """
-        self.logger.debug('_reset begin')
+        self.logger.debug('_reset(row_count={0})'.format(row_count))
         #
         # clear the request state before changing the model, changing the
         # model will trigger signals, filling the state again
@@ -782,6 +792,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         :param value: the collection of objects to display or None
         """
+        self.logger.debug('set_value called')
         if isinstance(value, CollectionContainer):
             value = value._collection
         model_context = RowModelContext()
@@ -806,9 +817,10 @@ class CollectionProxy(QtModel.QStandardItemModel):
         Set the filter mode for a specific filter
 
         :param list_filter: a :class:`camelot.admin.action.list_filter.Filter`
-           object
-        :param value: the value on which to filter
+           object, used as the key to filter on
+        :param value: the value on which to filter,
         """
+        self.logger.debug('set_filter called')
         old_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
         self._append_request(Filter(list_filter, old_value, value))
@@ -854,12 +866,13 @@ class CollectionProxy(QtModel.QStandardItemModel):
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
         returned by the `get_columns` method of the `EntityAdmin` class
         """
-        self.logger.debug( 'set_columns' )
+        self.logger.debug('set_columns called')
         assert object_thread( self )
         self._columns = columns
         self._append_request(SetColumns(columns))
 
     def setHeaderData(self, section, orientation, value, role):
+        self.logger.debug('setHeaderData called')
         assert object_thread( self )
         if orientation == Qt.Horizontal:
             if role == Qt.SizeHintRole:
@@ -896,6 +909,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
     def sort( self, column, order ):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
+        self.logger.debug('sort called')
         assert object_thread( self )
         self._append_request(Sort(column, order))
 
@@ -968,6 +982,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
     def get_admin( self ):
         """Get the admin object associated with this model"""
+        self.logger.debug('get_admin called')
         return self.admin
 
 
