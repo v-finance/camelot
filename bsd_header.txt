@@ -26,13 +26,3 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
-from ...core.qt import QtCore, QtWidgets
-
-class AbstractSearchWidget(QtWidgets.QWidget):
-    expand_search_options_signal = QtCore.qt_signal()
-    cancel_signal = QtCore.qt_signal()
-    search_signal = QtCore.qt_signal(str)
-    on_arrow_down_signal = QtCore.qt_signal()
-
-
