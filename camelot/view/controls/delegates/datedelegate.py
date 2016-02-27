@@ -58,3 +58,4 @@ class DateDelegate(CustomDelegate):
             item.setData(py_to_variant(six.text_type()), PreviewRole)
         return item
 
+

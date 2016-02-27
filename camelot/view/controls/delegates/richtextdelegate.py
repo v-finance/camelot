@@ -57,3 +57,4 @@ class RichTextDelegate(CustomDelegate):
             item.setData(py_to_variant(six.text_type(value_str)), PreviewRole)
         return item
 
+

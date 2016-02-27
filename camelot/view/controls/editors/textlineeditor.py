@@ -112,3 +112,4 @@ class TextLineEditor(CustomEditor):
                                          kwargs.get('background_color'))
             text_input.setValidator(validator)
 
+

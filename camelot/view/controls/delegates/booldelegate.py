@@ -73,3 +73,4 @@ class BoolDelegate(CustomDelegate):
                 
         painter.restore()
 
+

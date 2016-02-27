@@ -87,3 +87,4 @@ class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
         size = QtWidgets.QComboBox().sizeHint()
         return size
 
+

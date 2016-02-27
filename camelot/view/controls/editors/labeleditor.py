@@ -61,3 +61,4 @@ class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
 
 
 
+

@@ -76,3 +76,4 @@ class QueryTableProxy(CollectionProxy):
                 
         return query.all()
 
+

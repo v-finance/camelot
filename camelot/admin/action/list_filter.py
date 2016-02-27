@@ -270,6 +270,7 @@ class EditorFilter(Filter):
         state.modes = modes
         return state
 
+
 class SearchFilter(Filter):
 
     def __init__(self, admin):

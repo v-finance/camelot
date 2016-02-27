@@ -120,3 +120,4 @@ class ObjectValidator(QtCore.QObject):
             logger.debug(u'messages : %s'%(u','.join(messages)))
         return messages
 
+

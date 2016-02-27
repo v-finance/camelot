@@ -93,3 +93,4 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
         
         QtWidgets.QLineEdit.keyPressEvent(self, e)
 
+
