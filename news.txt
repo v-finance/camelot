@@ -58,7 +58,7 @@ Development
  
  * Removed the `ColoredFloatDelegate` as it is not a basic type of editor
  
- * `nullable` becomes a dynamic field attribute
+ * `nullable`, `visible`, `validator` are dynamic field attributes
 
  * `ObjectAdmin` does introspeciton on properties to see if they have a setter defined
 
@@ -66,16 +66,14 @@ Development
 
  * `camelot.view.filters` module has been moved to :mod:`camelot.admin.action.list_filter`
 
- * Remove 'delete_mode' and 'save_mode' Admin attributes, as this behavour can is customizable with actions.
+ * Remove 'delete_mode' and 'save_mode' Admin attributes, as this behavour is customizable with actions.
 
- * Remove the 'search_all_fields' Admin attribute, as this behavour can is customizable with the `get_search_fields`
-   method.
+ * Remove the 'search_all_fields' Admin attribute, as this behavour can is customizable with the `get_search_fields` method.
 
  * Add the `get_search_fields` method to the `EntityAdmin` for fine grained customization of the fields to search.
  
  * The tableview shows the number of selected rows.
  
- * `QValidator` classes can be used as a dynamic field attribute for text fields.
 
 Release 13.04.13
 ----------------

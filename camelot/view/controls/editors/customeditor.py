@@ -91,6 +91,9 @@ class AbstractCustomEditor(object):
 
     def set_label(self, label):
         self.field_label = label
+        # set label might be called after a set_field_attributes, so
+        # immediately update the attributes of the label
+        self.field_label.set_field_attributes(**self.field_attributes)
 
     def set_value(self, value):
         if value is ValueLoading:
@@ -111,6 +114,7 @@ class AbstractCustomEditor(object):
     def set_field_attributes(self, **kwargs):
         self.set_background_color(kwargs.get('background_color', None))
         self.field_attributes = kwargs
+        self.setVisible(kwargs.get('visible', True))
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
 

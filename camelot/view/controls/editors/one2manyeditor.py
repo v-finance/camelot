@@ -33,6 +33,7 @@ from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import object_thread, post
 from camelot.view import register
 from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
+from ..action_widget import ActionAction
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
@@ -137,9 +138,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if toolbar:
             model_context = self.gui_context.create_model_context()
             for qaction in toolbar.actions():
-                post(qaction.action.get_state,
-                     qaction.set_state,
-                     args=(model_context, ))
+                if isinstance(qaction, ActionAction):
+                    post(qaction.action.get_state,
+                         qaction.set_state,
+                         args=(model_context, ))
 
     def get_model(self):
         """

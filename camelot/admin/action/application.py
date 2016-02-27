@@ -67,8 +67,10 @@ class Application( Action ):
             # before anything else happens or is imported, the splash screen should be there
             #
             pixmap = self.application_admin.get_splashscreen()
+            progress_dialog = None
             if pixmap is not None:
-                self.gui_context.progress_dialog = SplashProgress( pixmap )
+                progress_dialog = SplashProgress(pixmap)
+                self.gui_context.progress_dialog = progress_dialog
                 gui_context.progress_dialog.show()
                 if sys.platform == 'darwin':
                     # Running on Mac OS X, focus application on launch
@@ -76,9 +78,10 @@ class Application( Action ):
                 gui_context.progress_dialog.setLabelText( _('Initialize application') )
             self.set_application_attributes()
             self.gui_context.admin = self.application_admin
-            super( Application, self ).gui_run( gui_context )
-            if gui_context.progress_dialog is not None:
-                gui_context.progress_dialog.close()
+            super(Application, self).gui_run(gui_context)
+            # only close the progress dialog if it was created in this method
+            if progress_dialog is not None:
+                progress_dialog.close()
         except Exception as e:
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )

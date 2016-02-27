@@ -44,11 +44,16 @@ class FieldLabel(UserTranslatableLabel):
     font = None
     bold_font = None
     
-    def __init__(self, field_name, text, admin, parent=None):
+    def __init__(self, field_name, text, admin, parent):
         """
         :param field_name: the name of the field
         :param text: user translatable string to be used as field label
         :param admin: the admin of the object of the field
+        :param parent: the parent widget
+        
+        Field labels should be created with a parent since setting the
+        field attributes might 'visualize' them, so they could appear as
+        'ghost' windows when they have no parent
         """
         super(FieldLabel, self).__init__(text, parent)
         if FieldLabel.font_width == None:
@@ -63,10 +68,10 @@ class FieldLabel(UserTranslatableLabel):
         self._admin = admin
         self._field_attributes = dict()
         
-    def sizeHint( self ):
-        size_hint = super(FieldLabel, self).sizeHint()
-        size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
-        return size_hint
+    #def sizeHint( self ):
+        #size_hint = super(FieldLabel, self).sizeHint()
+        #size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
+        #return size_hint
     
     def get_value(self):
         return None
@@ -78,6 +83,7 @@ class FieldLabel(UserTranslatableLabel):
         self._field_attributes = kwargs
         # required fields font is bold
         nullable = kwargs.get('nullable', True)
+        self.setVisible(kwargs.get('visible', True))
         if not nullable:
             self.setFont(self.bold_font)
         else:

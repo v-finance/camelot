@@ -68,6 +68,7 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'nullable',
                                                 'precision',
                                                 'directory',
+                                                'visible',
                                                 'validator'])
 
 

@@ -644,6 +644,9 @@ class TableView(AbstractView):
         header = self.findChild(QtWidgets.QWidget, 'header_widget')
         if header is not None:
             header.deleteLater()
+        # when a new header is set, the old one can no longer cancel its
+        # search
+        self.search_filter = lambda q: q
         header = self.header_widget(self.gui_context, self)
         header.setObjectName('header_widget')
         self.widget_layout.insertWidget(0, header)

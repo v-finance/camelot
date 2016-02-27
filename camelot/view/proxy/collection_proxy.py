@@ -524,6 +524,8 @@ class SetColumns(object):
             #
             # Set the header data
             #
+            
+            set_header_data(py_to_variant(field_name), Qt.UserRole)
             set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.FontRole)
@@ -859,6 +861,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 'received {0} objects created'.format(len(objects))
             )
             self._append_request(Created(objects))
+
 
     def set_columns(self, columns):
         """Callback method to set the columns

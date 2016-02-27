@@ -98,6 +98,8 @@ class SaveFile( ActionStep ):
         be selected, such as 'All files (*)'.  
         See :class:`QtGui.QFileDialog` for more documentation.
 
+    :param file_name: `None` or the default filename to use
+
     .. attribute:: caption
 
         The text to display to the user
@@ -110,14 +112,17 @@ class SaveFile( ActionStep ):
     and uses it as the initial location the next time it is invoked.
     """
 
-    def __init__( self, file_name_filter = ''):
+    def __init__(self, file_name_filter='', file_name=None):
         self.file_name_filter = six.text_type(file_name_filter)
+        self.file_name = file_name
         self.caption = _('Save')
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
         directory = six.text_type(variant_to_py(settings.value('datasource')))
         directory = os.path.dirname(directory)
+        if self.file_name is not None:
+            directory = os.path.join(directory, self.file_name)
         get_filename = QtGui.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
