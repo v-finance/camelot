@@ -75,19 +75,22 @@ class CrudSignalHandler(QtCore.QObject):
         """Call this method to inform the whole application an entity has 
         changed"""
         assert object_thread(self)
-        self.objects_updated.emit(sender, objects)
+        if len(objects):
+            self.objects_updated.emit(sender, objects)
 
     def send_objects_deleted(self, sender, objects, scope='local'):
         """Call this method to inform the whole application an entity is 
         about to be deleted"""
         assert object_thread(self)
-        self.objects_deleted.emit(sender, objects)
+        if len(objects):
+            self.objects_deleted.emit(sender, objects)
             
     def send_objects_created(self, sender, objects, scope='local'):
         """Call this method to inform the whole application an entity is 
         about to be deleted"""
         assert object_thread(self)
-        self.objects_created.emit(sender, objects)
+        if len(objects):
+            self.objects_created.emit(sender, objects)
 
 
 
