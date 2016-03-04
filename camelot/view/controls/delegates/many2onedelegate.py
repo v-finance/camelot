@@ -67,8 +67,7 @@ class Many2OneDelegate(CustomDelegate):
     def get_standard_item(cls, locale, value, fa_values):
         item = super(Many2OneDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
-            value_str = fa_values['admin'].get_verbose_identifier(value)
-            item.setData(py_to_variant(value_str), PreviewRole)
+            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
         return item
 
     def createEditor(self, parent, option, index):
