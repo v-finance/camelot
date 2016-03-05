@@ -157,10 +157,14 @@ class UpdateMixin(object):
             items = []
             locale = model_context.locale
             for column in changed_columns:
-                # copy to make sure the original dict can be compared in subsequent
-                # calls
-                field_attributes = dict(dynamic_field_attributes[column])
-                field_attributes.update(static_field_attributes[column])
+                # copy to make sure the original dict can be reused in
+                # subsequent calls
+                field_attributes = dict(static_field_attributes[column])
+                # the dynamic attributes might update the static attributes,
+                # if get_dynamic_field_attributes is overwritten, like in 
+                # the case of the EntityAdmin setting the onetomany fields
+                # to not editable for objects that are not persistent
+                field_attributes.update(dynamic_field_attributes[column])
                 delegate = field_attributes['delegate']
                 value = row_data[column]
                 item = delegate.get_standard_item(locale, value, field_attributes)
