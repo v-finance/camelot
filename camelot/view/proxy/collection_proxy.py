@@ -328,6 +328,12 @@ class RowData(Update):
     def model_run(self, model_context):
         offset, limit = self.offset_and_limit_rows_to_get()
         self.objects = list(model_context.proxy[offset:offset+limit])
+        # the update mixin will only return change ranges, while the 
+        # view might have not data at all if it requests the data, so
+        # clear the cache to make the whole obj is changed
+        for obj in self.objects:
+            model_context.edit_cache.delete_by_entity(obj)
+            model_context.attributes_cache.delete_by_entity(obj)
         super(RowData, self).model_run(model_context)
         return self
 
