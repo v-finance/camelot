@@ -58,7 +58,7 @@ from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
-    ValidRole, ValidMessageRole
+    ValidRole, ValidMessageRole, ProxyDict
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -88,10 +88,13 @@ def strip_data_from_object( obj, columns ):
             row_data.append( field_value )
     return row_data
 
-from camelot.view.proxy import ValueLoading
-
 invalid_data = py_to_variant()
-invalid_field_attributes_data = py_to_variant({})
+invalid_field_attributes_data = py_to_variant(ProxyDict(editable=False))
+invalid_item = QtModel.QStandardItem()
+invalid_item.setData(invalid_data, Qt.EditRole)
+invalid_item.setData(invalid_data, PreviewRole)
+invalid_item.setData(invalid_data, ObjectRole)
+invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 
 class RowModelContext(ListActionModelContext):
     """A list action model context for a single row.  This context is used
@@ -329,8 +332,6 @@ class RowData(Update):
 
     def gui_run(self, item_model):
         super(RowData, self).gui_run(item_model)
-        for row in self.rows:
-            item_model._rows_under_request.pop(row, None)
             
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
@@ -368,9 +369,6 @@ class SetData(Update):
                 from sqlalchemy.exc import DatabaseError
                 new_value = variant_to_py(value)
                 logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-    
-                if new_value == ValueLoading:
-                    continue
 
                 old_value = getattr(obj, field_name )
                 value_changed = ( new_value != old_value )
@@ -688,15 +686,11 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 self._append_request(SetData(self._update_requests))
                 self._update_requests = list()
             if self._rows_under_request:
-                rows_to_request = set(
-                    k for k,v in six.iteritems(
-                        self._rows_under_request
-                        ) if v==False
-                )
+                rows_to_request = self._rows_under_request.copy()
                 if len(rows_to_request):
                     self._append_request(RowData(rows_to_request))
                     for row in rows_to_request:
-                        self._rows_under_request[row] = True
+                        self._rows_under_request.discard(row)
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
@@ -775,7 +769,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         #
         # A dictionary where the key is the row for which data is requested,
         # and the value indicating if the request has been send
-        self._rows_under_request = dict()
+        self._rows_under_request = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         # make sure all pending requests are handled before removing things
@@ -898,7 +892,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             item = self.verticalHeaderItem(section)
             if item is None:
                 if section not in self._rows_under_request:
-                    self._rows_under_request[section]= False
+                    self._rows_under_request.add(section)
                     self._start_timer()
                 return invalid_data
             if role == Qt.DecorationRole:
@@ -932,24 +926,21 @@ class CollectionProxy(QtModel.QStandardItemModel):
 
         root_item = self.invisibleRootItem()
         row = index.row()
-        child_item = root_item.child(row, index.column())
+        col = index.column()
+        child_item = root_item.child(row, col)
         # the standard implementation uses EditRole as DisplayRole
         if role == Qt.DisplayRole:
             role = PreviewRole
 
         if child_item is None:
             if (row not in self._rows_under_request) and (row >= 0):
-                self._rows_under_request[row] = False
+                self._rows_under_request.add(row)
                 self._start_timer()
-            if role == FieldAttributesRole:
-                #return py_to_variant(
-                    #ProxyDict(self._static_field_attributes[index.column()])
-                #)
-                return invalid_field_attributes_data
-            elif role in (PreviewRole, ObjectRole):
-                return invalid_data
-            return py_to_variant(ValueLoading)
-
+            # set the child item, to prevent a row that has been requested
+            # to be requested twice
+            invalid_clone = invalid_item.clone()
+            root_item.setChild(row, col, invalid_clone)
+            return invalid_clone.data(role)
 
         if role == ObjectRole:
             return self.headerData(row, Qt.Vertical, role)
