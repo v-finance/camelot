@@ -127,16 +127,17 @@ class RowModelContext(ListActionModelContext):
 
 class UpdateMixin(object):
 
-    def add_data(self, model_context, row, obj, data):
+    def add_data(self, model_context, row, obj, data, column_limit):
         """Add data from object o at a row in the cache
         :param row: the row in the cache into which to add data
         :param obj: the object from which to strip the data
         :param data: fill the data cache, otherwise only fills the header cache
+        :param column_limit: upto which column to add data to the cache
         :return: the changes to the item model
         """
         admin = model_context.admin
         static_field_attributes = model_context.static_field_attributes
-        columns = [fa['field_name'] for fa in model_context.static_field_attributes]
+        columns = [fa['field_name'] for fa in model_context.static_field_attributes][:column_limit]
         action_state = None
         changed_ranges = []
         logger.debug('_add data for row {0}'.format(row))
@@ -213,7 +214,7 @@ class Update(UpdateMixin):
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
             #
-            self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
+            self.changed_ranges.extend(self.add_data(model_context, row, obj, True, len(model_context.static_field_attributes)))
         return self
 
     def gui_run(self, item_model):
@@ -292,9 +293,10 @@ class Filter(RowCount):
 
 class RowData(Update):
 
-    def __init__(self, rows):
+    def __init__(self, rows, cols):
         super(RowData, self).__init__(None)
-        self.rows = rows
+        self.rows = rows.copy()
+        self.cols = cols.copy()
         self.difference = None
         self.changed_ranges = []
 
@@ -325,16 +327,23 @@ class RowData(Update):
         return (offset, limit)
 
     def model_run(self, model_context):
+        if len(self.cols):
+            column_limit = max(self.cols) + 1
+        else:
+            # only header data might be requested
+            column_limit = 0
         offset, limit = self.offset_and_limit_rows_to_get()
-        self.objects = list(model_context.proxy[offset:offset+limit])
-        super(RowData, self).model_run(model_context)
+        for obj in list(model_context.proxy[offset:offset+limit]):
+            row = model_context.proxy.index(obj)
+            self.changed_ranges.extend(self.add_data(model_context, row, obj, True, column_limit))
         return self
 
     def gui_run(self, item_model):
         super(RowData, self).gui_run(item_model)
             
     def __repr__(self):
-        return '{0.__class__.__name__}(rows={1})'.format(self, repr(self.rows))
+        return '{0.__class__.__name__}(rows={1}, cols={2})'.format(
+            self, repr(self.rows), repr(self.cols))
 
 class SetData(Update):
 
@@ -424,7 +433,7 @@ class SetData(Update):
                     if was_persistent is False:
                         created_objects.add(obj)
                 # update the cache
-                self.changed_ranges.extend(self.add_data(model_context, row,obj, True))
+                self.changed_ranges.extend(self.add_data(model_context, row,obj, True, len(model_context.static_field_attributes)))
                 updated_objects.add(obj)
                 updated_objects.update(set(admin.get_depending_objects(obj)))
         self.created_objects = tuple(created_objects)
@@ -454,7 +463,7 @@ class Created(RowCount, UpdateMixin):
                 continue
             # rows should only be not None when a created object was in the cache
             self.rows = rows
-            self.changed_ranges.extend(self.add_data(model_context, row, obj, True))
+            self.changed_ranges.extend(self.add_data(model_context, row, obj, True, len(model_context.static_field_attributes)))
         if rows is not None:
             super(Created, self).model_run(model_context)
         return self
@@ -686,11 +695,11 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 self._append_request(SetData(self._update_requests))
                 self._update_requests = list()
             if self._rows_under_request:
-                rows_to_request = self._rows_under_request.copy()
-                if len(rows_to_request):
-                    self._append_request(RowData(rows_to_request))
-                    for row in rows_to_request:
-                        self._rows_under_request.discard(row)
+                self._append_request(
+                    RowData(self._rows_under_request, self._cols_under_request)
+                )
+                self._rows_under_request.clear()
+                self._cols_under_request.clear()
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
@@ -770,6 +779,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         # A dictionary where the key is the row for which data is requested,
         # and the value indicating if the request has been send
         self._rows_under_request = set()
+        self._cols_under_request = set()
         # once the cache has been cleared, no updates ought to be accepted
         self._update_requests = list()
         # make sure all pending requests are handled before removing things
@@ -933,9 +943,11 @@ class CollectionProxy(QtModel.QStandardItemModel):
             role = PreviewRole
 
         if child_item is None:
-            if (row not in self._rows_under_request) and (row >= 0):
-                self._rows_under_request.add(row)
-                self._start_timer()
+            if (row not in self._rows_under_request) or (col not in self._cols_under_request):
+                if (row >= 0) and (col >= 0):
+                    self._rows_under_request.add(row)
+                    self._cols_under_request.add(col)
+                    self._start_timer()
             # set the child item, to prevent a row that has been requested
             # to be requested twice
             invalid_clone = invalid_item.clone()
