@@ -30,6 +30,7 @@
 import six
 
 from ...core.qt import QtCore, QtGui, QtWidgets
+from ..workspace import apply_form_state
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -115,11 +116,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.buttons_widget().setLayout( layout )
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
-        admin._apply_form_state( self )
-
         # do inital validation, so the validity changed signal is valid
         self._validity_changed( 0 )
-
         # set the actions in the actions panel
         self.set_actions(form_actions)
 
@@ -266,7 +264,8 @@ class ChangeObject( ActionStep ):
         return dialog
 
     def gui_run( self, gui_context ):
-        dialog = self.render( gui_context )
+        dialog = self.render(gui_context)
+        apply_form_state(dialog, None, self.admin.form_state)
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtWidgets.QDialog.Rejected:

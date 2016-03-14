@@ -125,13 +125,12 @@ class OpenFormView( ActionStep ):
                         index=row)
         form.set_actions(self.actions)
         form.set_toolbar_actions(self.top_toolbar_actions)
-        self.admin._apply_form_state( form )
         return form
 
     def gui_run( self, gui_context ):
         window = gui_context.get_window()
         formview = self.render(gui_context)
-        show_top_level(formview, window)
+        show_top_level(formview, window, self.admin.form_state)
 
 class ToFirstForm( ActionStep ):
     """
