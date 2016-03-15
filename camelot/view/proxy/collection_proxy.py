@@ -482,6 +482,9 @@ position in the query.
                 def entity_update():
                     columns = self._columns
                     self._add_data(columns, row, entity)
+                    # the validity of an object might have changed when it was
+                    # modified by an action
+                    self.validator.isValid(row)
 
                 return entity_update
 
