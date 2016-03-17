@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from copy import copy
+import collections
 
 _fill = object()
 _no_data = (None,None)
@@ -53,19 +53,15 @@ class ValueCache(object):
         """:param max_entries: the maximum entries that will be stored in the
         cache, if more data is added, the oldest data gets removed"""
         self.max_entries = max_entries
-        self.entities = []
         self.data_by_rows = dict()
-        self.rows_by_entity = dict()
-        
-    def __unicode__(self):
-        return u','.join(six.text_type(e) for e in self.entities)
+        self.rows_by_entity = collections.OrderedDict()
     
-    def __str__(self):
-        return 'Fifo cache of %s rows'%(len(self.entities))
+    def __repr__(self):
+        return u'ValueCache({0.max_entries})'.format(self)
     
     def __len__(self):
         """The number of rows in the cache"""
-        return len( self.entities )
+        return len(self.rows_by_entity)
     
     def rows(self):
         """
@@ -84,9 +80,8 @@ class ValueCache(object):
         old_value = self.delete_by_entity(entity)[1]
         self.data_by_rows[row] = (entity, value)
         self.rows_by_entity[entity] = row
-        self.entities.append(entity)
-        if len(self.entities)>self.max_entries:
-            entity = self.entities.pop(0)
+        if len(self.rows_by_entity)>self.max_entries:
+            entity, _row = self.rows_by_entity.popitem(last=False)
             self.delete_by_entity(entity)
         if old_value is None:
             # there was no old data, so everything has changed
@@ -101,14 +96,10 @@ class ValueCache(object):
         row, data = None, _no_data
         try:
             row = self.rows_by_entity[entity]
-            data = self.data_by_rows.get( row, _no_data )
+            data = self.data_by_rows.get(row, _no_data)
             del self.data_by_rows[row]
             del self.rows_by_entity[entity]      
         except KeyError:
-            pass
-        try:
-            self.entities.remove(entity)
-        except ValueError:
             pass
         return row, data[1] 
     
