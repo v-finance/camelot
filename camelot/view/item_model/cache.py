@@ -73,16 +73,6 @@ class ValueCache(object):
         had data
         """
         return six.iterkeys(self.data_by_rows)
-    
-    def shallow_copy(self, max_entries):
-        """Copy the cache without the actual data but with the references
-        to which object is stored in which row"""
-        new_fifo = type(self)(max_entries)
-        new_fifo.entities = copy( self.entities )
-        # None is to distinguish between a list of data and no data
-        new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in six.iteritems(self.data_by_rows) )
-        new_fifo.rows_by_entity = copy( self.rows_by_entity )
-        return new_fifo
         
     def add_data(self, row, entity, value):
         """The entity might already be on another row, and this row
@@ -103,13 +93,6 @@ class ValueCache(object):
             return set( range( len( value ) ) )
         values = six.moves.zip_longest( value, old_value or [], fillvalue = _fill )
         return set( i for i,(new,old) in enumerate( values ) if new != old )
-      
-    def delete_by_row(self, row):
-        """Remove the data and the reference to the object at row"""
-        (entity, _value_) = self.data_by_rows[row]
-        del self.data_by_rows[row]
-        del self.rows_by_entity[entity] 
-        return row
     
     def delete_by_entity(self, entity):
         """Remove everything in the cache related to an entity instance
@@ -129,28 +112,7 @@ class ValueCache(object):
             pass
         return row, data[1] 
     
-    def has_data_at_row(self, row):
-        """:return: True if there is data in the cache for the row, False if 
-        there isn't"""
-        try:
-            data = self.get_data_at_row( row )
-            if data is not None:
-                return True
-        except KeyError:
-            pass
-        return False
-    
-    def get_data_at_row(self, row):
-        """:return: the data at row"""
-        return self.data_by_rows[row][1]
-    
     def get_row_by_entity(self, entity):
         """:return: the row at which an entity is stored"""
         return self.rows_by_entity[entity]
     
-    def get_entity_at_row(self, row):
-        """:return: the entity that is stored at a row"""
-        return self.data_by_rows[row][0]
-
-
-
