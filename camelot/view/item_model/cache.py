@@ -30,7 +30,6 @@
 import collections
 
 _fill = object()
-_no_data = (None,None)
 
 import six
 
@@ -78,7 +77,7 @@ class ValueCache(object):
         
         """
         old_value = self.delete_by_entity(entity)[1]
-        self.data_by_rows[row] = (entity, value)
+        self.data_by_rows[row] = value
         self.rows_by_entity[entity] = row
         if len(self.rows_by_entity)>self.max_entries:
             entity, _row = self.rows_by_entity.popitem(last=False)
@@ -93,15 +92,14 @@ class ValueCache(object):
         """Remove everything in the cache related to an entity instance
         returns the row at which the data was stored if the data was in the
         cache, return None otherwise"""
-        row, data = None, _no_data
         try:
             row = self.rows_by_entity[entity]
-            data = self.data_by_rows.get(row, _no_data)
+            value = self.data_by_rows.get(row, None)
             del self.data_by_rows[row]
             del self.rows_by_entity[entity]      
         except KeyError:
-            pass
-        return row, data[1] 
+            return None, None
+        return row, value
     
     def get_row_by_entity(self, entity):
         """:return: the row at which an entity is stored"""
