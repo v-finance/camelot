@@ -127,9 +127,10 @@ class RowModelContext(ListActionModelContext):
 
 class UpdateMixin(object):
 
-    def add_data(self, model_context, row, obj, data, column_limit):
+    def add_data(self, model_context, row, columns, obj, data):
         """Add data from object o at a row in the cache
         :param row: the row in the cache into which to add data
+        :param columns: the columns for which data should be added
         :param obj: the object from which to strip the data
         :param data: fill the data cache, otherwise only fills the header cache
         :param column_limit: upto which column to add data to the cache
@@ -137,21 +138,21 @@ class UpdateMixin(object):
         """
         admin = model_context.admin
         static_field_attributes = model_context.static_field_attributes
-        columns = [fa['field_name'] for fa in model_context.static_field_attributes][:column_limit]
+        column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
         action_state = None
         changed_ranges = []
         logger.debug('_add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
         if (not admin.is_deleted( obj ) and data==True):
-            row_data = strip_data_from_object( obj, columns )
-            dynamic_field_attributes = list(admin.get_dynamic_field_attributes(obj, columns))
+            row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
+            dynamic_field_attributes ={column:fa for column, fa in zip(columns, admin.get_dynamic_field_attributes(obj, column_names))}
             if admin.list_action:
                 model_context.obj = obj
                 model_context.current_row = row
                 action_state = admin.list_action.get_state(model_context)
         else:
-            row_data = [None] * len(columns)
-            dynamic_field_attributes =  [{'editable':False}] * len(columns)
+            row_data = {column:None for column in columns}
+            dynamic_field_attributes = {column:{'editable':False} for column in columns}
         # keep track of the columns that changed, to limit the
         # number of editors/cells that need to be updated
         changed_columns = set()
@@ -214,7 +215,8 @@ class Update(UpdateMixin):
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
             #
-            self.changed_ranges.extend(self.add_data(model_context, row, obj, True, len(model_context.static_field_attributes)))
+            columns = tuple(xrange(len(model_context.static_field_attributes)))
+            self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         return self
 
     def gui_run(self, item_model):
@@ -327,15 +329,10 @@ class RowData(Update):
         return (offset, limit)
 
     def model_run(self, model_context):
-        if len(self.cols):
-            column_limit = max(self.cols) + 1
-        else:
-            # only header data might be requested
-            column_limit = 0
         offset, limit = self.offset_and_limit_rows_to_get()
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            self.changed_ranges.extend(self.add_data(model_context, row, obj, True, column_limit))
+            self.changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
         return self
 
     def gui_run(self, item_model):
@@ -433,7 +430,8 @@ class SetData(Update):
                     if was_persistent is False:
                         created_objects.add(obj)
                 # update the cache
-                self.changed_ranges.extend(self.add_data(model_context, row,obj, True, len(model_context.static_field_attributes)))
+                columns = tuple(xrange(len(model_context.static_field_attributes)))
+                self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
                 updated_objects.add(obj)
                 updated_objects.update(set(admin.get_depending_objects(obj)))
         self.created_objects = tuple(created_objects)
@@ -463,7 +461,8 @@ class Created(RowCount, UpdateMixin):
                 continue
             # rows should only be not None when a created object was in the cache
             self.rows = rows
-            self.changed_ranges.extend(self.add_data(model_context, row, obj, True, len(model_context.static_field_attributes)))
+            columns = tuple(range(len(model_context.static_field_attributes)))
+            self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         if rows is not None:
             super(Created, self).model_run(model_context)
         return self

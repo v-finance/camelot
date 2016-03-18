@@ -53,7 +53,7 @@ class ValueCache(object):
         """:param max_entries: the maximum entries that will be stored in the
         cache, if more data is added, the oldest data gets removed"""
         self.max_entries = max_entries
-        self.data_by_rows = dict()
+        self.data_by_rows = collections.defaultdict(dict)
         self.rows_by_entity = collections.OrderedDict()
     
     def __repr__(self):
@@ -69,8 +69,8 @@ class ValueCache(object):
         had data
         """
         return six.iterkeys(self.data_by_rows)
-        
-    def add_data(self, row, entity, value):
+
+    def add_data(self, row, entity, values):
         """The entity might already be on another row, and this row
         might already contain an entity
         
@@ -78,17 +78,16 @@ class ValueCache(object):
         
         """
         old_value = self.delete_by_entity(entity)[1]
-        self.data_by_rows[row] = (entity, value)
+        self.data_by_rows[row] = (entity, values)
         self.rows_by_entity[entity] = row
         if len(self.rows_by_entity)>self.max_entries:
             entity, _row = self.rows_by_entity.popitem(last=False)
             self.delete_by_entity(entity)
         if old_value is None:
             # there was no old data, so everything has changed
-            return set( range( len( value ) ) )
-        values = six.moves.zip_longest( value, old_value or [], fillvalue = _fill )
-        return set( i for i,(new,old) in enumerate( values ) if new != old )
-    
+            return set(six.iterkeys(values))
+        return set(col for col, value in six.iteritems(values) if value != old_value.get(col, _fill))
+
     def delete_by_entity(self, entity):
         """Remove everything in the cache related to an entity instance
         returns the row at which the data was stored if the data was in the
