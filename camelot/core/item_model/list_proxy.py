@@ -80,6 +80,13 @@ class ListModelProxy(AbstractModelProxy, dict):
     def __len__(self):
         return len(self._objects)
 
+    def copy(self):
+        new = type(self).__new__(type(self))
+        new._objects = self._objects
+        new._indexed_objects = self._indexed_objects.copy()
+        new._sort_and_filter = self._sort_and_filter.copy()
+        return new
+
     def append(self, obj):
         if obj not in self._objects:
             self._objects.append(obj)

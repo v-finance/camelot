@@ -64,6 +64,14 @@ class QueryModelProxy(ListModelProxy):
             self._length = query.session.execute(select, mapper=mapper).scalar()
         return self._length + len(self._objects)
 
+    def copy(self):
+        new = super(QueryModelProxy, self).copy()
+        new._query = self._query
+        new._length = self._length
+        new._filters = self._filters.copy()
+        new._sort_decorator = self._sort_decorator
+        return new
+
     def sort(self, key=None, reverse=False):
         self._indexed_objects = TwoWayDict()
         self._sort_decorator = self._get_sort_decorator(key, reverse)

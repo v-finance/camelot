@@ -59,6 +59,13 @@ class AbstractModelProxy(object):
         """
         raise NotImplementedError()
 
+    def copy(self):
+        """
+        :return: a new `AbstractModelProxy` with consistent indexes as long
+            as no new operation is applied on one of the proxies.
+        """
+        raise NotImplementedError()
+
     def sort(self, key=None, reverse=False):
         """
         Apply an order on the objects retrieved by the proxy.  This order is not
