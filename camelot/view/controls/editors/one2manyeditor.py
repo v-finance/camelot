@@ -160,7 +160,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                model.set_columns(columns)
+                list(model.add_columns((fn for fn, _fa in columns)))
+                # this code should be useless, since at this point, the
+                # column count is still 0 ??
                 for i in range(model.columnCount()):
                     txtwidth = variant_to_py(
                         model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)

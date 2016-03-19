@@ -494,18 +494,23 @@ class Sort(RowCount):
 class SetColumns(object):
 
     def __init__(self, columns):
-        self.columns = [c[0] for c in columns]
+        """
+        :param columns: a dictionary mapping field names to column indices
+        """
+        self.columns = columns.copy()
         self.static_field_attributes = None
 
     def __repr__(self):
         return '{0.__class__.__name__}(columns=[{1}...])'.format(
             self,
-            ', '.join(self.columns[:2])
+            ', '.join([k for k,i in zip(six.iterkeys(self.columns), (1,2,))])
         )
 
     def model_run(self, model_context):
+        field_name_by_index = dict((v,k) for k,v in six.iteritems(self.columns))
+        field_names = (field_name_by_index[i] for i in range(len(self.columns)))
         model_context.static_field_attributes = list(
-            model_context.admin.get_static_field_attributes(self.columns)
+            model_context.admin.get_static_field_attributes(field_names)
         )
         # creating the header items should be done here instead of in the gui
         # run
@@ -525,7 +530,7 @@ class SetColumns(object):
         # increase the number of columns at once, since this is slow, and
         # setHorizontalHeaderItem will increase the number of columns one by one
         #
-        item_model.setColumnCount(len(self.columns))
+        item_model.setColumnCount(len(self.static_field_attributes))
         for i, fa in enumerate(self.static_field_attributes):
             verbose_name = six.text_type(fa['name'])
             field_name = fa['field_name']
@@ -620,7 +625,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
         timer.timeout.connect(self.timeout_slot)
 
         self._filters = dict()
-        self._columns = list()
+        self._columns = collections.defaultdict(itertools.count().next)
+
         self.__crud_request_counter = itertools.count()
         self.__crud_requests = collections.deque()
 
@@ -870,16 +876,19 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self._append_request(Created(objects))
 
 
-    def set_columns(self, columns):
-        """Callback method to set the columns
-
-        :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
-        returned by the `get_columns` method of the `EntityAdmin` class
+    def add_columns(self, field_names):
         """
-        self.logger.debug('set_columns called')
-        assert object_thread( self )
-        self._columns = columns
-        self._append_request(SetColumns(columns))
+        Add columns to the columns available through the model
+
+        :param field_names: an iterable of field names
+        :return: a generator of column indexes on which the data for these
+            field names will be available.
+        """
+        self.logger.debug('add_columns called')
+        assert object_thread(self)
+        for field_name in field_names:
+            yield self._columns[field_name]
+        self._append_request(SetColumns(self._columns))
 
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')

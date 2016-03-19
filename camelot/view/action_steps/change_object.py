@@ -119,7 +119,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_actions(form_actions)
         # set the value last, so the validity can be updated
         model.set_value([obj])
-        model.set_columns(columns)
+        list(model.add_columns((fn for fn, _fa in columns)))
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
