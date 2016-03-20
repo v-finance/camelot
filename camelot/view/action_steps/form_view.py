@@ -84,24 +84,28 @@ class OpenFormView( ActionStep ):
 
     def render(self, gui_context):
         from camelot.view.controls.formview import FormView
-
-        objects = self.objects
-        if objects is None:
+        if self.objects is None:
             related_model = gui_context.item_view.model()
-            # Always create a simple collection proxy, even if the original model
-            # was a query proxy, since relating two models to each other and
+            proxy = related_model.get_value().copy()
+            # Always create a new proxy
+            # relating two views on the same model to each other and
             # making sure the correct row is shown in the form involves too many
             # edge cases.
+            # this is the row the user clicked on
             related_row = gui_context.item_view.currentIndex().row()
+            # this is the object visible in that row at the time of the click
             obj = related_model.headerData(related_row, Qt.Vertical, ObjectRole)
-            objects = [variant_to_py(obj)]
-            row = 0
+            # this is the row in the new proxy for the same object, this migth
+            # be the same row as the related row if there were no gui changes
+            # pending
+            row = proxy.index(variant_to_py(obj))
         else:
             row = self.row
+            proxy = self.admin.get_proxy(self.objects)
 
         model = CollectionProxy(self.admin, max_number_of_rows=10)
         list(model.add_columns((fn for fn, fa in self._columns)))
-        model.set_value(self.admin.get_proxy(objects))
+        model.set_value(proxy)
 
         form = FormView(title=self.title, admin=self.admin, model=model,
                         columns=self._columns, form_display=self._form_display,
