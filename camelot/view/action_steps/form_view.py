@@ -101,7 +101,7 @@ class OpenFormView( ActionStep ):
 
         model = CollectionProxy(self.admin, max_number_of_rows=10)
         list(model.add_columns((fn for fn, fa in self._columns)))
-        model.set_value(objects)
+        model.set_value(self.admin.get_proxy(objects))
 
         form = FormView(title=self.title, admin=self.admin, model=model,
                         columns=self._columns, form_display=self._form_display,

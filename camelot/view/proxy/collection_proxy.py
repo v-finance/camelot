@@ -53,12 +53,11 @@ import six
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.list_action import ListActionModelContext
-from ...container.collection_container import CollectionContainer
 from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
-    ValidRole, ValidMessageRole, ProxyDict
+    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -808,11 +807,10 @@ class CollectionProxy(QtModel.QStandardItemModel):
         :param value: the collection of objects to display or None
         """
         self.logger.debug('set_value called')
-        if isinstance(value, CollectionContainer):
-            value = value._collection
+        assert isinstance(value, AbstractModelProxy)
         model_context = RowModelContext()
         model_context.admin = self.admin
-        model_context.proxy = self.admin.get_proxy(value)
+        model_context.proxy = value
         # todo : remove the concept of a validator
         model_context.validator = self.admin.get_validator()
         self._model_context = model_context

@@ -77,7 +77,7 @@ class UpdateTableView( ActionStep ):
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
-        table_view.set_value(self.value)
+        table_view.set_value(self.admin.get_proxy(self.value))
         table_view.set_list_actions(self.list_actions)
 
     def gui_run(self, gui_context):

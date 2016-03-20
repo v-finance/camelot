@@ -33,6 +33,7 @@ from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import object_thread, post
 from camelot.view import register
 from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
+from ....core.item_model import ListModelProxy
 from ..action_widget import ActionAction
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
@@ -172,7 +173,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def set_value(self, collection):
         collection = CustomEditor.set_value(self, collection)
         if collection is None:
-            collection = []
+            collection = ListModelProxy([])
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current

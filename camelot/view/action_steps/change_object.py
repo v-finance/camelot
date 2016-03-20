@@ -118,7 +118,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         # set the actions in the actions panel
         self.set_actions(form_actions)
         # set the value last, so the validity can be updated
-        model.set_value([obj])
+        model.set_value(admin.get_proxy([obj]))
         list(model.add_columns((fn for fn, _fa in columns)))
 
     @QtCore.qt_slot(list)
@@ -338,7 +338,7 @@ class ChangeObjects( ActionStep ):
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        dialog = ChangeObjectsDialog(self.objects,
+        dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
                                      self.admin,
                                      self.invalid_rows)
         dialog.setWindowTitle( six.text_type( self.window_title ) )
