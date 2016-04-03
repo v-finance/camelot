@@ -99,6 +99,7 @@ if qt_api in (None, 'PyQt4', 'PyQt5'):
             QtQml = DelayedModule('QtQml')
             QtQuick = DelayedModule('QtQuick')
         is_deleted = sip.isdeleted
+        delete = sip.delete
     except ImportError:
         qt_api = None
 
@@ -111,6 +112,7 @@ elif qt_api in (None, 'PySide'):
         variant_api = 2
         string_api = 2
         is_deleted = lambda _qobj:False
+        delete = lambda _qobj:True
 
     except ImportError:
         qt_api = None
