@@ -993,7 +993,9 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 return
             self.logger.debug('set data ({0},{1})'.format(row, column))
             self._update_requests.append((row, obj, column, value))
-            self._start_timer()
+            # dont trigger the timer, since the item  model might be deleted
+            # by the time the timout happens
+            self.timeout_slot()
         return True
 
     def get_admin( self ):
