@@ -354,6 +354,12 @@ class SetData(Update):
         self.created_objects = None
         self.updated_objects = None
 
+    def __repr__(self):
+        return '{0.__class__.__name__}([{1}])'.format(
+            self,
+            ', '.join(['(row={0}, column={1})'.format(row, column) for row, _o, column, _v in self.updates])
+        )
+
     def model_run(self, model_context):
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects = set(), set()
