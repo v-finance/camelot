@@ -268,12 +268,15 @@ class Deleted(RowCount, UpdateMixin):
             header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
             header_item.setData(py_to_variant(True), ValidRole)
             self.changed_ranges.append((row, header_item, tuple()))
-        self.rows = len(model_context.proxy)
+            # self.rows should only be not None when the object was in the
+            # proxy
+            self.rows = len(model_context.proxy)
         return self
 
     def gui_run(self, item_model):
         self.update_item_model(item_model)
-        item_model._refresh_content(self.rows)
+        RowCount.gui_run(self, item_model)
+
 
 class Filter(RowCount):
 
@@ -468,11 +471,12 @@ class Created(RowCount, UpdateMixin):
                 row = model_context.proxy.index(obj)
             except ValueError:
                 continue
-            # rows should only be not None when a created object was in the cache
+            # self.rows should only be not None when a created object was in
+            # the cache
             self.rows = rows
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        if rows is not None:
+        if self.rows is not None:
             super(Created, self).model_run(model_context)
         return self
 
