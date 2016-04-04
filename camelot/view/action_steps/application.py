@@ -115,7 +115,7 @@ class ActionView( ActionStep ):
 
     def gui_run(self, gui_context):
         workspace = gui_context.workspace
-        view = self.render(gui_context)
+        view = self.render(workspace.gui_context)
         workspace.set_view(view, title=self.title)
 
 
