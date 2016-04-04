@@ -260,8 +260,6 @@ class Deleted(RowCount, UpdateMixin):
             except KeyError:
                 continue
             model_context.proxy.remove(obj)
-            model_context.edit_cache.delete_by_entity(obj)
-            model_context.attributes_cache.delete_by_entity(obj)
             # update the header to signal the object became valid
             header_item = QtModel.QStandardItem()
             header_item.setData(py_to_variant(None), ObjectRole)
@@ -271,6 +269,8 @@ class Deleted(RowCount, UpdateMixin):
             # self.rows should only be not None when the object was in the
             # proxy
             self.rows = len(model_context.proxy)
+        if self.rows is not None:
+            super(Deleted, self).model_run(model_context)
         return self
 
     def gui_run(self, item_model):
