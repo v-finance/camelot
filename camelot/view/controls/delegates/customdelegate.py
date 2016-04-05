@@ -187,7 +187,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
 
     def setEditorData(self, editor, index):
-        if not index.model():
+        if index.model() is None:
             return
         value = variant_to_py(index.model().data(index, Qt.EditRole))
         field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()

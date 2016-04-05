@@ -504,22 +504,20 @@ class SetColumns(object):
 
     def __init__(self, columns):
         """
-        :param columns: a dictionary mapping field names to column indices
+        :param columns: a list with field names
         """
-        self.columns = columns.copy()
+        self.columns = list(columns)
         self.static_field_attributes = None
 
     def __repr__(self):
         return '{0.__class__.__name__}(columns=[{1}...])'.format(
             self,
-            ', '.join([k for k,i in zip(six.iterkeys(self.columns), (1,2,))])
+            ', '.join([col for col, _i in zip(self.columns, (1,2,))])
         )
 
     def model_run(self, model_context):
-        field_name_by_index = dict((v,k) for k,v in six.iteritems(self.columns))
-        field_names = (field_name_by_index[i] for i in range(len(self.columns)))
         model_context.static_field_attributes = list(
-            model_context.admin.get_static_field_attributes(field_names)
+            model_context.admin.get_static_field_attributes(self.columns)
         )
         # creating the header items should be done here instead of in the gui
         # run
@@ -634,7 +632,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         timer.timeout.connect(self.timeout_slot)
 
         self._filters = dict()
-        self._columns = collections.defaultdict(itertools.count().next)
+        self._columns = []
 
         self.__crud_request_counter = itertools.count()
         self.__crud_requests = collections.deque()
@@ -891,11 +889,18 @@ class CollectionProxy(QtModel.QStandardItemModel):
         :param field_names: an iterable of field names
         :return: a generator of column indexes on which the data for these
             field names will be available.
+
+        When the same field name appears multiple times in field_names, it will
+        generate different indices.  This is needed for the view, since the
+        views use the same indices as the model, and the view needs to be able
+        to make the disctinction between different cells pointing to the same
+        field.
         """
         self.logger.debug('add_columns called')
         assert object_thread(self)
-        for field_name in field_names:
-            yield self._columns[field_name]
+        for i, field_name in enumerate(field_names):
+            self._columns.append(field_name)
+            yield i
         self._append_request(SetColumns(self._columns))
 
     def setHeaderData(self, section, orientation, value, role):
