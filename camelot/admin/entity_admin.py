@@ -517,9 +517,8 @@ and used as a custom action.
 
     def is_persistent(self, obj):
         """:return: True if the object has a persisted state, False otherwise"""
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( obj )
-        if session:
+        session = orm.object_session(obj)
+        if session is not None:
             if obj in session.new:
                 return False
             if obj in session.deleted:
@@ -527,6 +526,12 @@ and used as a custom action.
             return True
         return False
 
+    def is_dirty(self, obj):
+        session = orm.object_session(obj)
+        if session is not None:
+            return (obj in session.dirty)
+        return True
+            
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent

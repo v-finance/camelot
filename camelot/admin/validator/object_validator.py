@@ -78,39 +78,44 @@ class ObjectValidator(QtCore.QObject):
         from camelot.view.controls import delegates
         messages = []
         
-        #
-        # initialize cached static field attributes on first use
-        #
-        if self._all_fields is None:
-            self._all_fields = [fn for fn,_fa in six.iteritems(self.admin.get_all_fields_and_attributes())]
-            for field_name, static_fa in zip(self._all_fields, self.admin.get_static_field_attributes(self._all_fields)):
-                self._all_field_field_attributes[field_name] = static_fa
-        #
-        # get dynamic field attributes on each use
-        #
-        for field_name, dynamic_fa in zip(self._all_fields, self.admin.get_dynamic_field_attributes(obj, self._all_fields)):
-            self._all_field_field_attributes[field_name].update(dynamic_fa)
+        persistent = self.admin.is_persistent(obj)
+        dirty = self.admin.is_dirty(obj)
         
-        for field, attributes in six.iteritems(self._all_field_field_attributes):
-            # if the field was not editable, don't waste any time
-            if attributes.get('editable', False):
-                # if the field, is nullable, don't waste time getting its value
-                if attributes.get('nullable', True) != True:
-                    value = getattr(obj, field)
-                    logger.debug('column %s is required'%(field))
-                    if 'delegate' not in attributes:
-                        raise Exception('no delegate specified for %s'%(field))
-                    is_null = False
-                    if value is None:
-                        is_null = True
-                    elif (attributes['delegate'] == delegates.PlainTextDelegate or issubclass(attributes['delegate'],delegates.PlainTextDelegate)) and (len(value) == 0):
-                        is_null = True
-                    elif (attributes['delegate'] == delegates.LocalFileDelegate or issubclass(attributes['delegate'],delegates.LocalFileDelegate)) and (len(value) == 0):
-                        is_null = True
-                    elif (attributes['delegate'] == delegates.VirtualAddressDelegate or issubclass(attributes['delegate'],delegates.VirtualAddressDelegate)) and (not value[1]):
-                        is_null = True
-                    if is_null:
-                        messages.append(_(u'%s is a required field') % (attributes['name']))
+        if (not persistent) or dirty:
+            #
+            # initialize cached static field attributes on first use
+            #
+            if self._all_fields is None:
+                self._all_fields = [fn for fn,_fa in six.iteritems(self.admin.get_all_fields_and_attributes())]
+                for field_name, static_fa in zip(self._all_fields, self.admin.get_static_field_attributes(self._all_fields)):
+                    self._all_field_field_attributes[field_name] = static_fa
+            #
+            # get dynamic field attributes on each use
+            #
+            for field_name, dynamic_fa in zip(self._all_fields, self.admin.get_dynamic_field_attributes(obj, self._all_fields)):
+                self._all_field_field_attributes[field_name].update(dynamic_fa)
+            
+            for field, attributes in six.iteritems(self._all_field_field_attributes):
+                # if the field was not editable, don't waste any time
+                if attributes.get('editable', False):
+                    # if the field, is nullable, don't waste time getting its value
+                    if attributes.get('nullable', True) != True:
+                        value = getattr(obj, field)
+                        logger.debug('column %s is required'%(field))
+                        if 'delegate' not in attributes:
+                            raise Exception('no delegate specified for %s'%(field))
+                        is_null = False
+                        if value is None:
+                            is_null = True
+                        elif (attributes['delegate'] == delegates.PlainTextDelegate or issubclass(attributes['delegate'],delegates.PlainTextDelegate)) and (len(value) == 0):
+                            is_null = True
+                        elif (attributes['delegate'] == delegates.LocalFileDelegate or issubclass(attributes['delegate'],delegates.LocalFileDelegate)) and (len(value) == 0):
+                            is_null = True
+                        elif (attributes['delegate'] == delegates.VirtualAddressDelegate or issubclass(attributes['delegate'],delegates.VirtualAddressDelegate)) and (not value[1]):
+                            is_null = True
+                        if is_null:
+                            messages.append(_(u'%s is a required field') % (attributes['name']))
+
         if not len( messages ):
             # if the object itself is valid, dig deeper within the compounding
             # objects

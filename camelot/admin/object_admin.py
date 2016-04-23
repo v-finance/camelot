@@ -905,6 +905,10 @@ be specified using the verbose_name attribute.
         """:return: True if the object has a persisted state, False otherwise"""
         return False
 
+    def is_dirty(self, _obj):
+        """:return: True if the object might have been modified"""
+        return True
+
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
