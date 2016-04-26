@@ -769,16 +769,6 @@ be specified using the verbose_name attribute.
             return structure_to_form(self.form_display)
         return Form( self.get_table().get_fields() )
 
-    def _apply_form_state(self, widget):
-        """apply the consequences of the form_state class attribute
-        to a widget"""
-        if hasattr(self, 'form_state'):
-            from camelot.core import constants
-            if self.form_state == constants.MAXIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMaximized)
-            if self.form_state == constants.MINIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMinimized)
-
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls
         the builtin :func:`setattr` function.
