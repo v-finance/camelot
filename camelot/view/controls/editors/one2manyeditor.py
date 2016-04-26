@@ -187,22 +187,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                          qaction.set_state,
                          args=(model_context, ))
 
-    def activate_editor(self, number_of_rows):
-        assert object_thread(self)
-#        return
-# Activating this code can cause segfaults
-# see ticket 765 in web issues
-#
-# The segfault seems no longer there after disabling the
-# editor before setting a new model, but the code below
-# seems to have no effect.
-        table = self.findChild(QtWidgets.QWidget, 'table')
-        if table is not None:
-            index = table.model().index(max(0, number_of_rows - 1), 0)
-            table.scrollToBottom()
-            table.setCurrentIndex(index)
-            table.edit(index)
-
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
         table = self.findChild(QtWidgets.QWidget, 'table')
