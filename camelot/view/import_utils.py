@@ -382,7 +382,7 @@ class RowDataAdmin(object):
         """
         return self._new_field_attributes
 
-    def get_validator(self, model):
+    def get_validator(self, model=None):
         """Creates a validator that validates the data to be imported, the
         validator will check if the background of the cell is pink, and if it
         is it will mark that object as invalid.

@@ -34,7 +34,7 @@ import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
-from ..core.qt import QtCore, Qt
+from ..core.qt import Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.controls.tableview import TableView

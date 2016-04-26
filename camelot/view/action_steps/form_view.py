@@ -119,35 +119,49 @@ class OpenFormView( ActionStep ):
         formview = self.render(gui_context)
         show_top_level(formview, window, self.admin.form_state)
 
-class ToFirstForm( ActionStep ):
+class ChangeFormIndex(ActionStep):
+
+    def gui_run( self, gui_context ):
+        # a pending request might change the number of rows, and therefor
+        # the new index
+        # submit all pending requests to the model thread
+        gui_context.widget_mapper.model().timeout_slot()
+        # wait until they are handled
+        super(ChangeFormIndex, self).gui_run(gui_context)
+
+class ToFirstForm(ChangeFormIndex):
     """
     Show the first object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToFirstForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toFirst()
 
-class ToNextForm( ActionStep ):
+class ToNextForm(ChangeFormIndex):
     """
     Show the next object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToNextForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toNext()
         
-class ToLastForm( ActionStep ):
+class ToLastForm(ChangeFormIndex):
     """
     Show the last object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToLastForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toLast()
         
-class ToPreviousForm( ActionStep ):
+class ToPreviousForm(ChangeFormIndex):
     """
     Show the previous object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToPreviousForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toPrevious()
 
