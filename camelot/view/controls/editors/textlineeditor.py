@@ -105,7 +105,7 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             editable = kwargs.get('editable', False)
             value = text_input.text()
-            text_input.setEnabled(editable)
+            text_input.setReadOnly(not editable)
             text_input.setText(value)
             text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
             set_background_color_palette(text_input,
