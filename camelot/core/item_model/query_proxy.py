@@ -59,7 +59,11 @@ class QueryModelProxy(ListModelProxy):
             query = self.get_query(order_clause=False)
             mapper = query._mapper_zero()
             select = query.order_by(None).as_scalar()
-            columns = [sql.func.count(mapper.primary_key[0])]
+            # search queries might result in outer joins which might result
+            # in the same primary key being returned multiple times
+            columns = [sql.func.count(sql.func.distinct(*mapper.primary_key))]
+            # as for performance related issues, see
+            # http://www.postgresql.org/message-id/CAONnt+72Mtg6kyAFDTHXFWyPPY-QRbAtuREak+64Lm1KN1c-wg@mail.gmail.com
             select = select.with_only_columns(columns)
             self._length = query.session.execute(select, mapper=mapper).scalar()
         return self._length + len(self._objects)
