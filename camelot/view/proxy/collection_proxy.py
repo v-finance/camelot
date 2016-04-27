@@ -91,6 +91,7 @@ def strip_data_from_object( obj, columns ):
 invalid_data = py_to_variant()
 invalid_field_attributes_data = py_to_variant(ProxyDict(editable=False))
 invalid_item = QtModel.QStandardItem()
+invalid_item.setFlags(Qt.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
@@ -807,6 +808,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         # easier to replace the source model all at once
         self.setRowCount(0)
         root_item = self.invisibleRootItem()
+        root_item.setFlags(Qt.NoItemFlags)
         root_item.setEnabled(row_count != None)
         self.setRowCount(row_count or 0)
         self.logger.debug('_reset end')
@@ -946,7 +948,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         assert object_thread( self )
         self._append_request(Sort(column, order))
 
-    def data( self, index, role = Qt.DisplayRole):
+    def data(self, index, role = Qt.DisplayRole):
         """:return: the data at index for the specified role
         This function will return ValueLoading when the data has not
         yet been fetched from the underlying model.  It will then send
@@ -984,6 +986,19 @@ class CollectionProxy(QtModel.QStandardItemModel):
             return self.headerData(row, Qt.Vertical, role)
 
         return child_item.data(role)
+
+    def flags(self, index):
+        """The default implementation of `flags` implicitly creates a child item
+        when there is None, and returns the default flags which are editable.
+        This makes cells which have no associated item yet editable, which can
+        result in data loss once they do have an associated item, but the editor
+        is already created.
+        """
+        root_item = self.invisibleRootItem()
+        child_item = root_item.child(index.row(), index.column())
+        if child_item is None:
+            return Qt.NoItemFlags
+        return child_item.flags()
 
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
