@@ -97,6 +97,8 @@ invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 
+initial_delay = 50
+
 class RowModelContext(ListActionModelContext):
     """A list action model context for a single row.  This context is used
     to get the state of the list action on a row
@@ -628,10 +630,13 @@ class CollectionProxy(QtModel.QStandardItemModel):
         # the model
         #
         timer = QtCore.QTimer(self)
-        timer.setInterval(5)
+        timer.setInterval(initial_delay)
         timer.setSingleShot(True)
         timer.setObjectName('timer')
         timer.timeout.connect(self.timeout_slot)
+
+        self.__time = QtCore.QTime()
+        self.__time.start()
 
         self._filters = dict()
         self._columns = []
@@ -708,7 +713,6 @@ class CollectionProxy(QtModel.QStandardItemModel):
         self.logger.debug('timout slot')
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
-            timer.stop()
             if self._update_requests:
                 self._append_request(SetData(self._update_requests))
                 self._update_requests = list()
@@ -718,6 +722,13 @@ class CollectionProxy(QtModel.QStandardItemModel):
                 )
                 self._rows_under_request.clear()
                 self._cols_under_request.clear()
+            # stop the timer after adding the requests, otherwise the timer
+            # will be trigered again
+            timer.stop()
+            # only slow down if the timout actually caused requests and
+            # requests are arriving at the speed of the interval
+            if len(self.__crud_requests) and (self.__time.restart() < (timer.interval() + initial_delay)):
+                timer.setInterval(timer.interval() * 2)
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
@@ -729,6 +740,9 @@ class CollectionProxy(QtModel.QStandardItemModel):
         """
         timer = self.findChild(QtCore.QTimer, 'timer')
         if (timer is not None) and (not timer.isActive()):
+            if self.__time.elapsed() > (timer.interval() + (2*initial_delay)):
+                # reset the interval after enough time has passed
+                timer.setInterval(initial_delay)
             timer.start()
 
     def _last_request(self):
