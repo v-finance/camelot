@@ -155,7 +155,10 @@ class SelectDirectory(ActionStep):
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = six.text_type(variant_to_py(settings.value('datasource')))
+        if self.directory is not None:
+            directory = self.directory
+        else:
+            directory = six.text_type(variant_to_py(settings.value('datasource')))
         get_directory = QtGui.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
             selected = get_directory(parent=gui_context.workspace,

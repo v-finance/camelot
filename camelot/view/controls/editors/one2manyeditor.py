@@ -30,7 +30,7 @@
 import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import object_thread, post
+from camelot.view.model_thread import post
 from camelot.view import register
 from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
 from ....core.item_model import ListModelProxy
@@ -186,22 +186,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                     post(qaction.action.get_state,
                          qaction.set_state,
                          args=(model_context, ))
-
-    def activate_editor(self, number_of_rows):
-        assert object_thread(self)
-#        return
-# Activating this code can cause segfaults
-# see ticket 765 in web issues
-#
-# The segfault seems no longer there after disabling the
-# editor before setting a new model, but the code below
-# seems to have no effect.
-        table = self.findChild(QtWidgets.QWidget, 'table')
-        if table is not None:
-            index = table.model().index(max(0, number_of_rows - 1), 0)
-            table.scrollToBottom()
-            table.setCurrentIndex(index)
-            table.edit(index)
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):

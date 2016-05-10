@@ -34,7 +34,7 @@ import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
-from ..core.qt import QtCore, Qt
+from ..core.qt import Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.controls.tableview import TableView
@@ -768,16 +768,6 @@ be specified using the verbose_name attribute.
         if self.form_display:
             return structure_to_form(self.form_display)
         return Form( self.get_table().get_fields() )
-
-    def _apply_form_state(self, widget):
-        """apply the consequences of the form_state class attribute
-        to a widget"""
-        if hasattr(self, 'form_state'):
-            from camelot.core import constants
-            if self.form_state == constants.MAXIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMaximized)
-            if self.form_state == constants.MINIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMinimized)
 
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls

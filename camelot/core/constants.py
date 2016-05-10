@@ -48,7 +48,5 @@ camelot_small_icon_height = 16
 
 MAXIMIZED = 'maximized'
 MINIMIZED = 'minimized'
-
-
-
-
+LEFT = 'left'
+RIGHT = 'right'

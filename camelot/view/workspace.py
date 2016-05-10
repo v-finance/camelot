@@ -34,6 +34,7 @@ import six
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
+from ..core import constants
 from ..core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.core.utils import ugettext as _
@@ -378,13 +379,40 @@ class DesktopWorkspace(QtWidgets.QWidget):
 
 top_level_windows = []
 
-def show_top_level(view, parent):
+def apply_form_state(view, parent, state):
+    #
+    # position the new window in the center of the same screen
+    # as the parent
+    #
+    screen = QtWidgets.QApplication.desktop().screenNumber(parent)
+    geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
+    if state == constants.MAXIMIZED:
+        view.setWindowState(QtCore.Qt.WindowMaximized)
+    elif state == constants.MINIMIZED:
+        view.setWindowState(QtCore.Qt.WindowMinimized)
+    elif state == constants.RIGHT:
+        geometry.setLeft(geometry.center().x())
+        view.resize(geometry.width(), geometry.height())
+        view.move(geometry.topLeft())
+    elif state == constants.LEFT:
+        geometry.setRight(geometry.center().x())
+        view.resize(geometry.width(), geometry.height())
+        view.move(geometry.topLeft())
+    else:
+        point = QtCore.QPoint(geometry.x() + geometry.width()/2,
+                              geometry.y() + geometry.height()/2)
+        point = QtCore.QPoint(point.x()-view.width()/2,
+                              point.y()-view.height()/2)
+        view.move(point)
+
+def show_top_level(view, parent, state=None):
     """Show a widget as a top level window.  If a parent window is given, the new
     window will have the same modality as the parent.
     
     :param view: the widget extend AbstractView
     :param parent: the widget with regard to which the top level
-    window will be placed.
+        window will be placed.
+    :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
     from camelot.view.register import register
     #
@@ -408,18 +436,8 @@ def show_top_level(view, parent):
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-    #
-    # position the new window in the center of the same screen
-    # as the parent
-    #
-    screen = QtWidgets.QApplication.desktop().screenNumber(parent)
-    available = QtWidgets.QApplication.desktop().availableGeometry(screen)
+    apply_form_state(view, parent, state)
 
-    point = QtCore.QPoint(available.x() + available.width()/2,
-                          available.y() + available.height()/2)
-    point = QtCore.QPoint(point.x()-view.width()/2,
-                          point.y()-view.height()/2)
-    view.move( point )
     if parent is not None:
         view.setWindowModality(parent.windowModality())
     view.show()

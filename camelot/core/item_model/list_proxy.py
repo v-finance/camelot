@@ -177,6 +177,8 @@ class ListModelProxy(AbstractModelProxy, dict):
                             # skipped, but neither should it be indexed again
                             if index != i:
                                 skipped_rows = skipped_rows + 1
+                            else:
+                                object_found = True
                         else:
                             self._indexed_objects[i] = obj
                             object_found = True

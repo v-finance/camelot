@@ -332,7 +332,7 @@ class XlsReader( six.Iterator ):
     def __iter__( self ):
         return self
     
-class RowDataAdmin(object):
+class RowDataAdmin(ObjectAdmin):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported.
@@ -364,17 +364,31 @@ class RowDataAdmin(object):
     def get_columns(self):
         return self._columns
 
+    def get_verbose_name(self):
+        return self.admin.get_verbose_name()
+
+    def get_verbose_name_plural(self):
+        return self.admin.get_verbose_name_plural()
+
     def get_verbose_identifier(self, obj):
         return six.text_type()
 
-    def __getattr__(self, attr):
-        return getattr(self.admin, attr)
-
     def get_fields(self):
         return self.get_columns()
-    
+
+    def get_settings(self):
+        settings = self.admin.get_settings()
+        settings.beginGroup('import')
+        return settings
+
     def get_table(self):
         return Table( [fn for fn, _fa in self.get_columns()] )
+
+    def get_all_fields_and_attributes(self):
+        """
+        reimplementation needed to support replace field contents during import
+        """
+        return self._new_field_attributes
 
     def get_validator(self, model=None):
         """Creates a validator that validates the data to be imported, the
@@ -399,16 +413,8 @@ class RowDataAdmin(object):
 
         return NewObjectValidator(self, model)
 
-    def flush(self, obj):
-        """When flush is called, don't do anything, since we'll only save the
-        object when importing them for real"""
-        pass
-
-    def is_persistent(self, obj):
-        return True
-
-    def delete(self, obj):
-        pass
+    def get_related_admin(self, cls):
+        return self.admin.get_related_admin(cls)
 
     def get_related_toolbar_actions(self, toolbar_area, direction):
         if toolbar_area==Qt.RightToolBarArea:

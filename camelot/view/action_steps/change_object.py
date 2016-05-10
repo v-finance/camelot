@@ -31,6 +31,7 @@ import six
 from six import moves
 
 from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
+from ..workspace import apply_form_state
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -114,7 +115,6 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self._change_complete(False)
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
-        admin._apply_form_state( self )
         # set the actions in the actions panel
         self.set_actions(form_actions)
         # set the value last, so the validity can be updated
@@ -264,7 +264,8 @@ class ChangeObject( ActionStep ):
         return dialog
 
     def gui_run( self, gui_context ):
-        dialog = self.render( gui_context )
+        dialog = self.render(gui_context)
+        apply_form_state(dialog, None, self.admin.form_state)
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtWidgets.QDialog.Rejected:
