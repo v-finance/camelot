@@ -902,7 +902,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
         for i, field_name in enumerate(field_names):
             self._columns.append(field_name)
             yield i
-        self._append_request(SetColumns(self._columns))
+        if len(self._columns):
+            self._append_request(SetColumns(self._columns))
 
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
