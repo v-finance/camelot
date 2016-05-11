@@ -26,8 +26,14 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+
+import six
+
+from ....core.item_model import PreviewRole
+from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
-from camelot.view.controls import editors
+
+from .. import editors
 
 class ManyToOneChoicesDelegate( CustomDelegate ):
     """Display a ManyToOne or a relationship field as a ComboBox, filling the 
@@ -43,4 +49,9 @@ class ManyToOneChoicesDelegate( CustomDelegate ):
   
     editor = editors.OneToManyChoicesEditor
 
-
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(ManyToOneChoicesDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+        return item
