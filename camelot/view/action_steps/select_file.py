@@ -152,6 +152,7 @@ class SelectDirectory(ActionStep):
     def __init__(self):
         self.caption = _('Select directory')
         self.options = QtGui.QFileDialog.ShowDirsOnly
+        self.directory = None
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
