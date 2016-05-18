@@ -125,12 +125,8 @@ class ListModelProxy(AbstractModelProxy, dict):
 
         indexed_keys = [(get_key(obj),i) for i,obj in enumerate(self._objects)]
         indexed_keys.sort(reverse=reverse)
-        LOGGER.info('indexed_keys')
-        LOGGER.info(indexed_keys)
         for j,(_key,i) in enumerate(indexed_keys):
             self._sort_and_filter[j] = i
-        LOGGER.info('sort and filter')
-        LOGGER.info(self._sort_and_filter)
 
     def filter(self, key=None, value=None):
         self._filters[key] = value
