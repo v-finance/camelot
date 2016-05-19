@@ -29,7 +29,7 @@
 import logging
 from sys import maxsize
 
-from six import moves
+from six import moves, iteritems
 
 from .proxy import AbstractModelProxy
 
@@ -71,6 +71,8 @@ class ListModelProxy(AbstractModelProxy, dict):
         assert isinstance(objects, list)
         # the unsorted, unfiltered list of objects
         self._objects = objects
+        self._length = None
+        self._filters = dict()
         # mapping of the sorted and filtered row numbers to the objects
         self._indexed_objects = TwoWayDict()
         # mapping of the sorted and filtered row numbers to the index in the
@@ -78,11 +80,16 @@ class ListModelProxy(AbstractModelProxy, dict):
         self._sort_and_filter = SortingRowMapper()
 
     def __len__(self):
-        return len(self._objects)
+        if self._length is None:
+            self._extend_indexed_objects(0, len(self._objects))
+            self._length = len(self._indexed_objects) / 2
+        return self._length
 
     def copy(self):
         new = type(self).__new__(type(self))
         new._objects = self._objects
+        new._length = self._length
+        new._filters = self._filters.copy()
         new._indexed_objects = self._indexed_objects.copy()
         new._sort_and_filter = self._sort_and_filter.copy()
         return new
@@ -90,6 +97,7 @@ class ListModelProxy(AbstractModelProxy, dict):
     def append(self, obj):
         if obj not in self._objects:
             self._objects.append(obj)
+            self._length = None
 
     def remove(self, obj):
         if obj in self._objects:
@@ -97,6 +105,7 @@ class ListModelProxy(AbstractModelProxy, dict):
             self._indexed_objects = TwoWayDict()
             self._sort_and_filter = SortingRowMapper()
             self._objects.remove(obj)
+            self._length = None
 
     def index(self, obj):
         try:
@@ -132,6 +141,7 @@ class ListModelProxy(AbstractModelProxy, dict):
         self._filters[key] = value
         self._length = None
         self._indexed_objects = TwoWayDict()
+        self._sort_and_filter = SortingRowMapper()
 
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
@@ -172,12 +182,19 @@ class ListModelProxy(AbstractModelProxy, dict):
                             # when index equals i, the row doesn't needs to be
                             # skipped, but neither should it be indexed again
                             if index != i:
-                                skipped_rows = skipped_rows + 1
+                                skipped_rows += 1
                             else:
                                 object_found = True
                         else:
-                            self._indexed_objects[i] = obj
-                            object_found = True
+                            obj_iterator = (obj,)
+                            for model_filter, filter_value in iteritems(self._filters):
+                                obj_iterator = model_filter.filter(obj_iterator, filter_value)
+                            for obj in obj_iterator:
+                                self._indexed_objects[i] = obj
+                                object_found = True
+                                break
+                            else:
+                                skipped_rows += 1
             except IndexError:
                 # stop when the end of the collection is reached, no matter
                 # what the request was

@@ -51,6 +51,19 @@ remove or filter operation is applied on the proxy, an object returned at an ind
 by the proxy will stay at this index, even when the model has changed.
 """
 
+
+class AbstractModelFilter(object):
+
+    def filter(self, it, value):
+        """
+        :param it: an iterator over objects in the model
+        :param value: the value of the filter to apply
+
+        :return: a filtered iterator
+        """
+        raise NotImplementedError()
+
+
 class AbstractModelProxy(object):
 
     def __len__(self):
@@ -73,6 +86,13 @@ class AbstractModelProxy(object):
 
         :key: the name of the attribute to sort the objects on, use None to
             disable a previous sort.
+        """
+        raise NotImplementedError()
+
+    def filter(self, key, value):
+        """
+        :param key: a concrete instance of `AbstractModelFilter`
+        :param value: the value of the filter to apply
         """
         raise NotImplementedError()
 

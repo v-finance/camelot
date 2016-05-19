@@ -412,8 +412,9 @@ class DeleteSelection( EditAction ):
         
     def handle_object( self, model_context, obj ):
         from camelot.view import action_steps
+        model_context.proxy.remove(obj)
         yield action_steps.DeleteObjects((obj,))
-        model_context.admin.delete( obj )
+        model_context.admin.delete(obj)
 
 class AbstractToPrevious(object):
     shortcut = QtGui.QKeySequence.MoveToPreviousPage

@@ -48,8 +48,6 @@ class QueryModelProxy(ListModelProxy):
         """
         super(QueryModelProxy, self).__init__([])
         self._query = query
-        self._length = None
-        self._filters = dict()
         self._sort_decorator = self._get_sort_decorator()
 
     def __len__(self):
@@ -71,8 +69,6 @@ class QueryModelProxy(ListModelProxy):
     def copy(self):
         new = super(QueryModelProxy, self).copy()
         new._query = self._query
-        new._length = self._length
-        new._filters = self._filters.copy()
         new._sort_decorator = self._sort_decorator
         return new
 

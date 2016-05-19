@@ -252,28 +252,38 @@ class RowCount(object):
 
 class Deleted(RowCount, UpdateMixin):
 
-    def __init__(self, objects):
+    def __init__(self, objects, rows_in_view):
+        """
+        
+        """
         super(Deleted, self).__init__()
         self.objects = objects
         self.changed_ranges = []
+        self.rows_in_view = rows_in_view
 
     def model_run(self, model_context):
         for obj in self.objects:
+            #
+            # If the object was valid, the header item should be updated
+            # make sure all views know the validity of the row has changed
+            #
             try:
+                # this will raise a KeyError if the object was not in the view,
+                # so there is no need to update views
                 row = model_context.edit_cache.get_row_by_entity(obj)
+                header_item = QtModel.QStandardItem()
+                header_item.setData(py_to_variant(None), ObjectRole)
+                header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
+                header_item.setData(py_to_variant(True), ValidRole)
+                self.changed_ranges.append((row, header_item, tuple()))
             except KeyError:
-                continue
-            model_context.proxy.remove(obj)
-            # update the header to signal the object became valid
-            header_item = QtModel.QStandardItem()
-            header_item.setData(py_to_variant(None), ObjectRole)
-            header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
-            header_item.setData(py_to_variant(True), ValidRole)
-            self.changed_ranges.append((row, header_item, tuple()))
-            # self.rows should only be not None when the object was in the
-            # proxy
-            self.rows = len(model_context.proxy)
-        if self.rows is not None:
+                pass
+        #
+        # Even if the object is not visible at the time, it might have been
+        # in the proxy whose number of rows have changed
+        #
+        if len(model_context.proxy) != self.rows_in_view:
+            # but updating the view is only needed if the rows changed
             super(Deleted, self).model_run(model_context)
         return self
 
@@ -885,7 +895,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
-            self._append_request(Deleted(objects))
+            self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()))
 
     @QtCore.qt_slot(object, tuple)
     def objects_created(self, sender, objects):
