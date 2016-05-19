@@ -34,6 +34,7 @@ import logging
 
 import six
 
+from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant
 from .base import Action
 from .application_action import ( ApplicationActionGuiContext,
@@ -972,7 +973,7 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
-class SetFilters(Action):
+class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
     This action differs from those in `list_filter` in the sense that it will
@@ -983,6 +984,16 @@ class SetFilters(Action):
     verbose_name = _('Find')
     tooltip = _('Filter the data')
     icon = Icon('tango/16x16/actions/system-search.png')
+
+    def filter(self, it, value):
+        field_name, field_value = value
+        if field_name is None:
+            for obj in it:
+                yield obj
+        else:
+            for obj in it:
+                if getattr(obj, value[0]) == value[1]:
+                    yield obj
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
