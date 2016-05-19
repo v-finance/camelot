@@ -284,7 +284,7 @@ class RowNumberAction( Action ):
 
     def get_state( self, model_context ):
         state = super(RowNumberAction, self).get_state(model_context)
-        state.verbose_name = str(model_context.current_row + 1)
+        state.verbose_name = six.text_type(model_context.current_row + 1)
         return state
 
 class EditAction( ListContextAction ):
@@ -314,6 +314,11 @@ class OpenFormView( ListContextAction ):
     def model_run(self, model_context):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
+
+    def get_state( self, model_context ):
+        state = Action.get_state(self, model_context)
+        state.verbose_name = six.text_type(model_context.current_row + 1)
+        return state
 
 class ChangeAdmin( Action ):
     """Change the admin of a tableview, this action is used to switch from
