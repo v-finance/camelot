@@ -191,7 +191,7 @@ class UpdateMixin(object):
             header_item.setData(py_to_variant(message), ValidMessageRole)
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
-                header_item.setData(py_to_variant(row+1), Qt.DisplayRole)
+                header_item.setData(py_to_variant(six.text_type(action_state.verbose_name or row+1)), Qt.DisplayRole)
                 header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
