@@ -971,7 +971,27 @@ class ReplaceFieldContents( EditAction ):
                 # might not be in a session
             yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
-        
+
+class SetFilters(Action):
+    """
+    Apply a set of filters on a list.
+    This action differs from those in `list_filter` in the sense that it will
+    pop up a dialog to configure a complete filter and wont allow the user
+    to apply filters from within its widget.
+    """
+
+    verbose_name = _('Find')
+    tooltip = _('Filter the data')
+    icon = Icon('tango/16x16/actions/system-search.png')
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        field_name, value = yield action_steps.ChangeField(
+            model_context.admin,
+            field_name = model_context.current_field_name
+        )
+        yield action_steps.SetFilter(self, (field_name, value))
+
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
     list"""

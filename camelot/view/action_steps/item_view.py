@@ -53,6 +53,22 @@ class Sort( ActionStep ):
             model = gui_context.item_view.model()
             model.sort( self.column, self.order )
 
+class SetFilter( ActionStep ):
+
+    def __init__( self, list_filter, value ):
+        """Filter the items in the item view
+        
+        :param list_filter: the `AbstractModelFilter` to apply
+        :param value: the value on which to filter
+        """
+        self.list_filter = list_filter
+        self.value = value
+
+    def gui_run( self, gui_context ):
+        if gui_context.item_view != None:
+            model = gui_context.item_view.model()
+            model.set_filter(self.list_filter, self.value)
+
 class UpdateTableView( ActionStep ):
     """Change the admin and or value of an existing table view
     
