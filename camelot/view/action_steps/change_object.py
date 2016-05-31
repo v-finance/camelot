@@ -371,6 +371,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                   admin,
                   field_attributes,
                   field_name,
+                  field_value = None,
                   parent = None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeFieldDialog, self).__init__( '', parent, flags )
@@ -379,9 +380,6 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         self.field = field_name
         self.value = None
         self.static_field_attributes = admin.get_static_field_attributes
-        self.setWindowTitle( admin.get_verbose_name_plural() )
-        self.set_banner_title( _('Replace field contents') )
-        self.set_banner_subtitle( _('Select the field to update and enter its new value') )
         self.banner_widget().setStyleSheet('background-color: white;')
         editor = ChoicesEditor( parent=self )
         editor.setObjectName( 'field_choice' )
@@ -400,7 +398,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
         editor.set_value(self.field)
-        self.field_changed()
+        self.field_changed(field_value)
         editor.editingFinished.connect( self.field_changed )
         self.set_default_buttons()
         if self.field is not None:
@@ -409,7 +407,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                 value_editor.setFocus()
 
     @QtCore.qt_slot()
-    def field_changed(self):
+    def field_changed(self, value=None):
         selected_field = ValueLoading
         editor = self.findChild( QtWidgets.QWidget, 'field_choice' )
         value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
@@ -419,7 +417,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             value_editor.deleteLater()
         if selected_field not in (None, ValueLoading):
             self.field = selected_field
-            self.value = None
+            self.value = value
             static_field_attributes = list(self.static_field_attributes([selected_field]))[0]
             # editable might be a dynamic field attribute
             static_field_attributes.setdefault('editable', True)
@@ -432,7 +430,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             value_editor.set_field_attributes( **static_field_attributes )
             self.main_widget().layout().addWidget( value_editor )
             value_editor.editingFinished.connect( self.value_changed )
-            value_editor.set_value(None)
+            value_editor.set_value(value)
             self.value_changed( value_editor )
 
     def value_changed(self, value_editor=None):
@@ -451,25 +449,54 @@ class ChangeField( ActionStep ):
     :param field_attributes: a list of field attributes of the fields that
         can be changed.  If `None` is given, all fields are shown.
     :param field_name: the name of the selected field when opening the dialog
+    :param field_value: the value of the selected field when opening the dialog
 
     This action step returns a tuple with the name of the selected field, and
     its new value.
+
+    This action step can be customised using these attributes :
+
+    .. attribute:: window_title
+
+        the window title of the dialog shown
+
+    .. attribute:: title
+
+        the title of the dialog shown
+
+    .. attribute:: subtitle
+
+        the subtitle of the dialog shown
+
     """
 
-    def __init__(self, admin, field_attributes = None, field_name=None):
+    def __init__(self,
+                 admin,
+                 field_attributes = None,
+                 field_name=None,
+                 field_value=None,
+                 ):
         super( ChangeField, self ).__init__()
         self.admin = admin
         self.field_name = field_name
+        self.field_value = field_value
         if field_attributes == None:
             field_attributes = admin.get_all_fields_and_attributes()
         self.field_attributes = field_attributes
+        self.window_title = admin.get_verbose_name_plural()
+        self.title = _('Replace field contents')
+        self.subtitle = _('Select the field to update and enter its new value')
 
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        return ChangeFieldDialog(
-            self.admin, self.field_attributes, self.field_name
+        dialog = ChangeFieldDialog(
+            self.admin, self.field_attributes, self.field_name, self.field_value
         )
+        dialog.setWindowTitle( six.text_type( self.window_title ) )
+        dialog.set_banner_title( six.text_type( self.title ) )
+        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
+        return dialog
 
     def gui_run( self, gui_context ):
         dialog = self.render()

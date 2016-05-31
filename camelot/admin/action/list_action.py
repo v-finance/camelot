@@ -36,7 +36,7 @@ import six
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant
-from .base import Action
+from .base import Action, Mode
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
@@ -954,6 +954,15 @@ class ReplaceFieldContents( EditAction ):
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.Replace
 
+    def gui_run( self, gui_context ):
+        #
+        # if there is an open editor on a row that will be deleted, there
+        # might be an assertion failure in QT, or the data of the editor 
+        # might be pushed to the changed row
+        #
+        gui_context.item_view.close_editor()
+        super(ReplaceFieldContents, self ).gui_run(gui_context)
+
     def model_run( self, model_context ):
         from camelot.view import action_steps
         field_name, value = yield action_steps.ChangeField(
@@ -986,22 +995,45 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('tango/16x16/actions/system-search.png')
 
     def filter(self, it, value):
-        field_name, field_value = value
-        if field_name is None:
+        if value is None:
             for obj in it:
                 yield obj
         else:
+            field_name, field_value = value
             for obj in it:
                 if getattr(obj, value[0]) == value[1]:
                     yield obj
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        field_name, value = yield action_steps.ChangeField(
-            model_context.admin,
-            field_name = model_context.current_field_name
-        )
-        yield action_steps.SetFilter(self, (field_name, value))
+
+        if model_context.mode_name == 'clear':
+            yield action_steps.SetFilter(self, None)
+
+        else:
+            current_field_name = model_context.current_field_name
+            current_field_value  = None
+            current_obj = model_context.get_object()
+            if (current_field_name is not None) and (current_obj is not None):
+                current_field_value = getattr(current_obj, current_field_name)
+
+            select_field = action_steps.ChangeField(
+                model_context.admin,
+                field_name = model_context.current_field_name,
+                field_value = current_field_value
+            )
+            select_field.title = _('Filter')
+            select_field.subtitle = _('Select field and value')
+
+            field_name, value = yield select_field
+            if field_name is None:
+                yield action_steps.SetFilter(self, None)
+            yield action_steps.SetFilter(self, (field_name, value))
+
+    def get_state(self, model_context):
+        state = super(SetFilters, self).get_state(model_context)
+        state.modes = [Mode('clear', _('Clear'))]
+        return state
 
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
