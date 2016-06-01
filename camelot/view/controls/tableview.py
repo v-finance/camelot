@@ -148,6 +148,8 @@ class TableWidget(QtWidgets.QTableView):
             self.horizontal_section_clicked)
         self.horizontalHeader().sectionResized.connect(
             self._save_section_width)
+        self.verticalScrollBar().sliderPressed.connect(self._slider_pressed)
+        self.horizontalScrollBar().sliderPressed.connect(self._slider_pressed)
 
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
@@ -170,6 +172,15 @@ class TableWidget(QtWidgets.QTableView):
                                            Qt.SizeHintRole)
         self._columns_changed = dict()
         super(TableWidget, self).timerEvent(event)
+
+    @QtCore.qt_slot()
+    def _slider_pressed(self):
+        """
+        Close the editor when scrolling starts, to prevent the table from
+        jumping back to the open editor, or to prevent the open editor from
+        being out of sight.
+        """
+        self.close_editor()
 
     @QtCore.qt_slot(int, int, int)
     def _save_section_width(self, logical_index, _old_size, new_width):
