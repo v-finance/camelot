@@ -177,7 +177,13 @@ class UpdateMixin(object):
                 value = row_data[column]
                 item = delegate.get_standard_item(locale, value, field_attributes)
                 items.append((column, item))
-            verbose_identifier = admin.get_verbose_identifier(obj)
+            try:
+                verbose_identifier = admin.get_verbose_identifier(obj)
+            except (Exception, RuntimeError, TypeError, NameError) as e:
+                message = "could not get verbose identifier of object of type %s"%(obj.__class__.__name__)
+                log_programming_error(logger,
+                                      message,
+                                      exc_info=e)
             valid = False
             for message in model_context.validator.validate_object(obj):
                 break
