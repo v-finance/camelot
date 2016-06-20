@@ -231,12 +231,15 @@ class Update(UpdateMixin):
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
             #
-            columns = tuple(moves.xrange(len(model_context.static_field_attributes)))
+            columns = tuple(six.iterkeys(model_context.edit_cache.get_data(row)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         return self
 
     def gui_run(self, item_model):
         self.update_item_model(item_model)
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
 
 class RowCount(object):
 

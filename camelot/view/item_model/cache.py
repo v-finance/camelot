@@ -87,6 +87,14 @@ class ValueCache(object):
             return set(six.iterkeys(values))
         return set(col for col, value in six.iteritems(values) if value != old_value.get(col, _fill))
 
+    def get_data(self, row):
+        """
+        The return value of this function should not be changed.
+
+        :return: a `dict` with the cached data in a row, the keys are the columns
+        """
+        return self.data_by_rows.get(row, {})
+
     def delete_by_entity(self, entity):
         """Remove everything in the cache related to an entity instance
         returns the row at which the data was stored if the data was in the
