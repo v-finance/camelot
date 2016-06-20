@@ -82,7 +82,7 @@ class ListModelProxy(AbstractModelProxy, dict):
     def __len__(self):
         if self._length is None:
             self._extend_indexed_objects(0, len(self._objects))
-            self._length = len(self._indexed_objects) / 2
+            self._length = len(self._indexed_objects) // 2
         return self._length
 
     def copy(self):
