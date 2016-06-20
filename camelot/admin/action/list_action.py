@@ -1032,7 +1032,10 @@ class SetFilters(Action, AbstractModelFilter):
 
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
-        state.modes = [Mode('clear', _('Clear'))]
+        state.modes = [
+            Mode('filter', _('Apply filter')),
+            Mode('clear', _('Clear filter')),
+        ]
         return state
 
 class AddExistingObject( EditAction ):
