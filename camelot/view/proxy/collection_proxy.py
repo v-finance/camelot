@@ -994,7 +994,10 @@ class CollectionProxy(QtModel.QStandardItemModel):
         a request to the model thread to fetch this data.  Once the data
         is readily available, the dataChanged signal will be emitted
         """
-        assert object_thread( self )
+        #
+        # this method is performance critical, do as few things as possible
+        # here
+        #
         if (not index.isValid()) or (index.model()!=self):
             if role == FieldAttributesRole:
                 return invalid_field_attributes_data
