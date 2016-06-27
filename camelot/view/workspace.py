@@ -386,17 +386,28 @@ def apply_form_state(view, parent, state):
     #
     screen = QtWidgets.QApplication.desktop().screenNumber(parent)
     geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
+    decoration_width, decoration_height = 0, 0
+    if parent is not None:
+        # here we use the incorrect assumption that we can use the size of
+        # the decorations of the parent window to know the size of the
+        # decorations of the new window
+        #
+        # http://doc.qt.io/qt-4.8/application-windows.html#window-geometry
+        geometry = parent.geometry()
+        frame = parent.frameGeometry()
+        decoration_width = frame.width() - geometry.width()
+        decoration_height = frame.height() - geometry.height()
     if state == constants.MAXIMIZED:
         view.setWindowState(QtCore.Qt.WindowMaximized)
     elif state == constants.MINIMIZED:
         view.setWindowState(QtCore.Qt.WindowMinimized)
     elif state == constants.RIGHT:
         geometry.setLeft(geometry.center().x())
-        view.resize(geometry.width(), geometry.height())
+        view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
         view.move(geometry.topLeft())
     elif state == constants.LEFT:
         geometry.setRight(geometry.center().x())
-        view.resize(geometry.width(), geometry.height())
+        view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
         view.move(geometry.topLeft())
     else:
         point = QtCore.QPoint(geometry.x() + geometry.width()/2,
