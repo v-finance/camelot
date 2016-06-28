@@ -98,6 +98,7 @@ invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 
 initial_delay = 50
+maximum_delay = 1000
 
 class RowModelContext(ListActionModelContext):
     """A list action model context for a single row.  This context is used
@@ -750,7 +751,8 @@ class CollectionProxy(QtModel.QStandardItemModel):
             # only slow down if the timout actually caused requests and
             # requests are arriving at the speed of the interval
             if len(self.__crud_requests) and (self.__time.restart() < (timer.interval() + initial_delay)):
-                timer.setInterval(timer.interval() * 2)
+                # convert interval to int in case a long is returned
+                timer.setInterval(min(maximum_delay, int(timer.interval()) * 2))
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
