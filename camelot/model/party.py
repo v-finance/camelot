@@ -69,6 +69,17 @@ class GeographicBoundary( Entity ):
     def __unicode__( self ):
         return u'%s %s' % ( self.code, self.name )
 
+    class Admin(EntityAdmin):
+        verbose_name = _('Geographic Boundary')
+        verbose_name_plural = _('Geographic Boundaries')
+        list_display = ['row_type', 'name', 'code']
+        field_attributes = {
+            'row_type': {
+                'name': _('Type'),
+                'editable': False,
+            }
+        }
+
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
@@ -87,8 +98,7 @@ class Country( GeographicBoundary ):
             orm.object_session( country ).flush()
         return country
 
-    class Admin( EntityAdmin ):
-        form_size = ( 700, 150 )
+    class Admin(GeographicBoundary.Admin):
         verbose_name = _('Country')
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
@@ -117,10 +127,9 @@ class City( GeographicBoundary ):
             orm.object_session( city ).flush()
         return city
 
-    class Admin( EntityAdmin ):
+    class Admin(GeographicBoundary.Admin):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        form_size = ( 700, 150 )
         list_display = ['code', 'name', 'country']
 
 class Address( Entity ):
