@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import py_to_variant
+from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
@@ -44,6 +44,7 @@ class IntegerDelegate(CustomDelegate):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
+    horizontal_align = Qt.AlignRight
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
