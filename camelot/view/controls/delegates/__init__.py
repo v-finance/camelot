@@ -45,7 +45,6 @@ from .one2manydelegate import One2ManyDelegate
 from .manytoonechoicesdelegate import ManyToOneChoicesDelegate
 from .plaintextdelegate import PlainTextDelegate
 from .richtextdelegate import RichTextDelegate
-from .stardelegate import StarDelegate
 from .texteditdelegate import TextEditDelegate
 from .timedelegate import TimeDelegate
 from .virtualaddressdelegate import VirtualAddressDelegate
@@ -73,7 +72,6 @@ __all__ = [
     ManyToOneChoicesDelegate.__name__,
     PlainTextDelegate.__name__,
     RichTextDelegate.__name__,
-    StarDelegate.__name__,
     TextEditDelegate.__name__,
     TimeDelegate.__name__,
     VirtualAddressDelegate.__name__,

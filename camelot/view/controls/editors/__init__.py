@@ -60,7 +60,6 @@ from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
 from .onetomanychoiceseditor import OneToManyChoicesEditor
 from .richtexteditor import RichTextEditor
-from .stareditor import StarEditor
 from .textlineeditor import TextLineEditor
 from .timeeditor import TimeEditor
 from .virtualaddresseditor import VirtualAddressEditor
@@ -91,7 +90,6 @@ __all__ = [
     One2ManyEditor.__name__,
     OneToManyChoicesEditor.__name__,
     RichTextEditor.__name__,
-    StarEditor.__name__,
     TextLineEditor.__name__,
     TimeEditor.__name__,
     VirtualAddressEditor.__name__,
