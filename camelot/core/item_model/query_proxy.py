@@ -123,7 +123,9 @@ class QueryModelProxy(ListModelProxy):
         return query
 
     def _extend_indexed_objects_from_query(self, offset, query_offset, query_limit):
-        query = self.get_query().offset(query_offset).limit(query_limit)
+        query = self.get_query().offset(query_offset)
+        if query_limit is not None:
+            query = query.limit(query_limit)
         free_index = offset
         indexed_object_count = 0
         for obj in query.all():
@@ -151,11 +153,14 @@ class QueryModelProxy(ListModelProxy):
         LOGGER.debug('extend cache from {0} with limit {1}'.format(offset, limit))
         if limit > 0:
             indexed_object_count = self._extend_indexed_objects_from_query(offset, offset, limit)
-            # this should be recursive, but that might lead to infinite
-            # recursion, try to find a middle ground by increasing the
-            # query limit once
             if indexed_object_count > 0:
-                self._extend_indexed_objects_from_query(offset, offset, limit+indexed_object_count)
+                # the query returns the same object at different offsets,
+                # to handle this the query limit could be increased gradually
+                # or a non distinct count could be done to guess the size of
+                # the increase.  now handle it by executing the query without
+                # specified limit, this at least ensures the result set is
+                # complete.
+                self._extend_indexed_objects_from_query(offset, offset, None)
             row_count = len(self)
             rows_in_query = row_count - len(self._objects)
             # Verify if rows not in the query have been requested
