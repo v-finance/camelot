@@ -122,26 +122,40 @@ class QueryModelProxy(ListModelProxy):
             query = self._sort_decorator(query)
         return query
 
+    def _extend_indexed_objects_from_query(self, offset, query_offset, query_limit):
+        query = self.get_query().offset(query_offset).limit(query_limit)
+        free_index = offset
+        indexed_object_count = 0
+        for obj in query.all():
+            # check if the object is not present with another index,
+            if self._indexed_objects.get(obj) is None:
+                # find a free index for each of the object, the object
+                # cannot be at the free_index, since otherwise it would
+                # have been indexed
+                while self._indexed_objects.get(free_index) is not None:
+                    free_index += 1
+                self._indexed_objects[free_index] = obj
+            else:
+                # if it is, the query_limit could have been higher
+                indexed_object_count += 1
+            # if the object is in _objects, remove it from there, since
+            # it is in the query as well, while keeping the total length
+            # of the collection invariant
+            if obj in self._objects:
+                self._objects.remove(obj)
+                if self._length is not None:
+                    self._length = self._length + 1
+        return indexed_object_count
+
     def _extend_indexed_objects(self, offset, limit):
         LOGGER.debug('extend cache from {0} with limit {1}'.format(offset, limit))
         if limit > 0:
-            query = self.get_query().offset(offset).limit(limit)
-            free_index = offset
-            for obj in query.all():
-                # find a free index for the object
-                while self._indexed_objects.get(free_index) not in (None, obj):
-                    free_index += 1
-                # check if the object is not present with another index,
-                # if the object is at the free index, nothing needs to happen
-                if self._indexed_objects.get(obj) is None:
-                    self._indexed_objects[free_index] = obj
-                # if the object is in _objects, remove it from there, since
-                # it is in the query as well, while keeping the total length
-                # of the collection invariant
-                if obj in self._objects:
-                    self._objects.remove(obj)
-                    if self._length is not None:
-                        self._length = self._length + 1
+            indexed_object_count = self._extend_indexed_objects_from_query(offset, offset, limit)
+            # this should be recursive, but that might lead to infinite
+            # recursion, try to find a middle ground by increasing the
+            # query limit once
+            if indexed_object_count > 0:
+                self._extend_indexed_objects_from_query(offset, offset, limit+indexed_object_count)
             row_count = len(self)
             rows_in_query = row_count - len(self._objects)
             # Verify if rows not in the query have been requested
