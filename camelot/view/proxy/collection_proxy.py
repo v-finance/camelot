@@ -185,6 +185,7 @@ class UpdateMixin(object):
                 log_programming_error(logger,
                                       message,
                                       exc_info=e)
+                verbose_identifier = u''
             valid = False
             for message in model_context.validator.validate_object(obj):
                 break
