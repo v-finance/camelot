@@ -145,7 +145,7 @@ class UpdateMixin(object):
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
         action_state = None
         changed_ranges = []
-        logger.debug('_add data for row {0}'.format(row))
+        logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
         if (not admin.is_deleted( obj ) and data==True):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
@@ -484,10 +484,17 @@ class SetData(Update):
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
 
-class Created(RowCount, UpdateMixin):
+class Created(UpdateMixin):
+    """
+    Does not subclass RowCount, because row count will reset the whole edit
+    cache.
+
+    When a created object is detected simply set the number of rows.  This
+    assumes the position of the other objects did not change.
+    """
 
     def __init__(self, objects):
-        super(Created, self).__init__()
+        self.rows = None
         self.objects = objects
         self.changed_ranges = []
 
@@ -504,12 +511,11 @@ class Created(RowCount, UpdateMixin):
             self.rows = rows
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        if self.rows is not None:
-            super(Created, self).model_run(model_context)
         return self
 
     def gui_run(self, item_model):
-        RowCount.gui_run(self, item_model)
+        if self.rows is not None:
+            item_model.setRowCount(self.rows)
         self.update_item_model(item_model)
 
 class Sort(RowCount):
@@ -633,7 +639,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         assert object_thread( self )
         from camelot.view.model_thread import get_model_thread
 
-        self.logger = logging.getLogger(logger.name + '.%s'%id(self))
+        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin.entity.__name__))
         self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
         self.admin = admin
         self._list_action = admin.list_action
