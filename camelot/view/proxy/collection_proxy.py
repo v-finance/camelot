@@ -277,6 +277,10 @@ class Deleted(RowCount, UpdateMixin):
 
     def model_run(self, model_context):
         row = None
+        #
+        # the object might or might not be in the proxy when the
+        # deletion is handled
+        #
         for obj in self.objects:
             try:
                 row = model_context.proxy.index(obj)
@@ -291,7 +295,11 @@ class Deleted(RowCount, UpdateMixin):
             header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
             header_item.setData(py_to_variant(True), ValidRole)
             self.changed_ranges.append((row, header_item, tuple()))
-        if row is not None:
+        #
+        # when it's no longer in the proxy, the len of the proxy will be
+        # different from the one of the view
+        #
+        if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
             super(Deleted, self).model_run(model_context)
         return self
