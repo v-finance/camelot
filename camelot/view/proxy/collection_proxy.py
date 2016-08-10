@@ -276,27 +276,22 @@ class Deleted(RowCount, UpdateMixin):
         self.rows_in_view = rows_in_view
 
     def model_run(self, model_context):
+        row = None
         for obj in self.objects:
+            try:
+                row = model_context.proxy.index(obj)
+            except ValueError:
+                continue
             #
             # If the object was valid, the header item should be updated
             # make sure all views know the validity of the row has changed
             #
-            try:
-                # this will raise a KeyError if the object was not in the view,
-                # so there is no need to update views
-                row = model_context.edit_cache.get_row_by_entity(obj)
-                header_item = QtModel.QStandardItem()
-                header_item.setData(py_to_variant(None), ObjectRole)
-                header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
-                header_item.setData(py_to_variant(True), ValidRole)
-                self.changed_ranges.append((row, header_item, tuple()))
-            except KeyError:
-                pass
-        #
-        # Even if the object is not visible at the time, it might have been
-        # in the proxy whose number of rows have changed
-        #
-        if len(model_context.proxy) != self.rows_in_view:
+            header_item = QtModel.QStandardItem()
+            header_item.setData(py_to_variant(None), ObjectRole)
+            header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
+            header_item.setData(py_to_variant(True), ValidRole)
+            self.changed_ranges.append((row, header_item, tuple()))
+        if row is not None:
             # but updating the view is only needed if the rows changed
             super(Deleted, self).model_run(model_context)
         return self
