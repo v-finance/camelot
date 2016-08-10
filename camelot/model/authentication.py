@@ -217,6 +217,7 @@ class AuthenticationGroup( Entity ):
         verbose_name = _('Authentication group')
         verbose_name_plural = _('Authenication groups')
         list_display = [ 'name' ]
+        form_state = 'right'
         
         def get_form_display( self ):
             return forms.TabForm( [(_('Group'), ['name', 'members']),

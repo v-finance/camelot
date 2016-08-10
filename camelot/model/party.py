@@ -73,6 +73,7 @@ class GeographicBoundary( Entity ):
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
         list_display = ['row_type', 'name', 'code']
+        form_state = 'right'
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
