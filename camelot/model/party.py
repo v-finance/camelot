@@ -941,7 +941,9 @@ class OrganizationAdmin( Party.Admin ):
     
     def get_query( self ):
         query = super( OrganizationAdmin, self ).get_query()
-        query = query.options( orm.joinedload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('addresses') )
+        query = query.options( orm.subqueryload('addresses.address') )
         return query
 
 Organization.Admin = OrganizationAdmin
@@ -970,7 +972,9 @@ class PersonAdmin( Party.Admin ):
 
     def get_query( self ):
         query = super( PersonAdmin, self ).get_query()
-        query = query.options( orm.joinedload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('addresses') )
+        query = query.options( orm.subqueryload('addresses.address') )
         return query
     
 Person.Admin = PersonAdmin
