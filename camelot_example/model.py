@@ -106,7 +106,7 @@ class Movie( Entity ):
     short_description = Column( sqlalchemy.types.Unicode(512) )
     releasedate = Column( sqlalchemy.types.Date )
     genre = Column( sqlalchemy.types.Unicode(15) )
-    rating = Column( camelot.types.Rating() )
+    rating = Column( sqlalchemy.types.Integer() )
     #
     # All relation types are covered with their own editor
     #
