@@ -145,7 +145,7 @@ class UpdateMixin(object):
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
         action_state = None
         changed_ranges = []
-        logger.debug('_add data for row {0}'.format(row))
+        logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
         if (not admin.is_deleted( obj ) and data==True):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
@@ -276,27 +276,30 @@ class Deleted(RowCount, UpdateMixin):
         self.rows_in_view = rows_in_view
 
     def model_run(self, model_context):
+        row = None
+        #
+        # the object might or might not be in the proxy when the
+        # deletion is handled
+        #
         for obj in self.objects:
+            try:
+                row = model_context.proxy.index(obj)
+            except ValueError:
+                continue
             #
             # If the object was valid, the header item should be updated
             # make sure all views know the validity of the row has changed
             #
-            try:
-                # this will raise a KeyError if the object was not in the view,
-                # so there is no need to update views
-                row = model_context.edit_cache.get_row_by_entity(obj)
-                header_item = QtModel.QStandardItem()
-                header_item.setData(py_to_variant(None), ObjectRole)
-                header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
-                header_item.setData(py_to_variant(True), ValidRole)
-                self.changed_ranges.append((row, header_item, tuple()))
-            except KeyError:
-                pass
+            header_item = QtModel.QStandardItem()
+            header_item.setData(py_to_variant(None), ObjectRole)
+            header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
+            header_item.setData(py_to_variant(True), ValidRole)
+            self.changed_ranges.append((row, header_item, tuple()))
         #
-        # Even if the object is not visible at the time, it might have been
-        # in the proxy whose number of rows have changed
+        # when it's no longer in the proxy, the len of the proxy will be
+        # different from the one of the view
         #
-        if len(model_context.proxy) != self.rows_in_view:
+        if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
             super(Deleted, self).model_run(model_context)
         return self
@@ -484,10 +487,17 @@ class SetData(Update):
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
 
-class Created(RowCount, UpdateMixin):
+class Created(UpdateMixin):
+    """
+    Does not subclass RowCount, because row count will reset the whole edit
+    cache.
+
+    When a created object is detected simply set the number of rows.  This
+    assumes the position of the other objects did not change.
+    """
 
     def __init__(self, objects):
-        super(Created, self).__init__()
+        self.rows = None
         self.objects = objects
         self.changed_ranges = []
 
@@ -504,12 +514,11 @@ class Created(RowCount, UpdateMixin):
             self.rows = rows
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        if self.rows is not None:
-            super(Created, self).model_run(model_context)
         return self
 
     def gui_run(self, item_model):
-        RowCount.gui_run(self, item_model)
+        if self.rows is not None:
+            item_model.setRowCount(self.rows)
         self.update_item_model(item_model)
 
 class Sort(RowCount):
@@ -633,7 +642,7 @@ class CollectionProxy(QtModel.QStandardItemModel):
         assert object_thread( self )
         from camelot.view.model_thread import get_model_thread
 
-        self.logger = logging.getLogger(logger.name + '.%s'%id(self))
+        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin.entity.__name__))
         self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
         self.admin = admin
         self._list_action = admin.list_action

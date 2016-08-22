@@ -891,7 +891,7 @@ class ImportFromFile( EditAction ):
             # in the field attributes
             #
             all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
-                         six.iteritems(admin.get_all_fields_and_attributes())]
+                         six.iteritems(admin.get_all_fields_and_attributes()) if entity_fa.get('from_string')]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
             for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
                                                           default_fields):
@@ -925,11 +925,7 @@ class ImportFromFile( EditAction ):
                 for i,row in enumerate(collection):
                     new_entity_instance = admin.entity()
                     for field_name, attributes in row_data_admin.get_columns():
-                        try:
-                            from_string = attributes['from_string']
-                        except KeyError:
-                            LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
-                            from_string = lambda _a:None
+                        from_string = attributes['from_string']
                         setattr(
                             new_entity_instance,
                             attributes['original_field'],

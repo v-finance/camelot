@@ -350,6 +350,7 @@ class RowDataAdmin(ObjectAdmin):
     list_actions = [DeleteSelection()]
     
     def __init__(self, admin, column_mappings):
+        super(RowDataAdmin, self).__init__(admin, RowData)
         self.admin = admin
         self._new_field_attributes = {}
         self._columns = []

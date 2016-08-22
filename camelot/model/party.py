@@ -73,6 +73,7 @@ class GeographicBoundary( Entity ):
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
         list_display = ['row_type', 'name', 'code']
+        form_state = 'right'
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
@@ -940,7 +941,9 @@ class OrganizationAdmin( Party.Admin ):
     
     def get_query( self ):
         query = super( OrganizationAdmin, self ).get_query()
-        query = query.options( orm.joinedload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('addresses') )
+        query = query.options( orm.subqueryload('addresses.address') )
         return query
 
 Organization.Admin = OrganizationAdmin
@@ -969,7 +972,9 @@ class PersonAdmin( Party.Admin ):
 
     def get_query( self ):
         query = super( PersonAdmin, self ).get_query()
-        query = query.options( orm.joinedload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('addresses') )
+        query = query.options( orm.subqueryload('addresses.address') )
         return query
     
 Person.Admin = PersonAdmin
