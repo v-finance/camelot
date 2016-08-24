@@ -36,6 +36,7 @@ from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
+from camelot.core.qt import QtGui
 
 from camelot.view.controls import editors
 
@@ -59,6 +60,8 @@ class PlainTextDelegate(CustomDelegate):
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
+        for completer in [fa_values[c] for c in fa_values.keys() if c == 'completer']:
+            completer.moveToThread(QtGui.QApplication.instance().thread())
         item = super(PlainTextDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
             item.setData(py_to_variant(six.text_type(value)), PreviewRole)
