@@ -393,10 +393,10 @@ def apply_form_state(view, parent, state):
         # decorations of the new window
         #
         # http://doc.qt.io/qt-4.8/application-windows.html#window-geometry
-        geometry = parent.geometry()
-        frame = parent.frameGeometry()
-        decoration_width = frame.width() - geometry.width()
-        decoration_height = frame.height() - geometry.height()
+        parent_geometry = parent.geometry()
+        parent_frame = parent.frameGeometry()
+        decoration_width = parent_frame.width() - parent_geometry.width()
+        decoration_height = parent_frame.height() - parent_geometry.height()
     if state == constants.MAXIMIZED:
         view.setWindowState(QtCore.Qt.WindowMaximized)
     elif state == constants.MINIMIZED:

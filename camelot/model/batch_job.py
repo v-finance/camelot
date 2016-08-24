@@ -224,6 +224,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         verbose_name = _('Batch job')
         list_display = ['host', 'type', 'current_status']
         list_filter = ['current_status', list_filter.ComboBoxFilter('host')]
+        form_state = 'right'
         form_display = forms.TabForm( [ ( _('Job'), list_display + ['message'] ),
                                         ( _('History'), ['status'] ) ] )
         form_actions = [ type_and_status.ChangeStatus( 'canceled',

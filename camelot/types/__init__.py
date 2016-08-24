@@ -129,22 +129,6 @@ class VirtualAddress(types.TypeDecorator):
     def __repr__(self):
         return 'VirtualAddress()'
 
-class Rating(types.TypeDecorator):
-    """The rating field is an integer field that is visualized as a number of stars that
-  can be selected::
-  
-    class Movie( Entity ):
-      title = Column( Unicode(60), nullable = False )
-      rating = Column( camelot.types.Rating() )
-      
-  .. image:: /_static/editors/StarEditor_editable.png
-"""
-    
-    impl = types.Integer
-       
-    @property
-    def python_type(self):
-        return self.impl.python_type
     
 class RichText(types.TypeDecorator):
     """RichText fields are unlimited text fields which contain html. The html will be

@@ -107,8 +107,4 @@ class ValueCache(object):
         except KeyError:
             return None, None
         return row, value
-    
-    def get_row_by_entity(self, entity):
-        """:return: the row at which an entity is stored"""
-        return self.rows_by_entity[entity]
-    
+

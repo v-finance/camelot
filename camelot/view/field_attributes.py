@@ -198,16 +198,6 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
     },
 
-    camelot.types.Rating: lambda f: {
-        'delegate': delegates.StarDelegate,
-        'editable': True,
-        'nullable': True,
-        'python_type': int,
-        'widget': 'star',
-        'from_string': int_from_string,
-        'operators' : _numerical_operators,
-    },
-
     camelot.types.Enumeration: lambda f: {
         'delegate': delegates.ComboBoxDelegate,
         'python_type': str,
