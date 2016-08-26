@@ -54,7 +54,7 @@ from six import moves
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.list_action import ListActionModelContext
-from ...core.qt import (Qt, QtCore, QtGui, QtModel, QtWidgets,
+from ...core.qt import (Qt, QtCore, QtGui, QtWidgets,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
@@ -90,7 +90,7 @@ def strip_data_from_object( obj, columns ):
 
 invalid_data = py_to_variant()
 invalid_field_attributes_data = py_to_variant(ProxyDict(editable=False))
-invalid_item = QtModel.QStandardItem()
+invalid_item = QtGui.QStandardItem()
 invalid_item.setFlags(Qt.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
@@ -192,7 +192,7 @@ class UpdateMixin(object):
             else:
                 valid = True
                 message = None
-            header_item = QtModel.QStandardItem()
+            header_item = QtGui.QStandardItem()
             header_item.setData(py_to_variant(obj), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
             header_item.setData(py_to_variant(valid), ValidRole)
@@ -290,7 +290,7 @@ class Deleted(RowCount, UpdateMixin):
             # If the object was valid, the header item should be updated
             # make sure all views know the validity of the row has changed
             #
-            header_item = QtModel.QStandardItem()
+            header_item = QtGui.QStandardItem()
             header_item.setData(py_to_variant(None), ObjectRole)
             header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
             header_item.setData(py_to_variant(True), ValidRole)
@@ -624,7 +624,7 @@ class SetHeaderData(object):
         item_model.settings.endGroup()
         item_model.settings.endGroup()
         
-class CollectionProxy(QtModel.QStandardItemModel):
+class CollectionProxy(QtGui.QStandardItemModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtWidgets.QTableView`  
