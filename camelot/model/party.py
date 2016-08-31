@@ -915,7 +915,14 @@ class PartyAdmin( EntityAdmin ):
             yield party_contact_mechanism
         for party_address in party.addresses:
             yield party_address
-        
+
+    def get_query( self ):
+        query = super( PartyAdmin, self ).get_query()
+        query = query.options( orm.subqueryload('contact_mechanisms') )
+        query = query.options( orm.subqueryload('addresses') )
+        query = query.options( orm.subqueryload('addresses.address') )
+        return query
+
     #def flush(self, party):
         #from sqlalchemy.orm.session import Session
         #session = Session.object_session( party )
@@ -947,13 +954,6 @@ class OrganizationAdmin( Party.Admin ):
                             ( _('Branding'), Form( ['logo'] ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
-    
-    def get_query( self ):
-        query = super( OrganizationAdmin, self ).get_query()
-        query = query.options( orm.subqueryload('contact_mechanisms') )
-        query = query.options( orm.subqueryload('addresses') )
-        query = query.options( orm.subqueryload('addresses.address') )
-        return query
 
 Organization.Admin = OrganizationAdmin
 
@@ -978,13 +978,6 @@ class PersonAdmin( Party.Admin ):
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                             ] )
-
-    def get_query( self ):
-        query = super( PersonAdmin, self ).get_query()
-        query = query.options( orm.subqueryload('contact_mechanisms') )
-        query = query.options( orm.subqueryload('addresses') )
-        query = query.options( orm.subqueryload('addresses.address') )
-        return query
     
 Person.Admin = PersonAdmin
 
