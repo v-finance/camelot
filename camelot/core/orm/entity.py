@@ -422,9 +422,6 @@ class EntityBase( object ):
                 session=Session()
             session.add( self ) 
 
-    if six.PY3:
-        def __str__(self):
-            return self.__unicode__()
     #
     # methods below were copied from camelot.core.orm to mimic the Elixir Entity
     # behavior

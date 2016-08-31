@@ -53,12 +53,13 @@ from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
 from .authentication import end_of_times
 
+@six.python_2_unicode_compatible
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     using_options( tablename = 'geographic_boundary' )
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
-    
+
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
 
@@ -66,7 +67,7 @@ class GeographicBoundary( Entity ):
     def full_name( self ):
         return self.code + ' ' + self.name
 
-    def __unicode__( self ):
+    def __str__(self):
         return u'%s %s' % ( self.code, self.name )
 
     class Admin(EntityAdmin):
@@ -104,18 +105,19 @@ class Country( GeographicBoundary ):
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
+@six.python_2_unicode_compatible
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     using_options( tablename = 'geographic_boundary_city' )
     country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    geographicboundary_id = Field( camelot.types.PrimaryKey(), 
-                                   ForeignKey('geographic_boundary.id'), 
+    geographicboundary_id = Field( camelot.types.PrimaryKey(),
+                                   ForeignKey('geographic_boundary.id'),
                                    primary_key = True )
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
-    
-    def __unicode__( self ):
+
+    def __str__(self):
         if None not in (self.code, self.name, self.country):
             return u'{0.code} {0.name} [{1.code}]'.format( self, self.country )
         return u''
@@ -133,21 +135,22 @@ class City( GeographicBoundary ):
         verbose_name_plural = _('Cities')
         list_display = ['code', 'name', 'country']
 
+@six.python_2_unicode_compatible
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
-    city = ManyToOne( City, 
-                      required = True, 
-                      ondelete = 'cascade', 
+    city = ManyToOne( City,
+                      required = True,
+                      ondelete = 'cascade',
                       onupdate = 'cascade',
                       lazy = 'subquery' )
-                         
+
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
-    
+
     name = ColumnProperty( name, deferred = True )
 
     @classmethod
@@ -158,7 +161,7 @@ class Address( Entity ):
             orm.object_session( address ).flush()
         return address
 
-    def __unicode__( self ):
+    def __str__(self):
         return u'%s, %s' % ( self.street1 or '', self.city or '' )
 
     class Admin( EntityAdmin ):
@@ -395,19 +398,20 @@ class Party(Entity, WithAddresses):
     
     full_name = ColumnProperty( full_name, deferred=True )
 
+@six.python_2_unicode_compatible
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
     using_options( tablename = 'organization' )
-    party_id = Field( camelot.types.PrimaryKey(), 
-                      ForeignKey('party.id'), 
+    party_id = Field( camelot.types.PrimaryKey(),
+                      ForeignKey('party.id'),
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
     logo = schema.Column( camelot.types.Image( upload_to = 'organization-logo' ))
     tax_id = schema.Column( Unicode( 20 ) )
 
-    def __unicode__( self ):
+    def __str__(self):
         return self.name or ''
 
     @property
@@ -420,12 +424,13 @@ class Organization( Party ):
                 return _('An organization with the same name already exists')
 
 # begin short person definition
+@six.python_2_unicode_compatible
 class Person( Party ):
     """Person represents natural persons
     """
     using_options( tablename = 'person' )
     party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'), 
+                      ForeignKey('party.id'),
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'person'}
     first_name = schema.Column( Unicode( 40 ), nullable = False )
@@ -455,7 +460,7 @@ class Person( Party ):
         # it needs to be fetched from the db first
         return ' '.join([name for name in [self.first_name, self.last_name] if name])
 
-    def __unicode__( self ):
+    def __str__(self):
         return self.name or ''
 
 #class PartyRelationship( Entity ):
@@ -697,33 +702,34 @@ class Addressable(object):
                           name = _('Phone'),
                           from_string = lambda s:('phone', s),
                           delegate = delegates.VirtualAddressDelegate ),
-            mobile = dict( editable = True, 
+            mobile = dict( editable = True,
                            minimal_column_width = 20,
                            address_type = 'mobile',
                            name = _('Mobile'),
                            from_string = lambda s:('mobile', s),
                            delegate = delegates.VirtualAddressDelegate ),
-            fax = dict( editable = True, 
+            fax = dict( editable = True,
                         minimal_column_width = 20,
                         address_type = 'fax',
                         name = _('Fax'),
                         from_string = lambda s:('fax', s),
                         delegate = delegates.VirtualAddressDelegate ), )
-        
-    
+
+
+@six.python_2_unicode_compatible
 class PartyAddress( Entity, Addressable ):
     using_options( tablename = 'party_address' )
-    party = ManyToOne( Party, 
-                       required = True, 
-                       ondelete = 'cascade', 
+    party = ManyToOne( Party,
+                       required = True,
+                       ondelete = 'cascade',
                        onupdate = 'cascade',
                        lazy = 'subquery',
-                       backref = orm.backref('addresses', lazy = True, 
+                       backref = orm.backref('addresses', lazy = True,
                                              cascade='all, delete, delete-orphan'))
-    address = ManyToOne( Address, 
-                         required = True, 
+    address = ManyToOne( Address,
+                         required = True,
                          backref = 'party_addresses',
-                         ondelete = 'cascade', 
+                         ondelete = 'cascade',
                          onupdate = 'cascade',
                          lazy = 'subquery' )
     from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )
@@ -733,10 +739,10 @@ class PartyAddress( Entity, Addressable ):
     def party_name( self ):
         return sql.select( [sql.func.coalesce(Party.full_name, '')],
                            whereclause = (Party.id==self.party_id))
-    
+
     party_name = ColumnProperty( party_name, deferred = True )
 
-    def __unicode__( self ):
+    def __str__(self):
         return '%s : %s' % ( six.text_type( self.party ), six.text_type( self.address ) )
 
     class Admin( EntityAdmin ):
@@ -783,13 +789,14 @@ class PartyAddressRoleType( Entity ):
         verbose_name = _('Address role type')
         list_display = ['code', 'description']
 
+@six.python_2_unicode_compatible
 class ContactMechanism( Entity ):
     using_options( tablename = 'contact_mechanism' )
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
     party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
     party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
 
-    def __unicode__( self ):
+    def __str__(self):
         if self.mechanism:
             return u'%s : %s' % ( self.mechanism[0], self.mechanism[1] )
 
@@ -807,11 +814,12 @@ class ContactMechanism( Entity ):
                 if party:
                     yield party
 
+@six.python_2_unicode_compatible
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
     party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                       backref = orm.backref('contact_mechanisms', lazy = 'select', 
+                       backref = orm.backref('contact_mechanisms', lazy = 'select',
                                              cascade='all, delete, delete-orphan' )
                        )
     contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
@@ -822,8 +830,8 @@ class PartyContactMechanism( Entity ):
     @hybrid.hybrid_property
     def mechanism( self ):
         if self.contact_mechanism != None:
-            return self.contact_mechanism.mechanism    
-       
+            return self.contact_mechanism.mechanism
+
     @mechanism.setter
     def mechanism_setter( self, value ):
         if value != None:
@@ -831,8 +839,8 @@ class PartyContactMechanism( Entity ):
                 self.contact_mechanism.mechanism = value
             else:
                 self.contact_mechanism = ContactMechanism( mechanism = value )
-                
-    @mechanism.expression 
+
+    @mechanism.expression
     def mechanism_expression( self ):
         return sql.select(
             [ContactMechanism.mechanism],
@@ -841,28 +849,29 @@ class PartyContactMechanism( Entity ):
     def party_name( self ):
         return sql.select( [Party.full_name],
                            whereclause = (Party.id==self.party_id))
-    
+
     party_name = ColumnProperty( party_name, deferred = True )
 
-    def __unicode__( self ):
+    def __str__(self):
         return six.text_type( self.contact_mechanism )
 
     Admin = PartyContactMechanismAdmin
 
 # begin category definition
+@six.python_2_unicode_compatible
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = schema.Column( Unicode(40), index=True, nullable = False )
     color = schema.Column( camelot.types.Color() )
 # end category definition
     parties = ManyToMany( 'Party', lazy = True, backref='categories',
-                          tablename='party_category_party', 
+                          tablename='party_category_party',
                           remote_colname='party_id',
                           local_colname='party_category_id')
-                            
+
     def get_contact_mechanisms(self, virtual_address_type):
         """Function to be used to do messaging
-        
+
         :param virtual_address_type: a virtual address type, such as 'phone' or 'email'
         :return: a generator that yields strings of contact mechanisms, egg 'info@example.com'
         """
@@ -873,8 +882,8 @@ class PartyCategory( Entity ):
                     virtual_address = contact_mechanism.mechanism
                     if virtual_address and virtual_address[0] == virtual_address_type:
                         yield virtual_address[1]
-                
-    def __unicode__(self):
+
+    def __str__(self):
         return self.name or ''
     
     class Admin( EntityAdmin ):
