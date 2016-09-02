@@ -918,9 +918,9 @@ class PartyAdmin( EntityAdmin ):
 
     def get_query( self ):
         query = super( PartyAdmin, self ).get_query()
-        query = query.options( orm.subqueryload('contact_mechanisms') )
-        query = query.options( orm.subqueryload('addresses') )
-        query = query.options( orm.subqueryload('addresses.address') )
+        #query = query.options( orm.subqueryload('contact_mechanisms') )
+        #query = query.options( orm.subqueryload('addresses') )
+        #query = query.options( orm.subqueryload('addresses.address') )
         return query
 
     #def flush(self, party):
@@ -943,6 +943,7 @@ Party.Admin = PartyAdmin
 class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
+    list_search = ['name', 'tax_id']
     list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
     form_display = TabForm( [( _('Basic'), Form( [ WidgetOnlyForm('note'), 'name', 'email', 
                                                    'phone', 
@@ -960,6 +961,7 @@ Organization.Admin = OrganizationAdmin
 class PersonAdmin( Party.Admin ):
     verbose_name = _( 'Person' )
     verbose_name_plural = _( 'Persons' )
+    list_search = ['first_name', 'last_name']
     list_display = ['first_name', 'last_name', 'email', 'phone']
     form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
                                                               'first_name', 
