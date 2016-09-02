@@ -250,7 +250,3 @@ class AuthenticationGroupRole( Entity ):
 
 AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
                                               cascade = 'all, delete, delete-orphan')
-
-document_classes([AuthenticationGroup,
-                  AuthenticationMechanism])
-
