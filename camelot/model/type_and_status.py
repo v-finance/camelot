@@ -571,3 +571,57 @@ class Type(EntityBuilder):
             setattr(self.entity, self.name, self.property)
 
 
+class TypeFilter(list_filter.GroupBoxFilter):
+    """
+    Filter to be used in a table view to enable filtering on the type
+    of an object.  This filter will display all available types, and as
+    such, needs not to query the distinct values used in the database to
+    build up it's widget.
+    
+    :param attribute: the attribute that holds the type
+    """
+
+    def decorate_query(self, query, values):
+        if list_filter.All in values:
+            return query
+        if (len(values) == 0) and (self.exclusive==False):
+            return query.filter(self.column==None)
+        where_clauses = [self.column==v for v in values]
+        query = query.filter(sql.or_(*where_clauses))
+        return query
+
+    def get_state(self, model_context):
+        state = Action.get_state(self, model_context)
+        admin = model_context.admin
+        self.attributes = admin.get_field_attributes(self.attribute)
+        type_type = self.attributes['target']
+
+        choices = [(t, t.code) for t in type_type.query.all()]
+
+        state.modes = []
+        modes = []
+        self.column = getattr(admin.entity, self.attribute)
+
+        for value, name in choices:
+            mode = list_filter.FilterMode(
+                value=value,
+                verbose_name=name,
+                checked=(self.exclusive==False),
+            )
+            modes.append(mode)
+
+        if self.exclusive:
+            all_mode = list_filter.FilterMode(value=list_filter.All,
+                                              verbose_name=ugettext('All'),
+                                              checked=(self.default==list_filter.All))
+            modes.insert(0, all_mode)
+        else:
+            none_mode = list_filter.FilterMode(value=None,
+                                               verbose_name=ugettext('None'),
+                                               checked=True)
+            modes.append(none_mode)
+
+        state.modes = modes
+        state.verbose_name = self.attributes['name']
+        return state
+
