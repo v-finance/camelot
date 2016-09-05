@@ -42,7 +42,6 @@ from sqlalchemy import orm
 
 import camelot.types
 from ..core.qt import QtCore, QtGui
-from camelot.core.document import document_classes
 from camelot.core.orm import Entity, Session, ManyToMany
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
