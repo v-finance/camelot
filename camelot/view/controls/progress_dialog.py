@@ -137,9 +137,11 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
                 details.show()
             model = details.model()
             model.insertRow(model.rowCount())
-            model.setData(model.index(model.rowCount()-1, 0),
+            index = model.index(model.rowCount()-1, 0)
+            model.setData(index,
                           py_to_variant(text),
                           Qt.DisplayRole)
+            details.scrollTo(index, QtWidgets.QListView.PositionAtBottom)
 
     def clear_details( self ):
         """Clear the detail text"""
