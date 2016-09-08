@@ -55,8 +55,8 @@ class IntegerEditor(CustomEditor):
         
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         action = QtWidgets.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
@@ -134,11 +134,11 @@ class IntegerEditor(CustomEditor):
             # If so, the calculatorButton and the spinBox's controls should be hidden.
             if self.option and self.option.version != 5:
                 self.calculatorButton.hide()
-                spin_box.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+                spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
             else:
                 self.calculatorButton.setVisible(editable and self._calculator)
                 if not editable:
-                    spin_box.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+                    spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator

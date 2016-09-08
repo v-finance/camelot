@@ -123,10 +123,10 @@ class AbstractCustomEditor(object):
     """
     def get_height(self):
         return max(QtWidgets.QLineEdit().sizeHint().height(),
-                   QtGui.QDateEdit().sizeHint().height(),
-                   QtGui.QDateTimeEdit().sizeHint().height(),
-                   QtGui.QSpinBox().sizeHint().height(),
-                   QtGui.QDateEdit().sizeHint().height(),
+                   QtWidgets.QDateEdit().sizeHint().height(),
+                   QtWidgets.QDateTimeEdit().sizeHint().height(),
+                   QtWidgets.QSpinBox().sizeHint().height(),
+                   QtWidgets.QDateEdit().sizeHint().height(),
                    QtWidgets.QComboBox().sizeHint().height())
 
     def set_background_color(self, background_color):

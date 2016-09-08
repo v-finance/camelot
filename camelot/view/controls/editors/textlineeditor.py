@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import QtCore, QtGui, QtWidgets
+from ....core.qt import QtCore, QtWidgets
 
 from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
@@ -46,8 +46,8 @@ class TextLineEditor(CustomEditor):
                  column_width=None,
                  **kwargs):
         CustomEditor.__init__(self, parent, column_width=column_width)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred,
-                           QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                           QtWidgets.QSizePolicy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)

@@ -99,7 +99,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.gui_context.workspace = self
         self.gui_context.admin = admin
         self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper,
+        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
 
         cancel_button = QtWidgets.QPushButton(six.text_type(reject))
@@ -123,7 +123,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
-        layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
+        layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
             actions_widget = ActionsBox( parent = self,

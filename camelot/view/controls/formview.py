@@ -53,7 +53,7 @@ class FormEditors( object ):
     
     def __init__( self, columns, widget_mapper, admin ):
         if self.option == None:
-            self.option = QtGui.QStyleOptionViewItem()
+            self.option = QtWidgets.QStyleOptionViewItem()
             # set version to 5 to indicate the widget will appear on a
             # a form view and not on a table view
             self.option.version = 5

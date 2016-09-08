@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import (QtGui, QtCore, QtModel, QtWidgets, Qt,
+from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
 from ....core.item_model import ProxyDict, FieldAttributesRole, PreviewRole
 
@@ -146,7 +146,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         
         :return: a `QStandardItem` object
         """
-        item = QtModel.QStandardItem()
+        item = QtGui.QStandardItem()
         item.setData(py_to_variant(value), Qt.EditRole)
         item.setData(py_to_variant(ProxyDict(field_attributes_values)),
                      FieldAttributesRole)
