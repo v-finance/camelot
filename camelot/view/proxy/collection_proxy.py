@@ -492,33 +492,34 @@ class Created(UpdateMixin):
     Does not subclass RowCount, because row count will reset the whole edit
     cache.
 
-    When a created object is detected simply set the number of rows.  This
-    assumes the position of the other objects did not change.
+    When a created object is detected simply update the row of this object,
+    assuming other objects have not been changed position.
     """
 
     def __init__(self, objects):
-        self.rows = None
         self.objects = objects
         self.changed_ranges = []
 
+    def __repr__(self):
+        return '{0.__class__.__name__}({1} objects)'.format(
+            self, len(self.objects)
+        )
+
     def model_run(self, model_context):
-        # assume rows already contains the new object
-        rows = len(model_context.proxy)
+        # the proxy cannot return it's length including the new object before
+        # the new object has been indexed
         for obj in self.objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
                 continue
-            # self.rows should only be not None when a created object was in
-            # the cache
-            self.rows = rows
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         return self
 
     def gui_run(self, item_model):
-        if self.rows is not None:
-            item_model.setRowCount(self.rows)
+        # appending new items to the model will increase the rowcount, so
+        # there is no need to set the rowcount explicitly
         self.update_item_model(item_model)
 
 class Sort(RowCount):
