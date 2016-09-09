@@ -44,6 +44,10 @@ class TwoWayDict(dict):
         dict.__setitem__(self, key, value)
         dict.__setitem__(self, value, key)
 
+    def copy(self):
+        # the default copy method always returns an object of type dict
+        return self.__class__(self)
+
 class SortingRowMapper( dict ):
     """Class mapping rows of a collection 1:1 without sorting
     and filtering, unless a mapping has been defined explicitly
@@ -58,6 +62,9 @@ class SortingRowMapper( dict ):
         except KeyError:
             return row
 
+    def copy(self):
+        # the default copy method always returns an object of type dict
+        return self.__class__(self)
 
 class ListModelProxy(AbstractModelProxy, dict):
     """
