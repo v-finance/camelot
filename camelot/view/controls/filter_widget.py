@@ -44,7 +44,7 @@ class AbstractFilterWidget(AbstractActionWidget):
     def current_row_changed(self, _current_row):
         pass
         
-    def data_changed(self, _index1, _index2):
+    def header_data_changed(self, _orientation, _first, _last):
         pass
 
     def set_menu(self, _state):

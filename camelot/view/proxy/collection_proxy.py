@@ -208,8 +208,10 @@ class UpdateMixin(object):
         root_item = item_model.invisibleRootItem()
         logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
         for row, header_item, items in self.changed_ranges:
-            # setting the vertical header item causes the table to scroll
-            # back to its open editor
+            # Setting the vertical header item causes the table to scroll
+            # back to its open editor.  However setting the header item every
+            # time data has changed is needed to signal other parts of the
+            # gui that the object itself has changed.
             item_model.setVerticalHeaderItem(row, header_item)
             for column, item in items:
                 root_item.setChild(row, column, item)

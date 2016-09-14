@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtCore, QtWidgets, variant_to_py, is_deleted
+from ...core.qt import Qt, QtGui, QtCore, QtWidgets, variant_to_py, is_deleted
 
 import six
 
@@ -42,16 +42,21 @@ class AbstractActionWidget( object ):
 
     def init( self, action, gui_context ):
         """Helper class to construct widget that when triggered run an action.
-        This class exists as a base class for custom ActionButton implementations.
+        This class exists as a base class for custom ActionButton
+        implementations.
+        
+        The model is assumed to update its vertical header every time the object
+        in a row changes.  So listening to the vertical header changes should
+        be enough to update the state of the action.
         """
         self.action = action
         self.gui_context = gui_context
         self.state = State()
         if isinstance( gui_context, FormActionGuiContext ):
-            gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
+            gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         if isinstance( gui_context, ListActionGuiContext ):
-            gui_context.item_view.model().dataChanged.connect(self.data_changed)
+            gui_context.item_view.model().headerDataChanged.connect(self.header_data_changed)
             #gui_context.item_view.model().modelReset.connect(self.model_reset)
             selection_model = gui_context.item_view.selectionModel()
             if selection_model is not None:
@@ -68,18 +73,20 @@ class AbstractActionWidget( object ):
               self.set_state,
               args = (self.gui_context.create_model_context(),) )
 
-    def data_changed(self, index1, index2):
+    def header_data_changed(self, orientation, first, last):
+        if orientation==Qt.Horizontal:
+            return
         if isinstance(self.gui_context, FormActionGuiContext):
             # the model might emit a dataChanged signal, while the widget mapper
             # has been deleted
             if not is_deleted(self.gui_context.widget_mapper):
-                self.current_row_changed( index1.row() )
+                self.current_row_changed(first)
         if isinstance(self.gui_context, ListActionGuiContext):
             if not is_deleted(self.gui_context.item_view):
                 selection_model = self.gui_context.item_view.selectionModel()
                 if (selection_model is not None) and selection_model.hasSelection():
                     parent = QtCore.QModelIndex()
-                    for row in six.moves.range(index1.row(), index2.row()+1):
+                    for row in six.moves.range(first, last+1):
                         if selection_model.rowIntersectsSelection(row, parent):
                             self.current_row_changed(row)
                             return
@@ -221,9 +228,9 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         AbstractActionWidget.init( self, action, gui_context )
         self.clicked.connect(self.action_triggered)
 
-    @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex )
-    def data_changed( self, index1, index2 ):
-        AbstractActionWidget.data_changed( self, index1, index2 )
+    @QtCore.qt_slot(int, int, int)
+    def header_data_changed(self, orientation, first, last):
+        AbstractActionWidget.header_data_changed(self, orientation, first, last)
 
     def set_state( self, state ):
         super( ActionPushButton, self ).set_state( state )
