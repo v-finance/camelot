@@ -609,6 +609,25 @@ class RemoveExportMapping( SaveExportMapping ):
             mappings.pop(mapping_name)
             self.write_mappings(mappings)
 
+
+class ClearMapping(Action):
+    """
+    Clear a selection of mappings
+    """
+
+    verbose_name = _('Clear')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+
+        cleared_mappings = list()
+        for mapping in model_context.get_selection():
+            if mapping.field is not None:
+                mapping.field = None
+                cleared_mappings.append(mapping)
+        yield action_steps.UpdateObjects(cleared_mappings)
+
+
 class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
     
@@ -651,7 +670,9 @@ class ExportSpreadsheet( ListContextAction ):
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
                                                  RestoreExportMapping(settings),
-                                                 RemoveExportMapping(settings)]
+                                                 RemoveExportMapping(settings),
+                                                 ClearMapping(),
+                                                 ]
         change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
         change_mappings.title = _('Select field')
         change_mappings.subtitle = _('Specify for each column the field to export')
