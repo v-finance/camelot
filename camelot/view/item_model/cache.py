@@ -77,15 +77,20 @@ class ValueCache(object):
         
         """
         old_value = self.delete_by_entity(entity)[1]
-        self.data_by_rows[row] = values
+        if old_value is None:
+            # there was no old data, so everything has changed
+            changed_columns = set(six.iterkeys(values))
+            new_values = values
+        else:
+            changed_columns = set(col for col, value in six.iteritems(values) if value != old_value.get(col, _fill))
+            new_values = old_value
+            new_values.update(values)
+        self.data_by_rows[row] = new_values
         self.rows_by_entity[entity] = row
         if len(self.rows_by_entity)>self.max_entries:
             entity, _row = self.rows_by_entity.popitem(last=False)
             self.delete_by_entity(entity)
-        if old_value is None:
-            # there was no old data, so everything has changed
-            return set(six.iterkeys(values))
-        return set(col for col, value in six.iteritems(values) if value != old_value.get(col, _fill))
+        return changed_columns
 
     def get_data(self, row):
         """

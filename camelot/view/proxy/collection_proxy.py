@@ -137,7 +137,6 @@ class UpdateMixin(object):
         :param columns: the columns for which data should be added
         :param obj: the object from which to strip the data
         :param data: fill the data cache, otherwise only fills the header cache
-        :param column_limit: upto which column to add data to the cache
         :return: the changes to the item model
         """
         admin = model_context.admin
@@ -240,7 +239,10 @@ class Update(UpdateMixin):
             # to strip data of the entity
             #
             columns = tuple(six.iterkeys(model_context.edit_cache.get_data(row)))
-            logger.debug('evaluate changes in row {0}, column {1} to {2}'.format(row, min(columns), max(columns)))
+            if len(columns):
+                logger.debug('evaluate changes in row {0}, column {1} to {2}'.format(row, min(columns), max(columns)))
+            else:
+                logger.debug('evaluate changes in row {0}'.format(row))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         return self
 
