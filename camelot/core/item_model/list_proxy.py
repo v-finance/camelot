@@ -119,7 +119,11 @@ class ListModelProxy(AbstractModelProxy, dict):
             return self._indexed_objects[obj]
         except KeyError:
             i = self._objects.index(obj)
+            # the object is in _objects, but has not been indexed yet,
+            # so index it
             self._indexed_objects[i] = obj
+            # now the length is outdated
+            self._length = None
             return i
 
     def sort(self, key=None, reverse=False):
