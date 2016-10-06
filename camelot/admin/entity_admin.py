@@ -48,6 +48,7 @@ import six
 from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
+from sqlalchemy.orm.exc import UnmappedClassError
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -379,8 +380,6 @@ and used as a custom action.
         :return: a dictionary with the changed attributes and their old
            value
         """
-        from sqlalchemy import orm
-        from sqlalchemy.orm.exc import UnmappedClassError
         state = orm.attributes.instance_state( obj )
         dict_ = state.dict
         modifications = dict()
@@ -388,7 +387,7 @@ and used as a custom action.
             if not hasattr( attr.impl, 'get_history' ):
                 continue
             (added, unchanged, deleted) = \
-                attr.impl.get_history( state, dict_ )
+                attr.impl.get_history(state, dict_, passive=orm.base.PASSIVE_NO_FETCH)
             if added or deleted:
                 old_value = None
                 if deleted:

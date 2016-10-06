@@ -384,19 +384,6 @@ class Party(Entity, WithAddresses):
     def mobile_expression( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
-    def full_name( self ):
-
-        aliased_organisation = sql.alias( Organization.table )
-        aliased_person = sql.alias( Person.table )
-        
-        return sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
-                                                   whereclause = and_( aliased_person.c.party_id == self.id ),
-                                                   ).limit( 1 ).as_scalar(),
-                                       sql.select( [aliased_organisation.c.name],
-                                                   whereclause = and_( aliased_organisation.c.party_id == self.id ), 
-                                                   ).limit( 1 ).as_scalar() )
-    
-    full_name = ColumnProperty( full_name, deferred=True )
 
 @six.python_2_unicode_compatible
 class Organization( Party ):
@@ -719,13 +706,15 @@ class Addressable(object):
 @six.python_2_unicode_compatible
 class PartyAddress( Entity, Addressable ):
     using_options( tablename = 'party_address' )
-    party = ManyToOne( Party,
-                       required = True,
-                       ondelete = 'cascade',
-                       onupdate = 'cascade',
-                       lazy = 'subquery',
-                       backref = orm.backref('addresses', lazy = True,
-                                             cascade='all, delete, delete-orphan'))
+    party_id = schema.Column(
+        camelot.types.PrimaryKey(),
+        ForeignKey('party.id', ondelete='cascade', onupdate='cascade'),
+        nullable=False,
+    )
+    party = orm.relationship(
+        Party, backref = orm.backref('addresses', lazy='subquery',
+                                     cascade='all, delete, delete-orphan')
+    )
     address = ManyToOne( Address,
                          required = True,
                          backref = 'party_addresses',
@@ -735,12 +724,6 @@ class PartyAddress( Entity, Addressable ):
     from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, nullable=False, index = True )
     comment = schema.Column( Unicode( 256 ) )
-
-    def party_name( self ):
-        return sql.select( [sql.func.coalesce(Party.full_name, '')],
-                           whereclause = (Party.id==self.party_id))
-
-    party_name = ColumnProperty( party_name, deferred = True )
 
     def __str__(self):
         return '%s : %s' % ( six.text_type( self.party ), six.text_type( self.address ) )
@@ -983,4 +966,21 @@ class PersonAdmin( Party.Admin ):
     
 Person.Admin = PersonAdmin
 
+aliased_organisation = sql.alias( Organization.table )
+aliased_person = sql.alias( Person.table )
 
+Party.full_name = orm.column_property(
+    sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
+                                           whereclause = and_( aliased_person.c.party_id == Party.id ),
+                                           ).limit( 1 ).as_scalar(),
+                               sql.select( [aliased_organisation.c.name],
+                                           whereclause = and_( aliased_organisation.c.party_id == Party.id ), 
+                                           ).limit( 1 ).as_scalar() )
+    , deferred=True
+)
+
+PartyAddress.party_name = orm.column_property(
+    sql.select( [sql.func.coalesce(Party.full_name, '')],
+                whereclause = (Party.id==PartyAddress.party_id)),
+    deferred = True 
+)
