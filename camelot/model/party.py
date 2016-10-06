@@ -712,8 +712,9 @@ class PartyAddress( Entity, Addressable ):
         nullable=False,
     )
     party = orm.relationship(
-        Party, backref = orm.backref('addresses', lazy='subquery',
-                                     cascade='all, delete, delete-orphan')
+        Party, backref = orm.backref('addresses', lazy=True,
+                                     cascade='all, delete, delete-orphan'),
+        lazy='subquery',
     )
     address = ManyToOne( Address,
                          required = True,
@@ -975,8 +976,8 @@ Party.full_name = orm.column_property(
                                            ).limit( 1 ).as_scalar(),
                                sql.select( [aliased_organisation.c.name],
                                            whereclause = and_( aliased_organisation.c.party_id == Party.id ), 
-                                           ).limit( 1 ).as_scalar() )
-    , deferred=True
+                                           ).limit( 1 ).as_scalar() ),
+    deferred=True
 )
 
 PartyAddress.party_name = orm.column_property(
