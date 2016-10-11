@@ -229,7 +229,7 @@ shortcut confusion and reduce the number of status updates.
             else:
                 raise Exception('Could not construct a default admin class')
             admin = admin_class(self, entity)
-            self._object_admin_cache[admin_class] = admin
+            self._object_admin_cache[entity] = admin
             return admin
 
     def get_actions(self):
