@@ -29,7 +29,7 @@
 
 import logging
 
-from ...core.qt import QtWidgets
+from ...core.qt import QtWidgets, QtGui
 
 import six
 
@@ -295,7 +295,7 @@ method.
 .. attribute:: tooltip
 
     The tooltip as displayed to the user, this should be of type 
-    :class:`camelot.core.utils.ugettext_lazy`
+    :class:`camelot.core.utils.ugettext_lazy` or :class:`QtGui.QKeySequence`
 
 .. attribute:: modes
 
@@ -343,7 +343,29 @@ direct manipulations of the user interface without a need to access the model.
         :attr:`shortcut` attribute
         """
         return self.shortcut
-        
+
+    def get_tooltip( self ):
+        """
+        :return: a `str` with the tooltip to display, by default this is
+            a combination of the :attr:`tooltip` and the :attr:`shortcut`
+            attribute
+        """
+        tooltip = None
+
+        if self.tooltip is not None:
+            tooltip = six.text_type(self.tooltip)
+
+        if isinstance(self.shortcut, QtGui.QKeySequence):
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+        elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
+            for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                break
+        elif self.shortcut is not None:
+            tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)
+
+        return tooltip
+
     def render( self, gui_context, parent ):
         """Create a widget to trigger the action.  Depending on the type of
         gui_context and parent, a different widget type might be returned.
@@ -405,7 +427,7 @@ direct manipulations of the user interface without a need to access the model.
         state = State()
         state.verbose_name = self.verbose_name
         state.icon = self.icon
-        state.tooltip = self.tooltip
+        state.tooltip = self.get_tooltip()
         state.modes = self.modes
         return state
 
