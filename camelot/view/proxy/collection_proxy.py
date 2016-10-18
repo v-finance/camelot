@@ -286,6 +286,7 @@ class Deleted(RowCount, UpdateMixin):
 
     def model_run(self, model_context):
         row = None
+        objects_to_remove = set()
         #
         # the object might or might not be in the proxy when the
         # deletion is handled
@@ -295,6 +296,7 @@ class Deleted(RowCount, UpdateMixin):
                 row = model_context.proxy.index(obj)
             except ValueError:
                 continue
+            objects_to_remove.add(obj)
             #
             # If the object was valid, the header item should be updated
             # make sure all views know the validity of the row has changed
@@ -304,6 +306,12 @@ class Deleted(RowCount, UpdateMixin):
             header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
             header_item.setData(py_to_variant(True), ValidRole)
             self.changed_ranges.append((row, header_item, tuple()))
+        #
+        # if the object that is going to be deleted is in the proxy, the
+        # proxy might be unaware of the deleting, so remove the object from
+        # the proxy
+        for obj in objects_to_remove:
+            model_context.proxy.remove(obj)
         #
         # when it's no longer in the proxy, the len of the proxy will be
         # different from the one of the view
