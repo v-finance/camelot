@@ -201,14 +201,16 @@ class FormWidget(QtWidgets.QWidget):
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, form_display.render( widgets, self, True) )
-        # give focus to the first editor in the form that can receive focus
-        for i in range(10):
-            first_widget = widget_mapper.mappedWidgetAt(i)
-            if first_widget is None:
-                break
-            if first_widget.focusPolicy() != Qt.NoFocus:
-                first_widget.setFocus(Qt.PopupFocusReason)
-                break
+        ## give focus to the first editor in the form that can receive focus
+        # this results in weird behavior on Mac, where the editor get focus
+        # from the OS and then immediately gets input
+        #for i in range(10):
+            #first_widget = widget_mapper.mappedWidgetAt(i)
+            #if first_widget is None:
+                #break
+            #if first_widget.focusPolicy() != Qt.NoFocus:
+                #first_widget.setFocus(Qt.PopupFocusReason)
+                #break
         LOGGER.debug( 'done' )
 
 class FormView(AbstractView):
