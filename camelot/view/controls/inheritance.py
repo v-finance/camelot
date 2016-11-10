@@ -56,8 +56,8 @@ class SubclassTree( ModelTree ):
         ModelTree.__init__(self, header_labels, parent=None)
         self.admin = admin
         self.setSizePolicy(
-            QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
         )
         self.clicked.connect( self.emit_subclass_clicked )
 

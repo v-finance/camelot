@@ -95,7 +95,7 @@ class LiteBoxView(QtWidgets.QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
-        QtGui.QShortcut( Qt.Key_Escape, self, self.close )
+        QtWidgets.QShortcut( Qt.Key_Escape, self, self.close )
         self.desktopshot = None
 
         # will propagate to children

@@ -52,8 +52,8 @@ class FileEditor(CustomEditor):
                             field_action.SaveFile()],
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.storage = storage
         self.filename = None # the widget containing the filename

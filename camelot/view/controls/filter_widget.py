@@ -224,7 +224,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         combobox.setCurrentIndex( default_index )
         combobox.currentIndexChanged.connect( self.combobox_changed )
         delegate = state.field_attributes['delegate'](** state.field_attributes)
-        option = QtGui.QStyleOptionViewItem()
+        option = QtWidgets.QStyleOptionViewItem()
         option.version = 5
         self._editor = delegate.createEditor( self, option, None )
         self._editor2 = delegate.createEditor( self, option, None )

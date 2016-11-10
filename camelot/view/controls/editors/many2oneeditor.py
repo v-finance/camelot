@@ -84,8 +84,8 @@ class Many2OneEditor( CustomEditor ):
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
         self.new_value = None
@@ -108,12 +108,12 @@ class Many2OneEditor( CustomEditor ):
         self.setFocusProxy(self.search_input)
 
         # Search Completer
-        self.completer = QtGui.QCompleter()
+        self.completer = QtWidgets.QCompleter()
         self.completions_model = self.CompletionsModel(self.completer)
         self.completer.setModel(self.completions_model)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtGui.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)

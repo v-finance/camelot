@@ -45,7 +45,7 @@ class BoolDelegate(CustomDelegate):
         self.drawBackground( painter, option, index )
         checked = variant_to_py(index.model().data(index, Qt.EditRole))
         
-        check_option = QtGui.QStyleOptionButton()
+        check_option = QtWidgets.QStyleOptionButton()
         
         rect = QtCore.QRect(option.rect.left(),
                             option.rect.top(),
@@ -54,20 +54,20 @@ class BoolDelegate(CustomDelegate):
         
         check_option.rect = rect
         check_option.palette = option.palette
-        if (option.state & QtGui.QStyle.State_Selected):
+        if (option.state & QtWidgets.QStyle.State_Selected):
             painter.fillRect(option.rect, option.palette.highlight())
         elif not self.editable:
             painter.fillRect(option.rect, option.palette.window())
 
         if checked in (ValueLoading, None):
-            check_option.state = option.state | QtGui.QStyle.State_Off
+            check_option.state = option.state | QtWidgets.QStyle.State_Off
         elif checked:
-            check_option.state = option.state | QtGui.QStyle.State_On
+            check_option.state = option.state | QtWidgets.QStyle.State_On
         else:
-            check_option.state = option.state | QtGui.QStyle.State_Off
+            check_option.state = option.state | QtWidgets.QStyle.State_Off
             
 
-        QtWidgets.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_CheckBox,
                                                check_option,
                                                painter)
                 

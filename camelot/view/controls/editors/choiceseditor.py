@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -52,7 +52,7 @@ class ChoicesEditor(CustomEditor):
                   actions = [],
                   **kwargs ):
         super(ChoicesEditor, self).__init__(parent)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -151,7 +151,7 @@ class ChoicesEditor(CustomEditor):
     def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed
         is the one that matches the value in the list set with set_choices
-        
+
         :param display_role: this is the name used to display the value in case
             the value is not in the list of choices.  If this is `None`, the string
             representation of the value is used.

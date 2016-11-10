@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,7 +64,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _commit_data(self, editor):
         self.commitData.emit(editor)
 
-    @QtCore.qt_slot( QtWidgets.QWidget, QtWidgets.QAbstractItemDelegate.EndEditHint )
+    # @QtCore.qt_slot( QtWidgets.QWidget, QtWidgets.QAbstractItemDelegate.EndEditHint )
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
@@ -80,7 +80,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
             editor = delegate.createEditor(parent, option, index)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
-            return QtWidgets.QWidget( parent = parent ) 
+            return QtWidgets.QWidget( parent = parent )
         return editor
 
     def setEditorData(self, editor, index):
@@ -104,14 +104,14 @@ class DelegateManager(QtWidgets.QItemDelegate):
         delegate.setModelData(editor, model, index)
 
     def sizeHint(self, option, index):
-        option = QtGui.QStyleOptionViewItem()
+        option = QtWidgets.QStyleOptionViewItem()
         delegate = self.get_column_delegate(index.column())
         return delegate.sizeHint(option, index)
 
     #def eventFilter(self, *args):
         #"""The datawidgetmapper installs the delegate as an event filter
         #on each editor.
-        
+
         #TODO : investigate if this is a reliable alternative to implement
                #commitData instead of the editingFinished signal.
         #"""

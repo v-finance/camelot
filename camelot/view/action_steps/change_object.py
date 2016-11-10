@@ -423,7 +423,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             static_field_attributes.setdefault('editable', True)
             delegate = static_field_attributes['delegate'](parent = self,
                                                             **static_field_attributes)
-            option = QtGui.QStyleOptionViewItem()
+            option = QtWidgets.QStyleOptionViewItem()
             option.version = 5
             value_editor = delegate.createEditor( self, option, None )
             value_editor.setObjectName( 'value_editor' )
