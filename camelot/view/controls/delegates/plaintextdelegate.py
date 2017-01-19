@@ -60,7 +60,8 @@ class PlainTextDelegate(CustomDelegate):
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
-        for completer in [fa_values[c] for c in fa_values.keys() if c == 'completer']:
+        completer = fa_values.get('completer')
+        if completer is not None:
             completer.moveToThread(QtGui.QApplication.instance().thread())
         item = super(PlainTextDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
