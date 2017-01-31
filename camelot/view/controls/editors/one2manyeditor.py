@@ -32,7 +32,7 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
 from camelot.view import register
-from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
+from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
 from ..action_widget import ActionAction
 from .wideeditor import WideEditor

@@ -33,7 +33,7 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import (QtGui, QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
+from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
 
 from camelot.admin.action.application_action import Refresh

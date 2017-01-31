@@ -148,7 +148,7 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
         canvas = FigureCanvas(fig)
         canvas.updateGeometry()
         figure_container.plot_on_figure(fig)
-        proxy = QtGui.QGraphicsProxyWidget()
+        proxy = QtWidgets.QGraphicsProxyWidget()
         proxy.setWidget(canvas)
         litebox.show_fullscreen_item(proxy)
         canvas.draw()

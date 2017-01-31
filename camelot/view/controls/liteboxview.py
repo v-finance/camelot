@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -102,7 +102,7 @@ class LiteBoxView(QtWidgets.QGraphicsView):
         self.setRenderHint(QtGui.QPainter.Antialiasing)
         self.setRenderHint(QtGui.QPainter.TextAntialiasing)
 
-        self.scene = QtGui.QGraphicsScene()
+        self.scene = QtWidgets.QGraphicsScene()
         self.setScene(self.scene)
 
     def close(self):
@@ -121,7 +121,7 @@ class LiteBoxView(QtWidgets.QGraphicsView):
         """:param pixmap: a QPixmap"""
         item = QtWidgets.QGraphicsPixmapItem(pixmap)
         self.show_fullscreen_item(item)
-        
+
     def show_fullscreen_image(self, image):
         """:param image: a QImage"""
         pixmap = QtGui.QPixmap.fromImage(image)
@@ -129,7 +129,7 @@ class LiteBoxView(QtWidgets.QGraphicsView):
 
     def show_fullscreen_item(self, item):
         """:param item: a QGraphicsItem to be shown fullscreen"""
-        item.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, True)
+        item.setFlag(QtWidgets.QGraphicsItem.ItemIsFocusable, True)
         self.scene.clear()
         self.scene.addItem(item)
         CloseMark(parent=item)

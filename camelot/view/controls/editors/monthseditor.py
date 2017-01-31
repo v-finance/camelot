@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets
+from ....core.qt import QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
 from camelot.view.controls.editors.customeditor import ValueLoading
@@ -44,7 +44,7 @@ class MonthsEditor(CustomEditor):
     def __init__(self, parent=None, editable=True, field_name='months', **kw):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )        
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
@@ -86,11 +86,11 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setReadOnly(not editable)
         self.months_spinbox.setEnabled(editable)
         if not editable:
-            self.years_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-            self.months_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            self.years_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+            self.months_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         else:
-            self.years_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
-            self.months_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+            self.years_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows)
+            self.months_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows)
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading

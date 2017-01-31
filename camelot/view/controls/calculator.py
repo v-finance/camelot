@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
@@ -206,7 +206,7 @@ class Calculator(QtWidgets.QDialog):
 
         #self.input.setText(str(eval(self.output.text())))
 
-        text, ok = QtGui.QInputDialog.getText(
+        text, ok = QtWidgets.QInputDialog.getText(
             self, 'Input Dialog', 'Enter percentage'
         )
 

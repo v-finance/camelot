@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -40,7 +40,7 @@ class ColorEditor(CustomEditor):
     def __init__(self, parent=None, editable=True, field_name='color', **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )        
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
@@ -86,12 +86,12 @@ class ColorEditor(CustomEditor):
         self._color = color
 
     def buttonClicked(self, raised):
-        options = QtGui.QColorDialog.ShowAlphaChannel
+        options = QtWidgets.QColorDialog.ShowAlphaChannel
         if self._color is None:
             color = Qt.white
         else:
             color = self._color
-        color = QtGui.QColorDialog.getColor(
+        color = QtWidgets.QColorDialog.getColor(
             color, self.parent(), ugettext('Select Color'),
             options,
         )
