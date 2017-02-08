@@ -411,8 +411,8 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             self.field = selected_field
             self.value = value
             static_field_attributes = list(self.static_field_attributes([selected_field]))[0]
-            # editable might be a dynamic field attribute
-            static_field_attributes.setdefault('editable', True)
+            # if the field is displayed in this dialog, it should be editable
+            static_field_attributes['editable'] = True
             delegate = static_field_attributes['delegate'](parent = self,
                                                             **static_field_attributes)
             option = QtGui.QStyleOptionViewItem()
