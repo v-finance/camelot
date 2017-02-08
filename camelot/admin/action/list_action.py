@@ -1036,6 +1036,9 @@ class SetFilters(Action, AbstractModelFilter):
 
             select_field = action_steps.ChangeField(
                 model_context.admin,
+                # explicit pass of field attributes because not editable
+                # fields should appear in the selection box
+                field_attributes = model_context.admin.get_all_fields_and_attributes(),
                 field_name = model_context.current_field_name,
                 field_value = current_field_value
             )

@@ -386,15 +386,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget( editor )
         self.main_widget().setLayout( layout )
-
-        def field_changeable(attributes):
-            if not attributes.get('editable', False):
-                return False
-            if attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
-                return False
-            return True
-
-        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes) if field_changeable(attributes)]
+        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes)]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
         editor.set_value(self.field)
@@ -447,7 +439,7 @@ class ChangeField( ActionStep ):
 
     :param admin: the admin of the object of which to change the field
     :param field_attributes: a list of field attributes of the fields that
-        can be changed.  If `None` is given, all fields are shown.
+        can be changed.  If `None` is given, all editable fields are shown.
     :param field_name: the name of the selected field when opening the dialog
     :param field_value: the value of the selected field when opening the dialog
 
@@ -473,15 +465,23 @@ class ChangeField( ActionStep ):
     def __init__(self,
                  admin,
                  field_attributes = None,
-                 field_name=None,
-                 field_value=None,
+                 field_name = None,
+                 field_value = None,
                  ):
         super( ChangeField, self ).__init__()
         self.admin = admin
         self.field_name = field_name
         self.field_value = field_value
-        if field_attributes == None:
+        if field_attributes is None:
             field_attributes = admin.get_all_fields_and_attributes()
+            not_editable_fields = []
+            for key, attributes in six.iteritems(field_attributes):
+                if not attributes.get('editable', False):
+                    not_editable_fields.append(key)
+                elif attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
+                    not_editable_fields.append(key)
+            for key in not_editable_fields:
+                field_attributes.pop(key)
         self.field_attributes = field_attributes
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Replace field contents')
