@@ -89,7 +89,12 @@ def strip_data_from_object( obj, columns ):
     return row_data
 
 invalid_data = py_to_variant()
-invalid_field_attributes_data = py_to_variant(ProxyDict(editable=False))
+# todo : investigate if the invalid field attributes ought to be
+#        the same as the default field attributes in the object admin
+invalid_field_attributes_data = py_to_variant(ProxyDict(
+    editable=False,
+    focus_policy=Qt.NoFocus,
+))
 invalid_item = QtGui.QStandardItem()
 invalid_item.setFlags(Qt.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.EditRole)
