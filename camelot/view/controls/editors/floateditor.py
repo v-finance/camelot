@@ -192,7 +192,9 @@ class FloatEditor(CustomEditor):
         editable = kwargs.get('editable', False)
         self.calculatorButton.setShown(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setFocusPolicy(kwargs.get('focus_policy'))
+        focus_policy = kwargs.get('focus_policy')
+        if focus_policy is not None:
+            spinBox.setFocusPolicy(focus_policy)
         spinBox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
         spinBox.setPrefix(six.text_type(kwargs.get('prefix', '')))
         spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
