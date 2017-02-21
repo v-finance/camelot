@@ -246,6 +246,7 @@ class EntityViewsTest(ModelThreadTestCase):
             if isinstance(admin, EntityAdmin):
                 obj = admin.get_query().first()
             if obj is None:
+                # TODO Make sure object can be created, FinancialAccountPremiumSchedule has an obligatory parameter so this fails now
                 obj = admin.entity()
                 new_obj = True
             # create a form view
