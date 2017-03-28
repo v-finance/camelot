@@ -782,11 +782,19 @@ be specified using the verbose_name attribute.
         """
         setattr(obj, field_name, value)
 
-    def set_defaults(self, object_instance):
+    def set_defaults(self, obj):
         """Set the defaults of an object
-
+    
         :return: `True` if a default value was set, `False` otherwise
         """
+        iterations = 0
+        while self._set_defaults(obj) == True:
+            iterations += 1
+            if iterations > 10:
+                raise Exception('More than 10 iterations while setting defaults')
+        return iterations > 0
+
+    def _set_defaults(self, object_instance):
         from sqlalchemy.schema import ColumnDefault
         from sqlalchemy import orm
 
@@ -829,25 +837,26 @@ be specified using the verbose_name attribute.
                     default_value = default()
             else:
                 default_value = default
-            logger.debug(
-                'set default for %s to %s' % (
-                    field,
-                    six.text_type(default_value)
-                )
-            )
-            try:
-                setattr(object_instance, field, default_value)
-                default_set = True
-            except AttributeError as exc:
-                logger.error(
-                    'Programming Error : could not set'
-                    ' attribute %s to %s on %s' % (
+            if default_value is not None:
+                logger.debug(
+                    u'set default for %s to %s'%(
                         field,
-                        default_value,
-                        object_instance.__class__.__name__
-                        ),
-                    exc_info=exc
+                        six.text_type(default_value)
+                    )
                 )
+                try:
+                    setattr(object_instance, field, default_value)
+                    default_set = True
+                except AttributeError as exc:
+                    logger.error(
+                        u'Programming Error : could not set'
+                        u' attribute %s to %s on %s' % (
+                            field,
+                            default_value,
+                            object_instance.__class__.__name__
+                            ),
+                        exc_info=exc
+                    )
         for compounding_object in self.get_compounding_objects( object_instance ):
             compound_admin = self.get_related_admin( type( compounding_object ) )
             compound_default_set = compound_admin.set_defaults(compounding_object)
