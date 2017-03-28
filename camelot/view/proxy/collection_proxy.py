@@ -474,7 +474,7 @@ class SetData(Update):
                     # setting this attribute, might trigger a default function 
                     # to return a value, that was not returned before
                     #
-                    admin.set_defaults(obj, include_nullable_fields=False )
+                    admin.set_defaults(obj)
                 except AttributeError as e:
                     logger.error( u"Can't set attribute %s to %s" % ( field_name, six.text_type( new_value ) ), exc_info = e )
                 except TypeError:

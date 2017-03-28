@@ -782,11 +782,10 @@ be specified using the verbose_name attribute.
         """
         setattr(obj, field_name, value)
 
-    def set_defaults(self, object_instance, include_nullable_fields=True):
+    def set_defaults(self, object_instance):
         """Set the defaults of an object
-        :param include_nullable_fields: also set defaults for nullable fields, 
-        depending on the context, this should be set to False to allow the user 
-        to set the field to None
+
+        :return: `True` if a default value was set, `False` otherwise
         """
         from sqlalchemy.schema import ColumnDefault
         from sqlalchemy import orm
@@ -794,6 +793,7 @@ be specified using the verbose_name attribute.
         if self.is_deleted( object_instance ):
             return False
 
+        default_set = False
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
         for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
@@ -837,6 +837,7 @@ be specified using the verbose_name attribute.
             )
             try:
                 setattr(object_instance, field, default_value)
+                default_set = True
             except AttributeError as exc:
                 logger.error(
                     'Programming Error : could not set'
@@ -848,7 +849,11 @@ be specified using the verbose_name attribute.
                     exc_info=exc
                 )
         for compounding_object in self.get_compounding_objects( object_instance ):
-            self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
+            compound_admin = self.get_related_admin( type( compounding_object ) )
+            compound_default_set = compound_admin.set_defaults(compounding_object)
+            default_set = default_set or compound_default_set
+
+        return default_set
 
     def primary_key( self, obj ):
         """Get the primary key of an object
