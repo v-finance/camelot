@@ -265,8 +265,8 @@ class XlsReader( six.Iterator ):
             )
         import openpyxl
         workbook = openpyxl.load_workbook(filename, data_only=True, keep_vba=False)
-        self.sheets = workbook.get_sheet_names()
-        self.sheet = workbook.get_active_sheet()
+        self.sheets = workbook.worksheets
+        self.sheet = workbook.active
         self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
 
@@ -278,11 +278,11 @@ class XlsReader( six.Iterator ):
             for cell in row:
                 value = cell.value
                 if value is None:
-                    value = ''
-                if value == True:
-                    value = 'true'
-                elif value == False:
-                    value = 'false'
+                    value = u''
+                if value is True:
+                    value = u'true'
+                elif value is False:
+                    value = u'false'
                 elif isinstance(value, six.integer_types):
                     # QLocale.toString doesn't seems to work with long ints
                     value = six.text_type(value)
@@ -303,6 +303,8 @@ class XlsReader( six.Iterator ):
                 elif isinstance(value, datetime.datetime):
                     dt = QtCore.QDate(value.year, value.month, value.day)
                     value = six.text_type(dt.toString(self.date_format))
+                elif isinstance(value, six.binary_type):
+                    value = value.decode('utf-8')
                 elif isinstance(value, six.text_type):
                     pass
                 else:
