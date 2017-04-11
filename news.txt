@@ -41,7 +41,9 @@ Development
  
  * Reworked import/export action to handle tables with many columns and allow the
    user to customize the imported and exported columns.
- 
+
+ * Importing spreadsheets now uses openpyxl instead of xlrd
+
  * New database profiles api in :class:`camelot.core.profile.ProfileStore`
  
  * Integer and float editors display `None` as an empty string
