@@ -269,9 +269,14 @@ def text_from_richtext( unstripped_text ):
     try:
         parser.feed(unstripped_text.strip())
     except html_parser.HTMLParseError:
-        logger.warn('html parse error')
+        logger.debug('html parse error')
 
     return strings
+
+def richtext_to_string(value):
+    if value is None:
+        return u''
+    return u'\n'.join([line for line in text_from_richtext(value)])
 
 def resize_widget_to_screen( widget, fraction = 0.75 ):
     """Resize a widget to fill a certain fraction of the screen

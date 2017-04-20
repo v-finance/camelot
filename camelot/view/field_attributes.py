@@ -53,6 +53,7 @@ from camelot.view.utils import (
     string_from_string,
     enumeration_to_string,
     default_language,
+    richtext_to_string,
 )
 
 _numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
@@ -187,6 +188,7 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.RichTextDelegate,
         'from_string': string_from_string,
         'operators' : [],
+        'to_string': richtext_to_string,
     },
 
     camelot.types.Color: lambda f: {

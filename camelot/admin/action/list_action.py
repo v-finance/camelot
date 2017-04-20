@@ -40,7 +40,7 @@ from .base import Action, Mode
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
@@ -779,12 +779,9 @@ class ExportSpreadsheet( ListContextAction ):
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
                 format_string = '0'
-                if value != None:
+                if value is not None:
                     if isinstance( value, Decimal ):
                         value = float( str( value ) )
-                    if isinstance( value, six.string_types ):
-                        if attributes.get( 'translate_content', False ) == True:
-                            value = ugettext( value )
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
                         value = separator.join([six.text_type(el) for el in value])
@@ -799,6 +796,8 @@ class ExportSpreadsheet( ListContextAction ):
                         format_string = datetime_format
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
+                    elif attributes.get('to_string') is not None:
+                        value = attributes['to_string'](value)
                     else:
                         value = six.text_type( value )
                 else:
