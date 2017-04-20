@@ -264,15 +264,16 @@ class XlsReader( six.Iterator ):
                 detail = u'supported formats are ' + u', '.join(SUPPORTED_FORMATS)
             )
         import openpyxl
-        workbook = openpyxl.load_workbook(filename, data_only=True, keep_vba=False)
+        # use these options to keep memory usage under control
+        workbook = openpyxl.load_workbook(
+            filename, data_only=True, keep_vba=False, read_only=True
+        )
         self.sheets = workbook.worksheets
         self.sheet = workbook.active
         self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
 
     def __iter__( self ):
-        import openpyxl
-        assert isinstance(self.sheet, openpyxl.worksheet.Worksheet)
         for row in self.sheet.iter_rows():
             vector = []
             for cell in row:
