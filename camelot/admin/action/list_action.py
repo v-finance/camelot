@@ -338,7 +338,8 @@ class ChangeAdmin( Action ):
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
     
-    shortcut = QtGui.QKeySequence.Copy
+    # no shortcut here, as this is too dangerous if the user
+    # presses the shortcut without being aware of the consequences
     icon = Icon('tango/16x16/actions/edit-copy.png')
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')

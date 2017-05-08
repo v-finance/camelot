@@ -473,7 +473,7 @@ class ChangeField( ActionStep ):
         self.field_name = field_name
         self.field_value = field_value
         if field_attributes is None:
-            field_attributes = admin.get_all_fields_and_attributes()
+            field_attributes = dict(admin.get_all_fields_and_attributes())
             not_editable_fields = []
             for key, attributes in six.iteritems(field_attributes):
                 if not attributes.get('editable', False):
