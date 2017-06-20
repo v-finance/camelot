@@ -363,7 +363,7 @@ class ChangeObjects( ActionStep ):
                 raise CancelRequest()
             return self.objects
 
-class ChangeFieldDialog( StandaloneWizardPage ):
+class ChangeFieldDialog(StandaloneWizardPage):
     """A dialog to change a field of  an object.
     """
 
