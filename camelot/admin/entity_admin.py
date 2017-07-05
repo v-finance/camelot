@@ -242,10 +242,7 @@ and used as a custom action.
                                 # the defaults or the nullable status of the column
                                 # does not need to be the default or the nullable
                                 # of the hybrid property
-                                # changed 4/7/2017 DJK; editable added to avoid setting fields editable
-                                # when they should not be editable
-                                # Note that a primary key can be set editable by this change!!
-                                if k in ['default', 'nullable', 'editable']:
+                                if k in ['default', 'nullable']:
                                     continue
                                 attributes[k] = v
                 break
