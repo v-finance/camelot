@@ -46,14 +46,17 @@ def hide_progress_dialog( gui_context ):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.progress_dialog
-    original_state = None
+    original_state, original_minimum_duration = None, None
     if isinstance( progress_dialog, QtWidgets.QWidget ):
         original_state = progress_dialog.isHidden()
+        original_minimum_duration = progress_dialog.minimumDuration()
     try:
+        progress_dialog.setMinimumDuration(0)
         if original_state == False:
             progress_dialog.hide()
         yield
     finally:
+        progress_dialog.setMinimumDuration(original_minimum_duration)
         if original_state == False:
             progress_dialog.show()
 
