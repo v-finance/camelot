@@ -151,6 +151,19 @@ class TableWidget(QtWidgets.QTableView):
         self.verticalScrollBar().sliderPressed.connect(self._slider_pressed)
         self.horizontalScrollBar().sliderPressed.connect(self._slider_pressed)
 
+    @QtCore.qt_slot()
+    def selectAll(self):
+        """
+        Reimplement `QtWidgets.QAbstractItemView.selectAll` to add the
+        option of selecting nothing.
+        """
+        selection_model = self.selectionModel()
+        if selection_model is not None:
+            if selection_model.hasSelection():
+                selection_model.clear()
+            else:
+                super(TableWidget, self).selectAll()
+
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
         assert object_thread(self)

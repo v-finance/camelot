@@ -677,8 +677,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.vertical_header_size =  QtCore.QSize( 16 + 10,
                                                    self._vertical_header_height )
         self._max_number_of_rows = max_number_of_rows
-        self._model_context = RowModelContext()
-        self._model_context.admin = admin
+        self._model_context = None
         self._model_thread = get_model_thread()
         #
         # The timer reduced the number of times the model thread is
@@ -896,8 +895,11 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # todo : remove the concept of a validator
         model_context.validator = self.admin.get_validator()
         self._model_context = model_context
-        self._filters = dict()
+        #self._filters = dict()
         self._reset()
+        # filters might be applied before the value is set
+        for list_filter, value in six.iteritems(self._filters):
+            self._append_request(Filter(list_filter, None, value))
         # the columns might be set before the value, but they might be running
         # in the model thread for a different model context as well, so
         # resubmit the set columns task for this model context
@@ -905,7 +907,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.layoutChanged.emit()
     
     def get_value(self):
-        return self._model_context.proxy
+        if self._model_context is not None:
+            return self._model_context.proxy
 
     def set_filter(self, list_filter, value):
         """
@@ -918,7 +921,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.logger.debug('set_filter called')
         old_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
-        self._append_request(Filter(list_filter, old_value, value))
+        if (self._model_context is not None):
+            self._append_request(Filter(list_filter, old_value, value))
 
     @QtCore.qt_slot(object, tuple)
     def objects_updated(self, sender, objects):
@@ -975,7 +979,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         for i, field_name in enumerate(field_names):
             self._columns.append(field_name)
             yield i
-        if len(self._columns):
+        if len(self._columns) and (self._model_context is not None):
             self._append_request(SetColumns(self._columns))
 
     def setHeaderData(self, section, orientation, value, role):
