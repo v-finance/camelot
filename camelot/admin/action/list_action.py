@@ -999,6 +999,7 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -1022,33 +1023,60 @@ class SetFilters(Action, AbstractModelFilter):
                     yield obj
 
     def model_run( self, model_context ):
+        from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
+        from camelot.view.controls import delegates
 
+        class FieldFilter(object):
+            """
+            Helper class for the `SetFilters` action that allows the user to
+            configure a filter on an individual field.
+            """
+        
+            def __init__(self, field_attributes, field_name=None, value=None):
+                self._field_attributes = field_attributes
+                self.field_name = field_name
+                self.value = value
+        
+            class Admin(ObjectAdmin):
+                list_display = ['field_name', 'value']
+                field_attributes = {
+                    'field_name': {
+                        'name': _('Name'),
+                        'editable': True,
+                        'delegate': delegates.ComboBoxDelegate,
+                        'choices': lambda field:[
+                            (f, fa['name']) for f, fa in six.iteritems(field._field_attributes)
+                        ]
+                        },
+                }
+        
         if model_context.mode_name == 'clear':
             yield action_steps.SetFilter(self, None)
 
         else:
+            filters = []
             current_field_name = model_context.current_field_name
             current_field_value  = None
             current_obj = model_context.get_object()
+            field_attributes = model_context.admin.get_all_fields_and_attributes()
             if (current_field_name is not None) and (current_obj is not None):
                 current_field_value = getattr(current_obj, current_field_name)
+                filters.append(FieldFilter(field_attributes, current_field_name, current_field_value))
 
-            select_field = action_steps.ChangeField(
-                model_context.admin,
-                # explicit pass of field attributes because not editable
-                # fields should appear in the selection box
-                field_attributes = model_context.admin.get_all_fields_and_attributes(),
-                field_name = model_context.current_field_name,
-                field_value = current_field_value
-            )
-            select_field.title = _('Filter')
-            select_field.subtitle = _('Select field and value')
+            for k, v in six.iteritems(field_attributes):
+                filters.append(FieldFilter(field_attributes))
 
-            field_name, value = yield select_field
-            if field_name is None:
+            filter_admin = model_context.admin.get_related_admin(FieldFilter)
+            change_filters = action_steps.ChangeObjects(filters, filter_admin)
+            change_filters.title = _('Filter')
+            change_filters.subtitle = _('Select field and value')
+            for field_filter in filters:
+                if field_filter.field_name is not None:
+                    break
+            else:
                 yield action_steps.SetFilter(self, None)
-            yield action_steps.SetFilter(self, (field_name, value))
+            yield action_steps.SetFilter(self, filters)
 
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
