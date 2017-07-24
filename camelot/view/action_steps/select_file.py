@@ -29,7 +29,7 @@
 
 import os
 
-from ...core.qt import QtGui, QtCore, variant_to_py, py_to_variant
+from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant
 
 import six
 
@@ -43,7 +43,7 @@ class SelectFile( ActionStep ):
     
     :param file_name_filter: Filter on the names of the files that can
         be selected, such as 'All files (*)'.  
-        See :class:`QtGui.QFileDialog` for more documentation.
+        See :class:`QtWidgets.QFileDialog` for more documentation.
     
     .. attribute:: single
     
@@ -73,9 +73,9 @@ class SelectFile( ActionStep ):
         directory = six.text_type(variant_to_py(settings.value('datasource')))
         directory = os.path.dirname(directory)
         if self.single:
-            get_filename = QtGui.QFileDialog.getOpenFileName
+            get_filename = QtWidgets.QFileDialog.getOpenFileName
         else:
-            get_filename = QtGui.QFileDialog.getOpenFileNames
+            get_filename = QtWidgets.QFileDialog.getOpenFileNames
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
                                     caption=six.text_type(self.caption),
@@ -96,7 +96,7 @@ class SaveFile( ActionStep ):
     
     :param file_name_filter: Filter on the names of the files that can
         be selected, such as 'All files (*)'.  
-        See :class:`QtGui.QFileDialog` for more documentation.
+        See :class:`QtWidgets.QFileDialog` for more documentation.
 
     :param file_name: `None` or the default filename to use
 
@@ -123,7 +123,7 @@ class SaveFile( ActionStep ):
         directory = os.path.dirname(directory)
         if self.file_name is not None:
             directory = os.path.join(directory, self.file_name)
-        get_filename = QtGui.QFileDialog.getSaveFileName
+        get_filename = QtWidgets.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
                                     caption=six.text_type(self.caption),
@@ -144,14 +144,14 @@ class SelectDirectory(ActionStep):
 
     .. attribute:: options
     
-        options to pass to :meth:`QtGui.QFileDialog.getExistingDirectory`,
-        defaults to :const:`QtGui.QFileDialog.ShowDirsOnly`
+        options to pass to :meth:`QtWidgets.QFileDialog.getExistingDirectory`,
+        defaults to :const:`QtWidgets.QFileDialog.ShowDirsOnly`
 
     """
     
     def __init__(self):
         self.caption = _('Select directory')
-        self.options = QtGui.QFileDialog.ShowDirsOnly
+        self.options = QtWidgets.QFileDialog.ShowDirsOnly
         self.directory = None
         
     def gui_run(self, gui_context):
@@ -160,7 +160,7 @@ class SelectDirectory(ActionStep):
             directory = self.directory
         else:
             directory = six.text_type(variant_to_py(settings.value('datasource')))
-        get_directory = QtGui.QFileDialog.getExistingDirectory
+        get_directory = QtWidgets.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
             selected = get_directory(parent=gui_context.workspace,
                                      caption=six.text_type(self.caption),
