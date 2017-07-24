@@ -81,7 +81,7 @@ class AbstractCustomEditor(object):
       on those widgets.
 
     * Editor should set their size policy, for most editor this means their
-      vertical size policy should be  `QtGui.QSizePolicy.Fixed`
+      vertical size policy should be  `QtWidgets.QSizePolicy.Fixed`
     """
 
     def __init__(self):

@@ -54,8 +54,8 @@ class DateEditor(CustomEditor):
                        validator = DateValidator(),
                        **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
@@ -69,7 +69,7 @@ class DateEditor(CustomEditor):
         # so don't change this without extensive testing on windows
         special_date_menu = QtWidgets.QMenu(self)
         calendar_widget_action = QtWidgets.QWidgetAction(special_date_menu)
-        self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
+        self.calendar_widget = QtWidgets.QCalendarWidget(special_date_menu)
         self.calendar_widget.activated.connect(self.calendar_widget_activated)
         self.calendar_widget.clicked.connect(self.calendar_widget_activated)
         calendar_widget_action.setDefaultWidget(self.calendar_widget)

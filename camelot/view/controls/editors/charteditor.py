@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -57,7 +57,7 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
         super(ChartEditor, self).__init__( parent )
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
-        
+
         chart_frame = QtWidgets.QFrame( self )
         chart_frame.setFrameShape( self.Box )
         chart_frame.setContentsMargins( 1, 1, 1, 1 )
@@ -84,7 +84,7 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
 
         icon = Icon( 'tango/16x16/actions/document-print-preview.png' ).getQIcon()
         button_layout.addStretch()
-        
+
         print_button = QtWidgets.QToolButton()
         print_button.setIcon( icon )
         print_button.setAutoRaise( True )
@@ -99,13 +99,13 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
         copy_button.setToolTip( _('Copy to clipboard') )
         copy_button.clicked.connect( self.copy_to_clipboard )
         button_layout.addWidget( copy_button )
-                
+
         layout.addLayout( button_layout )
         layout.setContentsMargins( 0, 0, 0, 0)
         self.setLayout(layout)
         self.canvas.setSizePolicy(
-            QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
         )
         self.canvas.installEventFilter(self)
         self.show_fullscreen_signal.connect(self.show_fullscreen)
@@ -119,19 +119,19 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
         clipboard = QtWidgets.QApplication.clipboard()
         pixmap = QtGui.QPixmap.grabWidget( self.canvas )
         clipboard.setPixmap( pixmap )
-        
+
     @QtCore.qt_slot()
     def print_preview(self):
         """Popup a print preview dialog for the Chart"""
         from camelot.view.action_steps import PrintChart
         print_chart = PrintChart( self._value )
         print_chart.gui_run( self.gui_context )
-    
+
     def set_field_attributes(self, *args, **kwargs):
         """Overwrite set_field attributes because a ChartEditor cannot be
         disabled or have its background color changed"""
         pass
-    
+
     @staticmethod
     def show_fullscreen_chart(chart, parent):
         """
@@ -148,12 +148,12 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
         canvas = FigureCanvas(fig)
         canvas.updateGeometry()
         figure_container.plot_on_figure(fig)
-        proxy = QtGui.QGraphicsProxyWidget()
+        proxy = QtWidgets.QGraphicsProxyWidget()
         proxy.setWidget(canvas)
         litebox.show_fullscreen_item(proxy)
         canvas.draw()
         return litebox
-                    
+
     @QtCore.qt_slot()
     def show_fullscreen(self):
         """Show the plot full screen, using the litebox"""
@@ -175,12 +175,12 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
         return False
 
     def set_value(self, value):
-        """Accepts a camelot.container.chartcontainer.FigureContainer or a 
+        """Accepts a camelot.container.chartcontainer.FigureContainer or a
         camelot.container.chartcontainer.AxesContainer """
         from camelot.container.chartcontainer import structure_to_figure_container
         self._value = structure_to_figure_container( AbstractCustomEditor.set_value( self, value ) )
         self.on_draw()
-        
+
     def get_value(self):
         return AbstractCustomEditor.get_value( self ) or self._value
 
@@ -196,24 +196,24 @@ class ChartEditor( QtWidgets.QFrame, AbstractCustomEditor, WideEditor ):
 #        fig.canvas.draw()
 #        bbox_original = fig.bbox_inches
 #        bbox_tight = self._get_tightbbox(fig, pad_inches)
-#        
+#
 #        print bbox_tight
-#        
+#
 #        # figure dimensions ordered like bbox.extents: x0, y0, x1, y1
 #        lengths = np.array([bbox_original.width, bbox_original.height,
 #                            bbox_original.width, bbox_original.height])
 #        whitespace = (bbox_tight.extents - bbox_original.extents) / lengths
-#        
+#
 #        # border padding ordered like bbox.extents: x0, y0, x1, y1
 #        current_borders = np.array([fig.subplotpars.left, fig.subplotpars.bottom,
 #                                    fig.subplotpars.right, fig.subplotpars.top])
-#        
-#        
+#
+#
 #        left, bottom, right, top = current_borders - whitespace
 #        print self.canvas.size()
 #        print left, bottom, right, top
 #        fig.subplots_adjust(bottom=bottom, top=top, left=left, right=right)
-    
+
     def on_draw(self):
         """draw the matplotlib figure on the canvas"""
         if self._value not in (None, ValueLoading):

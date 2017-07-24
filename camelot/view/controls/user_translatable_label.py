@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -29,21 +29,21 @@
 
 import six
 
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt
+from ...core.qt import QtCore, QtWidgets, Qt
 from camelot.core.utils import ugettext_lazy
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
 class TranslateLabelAction(QtWidgets.QAction):
-    
+
     translate_icon = Icon( 'tango/16x16/apps/preferences-desktop-locale.png' )
-    
+
     def __init__(self, parent):
         super(TranslateLabelAction, self).__init__(_('Change translation'), parent)
         self.setIcon(self.translate_icon.getQIcon())
 
 class UserTranslatableLabel(QtWidgets.QLabel):
-    """A QLabel that allows the user to translate the text contained 
+    """A QLabel that allows the user to translate the text contained
 within by right clicking on it and selecting the appropriate submenu.
 """
 
@@ -51,7 +51,7 @@ within by right clicking on it and selecting the appropriate submenu.
         """:param text: the text to be displayed within the label, this can
         be either a normal string or a ugettext_lazy string, only in the last
         case, the label will be translatable"""
-        super(UserTranslatableLabel, self).__init__(six.text_type(text), 
+        super(UserTranslatableLabel, self).__init__(six.text_type(text),
                                                     parent)
         self.setContextMenuPolicy(Qt.ActionsContextMenu)
         if isinstance(text, (ugettext_lazy)):
@@ -61,15 +61,15 @@ within by right clicking on it and selecting the appropriate submenu.
             self.addAction(translate_action)
         else:
             self._text = None
-            
+
     @QtCore.qt_slot()
     def change_translation(self):
         if self._text:
-            new_translation, ok = QtGui.QInputDialog.getText(self, 
-                                                             _('Change translation'),
-                                                             _('Translation'),
-                                                             QtWidgets.QLineEdit.Normal,
-                                                             six.text_type(self._text))
+            new_translation, ok = QtWidgets.QInputDialog.getText(self,
+                                                                 _('Change translation'),
+                                                                 _('Translation'),
+                                                                 QtWidgets.QLineEdit.Normal,
+                                                                 six.text_type(self._text))
             # when the user presses ok in a blank dialog, the labels
             # should not disappear
             new_translation = six.text_type( new_translation ).strip()
@@ -81,9 +81,9 @@ within by right clicking on it and selecting the appropriate submenu.
                 post(self.create_update_translation_table(self._text._string_to_translate,
                                                           six.text_type(QtCore.QLocale().name()),
                                                           six.text_type(new_translation)))
-                
+
     def create_update_translation_table(self, source, language, value):
-        
+
         def update_translation_table():
             from camelot.model.i18n import Translation
             from sqlalchemy.orm.session import Session
@@ -92,11 +92,5 @@ within by right clicking on it and selecting the appropriate submenu.
                 t = Translation(source=source, language=language)
             t.value = value
             Session.object_session( t ).flush( [t] )
-            
+
         return update_translation_table
-                
-
-
-
-
-

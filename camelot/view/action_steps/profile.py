@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -112,7 +112,7 @@ allow all languages
             'is not writable.'))
         self.not_writable_media_path_label.setStyleSheet('color: red')
 
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
 
         layout.addWidget(self.profile_label, 0, 0, Qt.AlignRight)
         layout.addWidget(self.dialect_label, 1, 0, Qt.AlignRight)
