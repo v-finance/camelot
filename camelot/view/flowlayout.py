@@ -32,7 +32,7 @@ PyQt port of the layouts/flowlayout example from Qt v4.x
 The original port was copied from the PyQt layout examples.
 """
 
-from ..core.qt import QtCore, QtGui
+from ..core.qt import QtCore, QtWidgets
 
 class FlowLayout( QtWidgets.QLayout ):
     """

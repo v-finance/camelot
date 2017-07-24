@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import variant_to_py, QtCore, QtGui, Qt
+from ....core.qt import variant_to_py, QtCore, QtGui, QtWidgets, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading

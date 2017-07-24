@@ -30,7 +30,7 @@
 import six
 from six import moves
 
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
+from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
 
 from camelot.admin.action import ActionStep

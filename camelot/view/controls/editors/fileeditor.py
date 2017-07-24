@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import QtGui, QtWidgets, Qt
+from ....core.qt import QtWidgets, Qt
 from ....admin.action import field_action
 from .customeditor import CustomEditor, set_background_color_palette
 
