@@ -134,7 +134,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
-    @QtCore.qt_slot(int, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Vertical:
             model = self.sender()
@@ -189,7 +189,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.set_default_buttons()
         self.update_complete(model)
 
-    @QtCore.qt_slot(int, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Vertical:
             model = self.sender()

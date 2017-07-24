@@ -73,6 +73,7 @@ class AbstractActionWidget( object ):
               self.set_state,
               args = (self.gui_context.create_model_context(),) )
 
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Horizontal:
             return
