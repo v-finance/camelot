@@ -46,8 +46,10 @@ import six
 
 LOGGER = logging.getLogger('camelot.core.qt')
 
-qt_api = os.environ.get('CAMELOT_QT_API', None)
-if qt_api is not None:
+# an empty environment variable might result in an empty string,
+# so treat a non existent environment variable as an empty string
+qt_api = os.environ.get('CAMELOT_QT_API', '')
+if qt_api != '':
     LOGGER.warn('CAMELOT_QT_API environment variable set to {}'.format(qt_api))
 
 class DelayedModule(object):
@@ -79,31 +81,23 @@ QtModel = DelayedModule('QtGui')
 QtWidgets = DelayedModule('QtGui')
 QtPrintSupport = DelayedModule('QtGui')
 
-if qt_api in (None, 'PyQt4', 'PyQt5'):
+if qt_api in ('', 'PyQt4'):
     try:
-        qt_api = qt_api or 'PyQt4'
+        qt_api = 'PyQt4'
         import sip
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
         QtCore.qt_property = QtCore.pyqtProperty
         # the api version is only available after importing QtCore
-        if qt_api == 'PyQt4':
-            variant_api = sip.getapi('QVariant')
-            string_api = sip.getapi('QString')
-        else:
-            variant_api = 2
-            string_api = 2
-            QtModel = DelayedModule('QtCore')
-            QtWidgets = DelayedModule('QtWidgets')
-            QtPrintSupport = DelayedModule('QtPrintSupport')
-            QtQml = DelayedModule('QtQml')
-            QtQuick = DelayedModule('QtQuick')
+        variant_api = sip.getapi('QVariant')
+        string_api = sip.getapi('QString')
         is_deleted = sip.isdeleted
         delete = sip.delete
     except ImportError:
-        qt_api = None
+        LOGGER.warn('Could not load PyQt4')
+        qt_api = ''
 
-elif qt_api in (None, 'PySide'):
+if qt_api in ('', 'PySide'):
     try:
         qt_api = 'PySide'
         QtCore.qt_slot = QtCore.Slot
@@ -113,12 +107,32 @@ elif qt_api in (None, 'PySide'):
         string_api = 2
         is_deleted = lambda _qobj:False
         delete = lambda _qobj:True
-
     except ImportError:
-        qt_api = None
+        LOGGER.warn('Could not load PySide')
+        qt_api = ''
 
-if qt_api is None:
-    raise Exception('PyQt4 nor PySide could be imported')
+if qt_api in ('', 'PyQt5'):
+    try:
+        qt_api = 'PyQt5'
+        import sip
+        QtCore.qt_slot = QtCore.pyqtSlot
+        QtCore.qt_signal = QtCore.pyqtSignal
+        QtCore.qt_property = QtCore.pyqtProperty
+        variant_api = 2
+        string_api = 2
+        QtModel = DelayedModule('QtCore')
+        QtWidgets = DelayedModule('QtWidgets')
+        QtPrintSupport = DelayedModule('QtPrintSupport')
+        QtQml = DelayedModule('QtQml')
+        QtQuick = DelayedModule('QtQuick')
+        is_deleted = sip.isdeleted
+        delete = sip.delete
+    except ImportError:
+        LOGGER.warn('Could not load PyQt5')
+        qt_api = ''
+
+if qt_api=='':
+    raise Exception('PyQt4, PySide nor PyQt5 could be imported')
 else:
     LOGGER.info('Using {} Qt bindings'.format(qt_api))
 
