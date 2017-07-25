@@ -44,7 +44,6 @@ class AbstractFilterWidget(AbstractActionWidget):
     def current_row_changed(self, _current_row):
         pass
 
-    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, _orientation, _first, _last):
         pass
 
