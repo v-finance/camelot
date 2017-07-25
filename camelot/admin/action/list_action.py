@@ -1000,6 +1000,16 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.FlushSession(model_context.session)
 
 
+class FieldFilter(object):
+    """
+    Helper class for the `SetFilters` action that allows the user to
+    configure a filter on an individual field.
+    """
+
+    def __init__(self, field_name=None, value=None):
+        self.field_name = field_name
+        self.value = value
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -1027,30 +1037,6 @@ class SetFilters(Action, AbstractModelFilter):
         from camelot.view import action_steps
         from camelot.view.controls import delegates
 
-        class FieldFilter(object):
-            """
-            Helper class for the `SetFilters` action that allows the user to
-            configure a filter on an individual field.
-            """
-        
-            def __init__(self, field_attributes, field_name=None, value=None):
-                self._field_attributes = field_attributes
-                self.field_name = field_name
-                self.value = value
-        
-            class Admin(ObjectAdmin):
-                list_display = ['field_name', 'value']
-                field_attributes = {
-                    'field_name': {
-                        'name': _('Name'),
-                        'editable': True,
-                        'delegate': delegates.ComboBoxDelegate,
-                        'choices': lambda field:[
-                            (f, fa['name']) for f, fa in six.iteritems(field._field_attributes)
-                        ]
-                        },
-                }
-        
         if model_context.mode_name == 'clear':
             yield action_steps.SetFilter(self, None)
 
@@ -1060,17 +1046,52 @@ class SetFilters(Action, AbstractModelFilter):
             current_field_value  = None
             current_obj = model_context.get_object()
             field_attributes = model_context.admin.get_all_fields_and_attributes()
+
+            # if a field was selected when calling the action, use that
+            # field as a first filter
             if (current_field_name is not None) and (current_obj is not None):
                 current_field_value = getattr(current_obj, current_field_name)
-                filters.append(FieldFilter(field_attributes, current_field_name, current_field_value))
+                filters.append(FieldFilter(current_field_name, current_field_value))
 
-            for k, v in six.iteritems(field_attributes):
-                filters.append(FieldFilter(field_attributes))
+            # prepare a number of filters, for easy access
+            for i in range(10):
+                filters.append(FieldFilter())
 
-            filter_admin = model_context.admin.get_related_admin(FieldFilter)
+            # build a list of fields to choose from
+            field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+
+            class FieldFilterAdmin(ObjectAdmin):
+
+                @classmethod
+                def get_field_value_choices(cls, field_filter):
+                    if field_filter.field_name is None:
+                        return []
+                    else:
+                        to_string = field_attributes[field_filter.field_name]['to_string']
+                        values = set(getattr(obj, field_filter.field_name) for obj in model_context.get_collection())
+                        return [(value, to_string(value)) for value in values]
+
+                list_display = ['field_name', 'value']
+                field_attributes = {
+                    'field_name': {
+                        'name': _('Name'),
+                        'editable': True,
+                        'delegate': delegates.ComboBoxDelegate,
+                        'choices':field_choices
+                        },
+                    'value': {
+                        'name': _('Value'),
+                        'editable': True,
+                        'delegate': delegates.ComboBoxDelegate,
+                        'choices': get_field_value_choices
+                        },
+                }
+
+            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
             change_filters = action_steps.ChangeObjects(filters, filter_admin)
             change_filters.title = _('Filter')
             change_filters.subtitle = _('Select field and value')
+            yield change_filters
             for field_filter in filters:
                 if field_filter.field_name is not None:
                     break

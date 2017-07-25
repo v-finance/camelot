@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,7 +31,7 @@ from functools import update_wrapper, partial
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
+from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
 from ....admin.action.list_filter import SearchFilter
@@ -84,8 +84,8 @@ class Many2OneEditor( CustomEditor ):
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
         self.new_value = None
@@ -108,12 +108,12 @@ class Many2OneEditor( CustomEditor ):
         self.setFocusProxy(self.search_input)
 
         # Search Completer
-        self.completer = QtGui.QCompleter()
+        self.completer = QtWidgets.QCompleter()
         self.completions_model = self.CompletionsModel(self.completer)
         self.completer.setModel(self.completions_model)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtGui.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)

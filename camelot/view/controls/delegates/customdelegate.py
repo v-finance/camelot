@@ -245,7 +245,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
 
-        if( option.state & QtGui.QStyle.State_Selected ):
+        if( option.state & QtWidgets.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = option.palette.highlightedText().color()
         else:

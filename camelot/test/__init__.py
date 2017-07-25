@@ -39,7 +39,7 @@ import six
 from ..admin.action.application_action import ApplicationActionGuiContext
 from ..admin.entity_admin import EntityAdmin
 from ..core.orm import Session
-from ..core.qt import Qt, QtCore, QtGui, QtWidgets
+from ..core.qt import Qt, QtCore, QtGui, QtWidgets, qt_api
 from ..view import action_steps
 
 has_programming_error = False
@@ -107,7 +107,10 @@ class ModelThreadTestCase(unittest.TestCase):
         widget.repaint()
         QtWidgets.QApplication.flush()
         widget.repaint()
-        inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
+        if qt_api == 'PyQt5':
+            inner_pixmap = QtWidgets.QWidget.grab(widget)
+        else:
+            inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
         # add a border to the image
         border = 4
         outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)

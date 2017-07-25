@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -36,7 +36,7 @@ from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
-from camelot.core.qt import QtGui
+from camelot.core.qt import QtWidgets
 
 from camelot.view.controls import editors
 
@@ -48,10 +48,10 @@ class PlainTextDelegate(CustomDelegate):
 
     editor = editors.TextLineEditor
 
-    def __init__( self, 
-                  parent = None, 
+    def __init__( self,
+                  parent = None,
                   length = DEFAULT_COLUMN_WIDTH,
-                  translate_content=False, 
+                  translate_content=False,
                   **kw ):
         CustomDelegate.__init__( self, parent, length = length, **kw )
         self._translate_content = translate_content
@@ -62,7 +62,7 @@ class PlainTextDelegate(CustomDelegate):
     def get_standard_item(cls, locale, value, fa_values):
         completer = fa_values.get('completer')
         if completer is not None:
-            completer.moveToThread(QtGui.QApplication.instance().thread())
+            completer.moveToThread(QtWidgets.QApplication.instance().thread())
         item = super(PlainTextDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
             item.setData(py_to_variant(six.text_type(value)), PreviewRole)

@@ -33,7 +33,6 @@ from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import CustomEditor, set_background_color_palette
 from ...art import Icon
-from ...utils import locale
 from ....core import constants
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
@@ -83,11 +82,8 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = six.text_type( locale().toString( float(value),
-                                                 'f', 
-                                                 self.decimals() ) )
-        return text
-    
+        return super(CustomDoubleSpinBox, self).textFromValue(value)
+
     def stripped(self, qinput):
         """Strip a string from its prefix, suffix and spaces
         
@@ -146,8 +142,8 @@ class FloatEditor(CustomEditor):
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
         action = QtWidgets.QAction(self)

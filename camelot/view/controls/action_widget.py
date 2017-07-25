@@ -228,7 +228,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         AbstractActionWidget.init( self, action, gui_context )
         self.clicked.connect(self.action_triggered)
 
-    @QtCore.qt_slot(int, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         AbstractActionWidget.header_data_changed(self, orientation, first, last)
 
