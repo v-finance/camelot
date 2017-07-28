@@ -1056,7 +1056,7 @@ class SetFilters(Action, AbstractModelFilter):
         if field_name is None:
             return []
         field_attributes = model_context.admin.get_field_attributes(field_name)
-        to_string = field_attributes['to_string']
+        to_string = field_attributes.get('to_string', six.text_type)
         values = set(getattr(obj, field_name) for obj in model_context.get_collection())
         return [(value, to_string(value)) for value in values]
 
