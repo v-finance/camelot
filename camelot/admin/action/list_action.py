@@ -30,6 +30,7 @@
 import codecs
 import copy
 import datetime
+import functools
 import logging
 
 import six
@@ -1022,15 +1023,42 @@ class SetFilters(Action, AbstractModelFilter):
     tooltip = _('Filter the data')
     icon = Icon('tango/16x16/actions/system-search.png')
 
-    def filter(self, it, value):
-        if value is None:
+    def filter(self, it, field_filters):
+        if field_filters is None:
             for obj in it:
                 yield obj
         else:
-            field_name, field_value = value
             for obj in it:
-                if getattr(obj, value[0]) == value[1]:
+                for field_filter in field_filters:
+                    if field_filter.field_name is not None:
+                        if getattr(obj, field_filter.field_name) != field_filter.value:
+                            break
+                else:
                     yield obj
+
+    def get_field_name_choices(self, model_context):
+        """
+        :return: a list of choices with the fields the user can select to
+           filter upon.
+        """
+        field_attributes = model_context.admin.get_all_fields_and_attributes()
+        field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+        field_choices.sort(key=lambda choice:choice[1])
+        return field_choices
+
+    def get_field_value_choices(self, model_context, field_filter):
+        """
+        :param field_filter: `FieldFilter` the filter the user is configuring.
+        :return: for a specific field name, the list of values from which the
+           user can select to filter upon.
+        """
+        field_name = field_filter.field_name
+        if field_name is None:
+            return []
+        field_attributes = model_context.admin.get_field_attributes(field_name)
+        to_string = field_attributes['to_string']
+        values = set(getattr(obj, field_name) for obj in model_context.get_collection())
+        return [(value, to_string(value)) for value in values]
 
     def model_run( self, model_context ):
         from camelot.admin.object_admin import ObjectAdmin
@@ -1045,7 +1073,7 @@ class SetFilters(Action, AbstractModelFilter):
             current_field_name = model_context.current_field_name
             current_field_value  = None
             current_obj = model_context.get_object()
-            field_attributes = model_context.admin.get_all_fields_and_attributes()
+            
 
             # if a field was selected when calling the action, use that
             # field as a first filter
@@ -1057,33 +1085,23 @@ class SetFilters(Action, AbstractModelFilter):
             for i in range(10):
                 filters.append(FieldFilter())
 
-            # build a list of fields to choose from
-            field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+            field_name_choices = self.get_field_name_choices(model_context)
+            field_value_choices = functools.partial(self.get_field_value_choices, model_context)
 
             class FieldFilterAdmin(ObjectAdmin):
-
-                @classmethod
-                def get_field_value_choices(cls, field_filter):
-                    if field_filter.field_name is None:
-                        return []
-                    else:
-                        to_string = field_attributes[field_filter.field_name]['to_string']
-                        values = set(getattr(obj, field_filter.field_name) for obj in model_context.get_collection())
-                        return [(value, to_string(value)) for value in values]
-
                 list_display = ['field_name', 'value']
                 field_attributes = {
                     'field_name': {
                         'name': _('Name'),
                         'editable': True,
                         'delegate': delegates.ComboBoxDelegate,
-                        'choices':field_choices
+                        'choices':field_name_choices
                         },
                     'value': {
                         'name': _('Value'),
                         'editable': True,
                         'delegate': delegates.ComboBoxDelegate,
-                        'choices': get_field_value_choices
+                        'choices': field_value_choices,
                         },
                 }
 
