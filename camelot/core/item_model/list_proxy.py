@@ -154,6 +154,9 @@ class ListModelProxy(AbstractModelProxy, dict):
         self._indexed_objects = TwoWayDict()
         self._sort_and_filter = SortingRowMapper()
 
+    def get_filter(self, key):
+        return self._filters.get(key)
+
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
         size = maxsize

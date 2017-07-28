@@ -96,6 +96,14 @@ class AbstractModelProxy(object):
         """
         raise NotImplementedError()
 
+    def get_filter(self, key):
+        """
+        :param key: a concrete instance of `AbstractModelFilter`
+        :return: the value of the filter to apply if the filter is applied,
+            `None` if the filters is not applied.
+        """
+        raise NotImplementedError()
+
     def append(self, obj):
         """
         Add an object to the proxy and the model
