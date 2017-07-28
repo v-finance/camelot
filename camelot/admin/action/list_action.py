@@ -1065,64 +1065,78 @@ class SetFilters(Action, AbstractModelFilter):
         from camelot.view import action_steps
         from camelot.view.controls import delegates
 
+        # prepare a number of filters, for easy access
+        filters = [FieldFilter() for i in range(10)]
+
         if model_context.mode_name == 'clear':
             yield action_steps.SetFilter(self, None)
+            return
+        elif model_context.mode_name == 'change':
+            # don't just modify the old filters, but create new filters
+            # each time
+            old_filters = model_context.proxy.get_filter(self) or []
+            for old_filter, new_filter in zip(old_filters, filters):
+                if old_filter.field_name is not None:
+                    new_filter.field_name = old_filter.field_name
+                    new_filter.value = old_filter.value
 
-        else:
-            filters = []
-            current_field_name = model_context.current_field_name
-            current_field_value  = None
-            current_obj = model_context.get_object()
-            
+        current_field_name = model_context.current_field_name
+        current_field_value  = None
+        current_obj = model_context.get_object()
 
-            # if a field was selected when calling the action, use that
-            # field as a first filter
-            if (current_field_name is not None) and (current_obj is not None):
-                current_field_value = getattr(current_obj, current_field_name)
-                filters.append(FieldFilter(current_field_name, current_field_value))
-
-            # prepare a number of filters, for easy access
-            for i in range(10):
-                filters.append(FieldFilter())
-
-            field_name_choices = self.get_field_name_choices(model_context)
-            field_value_choices = functools.partial(self.get_field_value_choices, model_context)
-
-            class FieldFilterAdmin(ObjectAdmin):
-                list_display = ['field_name', 'value']
-                field_attributes = {
-                    'field_name': {
-                        'name': _('Name'),
-                        'editable': True,
-                        'delegate': delegates.ComboBoxDelegate,
-                        'choices':field_name_choices
-                        },
-                    'value': {
-                        'name': _('Value'),
-                        'editable': True,
-                        'delegate': delegates.ComboBoxDelegate,
-                        'choices': field_value_choices,
-                        },
-                }
-
-            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
-            change_filters = action_steps.ChangeObjects(filters, filter_admin)
-            change_filters.title = _('Filter')
-            change_filters.subtitle = _('Select field and value')
-            yield change_filters
+        # if a field was selected when calling the action, use that
+        # field for the first empty filter
+        if (current_field_name is not None) and (current_obj is not None):
+            current_field_value = getattr(current_obj, current_field_name)
             for field_filter in filters:
-                if field_filter.field_name is not None:
+                if field_filter.field_name is None:
+                    field_filter.field_name = current_field_name
+                    field_filter.value = current_field_value
                     break
-            else:
-                yield action_steps.SetFilter(self, None)
-            yield action_steps.SetFilter(self, filters)
+
+        field_name_choices = self.get_field_name_choices(model_context)
+        field_value_choices = functools.partial(self.get_field_value_choices, model_context)
+
+        class FieldFilterAdmin(ObjectAdmin):
+            list_display = ['field_name', 'value']
+            field_attributes = {
+                'field_name': {
+                    'name': _('Name'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices':field_name_choices
+                    },
+                'value': {
+                    'name': _('Value'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices': field_value_choices,
+                    },
+            }
+
+        filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
+        change_filters = action_steps.ChangeObjects(filters, filter_admin)
+        change_filters.title = _('Filter')
+        change_filters.subtitle = _('Select field and value')
+        yield change_filters
+        for field_filter in filters:
+            if field_filter.field_name is not None:
+                break
+        else:
+            yield action_steps.SetFilter(self, None)
+        yield action_steps.SetFilter(self, filters)
 
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
-        state.modes = [
+        modes = []
+        if model_context.proxy.get_filter(self) is not None:
+            modes.append(Mode('change', _('Change filter')))
+            state.notification = True
+        modes.extend([
             Mode('filter', _('Apply filter')),
             Mode('clear', _('Clear filter')),
-        ]
+        ])
+        state.modes = modes
         return state
 
 class AddExistingObject( EditAction ):
