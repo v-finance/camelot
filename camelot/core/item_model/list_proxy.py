@@ -39,7 +39,7 @@ class TwoWayDict(dict):
 
     def __setitem__(self, key, value):
         # Remove any previous connections with these values
-        assert (key not in self)
+        assert (key not in self), 'key {0} allready in two way dict of size {1}'.format(key, len(self))
         assert (value not in self)
         dict.__setitem__(self, key, value)
         dict.__setitem__(self, value, key)
