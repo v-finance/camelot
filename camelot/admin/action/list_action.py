@@ -636,13 +636,14 @@ class ExportSpreadsheet( ListContextAction ):
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
 
-    # xlwt options
     max_width = 10000
     font_name = 'Arial'
     
     def model_run( self, model_context ):
         from decimal import Decimal
-        from xlwt import Font, Borders, XFStyle, Pattern, Workbook
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Border, PatternFill, Side, NamedStyle
+        from openpyxl.utils import get_column_letter
         from camelot.view.import_utils import ( ColumnMapping,
                                                 ColumnSelectionAdmin )
         from camelot.view.utils import ( local_date_format, 
@@ -688,57 +689,58 @@ class ExportSpreadsheet( ListContextAction ):
         #
         yield action_steps.UpdateProgress( text = _('Create worksheet') )
         workbook = Workbook()
-        worksheet = workbook.add_sheet('Sheet1')
-        #
-        # keep a global cache of styles, since the number of styles that
-        # can be used is limited.
-        #
-        styles = dict()
-        freeze = lambda d:tuple(sorted(six.iteritems(d)))
-        
-        def get_style( font_specs=dict(), 
-                       border_specs = dict(), 
-                       pattern = None,
-                       num_format_str = None, ):
-            
-            style_key = ( freeze(font_specs), 
-                          freeze(border_specs), 
-                          pattern, 
-                          num_format_str )
-            
-            try:
-                return styles[style_key]
-            except KeyError:
-                style = XFStyle()
-                style.font = Font()
-                for key, value in six.iteritems(font_specs):
-                    setattr( style.font, key, value )
-                style.borders = Borders()
-                for key, value in six.iteritems(border_specs):
-                    setattr( style.borders, key, value )
-                if pattern:
-                    style.pattern = pattern
-                if num_format_str:
-                    style.num_format_str = num_format_str
-                styles[ style_key ] = style
-                return style
+        #Workbook adds by default an sheet
+        worksheet = workbook.active
+        worksheet.title = 'Sheet1'
         
         #
-        # write style
+        # write styles
         #
-        title_style = get_style( dict( font_name = self.font_name,
-                                       bold = True,
-                                       height = 240 ) )
-        worksheet.write( 0, 0, admin.get_verbose_name_plural(), title_style )
+        title_style = NamedStyle(name='title_style',
+                                 font=Font(name=self.font_name,
+                                           bold=True,
+                                           size=12)
+                                 )
+        
+        header_style = NamedStyle(name='header_style',
+                                  font=Font(name=self.font_name,
+                                        bold=True,
+                                        size=10),
+                                  fill=PatternFill(fill_type='solid',
+                                                   fgColor='C0C0C0')
+                                  )
+        
+        content_style = NamedStyle(name='content_style',
+                                   font=Font(name=self.font_name,
+                                             size=10)
+                                   )
+        
+        header_border = Border(top=Side(style='thin'))
+        header_border_left = Border(top=header_border.top, left=Side(style='thin'))
+        header_border_right = Border(top=header_border.top, right=Side(style='thin'))
+        
+        content_border_no_border = Border()
+        content_border_left = Border(left=Side(style='thin'))
+        content_border_right = Border(right=Side(style='thin'))
+        content_border_bottom = Border(bottom=Side(style='thin'))
+        content_border_bottom_left = Border(bottom=content_border_bottom.bottom, left=content_border_left.left)
+        content_border_bottom_right = Border(bottom=content_border_bottom.bottom, right=content_border_right.right)
+        
+        #is misschien overbodig...
+        workbook.add_named_style(title_style)
+        workbook.add_named_style(header_style)
+        workbook.add_named_style(content_style)
+        
+        worksheet.cell(row=1, column=1).value = admin.get_verbose_name_plural()
+        worksheet.cell(row=1, column=1).style = 'title_style'
+        
         #
         # create some patterns and formats
         #
         date_format = local_date_format()
         datetime_format = local_datetime_format()
         time_format = local_time_format()
-        header_pattern = Pattern()
-        header_pattern.pattern = Pattern.SOLID_PATTERN
-        header_pattern.pattern_fore_colour = 0x16
+
         #
         # write headers
         #
@@ -746,22 +748,21 @@ class ExportSpreadsheet( ListContextAction ):
         for i, (name, field_attributes) in enumerate( columns ):
             verbose_name = six.text_type( field_attributes.get( 'name', name ) )
             field_names.append( name )
-            font_specs = dict( font_name = self.font_name, 
-                               bold = True, 
-                               height = 200 )
-            border_specs = dict( top = 0x01 )
             name = six.text_type( name )
+            
             if i == 0:
-                border_specs[ 'left' ] = 0x01                
+                header_style.border = header_border_left
             elif i == len( columns ) - 1:
-                border_specs[ 'right' ] = 0x01 
-            header_style = get_style( font_specs, border_specs, header_pattern )
-            worksheet.write( 2, i, verbose_name, header_style)
+                header_style.border = header_border_right
+            else:
+                header_style.border = header_border
+            worksheet.cell(row=2, column=i+1).value = verbose_name
+            worksheet.cell(row=2, column=i+1).style = 'header_style'
                 
             if len( name ) < 8:
-                worksheet.col( i ).width = 8 *  375
+                worksheet.column_dimensions[get_column_letter(i+1)].width = 8 * 1.3
             else:
-                worksheet.col( i ).width = len( verbose_name ) *  375
+                worksheet.column_dimensions[get_column_letter(i+1)].width = len( verbose_name ) * 1.3
         #
         # write data
         #
@@ -779,10 +780,10 @@ class ExportSpreadsheet( ListContextAction ):
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
-                format_string = '0'
+                format_string = 'General'
                 if value is not None:
                     if isinstance( value, Decimal ):
-                        value = float( str( value ) )
+                        format_string = '0.00'
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
                         value = separator.join([six.text_type(el) for el in value])
@@ -806,24 +807,30 @@ class ExportSpreadsheet( ListContextAction ):
                     # borders right
                     value = ''
                         
-                font_specs = dict( font_name = self.font_name, height = 200 )
-                border_specs = dict()
                 if i == 0:
-                    border_specs[ 'left' ] = 0x01
+                    if (row - offset + 1) == model_context.collection_count:
+                        content_style.border = content_border_bottom_left
+                    else:
+                        content_style.border = content_border_left
                 elif i == len( columns ) - 1:
-                    border_specs[ 'right' ] = 0x01
-                if (row - offset + 1) == model_context.collection_count:
-                    border_specs[ 'bottom' ] = 0x01
-                style = get_style( font_specs, 
-                                   border_specs, 
-                                   None, 
-                                   format_string )
-                worksheet.write( row, i, value, style )
-                min_width = len( six.text_type( value ) ) * 300
-                worksheet.col( i ).width = min(self.max_width, max(
-                    min_width,
-                    worksheet.col( i ).width)
-                )
+                    if (row - offset + 1) == model_context.collection_count:
+                        content_style.border = content_border_bottom_right
+                    else:
+                        content_style.border = content_border_right
+                elif (row - offset + 1) == model_context.collection_count and i != 0 and i != len(columns):
+                    content_style.border = content_border_bottom
+                else:
+                    content_style.border = content_border_no_border
+
+                worksheet.cell(row=row, column=i+1).number_format = format_string
+                worksheet.cell(row=row, column=i+1).value = value
+                worksheet.cell(row=row, column=i+1).style = 'content_style'
+
+                min_width = len( six.text_type( value ) ) * 1.3
+                worksheet.column_dimensions[get_column_letter(i+1)].width = min(self.max_width, max(
+                    min_width, 
+                    worksheet.column_dimensions[get_column_letter(i+1)].width)
+                                                                               )
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
         filename = action_steps.OpenFile.create_temporary_file( '.xls' )
