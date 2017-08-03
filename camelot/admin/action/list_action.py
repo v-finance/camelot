@@ -30,6 +30,7 @@
 import codecs
 import copy
 import datetime
+import functools
 import logging
 
 import six
@@ -1007,6 +1008,16 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.FlushSession(model_context.session)
 
 
+class FieldFilter(object):
+    """
+    Helper class for the `SetFilters` action that allows the user to
+    configure a filter on an individual field.
+    """
+
+    def __init__(self, field_name=None, value=None):
+        self.field_name = field_name
+        self.value = value
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -1019,78 +1030,120 @@ class SetFilters(Action, AbstractModelFilter):
     tooltip = _('Filter the data')
     icon = Icon('tango/16x16/actions/system-search.png')
 
-    def filter(self, it, value):
-        if value is None:
+    def filter(self, it, field_filters):
+        if field_filters is None:
             for obj in it:
                 yield obj
         else:
-            field_name, field_value = value
             for obj in it:
-                if getattr(obj, value[0]) == value[1]:
+                for field_filter in field_filters:
+                    if field_filter.field_name is not None:
+                        if getattr(obj, field_filter.field_name) != field_filter.value:
+                            break
+                else:
                     yield obj
+
+    def get_field_name_choices(self, model_context):
+        """
+        :return: a list of choices with the fields the user can select to
+           filter upon.
+        """
+        field_attributes = model_context.admin.get_all_fields_and_attributes()
+        field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+        field_choices.sort(key=lambda choice:choice[1])
+        return field_choices
+
+    def get_field_value_choices(self, model_context, field_filter):
+        """
+        :param field_filter: `FieldFilter` the filter the user is configuring.
+        :return: for a specific field name, the list of values from which the
+           user can select to filter upon.
+        """
+        field_name = field_filter.field_name
+        if field_name is None:
+            return []
+        field_attributes = model_context.admin.get_field_attributes(field_name)
+        to_string = field_attributes.get('to_string', six.text_type)
+        values = set(getattr(obj, field_name) for obj in model_context.get_collection())
+        return [(value, to_string(value)) for value in values]
 
     def model_run( self, model_context ):
         from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
         from camelot.view.controls import delegates
 
-        class FieldFilter(object):
-            """
-            Helper class for the `SetFilters` action that allows the user to
-            configure a filter on an individual field.
-            """
-        
-            def __init__(self, field_attributes, field_name=None, value=None):
-                self._field_attributes = field_attributes
-                self.field_name = field_name
-                self.value = value
-        
-            class Admin(ObjectAdmin):
-                list_display = ['field_name', 'value']
-                field_attributes = {
-                    'field_name': {
-                        'name': _('Name'),
-                        'editable': True,
-                        'delegate': delegates.ComboBoxDelegate,
-                        'choices': lambda field:[
-                            (f, fa['name']) for f, fa in six.iteritems(field._field_attributes)
-                        ]
-                        },
-                }
-        
+        # prepare a number of filters, for easy access
+        filters = [FieldFilter() for i in range(10)]
+
         if model_context.mode_name == 'clear':
             yield action_steps.SetFilter(self, None)
+            return
+        elif model_context.mode_name == 'change':
+            # don't just modify the old filters, but create new filters
+            # each time
+            old_filters = model_context.proxy.get_filter(self) or []
+            for old_filter, new_filter in zip(old_filters, filters):
+                if old_filter.field_name is not None:
+                    new_filter.field_name = old_filter.field_name
+                    new_filter.value = old_filter.value
 
-        else:
-            filters = []
-            current_field_name = model_context.current_field_name
-            current_field_value  = None
-            current_obj = model_context.get_object()
-            field_attributes = model_context.admin.get_all_fields_and_attributes()
-            if (current_field_name is not None) and (current_obj is not None):
-                current_field_value = getattr(current_obj, current_field_name)
-                filters.append(FieldFilter(field_attributes, current_field_name, current_field_value))
+        current_field_name = model_context.current_field_name
+        current_field_value  = None
+        current_obj = model_context.get_object()
 
-            for k, v in six.iteritems(field_attributes):
-                filters.append(FieldFilter(field_attributes))
-
-            filter_admin = model_context.admin.get_related_admin(FieldFilter)
-            change_filters = action_steps.ChangeObjects(filters, filter_admin)
-            change_filters.title = _('Filter')
-            change_filters.subtitle = _('Select field and value')
+        # if a field was selected when calling the action, use that
+        # field for the first empty filter
+        if (current_field_name is not None) and (current_obj is not None):
+            current_field_value = getattr(current_obj, current_field_name)
             for field_filter in filters:
-                if field_filter.field_name is not None:
+                if field_filter.field_name is None:
+                    field_filter.field_name = current_field_name
+                    field_filter.value = current_field_value
                     break
-            else:
-                yield action_steps.SetFilter(self, None)
-            yield action_steps.SetFilter(self, filters)
+
+        field_name_choices = self.get_field_name_choices(model_context)
+        field_value_choices = functools.partial(self.get_field_value_choices, model_context)
+
+        class FieldFilterAdmin(ObjectAdmin):
+            list_display = ['field_name', 'value']
+            field_attributes = {
+                'field_name': {
+                    'name': _('Name'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices':field_name_choices
+                    },
+                'value': {
+                    'name': _('Value'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices': field_value_choices,
+                    },
+            }
+
+        filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
+        change_filters = action_steps.ChangeObjects(filters, filter_admin)
+        change_filters.title = _('Filter')
+        change_filters.subtitle = _('Select field and value')
+        yield change_filters
+        for field_filter in filters:
+            if field_filter.field_name is not None:
+                break
+        else:
+            yield action_steps.SetFilter(self, None)
+        yield action_steps.SetFilter(self, filters)
 
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
-        state.modes = [
+        modes = []
+        if model_context.proxy.get_filter(self) is not None:
+            modes.append(Mode('change', _('Change filter')))
+            state.notification = True
+        modes.extend([
             Mode('filter', _('Apply filter')),
             Mode('clear', _('Clear filter')),
-        ]
+        ])
+        state.modes = modes
         return state
 
 class AddExistingObject( EditAction ):

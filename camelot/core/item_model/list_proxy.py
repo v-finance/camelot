@@ -39,7 +39,7 @@ class TwoWayDict(dict):
 
     def __setitem__(self, key, value):
         # Remove any previous connections with these values
-        assert (key not in self)
+        assert (key not in self), 'key {0} allready in two way dict of size {1}'.format(key, len(self))
         assert (value not in self)
         dict.__setitem__(self, key, value)
         dict.__setitem__(self, value, key)
@@ -153,6 +153,9 @@ class ListModelProxy(AbstractModelProxy, dict):
         self._length = None
         self._indexed_objects = TwoWayDict()
         self._sort_and_filter = SortingRowMapper()
+
+    def get_filter(self, key):
+        return self._filters.get(key)
 
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow

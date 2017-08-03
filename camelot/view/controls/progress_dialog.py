@@ -197,6 +197,12 @@ class SplashProgress( QtWidgets.QSplashScreen ):
         if pixmap.mask(): self.setMask(pixmap.mask())
         self.setLayout(layout)
 
+    def minimumDuration(self):
+        return 0
+
+    def setMinimumDuration(self, minimum):
+        pass
+
     def setMaximum( self, maximum ):
         progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setMaximum(maximum)

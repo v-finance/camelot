@@ -31,7 +31,7 @@
 
 from sqlalchemy import orm
 
-from ..core.qt import QtGui
+from ..core.qt import QtWidgets
 from ..admin.action.list_action import ListActionGuiContext
 
 class MockModelContext( object ):
@@ -74,6 +74,6 @@ class MockListActionGuiContext( ListActionGuiContext ):
     
     def __init__( self ):
         super(MockListActionGuiContext, self).__init__()
-        self.item_view = QtGui.QTableWidget( 4, 4 )
+        self.item_view = QtWidgets.QTableWidget( 4, 4 )
 
 

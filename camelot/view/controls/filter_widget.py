@@ -35,7 +35,7 @@ import six
 
 from ...admin.action.list_filter import All
 from ...core.utils import ugettext
-from ...core.qt import Qt, QtCore, QtWidgets, py_to_variant, variant_to_py
+from ...core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 
 class AbstractFilterWidget(AbstractActionWidget):
