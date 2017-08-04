@@ -690,32 +690,13 @@ class ExportSpreadsheet( ListContextAction ):
         #
         yield action_steps.UpdateProgress( text = _('Create worksheet') )
         workbook = Workbook()
-        #Workbook adds by default an sheet
+        #Workbook contains by default an sheet
         worksheet = workbook.active
         worksheet.title = 'Sheet1'
         
         #
         # write styles
         #
-        #title_style = NamedStyle(name='title_style',
-                                 #font=Font(name=self.font_name,
-                                           #bold=True,
-                                           #size=12)
-                                 #)
-        
-        #header_style = NamedStyle(name='header_style',
-                                  #font=Font(name=self.font_name,
-                                        #bold=True,
-                                        #size=10),
-                                  #fill=PatternFill(fill_type='solid',
-                                                   #fgColor='C0C0C0')
-                                  #)
-        
-        #content_style = NamedStyle(name='content_style',
-                                   #font=Font(name=self.font_name,
-                                             #size=10)
-                                   #)
-        
         title_style = NamedStyle(name='title_style',
                                 font=Font(name=self.font_name,
                                           bold=True,
@@ -723,54 +704,38 @@ class ExportSpreadsheet( ListContextAction ):
                                 )        
         
         header_style = NamedStyle(name='header_style', 
-                                   font=Font(bold=True,
-                                             name=self.font_name,
-                                             color='FFFFFF',
-                                             size=10),
-                                   fill=PatternFill(fill_type='solid',
+                                  font=Font(bold=True,
+                                            name=self.font_name,
+                                            color='FFFFFF',
+                                            size=10),
+                                  fill=PatternFill(fill_type='solid',
                                                    start_color='4F81BD',
                                                    end_color='4F81BD'),
-                                   border=Border(top=Side(style='thin',
-                                                          color='95B3D7'),
-                                                 bottom=Side(style='thin',
-                                                             color='95B3D7'))
-                                   )
+                                  border=Border(top=Side(style='thin',
+                                                         color='95B3D7'),
+                                                bottom=Side(style='thin',
+                                                            color='95B3D7'))
+                                  )
     
         table_fill_odd = NamedStyle(name='table_fill_odd', 
-                                        font=Font(name=self.font_name,
-                                                  size=10), 
-                                        fill=PatternFill(fill_type='solid', 
-                                                         start_color='C6D9F0', 
-                                                         end_color='C6D9F0')
-                                        )
+                                    font=Font(name=self.font_name,
+                                              size=10), 
+                                    fill=PatternFill(fill_type='solid', 
+                                                     start_color='C6D9F0', 
+                                                     end_color='C6D9F0')
+                                    )
     
         table_fill_even = NamedStyle(name='table_fill_even', 
-                                         font=Font(name=self.font_name,
-                                                   size=10), 
-                                         fill=PatternFill(fill_type='solid', 
-                                                          start_color='FFFFFF', 
-                                                          end_color='FFFFFF')
-                                         )
+                                     font=Font(name=self.font_name,
+                                               size=10), 
+                                     fill=PatternFill(fill_type='solid', 
+                                                      start_color='FFFFFF', 
+                                                      end_color='FFFFFF')
+                                     )
     
         border_bottom = Border(bottom=Side(style='thin', color='95B3D7'))
         border_left = Border(bottom=border_bottom.bottom, left=Side(style='thin', color='95B3D7'))
         border_right = Border(bottom=border_bottom.bottom, right=Side(style='thin', color='95B3D7'))        
-        
-        #header_border = Border(top=Side(style='thin'))
-        #header_border_left = Border(top=header_border.top, left=Side(style='thin'))
-        #header_border_right = Border(top=header_border.top, right=Side(style='thin'))
-        
-        #content_border_no_border = Border()
-        #content_border_left = Border(left=Side(style='thin'))
-        #content_border_right = Border(right=Side(style='thin'))
-        #content_border_bottom = Border(bottom=Side(style='thin'))
-        #content_border_bottom_left = Border(bottom=content_border_bottom.bottom, left=content_border_left.left)
-        #content_border_bottom_right = Border(bottom=content_border_bottom.bottom, right=content_border_right.right)
-        
-        #is misschien overbodig...
-        #workbook.add_named_style(title_style)
-        #workbook.add_named_style(header_style)
-        #workbook.add_named_style(content_style)
         
         worksheet.cell(row=1, column=1).value = admin.get_verbose_name_plural()
         worksheet.cell(row=1, column=1).style = title_style
@@ -837,12 +802,12 @@ class ExportSpreadsheet( ListContextAction ):
                         format_string = '0.' + '0'*precision
                     elif isinstance( value, int ):
                         format_string = '0'
-                    #elif isinstance( value, datetime.date ):
-                        #format_string = date_format
-                    #elif isinstance( value, datetime.datetime ):
-                        #format_string = datetime_format
-                    #elif isinstance( value, datetime.time ):
-                        #format_string = time_format
+                    elif isinstance( value, datetime.date ):
+                        format_string = date_format
+                    elif isinstance( value, datetime.datetime ):
+                        format_string = datetime_format
+                    elif isinstance( value, datetime.time ):
+                        format_string = time_format
                     elif attributes.get('to_string') is not None:
                         value = attributes['to_string'](value)
                     else:
@@ -852,20 +817,6 @@ class ExportSpreadsheet( ListContextAction ):
                     # borders right
                     value = ''
                         
-                #if i == 0:
-                    #if (row - offset + 1) == model_context.collection_count:
-                        #content_style.border = content_border_bottom_left
-                    #else:
-                        #content_style.border = content_border_left
-                #elif i == len( columns ) - 1:
-                    #if (row - offset + 1) == model_context.collection_count:
-                        #content_style.border = content_border_bottom_right
-                    #else:
-                        #content_style.border = content_border_right
-                #elif (row - offset + 1) == model_context.collection_count and i != 0 and i != len(columns) - 1:
-                    #content_style.border = content_border_bottom
-                #else:
-                    #content_style.border = content_border_no_border
 
                 worksheet.cell(row=row, column=i+1).number_format = format_string
                 worksheet.cell(row=row, column=i+1).value = value
