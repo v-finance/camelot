@@ -637,13 +637,13 @@ class ExportSpreadsheet( ListContextAction ):
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
 
-    max_width = 10000
-    font_name = 'Arial'
+    max_width = 40
+    font_name = 'Calibri'
     
     def model_run( self, model_context ):
         from decimal import Decimal
         from openpyxl import Workbook
-        from openpyxl.styles import Font, Border, PatternFill, Side, NamedStyle
+        from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
         from openpyxl.utils import get_column_letter
         from camelot.view.import_utils import ( ColumnMapping,
                                                 ColumnSelectionAdmin )
@@ -697,43 +697,83 @@ class ExportSpreadsheet( ListContextAction ):
         #
         # write styles
         #
+        #title_style = NamedStyle(name='title_style',
+                                 #font=Font(name=self.font_name,
+                                           #bold=True,
+                                           #size=12)
+                                 #)
+        
+        #header_style = NamedStyle(name='header_style',
+                                  #font=Font(name=self.font_name,
+                                        #bold=True,
+                                        #size=10),
+                                  #fill=PatternFill(fill_type='solid',
+                                                   #fgColor='C0C0C0')
+                                  #)
+        
+        #content_style = NamedStyle(name='content_style',
+                                   #font=Font(name=self.font_name,
+                                             #size=10)
+                                   #)
+        
         title_style = NamedStyle(name='title_style',
-                                 font=Font(name=self.font_name,
-                                           bold=True,
-                                           size=12)
-                                 )
+                                font=Font(name=self.font_name,
+                                          bold=True,
+                                          size=12)
+                                )        
         
-        header_style = NamedStyle(name='header_style',
-                                  font=Font(name=self.font_name,
-                                        bold=True,
-                                        size=10),
-                                  fill=PatternFill(fill_type='solid',
-                                                   fgColor='C0C0C0')
-                                  )
-        
-        content_style = NamedStyle(name='content_style',
-                                   font=Font(name=self.font_name,
-                                             size=10)
+        header_style = NamedStyle(name='header_style', 
+                                   font=Font(bold=True,
+                                             name=self.font_name,
+                                             color='FFFFFF',
+                                             size=10),
+                                   fill=PatternFill(fill_type='solid',
+                                                   start_color='4F81BD',
+                                                   end_color='4F81BD'),
+                                   border=Border(top=Side(style='thin',
+                                                          color='95B3D7'),
+                                                 bottom=Side(style='thin',
+                                                             color='95B3D7'))
                                    )
+    
+        table_fill_odd = NamedStyle(name='table_fill_odd', 
+                                        font=Font(name=self.font_name,
+                                                  size=10), 
+                                        fill=PatternFill(fill_type='solid', 
+                                                         start_color='C6D9F0', 
+                                                         end_color='C6D9F0')
+                                        )
+    
+        table_fill_even = NamedStyle(name='table_fill_even', 
+                                         font=Font(name=self.font_name,
+                                                   size=10), 
+                                         fill=PatternFill(fill_type='solid', 
+                                                          start_color='FFFFFF', 
+                                                          end_color='FFFFFF')
+                                         )
+    
+        border_bottom = Border(bottom=Side(style='thin', color='95B3D7'))
+        border_left = Border(bottom=border_bottom.bottom, left=Side(style='thin', color='95B3D7'))
+        border_right = Border(bottom=border_bottom.bottom, right=Side(style='thin', color='95B3D7'))        
         
-        header_border = Border(top=Side(style='thin'))
-        header_border_left = Border(top=header_border.top, left=Side(style='thin'))
-        header_border_right = Border(top=header_border.top, right=Side(style='thin'))
+        #header_border = Border(top=Side(style='thin'))
+        #header_border_left = Border(top=header_border.top, left=Side(style='thin'))
+        #header_border_right = Border(top=header_border.top, right=Side(style='thin'))
         
-        content_border_no_border = Border()
-        content_border_left = Border(left=Side(style='thin'))
-        content_border_right = Border(right=Side(style='thin'))
-        content_border_bottom = Border(bottom=Side(style='thin'))
-        content_border_bottom_left = Border(bottom=content_border_bottom.bottom, left=content_border_left.left)
-        content_border_bottom_right = Border(bottom=content_border_bottom.bottom, right=content_border_right.right)
+        #content_border_no_border = Border()
+        #content_border_left = Border(left=Side(style='thin'))
+        #content_border_right = Border(right=Side(style='thin'))
+        #content_border_bottom = Border(bottom=Side(style='thin'))
+        #content_border_bottom_left = Border(bottom=content_border_bottom.bottom, left=content_border_left.left)
+        #content_border_bottom_right = Border(bottom=content_border_bottom.bottom, right=content_border_right.right)
         
         #is misschien overbodig...
-        workbook.add_named_style(title_style)
-        workbook.add_named_style(header_style)
-        workbook.add_named_style(content_style)
+        #workbook.add_named_style(title_style)
+        #workbook.add_named_style(header_style)
+        #workbook.add_named_style(content_style)
         
         worksheet.cell(row=1, column=1).value = admin.get_verbose_name_plural()
-        worksheet.cell(row=1, column=1).style = 'title_style'
+        worksheet.cell(row=1, column=1).style = title_style
         
         #
         # create some patterns and formats
@@ -745,6 +785,7 @@ class ExportSpreadsheet( ListContextAction ):
         #
         # write headers
         #
+        worksheet.auto_filter.ref = 'A2:' + get_column_letter(len(columns)) + '2' 
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
             verbose_name = six.text_type( field_attributes.get( 'name', name ) )
@@ -752,18 +793,21 @@ class ExportSpreadsheet( ListContextAction ):
             name = six.text_type( name )
             
             if i == 0:
-                header_style.border = header_border_left
+                header_style.border = border_left
             elif i == len( columns ) - 1:
-                header_style.border = header_border_right
+                header_style.border = border_right
             else:
-                header_style.border = header_border
+                header_style.border = border_bottom
             worksheet.cell(row=2, column=i+1).value = verbose_name
-            worksheet.cell(row=2, column=i+1).style = 'header_style'
+            worksheet.cell(row=2, column=i+1).style = header_style
                 
             if len( name ) < 8:
                 worksheet.column_dimensions[get_column_letter(i+1)].width = 8 * 1.3
             else:
                 worksheet.column_dimensions[get_column_letter(i+1)].width = len( verbose_name ) * 1.3
+        
+        worksheet.auto_filter.add_filter_column(0, [])
+        
         #
         # write data
         #
@@ -793,12 +837,12 @@ class ExportSpreadsheet( ListContextAction ):
                         format_string = '0.' + '0'*precision
                     elif isinstance( value, int ):
                         format_string = '0'
-                    elif isinstance( value, datetime.date ):
-                        format_string = date_format
-                    elif isinstance( value, datetime.datetime ):
-                        format_string = datetime_format
-                    elif isinstance( value, datetime.time ):
-                        format_string = time_format
+                    #elif isinstance( value, datetime.date ):
+                        #format_string = date_format
+                    #elif isinstance( value, datetime.datetime ):
+                        #format_string = datetime_format
+                    #elif isinstance( value, datetime.time ):
+                        #format_string = time_format
                     elif attributes.get('to_string') is not None:
                         value = attributes['to_string'](value)
                     else:
@@ -808,26 +852,41 @@ class ExportSpreadsheet( ListContextAction ):
                     # borders right
                     value = ''
                         
-                if i == 0:
-                    if (row - offset + 1) == model_context.collection_count:
-                        content_style.border = content_border_bottom_left
-                    else:
-                        content_style.border = content_border_left
-                elif i == len( columns ) - 1:
-                    if (row - offset + 1) == model_context.collection_count:
-                        content_style.border = content_border_bottom_right
-                    else:
-                        content_style.border = content_border_right
-                elif (row - offset + 1) == model_context.collection_count and i != 0 and i != len(columns):
-                    content_style.border = content_border_bottom
-                else:
-                    content_style.border = content_border_no_border
+                #if i == 0:
+                    #if (row - offset + 1) == model_context.collection_count:
+                        #content_style.border = content_border_bottom_left
+                    #else:
+                        #content_style.border = content_border_left
+                #elif i == len( columns ) - 1:
+                    #if (row - offset + 1) == model_context.collection_count:
+                        #content_style.border = content_border_bottom_right
+                    #else:
+                        #content_style.border = content_border_right
+                #elif (row - offset + 1) == model_context.collection_count and i != 0 and i != len(columns) - 1:
+                    #content_style.border = content_border_bottom
+                #else:
+                    #content_style.border = content_border_no_border
 
                 worksheet.cell(row=row, column=i+1).number_format = format_string
                 worksheet.cell(row=row, column=i+1).value = value
-                worksheet.cell(row=row, column=i+1).style = 'content_style'
+                if(row % 2 == 0):
+                    if i == 0:
+                        table_fill_even.border = border_left
+                    elif i == len(columns) - 1:
+                        table_fill_even.border = border_right
+                    else:
+                        table_fill_even.border = border_bottom
+                    worksheet.cell(row=row, column=i+1).style = table_fill_even
+                else:
+                    if i == 0:
+                        table_fill_odd.border = border_left 
+                    elif i == len(columns) - 1:
+                        table_fill_odd.border = border_right
+                    else:
+                        table_fill_odd.border = border_bottom
+                    worksheet.cell(row=row, column=i+1).style = table_fill_odd
 
-                min_width = len( six.text_type( value ) ) * 1.3
+                min_width = len( six.text_type( value ) ) * 1
                 worksheet.column_dimensions[get_column_letter(i+1)].width = min(self.max_width, max(
                     min_width, 
                     worksheet.column_dimensions[get_column_letter(i+1)].width)
