@@ -44,6 +44,10 @@ from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
 
+from openpyxl import Workbook
+from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill, is_date_format
+from openpyxl.utils import get_column_letter
+
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 
 class ListActionModelContext( ApplicationActionModelContext ):
@@ -642,9 +646,6 @@ class ExportSpreadsheet( ListContextAction ):
     
     def model_run( self, model_context ):
         from decimal import Decimal
-        from openpyxl import Workbook
-        from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
-        from openpyxl.utils import get_column_letter
         from camelot.view.import_utils import ( ColumnMapping,
                                                 ColumnSelectionAdmin )
         from camelot.view.utils import ( local_date_format, 
@@ -817,9 +818,8 @@ class ExportSpreadsheet( ListContextAction ):
                     # borders right
                     value = ''
                         
-
-                worksheet.cell(row=row, column=i+1).number_format = format_string
                 worksheet.cell(row=row, column=i+1).value = value
+                
                 if(row % 2 == 0):
                     if i == 0:
                         table_fill_even.border = border_left
@@ -842,6 +842,8 @@ class ExportSpreadsheet( ListContextAction ):
                     min_width, 
                     worksheet.column_dimensions[get_column_letter(i+1)].width)
                                                                                )
+                #number_format must be set at the end, otherwise it will not be applied
+                worksheet.cell(row=row, column=i+1).number_format = format_string
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
         filename = action_steps.OpenFile.create_temporary_file( '.xls' )
