@@ -45,7 +45,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
 
 from openpyxl import Workbook
-from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill, is_date_format
+from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
 from openpyxl.utils import get_column_letter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
