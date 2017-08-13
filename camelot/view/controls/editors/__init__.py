@@ -44,7 +44,6 @@ ValueLoading until set_value is called with another argument.
 """
 
 from .booleditor import BoolEditor
-from .charteditor import ChartEditor
 from .choiceseditor import ChoicesEditor
 from .coloreditor import ColorEditor
 from .customeditor import CustomEditor
@@ -71,7 +70,6 @@ from .monthseditor import MonthsEditor
 
 __all__ = [
     BoolEditor.__name__,
-    ChartEditor.__name__,
     ChoicesEditor.__name__,
     ColorEditor.__name__,
     CustomEditor.__name__,

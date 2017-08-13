@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -52,7 +52,7 @@ class BusyWidget( QtWidgets.QLabel ):
         self.orbs = rows * self.cols
         self.highlighted_orb = 0
         self.timer = None
-        self.setSizePolicy( QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding )
         mt = get_model_thread()
         mt.thread_busy_signal.connect( self.set_busy )
         # the model thread might already be busy before we connected to it
@@ -64,7 +64,7 @@ class BusyWidget( QtWidgets.QLabel ):
         :arg busy_state: True or False
         """
         #
-        # the set_busy method might get called multiple times with 
+        # the set_busy method might get called multiple times with
         # busy_state=True before calls with busy_state=False,
         # so a check on self.timer is needed to prevent multiple timers
         # from being started
@@ -77,19 +77,19 @@ class BusyWidget( QtWidgets.QLabel ):
                 self.timer = None
             self.highlighted_orb = 0
         self.update()
-    
+
     def paintEvent(self, event):
         """custom paint, painting the orbs"""
         painter = QtGui.QPainter()
         painter.begin( self )
         pixmap = working_pixmap.getQPixmap()
         row, col = divmod( self.highlighted_orb, self.cols )
-        painter.drawPixmap( self.width() - self.frame_width, 
-                            self.height() - self.frame_height, 
-                            pixmap, 
-                            self.frame_width * col, 
-                            self.frame_height * row, 
-                            self.frame_width, 
+        painter.drawPixmap( self.width() - self.frame_width,
+                            self.height() - self.frame_height,
+                            pixmap,
+                            self.frame_width * col,
+                            self.frame_height * row,
+                            self.frame_width,
                             self.frame_height )
         painter.end()
 

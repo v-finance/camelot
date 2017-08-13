@@ -105,15 +105,15 @@ All files (*)"""
 
         # horizontal policy is always expanding, to fill the width of a column
         # in a form
-        vertical_size_policy = QtGui.QSizePolicy.Expanding
+        vertical_size_policy = QtWidgets.QSizePolicy.Expanding
 
         if self.preview_width != 0:
             self.label.setMinimumWidth(self.preview_width)
         if self.preview_height != 0:
             self.label.setFixedHeight(self.preview_height)
-            vertical_size_policy = QtGui.QSizePolicy.Fixed
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, vertical_size_policy)
-        self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, vertical_size_policy)
+            vertical_size_policy = QtWidgets.QSizePolicy.Fixed
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vertical_size_policy)
+        self.label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vertical_size_policy)
         
     @QtCore.qt_slot()
     def clipboard_data_changed(self):

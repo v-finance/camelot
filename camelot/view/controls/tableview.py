@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -132,9 +132,12 @@ class TableWidget(QtWidgets.QTableView):
         self.setEditTriggers(QtWidgets.QAbstractItemView.SelectedClicked |
                              QtWidgets.QAbstractItemView.DoubleClicked |
                              QtWidgets.QAbstractItemView.CurrentChanged)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding)
-        self.horizontalHeader().setClickable(True)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
+        try:
+            self.horizontalHeader().setClickable(True)
+        except AttributeError:
+            self.horizontalHeader().setSectionsClickable(True)
         self._header_font_required = QtWidgets.QApplication.font()
         self._header_font_required.setBold(True)
         line_height = QtGui.QFontMetrics(QtWidgets.QApplication.font()
@@ -454,7 +457,7 @@ class HeaderWidget(QtWidgets.QWidget):
         self._expanded_search.hide()
         layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.search = search
 
     @hybrid_property
@@ -553,14 +556,14 @@ class TableView(AbstractView):
         widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
-        splitter = QtGui.QSplitter(self)
+        splitter = QtWidgets.QSplitter(self)
         splitter.setObjectName('splitter')
         widget_layout.addWidget(splitter)
         table_widget = QtWidgets.QWidget(self)
         # make sure the table itself takes expands to fill the available
         # width of the view
-        size_policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-                                        QtGui.QSizePolicy.Expanding)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                            QtWidgets.QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(1)
         table_widget.setSizePolicy(size_policy)
         filters_widget = QtWidgets.QWidget(self)
@@ -584,7 +587,7 @@ class TableView(AbstractView):
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
         self.search_filter = None
-        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                    self)
         shortcut.activated.connect(self.activate_search)
 

@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,16 +32,16 @@ PyQt port of the layouts/flowlayout example from Qt v4.x
 The original port was copied from the PyQt layout examples.
 """
 
-from ..core.qt import QtCore, QtGui
+from ..core.qt import QtCore, QtWidgets
 
-class FlowLayout( QtGui.QLayout ):
+class FlowLayout( QtWidgets.QLayout ):
     """
     Layout that arranges child widgets from left to right and top to bottom.
-    
+
     @todo : this layout returns a height for width that is too high, it seems
             as if it takes into account that it should be able to expand
     """
-    
+
     def __init__( self, parent = None ):
         """
         :param parent: a `QtWidgets.QWidget`
@@ -103,8 +103,8 @@ class FlowLayout( QtGui.QLayout ):
 
         for item in self.item_list:
             wid = item.widget()
-            spaceX = self.spacing() + wid.style().layoutSpacing(QtGui.QSizePolicy.PushButton, QtGui.QSizePolicy.PushButton, QtCore.Qt.Horizontal)
-            spaceY = self.spacing() + wid.style().layoutSpacing(QtGui.QSizePolicy.PushButton, QtGui.QSizePolicy.PushButton, QtCore.Qt.Vertical)
+            spaceX = self.spacing() + wid.style().layoutSpacing(QtWidgets.QSizePolicy.PushButton, QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Horizontal)
+            spaceY = self.spacing() + wid.style().layoutSpacing(QtWidgets.QSizePolicy.PushButton, QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Vertical)
             nextX = x + item.sizeHint().width() + spaceX
             if nextX - spaceX > rect.right() and lineHeight > 0:
                 x = rect.x()

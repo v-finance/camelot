@@ -30,7 +30,7 @@
 import six
 from six import moves
 
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
+from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
 
 from camelot.admin.action import ActionStep
@@ -134,7 +134,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
-    @QtCore.qt_slot(int, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Vertical:
             model = self.sender()
@@ -189,7 +189,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.set_default_buttons()
         self.update_complete(model)
 
-    @QtCore.qt_slot(int, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Vertical:
             model = self.sender()
@@ -415,7 +415,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
             static_field_attributes['editable'] = True
             delegate = static_field_attributes['delegate'](parent = self,
                                                             **static_field_attributes)
-            option = QtGui.QStyleOptionViewItem()
+            option = QtWidgets.QStyleOptionViewItem()
             option.version = 5
             value_editor = delegate.createEditor( self, option, None )
             value_editor.setObjectName( 'value_editor' )

@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
@@ -41,7 +41,7 @@ class Calculator(QtWidgets.QDialog):
         topLeftLayout = QtWidgets.QVBoxLayout()
         topRightLayout = QtWidgets.QHBoxLayout()
         bottomRightLayout = QtWidgets.QHBoxLayout()
-        bottomLayout = QtGui.QGridLayout()
+        bottomLayout = QtWidgets.QGridLayout()
 
         self.setWindowTitle(_('Calculator'))
         self.input = QtWidgets.QLineEdit(self)
@@ -206,7 +206,7 @@ class Calculator(QtWidgets.QDialog):
 
         #self.input.setText(str(eval(self.output.text())))
 
-        text, ok = QtGui.QInputDialog.getText(
+        text, ok = QtWidgets.QInputDialog.getText(
             self, 'Input Dialog', 'Enter percentage'
         )
 

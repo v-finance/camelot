@@ -68,8 +68,8 @@ class VirtualAddressEditor(CustomEditor):
         not yet taken into account.
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
         self.layout = QtWidgets.QHBoxLayout()

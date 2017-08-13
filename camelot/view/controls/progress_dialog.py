@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -37,7 +37,7 @@ from camelot.view.art import Icon
 
 import six
 
-from ...core.qt import QtGui, QtCore, QtWidgets, Qt, q_string, py_to_variant
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, q_string, py_to_variant
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -91,7 +91,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         self.setLayout( layout )
         # show immediately, to prevent a pop up before another window
         # opened in an action_step
-        self.show() 
+        self.show()
         #QtCore.QTimer.singleShot( 1000, self.show )
 
     @property
@@ -132,7 +132,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             # model with the real data should live in the model thread, and
             # this should only be a proxy
             if details.isHidden():
-                model = QtGui.QStringListModel( parent = self )
+                model = QtModel.QStringListModel( parent = self )
                 details.setModel( model )
                 details.show()
             model = details.model()
@@ -180,7 +180,7 @@ class SplashProgress( QtWidgets.QSplashScreen ):
     """
     # don't let splash screen stay on top, this might hinder
     # registration wizards or others that wait for user input
-    # while camelot is starting up  
+    # while camelot is starting up
 
     def __init__( self, pixmap ):
         super( SplashProgress, self ).__init__(pixmap)
