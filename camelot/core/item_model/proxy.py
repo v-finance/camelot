@@ -104,6 +104,12 @@ class AbstractModelProxy(object):
         """
         raise NotImplementedError()
 
+    def get_model(self):
+        """
+        :return: the model that was used to contruct the proxy
+        """
+        raise NotImplementedError()
+    
     def append(self, obj):
         """
         Add an object to the proxy and the model
