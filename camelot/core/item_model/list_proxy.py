@@ -157,6 +157,9 @@ class ListModelProxy(AbstractModelProxy, dict):
     def get_filter(self, key):
         return self._filters.get(key)
 
+    def get_model(self):
+        return self._objects
+    
     def __getitem__(self, sl, yield_per=None):
         # for now, dont get the actual length, as this might be too slow
         size = maxsize

@@ -1076,7 +1076,7 @@ class SetFilters(Action, AbstractModelFilter):
             return []
         field_attributes = model_context.admin.get_field_attributes(field_name)
         to_string = field_attributes.get('to_string', six.text_type)
-        values = set(getattr(obj, field_name) for obj in model_context.get_collection())
+        values = set(getattr(obj, field_name) for obj in model_context.proxy.get_model())
         return [(value, to_string(value)) for value in values]
 
     def model_run( self, model_context ):
