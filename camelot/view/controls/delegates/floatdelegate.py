@@ -40,7 +40,7 @@ class FloatDelegate(CustomDelegate):
     """Custom delegate for float values"""
 
     editor = editors.FloatEditor
-    horizontal_align = Qt.AlignRight
+    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
 
     def __init__( self,
                  minimum=constants.camelot_minfloat,
@@ -61,6 +61,10 @@ class FloatDelegate(CustomDelegate):
             value_str = six.text_type(
                 locale.toString(float(value), 'f', precision)
             )
+            if fa_values.get('suffix') is not None:
+                value_str = value_str + ' ' + fa_values.get('suffix')
+            if fa_values.get('prefix') is not None:
+                value_str = fa_values.get('prefix') + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
             item.setData(py_to_variant(six.text_type()), PreviewRole)

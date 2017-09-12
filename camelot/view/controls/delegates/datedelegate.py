@@ -41,7 +41,7 @@ class DateDelegate(CustomDelegate):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor
-    horizontal_align = Qt.AlignRight
+    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
     
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
