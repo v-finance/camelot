@@ -45,6 +45,7 @@ returned and an update signal is emitted when the correct data is available.
 import collections
 import itertools
 import logging
+import weakref
 
 logger = logging.getLogger(__name__)
 
@@ -655,7 +656,12 @@ class CollectionProxy(QtGui.QStandardItemModel):
     The behavior of the :class:`QtWidgets.QTableView`, such as what happens when the
     user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
+    :attr instances: the set of `CollectionProxy` instances.  To be used
+        during unit testing to fire the timer events of all models without
+        waiting
     """
+
+    instances = weakref.WeakSet()
 
     def __init__(self, admin, max_number_of_rows=10):
         """
@@ -702,7 +708,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self._reset()
         self._crud_signal_handler = CrudSignalHandler()
         self._crud_signal_handler.connect_signals( self )
-#    # in that way the number of rows is requested as well
+        self.instances.add(self)
         self.logger.debug( 'initialization finished' )
 
     

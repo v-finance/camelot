@@ -44,13 +44,17 @@ class IntegerDelegate(CustomDelegate):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
-    horizontal_align = Qt.AlignRight
+    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
         item = super(IntegerDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
             value_str = locale.toString(long_int(value))
+            if fa_values.get('suffix') is not None:
+                value_str = value_str + ' ' + fa_values.get('suffix')
+            if fa_values.get('prefix') is not None:
+                value_str = fa_values.get('prefix') + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         return item
 
