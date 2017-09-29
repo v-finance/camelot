@@ -186,7 +186,7 @@ class FloatEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(FloatEditor, self).set_field_attributes(**kwargs)
         editable = kwargs.get('editable', False)
-        self.calculatorButton.setShown(editable and self._calculator)
+        self.calculatorButton.setVisible(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         focus_policy = kwargs.get('focus_policy')
         if focus_policy is not None:
@@ -196,7 +196,7 @@ class FloatEditor(CustomEditor):
         spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
         spinBox.setReadOnly(not editable)
-        spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows if editable else QtGui.QAbstractSpinBox.NoButtons)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
