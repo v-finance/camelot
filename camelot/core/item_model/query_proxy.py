@@ -104,7 +104,7 @@ class QueryModelProxy(ListModelProxy):
         if obj in self._objects:
             self._objects.remove(obj)
         elif self._length is not None:
-            self._length = self._length - 1
+            self._length = max(0, self._length - 1)
         # clear sort and filter, this could probably happen more efficient
         self._indexed_objects = TwoWayDict()
         self._sort_and_filter = SortingRowMapper()
