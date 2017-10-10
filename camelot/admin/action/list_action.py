@@ -186,7 +186,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
         current_row, current_column, current_field_name = None, None, None
-        model = None
+        proxy = None
         collection_count = 0
         selection_count = 0
         selected_rows = []
@@ -197,6 +197,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 current_column = current_index.column()
             model = self.item_view.model()
             if model is not None:
+                proxy = model.get_value()
                 collection_count = model.rowCount()
                 if current_column is not None:
                     current_field_name = variant_to_py(
@@ -217,7 +218,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.current_row = current_row
         context.current_column = current_column
         context.current_field_name = current_field_name
-        context.proxy = model.get_value()
+        context.proxy = proxy
         return context
         
     def copy( self, base_class = None ):
@@ -323,7 +324,10 @@ class OpenFormView( ListContextAction ):
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
-        state.verbose_name = six.text_type(model_context.current_row + 1)
+        if model_context.current_row is not None:
+            state.verbose_name = six.text_type(model_context.current_row + 1)
+        else:
+            state.verbose_name = six.text_type()
         return state
 
 class ChangeAdmin( Action ):

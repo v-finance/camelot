@@ -382,9 +382,12 @@ top_level_windows = []
 def apply_form_state(view, parent, state):
     #
     # position the new window in the center of the same screen
-    # as the parent
-    #
-    screen = QtWidgets.QApplication.desktop().screenNumber(parent)
+    # as the parent.
+    # That parent might be a QWidget or a QWindow
+    if isinstance(parent, QtWidgets.QWidget):
+        screen = QtWidgets.QApplication.desktop().screenNumber(parent)
+    else:
+        screen = 0
     geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
     decoration_width, decoration_height = 0, 0
     if parent is not None:
@@ -449,7 +452,8 @@ def show_top_level(view, parent, state=None):
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     apply_form_state(view, parent, state)
 
-    if parent is not None:
+    # parent might be a QWidget or a QWindow
+    if isinstance(parent, QtWidgets.QWidget):
         view.setWindowModality(parent.windowModality())
     view.show()
 
