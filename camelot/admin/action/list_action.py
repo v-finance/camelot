@@ -799,7 +799,7 @@ class ExportSpreadsheet( ListContextAction ):
                         separator = attributes.get('separator', u', ')
                         value = separator.join([six.text_type(el) for el in value])
                     elif isinstance( value, float ):
-                        precision = attributes.get( 'precision', 2 )
+                        precision = attributes.get('precision', 2)
                         format_string = '0.' + '0'*precision
                     elif isinstance( value, int ):
                         format_string = '0'
@@ -810,9 +810,9 @@ class ExportSpreadsheet( ListContextAction ):
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
                     elif attributes.get('to_string') is not None:
-                        value = attributes['to_string'](value)
+                        value = six.text_type(attributes['to_string'](value))
                     else:
-                        value = six.text_type( value )
+                        value = six.text_type(value)
                 else:
                     # empty cells should be filled as well, to get the
                     # borders right
