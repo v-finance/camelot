@@ -1061,11 +1061,13 @@ class CollectionProxy(QtGui.QStandardItemModel):
                     self._rows_under_request.add(row)
                     self._cols_under_request.add(col)
                     self._start_timer()
-            # set the child item, to prevent a row that has been requested
-            # to be requested twice
-            invalid_clone = invalid_item.clone()
-            root_item.setChild(row, col, invalid_clone)
-            return invalid_clone.data(role)
+                # set the child item, to prevent a row that has been requested
+                # to be requested twice
+                # dont do this any more since this causes a data changed signal
+                # which causes more data to be requested again, and so on.
+                #invalid_clone = invalid_item.clone()
+                #root_item.setChild(row, col, invalid_clone)
+            return invalid_item.data(role)
 
         if role == ObjectRole:
             return self.headerData(row, Qt.Vertical, role)
