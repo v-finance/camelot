@@ -133,7 +133,7 @@ class FormWidget(QtWidgets.QWidget):
         if model is not None:
             model.headerDataChanged.connect(self._header_data_changed)
             model.layoutChanged.connect(self._layout_changed)
-            model.modelReset.connect(self._model_reset)
+            model.modelReset.connect(self._layout_changed)
             model.rowsInserted.connect(self._layout_changed)
             model.rowsRemoved.connect(self._layout_changed)
             if widget_mapper is not None:
@@ -150,11 +150,6 @@ class FormWidget(QtWidgets.QWidget):
         if widget_mapper:
             widget_mapper.clearMapping()
 
-    @QtCore.qt_slot()
-    def _model_reset(self):
-        self._layout_changed()
-
-
     # @QtCore.qt_slot(int, int, int)
     def _header_data_changed(self, orientation, first, last):
         if orientation == Qt.Vertical:
@@ -164,8 +159,10 @@ class FormWidget(QtWidgets.QWidget):
                 if (current_index >= first) and (current_index <= last):
                     self.changed_signal.emit(current_index)
 
-    @QtCore.qt_slot()
-    def _layout_changed(self):
+    
+    @QtCore.qt_slot() # for model reset
+    @QtCore.qt_slot(QtCore.QModelIndex, int, int) # for rows inserted/removed
+    def _layout_changed(self, index=None, start=None, end=None):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper is not None:
             # after a layout change, the row we want to display might be there
