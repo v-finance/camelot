@@ -850,7 +850,7 @@ class ExportSpreadsheet( ListContextAction ):
                 worksheet.cell(row=row, column=i+1).number_format = format_string
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
-        filename = action_steps.OpenFile.create_temporary_file( '.xls' )
+        filename = action_steps.OpenFile.create_temporary_file( '.xlsx' )
         workbook.save( filename )
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
