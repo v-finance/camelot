@@ -107,8 +107,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
     type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
     status  = type_and_status.Status( batch_job_statusses )
-    message = orm.column_property(schema.Column(camelot.types.RichText())
-                                  , deferred=True)
+    message = orm.deferred(schema.Column(camelot.types.RichText()))
 
     @classmethod
     def create( cls, batch_job_type = None, status = 'running' ):
@@ -223,7 +222,10 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')
         list_display = ['host', 'type', 'current_status']
-        list_filter = ['current_status', list_filter.ComboBoxFilter('host')]
+        list_filter = [
+            type_and_status.StatusFilter('status'),
+            list_filter.ComboBoxFilter('host')
+        ]
         form_state = 'right'
         form_display = forms.TabForm( [ ( _('Job'), list_display + ['message'] ),
                                         ( _('History'), ['status'] ) ] )
