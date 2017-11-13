@@ -52,9 +52,9 @@ class IntegerDelegate(CustomDelegate):
         if value is not None:
             value_str = locale.toString(long_int(value))
             if fa_values.get('suffix') is not None:
-                value_str = value_str + ' ' + fa_values.get('suffix')
+                value_str = value_str + ' ' + six.text_type(fa_values.get('suffix'))
             if fa_values.get('prefix') is not None:
-                value_str = fa_values.get('prefix') + ' ' + value_str
+                value_str = six.text_type(fa_values.get('prefix')) + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         return item
 
