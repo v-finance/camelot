@@ -39,7 +39,7 @@ from ...validator import DateValidator
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext
 
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
@@ -76,12 +76,12 @@ class DateEditor(CustomEditor):
 
         self.calendar_action_trigger.connect( special_date_menu.hide )
         special_date_menu.addAction(calendar_widget_action)
-        special_date_menu.addAction(_('Today'))
-        special_date_menu.addAction(_('Far future'))
+        special_date_menu.addAction(ugettext('Today'))
+        special_date_menu.addAction(ugettext('Far future'))
         self.special_date = QtWidgets.QToolButton(self)
         self.special_date.setIcon( self.special_date_icon.getQIcon() )
         self.special_date.setAutoRaise(True)
-        self.special_date.setToolTip(_('Calendar and special dates'))
+        self.special_date.setToolTip(ugettext('Calendar and special dates'))
         self.special_date.setMenu(special_date_menu)
         self.special_date.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
@@ -89,7 +89,7 @@ class DateEditor(CustomEditor):
         # end of sensitive part
 
         if nullable:
-            special_date_menu.addAction(_('Clear'))
+            special_date_menu.addAction(ugettext('Clear'))
 
         self.hlayout = QtWidgets.QHBoxLayout()
         self.hlayout.addWidget(line_edit)
@@ -176,11 +176,11 @@ class DateEditor(CustomEditor):
     def set_special_date(self, action):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
-            if action.text().compare(_('Today')) == 0:
+            if six.text_type(action.text()) == ugettext('Today'):
                 self.set_value(datetime.date.today())
-            elif action.text().compare(_('Far future')) == 0:
+            elif six.text_type(action.text()) == ugettext('Far future'):
                 self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-            elif action.text().compare(_('Clear')) == 0:
+            elif six.text_type(action.text()) == ugettext('Clear'):
                 self.set_value(None)
             line_edit.setFocus()
             self.editingFinished.emit()
