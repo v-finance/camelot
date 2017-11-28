@@ -70,8 +70,13 @@ class SelectFile( ActionStep ):
 
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
-        directory = six.text_type(variant_to_py(settings.value('datasource')))
-        directory = os.path.dirname(directory)
+        datasource = settings.value('datasource')
+        # we have no guarantee on what is inside datasource
+        try:
+            directory = six.text_type(variant_to_py(datasource))
+            directory = os.path.dirname(directory)
+        except TypeError:
+            directory = ''
         if self.single:
             get_filename = QtWidgets.QFileDialog.getOpenFileName
         else:
@@ -81,12 +86,18 @@ class SelectFile( ActionStep ):
                                     caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
-            if selected:
+            if selected is not None:
                 if self.single:
-                    settings.setValue( 'datasource', py_to_variant(selected))
+                    settings.setValue(
+                        'datasource',
+                        py_to_variant(six.text_type(selected))
+                    )
                     return [six.text_type(selected)]
                 else:
-                    settings.setValue( 'datasource', py_to_variant(selected[0]))
+                    settings.setValue(
+                        'datasource',
+                        py_to_variant(six.text_type(selected[0]))
+                    )
                     return [six.text_type(fn) for fn in selected]
             else:
                 raise CancelRequest()
