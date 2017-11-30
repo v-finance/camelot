@@ -31,8 +31,7 @@ import six
 
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.item_model import ProxyDict, FieldAttributesRole, PreviewRole
-
+from ....core.item_model import ProxyDict, FieldAttributesRole
 from camelot.view.proxy import ValueLoading
 
 
@@ -117,7 +116,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
-    horizontal_align = Qt.AlignLeft
+    horizontal_align = Qt.AlignLeft | Qt.AlignVCenter
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
@@ -148,6 +147,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         """
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(value), Qt.EditRole)
+        item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(field_attributes_values)),
                      FieldAttributesRole)
         item.setData(py_to_variant(field_attributes_values.get('tooltip')),
@@ -209,13 +209,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.model().data(index, PreviewRole))
-        self.paint_text(painter, option, index, value or six.text_type())
-        painter.restore()
-
     def paint_text(
         self,
         painter,
@@ -245,7 +238,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
 
-        if( option.state & QtGui.QStyle.State_Selected ):
+        if( option.state & QtWidgets.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = option.palette.highlightedText().color()
         else:
@@ -266,7 +259,3 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                          rect.height() - 4, # not -10, because the row might not be high enough for this
                          vertical_align | (horizontal_align or self.horizontal_align),
                          text)
-
-
-
-

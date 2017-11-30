@@ -104,15 +104,19 @@ class QueryModelProxy(ListModelProxy):
         if obj in self._objects:
             self._objects.remove(obj)
         elif self._length is not None:
-            self._length = self._length - 1
+            self._length = max(0, self._length - 1)
         # clear sort and filter, this could probably happen more efficient
         self._indexed_objects = TwoWayDict()
         self._sort_and_filter = SortingRowMapper()
 
+    def get_model(self):
+        return self._query
+
     def get_query(self, order_clause=True):
         """
         :return: the query used to fetch the data, this is not the same as the
-            one set in the constructor, as sorting and filters will modify it.
+            one set in the constructor and returned by `get_model`,
+            as sorting and filters will modify it.
         """
         query = self._query
         # filters might be changed in the gui thread while being iterated

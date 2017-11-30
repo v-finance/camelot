@@ -174,21 +174,6 @@ class SelectItem( ActionStep ):
             raise CancelRequest()
         return dialog.get_value()
 
-class ShowChart( ActionStep ):
-    """Show a full screen chart.
-
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` or
-        :class:`camelot.container.chartcontainer.AxesContainer`
-    """
-
-    def __init__( self, chart ):
-        self.chart = chart
-
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.editors import ChartEditor
-        ChartEditor.show_fullscreen_chart( self.chart,
-                                           gui_context.workspace )
-
 
 class ShowPixmap( ActionStep ):
     """Show a full screen pixmap

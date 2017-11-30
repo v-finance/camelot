@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,7 +32,7 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 
@@ -56,8 +56,8 @@ class SubclassTree( ModelTree ):
         ModelTree.__init__(self, header_labels, parent=None)
         self.admin = admin
         self.setSizePolicy(
-            QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
         )
         self.clicked.connect( self.emit_subclass_clicked )
 
@@ -68,7 +68,7 @@ class SubclassTree( ModelTree ):
                 subclass_item = SubclassItem(class_item, subclass_admin)
                 self.modelitems.append(subclass_item)
                 append_subclasses(subclass_item, subsubclasses)
-                
+
         self.clear_model_items()
         if len(subclasses):
             top_level_item = SubclassItem(self, self.admin)

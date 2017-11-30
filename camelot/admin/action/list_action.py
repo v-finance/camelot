@@ -30,6 +30,7 @@
 import codecs
 import copy
 import datetime
+import functools
 import logging
 
 import six
@@ -42,6 +43,10 @@ from .application_action import ( ApplicationActionGuiContext,
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
+from openpyxl.utils import get_column_letter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 
@@ -181,7 +186,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
         current_row, current_column, current_field_name = None, None, None
-        model = None
+        proxy = None
         collection_count = 0
         selection_count = 0
         selected_rows = []
@@ -192,6 +197,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 current_column = current_index.column()
             model = self.item_view.model()
             if model is not None:
+                proxy = model.get_value()
                 collection_count = model.rowCount()
                 if current_column is not None:
                     current_field_name = variant_to_py(
@@ -212,7 +218,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.current_row = current_row
         context.current_column = current_column
         context.current_field_name = current_field_name
-        context.proxy = model.get_value()
+        context.proxy = proxy
         return context
         
     def copy( self, base_class = None ):
@@ -318,7 +324,10 @@ class OpenFormView( ListContextAction ):
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
-        state.verbose_name = six.text_type(model_context.current_row + 1)
+        if model_context.current_row is not None:
+            state.verbose_name = six.text_type(model_context.current_row + 1)
+        else:
+            state.verbose_name = six.text_type()
         return state
 
 class ChangeAdmin( Action ):
@@ -338,7 +347,8 @@ class ChangeAdmin( Action ):
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
     
-    shortcut = QtGui.QKeySequence.Copy
+    # no shortcut here, as this is too dangerous if the user
+    # presses the shortcut without being aware of the consequences
     icon = Icon('tango/16x16/actions/edit-copy.png')
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
@@ -635,13 +645,11 @@ class ExportSpreadsheet( ListContextAction ):
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
 
-    # xlwt options
-    max_width = 10000
-    font_name = 'Arial'
+    max_width = 40
+    font_name = 'Calibri'
     
     def model_run( self, model_context ):
         from decimal import Decimal
-        from xlwt import Font, Borders, XFStyle, Pattern, Workbook
         from camelot.view.import_utils import ( ColumnMapping,
                                                 ColumnSelectionAdmin )
         from camelot.view.utils import ( local_date_format, 
@@ -687,80 +695,89 @@ class ExportSpreadsheet( ListContextAction ):
         #
         yield action_steps.UpdateProgress( text = _('Create worksheet') )
         workbook = Workbook()
-        worksheet = workbook.add_sheet('Sheet1')
-        #
-        # keep a global cache of styles, since the number of styles that
-        # can be used is limited.
-        #
-        styles = dict()
-        freeze = lambda d:tuple(sorted(six.iteritems(d)))
-        
-        def get_style( font_specs=dict(), 
-                       border_specs = dict(), 
-                       pattern = None,
-                       num_format_str = None, ):
-            
-            style_key = ( freeze(font_specs), 
-                          freeze(border_specs), 
-                          pattern, 
-                          num_format_str )
-            
-            try:
-                return styles[style_key]
-            except KeyError:
-                style = XFStyle()
-                style.font = Font()
-                for key, value in six.iteritems(font_specs):
-                    setattr( style.font, key, value )
-                style.borders = Borders()
-                for key, value in six.iteritems(border_specs):
-                    setattr( style.borders, key, value )
-                if pattern:
-                    style.pattern = pattern
-                if num_format_str:
-                    style.num_format_str = num_format_str
-                styles[ style_key ] = style
-                return style
+        #Workbook contains by default an sheet
+        worksheet = workbook.active
+        worksheet.title = 'Sheet1'
         
         #
-        # write style
+        # write styles
         #
-        title_style = get_style( dict( font_name = self.font_name,
-                                       bold = True,
-                                       height = 240 ) )
-        worksheet.write( 0, 0, admin.get_verbose_name_plural(), title_style )
+        title_style = NamedStyle(name='title_style',
+                                font=Font(name=self.font_name,
+                                          bold=True,
+                                          size=12)
+                                )        
+        
+        header_style = NamedStyle(name='header_style', 
+                                  font=Font(bold=True,
+                                            name=self.font_name,
+                                            color='FFFFFF',
+                                            size=10),
+                                  fill=PatternFill(fill_type='solid',
+                                                   start_color='4F81BD',
+                                                   end_color='4F81BD'),
+                                  border=Border(top=Side(style='thin',
+                                                         color='95B3D7'),
+                                                bottom=Side(style='thin',
+                                                            color='95B3D7'))
+                                  )
+    
+        table_fill_odd = NamedStyle(name='table_fill_odd', 
+                                    font=Font(name=self.font_name,
+                                              size=10), 
+                                    fill=PatternFill(fill_type='solid', 
+                                                     start_color='C6D9F0', 
+                                                     end_color='C6D9F0')
+                                    )
+    
+        table_fill_even = NamedStyle(name='table_fill_even', 
+                                     font=Font(name=self.font_name,
+                                               size=10), 
+                                     fill=PatternFill(fill_type='solid', 
+                                                      start_color='FFFFFF', 
+                                                      end_color='FFFFFF')
+                                     )
+    
+        border_bottom = Border(bottom=Side(style='thin', color='95B3D7'))
+        border_left = Border(bottom=border_bottom.bottom, left=Side(style='thin', color='95B3D7'))
+        border_right = Border(bottom=border_bottom.bottom, right=Side(style='thin', color='95B3D7'))        
+        
+        worksheet.cell(row=1, column=1).value = admin.get_verbose_name_plural()
+        worksheet.cell(row=1, column=1).style = title_style
+        
         #
         # create some patterns and formats
         #
         date_format = local_date_format()
         datetime_format = local_datetime_format()
         time_format = local_time_format()
-        header_pattern = Pattern()
-        header_pattern.pattern = Pattern.SOLID_PATTERN
-        header_pattern.pattern_fore_colour = 0x16
+
         #
         # write headers
         #
+        worksheet.auto_filter.ref = 'A2:' + get_column_letter(len(columns)) + '2' 
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
             verbose_name = six.text_type( field_attributes.get( 'name', name ) )
             field_names.append( name )
-            font_specs = dict( font_name = self.font_name, 
-                               bold = True, 
-                               height = 200 )
-            border_specs = dict( top = 0x01 )
             name = six.text_type( name )
+            
             if i == 0:
-                border_specs[ 'left' ] = 0x01                
+                header_style.border = border_left
             elif i == len( columns ) - 1:
-                border_specs[ 'right' ] = 0x01 
-            header_style = get_style( font_specs, border_specs, header_pattern )
-            worksheet.write( 2, i, verbose_name, header_style)
+                header_style.border = border_right
+            else:
+                header_style.border = border_bottom
+            worksheet.cell(row=2, column=i+1).value = verbose_name
+            worksheet.cell(row=2, column=i+1).style = header_style
                 
             if len( name ) < 8:
-                worksheet.col( i ).width = 8 *  375
+                worksheet.column_dimensions[get_column_letter(i+1)].width = 8 * 1.3
             else:
-                worksheet.col( i ).width = len( verbose_name ) *  375
+                worksheet.column_dimensions[get_column_letter(i+1)].width = len( verbose_name ) * 1.3
+        
+        worksheet.auto_filter.add_filter_column(0, [])
+        
         #
         # write data
         #
@@ -778,15 +795,15 @@ class ExportSpreadsheet( ListContextAction ):
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
-                format_string = '0'
+                format_string = 'General'
                 if value is not None:
                     if isinstance( value, Decimal ):
-                        value = float( str( value ) )
+                        format_string = '0.00'
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
                         value = separator.join([six.text_type(el) for el in value])
                     elif isinstance( value, float ):
-                        precision = attributes.get( 'precision', 2 )
+                        precision = attributes.get('precision', 2)
                         format_string = '0.' + '0'*precision
                     elif isinstance( value, int ):
                         format_string = '0'
@@ -797,35 +814,43 @@ class ExportSpreadsheet( ListContextAction ):
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
                     elif attributes.get('to_string') is not None:
-                        value = attributes['to_string'](value)
+                        value = six.text_type(attributes['to_string'](value))
                     else:
-                        value = six.text_type( value )
+                        value = six.text_type(value)
                 else:
                     # empty cells should be filled as well, to get the
                     # borders right
                     value = ''
                         
-                font_specs = dict( font_name = self.font_name, height = 200 )
-                border_specs = dict()
-                if i == 0:
-                    border_specs[ 'left' ] = 0x01
-                elif i == len( columns ) - 1:
-                    border_specs[ 'right' ] = 0x01
-                if (row - offset + 1) == model_context.collection_count:
-                    border_specs[ 'bottom' ] = 0x01
-                style = get_style( font_specs, 
-                                   border_specs, 
-                                   None, 
-                                   format_string )
-                worksheet.write( row, i, value, style )
-                min_width = len( six.text_type( value ) ) * 300
-                worksheet.col( i ).width = min(self.max_width, max(
-                    min_width,
-                    worksheet.col( i ).width)
-                )
+                worksheet.cell(row=row, column=i+1).value = value
+                
+                if(row % 2 == 0):
+                    if i == 0:
+                        table_fill_even.border = border_left
+                    elif i == len(columns) - 1:
+                        table_fill_even.border = border_right
+                    else:
+                        table_fill_even.border = border_bottom
+                    worksheet.cell(row=row, column=i+1).style = table_fill_even
+                else:
+                    if i == 0:
+                        table_fill_odd.border = border_left 
+                    elif i == len(columns) - 1:
+                        table_fill_odd.border = border_right
+                    else:
+                        table_fill_odd.border = border_bottom
+                    worksheet.cell(row=row, column=i+1).style = table_fill_odd
+
+                min_width = len( six.text_type( value ) ) * 1
+                worksheet.column_dimensions[get_column_letter(i+1)].width = min(self.max_width, max(
+                    min_width, 
+                    worksheet.column_dimensions[get_column_letter(i+1)].width)
+                                                                               )
+                #number_format must be set at the end, otherwise it will not be applied
+                worksheet.cell(row=row, column=i+1).number_format = format_string
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
-        filename = action_steps.OpenFile.create_temporary_file( '.xls' )
+        filename = action_steps.OpenFile.create_temporary_file( '.xlsx' )
         workbook.save( filename )
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
@@ -998,6 +1023,17 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
+
+class FieldFilter(object):
+    """
+    Helper class for the `SetFilters` action that allows the user to
+    configure a filter on an individual field.
+    """
+
+    def __init__(self, field_name=None, value=None):
+        self.field_name = field_name
+        self.value = value
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -1010,51 +1046,120 @@ class SetFilters(Action, AbstractModelFilter):
     tooltip = _('Filter the data')
     icon = Icon('tango/16x16/actions/system-search.png')
 
-    def filter(self, it, value):
-        if value is None:
+    def filter(self, it, field_filters):
+        if field_filters is None:
             for obj in it:
                 yield obj
         else:
-            field_name, field_value = value
             for obj in it:
-                if getattr(obj, value[0]) == value[1]:
+                for field_filter in field_filters:
+                    if field_filter.field_name is not None:
+                        if getattr(obj, field_filter.field_name) != field_filter.value:
+                            break
+                else:
                     yield obj
 
+    def get_field_name_choices(self, model_context):
+        """
+        :return: a list of choices with the fields the user can select to
+           filter upon.
+        """
+        field_attributes = model_context.admin.get_all_fields_and_attributes()
+        field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+        field_choices.sort(key=lambda choice:choice[1])
+        return field_choices
+
+    def get_field_value_choices(self, model_context, field_filter):
+        """
+        :param field_filter: `FieldFilter` the filter the user is configuring.
+        :return: for a specific field name, the list of values from which the
+           user can select to filter upon.
+        """
+        field_name = field_filter.field_name
+        if field_name is None:
+            return []
+        field_attributes = model_context.admin.get_field_attributes(field_name)
+        to_string = field_attributes.get('to_string', six.text_type)
+        values = set(getattr(obj, field_name) for obj in model_context.proxy.get_model())
+        return [(value, to_string(value)) for value in values]
+
     def model_run( self, model_context ):
+        from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
+        from camelot.view.controls import delegates
+
+        # prepare a number of filters, for easy access
+        filters = [FieldFilter() for i in range(10)]
 
         if model_context.mode_name == 'clear':
             yield action_steps.SetFilter(self, None)
+            return
+        elif model_context.mode_name == 'change':
+            # don't just modify the old filters, but create new filters
+            # each time
+            old_filters = model_context.proxy.get_filter(self) or []
+            for old_filter, new_filter in zip(old_filters, filters):
+                if old_filter.field_name is not None:
+                    new_filter.field_name = old_filter.field_name
+                    new_filter.value = old_filter.value
 
+        current_field_name = model_context.current_field_name
+        current_field_value  = None
+        current_obj = model_context.get_object()
+
+        # if a field was selected when calling the action, use that
+        # field for the first empty filter
+        if (current_field_name is not None) and (current_obj is not None):
+            current_field_value = getattr(current_obj, current_field_name)
+            for field_filter in filters:
+                if field_filter.field_name is None:
+                    field_filter.field_name = current_field_name
+                    field_filter.value = current_field_value
+                    break
+
+        field_name_choices = self.get_field_name_choices(model_context)
+        field_value_choices = functools.partial(self.get_field_value_choices, model_context)
+
+        class FieldFilterAdmin(ObjectAdmin):
+            list_display = ['field_name', 'value']
+            field_attributes = {
+                'field_name': {
+                    'name': _('Name'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices':field_name_choices
+                    },
+                'value': {
+                    'name': _('Value'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices': field_value_choices,
+                    },
+            }
+
+        filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
+        change_filters = action_steps.ChangeObjects(filters, filter_admin)
+        change_filters.title = _('Filter')
+        change_filters.subtitle = _('Select field and value')
+        yield change_filters
+        for field_filter in filters:
+            if field_filter.field_name is not None:
+                break
         else:
-            current_field_name = model_context.current_field_name
-            current_field_value  = None
-            current_obj = model_context.get_object()
-            if (current_field_name is not None) and (current_obj is not None):
-                current_field_value = getattr(current_obj, current_field_name)
-
-            select_field = action_steps.ChangeField(
-                model_context.admin,
-                # explicit pass of field attributes because not editable
-                # fields should appear in the selection box
-                field_attributes = model_context.admin.get_all_fields_and_attributes(),
-                field_name = model_context.current_field_name,
-                field_value = current_field_value
-            )
-            select_field.title = _('Filter')
-            select_field.subtitle = _('Select field and value')
-
-            field_name, value = yield select_field
-            if field_name is None:
-                yield action_steps.SetFilter(self, None)
-            yield action_steps.SetFilter(self, (field_name, value))
+            yield action_steps.SetFilter(self, None)
+        yield action_steps.SetFilter(self, filters)
 
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
-        state.modes = [
+        modes = []
+        if model_context.proxy.get_filter(self) is not None:
+            modes.append(Mode('change', _('Change filter')))
+            state.notification = True
+        modes.extend([
             Mode('filter', _('Apply filter')),
             Mode('clear', _('Clear filter')),
-        ]
+        ])
+        state.modes = modes
         return state
 
 class AddExistingObject( EditAction ):

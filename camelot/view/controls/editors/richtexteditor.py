@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -36,13 +36,13 @@ from camelot.view.art import Icon
 
 class CustomTextEdit(QtWidgets.QTextEdit):
     """
-    A TextEdit editor that sends editingFinished events 
+    A TextEdit editor that sends editingFinished events
     when the text was changed and focus is lost.
     """
 
     editingFinished = QtCore.qt_signal()
     receivedFocus = QtCore.qt_signal()
-    
+
     def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
         self._changed = False
@@ -67,11 +67,11 @@ class CustomTextEdit(QtWidgets.QTextEdit):
     def setHtml(self, html):
         QtWidgets.QTextEdit.setHtml(self, html)
         self._changed = False
-                
+
 class RichTextEditor(CustomEditor, WideEditor):
 
-    def __init__(self, 
-                 parent = None, 
+    def __init__(self,
+                 parent = None,
                  field_name = 'richtext',
                  **kwargs):
         CustomEditor.__init__(self, parent)
@@ -86,11 +86,11 @@ class RichTextEditor(CustomEditor, WideEditor):
 
         toolbar = self.initToolbar() # Has to be invoked before the connect's below.
         toolbar.hide() # Should only be visible when textedit is focused.
-        
+
         self.textedit.editingFinished.connect(self.emit_editing_finished)
         self.textedit.receivedFocus.connect(toolbar.show)
         self.textedit.setAcceptRichText(True)
-        
+
         # Layout
         self.layout.addWidget(toolbar)
         self.layout.addWidget(self.textedit)
@@ -126,7 +126,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             toolbar.setHidden( hidden )
-        
+
     def initToolbar(self):
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setObjectName( 'toolbar' )
@@ -205,14 +205,14 @@ class RichTextEditor(CustomEditor, WideEditor):
         zoomin_button.setMaximumSize(QtCore.QSize(20, 20))
         zoomin_button.setToolTip('Zoom in')
         zoomin_button.clicked.connect(self.zoomin)
-        
+
         zoomout_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/list-remove.png').getQIcon()
         zoomout_button.setIcon(icon)
         zoomout_button.setMaximumSize(QtCore.QSize(20, 20))
         zoomout_button.setToolTip('Zoom out')
         zoomout_button.clicked.connect(self.zoomout)
-        
+
         color_button = QtWidgets.QToolButton(self)
         color_button.setMaximumSize(QtCore.QSize(20, 20))
         color_button.setToolTip('Color')
@@ -273,7 +273,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setAlignment(Qt.AlignRight)
 
     def set_color(self):
-        color = QtGui.QColorDialog.getColor(self.textedit.textColor())
+        color = QtWidgets.QColorDialog.getColor(self.textedit.textColor())
         if color.isValid():
             self.textedit.setTextColor(color)
 
@@ -288,7 +288,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         :param document: a :class:`QtGui.QTextDocument` object.
         """
         self.textedit.setDocument( document )
-        
+
     def set_value( self, value ):
         value = CustomEditor.set_value(self, value)
         if value!=None:

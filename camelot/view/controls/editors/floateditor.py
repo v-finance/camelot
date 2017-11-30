@@ -33,7 +33,6 @@ from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import CustomEditor, set_background_color_palette
 from ...art import Icon
-from ...utils import locale
 from ....core import constants
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
@@ -83,11 +82,8 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = six.text_type( locale().toString( float(value),
-                                                 'f', 
-                                                 self.decimals() ) )
-        return text
-    
+        return super(CustomDoubleSpinBox, self).textFromValue(value)
+
     def stripped(self, qinput):
         """Strip a string from its prefix, suffix and spaces
         
@@ -146,8 +142,8 @@ class FloatEditor(CustomEditor):
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
         action = QtWidgets.QAction(self)
@@ -190,7 +186,7 @@ class FloatEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(FloatEditor, self).set_field_attributes(**kwargs)
         editable = kwargs.get('editable', False)
-        self.calculatorButton.setShown(editable and self._calculator)
+        self.calculatorButton.setVisible(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         focus_policy = kwargs.get('focus_policy')
         if focus_policy is not None:
@@ -200,7 +196,7 @@ class FloatEditor(CustomEditor):
         spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
         spinBox.setReadOnly(not editable)
-        spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows if editable else QtGui.QAbstractSpinBox.NoButtons)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )

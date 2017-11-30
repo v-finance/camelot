@@ -81,7 +81,7 @@ class AbstractCustomEditor(object):
       on those widgets.
 
     * Editor should set their size policy, for most editor this means their
-      vertical size policy should be  `QtGui.QSizePolicy.Fixed`
+      vertical size policy should be  `QtWidgets.QSizePolicy.Fixed`
     """
 
     def __init__(self):
@@ -118,17 +118,6 @@ class AbstractCustomEditor(object):
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
 
-    """
-    Get the 'standard' height for a cell
-    """
-    def get_height(self):
-        return max(QtWidgets.QLineEdit().sizeHint().height(),
-                   QtWidgets.QDateEdit().sizeHint().height(),
-                   QtWidgets.QDateTimeEdit().sizeHint().height(),
-                   QtWidgets.QSpinBox().sizeHint().height(),
-                   QtWidgets.QDateEdit().sizeHint().height(),
-                   QtWidgets.QComboBox().sizeHint().height())
-
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
 
@@ -162,6 +151,12 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             self.size_hint_width = None
         else:
             self.size_hint_width = column_width * CustomEditor._font_width
+
+    def get_height(self):
+        """
+        Get the 'standard' height for a cell
+        """
+        return self.contentsRect().height()
 
     def add_actions(self, actions, layout):
         for action in actions:

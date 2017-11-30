@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import variant_to_py, QtCore, QtGui, Qt
+from ....core.qt import variant_to_py, QtCore, QtGui, QtWidgets, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
@@ -49,7 +49,7 @@ class ColorDelegate(CustomDelegate):
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
             background_color = field_attributes.get( 'background_color', None )
-        if ( option.state & QtGui.QStyle.State_Selected ):
+        if ( option.state & QtWidgets.QStyle.State_Selected ):
             painter.fillRect( option.rect, option.palette.highlight() )
         elif not editable:
             painter.fillRect( option.rect, background_color or option.palette.window() )

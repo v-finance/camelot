@@ -196,12 +196,18 @@ class SignalSlotModelThread( AbstractModelThread ):
         self._request_queue = []
         self._connected = False
 
-    def run( self ):
-        self.logger.debug( 'model thread started' )
+    def _init_model_thread(self):
+        """
+        Initialize the objects that live in the model thread
+        """
         self._task_handler = TaskHandler(self)
         self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
-        # Some tasks might have been posted before the signals were connected to the task handler,
-        # so once force the handling of tasks
+
+    def run( self ):
+        self.logger.debug( 'model thread started' )
+        self._init_model_thread()
+        # Some tasks might have been posted before the signals were connected
+        # to the task handler, so once force the handling of tasks
         self._task_handler.handle_task()
         self.exec_()
         self.logger.debug('model thread stopped')

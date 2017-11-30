@@ -649,8 +649,6 @@ class RuntimeInfo( Action ):
         import sqlalchemy
         import chardet
         import jinja2
-        import xlrd
-        import xlwt
                 
         html = """<em>Python:</em> <b>%s</b><br>
                   <em>Qt:</em> <b>%s</b><br>
@@ -658,16 +656,12 @@ class RuntimeInfo( Action ):
                   <em>SQLAlchemy:</em> <b>%s</b><br>
                   <em>Chardet:</em> <b>%s</b><br>
                   <em>Jinja:</em> <b>%s</b><br>
-                  <em>xlrd:</em> <b>%s</b><br>
-                  <em>xlwt:</em> <b>%s</b><br><br>
                   <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
                                               float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
                                               QtCore.PYQT_VERSION_STR,
                                               sqlalchemy.__version__,
                                               chardet.__version__,
                                               jinja2.__version__,
-                                              xlrd.__VERSION__,
-                                              xlwt.__VERSION__,
                                               six.text_type(sys.path))        
         yield action_steps.PrintHtml( html )
         

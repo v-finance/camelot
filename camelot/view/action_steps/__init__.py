@@ -33,13 +33,13 @@ from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
 from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
-                   ShowChart, ShowPixmap, SelectSubclass, UpdateEditor,)
+                   ShowPixmap, SelectSubclass, UpdateEditor,)
 from .item_view import Sort, OpenTableView, SetFilter, UpdateTableView
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from .orm import (CreateObject, CreateObjects, DeleteObject, DeleteObjects,
                   FlushSession, UpdateObject, UpdateObjects)
-from .print_preview import ( PrintChart, PrintHtml, PrintPreview,
+from .print_preview import ( PrintHtml, PrintPreview,
                              PrintJinjaTemplate, UpdatePrintPreview )
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
@@ -68,7 +68,6 @@ __all__ = [
     OpenStream.__name__,
     OpenString.__name__,
     OpenTableView.__name__,
-    PrintChart.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
@@ -83,7 +82,6 @@ __all__ = [
     SelectRestore.__name__,
     SelectSubclass.__name__,
     SetFilter.__name__,
-    ShowChart.__name__,
     ShowPixmap.__name__,
     Sort.__name__,
     ToFirstForm.__name__,

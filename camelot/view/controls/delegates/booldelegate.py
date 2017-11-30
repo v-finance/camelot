@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt, QtCore, QtGui, QtWidgets
+from ....core.qt import variant_to_py, Qt, QtCore, QtWidgets
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
@@ -37,40 +37,40 @@ from camelot.view.proxy import ValueLoading
 @six.add_metaclass(DocumentationMetaclass)
 class BoolDelegate(CustomDelegate):
     """Custom delegate for boolean values"""
-    
+
     editor = editors.BoolEditor
-  
+
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground( painter, option, index )
         checked = variant_to_py(index.model().data(index, Qt.EditRole))
-        
-        check_option = QtGui.QStyleOptionButton()
-        
+
+        check_option = QtWidgets.QStyleOptionButton()
+
         rect = QtCore.QRect(option.rect.left(),
                             option.rect.top(),
                             option.rect.width(),
                             option.rect.height())
-        
+
         check_option.rect = rect
         check_option.palette = option.palette
-        if (option.state & QtGui.QStyle.State_Selected):
+        if (option.state & QtWidgets.QStyle.State_Selected):
             painter.fillRect(option.rect, option.palette.highlight())
         elif not self.editable:
             painter.fillRect(option.rect, option.palette.window())
 
         if checked in (ValueLoading, None):
-            check_option.state = option.state | QtGui.QStyle.State_Off
+            check_option.state = option.state | QtWidgets.QStyle.State_Off
         elif checked:
-            check_option.state = option.state | QtGui.QStyle.State_On
+            check_option.state = option.state | QtWidgets.QStyle.State_On
         else:
-            check_option.state = option.state | QtGui.QStyle.State_Off
-            
+            check_option.state = option.state | QtWidgets.QStyle.State_Off
 
-        QtWidgets.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
+
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_CheckBox,
                                                check_option,
                                                painter)
-                
+
         painter.restore()
 
 
