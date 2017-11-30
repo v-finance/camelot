@@ -251,8 +251,10 @@ class Status( EntityBuilder ):
 
     def create_tables(self):
         self.status_history.__table__.schema = self.entity.__table__.schema
+        self.status_history.__table__.info = self.entity.__table__.info.copy()
         if self.status_type is not None:
             self.status_type.__table__.schema = self.entity.__table__.schema
+            self.status_type.__table__.schema = self.entity.__table__.info.copy()
 
     def create_non_pk_cols( self ):
         table = orm.class_mapper( self.entity ).local_table
