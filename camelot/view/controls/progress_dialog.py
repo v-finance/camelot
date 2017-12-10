@@ -188,7 +188,7 @@ class SplashProgress(QtCore.QObject):
         # only construct a new splash screen if there is no splash
         # screen yet
         if self.splash is None:
-            self.splash = QtWidgets.QSplashScreen(pixmap)
+            self.splash = QtWidgets.QSplashScreen()
             # allow the splash screen to keep the application alive, even
             # if the last dialog was closed
             layout = QtWidgets.QVBoxLayout()
@@ -199,6 +199,8 @@ class SplashProgress(QtCore.QObject):
             self.splash.setAttribute(Qt.WA_QuitOnClose)
             self.splash.setWindowTitle(' ')
             self.splash.setLayout(layout)
+        if pixmap is not None:
+            self.splash.setPixmap(pixmap)
 
     def find_splash(self):
         """
