@@ -303,12 +303,14 @@ class ShowHelp( Action ):
     verbose_name = _('Help')
     
     def gui_run( self, gui_context ):
-        self.view = QtWebKit.QWebView( None )
-        self.view.load( gui_context.admin.get_application_admin().get_help_url() )
-        self.view.setWindowTitle( ugettext('Help Browser') )
-        self.view.setWindowIcon( self.icon.getQIcon() )
-        self.view.show()
-     
+        from camelot.view.register import register
+        view = QtWebKit.QWebView(None)
+        view.load(gui_context.admin.get_application_admin().get_help_url())
+        view.setWindowTitle(ugettext('Help Browser'))
+        view.setWindowIcon(self.icon.getQIcon())
+        view.show()
+        register(view, view)
+
 class ShowAbout( Action ):
     """Show the about dialog with the content returned by the
     :meth:`ApplicationAdmin.get_about` method

@@ -70,6 +70,12 @@ class DelayedModule(object):
             self.module = getattr(binding_module, self.__name__)
         return getattr(self.module, attr)
 
+class DelayedQtWebEngineWidgets(DelayedModule):
+
+    @property
+    def QWebView(self):
+        return self.QWebEngineView
+
 QtCore = DelayedModule('QtCore')
 QtGui = DelayedModule('QtGui')
 QtWebKit = DelayedModule('QtWebKit')
@@ -125,6 +131,8 @@ if qt_api in ('', 'PyQt5'):
         QtPrintSupport = DelayedModule('QtPrintSupport')
         QtQml = DelayedModule('QtQml')
         QtQuick = DelayedModule('QtQuick')
+        #QtWebKit = DelayedQtWebEngineWidgets('QtWebEngineWidgets')
+        QtWebKit = DelayedModule('QtWebKitWidgets')
         is_deleted = sip.isdeleted
         delete = sip.delete
     except ImportError:
