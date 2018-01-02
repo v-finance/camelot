@@ -172,7 +172,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             cancel_button.setHidden( hidden )
 
 
-class SplashProgress( QtWidgets.QSplashScreen ):
+class SplashProgress(QtCore.QObject):
     """
     Wrapper around :class:`QtWidgets.QSplashScreen` to make it behave as if
     it were a progress dialog, this allows reuse of the progress related
@@ -183,20 +183,33 @@ class SplashProgress( QtWidgets.QSplashScreen ):
     # while camelot is starting up
 
     def __init__( self, pixmap ):
-        super( SplashProgress, self ).__init__(pixmap)
-        # allow the splash screen to keep the application alive, even
-        # if the last dialog was closed
-        layout = QtWidgets.QVBoxLayout()
-        progress_bar = QtWidgets.QProgressBar(parent=self)
-        progress_bar.setObjectName('progress_bar')
-        layout.addStretch(1)
-        layout.addWidget(progress_bar)
-        self.setAttribute(Qt.WA_QuitOnClose)
-        self.setWindowTitle(' ')
-        # support transparency
-        if pixmap.mask(): self.setMask(pixmap.mask())
-        self.setLayout(layout)
+        super( SplashProgress, self ).__init__()
+        self.splash = self.find_splash()
+        # only construct a new splash screen if there is no splash
+        # screen yet
+        if self.splash is None:
+            self.splash = QtWidgets.QSplashScreen()
+            # allow the splash screen to keep the application alive, even
+            # if the last dialog was closed
+            layout = QtWidgets.QVBoxLayout()
+            progress_bar = QtWidgets.QProgressBar(parent=self.splash)
+            progress_bar.setObjectName('progress_bar')
+            layout.addStretch(1)
+            layout.addWidget(progress_bar)
+            self.splash.setAttribute(Qt.WA_QuitOnClose)
+            self.splash.setWindowTitle(' ')
+            self.splash.setLayout(layout)
+        if pixmap is not None:
+            self.splash.setPixmap(pixmap)
 
+    def find_splash(self):
+        """
+        find a top level splash screen for the current application
+        """
+        for widget in QtCore.QCoreApplication.instance().topLevelWidgets():
+            if isinstance(widget, QtWidgets.QSplashScreen):
+                return widget
+            
     def minimumDuration(self):
         return 0
 
@@ -204,16 +217,22 @@ class SplashProgress( QtWidgets.QSplashScreen ):
         pass
 
     def setMaximum( self, maximum ):
-        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
+        progress_bar = self.splash.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setMaximum(maximum)
 
     def setValue( self, value ):
-        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
+        progress_bar = self.splash.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setValue(value)
 
     def setLabelText( self, text ):
-        progress_bar = self.findChild(QtWidgets.QProgressBar, 'progress_bar')
+        progress_bar = self.splash.findChild(QtWidgets.QProgressBar, 'progress_bar')
         progress_bar.setFormat(text)
+
+    def show(self):
+        self.splash.show()
+
+    def close(self):
+        self.splash.close()
 
     def wasCanceled( self ):
         return False
