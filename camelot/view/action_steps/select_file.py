@@ -29,7 +29,7 @@
 
 import os
 
-from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant
+from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant, qt_api
 
 import six
 
@@ -140,6 +140,8 @@ class SaveFile( ActionStep ):
                                     caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
+            if qt_api == 'PyQt5':
+                selected = selected[0]
             if selected:
                 settings.setValue('datasource', py_to_variant(selected))
                 return six.text_type(selected)
