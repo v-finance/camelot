@@ -60,7 +60,12 @@ class AbstractActionWidget( object ):
             #gui_context.item_view.model().modelReset.connect(self.model_reset)
             selection_model = gui_context.item_view.selectionModel()
             if selection_model is not None:
-                selection_model.currentRowChanged.connect(self.current_row_changed)
+                # a queued connection, since the selection of the selection model
+                # might not be up to date at the time the currentRowChanged
+                # signal is emitted
+                selection_model.currentRowChanged.connect(
+                    self.current_row_changed, type=Qt.QueuedConnection
+                )
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
