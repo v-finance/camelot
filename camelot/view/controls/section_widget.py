@@ -34,7 +34,7 @@ logger = logging.getLogger('camelot.view.controls.section_widget')
 
 import six
 
-from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
+from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt, qt_api
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.section import Section, SectionItem
 from camelot.view.model_thread import post
@@ -156,7 +156,10 @@ class NavigationPane(QtWidgets.QDockWidget):
         self.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
 
     def wheelEvent(self, wheel_event):
-        steps = -1 * wheel_event.delta() / (8 * 15)
+        if qt_api=='PyQt5':
+            steps = -1 * wheel_event.angleDelta().y() / (8 * 15)
+        else:
+            steps = -1 * wheel_event.delta() / (8 * 15)
         toolbox = self.findChild(QtWidgets.QWidget, 'toolbox')
         if steps and toolbox:
             current_index = toolbox.currentIndex()
