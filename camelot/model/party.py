@@ -212,11 +212,11 @@ class WithAddresses(object):
         return self._get_address_field( u'street1' )
     
     @street1.setter
-    def street1_setter( self, value ):
+    def street1( self, value ):
         return self._set_address_field( u'street1', value )
 
     @street1.expression
-    def street1_expression(cls):
+    def street1(cls):
         return sql.select([Address.street1],
                           whereclause=cls.first_address_filter(),
                           limit=1).as_scalar()
@@ -226,7 +226,7 @@ class WithAddresses(object):
         return self._get_address_field( u'street2' )
     
     @street2.setter
-    def street2_setter( self, value ):
+    def street2( self, value ):
         return self._set_address_field( u'street2', value )
 
     @hybrid.hybrid_property
@@ -234,11 +234,11 @@ class WithAddresses(object):
         return self._get_address_field( u'city' )
     
     @city.setter
-    def city_setter( self, value ):
+    def city( self, value ):
         return self._set_address_field( u'city', value )
 
     @city.expression
-    def city_expression(cls):
+    def city(cls):
 
         GB = orm.aliased(GeographicBoundary)
 
@@ -341,11 +341,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'email' )
     
     @email.setter
-    def email_setter( self, value ):
+    def email( self, value ):
         return self._set_contact_mechanism( u'email', value )
     
     @email.expression
-    def email_expression( self ):
+    def email( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
@@ -353,11 +353,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'phone' )
     
     @phone.setter
-    def phone_setter( self, value ):
+    def phone( self, value ):
         return self._set_contact_mechanism( u'phone', value )
     
     @phone.expression
-    def phone_expression( self ):
+    def phone( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
@@ -365,11 +365,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'fax' )
 
     @fax.setter
-    def fax_setter( self, value ):
+    def fax( self, value ):
         return self._set_contact_mechanism( u'fax', value )
 
     @fax.expression
-    def fax_expression( self ):
+    def fax( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
@@ -377,11 +377,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'mobile' )
 
     @mobile.setter
-    def mobile_setter( self, value ):
+    def mobile( self, value ):
         return self._set_contact_mechanism( u'mobile', value )
 
     @mobile.expression
-    def mobile_expression( self ):
+    def mobile( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
 
@@ -639,11 +639,11 @@ class Addressable(object):
         return self._get_address_field( u'street1' )
     
     @street1.setter
-    def street1_setter( self, value ):
+    def street1( self, value ):
         return self._set_address_field( u'street1', value )
     
     @street1.expression
-    def street1_expression( self ):
+    def street1( self ):
         return Address.street1
 
     @hybrid.hybrid_property
@@ -663,7 +663,7 @@ class Addressable(object):
         return self._get_address_field( u'city' )
     
     @city.setter
-    def city_setter( self, value ):
+    def city( self, value ):
         return self._set_address_field( u'city', value )
     
     class Admin(object):
@@ -817,7 +817,7 @@ class PartyContactMechanism( Entity ):
             return self.contact_mechanism.mechanism
 
     @mechanism.setter
-    def mechanism_setter( self, value ):
+    def mechanism( self, value ):
         if value != None:
             if self.contact_mechanism:
                 self.contact_mechanism.mechanism = value
@@ -825,7 +825,7 @@ class PartyContactMechanism( Entity ):
                 self.contact_mechanism = ContactMechanism( mechanism = value )
 
     @mechanism.expression
-    def mechanism_expression( self ):
+    def mechanism( self ):
         return sql.select(
             [ContactMechanism.mechanism],
             whereclause=ContactMechanism.id==self.contact_mechanism_id).as_scalar()
