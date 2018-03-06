@@ -775,9 +775,7 @@ class ManyToOne( Relationship ):
             if 'name' not in self.constraint_kwargs:
                 # In some databases (at least MySQL) the constraint name needs
                 # to be unique for the whole database, instead of per table.
-                fk_name = options.CONSTRAINT_NAMEFORMAT % \
-                          {'tablename': source_desc.tablename,
-                           'colnames': '_'.join(fk_colnames)}
+                fk_name = None
                 self.constraint_kwargs['name'] = fk_name
 
             constraint =schema.ForeignKeyConstraint( fk_colnames, fk_refcols,
