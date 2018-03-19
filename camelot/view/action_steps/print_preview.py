@@ -80,7 +80,9 @@ class UpdatePrintPreview(ActionStep):
     """
 
     def gui_run(self, gui_context):
-        preview_widget = gui_context.view.findChild(QtGui.QPrintPreviewWidget)
+        preview_widget = gui_context.view.findChild(
+            QtPrintSupport.QPrintPreviewWidget
+        )
         preview_widget.updatePreview()
 
 class PrintPreview( ActionStep ):

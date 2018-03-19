@@ -29,7 +29,7 @@
 import logging
 
 import six
-from sqlalchemy import types, sql
+from sqlalchemy import types, sql, PrimaryKeyConstraint
 
 from .qt import QtGui
 
@@ -166,7 +166,7 @@ class BackupMechanism(object):
                 to_table = from_table.tometadata(to_meta_data)
                 to_table.schema = None
                 to_table.constraints = set()
-                to_table.primary_key = []
+                to_table.primary_key = PrimaryKeyConstraint()
                 to_table.foreign_keys = set()
                 from_and_to_tables.append((from_table, to_table))
         to_meta_data.create_all(to_connection)

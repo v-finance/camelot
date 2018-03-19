@@ -467,7 +467,7 @@ class EntityBase( object ):
         return Session().query( self.__class__ )
 
     @query.expression
-    def query_expression( cls ):
+    def query( cls ):
         return Session().query( cls )
 
     @classmethod

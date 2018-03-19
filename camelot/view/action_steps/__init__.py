@@ -34,7 +34,9 @@ from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
 from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
                    ShowPixmap, SelectSubclass, UpdateEditor,)
-from .item_view import Sort, OpenTableView, SetFilter, UpdateTableView
+from .item_view import (
+    Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
+)
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from .orm import (CreateObject, CreateObjects, DeleteObject, DeleteObjects,
@@ -51,6 +53,7 @@ __all__ = [
     ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
+    ClearSelection.__name__,
     CloseView.__name__,
     CreateObject.__name__,
     CreateObjects.__name__,

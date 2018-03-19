@@ -247,6 +247,10 @@ and used as a custom action.
                     # the 'appropriate' way to get it from the class.  Getting it
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
+                    # class attribute of hybrid properties is changed from
+                    # expression to comparator in sqla 1.2
+                    if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
+                        class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
                         if isinstance(class_attribute, sql.Select):
                             for k, v in six.iteritems(self.get_sql_field_attributes(class_attribute.columns)):

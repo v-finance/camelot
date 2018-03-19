@@ -437,11 +437,12 @@ def show_top_level(view, parent, state=None):
     #
     register( view, view )
     #
-    # set the parent to None to avoid the window being destructed
-    # once the parent gets destructed
+    # asset the parent is None to avoid the window being destructed
+    # once the parent gets destructed, do not set the parent itself here,
+    # nor the window flags, as this might cause windows to hide themselves
+    # again after being shown in Qt5
     #
-    view.setParent( None )
-    view.setWindowFlags(QtCore.Qt.Window)
+    assert view.parent() is None
     #
     # Make the window title blank to prevent the something
     # like main.py or pythonw being displayed
@@ -450,12 +451,15 @@ def show_top_level(view, parent, state=None):
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-    apply_form_state(view, parent, state)
-
     # parent might be a QWidget or a QWindow
+    # the modality should be set before showing the window
     if isinstance(parent, QtWidgets.QWidget):
         view.setWindowModality(parent.windowModality())
+    #
+    # There is a bug in certain versions of Qt5 (QTBUG-57882), that causes
+    # view.show() to unmax/min the window.
+    # Therefor show the window before moving/resizing it to its final position
+    #
     view.show()
-
-
+    apply_form_state(view, parent, state)
 

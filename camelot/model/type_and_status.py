@@ -331,7 +331,7 @@ class StatusMixin( object ):
             return status_history.classified_by
 
     @current_status.expression
-    def current_status_expression( cls ):
+    def current_status( cls ):
         return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
 
     def change_status(self, new_status, 
