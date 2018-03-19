@@ -45,7 +45,7 @@ from camelot.core.qt import Qt
 
 import six
 
-from sqlalchemy import orm, schema, sql
+from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 from sqlalchemy.orm.exc import UnmappedClassError
@@ -249,8 +249,9 @@ and used as a custom action.
                     class_attribute = getattr(self.entity, field_name)
                     # class attribute of hybrid properties is changed from
                     # expression to comparator in sqla 1.2
-                    if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
-                        class_attribute = class_attribute.comparator.expression
+                    if sqlalchemy_version.startswith('1.2'):
+                        if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
+                            class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
                         if isinstance(class_attribute, sql.Select):
                             for k, v in six.iteritems(self.get_sql_field_attributes(class_attribute.columns)):
