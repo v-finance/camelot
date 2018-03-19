@@ -76,6 +76,10 @@ class ListModelProxy(AbstractModelProxy, dict):
         :param objects: a list of objects
         """
         assert isinstance(objects, list)
+        # the list of objects should be hashable, use assert isinstance
+        # to detect incoming non hashable types (in py3, abc can be used)
+        for obj in objects:
+            assert not isinstance(obj, (list,))
         # the unsorted, unfiltered list of objects
         self._objects = objects
         self._length = None
@@ -102,11 +106,13 @@ class ListModelProxy(AbstractModelProxy, dict):
         return new
 
     def append(self, obj):
+        assert not isinstance(obj, (list,))
         if obj not in self._objects:
             self._objects.append(obj)
             self._length = None
 
     def remove(self, obj):
+        assert not isinstance(obj, (list,))
         if obj in self._objects:
             # clear sort and filter, this could probably happen more efficient
             self._indexed_objects = TwoWayDict()
@@ -115,6 +121,7 @@ class ListModelProxy(AbstractModelProxy, dict):
             self._length = None
 
     def index(self, obj):
+        assert not isinstance(obj, (list,))
         try:
             return self._indexed_objects[obj]
         except KeyError:
