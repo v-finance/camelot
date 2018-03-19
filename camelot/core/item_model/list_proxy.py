@@ -35,10 +35,17 @@ from .proxy import AbstractModelProxy
 
 LOGGER = logging.getLogger(__name__)
 
+# not all objects can be used as value for the list_proxy :
+# - int is used as key in the two way dict
+# - list is unhashable
+
+assert_value_objects = (list, int,)
+
 class TwoWayDict(dict):
 
     def __setitem__(self, key, value):
         # Remove any previous connections with these values
+        assert not isinstance(value, assert_value_objects)
         assert (key not in self), 'key {0} allready in two way dict of size {1}'.format(key, len(self))
         assert (value not in self)
         dict.__setitem__(self, key, value)
@@ -79,7 +86,7 @@ class ListModelProxy(AbstractModelProxy, dict):
         # the list of objects should be hashable, use assert isinstance
         # to detect incoming non hashable types (in py3, abc can be used)
         for obj in objects:
-            assert not isinstance(obj, (list,))
+            assert not isinstance(obj, assert_value_objects)
         # the unsorted, unfiltered list of objects
         self._objects = objects
         self._length = None
@@ -106,13 +113,13 @@ class ListModelProxy(AbstractModelProxy, dict):
         return new
 
     def append(self, obj):
-        assert not isinstance(obj, (list,))
+        assert not isinstance(obj, assert_value_objects)
         if obj not in self._objects:
             self._objects.append(obj)
             self._length = None
 
     def remove(self, obj):
-        assert not isinstance(obj, (list,))
+        assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
             # clear sort and filter, this could probably happen more efficient
             self._indexed_objects = TwoWayDict()
@@ -121,7 +128,7 @@ class ListModelProxy(AbstractModelProxy, dict):
             self._length = None
 
     def index(self, obj):
-        assert not isinstance(obj, (list,))
+        assert not isinstance(obj, assert_value_objects)
         try:
             return self._indexed_objects[obj]
         except KeyError:
