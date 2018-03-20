@@ -33,7 +33,9 @@ import six
 
 from sqlalchemy import orm, sql, exc
 
-from .list_proxy import ListModelProxy, TwoWayDict, SortingRowMapper
+from .list_proxy import (
+    ListModelProxy, TwoWayDict, SortingRowMapper, assert_value_objects
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -77,6 +79,7 @@ class QueryModelProxy(ListModelProxy):
         self._sort_decorator = self._get_sort_decorator(key, reverse)
 
     def append(self, obj):
+        assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
             return
         # a new object cannot be in the query, so no need to check it
@@ -93,6 +96,7 @@ class QueryModelProxy(ListModelProxy):
         self._objects.append(obj)
 
     def index(self, obj):
+        assert not isinstance(obj, assert_value_objects)
         try:
             return self._indexed_objects[obj]
         except KeyError:
@@ -101,6 +105,7 @@ class QueryModelProxy(ListModelProxy):
             return i+self._length
 
     def remove(self, obj):
+        assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
             self._objects.remove(obj)
         elif self._length is not None:
