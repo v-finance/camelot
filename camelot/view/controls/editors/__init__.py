@@ -52,6 +52,7 @@ from .datetimeeditor import DateTimeEditor
 from .fileeditor import FileEditor
 from .floateditor import FloatEditor
 from .imageeditor import ImageEditor
+from .dbimageeditor import DbImageEditor
 from .integereditor import IntegerEditor
 from .languageeditor import LanguageEditor
 from .localfileeditor import LocalFileEditor
@@ -78,6 +79,7 @@ __all__ = [
     FileEditor.__name__,
     FloatEditor.__name__,
     ImageEditor.__name__,
+    DbImageEditor.__name__,
     IntegerEditor.__name__,
     LabelEditor.__name__,
     LanguageEditor.__name__,
