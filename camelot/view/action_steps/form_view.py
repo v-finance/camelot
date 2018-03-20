@@ -95,6 +95,10 @@ class OpenFormView( ActionStep ):
             related_row = gui_context.item_view.currentIndex().row()
             # this is the object visible in that row at the time of the click
             obj = related_model.headerData(related_row, Qt.Vertical, ObjectRole)
+            # the value for the ObjectRole might be None if the update of the
+            # model is still pending, in that case no form can be opened yet
+            if obj is None:
+                return None
             # this is the row in the new proxy for the same object, this migth
             # be the same row as the related row if there were no gui changes
             # pending
@@ -117,7 +121,8 @@ class OpenFormView( ActionStep ):
     def gui_run( self, gui_context ):
         window = gui_context.get_window()
         formview = self.render(gui_context)
-        show_top_level(formview, window, self.admin.form_state)
+        if formview is not None:
+            show_top_level(formview, window, self.admin.form_state)
 
 class ChangeFormIndex(ActionStep):
 
