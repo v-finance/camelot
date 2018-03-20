@@ -230,6 +230,9 @@ class UploadFile(FieldAction):
         filenames = yield action_steps.SelectFile(self.file_name_filter)
         storage = model_context.field_attributes['storage']
         for file_name in filenames:
+            # the storage cannot checkin empty file names
+            if not file_name:
+                continue
             remove = False
             if model_context.field_attributes.get('remove_original'):
                 reply = yield action_steps.MessageBox(
