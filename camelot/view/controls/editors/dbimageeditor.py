@@ -1,6 +1,7 @@
+import os
+
 from ....view.art import Icon
 from ....view.action import ActionFactory
-from ....view.controls.editors.imageeditor import ImageEditor
 from ....core.qt import QtCore, QtWidgets, Qt, QtGui
 from ....core.utils import ugettext as _
 
@@ -144,17 +145,27 @@ class DbImageEditor(CustomEditor):
     
     @QtCore.qt_slot()
     def open(self):
+        image_filter = "Images (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)"
         options = QtWidgets.QFileDialog.Options()
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "",ImageEditor.filter, options=options)
+        file_name = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "",image_filter, options=options)
         if file_name:
-            image = QtGui.QImage( file_name )
-            ba = QtCore.QByteArray()
-            buffer = QtCore.QBuffer(ba)
-            buffer.open(QtCore.QIODevice.WriteOnly)
-            image.save(buffer, 'PNG')
-            image_data = ba.toBase64().data().decode()
-            self.set_value(image_data)
-            self.editingFinished.emit()
+            statinfo = os.stat(file_name)
+            image_size = statinfo.st_size
+            
+            # Allow images of sizes up to 50Kb
+            max_size = 50000            
+            
+            if image_size <= max_size:
+                image = QtGui.QImage( file_name )
+                ba = QtCore.QByteArray()
+                buffer = QtCore.QBuffer(ba)
+                buffer.open(QtCore.QIODevice.WriteOnly)
+                image.save(buffer, 'PNG')
+                image_data = ba.toBase64().data().decode()
+                self.set_value(image_data)
+                self.editingFinished.emit()
+            else: 
+                QtGui.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(max_size/1000))
     
     def set_image_to_clipboard(self, image):
         clipboard = QtWidgets.QApplication.clipboard()
