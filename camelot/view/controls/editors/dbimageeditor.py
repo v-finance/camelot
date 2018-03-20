@@ -2,7 +2,6 @@ import os
 
 from ....view.art import Icon
 from ....view.action import ActionFactory
-from ....view.controls.editors.imageeditor import ImageEditor
 from ....core.qt import QtCore, QtWidgets, Qt, QtGui
 from ....core.utils import ugettext as _
 
@@ -162,7 +161,6 @@ class DbImageEditor(CustomEditor):
                 buffer = QtCore.QBuffer(ba)
                 buffer.open(QtCore.QIODevice.WriteOnly)
                 image.save(buffer, 'PNG')
-                size = ba.size()
                 image_data = ba.toBase64().data().decode()
                 self.set_value(image_data)
                 self.editingFinished.emit()
