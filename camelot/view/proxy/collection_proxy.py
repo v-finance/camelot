@@ -424,9 +424,13 @@ class SetData(Update):
             grouped_requests[(row, obj)].append((column, value))
         admin = model_context.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
-            o = list(model_context.proxy[row:row+1])[0]
+            object_slice = list(model_context.proxy[row:row+1])
+            if not len(object_slice):
+                logger.error('Cannot set data : no object in row {0}'.format(row))
+                continue
+            o = object_slice[0]
             if not (o is obj):
-                logger.warn('model view inconsistency')
+                logger.warn('Cannot set data : object in row {0} is inconsistent with view'.format(row))
                 continue
             #
             # the object might have been deleted while an editor was open
