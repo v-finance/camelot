@@ -188,6 +188,7 @@ class BackupMechanism(object):
             logger.info(u'check backfup file in to storage with name %s'%self.filename)
             self.storage.checkin( temp_file_name, self.filename )
             os.remove( temp_file_name )
+        yield (number_of_tables + 1, number_of_tables + 1, self.filename)
         yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))
     
     def restore(self, to_engine):

@@ -374,6 +374,7 @@ class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
     shortcut = QtGui.QKeySequence.Delete
+    name = 'delete_selection'
     icon = Icon('tango/16x16/places/user-trash.png')
     tooltip = _('Delete')
     verbose_name = _('Delete')
@@ -667,8 +668,12 @@ class ExportSpreadsheet( ListContextAction ):
         field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
                          six.iteritems(all_fields) ]
         field_choices.sort(key=lambda field_tuple:field_tuple[1])
-        row_data = [None] * len(all_fields)
-        column_range = six.moves.range(len(all_fields))
+        list_columns = admin.get_columns()
+        # the admin might show more columns then fields available, if the
+        # columns are generated dynamically
+        max_mapping_length = max(len(list_columns), len(all_fields))
+        row_data = [None] * max_mapping_length
+        column_range = six.moves.range(max_mapping_length)
         mappings = []
         for i, default_field in six.moves.zip_longest(column_range,
                                                       admin.get_columns(),
