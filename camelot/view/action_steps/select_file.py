@@ -86,7 +86,10 @@ class SelectFile( ActionStep ):
                                     caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
-            if selected is not None:
+            if qt_api == 'PyQt5':
+                selected = selected[0]
+            # selected is an empty string if cancel is pressed
+            if selected:
                 if self.single:
                     settings.setValue(
                         'datasource',
