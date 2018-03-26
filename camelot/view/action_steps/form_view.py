@@ -97,7 +97,7 @@ class OpenFormView( ActionStep ):
             obj = related_model.headerData(related_row, Qt.Vertical, ObjectRole)
             # the value for the ObjectRole might be None if the update of the
             # model is still pending, in that case no form can be opened yet
-            if obj is None:
+            if variant_to_py(obj) is None:
                 return None
             # this is the row in the new proxy for the same object, this migth
             # be the same row as the related row if there were no gui changes
