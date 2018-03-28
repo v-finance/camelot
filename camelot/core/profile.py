@@ -181,8 +181,12 @@ class ProfileStore(object):
         """:return: the :class:`Crypto.Cipher` object used for encryption and
         decryption in :meth:`_encode` and :meth:`_decode`.
         """
-        from Crypto.Cipher import ARC4
-        return ARC4.new( self.cipher_key )
+        if six.PY2:
+            from Crypto.Cipher import ARC4
+            return ARC4.new( self.cipher_key )
+        else:
+            from .pyarc4 import Arc4
+            return Arc4(self.cipher_key.encode('ascii'))
 
     def _encode( self, value ):
         """Encrypt and encode a single value, this method is used to 
