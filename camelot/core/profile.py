@@ -167,6 +167,12 @@ class ProfileStore(object):
     :param cipher_key: cipher key used to encrypt profile information to make
         it only readeable to the application itself.  If left to `None`,
         `camelot.core.conf.settings.CAMELOT_DBPROFILES_CIPHER is used.
+
+    Profiles are supposed to be encrypted within the settings, unless the
+    profile has a key with the name `encrypted` and a value different from `1`.
+    This allows an external script or application that does not know the
+    cipther to generate a profile.  Upon first modification, the profile will
+    be encrypted.
     """
     
     def __init__( self, filename=None, profile_class=Profile, cipher_key=None):
@@ -232,9 +238,10 @@ class ProfileStore(object):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
+            encrypted = variant_to_py(qsettings.value('encrypted', b'1'))
             for key in six.iterkeys(state):
                 value = variant_to_py(qsettings.value(key, empty))
-                if key != 'profilename':
+                if (key != 'profilename') and (encrypted==b'1'):
                     value = self._decode(value or b'')
                 else:
                     value = value
@@ -263,6 +270,7 @@ class ProfileStore(object):
         qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
+            qsettings.setValue('encrypted', b'1')
             for key, value in six.iteritems(profile.__getstate__()):
                 if key != 'profilename':
                     value = self._encode(value)
