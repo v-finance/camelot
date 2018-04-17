@@ -238,10 +238,10 @@ class ProfileStore(object):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
-            encrypted = variant_to_py(qsettings.value('encrypted', b'1'))
+            encrypted = int(variant_to_py(qsettings.value('encrypted', py_to_variant(1))))
             for key in six.iterkeys(state):
                 value = variant_to_py(qsettings.value(key, empty))
-                if (key != 'profilename') and (encrypted==b'1'):
+                if (key != 'profilename') and (encrypted==1):
                     value = self._decode(value or b'')
                 else:
                     value = value
@@ -270,7 +270,7 @@ class ProfileStore(object):
         qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
-            qsettings.setValue('encrypted', b'1')
+            qsettings.setValue('encrypted', py_to_variant(1))
             for key, value in six.iteritems(profile.__getstate__()):
                 if key != 'profilename':
                     value = self._encode(value)
