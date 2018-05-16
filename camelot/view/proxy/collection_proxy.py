@@ -152,7 +152,7 @@ class UpdateMixin(object):
         changed_ranges = []
         logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
-        if (not admin.is_deleted( obj ) and data==True):
+        if (not admin.is_deleted( obj ) and (data==True) and (obj is not None)):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
             dynamic_field_attributes ={column:fa for column, fa in zip(columns, admin.get_dynamic_field_attributes(obj, column_names))}
             if admin.list_action:
