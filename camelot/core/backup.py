@@ -166,6 +166,7 @@ class BackupMechanism(object):
                 to_table = from_table.tometadata(to_meta_data)
                 to_table.schema = None
                 to_table.constraints = set()
+                to_table.indexes = set()
                 to_table.primary_key = PrimaryKeyConstraint()
                 to_table.foreign_keys = set()
                 from_and_to_tables.append((from_table, to_table))
