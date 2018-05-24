@@ -260,24 +260,32 @@ if qt_api in ('PyQt4', 'PySide'):
     #
     _encoding=QtCore.QCoreApplication.UnicodeUTF8
 
-    def qtranslate(string_to_translate):
+    def qtranslate(string_to_translate, n=-1):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
-        return six.text_type(QtCore.QCoreApplication.translate('', 
-                                                               string_to_translate.encode('utf-8'), 
-                                                               encoding=_encoding))
+        return six.text_type(QtCore.QCoreApplication.translate(
+            '',
+            string_to_translate.encode('utf-8'),
+            '',
+            _encoding,
+            n
+        ))
 
 else:
 
-    def qtranslate(string_to_translate):
+    def qtranslate(string_to_translate, n=-1):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
-        return six.text_type(QtCore.QCoreApplication.translate('', 
-                                                               string_to_translate.encode('utf-8'),))
+        return six.text_type(QtCore.QCoreApplication.translate(
+            '',
+            string_to_translate.encode('utf-8'),
+            '',
+            n,
+        ))
 
     def qmsghandler(msg_type, msg_log_context, msg_string):
         """ Logging handler to redirect messages from Qt to Python """
