@@ -29,7 +29,7 @@
 
 import six
 
-from ....core.qt import Qt, variant_to_py
+from ....core.qt import Qt, variant_to_py, qtranslate
 from camelot.view.controls.editors import MonthsEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core.utils import ugettext
@@ -67,9 +67,9 @@ class MonthsDelegate(CustomDelegate):
         elif value not in (None, ValueLoading):
             years, months = divmod( value, 12 )
             if years:
-                value_str = value_str + ugettext('%i years ')%(years)
+                value_str = qtranslate('%i years', n=years)%(years) + u' '
             if months:
-                value_str = value_str + ugettext('%i months')%(months)
+                value_str = value_str + qtranslate('%i months', n=months)%(months)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()
