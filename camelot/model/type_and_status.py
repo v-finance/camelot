@@ -66,6 +66,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
+from camelot.core.item_model.proxy import AbstractModelFilter
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view import action_steps
@@ -254,7 +255,7 @@ class Status( EntityBuilder ):
         self.status_history.__table__.info = self.entity.__table__.info.copy()
         if self.status_type is not None:
             self.status_type.__table__.schema = self.entity.__table__.schema
-            self.status_type.__table__.schema = self.entity.__table__.info.copy()
+            self.status_type.__table__.info = self.entity.__table__.info.copy()
 
     def create_non_pk_cols( self ):
         table = orm.class_mapper( self.entity ).local_table
@@ -430,7 +431,7 @@ class ChangeStatus( Action ):
                     yield action_steps.UpdateObject(obj)
             yield action_steps.FlushSession(model_context.session)
 
-class StatusFilter(list_filter.GroupBoxFilter):
+class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     """
     Filter to be used in a table view to enable filtering on the status
     of an object.  This filter will display all available statuses, and as
@@ -449,6 +450,22 @@ class StatusFilter(list_filter.GroupBoxFilter):
         where_clauses = [self.column==v for v in values]
         query = query.filter(sql.or_(*where_clauses))
         return query
+
+    def filter(self, it, value):
+        """
+        Allow the status filter to work on list of objects instead of
+        queries.
+        """
+        if list_filter.All in value:
+            for obj in it:
+                yield obj
+        elif len(value) > 0:
+            today = datetime.date.today()
+            for obj in it:
+                for history in getattr(obj, self.attribute):
+                    if history.status_from_date <= today <= history.status_thru_date:
+                        if history.classified_by in value:
+                            yield obj
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
