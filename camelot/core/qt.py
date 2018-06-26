@@ -241,11 +241,13 @@ def _q_string_2(arg=None):
 
 if string_api==2:
     q_string = _q_string_2
+    q_string_type = str
     q_string_size = len
     q_string_startswith = str.startswith
     q_string_endswith = str.endswith
 elif string_api==1:
     q_string = QtCore.QString
+    q_string_type = QtCore.QString
     q_string_size = QtCore.QString.size
     q_string_startswith = QtCore.QString.startsWith
     q_string_endswith = QtCore.QString.endsWith
