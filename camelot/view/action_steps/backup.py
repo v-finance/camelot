@@ -218,7 +218,7 @@ class SelectBackupDialog( SelectDialog ):
             ok_button.setEnabled( self.label != '' )
             
     def _setPath(self, start_dir):
-        path = QtGui.QFileDialog.getSaveFileName(
+        path = QtWidgets.QFileDialog.getSaveFileName(
                 self, six.text_type(self.caption),
                 start_dir or u'',
                 ugettext('Database files (*%s);;All files (*.*)' % self.extension),
@@ -268,7 +268,7 @@ class SelectRestoreDialog( SelectDialog ):
             ok_button.setEnabled( self.label != '' )
 
     def _setPath(self, dir):
-        path = QtGui.QFileDialog.getOpenFileName(
+        path = QtWidgets.QFileDialog.getOpenFileName(
             self, six.text_type(self.caption), dir or '', ugettext('Database files (*%s);;All files (*.*)' % self.extension),
         )
         return path

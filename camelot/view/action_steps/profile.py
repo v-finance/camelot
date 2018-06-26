@@ -32,7 +32,7 @@ import pkgutil
 
 import six
 
-from ...core.qt import QtCore, QtGui, QtWidgets, QtNetwork, Qt
+from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -346,7 +346,7 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = six.text_type(QtGui.QFileDialog.getExistingDirectory(self, caption))
+        selected = six.text_type(QtWidgets.QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return
