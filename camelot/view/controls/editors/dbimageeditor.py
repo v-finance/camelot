@@ -147,7 +147,7 @@ class DbImageEditor(CustomEditor):
     def open(self):
         image_filter = "Images (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)"
         options = QtWidgets.QFileDialog.Options()
-        file_name = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "",image_filter, options=options)
+        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "",image_filter, options=options)
         if file_name:
             statinfo = os.stat(file_name)
             image_size = statinfo.st_size
