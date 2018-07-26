@@ -90,6 +90,8 @@ QtPrintSupport = DelayedModule('QtGui')
 if qt_api in ('', 'PyQt4'):
     try:
         qt_api = 'PyQt4'
+        # as of pyqt 5.11, qt should be imported before sip
+        from PyQt4 import QtCore
         import sip
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
@@ -120,6 +122,8 @@ if qt_api in ('', 'PySide'):
 if qt_api in ('', 'PyQt5'):
     try:
         qt_api = 'PyQt5'
+        # as of pyqt 5.11, qt should be imported before sip
+        from PyQt5 import QtCore
         import sip
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
