@@ -200,6 +200,12 @@ and used as a custom action.
                         primary_key_representation,
                         six.text_type(obj)
                     )
+                elif six.PY3 and hasattr(obj, '__str__'):
+                    return u'%s %s : %s' % (
+                        self.get_verbose_name() or '',
+                        primary_key_representation,
+                        obj.__str__()
+                    )                
                 else:
                     return u'%s %s' % (
                         self.get_verbose_name() or '',

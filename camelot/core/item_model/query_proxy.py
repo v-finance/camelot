@@ -32,7 +32,7 @@ import logging
 import six
 
 from sqlalchemy import orm, sql, exc
-
+from sqlalchemy.orm.attributes import QueryableAttribute
 from .list_proxy import (
     ListModelProxy, TwoWayDict, SortingRowMapper, assert_value_objects
 )
@@ -221,6 +221,8 @@ class QueryModelProxy(ListModelProxy):
                     else:
                         class_attribute = list(property._calculated_foreign_keys)[0]
             if property:
+                order_by.append((class_attribute, reverse))
+            elif isinstance(class_attribute, QueryableAttribute):
                 order_by.append((class_attribute, reverse))
                                 
         def sort_decorator(order_by, join, query):
