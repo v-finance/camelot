@@ -67,6 +67,7 @@ batch_job_statusses = [ (-2, 'planned'),
                         (2,  'errors'),
                         (3,  'canceled') ]
 
+@six.python_2_unicode_compatible
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
@@ -76,7 +77,7 @@ class BatchJobType( Entity ):
     name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
     parent = ManyToOne( 'BatchJobType' )
     
-    def __unicode__(self):
+    def __str__(self):
         return self.name
     
     @classmethod
