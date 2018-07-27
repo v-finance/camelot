@@ -450,6 +450,9 @@ class StatusFilter(list_filter.GroupBoxFilter):
         query = query.filter(sql.or_(*where_clauses))
         return query
 
+    def get_entity_id(self, model_context):
+        return model_context.admin.entity.id
+
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
         admin = model_context.admin
@@ -468,7 +471,7 @@ class StatusFilter(list_filter.GroupBoxFilter):
         modes = []
         current_date = sql.functions.current_date()
         self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                             history_type.status_for_id == admin.entity.id,
+                                             history_type.status_for_id == self.get_entity_id(model_context),
                                              history_type.status_thru_date >= current_date)
                       )
         self.column = getattr(history_type, 'classified_by')
