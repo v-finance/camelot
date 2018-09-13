@@ -165,7 +165,7 @@ class DbImageEditor(CustomEditor):
                 self.set_value(image_data)
                 self.editingFinished.emit()
             else: 
-                QtGui.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(max_size/1000))
+                QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(max_size/1000))
     
     def set_image_to_clipboard(self, image):
         clipboard = QtWidgets.QApplication.clipboard()
