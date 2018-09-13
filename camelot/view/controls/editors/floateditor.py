@@ -67,12 +67,19 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         # Make sure that the Period key on the numpad is *always* 
         # represented by the systems locale decimal separator to 
         # facilitate user input.
-        if key_event.key() == Qt.Key_Period and decimal_point.unicode() != Qt.Key_Period:
+        if six.PY3:
+            decimal_point_in_unicode = ord(decimal_point)
+            decimal_point_string = decimal_point
+        elif six.PY2:
+            decimal_point_in_unicode = decimal_point.unicode()
+            decimal_point_string = QtCore.QString(decimal_point)
+        
+        if key_event.key() == Qt.Key_Period and decimal_point_in_unicode != Qt.Key_Period:
             # Dynamically build a 'new' event that holds this locales decimal separator
             new_key_event = QtGui.QKeyEvent( key_event.type(),
-                                             decimal_point.unicode(),
+                                             decimal_point_in_unicode,
                                              key_event.modifiers(),
-                                             QtCore.QString(decimal_point) )
+                                             decimal_point_string )
             key_event.accept() # Block 'old' event
             QtWidgets.QApplication.sendEvent(self, new_key_event)
         # Propagate all other events to the super class
