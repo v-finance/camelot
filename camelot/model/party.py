@@ -224,7 +224,13 @@ class WithAddresses(object):
     @hybrid.hybrid_property
     def street2( self ):
         return self._get_address_field( u'street2' )
-    
+
+    @street2.expression
+    def street2_expression(cls):
+        return sql.select([Address.street2],
+                          whereclause=cls.first_address_filter(),
+                          limit=1).as_scalar()
+
     @street2.setter
     def street2( self, value ):
         return self._set_address_field( u'street2', value )
@@ -665,7 +671,11 @@ class Addressable(object):
     @city.setter
     def city( self, value ):
         return self._set_address_field( u'city', value )
-    
+
+    @city.expression
+    def city_expression( self ):
+        return Address.city_geographicboundary_id
+
     class Admin(object):
         field_attributes = dict(
             street1 = dict( editable = True,
