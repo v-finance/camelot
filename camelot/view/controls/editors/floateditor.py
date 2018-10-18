@@ -146,6 +146,7 @@ class FloatEditor(CustomEditor):
                        decimal = False, 
                        option = None,
                        field_name = 'float',
+                       actions = [],
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
@@ -187,6 +188,7 @@ class FloatEditor(CustomEditor):
         layout.setSpacing(0)
         layout.addWidget(spinBox)
         layout.addWidget(self.calculatorButton)
+        self.add_actions(actions, layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 
@@ -207,6 +209,7 @@ class FloatEditor(CustomEditor):
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
+        self.update_actions()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -215,6 +218,7 @@ class FloatEditor(CustomEditor):
             spinBox.setValue(spinBox.minimum())
         else:
             spinBox.setValue(float(value))
+        self.update_actions()
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
@@ -261,5 +265,6 @@ class FloatEditor(CustomEditor):
         set_background_color_palette(spinBox.lineEdit(), background_color)
         set_background_color_palette(spinBox, background_color)
 
+    value = property(fget=get_value,fset=set_value)
 
 
