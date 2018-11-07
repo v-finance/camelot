@@ -152,3 +152,18 @@ class ClearSelection(ActionStep):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
 
+class RefreshItemView(ActionStep):
+    """
+    Refresh only the current item view
+    """
+
+    def gui_run(self, gui_context):
+        if gui_context.item_view is not None:
+            model = gui_context.item_view.model()
+            if model is not None:
+                model.refresh()
+                # this should reset the sort, since a refresh might cause
+                # new row to appear, and so the proxy needs to be reindexed
+                # this sorting of reset is not implemented, therefor, we simply
+                # sort on the first column to force reindexing
+                model.sort(0, Qt.AscendingOrder)

@@ -90,8 +90,14 @@ class QueryModelProxy(ListModelProxy):
 
         # check if the object is in the query
         mapper = self._query._mapper_zero()
-        primary_key = mapper.primary_key_from_instance(obj)
-        if self.get_query(order_clause=False).get(primary_key) is not None:
+        primary_key_values = mapper.primary_key_from_instance(obj)
+        primary_key_columns = mapper.primary_key
+        query = self.get_query(order_clause=False)
+        for column, value in zip(primary_key_columns, primary_key_values):
+            query = query.filter(column==value)
+        if query.count() > 0:
+            # The object is in the query, but might not yet be in the length
+            self._length = None
             return
         self._objects.append(obj)
 

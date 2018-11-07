@@ -36,6 +36,7 @@ from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
                    ShowPixmap, SelectSubclass, UpdateEditor,)
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
+    RefreshItemView,
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -75,6 +76,7 @@ __all__ = [
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
+    RefreshItemView.__name__,
     RemoveTranslators.__name__,
     SaveFile.__name__,
     SelectBackup.__name__,
