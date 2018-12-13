@@ -105,7 +105,6 @@ class SelectDialog(QtWidgets.QDialog):
         layout.addWidget(table)
         self.setLayout( layout )
         self.objects = []
-        self.setWindowState(Qt.WindowMaximized)
 
 class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step
@@ -139,6 +138,9 @@ class SelectObjects( OpenTableView ):
     def gui_run( self, gui_context ):
         dialog = self.render(gui_context)
         with hide_progress_dialog(gui_context):
+            # strange things happen on windows 7 and later with maximizing
+            # this dialog, maximizing it here appears to work
+            dialog.showMaximized()
             if dialog.exec_() == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return dialog.objects
