@@ -29,7 +29,6 @@
 import logging
 
 import six
-import wingdbstub
 from camelot.types import PrimaryKey
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
