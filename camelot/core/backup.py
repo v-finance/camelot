@@ -29,6 +29,8 @@
 import logging
 
 import six
+import wingdbstub
+from camelot.types import PrimaryKey
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
 from .qt import QtGui
@@ -272,7 +274,9 @@ class BackupMechanism(object):
             to_connection.execute(to_table.insert(), table_data)
             if to_dialect == 'postgresql':
                 for column in to_table.columns:
-                    if isinstance(column.type, types.Integer) and column.autoincrement==True and column.primary_key==True:
+                    # Support both sqlalchemy's as Camelot's primary key type.
+                    if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
+                       column.autoincrement=='auto' and column.primary_key==True:
                         column_name = column.name
                         table_name = to_table.name
                         seq_name = table_name + "_" + column_name + "_seq"

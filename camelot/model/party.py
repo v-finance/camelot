@@ -88,7 +88,8 @@ class Country( GeographicBoundary ):
     using_options( tablename = 'geographic_boundary_country' )
     geographicboundary_id = Field( camelot.types.PrimaryKey(), 
                                    ForeignKey('geographic_boundary.id'), 
-                                   primary_key = True )
+                                   primary_key = True,
+                                   autoincrement = False )
 
     __mapper_args__ = {'polymorphic_identity': 'country'}
 
@@ -113,7 +114,8 @@ class City( GeographicBoundary ):
     country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     geographicboundary_id = Field( camelot.types.PrimaryKey(),
                                    ForeignKey('geographic_boundary.id'),
-                                   primary_key = True )
+                                   primary_key = True,
+                                   autoincrement = False )
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
 

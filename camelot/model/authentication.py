@@ -239,13 +239,15 @@ class AuthenticationGroupRole( Entity ):
     
     role_id = Column( camelot.types.PrimaryKey(), 
                       nullable = False,
-                      primary_key = True)
+                      primary_key = True,
+                      autoincrement = False )
     group_id = Column( camelot.types.PrimaryKey(), 
                        ForeignKey( 'authentication_group.id',
                                    onupdate = 'cascade',
                                    ondelete = 'cascade' ),
                        nullable = False,
-                       primary_key = True )
+                       primary_key = True,
+                       autoincrement = False )
 
 AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
                                               cascade = 'all, delete, delete-orphan')
