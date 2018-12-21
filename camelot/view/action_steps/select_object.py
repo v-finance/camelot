@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtWidgets
+from ...core.qt import QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
