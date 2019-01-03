@@ -275,7 +275,8 @@ class BackupMechanism(object):
                 for column in to_table.columns:
                     # Support both sqlalchemy's as Camelot's primary key type.
                     if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
-                       column.autoincrement=='auto' and column.primary_key==True:
+                       column.autoincrement=='auto' and column.primary_key==True and \
+                       len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                         column_name = column.name
                         table_name = to_table.name
                         seq_name = table_name + "_" + column_name + "_seq"
