@@ -31,7 +31,9 @@ import logging
 
 import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
+from ....core.qt import (
+    QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
+)
 from camelot.view.proxy import ValueLoading
 from ...art import Icon, ColorScheme
 from .customeditor import CustomEditor
@@ -161,6 +163,10 @@ class ChoicesEditor(CustomEditor):
         for i in range(combobox.count(), 0, -1):
             combobox.removeItem(i-1)
         model = combobox.model()
+        # the model of the combobox is owned by C++, so it might be
+        # deleted before the combobox is deleted
+        if is_deleted(model):
+            return
         self.append_choices(model, choices)
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
