@@ -27,14 +27,16 @@
 #
 #  ============================================================================
 
+
+import six
+
 from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.core.utils import ugettext as _
 from camelot.admin.action.field_action import (ShowFieldAttributes,
                                                FieldActionGuiContext)
-from .user_translatable_label import UserTranslatableLabel
 
 
-class FieldLabel(UserTranslatableLabel):
+class FieldLabel(QtWidgets.QLabel):
     """A Label widget used to display the name of a field on a form.
     This label provides the user with the possibility to change the translation
     of the label and review its field attributes.
@@ -55,7 +57,7 @@ class FieldLabel(UserTranslatableLabel):
         field attributes might 'visualize' them, so they could appear as
         'ghost' windows when they have no parent
         """
-        super(FieldLabel, self).__init__(text, parent)
+        super(FieldLabel, self).__init__(six.text_type(text), parent)
         if FieldLabel.font_width == None:
             FieldLabel.font = QtWidgets.QApplication.font()
             FieldLabel.bold_font = QtWidgets.QApplication.font()
