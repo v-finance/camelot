@@ -81,14 +81,18 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         model = CollectionProxy(admin)
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(admin=admin,
                                  model=model,
                                  form_display=form_display,
                                  columns=columns,
                                  parent=self)
+        note = editors.NoteEditor( parent=self )
+        note.set_value(None)
+        note.setObjectName( 'note' )
         layout.addWidget( form_widget )
+        layout.addWidget( note )
         model.headerDataChanged.connect(self.header_data_changed)
         form_widget.setObjectName( 'form' )
         if hasattr(admin, 'form_size') and admin.form_size:
@@ -112,7 +116,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         layout.addWidget( cancel_button )
         layout.addStretch()
         self.buttons_widget().setLayout( layout )
-        self._change_complete(False)
+        self._change_complete(model, False)
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         # set the actions in the actions panel
@@ -139,14 +143,19 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         if orientation == Qt.Vertical:
             model = self.sender()
             valid = variant_to_py(model.headerData(0, orientation, ValidRole))
-            self._change_complete(valid or False)
+            self._change_complete(model, valid or False)
 
-    def _change_complete(self, complete):
+    def _change_complete(self, model, complete):
+        note = self.findChild( QtWidgets.QWidget, 'note' )
         ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         cancel_button = self.findChild( QtWidgets.QPushButton, 'cancel' )
-        if ok_button is not None:
+        if ok_button is not None and note is not None:
             ok_button.setEnabled( complete )
             ok_button.setDefault( complete )
+            if complete:
+                note.set_value(None)
+            else:
+                note.set_value(variant_to_py(model.headerData(0, Qt.Vertical, ValidMessageRole))) 
         if cancel_button is not None:
             ok_button.setDefault( not complete )
 
