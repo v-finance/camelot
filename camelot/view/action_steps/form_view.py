@@ -33,7 +33,7 @@ context of the `Qt` model-view-delegate framework.
 """
 
 from ...admin.action.base import ActionStep
-from ...core.qt import Qt, variant_to_py
+from ...core.qt import Qt, variant_to_py, is_deleted
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import ObjectRole, CollectionProxy
 
@@ -130,6 +130,8 @@ class ChangeFormIndex(ActionStep):
         # a pending request might change the number of rows, and therefor
         # the new index
         # submit all pending requests to the model thread
+        if is_deleted(gui_context.widget_mapper):
+            return
         gui_context.widget_mapper.model().timeout_slot()
         # wait until they are handled
         super(ChangeFormIndex, self).gui_run(gui_context)
