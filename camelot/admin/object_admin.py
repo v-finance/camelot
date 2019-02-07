@@ -525,13 +525,14 @@ be specified using the verbose_name attribute.
                     # as it might be the max of a column
                     continue
                 if six.callable(value):
-                    return_value = None
                     try:
                         return_value = value(obj)
                     except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
-                    finally:
-                        dynamic_field_attributes[name] = return_value
+                        # dont inject dummy field attributes, as the delegate logic
+                        # might assume the attributes having a specific type
+                        continue
+                    dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
 
     def get_descriptor_field_attributes(self, field_name):
