@@ -49,7 +49,8 @@ class IntegerEditor(CustomEditor):
                        minimum = camelot_minint,
                        maximum = camelot_maxint,
                        calculator = True,
-                       option = None, 
+                       option = None,
+                       decimal = False,
                        field_name = 'integer',
                        **kwargs):
         
@@ -91,6 +92,7 @@ class IntegerEditor(CustomEditor):
         self.setFocusProxy(spin_box)
         self.setLayout(layout)
         self.option = option
+        self.decimal = decimal
 
     def set_field_attributes(self, **kwargs):
         super(IntegerEditor, self).set_field_attributes(**kwargs)
@@ -122,6 +124,9 @@ class IntegerEditor(CustomEditor):
             value = int(spin_box.value())
             if value==int(spin_box.minimum()):
                 return None
+            elif self.decimal:
+                import decimal
+                return decimal.Decimal(value)
             return value
 
     def set_enabled(self, editable=True):
