@@ -418,7 +418,7 @@ class ChangeStatus( Action ):
                 if number_of_statuses != history_count:
                     if obj not in model_context.session.new:
                         model_context.session.expire(obj)
-                    yield action_steps.UpdateObject(obj)
+                    yield action_steps.UpdateObjects([obj])
                     raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
@@ -428,7 +428,7 @@ class ChangeStatus( Action ):
                     obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObject(obj)
+                    yield action_steps.UpdateObjects([obj])
             yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):

@@ -148,39 +148,6 @@ class CreateObjects(AbstractCrudSignal):
     def get_objects(self):
         return self.objects_created
 
-class UpdateObject(UpdateObjects):
-    """For backwards compatibility, don't use, use UpdateObjects"""
-
-    def __init__(self, obj):
-        super(UpdateObject, self).__init__((obj,))
-        warnings.warn("deprecated, use UpdateObjects", DeprecationWarning)
-
-    def get_object(self):
-        warnings.warn("deprecated, use get_objects", DeprecationWarning)
-        return self.objects_updated[0]
-
-class DeleteObject(DeleteObjects):
-    """For backwards compatibility, don't use, use DeleteObjects"""
-
-    def __init__(self, obj):
-        warnings.warn("deprecated, use DeleteObjects", DeprecationWarning)
-        super(DeleteObject, self).__init__((obj,))
-
-    def get_object(self):
-        warnings.warn("deprecated, use get_objects", DeprecationWarning)
-        return self.objects_deleted[0]
-
-class CreateObject(CreateObjects):
-    """For backwards compatibility, don't use, use CreateObjects"""
-
-    def __init__(self, obj):
-        warnings.warn("deprecated, use CreateObjects", DeprecationWarning)
-        super(CreateObject, self).__init__((obj,))
-
-    def get_object(self):
-        warnings.warn("deprecated, use get_objects", DeprecationWarning)
-        return self.objects_created[0]
-
 
 
 
