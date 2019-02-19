@@ -59,6 +59,9 @@ in the definition of the Application admin:
     def get_items(self):
         return self.items
 
+    def get_modes(self):
+        return []
+
 class SectionItem(object):
     """An item inside a section, the user can click on and trigger an action."""
 

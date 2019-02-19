@@ -94,6 +94,7 @@ class PaneSection(QtWidgets.QWidget):
                     
             section_tree.resizeColumnToContents( 0 )
 
+    @QtCore.qt_slot(QtCore.QPoint)
     def create_context_menu(self, point):
         logger.debug('creating context menu')
         section_tree = self.findChild(QtWidgets.QWidget, 'SectionTree')
