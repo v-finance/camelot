@@ -319,11 +319,12 @@ class StatusMixin( object ):
         :param status_class: the class or columns of the class that have a status
         :return: a select statement that looks for the current status of the status_class
         """
-        return sql.select( [status_history.classified_by],
-                           whereclause = sql.and_( status_history.status_for_id == status_class.id,
-                                                   status_history.status_from_date <= sql.functions.current_date(),
-                                                   status_history.status_thru_date >= sql.functions.current_date() ),
-                           from_obj = [status_history.table] ).order_by(status_history.status_from_date.desc(), status_history.id.desc()).limit(1)
+        SH = orm.aliased(status_history)
+        return sql.select( [SH.classified_by],
+                           whereclause = sql.and_( SH.status_for_id == status_class.id,
+                                                   SH.status_from_date <= sql.functions.current_date(),
+                                                   SH.status_thru_date >= sql.functions.current_date() ),
+                           from_obj = [SH.table] ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
 
     @hybrid.hybrid_property
     def current_status( self ):
