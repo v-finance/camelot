@@ -259,17 +259,21 @@ and used as a custom action.
                         if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
                             class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
-                        if isinstance(class_attribute, sql.Select):
-                            for k, v in six.iteritems(self.get_sql_field_attributes(class_attribute.columns)):
-                                # the defaults or the nullable status of the column
-                                # does not need to be the default or the nullable
-                                # of the hybrid property
-                                # changed 4/7/2017 DJK; editable added to avoid setting fields editable
-                                # when they should not be editable
-                                # Note that a primary key can be set editable by this change!!
-                                if k in ['default', 'nullable', 'editable']:
-                                    continue
-                                attributes[k] = v
+                        columns = []
+                        if isinstance(class_attribute, sql.elements.Label):
+                            columns = [class_attribute]
+                        elif isinstance(class_attribute, sql.Select):
+                            columns = class_attribute.columns
+                        for k, v in six.iteritems(self.get_sql_field_attributes(columns)):
+                            # the defaults or the nullable status of the column
+                            # does not need to be the default or the nullable
+                            # of the hybrid property
+                            # changed 4/7/2017 DJK; editable added to avoid setting fields editable
+                            # when they should not be editable
+                            # Note that a primary key can be set editable by this change!!
+                            if k in ['default', 'nullable', 'editable']:
+                                continue
+                            attributes[k] = v
                 break
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
