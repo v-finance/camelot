@@ -1,34 +1,42 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 import contextlib
+import functools
 import logging
 
-from PyQt4 import QtCore, QtGui
+import six
 
+from ..core.qt import QtCore, QtWidgets
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
+from camelot.view.controls.exception import ExceptionDialog
 from camelot.view.model_thread import post
 
 LOGGER = logging.getLogger( 'camelot.view.action_runner' )
@@ -38,14 +46,17 @@ def hide_progress_dialog( gui_context ):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.progress_dialog
-    original_state = None
-    if isinstance( progress_dialog, ( QtGui.QWidget, ) ):
+    original_state, original_minimum_duration = None, None
+    if isinstance( progress_dialog, QtWidgets.QWidget ):
         original_state = progress_dialog.isHidden()
+        original_minimum_duration = progress_dialog.minimumDuration()
     try:
+        progress_dialog.setMinimumDuration(0)
         if original_state == False:
             progress_dialog.hide()
         yield
     finally:
+        progress_dialog.setMinimumDuration(original_minimum_duration)
         if original_state == False:
             progress_dialog.show()
 
@@ -58,7 +69,7 @@ class ActionRunner( QtCore.QEventLoop ):
     This is class is intended for internal Camelot use only.
     """
     
-    non_blocking_action_step_signal = QtCore.pyqtSignal(object)
+    non_blocking_action_step_signal = QtCore.qt_signal(object)
     
     def __init__( self, generator_function, gui_context ):
         """
@@ -107,7 +118,7 @@ class ActionRunner( QtCore.QEventLoop ):
         try:
             result = generator_method( *args )
             while True:
-                if isinstance( result, (ActionStep,)):
+                if isinstance(result, ActionStep):
                     if result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
@@ -123,15 +134,15 @@ class ActionRunner( QtCore.QEventLoop ):
                     result = self._generator.throw( CancelRequest() )
                 else:
                     LOGGER.debug( 'move iterator forward' )
-                    result = self._generator.next()
-        except CancelRequest, e:
+                    result = six.advance_iterator( self._generator )
+        except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
-        except StopIteration, e:
+        except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
             return e
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def non_blocking_action_step( self, action_step ):
         try:
             self._was_canceled( self._gui_context )
@@ -140,14 +151,14 @@ class ActionRunner( QtCore.QEventLoop ):
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
         
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
-        from camelot.view.controls.exception import model_thread_exception_message_box
-        model_thread_exception_message_box( exception_info )
+        dialog = ExceptionDialog( exception_info )
+        dialog.exec_()
         self.exit()
         
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def generator( self, generator ):
         """Handle the creation of the generator"""
         self._generator = generator
@@ -157,9 +168,10 @@ class ActionRunner( QtCore.QEventLoop ):
         #
         if self._generator != None:
             post( self._iterate_until_blocking, 
-                  self.next, 
+                  self.__next__, 
                   self.exception,
-                  args = ( self._generator.next, ) )
+                  args = ( functools.partial( six.advance_iterator,
+                                              self._generator ), ) )
         else:
             self.exit()
         
@@ -173,28 +185,28 @@ class ActionRunner( QtCore.QEventLoop ):
                 LOGGER.debug( 'progress dialog was canceled, raise request' )
                 raise CancelRequest()
             
-    @QtCore.pyqtSlot( object )
-    def next( self, yielded ):
-        """Handle the result of the next call of the generator
+    @QtCore.qt_slot( object )
+    def __next__( self, yielded ):
+        """Handle the result of the __next__ call of the generator
         
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        if isinstance( yielded, (ActionStep,) ):
+        if isinstance( yielded, ActionStep ):
             try:
                 self._was_canceled( self._gui_context )
                 to_send = yielded.gui_run( self._gui_context )
                 self._was_canceled( self._gui_context )
                 post( self._iterate_until_blocking, 
-                      self.next, 
+                      self.__next__, 
                       self.exception, 
                       args = ( self._generator.send, to_send,) )
-            except CancelRequest, exc:
+            except CancelRequest as exc:
                 post( self._iterate_until_blocking,
-                      self.next,
+                      self.__next__,
                       self.exception,
                       args = ( self._generator.throw, exc,) )
-            except Exception, exc:
+            except Exception as exc:
                 LOGGER.error( 'gui exception while executing action', 
                               exc_info=exc)
                 #
@@ -204,7 +216,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 # should be past to the model.
                 #
                 post( self._iterate_until_blocking,
-                      self.next,
+                      self.__next__,
                       self.exception,
                       args = ( self._generator.throw, GuiException(), ) )
         elif isinstance( yielded, (StopIteration, CancelRequest) ):
@@ -215,8 +227,9 @@ class ActionRunner( QtCore.QEventLoop ):
             self.processEvents()
             self.exit()
         else:
-            LOGGER.error( 'next call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( unicode( yielded ) )
+            LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
+            LOGGER.error( six.text_type( yielded ) )
             raise Exception( 'this should not happen' )
+
 
 

@@ -1,40 +1,49 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Admin class for Plain Old Python Object"""
 
+import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from ..core.item_model.list_proxy import ListModelProxy
+from ..core.qt import Qt
+from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from validator.object_validator import ObjectValidator
-from PyQt4 import QtCore
+from .validator.object_validator import ObjectValidator
+
+import six
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -48,11 +57,20 @@ class FieldAttributesList(list):
         doc = '\n'.join([template%(name, name) for name in original_list])
         self.__doc__ = doc
 
-DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color',
-                                                'editable', 'choices',
-                                                'prefix', 'suffix', 'arrow',
+DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
+                                                'color',
+                                                'background_color',
+                                                'editable',
+                                                'choices',
+                                                'prefix',
+                                                'suffix',
                                                 'new_message',
-                                                'precision'])
+                                                'nullable',
+                                                'precision',
+                                                'directory',
+                                                'visible',
+                                                'validator',
+                                                'completer'])
 
 
 class ObjectAdmin(object):
@@ -87,7 +105,7 @@ be specified using the verbose_name attribute.
 .. attribute:: list_display
 
     a list with the fields that should be displayed in a table view
-    
+
 .. attribute:: lines_per_row
 
     An integer number specifying the height of a row in the table view, expressed
@@ -121,30 +139,19 @@ be specified using the verbose_name attribute.
 
 **Behaviour**
 
+.. attribute:: list_action
+
+    The :class:`camelot.admin.action.base.Action` that will be triggered when the
+    user selects an item in a list of objects.  This defaults to 
+    :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
+    for the current object.
+
 .. attribute:: form_close_action
 
     The action triggered when the form window is closed by the operating system or the window manager.  By default this is the
     :class:`camelot.admin.action.form_action.CloseForm` action, which validates
     the form and allows the user to discard the changes when the form is invalid.  To change the form close action in the 
     toolbar, the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions` method should be overwritten.
-    
-.. attribute:: save_mode
-
-    Specifies when the data should be send from the view to the model and flushed
-    to the database.  The default mode is 'on_change', meaning that every change
-    in the view will be send immediately to the database.  Other possibilities are :
-
-      * 'on_leave' : the data will be send from the view to the model when the view
-                     is closed, eg. : the form is closed.
-
-.. attribute:: delete_mode
-
-    Indicates if the deletion of an object should be confirmed by the user, defaults
-    to 'on_request', indicating object should be deleted when the user hits the trash
-    button.  Other possibilities are :
-
-      * 'on_confirm' : the user will be asked for confirmation before the delete
-        takes place.
 
 .. attribute:: form_size
 
@@ -156,10 +163,10 @@ be specified using the verbose_name attribute.
 
         class Admin( EntityAdmin ):
             form_actions = [CloseForm()]
-            
+
     These actions will be triggered with a :class:`camelot.admin.action.form_action.FormActionModelContext` as the `model_context` parameter
     in the :meth:`camelot.admin.action.base.Action.model_run` method.
-            
+
 .. attribute:: related_toolbar_actions
 
     list of actions that appear in the toolbar of a `OneToMany` editor.
@@ -168,7 +175,7 @@ be specified using the verbose_name attribute.
 
     the action that is triggered when a drag and drop occured on the table
     view 
-    
+
 **Field attributes**
 
 .. attribute:: field_attributes
@@ -178,9 +185,9 @@ be specified using the verbose_name attribute.
     are propagated to the constructor of the delegate of this field::
 
         class Movie( Entity ):
-        
+
             title = Column( Unicode(50) )
-    
+
             class Admin( EntityAdmin ):
                 list_display = ['title']
                 field_attributes = { 'title' : {'editable':False} }
@@ -189,6 +196,22 @@ be specified using the verbose_name attribute.
     that can be used in the field attributes class attribute of an ObjectAdmin 
     or EntityAdmin.
 
+**Searching**
+
+.. attribute:: list_search
+
+    A list of fields that should be searched when the user enters something in
+    the search box in the table view.
+    The field will only be searched when the entered string can be converted to the
+    datatype of the underlying column using the `from_string` field attribute of the
+    column.
+
+.. attribute:: expanded_list_search
+
+    A list of fields that will be searchable through the expanded search.  When set
+    to None, all the fields in list_display will be searchable.  Use this attribute
+    to limit the number of search widgets.  Defaults to None.
+
 **Window state**
 
 .. attribute:: form_state
@@ -196,9 +219,9 @@ be specified using the verbose_name attribute.
     Set this attribute to `maximized` or `minimized` for respective behaviour ::
 
         class Movie( Entity ):
-        
+
             title = Column( Unicode(50) )
-    
+
             class Admin( EntityAdmin ):
                 list_display = ['title']
                 form_state = 'maximized'
@@ -209,9 +232,9 @@ be specified using the verbose_name attribute.
 
     The name of the group in settings in which user dependent settings will
     be stored, defaults to the class name for which this Admin class is used.
-    
+
     """
-    
+
     name = None
     verbose_name = None
     verbose_name_plural = None
@@ -223,9 +246,12 @@ be specified using the verbose_name attribute.
     form_display = []
     form_close_action = CloseForm()
     list_filter = []
+    list_action = OpenFormView()
     list_actions = []
     list_size = (600, 600)
-    form_size = (700, 500)
+    list_search = []
+    expanded_list_search = None
+    form_size = None
     form_actions = []
     related_toolbar_actions = []
     field_attributes = {}
@@ -235,25 +261,17 @@ be specified using the verbose_name attribute.
     # Behavioral attributes
     # 
     drop_action = None
-    save_mode = 'on_edit'
-    delete_mode = 'on_request'
 
     TableView = TableView
 
     def __init__( self, app_admin, entity ):
         """
         :param app_admin: the application admin object for this application, 
-            if None, then the default application_admin is taken
         :param entity: the entity class for which this admin instance is to be
             used
         """
-        if not app_admin:
-            from camelot.admin.application_admin import get_application_admin
-            self.app_admin = get_application_admin()
-        else:
-            self.app_admin = app_admin
-        if entity:
-            self.entity = entity
+        self.app_admin = app_admin
+        self.entity = entity
         #
         # caches to prevent recalculation of things
         #
@@ -264,92 +282,100 @@ be specified using the verbose_name attribute.
         return 'Admin %s' % str(self.entity.__name__)
 
     def __repr__(self):
-        return 'ObjectAdmin(%s)' % str(self.entity.__name__)
+        return '{0.__name__}({1.__name__})'.format(type(self), self.entity)
 
     def get_name(self):
         """ The name of the group in settings in which user dependent settings 
         will be stored, this is either the `name` attribute of this class or, 
         the class name of the class for which this Admin class is used.
-        
+
         :return: a string with the name of the settings group        
         """
         return self.name or self.entity.__name__
 
     def get_verbose_name(self):
-        
-#        def uncamelize(text):
-#            def downcase(matchobj):
-#                return "_" + matchobj.group(0).lower()
-#            if text:
-#                text = text[0].lower() + re.sub(r'([A-Z])', downcase, text[1:])
-#            return text 
-
-        return unicode(
+        """ The name of the associated entity. """
+        return six.text_type(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
-        return unicode(
+        return six.text_type(
             self.verbose_name_plural
-            or (self.get_verbose_name() + 's')
+            or (self.get_verbose_name() + u's')
         )
-        
+
     def get_icon(self):
         return self.icon
 
-    @model_function
     def get_verbose_identifier(self, obj):
         """Create an identifier for an object that is interpretable
         for the user, eg : the primary key of an object.  This verbose identifier can
         be used to generate a title for a form view of an object.
         """
-        return u'%s : %s' % (self.get_verbose_name(), unicode(obj))
+        return u'%s: %s' % (self.get_verbose_name(),
+                            self.get_verbose_object_name(obj))
+
+    def get_verbose_object_name(self, obj):
+        """
+        Textual representation of the current object.
+        """
+        return six.text_type(obj)
+
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        return ListModelProxy(objects)
+
+    def get_search_identifiers(self, obj):
+        """Create a dict of identifiers to be used in search boxes.
+        The keys are Qt roles."""
+        search_identifiers = {} 
+
+        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+        search_identifiers[Qt.EditRole] = obj
+        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+
+        return search_identifiers
 
     def get_entity_admin(self, entity):
-        return self.app_admin.get_entity_admin(entity)
+        """deprecated : use get_related_admin"""
+        return self.app_admin.get_related_admin(entity)
 
-    def get_save_mode(self):
-        return self.save_mode
-    
     def get_settings( self ):
         """A settings object in which settings related to this admin can be
         stored.
-        
+
         :return: a :class:`QtCore.QSettings` object
         """
         settings = self.app_admin.get_settings()
         settings.beginGroup( self.get_name()[:255] )
         return settings
-    
+
     def get_memento( self ):
         return self.app_admin.get_memento()
 
-    def get_delete_mode(self):
-        return self.delete_mode
-
-    def get_delete_message(self, obj):
-        return _('Are you sure you want to delete this')
-
-    @model_function
-    def get_form_actions( self, obj ):
+    def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.
-        
-        :param obj: the object displayed in the form
+
+        :param obj: the object displayed in the form (Deprecated, use action
+            states to make the appearance of actions dynamic on a form)
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
-    
-    @model_function
+
     def get_form_toolbar_actions( self, toolbar_area ):
         """
         By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
-        
+
         :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
             where the toolbar actions will be positioned
-            
+
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
@@ -359,22 +385,28 @@ be specified using the verbose_name attribute.
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
-        
+
         :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
-            
+
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
-    
-    @model_function
+
     def get_list_actions(self):
         return self.list_actions
 
-    @model_function
+    def get_list_action(self):
+        """Get the action that should be triggered when an object is selected
+        in a table of objects.
+
+        :return: by default returns the `list_action` attribute
+        """
+        return self.list_action
+
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
         object.  When obj is modified by the user, this function will be called to determine
@@ -384,22 +416,21 @@ be specified using the verbose_name attribute.
         :return: an iterator over objects that depend on obj
         """
         return []
-    
-    @model_function
+
     def get_compounding_objects(self, obj):
         """Overwrite this function to generate a list of objects out of which
         `obj` is build.  These objects will be validated if `obj` is 
         validated.  The effect of returning compounding objects will be :
-        
+
           * `obj` will only be valid if all its compounding object
             are valid as well.
-            
+
           * default values will be set for the attributes of the compounding
             objects
-            
+
           * when an object is expired or refreshed, all its compounding objects
             will be expired and refreshed as well
-            
+
         """
         return []
 
@@ -418,10 +449,10 @@ be specified using the verbose_name attribute.
                     subclass_admin.get_subclass_tree()
                 ))
 
-        def sort_admins(a1, a2):
-            return cmp(a1[0].get_verbose_name_plural(), a2[0].get_verbose_name_plural())
+        def admin_key(admin):
+            return admin[0].get_verbose_name_plural()
 
-        subclasses.sort(cmp=sort_admins)
+        subclasses.sort(key=admin_key)
         return subclasses
 
     def get_related_admin(self, cls):
@@ -433,11 +464,11 @@ be specified using the verbose_name attribute.
         """
         if cls == self.entity:
             return self
-        related_admin = self.app_admin.get_entity_admin(cls)
+        related_admin = self.app_admin.get_related_admin(cls)
         if not related_admin:
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
-        
+
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
@@ -454,8 +485,8 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in field_attributes.items():
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+            for name, value in six.iteritems(field_attributes):
+                if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
 
@@ -472,7 +503,7 @@ be specified using the verbose_name attribute.
 
         The returned list has the same order than the requested
         field_names.  A reimplementation of this method can look like::
-        
+
             def get_dynamic_field_attributes(self, obj, field_names):
                 for field_attributes in super( MyAdmin, self ).get_dynamic_field_attributes(obj, field_names):
                     if obj.status == 'finished':
@@ -480,12 +511,12 @@ be specified using the verbose_name attribute.
                     else:
                         field_attributes['editable'] = False
                     yield field_attributes
-                
+
         """
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
-            dynamic_field_attributes = {}
-            for name, value in field_attributes.items():
+            dynamic_field_attributes = {'obj':obj}
+            for name, value in six.iteritems(field_attributes):
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if name in ('default',):
@@ -493,15 +524,42 @@ be specified using the verbose_name attribute.
                     # and the continuous evaluation of it might be expensive,
                     # as it might be the max of a column
                     continue
-                if callable(value):
-                    return_value = None
+                if six.callable(value):
                     try:
                         return_value = value(obj)
-                    except (ValueError, Exception, RuntimeError, TypeError, NameError), exc:
+                    except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
-                    finally:
-                        dynamic_field_attributes[name] = return_value
+                        # dont inject dummy field attributes, as the delegate logic
+                        # might assume the attributes having a specific type
+                        continue
+                    dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
+
+    def get_descriptor_field_attributes(self, field_name):
+        """
+        Returns a set of default field attributes based on introspection
+        of the descriptor of a field.  This method is called within 
+        `get_field_attributes`.  Overwrite it to handle custom descriptors.
+
+        The default implementation checks if the descriptor is a `property`,
+        and sets the `editable` field attribute to `True` if the property
+        has a setter defined.
+
+        :param field_name: the name of the field
+        :return: a dictionary with field attributes, empty in case no introspection
+            of the attribute was possible
+        """
+        #
+        # See if there is a descriptor
+        #
+        attributes = dict()
+        for cls in self.entity.__mro__:
+            descriptor = cls.__dict__.get(field_name, None)
+            if descriptor is not None:
+                if isinstance(descriptor, property):
+                    attributes['editable'] = (descriptor.fset is not None)
+                break
+        return attributes
 
     def get_field_attributes(self, field_name):
         """
@@ -529,91 +587,130 @@ be specified using the verbose_name attribute.
         try:
             return self._field_attributes[field_name]
         except KeyError:
-
-            def create_default_getter(field_name):
-                return lambda o:getattr(o, field_name)
-
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
             #
             attributes = dict(
-                getter=create_default_getter(field_name),
                 to_string = to_string,
                 field_name=field_name,
                 python_type=str,
                 length=None,
                 tooltip=None,
                 background_color=None,
-                #minimal_column_width=12,
                 editable=False,
                 nullable=True,
+                focus_policy=Qt.StrongFocus,
                 widget='str',
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
             )
+            descriptor_attributes = self.get_descriptor_field_attributes(field_name)
+            attributes.update(descriptor_attributes)
             #
-            # Field attributes forced by the field_attributes property
+            # first put the attributes in the cache, and only then start to expand
+            # them, to be able to prevent recursion when expanding the attributes
             #
-            forced_attributes = {}
-            try:
-                forced_attributes = self.field_attributes[field_name]
-            except KeyError:
-                pass
-
-            #
-            # TODO : move part of logic from entity admin class over here
-            #
-
-            #
-            # Overrule introspected field_attributes with those defined
-            #
+            self._field_attributes[field_name] = attributes
+            forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
+            if 'choices' in forced_attributes:
+                from camelot.view.controls import delegates
+                attributes['delegate'] = delegates.ComboBoxDelegate
+                if isinstance(forced_attributes['choices'], list):
+                    choices_dict = dict(forced_attributes['choices'])
+                    attributes['to_string'] = lambda x : choices_dict.get(x, '')
+            self._expand_field_attributes(attributes, field_name)
+            return attributes
 
+    def _expand_field_attributes(self, field_attributes, field_name):
+        """Given a set field attributes, expand the set with attributes
+        derived from the given attributes.
+        """
+        column_width = field_attributes.get('column_width', None)
+        #
+        # If there is an `admin` field attribute, instantiate it
+        #
+        target = field_attributes.get('target', None)
+        if target is not None:
+            admin = field_attributes.get('admin', None)
+            direction = field_attributes.get('direction', '')
+            if admin is not None:
+                related_admin = admin(self, target)
             #
-            # In case of a 'target' field attribute, instantiate an appropriate
+            # In case of a 'target' field attribute, add an appropriate
             # 'admin' attribute
             #
+            else:
+                related_admin = self.get_related_admin(target)
+            #
+            # for an xtomany field, calculate the sum of the column widths, as
+            # an estimate for the width of the table widget
+            #
+            if column_width is None and direction.endswith('many') and related_admin:
+                table = related_admin.get_table()
+                fields = table.get_fields(column_group=0)
+                related_field_attributes = related_admin.get_field_attributes
+                related_column_widths = (
+                    related_field_attributes(field).get('column_width', 0) for 
+                    field in fields)
+                column_width = sum(related_column_widths, 0)
+            field_attributes['admin'] = related_admin
+        #
+        # If no column_width is specified, try to derive one
+        #
+        if column_width is None:
+            length = field_attributes.get('length')
+            minimal_column_width = field_attributes.get('minimal_column_width')
+            if (length is None) and (minimal_column_width is None):
+                length = 10
+            column_width = max( 
+                minimal_column_width or 0,
+                2 + len(six.text_type(field_attributes['name'])),
+                min(length or 0, 50),
+            )
+        field_attributes['column_width'] = column_width
 
-            def get_entity_admin(target):
-                """Helper function that instantiated an Admin object for a
-                target entity class
+    def get_search_fields(self, substring):
+        """
+        Generate a list of fields in which to search.  By default this method
+        returns the `list_search` attribute.
 
-                :param target: an entity class for which an Admin object is
-                needed
-                """
-                try:
-                    fa = self.field_attributes[field_name]
-                    target = fa.get('target', target)
-                    admin_class = fa['admin']
-                    return admin_class(self.app_admin, target)
-                except KeyError:
-                    return self.get_related_admin(target)
+        :param substring: that part of the complete search string for which
+           the search fields are requested.  This allows analysis of the search
+           string to improve the search behavior
 
-            if 'target' in attributes:
-                attributes['admin'] = get_entity_admin(attributes['target'])
-
-            self._field_attributes[field_name] = attributes
-            return attributes
+        :return: a list with the names of the fields in which to search
+        """
+        return self.list_search
 
     def get_table( self ):
         """The definition of the table to be used in a list view
         :return: a `camelot.admin.table.Table` object
         """
         from camelot.admin.table import structure_to_table
-        table = structure_to_table( self.list_display )
+        if self.list_display == []:
+            # take a copy to prevent contamination
+            self.list_display = list()
+            # no fields were defined, see if there are properties
+            for cls in inspect.getmro(self.entity):
+                for desc_name, desc in six.iteritems(cls.__dict__):
+                    if desc_name.startswith('__'):
+                        continue
+                    if len(self.get_descriptor_field_attributes(desc_name)):
+                        self.list_display.insert(0, desc_name)
+        table = structure_to_table(self.list_display)
         return table
-    
-    @model_function
+
     def get_columns(self):
         """
         The columns to be displayed in the list view, returns a list of pairs
         of the name of the field and its attributes needed to display it
         properly
 
-        @return: [(field_name,
+        :return: [(field_name,
                   {'widget': widget_type,
                    'editable': True or False,
                    'blank': True or False,
@@ -625,263 +722,148 @@ be specified using the verbose_name attribute.
         return [(field, self.get_field_attributes(field))
                 for field in table.get_fields() ]
 
-    def get_validator( self, model = None, initial_validation = False ):
+    def get_validator( self, model = None):
         """Get a validator object
-        
+
         :return: a :class:`camelot.admin.validator.object_validator.Validator`
         """
         return self.validator( self, 
-                               model = model, 
-                               initial_validation = initial_validation )
+                               model = model )
 
-    @model_function
     def get_fields(self):
         fields = self.get_form_display().get_fields()
         fields_and_attributes =  [
-                (field, self.get_field_attributes(field))
-                for field in fields
+            (field, self.get_field_attributes(field))
+            for field in fields
         ]
         return fields_and_attributes
 
     def get_application_admin( self ):
         """Provide access to the :class:`ApplicationAdmin`
-        
+
         :return: the :class:`camelot.admin.application_admin.ApplicationAdmin`
             object for the application.
         """
         return self.app_admin.get_application_admin()
-    
-    @model_function
+
     def get_all_fields_and_attributes(self):
         """A dictionary of (field_name:field_attributes) for all fields that can
         possibly appear in a list or a form or for which field attributes have
         been defined
         """
-        fields = dict(self.get_columns())
-        fields.update(dict(self.get_fields()))
+        fields = {}
+        # capture all properties
+        for cls in inspect.getmro(self.entity):
+            for desc_name, desc in six.iteritems(cls.__dict__):
+                if desc_name.startswith('__'):
+                    continue
+                if len(self.get_descriptor_field_attributes(desc_name)):
+                    fields[desc_name] = self.get_field_attributes(desc_name)
+        fields.update(self.get_columns())
+        fields.update(self.get_fields())
         return fields
 
-    @model_function
+    def get_filters(self):
+        return []
+
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
             return structure_to_form(self.form_display)
-        if self.list_display:
-            return Form( self.get_table().get_fields() )
-        return Form([])
+        return Form( self.get_table().get_fields() )
 
-    def _apply_form_state(self, widget):
-        """apply the consequences of the form_state class attribute
-        to a widget"""
-        if hasattr(self, 'form_state'):
-            from camelot.core import constants
-            if self.form_state == constants.MAXIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMaximized)
-            if self.form_state == constants.MINIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMinimized)
-        
-    def create_form_view(self, title, model, index, parent=None):
-        """Creates a Qt widget containing a form view, for a specific index in
-        a model.  Use this method to create a form view for a collection of objects,
-        the user will be able to use :kbd:`PgUp`/:kbd:`PgDown` to move to 
-        the next object.
+    def set_field_value(self, obj, field_name, value):
+        """Set the value of a field on an object.  By default this method calls
+        the builtin :func:`setattr` function.
 
-        :param title: the title of the form view
-        :param model: the data model to be used to fill the form view
-        :param index: which row in the data model to display
-        :param parent: the parent widget for the form
+        :param obj: the object on which to set the value
+        :param field_name: the name of the field, which by default will be used
+            as the name of the attribute to set
+        :param value: the value to set
         """
-        logger.debug('creating form view for index %s' % index)
-        from camelot.view.controls.formview import FormView
-        form = FormView(title, self, model, index)
-        self._apply_form_state( form )
-        return form
+        setattr(obj, field_name, value)
 
-    def set_defaults(self, object_instance, include_nullable_fields=True):
+    def set_defaults(self, obj):
         """Set the defaults of an object
-        :param include_nullable_fields: also set defaults for nullable fields, 
-        depending on the context, this should be set to False to allow the user 
-        to set the field to None
+    
+        :return: `True` if a default value was set, `False` otherwise
         """
+        iterations = 0
+        while self._set_defaults(obj) == True:
+            iterations += 1
+            if iterations > 10:
+                raise Exception('More than 10 iterations while setting defaults')
+        return iterations > 0
+
+    def _set_defaults(self, object_instance):
         from sqlalchemy.schema import ColumnDefault
-        
+        from sqlalchemy import orm
+
         if self.is_deleted( object_instance ):
             return False
-        
-        for field, attributes in self.get_fields():
-            has_default = False
-            try:
-                default = attributes['default']
-                has_default = True
-            except KeyError:
-                pass
-            if has_default:
-                #
-                # prevent the setting of a default value when one has been
-                # set already
-                #
-                value = attributes['getter'](object_instance)
-                if value not in (None, []):
-                    # False is a legitimate value for Booleans, but a 
-                    # one-to-many field might have a default value as well
-                    continue
-                if isinstance(default, ColumnDefault):
-                    if default.is_scalar:
-                        # avoid trip to database
-                        default_value = default.arg
-                    else:
-                        default_value = default.execute()
-                elif callable(default):
-                    import inspect
-                    args, _varargs, _kwargs, _defs = \
-                        inspect.getargspec(default)
-                    if len(args):
-                        default_value = default(object_instance)
-                    else:
-                        default_value = default()
+
+        default_set = False
+        # set defaults for all fields, also those that are not displayed, since
+        # those might be needed for validation or other logic
+        for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
+            default = attributes.get('default')
+            if default is None:
+                continue
+            #
+            # prevent the setting of a default value when one has been
+            # set already
+            #
+            value = getattr(object_instance, field)
+            if value not in (None, []):
+                # False is a legitimate value for Booleans, but a 
+                # one-to-many field might have a default value as well
+                continue
+            if isinstance(default, ColumnDefault):
+                if default.is_scalar:
+                    # avoid trip to database
+                    default_value = default.arg
                 else:
-                    default_value = default
+                    # shouldn't this default be set by SQLA at insertion time
+                    # and skip this field in the validation ??
+                    session = orm.object_session(object_instance)
+                    bind = session.get_bind(mapper=self.mapper)
+                    default_value = bind.execute(default)
+            elif six.callable(default):
+                import inspect
+                args, _varargs, _kwargs, _defs = \
+                    inspect.getargspec(default)
+                if len(args):
+                    default_value = default(object_instance)
+                else:
+                    default_value = default()
+            else:
+                default_value = default
+            if default_value is not None:
                 logger.debug(
-                    'set default for %s to %s' % (
+                    u'set default for %s to %s'%(
                         field,
-                        unicode(default_value)
+                        six.text_type(default_value)
                     )
                 )
                 try:
                     setattr(object_instance, field, default_value)
-                except AttributeError, exc:
+                    default_set = True
+                except AttributeError as exc:
                     logger.error(
-                        'Programming Error : could not set'
-                        ' attribute %s to %s on %s' % (
+                        u'Programming Error : could not set'
+                        u' attribute %s to %s on %s' % (
                             field,
                             default_value,
                             object_instance.__class__.__name__
-                        ),
+                            ),
                         exc_info=exc
                     )
         for compounding_object in self.get_compounding_objects( object_instance ):
-            self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
+            compound_admin = self.get_related_admin( type( compounding_object ) )
+            compound_default_set = compound_admin.set_defaults(compounding_object)
+            default_set = default_set or compound_default_set
 
-    def create_object_form_view(self, title, object_getter, parent=None):
-        """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
-        will do nothing.
-
-        :param title: the title of the form view
-        :param object_getter: a function taking no arguments, and returning the object
-        :param parent: the parent widget for the form
-        """
-
-        def create_collection_getter( object_getter, object_cache ):
-            """Transform an object_getter into a collection_getter which
-            returns a collection with only the object returned by object
-            getter.
-
-            :param object_getter: a function that returns the object that 
-                should be in the collection
-            :param object_cache: a list that will be used to store the result
-                of object_getter, to prevent multiple calls of object_getter
-            """
-
-            def collection_getter():
-                if not object_cache:
-                    object_cache.append( object_getter() )
-                return object_cache
-
-            return collection_getter
-
-        model = self.model( self,
-                            create_collection_getter( object_getter, [] ),
-                            self.get_fields )
-        return self.create_form_view(title, model, 0, parent)
-
-    def create_new_view(admin, related_collection_proxy=None, parent=None):
-        """Create a Qt widget containing a form to create a new instance of the
-        entity related to this admin class
-
-        The returned class has an 'entity_created_signal' that will be fired
-        when a valid new entity was created by the form
-
-        :param collection_proxy: if specified, the object will be appended to
-        its underlying collection upon creation and removed from it upon
-        discarding.
-        """
-        from PyQt4 import QtCore
-        from camelot.view.controls.formview import FormView
-        from camelot.view.model_thread import post
-
-        class NewObjectCollectionProxy( CollectionProxy ):
-            """A CollectionProxy for creating new objects, the underlying collection
-            will always be filled with a single object."""
-
-            def __init__(self, related_collection_proxy, *args, **kwargs):
-                # set attributes before initializing NewObjectCollectionProxy,
-                # because this one contains posts that need these attributes
-                self._new_object = None
-                self._related_collection_proxy = related_collection_proxy
-                super(NewObjectCollectionProxy, self).__init__(*args, **kwargs)
-            
-            @property
-            def max_number_of_rows(self):
-                return 1
-
-            def get_new_object(self):
-                if not self._new_object:
-                    self._new_object = admin.entity()
-                    # Give the default fields their value
-                    admin.add( self._new_object )
-                    admin.set_defaults(self._new_object)
-                    if self._related_collection_proxy:
-                        self._related_collection_proxy.append_object( self._new_object, flush=False )
-                return self._new_object
-                
-            def get_collection(self):
-                return [self.get_new_object()]
-
-        model = NewObjectCollectionProxy( related_collection_proxy,
-                                          admin,
-                                          None,
-                                          admin.get_fields,
-                                          max_number_of_rows=1 )
-
-        validator = admin.get_validator(model)
-
-        class NewView( FormView ):
-
-            entity_created_signal = QtCore.pyqtSignal(object)
-
-            def __init__(self, parent):
-                super( NewView, self).__init__( title = _('New'), 
-                                                admin = admin, 
-                                                model = model, 
-                                                index = 0)
-
-                #
-                # every time data has been changed, it could become valid,
-                # when this is the case, it should be propagated
-                #
-                model.dataChanged.connect( self.dataChanged )
-
-            def emit_if_valid(self, valid):
-                if valid:
-
-                    def create_instance_getter(new_object):
-                        return lambda:new_object[0]
-
-                    self.entity_created_signal.emit( model.get_new_object )
-
-            @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
-            def dataChanged(self, _index1, _index2):
-
-                def validate():
-                    return validator.isValid(0)
-
-                post(validate, self.emit_if_valid)
-
-        form = NewView( parent )
-        admin._apply_form_state( form )
-        if hasattr(admin, 'form_size'):
-            form.setMinimumSize(admin.form_size[0], admin.form_size[1])
-        return form
+        return default_set
 
     def primary_key( self, obj ):
         """Get the primary key of an object
@@ -890,7 +872,7 @@ be specified using the verbose_name attribute.
             emtpy list if the object has no primary key yet or any more.
         """
         return []
-    
+
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
         :param obj: the object for which to get the modifications
@@ -898,7 +880,7 @@ be specified using the verbose_name attribute.
            value
         """
         return dict()
-    
+
     def delete(self, entity_instance):
         """Delete an entity instance"""
         del entity_instance
@@ -906,7 +888,7 @@ be specified using the verbose_name attribute.
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         pass
-    
+
     def expunge(self, entity_instance):
         """Remove this object from the objects being managed"""
         pass
@@ -925,12 +907,15 @@ be specified using the verbose_name attribute.
         :return: True if the object has been deleted from the persistent
             state, False otherwise"""
         return False
-    
+
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False
-    
-    @model_function
+
+    def is_dirty(self, _obj):
+        """:return: True if the object might have been modified"""
+        return True
+
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()

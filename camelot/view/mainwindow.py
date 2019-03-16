@@ -1,64 +1,63 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
+from ..core.qt import Qt, QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view.controls.navpane2 import NavigationPane
-from camelot.view.model_thread import post
+from camelot.view.controls.section_widget import NavigationPane
 
 from camelot.core.utils import ugettext as _
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     """Main window of a Desktop Camelot application
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
-    :param parent: a :class:`QtGui.QWidget` object or :class:`None` 
+    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None` 
     
-    .. attribute:: splash_screen 
-        a :class:`QtGui.QWidget` that needs to be closed when
-        the main window is shown.
     """
 
     def __init__(self, gui_context, parent=None):
-        from workspace import DesktopWorkspace
+        from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
 
-        self.splash_screen = None
         self.toolbars = []
         self.nav_pane = None
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
-        self.workspace = DesktopWorkspace( self.app_admin, self )
         self.gui_context = gui_context
+        self.workspace = DesktopWorkspace( self.app_admin, self )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')
@@ -70,58 +69,12 @@ class MainWindow(QtGui.QMainWindow):
         self.workspace.last_view_closed_signal.connect( self.unmaximize_view )
         self.workspace.view_activated_signal.connect( self.view_activated )
 
-        logger.debug('creating navigation pane')
-        post( self.app_admin.get_sections, self.set_sections )
-        
-        logger.debug('creating the menus')
-        post( self.app_admin.get_main_menu, self.set_main_menu )
-
-        logger.debug('creating the toolbars')
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_left_toolbar_actions,
-              args = (Qt.LeftToolBarArea,) )
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_right_toolbar_actions,
-              args = (Qt.RightToolBarArea,) )
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_top_toolbar_actions,
-              args = (Qt.TopToolBarArea,) )
-        post( self.app_admin.get_toolbar_actions, 
-              self.set_bottom_toolbar_actions,
-              args = (Qt.BottomToolBarArea,) )
-        post( self.app_admin.get_hidden_actions,
-              self.set_hidden_actions )
-
         logger.debug('reading saved settings')
         self.read_settings()
-        
-        windowtitle = self.app_admin.get_name()
-        logger.debug( u'setting up window title: %s'%windowtitle )
-        self.setWindowTitle( windowtitle )
-        self.app_admin.title_changed_signal.connect( self.setWindowTitle )
 
         logger.debug('initialization complete')
-
-    @QtCore.pyqtSlot()
-    def show( self ):
-        """This method wait until the main window is completely set up, and
-        only then shows it.  This is a workaround for a bug in Qt on OS X
         
-        https://bugreports.qt.nokia.com/browse/QTBUG-18567
-        
-        """
-        post( lambda:None, self._delayed_show )
-        
-    @QtCore.pyqtSlot(object)
-    def _delayed_show( self, _o ):
-        """Call to the underlying :meth:`QMainWindow.show`, to be used in
-        :meth:`MainWindow.show`
-        """
-        super( MainWindow, self ).show()
-        if self.splash_screen:
-            self.splash_screen.close()
-        
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def unmaximize_view( self ):
         """Show the navigation pane and the menu bar if they exist """
         if self.navpane:
@@ -129,7 +82,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.menuBar():
             self.menuBar().show()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def change_view_mode( self ):
         """Switch between hidden or shown menubar and navigation pane"""
         if self.menuBar().isHidden():
@@ -144,16 +97,18 @@ class MainWindow(QtGui.QMainWindow):
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
         settings = QtCore.QSettings()
-        self.restoreGeometry(settings.value('geometry').toByteArray())
+        geometry = variant_to_py( settings.value('geometry') )
+        if geometry:
+            self.restoreGeometry( geometry )
 
     def write_settings(self):
         """Store the current geometry of the main window"""
         logger.debug('writing application settings')
         settings = QtCore.QSettings()
-        settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
+        settings.setValue('geometry', py_to_variant(self.saveGeometry()))
         logger.debug('settings written')
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_main_menu( self, main_menu ):
         """Set the main menu
         :param main_menu: a list of :class:`camelot.admin.menu.Menu` objects,
@@ -180,7 +135,7 @@ class MainWindow(QtGui.QMainWindow):
             return active_view.gui_context
         return self.gui_context
         
-    @QtCore.pyqtSlot( object, object )
+    @QtCore.qt_slot( object, object )
     def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
         """Set the toolbar for a specific area
         :param toolbar_area: the area on which to put the toolbar, from
@@ -199,37 +154,28 @@ class MainWindow(QtGui.QMainWindow):
             if menu_bar:
                 for qaction in menu_bar.findChildren( ActionAction ):
                     qactions[qaction.action] = qaction
-            toolbar = QtGui.QToolBar( _('Toolbar') )
+            toolbar = QtWidgets.QToolBar( _('Toolbar') )
             self.addToolBar( toolbar_area, toolbar )
             toolbar.setObjectName( 'MainWindowToolBar_%i'%toolbar_area )
             toolbar.setMovable( False )
             toolbar.setFloatable( False )
             for action in toolbar_actions:
                 qaction = qactions.get( action, None )
+                if qaction != None:
+                    # the action already exists in the menu
+                    toolbar.addAction( qaction )
                 if qaction == None:
-                    qaction = action.render( self.gui_context, toolbar )
-                    qaction.triggered.connect( self.action_triggered )
-                toolbar.addAction( qaction )
+                    rendered = action.render( self.gui_context, toolbar )
+                    # both QWidgets and QActions can be put in a toolbar
+                    if isinstance(rendered, QtWidgets.QWidget):
+                        toolbar.addWidget(rendered)
+                    elif isinstance(rendered, QtWidgets.QAction):
+                        rendered.triggered.connect( self.action_triggered )
+                        toolbar.addAction( rendered )
             self.toolbars.append( toolbar )
             toolbar.addWidget( BusyWidget() )
-                
-    @QtCore.pyqtSlot( object )
-    def set_left_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.LeftToolBarArea, toolbar_actions )
-    
-    @QtCore.pyqtSlot( object )
-    def set_right_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.RightToolBarArea, toolbar_actions )
-        
-    @QtCore.pyqtSlot( object )
-    def set_top_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.TopToolBarArea, toolbar_actions )
-        
-    @QtCore.pyqtSlot( object )
-    def set_bottom_toolbar_actions( self, toolbar_actions ):
-        self.set_toolbar_actions( Qt.BottomToolBarArea, toolbar_actions )
 
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_hidden_actions( self, hidden_actions ):
         from camelot.view.controls.action_widget import ActionAction
         for action in hidden_actions:
@@ -237,10 +183,11 @@ class MainWindow(QtGui.QMainWindow):
             action_action.triggered.connect( self.action_triggered )
             self.addAction( action_action )
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def view_activated( self ):
         """Update the state of the actions when the active tab in the
         desktop widget has changed"""
+        from camelot.view.model_thread import post
         from camelot.view.controls.action_widget import ActionAction
         gui_context = self.get_gui_context()
         model_context = gui_context.create_model_context()
@@ -257,7 +204,7 @@ class MainWindow(QtGui.QMainWindow):
                       qaction.set_state,
                       args = ( model_context, ) )
         
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         """Execute an action that was triggered somewhere in the main window,
         such as the toolbar or the main menu"""
@@ -265,7 +212,7 @@ class MainWindow(QtGui.QMainWindow):
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
         
-    @QtCore.pyqtSlot( object )
+    @QtCore.qt_slot( object )
     def set_sections( self, sections ):
         """Set the sections of the navigation pane
         :param main_menu: a list of :class:`camelot.admin.section.Section` objects,
@@ -274,11 +221,11 @@ class MainWindow(QtGui.QMainWindow):
         """
         if sections != None:
             self.navpane = NavigationPane(
-                self.app_admin,
                 workspace=self.workspace,
                 parent=self
             )
             self.addDockWidget( Qt.LeftDockWidgetArea, self.navpane )
+            self.navpane.set_sections(sections)
         else:
             self.navpane = None
 
@@ -291,5 +238,4 @@ class MainWindow(QtGui.QMainWindow):
         model_thread.stop()
         super( MainWindow, self ).closeEvent( event )
         QtCore.QCoreApplication.exit(0)
-
 

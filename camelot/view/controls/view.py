@@ -1,35 +1,39 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Functionality common to TableViews and FormViews"""
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+import six
 
-from camelot.view.model_thread import post
+from ...core.qt import QtCore, QtGui, QtWidgets
 
-class AbstractView(QtGui.QWidget):
+class AbstractView(QtWidgets.QWidget):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
 
@@ -43,59 +47,22 @@ class AbstractView(QtGui.QWidget):
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.pyqtSignal(QtCore.QString)
-    icon_changed_signal = QtCore.pyqtSignal(QtGui.QIcon)
+    title_changed_signal = QtCore.qt_signal(six.text_type)
+    icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the data in the current view"""
         pass
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
         #import sip
         #if not sip.isdeleted(self):
-        self.title_changed_signal.emit( unicode(new_title) )
+        self.title_changed_signal.emit( six.text_type(new_title) )
         
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
-
-class TabView(AbstractView):
-    """Class to combine multiple views in Tabs and let them behave as one view.
-    This class can be used when defining custom create_table_view methods on an
-    ObjectAdmin class to group multiple table views together in one view."""
-
-    def __init__(self, parent, views=[], admin=None):
-        """:param views: a list of the views to combine"""
-        AbstractView.__init__(self, parent)
-        layout = QtGui.QVBoxLayout()
-        if self.header_widget:
-            self.header = self.header_widget(self, admin)
-        else:
-            self.header = None
-        layout.addWidget(self.header)
-        self._tab_widget = QtGui.QTabWidget(self)
-        self._tab_widget.setObjectName( 'tab_widget' )
-        layout.addWidget(self._tab_widget)
-        self.setLayout(layout)
-
-        def get_views_and_titles():
-            return [(view, view.get_title()) for view in views]
-
-        post(get_views_and_titles, self.set_views_and_titles)
-        post(lambda:self.title_format, self.change_title)
-
-    @QtCore.pyqtSlot()
-    def refresh(self):
-        """Refresh the data in the current view"""
-        for i in range(self._tab_widget.count()):
-            view = self._tab_widget.widget(i)
-            view.refresh()
-
-    def set_views_and_titles(self, views_and_titles):
-        for view, title in views_and_titles:
-            self._tab_widget.addTab(view, title)
-
 

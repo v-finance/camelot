@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 '''
@@ -33,8 +38,9 @@ should be kept alive.
 '''
 
 import logging
+import six
 
-from PyQt4 import QtCore
+from ..core.qt import QtCore, valid_variant, variant_to_py
 
 LOGGER = logging.getLogger('camelot.view.register')
 
@@ -56,8 +62,8 @@ class Register(QtCore.QObject):
         :param registered: the object that will be registered
         :param monitored: the object that will be monitored
         """
-        if monitored.property(self._key_name).isValid():
-            key, _success = monitored.property( self._key_name ).toLongLong()
+        if valid_variant( monitored.property(self._key_name) ):
+            key = variant_to_py(monitored.property( self._key_name ))
         else:
             self._max_monitor_key += 1
             key = self._max_monitor_key
@@ -66,10 +72,10 @@ class Register(QtCore.QObject):
         self._registed_by_monitor_key[key] = registered
         monitored.setProperty( self._key_name, key )
         
-    @QtCore.pyqtSlot(QtCore.QObject)
+    @QtCore.qt_slot(QtCore.QObject)
     def _monitored_object_destroyed(self, qobject):
         """slot to indicate a monitored object is destroyed"""
-        key, _success = qobject.property( self._key_name ).toLongLong()
+        key = variant_to_py( qobject.property( self._key_name ) )
         LOGGER.debug('object with key %s is destroyed'%key)
         del self._registed_by_monitor_key[key]
         
@@ -90,6 +96,7 @@ def dump_register( logger ):
     """Method to see the currently monitored objects, for debugging
     purposes"""
     if _global_register_:
-        for k,v in _global_register_._registed_by_monitor_key.items():
+        for k,v in six.iteritems(_global_register_._registed_by_monitor_key):
             logger.warn( '%s : %s'%( k, v ) )
+
 

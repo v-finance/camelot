@@ -1,47 +1,50 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-from fileeditor import FileEditor
+from .fileeditor import FileEditor
 
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext as _
 from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
 from camelot.view.action import ActionFactory
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
+import six
 
+from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class ImageEditor( FileEditor ):
     """Editor to view and edit image files, this is a customized
     implementation of a FileEditor"""
 
-    filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm
-*.tiff *.xbm *.xpm) All files (*)"""
+    filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
+All files (*)"""
 
     def __init__( self,
                   parent=None,
@@ -56,95 +59,73 @@ class ImageEditor( FileEditor ):
             self, parent=parent, storage=storage,
             **kwargs
         )
-        self.setObjectName( field_name )        
+        self.setObjectName( field_name )
 
     def setup_widget(self):
-        layout = QtGui.QVBoxLayout()
-        layout.setSpacing( 0 )
-        label_button_layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         #
         # Setup label
         #
-        self.label = QtGui.QLabel(self)
+        self.label = QtWidgets.QLabel(self)
         self.label.installEventFilter(self)
         self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
-        label_button_layout.addWidget(self.label)
+        layout.addWidget(self.label)
         
         self.filename = DecoratedLineEdit( self )
         self.filename.setVisible( False )
         #
         # Setup buttons
         #
-        button_layout = QtGui.QVBoxLayout()
+        button_layout = QtWidgets.QVBoxLayout()
         button_layout.setSpacing( 0 )
         button_layout.setContentsMargins( 0, 0, 0, 0)
-
-        self.save_as_button = QtGui.QToolButton()
-        self.save_as_button.setFocusPolicy( Qt.ClickFocus )
-        self.save_as_button.setIcon(self.save_as_icon.getQIcon())
-        self.save_as_button.setToolTip(_('Save file as'))
-        self.save_as_button.setAutoRaise(True)
-        self.save_as_button.clicked.connect(self.save_as_button_clicked)
         
-        self.open_button = QtGui.QToolButton()
-        self.open_button.setIcon(self.open_icon.getQIcon())
-        self.open_button.setAutoRaise(True)
-        self.open_button.setToolTip(unicode(_('open image')))
-        self.open_button.clicked.connect(self.open_button_clicked)
-
-        self.add_button = QtGui.QToolButton()
-        self.add_button.setFocusPolicy( Qt.StrongFocus )
-        self.add_button.setIcon(self.add_icon.getQIcon())
-        self.add_button.setToolTip(_('Attach file'))
-        self.add_button.clicked.connect(self.add_button_clicked)
-        self.add_button.setAutoRaise(True)
-        
-        self.clear_button = QtGui.QToolButton()
-        self.clear_button.setIcon(self.clear_icon.getQIcon())
-        self.clear_button.setToolTip(unicode(_('delete image')))
-        self.clear_button.setAutoRaise(True)
-        self.clear_button.clicked.connect(self.clear_button_clicked)
-        self.clear_button.setFocusPolicy(Qt.ClickFocus)
-        
-        copy_button = QtGui.QToolButton()
+        copy_button = QtWidgets.QToolButton()
         copy_button.setDefaultAction( ActionFactory.copy(self, self.copy_to_clipboard ) )
         copy_button.setAutoRaise(True)
         copy_button.setFocusPolicy(Qt.ClickFocus)
 
-        paste_button = QtGui.QToolButton()
+        paste_button = QtWidgets.QToolButton()
         paste_button.setDefaultAction( ActionFactory.paste(self, self.paste_from_clipboard ) )
         paste_button.setAutoRaise(True)
         paste_button.setObjectName('paste')
         paste_button.setFocusPolicy(Qt.ClickFocus)
         
-        #button_layout.addStretch()
-        button_layout.addWidget(self.open_button)
-        button_layout.addWidget(self.save_as_button)
-        button_layout.addWidget(self.add_button)
-        button_layout.addWidget(self.clear_button)
+        self.add_actions(self.actions, button_layout)
         button_layout.addWidget(copy_button)
         button_layout.addWidget(paste_button)
+        button_layout.addStretch()
 
-        label_button_layout.addLayout(button_layout)
-        label_button_layout.addStretch()
-        layout.addLayout( label_button_layout )
-        #layout.addStretch()
+        layout.addLayout(button_layout)
+        #label_button_layout.addStretch()
         self.setLayout( layout )
         self.clear_image()
-        QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
+        QtWidgets.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
         self.clipboard_data_changed()
+
+        # horizontal policy is always expanding, to fill the width of a column
+        # in a form
+        vertical_size_policy = QtWidgets.QSizePolicy.Expanding
+
+        if self.preview_width != 0:
+            self.label.setMinimumWidth(self.preview_width)
+        if self.preview_height != 0:
+            self.label.setFixedHeight(self.preview_height)
+            vertical_size_policy = QtWidgets.QSizePolicy.Fixed
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vertical_size_policy)
+        self.label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vertical_size_policy)
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def clipboard_data_changed(self):
-        paste_button = self.findChild(QtGui.QWidget, 'paste')
+        paste_button = self.findChild(QtWidgets.QWidget, 'paste')
         if paste_button:
-            mime_data = QtGui.QApplication.clipboard().mimeData()
+            mime_data = QtWidgets.QApplication.clipboard().mimeData()
             paste_button.setVisible( mime_data.hasImage() )
             
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def paste_from_clipboard(self):
         """Paste an image from the clipboard into the editor"""
-        mime_data = QtGui.QApplication.clipboard().mimeData()
+        mime_data = QtWidgets.QApplication.clipboard().mimeData()
         if mime_data.hasImage():
             byte_array = QtCore.QByteArray()
             buffer = QtCore.QBuffer( byte_array )
@@ -158,15 +139,11 @@ class ImageEditor( FileEditor ):
         
     def checkin_byte_array(self, byte_array, suffix):
         """Check a byte_array into the storage"""
-        import cStringIO
-        stream = cStringIO.StringIO( byte_array.data() )
+        stream = six.StringIO( byte_array.data() )
         return self.storage.checkin_stream( 'clipboard', suffix, stream)
         
     def set_enabled(self, editable=True):
-        self.clear_button.setEnabled(editable)
-        self.open_button.setEnabled(editable)
-        self.add_button.setEnabled(editable)
-        self.label.setEnabled(editable)
+        self.setAcceptDrops(editable)
 
     def set_pixmap(self, pixmap):
         self.label.setPixmap(pixmap)
@@ -175,14 +152,14 @@ class ImageEditor( FileEditor ):
     def set_image(self, image):
         self.set_pixmap(QtGui.QPixmap.fromImage(image))
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def copy_to_clipboard(self):
         """Copy the image to the clipboard"""
         if self.value:
             post( self.value.checkout_image, self.set_image_to_clipboard )
         
     def set_image_to_clipboard(self, image):
-        clipboard = QtGui.QApplication.clipboard()
+        clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setImage( image )
 
     def clear_image(self):
@@ -190,26 +167,33 @@ class ImageEditor( FileEditor ):
         self.set_pixmap(dummy_image.getQPixmap())
 
     def set_value(self, value):
-        old_value = self.value
         value = super( ImageEditor, self ).set_value( value )
-        if value:
-            if value != old_value:
-                post(
-                    lambda:value.checkout_thumbnail(
-                        self.preview_width,
-                        self.preview_height
-                    ),
-                    self.set_image
-                )
+        if value is not None:
+            if value.name != self.file_name:
+                if self.preview_height and self.preview_width:
+                    post(
+                        lambda:value.checkout_thumbnail(
+                            self.preview_width,
+                            self.preview_height
+                        ),
+                        self.set_image
+                    )
+                else:
+                    post(
+                        lambda:value.checkout_image(),
+                        self.set_image
+                    )
+                # store the file name of which a previous is shown in the editor,
+                # to ensure the preview is updated when this changes
+                self.file_name = value.name
         else:
             self.clear_image()
         return value
 
     def draw_border(self):
-        self.label.setFrameShape(QtGui.QFrame.Box)
-        self.label.setFrameShadow(QtGui.QFrame.Plain)
+        self.label.setFrameShape(QtWidgets.QFrame.Box)
+        self.label.setFrameShadow(QtWidgets.QFrame.Plain)
         self.label.setLineWidth(1)
-        self.label.setFixedSize(self.preview_width, self.preview_height)
 
     def show_fullscreen(self, image):
         lite_box = LiteBoxView(self)
@@ -230,7 +214,4 @@ class ImageEditor( FileEditor ):
                 )
             return True
         return False
-
-
-
 

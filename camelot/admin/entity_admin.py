@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -27,35 +32,31 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-from camelot.admin.action.list_action import OpenFormView
+from ..core.item_model import QueryModelProxy
+
+from camelot.admin.action import list_filter
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.model_thread import post, model_function
-from camelot.view.utils import to_string
+from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.memento import memento_change
-from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
-from camelot.admin.validator.entity_validator import EntityValidator
+from camelot.types import PrimaryKey
+from camelot.core.qt import Qt
 
-from sqlalchemy import orm, schema
+import six
+
+from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
+from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
+from sqlalchemy.orm.exc import UnmappedClassError
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
-This allows for much more introspection than the standard 
+This allows for much more introspection than the standard
 :class:`camelot.admin.object_admin.ObjectAdmin`.
-    
+
 It has additional class attributes that customise its behaviour.
 
-**Basic**
-
-.. attribute:: list_action
-
-   The :class:`camelot.admin.action.base.Action` that will be triggered when the
-   user selects an item in a list of objects.  This defaults to 
-   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
-   for the current object.
-   
 **Filtering**
 
 .. attribute:: list_filter
@@ -67,7 +68,7 @@ It has additional class attributes that customise its behaviour.
         class Project( Entity ):
             oranization = OneToMany( 'Organization' )
             name = Column( Unicode(50) )
-    
+
           class Admin( EntityAdmin ):
               list_display = ['organization']
               list_filter = ['organization.name']
@@ -78,12 +79,17 @@ It has additional class attributes that customise its behaviour.
 
 .. attribute:: copy_deep
 
-   A dictionary of fields that will be deep copied when the user presses the copy
-   button.  This is useful for OneToMany fields.  The key in the dictionary should
-   be the name of the field, and the value is a new dictionary that can contain other
-   fields that need to be copied::
+    A dictionary of fields that will be deep copied when the user presses the copy
+    button.  This is useful for OneToMany fields.  The key in the dictionary should
+    be the name of the field, and the value is a new dictionary :: 
 
        copy_deep = {'addresses':{}}
+
+    This dictionary can contain fields in the related object that need to be deep 
+    copied as well ::
+
+       copy_deep = {'addresses':{'city':{}}}
+
 
 .. attribute:: copy_exclude
 
@@ -93,38 +99,18 @@ It has additional class attributes that customise its behaviour.
 
     The fields that form the primary key of the object will be excluded by default.
 
-**Searching**
+To further customize the copy process without additional user interaction,
+:meth:`camelot.admin.object_admin.EntityAdmin.copy` method can be overwritten.
 
-.. attribute:: list_search
+If the user interaction during the copy process needs to be customized as well, the
+:class:`camelot.admin.action.list_action.DuplicateSelection` class can be subclassed
+and used as a custom action.
 
-    A list of fields that should be searched when the user enters something in
-    the search box in the table view.  By default all fields are
-    searched for which Camelot can do a conversion of the entered string to the
-    datatype of the underlying column.  
 
-    For use with one2many, many2one or many2many fields, the same rules as for the 
-    list_filter attribute apply
-
-.. attribute:: search_all_fields
-
-    Defaults to True, meaning that by default all searchable fields should be
-    searched.  If this is set to False, one should explicitely set the list_search
-    attribute to enable search.
-
-.. attribute:: expanded_list_search
-
-    A list of fields that will be searchable through the expanded search.  When set 
-    to None, all the fields in list_display will be searchable.  Use this attribute
-    to limit the number of search widgets.  Defaults to None.
- 
     """
 
-    list_action = OpenFormView()
-    list_search = []
-    expanded_list_search = None
     copy_deep = {}
     copy_exclude = []
-    search_all_fields = True
     validator = EntityValidator
 
     def __init__(self, app_admin, entity):
@@ -133,20 +119,23 @@ It has additional class attributes that customise its behaviour.
         from sqlalchemy.orm.mapper import _mapper_registry
         try:
             self.mapper = orm.class_mapper(self.entity)
-        except UnmappedClassError, exception:
-            mapped_entities = [unicode(m) for m in _mapper_registry.keys()]
+        except UnmappedClassError as exception:
+            mapped_entities = [six.text_type(m) for m in six.iterkeys(_mapper_registry)]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
+        # caching
+        self._search_fields = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
         """Returns a set of default field attributes based on introspection
         of the SQLAlchemy columns that form a field
-        
-        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column` objects.
+
+        :param: columns a list of :class:`sqlalchemy:sqlalchemy.schema.Column`
+            objects.
         :return: a dictionary with field attributes
-        
+
         By default this method looks at the first column that defines the
         field and derives a delegate and other field attributes that make
         sense.
@@ -155,21 +144,35 @@ It has additional class attributes that customise its behaviour.
         sql_attributes = dict()
         for column in columns:
             column_type = column.type
+            sql_attributes['python_type'] = ''
+            sql_attributes['doc'] = ''
+            # PrimaryKey is not in _sqlalchemy_to_python_type_, but its
+            # implementation class probably is
+            if isinstance(column_type, PrimaryKey):
+                column_type = column_type.load_dialect_impl(None)
             for base_class in inspect.getmro( type( column_type ) ):
-                fa = _sqlalchemy_to_python_type_.get( base_class, 
+                fa = _sqlalchemy_to_python_type_.get( base_class,
                                                       None )
-                if fa != None:
+                if fa is not None:
                     sql_attributes.update( fa( column_type ) )
                     break
             if isinstance( column, (schema.Column) ):
                 sql_attributes['nullable'] = column.nullable
                 sql_attributes['default'] = column.default
-                if column.primary_key:
-                    sql_attributes['editable'] = False
+                sql_attributes['doc'] = column.doc or ''
+                editable = (column.primary_key is False)
+                # if these fields are editable, they are validated when a form
+                # is closed, while at that time the field is not yet filled
+                # because the foreign key column is only filled after the flush
+                if len(column.foreign_keys):
+                    editable = False
+                sql_attributes['editable'] = editable
+            field_admin = getattr(column, '_field_admin', None)
+            if field_admin != None:
+                sql_attributes.update(field_admin.get_field_attributes())
             break
         return sql_attributes
-    
-    @model_function
+
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
@@ -177,196 +180,174 @@ It has additional class attributes that customise its behaviour.
         """
         return Session().query( self.entity )
 
-    @model_function
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        if isinstance(objects, orm.Query):
+            return QueryModelProxy(objects)
+        return super(EntityAdmin, self).get_proxy(objects)
+
     def get_verbose_identifier(self, obj):
-        if obj:
+        if obj is not None:
             primary_key = self.mapper.primary_key_from_instance(obj)
             if not None in primary_key:
-                primary_key_representation = u','.join([unicode(v) for v in primary_key])
+                primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
                     return u'%s %s : %s' % (
-                        unicode(self.get_verbose_name() or ''),
+                        six.text_type(self.get_verbose_name() or ''),
                         primary_key_representation,
-                        unicode(obj)
+                        six.text_type(obj)
                     )
+                elif six.PY3 and hasattr(obj, '__str__'):
+                    return u'%s %s : %s' % (
+                        self.get_verbose_name() or '',
+                        primary_key_representation,
+                        obj.__str__()
+                    )                
                 else:
                     return u'%s %s' % (
                         self.get_verbose_name() or '',
                         primary_key_representation
                     )
         return self.get_verbose_name()
-    
-    @model_function
-    def get_field_attributes(self, field_name):
-        """Get the attributes needed to visualize the field field_name
-        :param field_name: the name of the field
 
-        :return: a dictionary of attributes needed to visualize the field,
-        those attributes can be:
-         * python_type : the corresponding python type of the object
-         * editable : bool specifying wether the user can edit this field
-         * widget : which widget to be used to render the field
-         * ...
-        """        
-        from sqlalchemy.orm.mapper import _mapper_registry
-            
+    def get_search_identifiers(self, obj):
+        search_identifiers = {}
+
+        search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
+        search_identifiers[Qt.EditRole] = obj
+        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+
+        return search_identifiers                
+
+    def get_descriptor_field_attributes(self, field_name):
+        """Returns a set of default field attributes based on introspection
+        of the descriptor of a field.
+        """
+        from camelot.view.controls import delegates
+        attributes = super(EntityAdmin, self).get_descriptor_field_attributes(field_name)
+        #
+        # Field attributes forced by the field_attributes property
+        #
+        forced_attributes = self.field_attributes.get(field_name, {})
+        #
+        # Get the default field_attributes trough introspection if the
+        # field is a mapped field
+        #
+        from sqlalchemy import orm
+        from sqlalchemy.exc import InvalidRequestError
+        #
+        # See if there is a sqlalchemy descriptor
+        #
+        for cls in self.entity.__mro__:
+            descriptor = cls.__dict__.get(field_name, None)
+            if descriptor is not None:
+                if isinstance(descriptor, hybrid.hybrid_property):
+                    attributes['editable'] = (descriptor.fset is not None)
+                    if (descriptor.expr is None) or (descriptor.expr == descriptor.fget):
+                        # the descriptor has no expression, stop the introspection
+                        break
+                    # dont try to get the expression from the descriptor, but use
+                    # the 'appropriate' way to get it from the class.  Getting it
+                    # from the descriptor seems to manipulate  the actual descriptor
+                    class_attribute = getattr(self.entity, field_name)
+                    # class attribute of hybrid properties is changed from
+                    # expression to comparator in sqla 1.2
+                    if sqlalchemy_version.startswith('1.2'):
+                        if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
+                            class_attribute = class_attribute.comparator.expression
+                    if class_attribute is not None:
+                        columns = []
+                        if isinstance(class_attribute, sql.elements.Label):
+                            columns = [class_attribute]
+                        elif isinstance(class_attribute, sql.Select):
+                            columns = class_attribute.columns
+                        for k, v in six.iteritems(self.get_sql_field_attributes(columns)):
+                            # the defaults or the nullable status of the column
+                            # does not need to be the default or the nullable
+                            # of the hybrid property
+                            # changed 4/7/2017 DJK; editable added to avoid setting fields editable
+                            # when they should not be editable
+                            # Note that a primary key can be set editable by this change!!
+                            if k in ['default', 'nullable', 'editable']:
+                                continue
+                            attributes[k] = v
+                break
+        # @todo : investigate if the property can be fetched from the descriptor
+        #         instead of going through the mapper
         try:
-            return self._field_attributes[field_name]
-        except KeyError:
-
-            def create_default_getter(field_name):
-                return lambda o:getattr(o, field_name)
-
-            from camelot.view.controls import delegates
-            #
-            # Default attributes for all fields
-            #
-            attributes = dict(
-                python_type = str,
-                to_string = to_string,
-                field_name = field_name,
-                getter = create_default_getter(field_name),
-                length = None,
-                tooltip = None,
-                background_color = None,
-                #minimal_column_width = 12,
-                editable = False,
-                nullable = True,
-                widget = 'str',
-                blank = True,
-                delegate = delegates.PlainTextDelegate,
-                validator_list = [],
-                name = ugettext_lazy(field_name.replace('_', ' ').capitalize())
+            property = self.mapper.get_property(
+                field_name
             )
+            if isinstance(property, orm.properties.ColumnProperty):
+                columns = property.columns
+                sql_attributes = self.get_sql_field_attributes( columns )
+                attributes.update( sql_attributes )
+            elif isinstance(property, orm.properties.RelationshipProperty):
+                target = forced_attributes.get( 'target',
+                                                property.mapper.class_ )
 
-            #
-            # Field attributes forced by the field_attributes property
-            #
-            forced_attributes = {}
-            try:
-                forced_attributes = self.field_attributes[field_name]
-            except KeyError:
-                pass
+                attributes.update( target = target,
+                                   editable = property.viewonly==False,
+                                   nullable = True)
+                foreign_keys = list( property._user_defined_foreign_keys )
+                foreign_keys.extend( list(property._calculated_foreign_keys) )
 
-            def resolve_target(target):
-                """A class or name of the class representing the other
-                side of a relation.  Use the name of the class to avoid
-                circular dependencies"""
-                if isinstance(target, basestring):
-                    for mapped_class in _mapper_registry.keys():
-                        if mapped_class.class_.__name__ == target:
-                            return mapped_class.class_
-                    raise Exception('No mapped class found for target %s'%target)
-                return target
-                
-            def get_entity_admin(target):
-                """Helper function that instantiated an Admin object for a
-                target entity class.
+                if property.direction == orm.interfaces.ONETOMANY:
+                    attributes.update( direction = 'onetomany' )
+                elif property.direction == orm.interfaces.MANYTOONE:
+                    attributes.update(
+                        #
+                        # @todo: take into account all foreign keys instead
+                        # of only the first one
+                        #
+                        nullable = foreign_keys[0].nullable,
+                        direction = 'manytoone',
+                    )
+                elif property.direction == orm.interfaces.MANYTOMANY:
+                    attributes.update( direction = 'manytomany' )
+                else:
+                    raise Exception('RelationshipProperty has unknown direction')
 
-                :param target: an entity class for which an Admin object is
-                needed
-                """
+                if property.uselist == True:
+                    attributes.update(
+                        delegate = delegates.One2ManyDelegate,
+                        python_type = list,
+                        create_inline = False,
+                    )
+                else:
+                    attributes.update(
+                        delegate = delegates.Many2OneDelegate,
+                        python_type = str,
+                    )
 
-                try:
-                    admin_class = forced_attributes['admin']
-                    return admin_class(self.app_admin, target)
-                except KeyError:
-                    return self.get_related_admin(target)
+        except InvalidRequestError:
             #
-            # Get the default field_attributes trough introspection if the
-            # field is a mapped field
+            # If the field name is not a property of the mapper, then use
+            # the default stuff
             #
-            from sqlalchemy import orm
-            from sqlalchemy.exc import InvalidRequestError
+            pass
+        return attributes
 
-            try:
-                property = self.mapper.get_property(
-                    field_name
-                )
-                if isinstance(property, orm.properties.ColumnProperty):
-                    columns = property.columns
-                    sql_attributes = self.get_sql_field_attributes( columns )
-                    attributes.update( sql_attributes ) 
-                elif isinstance(property, orm.properties.PropertyLoader):
-                    target = forced_attributes.get( 'target', 
-                                                    property.mapper.class_ )
-                    
-                    #
-                    # _foreign_keys is for sqla pre 0.6.4
-                    # 
-                    if hasattr(property, '_foreign_keys'):
-                        foreign_keys = list(property._foreign_keys)
-                    else:
-                        foreign_keys = list( property._user_defined_foreign_keys )
-                        foreign_keys.extend( list(property._calculated_foreign_keys) )
-                        
-                    if property.direction == orm.interfaces.ONETOMANY:
-                        attributes.update(
-                            python_type = list,
-                            editable = True,
-                            nullable = True,
-                            delegate = delegates.One2ManyDelegate,
-                            target = target,
-                            create_inline = False,
-                            direction = 'onetomany',
-                            admin = get_entity_admin(target)
-                        )
-                    elif property.direction == orm.interfaces.MANYTOONE:
-                        attributes.update(
-                            python_type = str,
-                            editable = True,
-                            delegate = delegates.Many2OneDelegate,
-                            target = target,
-                            #
-                            # @todo: take into account all foreign keys instead
-                            # of only the first one
-                            #
-                            nullable = foreign_keys[0].nullable,
-                            direction = 'manytoone',
-                            admin = get_entity_admin(target)
-                        )
-                    elif property.direction == orm.interfaces.MANYTOMANY:
-                        attributes.update(
-                            python_type = list,
-                            editable = True,
-                            target = target,
-                            nullable = True,
-                            create_inline = False,
-                            direction = 'manytomany',
-                            delegate = delegates.One2ManyDelegate,
-                            admin = get_entity_admin(target)
-                        )
-                    else:
-                        raise Exception('PropertyLoader has unknown direction')
-            except InvalidRequestError:
-                #
-                # If the field name is not a property of the mapper, then use
-                # the default stuff
-                #
-                pass
-
-            if 'choices' in forced_attributes:
-                attributes['delegate'] = delegates.ComboBoxDelegate
-                attributes['editable'] = True
-                if isinstance(forced_attributes['choices'], list):
-                    choices_dict = dict(forced_attributes['choices'])
-                    attributes['to_string'] = lambda x : choices_dict[x]
-
-            #
-            # Overrule introspected field_attributes with those defined
-            #
-            attributes.update(forced_attributes)
-
-            #
-            # In case of a 'target' field attribute, instantiate an appropriate
-            # 'admin' attribute
-            #
-            if 'target' in attributes:
-                attributes['target'] = resolve_target(attributes['target'])
-                attributes['admin'] = get_entity_admin(attributes['target'])
-            
-            self._field_attributes[field_name] = attributes
-            return attributes
+    def _expand_field_attributes(self, field_attributes, field_name):
+        """Given a set field attributes, expand the set with attributes
+        derived from the given attributes.
+        """
+        #
+        # In case of a text 'target' field attribute, resolve it
+        #
+        from sqlalchemy.orm.mapper import _mapper_registry
+        target = field_attributes.get('target', None)
+        if isinstance(target, six.string_types):
+            for mapped_class in six.iterkeys(_mapper_registry):
+                if mapped_class.class_.__name__ == target:
+                    field_attributes['target'] = mapped_class.class_
+                    break
+            else:
+                raise Exception('No mapped class found for target %s'%target)
+        super(EntityAdmin, self)._expand_field_attributes(field_attributes, field_name)
 
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
@@ -384,95 +365,19 @@ It has additional class attributes that customise its behaviour.
                     attributes['editable'] = False
             yield attributes
 
-    @model_function
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
-        :return: [(filter, filter_data)]
+        :return: [filter, filter, ...]
         """
-        from camelot.view.filters import structure_to_filter
 
         def filter_generator():
             for structure in self.list_filter:
-                filter = structure_to_filter(structure)
-                yield (filter, filter.get_filter_data(self))
+                if not isinstance(structure, list_filter.Filter):
+                    structure = list_filter.GroupBoxFilter(structure)
+                yield structure
 
         return list(filter_generator())
-
-    def create_select_view(admin, query=None, search_text=None, parent=None):
-        """Returns a Qt widget that can be used to select an element from a
-        query
-
-        :param query: sqlalchemy query object
-
-        :param parent: the widget that will contain this select view, the
-        returned widget has an entity_selected_signal signal that will be fired
-        when a entity has been selected.
-        """
-        from camelot.admin.action.base import GuiContext
-        from camelot.view.art import Icon
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from PyQt4 import QtCore, QtGui
-
-        class SelectQueryTableProxy(QueryTableProxy):
-            header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
-
-        class SelectView(admin.TableView):
-            table_model = SelectQueryTableProxy
-            entity_selected_signal = QtCore.pyqtSignal(object)
-            title_format = ugettext('Select %s')
-
-            def __init__(self, admin, parent):
-                gui_context = GuiContext()
-                super(SelectView, self).__init__(
-                    gui_context,
-                    admin,
-                    search_text=search_text, parent=parent
-                )
-                self.row_selected_signal.connect( self.sectionClicked )
-                self.setUpdatesEnabled(True)
-
-                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
-                if table != None:
-                    table.keyboard_selection_signal.connect(self.on_keyboard_selection)
-                    table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-
-            def emit_entity_selected(self, instance_getter):
-                self.entity_selected_signal.emit( instance_getter )
-                
-            @QtCore.pyqtSlot()
-            def on_keyboard_selection(self):
-                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
-                if table != None:
-                    self.row_selected_signal.emit(table.currentIndex().row())
-
-            @QtCore.pyqtSlot(int)
-            def sectionClicked(self, index):
-                # table model will be set by the model thread, we can't
-                # decently select if it has not been set yet
-                if self.table.model():
-
-                    def create_constant_getter(cst):
-                        return lambda:cst
-
-                    def create_instance_getter():
-                        entity = self.table.model()._get_object(index)
-                        return create_constant_getter(entity)
-
-                    post(create_instance_getter, self.emit_entity_selected)
-
-        widget = SelectView(admin, parent)
-        widget.setUpdatesEnabled(True)
-        widget.setMinimumSize(admin.list_size[0], admin.list_size[1])
-        widget.update()
-        return widget
-
-    def create_table_view( self, gui_context ):
-        """Returns a :class:`QtGui.QWidget` containing a table view
-        :param gui_context: a :class:`camelot.admin.action.base.GuiContext`
-            object.
-        """
-        return self.TableView( gui_context, self )
 
     def primary_key( self, obj ):
         """Get the primary key of an object
@@ -482,16 +387,17 @@ It has additional class attributes that customise its behaviour.
         """
         if not self.is_persistent( obj ):
             return None
-        return self.mapper.primary_key_from_instance( obj )
-    
+        # this function is called on compound objects as well, so the
+        # mapper might be different from the mapper related to this admin
+        mapper = orm.object_mapper(obj)
+        return mapper.primary_key_from_instance( obj )
+
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
         :param obj: the object for which to get the modifications
         :return: a dictionary with the changed attributes and their old
            value
         """
-        from sqlalchemy import orm
-        from sqlalchemy.orm.exc import UnmappedClassError
         state = orm.attributes.instance_state( obj )
         dict_ = state.dict
         modifications = dict()
@@ -499,7 +405,7 @@ It has additional class attributes that customise its behaviour.
             if not hasattr( attr.impl, 'get_history' ):
                 continue
             (added, unchanged, deleted) = \
-                    attr.impl.get_history( state, dict_ )
+                attr.impl.get_history(state, dict_, passive=orm.base.PASSIVE_NO_FETCH)
             if added or deleted:
                 old_value = None
                 if deleted:
@@ -515,16 +421,14 @@ It has additional class attributes that customise its behaviour.
                         pass
                 modifications[ attr.key ] = old_value
         return modifications
-        
-    @model_function
+
     def add( self, obj ):
         """Adds the entity instance to the default session, if it is not
         yet attached to a session"""
         session = Session.object_session( obj )
         if session == None:
             Session().add( obj )
-    
-    @model_function
+
     def delete(self, entity_instance):
         """Delete an entity instance"""
         session = Session.object_session( entity_instance )
@@ -544,15 +448,14 @@ It has additional class attributes that customise its behaviour.
                     memento = self.get_memento()
                     if memento != None:
                         modifications = entity_to_dict( entity_instance )
-                        change = memento_change( model = unicode( self.entity.__name__ ),
+                        change = memento_change( model = six.text_type( self.entity.__name__ ),
                                                  memento_type = 'before_delete',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
                         memento.register_changes( [change] )
                 session.delete( entity_instance )
-                self.flush( entity_instance )
+                session.flush()
 
-    @model_function
     def expunge(self, entity_instance):
         """Expunge the entity from the session"""
         session = orm.object_session( entity_instance )
@@ -562,7 +465,7 @@ It has additional class attributes that customise its behaviour.
             for obj in objects_to_expunge:
                 if obj in session:
                     session.expunge( obj )
-        
+
     def _expand_compounding_objects( self, objs ):
         """
         Given a set of objects, expand this set with all compounding objects.
@@ -577,9 +480,8 @@ It has additional class attributes that customise its behaviour.
                 related_admin = self.get_related_admin( type(obj_to_flush ) )
                 for compounding_object in related_admin.get_compounding_objects( obj_to_flush ):
                     if compounding_object not in objs:
-                        additional_objects.add( compounding_object )        
-                        
-    @model_function
+                        additional_objects.add( compounding_object )
+
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
@@ -596,13 +498,13 @@ It has additional class attributes that customise its behaviour.
                     modifications = {}
                     try:
                         modifications = self.get_modifications( obj_to_flush )
-                    except Exception, e:
+                    except Exception as e:
                         # todo : there seems to be a bug in sqlalchemy that causes the
                         #        get history to fail in some cases
                         logger.error( 'could not get modifications from object', exc_info = e )
                     primary_key = self.primary_key( obj_to_flush )
                     if modifications and (None not in primary_key):
-                        change = memento_change( model = unicode( self.entity.__name__ ),
+                        change = memento_change( model = six.text_type(type(obj_to_flush).__name__),
                                                  memento_type = 'before_update',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
@@ -615,7 +517,6 @@ It has additional class attributes that customise its behaviour.
             if changes and memento != None:
                 memento.register_changes( changes )
 
-    @model_function
     def refresh(self, entity_instance):
         """Undo the pending changes to the backend and restore the original
         state"""
@@ -630,21 +531,24 @@ It has additional class attributes that customise its behaviour.
                         session.refresh( obj )
                     else:
                         session.expunge( obj )
-       
-    @model_function
+
     def is_persistent(self, obj):
         """:return: True if the object has a persisted state, False otherwise"""
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( obj )
-        if session:
+        session = orm.object_session(obj)
+        if session is not None:
             if obj in session.new:
                 return False
             if obj in session.deleted:
                 return False
             return True
         return False
-    
-    @model_function
+
+    def is_dirty(self, obj):
+        session = orm.object_session(obj)
+        if session is not None:
+            return (obj in session.dirty)
+        return True
+            
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent
@@ -653,9 +557,8 @@ It has additional class attributes that customise its behaviour.
         if state != None and state.deleted:
             return True
         return False
-    
-    @model_function
-    def get_expanded_search_fields(self):
+
+    def get_expanded_search_filters(self):
         """
         :return: a list of tuples of type [(field_name, field_attributes)]
         """
@@ -663,31 +566,51 @@ It has additional class attributes that customise its behaviour.
             field_list = self.get_table().get_fields()
         else:
             field_list = self.expanded_list_search
-        return [(field, self.get_field_attributes(field))
-                for field in field_list]
-    
+        return [list_filter.EditorFilter(field_name) for field_name in field_list]
+
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
         or through the field_attributes, this method returns all the fields
         that have been mapped.
         """
-        fields = super( EntityAdmin, self ).get_all_fields_and_attributes()
+        fields = super(EntityAdmin, self).get_all_fields_and_attributes()
         for mapper_property in self.mapper.iterate_properties:
             if isinstance(mapper_property, orm.properties.ColumnProperty):
                 field_name = mapper_property.key
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
-        
-    @model_function
+
+    def get_search_fields(self, substring):
+        """
+        Generate a list of fields in which to search.  By default this method
+        returns the fields in the `list_search` attribute as well as the 
+        properties that are mapped to a column in the database.  Any property that
+        is not a simple Column might result in very slow searches, so those should
+        be put explicitly in the `list_search` attribute.
+
+        :param substring: that part of the complete search string for which
+           the search fields are requested.  This allows analysis of the search
+           string to improve the search behavior
+
+        :return: a list with the names of the fields in which to search
+        """
+        if self._search_fields is None:
+            self._search_fields = list(self.list_search)
+            # list to avoid p3k fixes
+            for field_name, col_property in list(self.mapper.column_attrs.items()):
+                if isinstance(col_property.expression, schema.Column):
+                    self._search_fields.append(field_name)
+        return self._search_fields
+
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new
         one will be created.  This function will be called every time the
         user presses a copy button.
-        
+
         :param obj: the object to be copied from
         :param new_obj: the object to be copied to, defaults to None
         :return: the new object
-        
+
         This function takes into account the deep_copy and the copy_exclude
         attributes.  It tries to recreate relations with a minimum of side
         effects.
@@ -705,16 +628,16 @@ It has additional class attributes that customise its behaviour.
         # the serialized structure
         #
         # @todo: this should be recursive
-        for property in self.mapper.iterate_properties:
-            if isinstance(property, orm.properties.PropertyLoader):
-                if property.direction == orm.interfaces.ONETOMANY:
-                    target = property.mapper.class_
-                    for relation in serialized.get(property.key, []):
-                        relation_mapper = orm.class_mapper(target)
-                        for primary_key_field in relation_mapper.primary_key:
-                            relation[primary_key_field.name] = None
-        #from pprint import pprint
-        #pprint( serialized )
+        for relationship_property in self.mapper.relationships:
+            if relationship_property.direction == orm.interfaces.ONETOMANY:
+                target = relationship_property.mapper.class_
+                for relation in serialized.get(relationship_property.key, []):
+                    relation_mapper = orm.class_mapper(target)
+                    for primary_key_field in relation_mapper.primary_key:
+                        # remove the primary key field, since setting it
+                        # to None might overwrite a value set at object
+                        # construction time
+                        relation.pop(primary_key_field.name, None)
         #
         # deserialize into the new object
         #
@@ -722,12 +645,11 @@ It has additional class attributes that customise its behaviour.
         #
         # recreate the ManyToOne relations
         #
-        for property in self.mapper.iterate_properties:
-            if isinstance(property, orm.properties.PropertyLoader):
-                if property.direction == orm.interfaces.MANYTOONE:
-                    setattr( new_obj, 
-                             property.key,
-                             getattr( obj, property.key ) )
+        for relationship_property in self.mapper.relationships:
+            if relationship_property.direction == orm.interfaces.MANYTOONE:
+                setattr( new_obj,
+                         relationship_property.key,
+                         getattr( obj, relationship_property.key ) )
         return new_obj
 
 

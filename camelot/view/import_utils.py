@@ -1,47 +1,54 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Utility classes to import files into Camelot"""
 
-from PyQt4 import QtCore
-
 import csv
-import codecs
-import itertools
+import datetime
 import logging
+import os.path
 import string
-import re
 
-from camelot.view import forms
+import six
+
+from ..core.qt import QtCore, Qt
 from camelot.view.controls import delegates
-from camelot.admin.action import CallMethod
+from camelot.admin.action.list_action import DeleteSelection
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
+from camelot.admin.action import Action, RowNumberAction
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.utils import local_date_format
+
+from . import action_steps
 
 logger = logging.getLogger('camelot.view.import_utils')
 
@@ -59,265 +66,254 @@ class RowData(object):
 
     def __init__(self, row_number, row_data):
         self.id = row_number + 1
+        i = 0
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i' % i, data)
         self.columns = i + 1
 
     def __getattr__(self, attr_name):
         return None
-    
+
+    def __len__(self):
+        return self.columns
+
+    def __getitem__(self, i):
+        return getattr(self, 'column_%i'%i)
+
+def column_name(column):
+    """Create a column name starting from an index starting at 0
+    eg : column=0 -> name='A'
+    """
+    if column <= 25:
+        return string.ascii_uppercase[column];
+    else:
+        return column_name((column//26)-1) + column_name(column%26)
+
 class ColumnMapping( object ):
     """
-    Object that maps the columns in the rows to import onto the fields of the 
-    data model.  This object has attributes named `column_0_field`, 
-    `column_1_field`, ...  Each of these attributes should be set to the field
-    name in which the data of the column should be imported.
+    Object that maps a column in the rows to import to a field of the 
+    data model.
     
-    :param columns: the number of columns in the rows
+    :param column: a number that indicates which column is mapped
     :param rows: the list of RowData objects to import, the list should
         not be empty    
-    :param admin: the admin object of the model in which to import
-    :param default_fields: a list of field names that will be used as the
-        default fields to map
+    :param default_field: the default field that is mapped, or `None`
+    
     """
     
-    def __init__( self, columns, rows, admin, default_fields ):
+    def __init__(self, column, rows, default_field=None):
         # show row is the row that will be previewed in the column
         # selection form
-        self.columns = columns
+        self.column = column
+        self.column_name = column_name(column)
         self.rows = rows
-        self.admin = admin
-        for i in range( self.columns ):
-            setattr( self, 'column_%i_field'%i, None )
-        self.show_row = 0
-        for i, field in itertools.izip( range( self.columns ),
-                                        default_fields ):
-            setattr( self, 'column_%i_field'%i, field )
+        self.field = default_field
+        self.value = None
+        self.preview_row = None
+        self.set_preview_row(0)
 
-    def __setattr__( self, attr, value ):
-        if attr == 'show_row':
-            if value >= 0 and value < len(self.rows):
-                for i in range( self.columns ):
-                    column_value = getattr( self.rows[value], 'column_%i'%i )
-                    setattr( self, 'column_%i_value'%i, column_value )
-        super( ColumnMapping, self ).__setattr__( attr, value )
-        
-    def show_next( self ):
-        self.show_row = self.show_row + 1
-        
-    def show_previous( self ):
-        self.show_row = self.show_row - 1
-        
-    def match_names( self ):
-        """Use the data in the current row to determine field names"""
-        field_choices = [ (f,entity_fa['name']) for f,entity_fa in 
-                          self.admin.get_all_fields_and_attributes().items() 
-                          if entity_fa.get('editable', True) ]
-        # create a dict that  will be used to search field names
-        matches = dict( (unicode(verbose_name).lower(), fn)
-                         for fn, verbose_name in field_choices )
-        matches.update( dict( (fn.lower().replace('_',''), fn)
-                              for fn, _verbose_name in field_choices ) )
-        for i in range( self.columns ):
-            value = getattr( self, 'column_%i_value'%i )
-            field_name = matches.get( value.replace('_','').lower(), None )
-            setattr( self, 'column_%i_field'%i, field_name )
-            
-class ColumnMappingAdmin( ObjectAdmin ):
-    """Admin class that allows the user to manipulate the column mapping
+    def get_preview_row(self):
+        return self.preview_row
+
+    def set_preview_row(self, row):
+        if row >= 0 and row < len(self.rows):
+            self.preview_row = row
+            if self.column < len(self.rows[row]):
+                self.value = self.rows[row][self.column]
+            else:
+                self.value = None
+
+class ShowNext(Action):
     
-    :param columns: the number of columns for which to edit the mapping
+    verbose_name = _('Show next')
+    
+    def model_run(self, model_context):
+        for mapping in model_context.get_collection():
+            mapping.set_preview_row(mapping.get_preview_row()+1)
+        yield action_steps.UpdateObjects(model_context.get_collection())
+
+class ShowPrevious(Action):
+    
+    verbose_name = _('Show previous')
+    
+    def model_run(self, model_context):
+        for mapping in model_context.get_collection():
+            mapping.set_preview_row(mapping.get_preview_row()-1)
+        yield action_steps.UpdateObjects(model_context.get_collection())
+
+class MatchNames(Action):
+    """Use the data in the current row to determine field names"""
+    
+    verbose_name = _('Match names')
+    
+    def model_run(self, model_context):
+        field_choices = model_context.admin.field_choices
+        # create a dict that  will be used to search field names
+        matches = dict( (six.text_type(verbose_name).lower(), fn)
+                         for fn, verbose_name in field_choices if fn )
+        matches.update( dict( (fn.lower().replace('_',''), fn)
+                              for fn, _verbose_name in field_choices if fn) )
+        for mapping in model_context.get_collection():
+            if mapping.value is not None:
+                field = matches.get(mapping.value.replace('_','').lower(), None)
+                mapping.field = field
+            else:
+                mapping.field = None
+        yield action_steps.UpdateObjects(model_context.get_collection())
+
+class ColumnMappingAdmin(ObjectAdmin):
+    """Admin class that allows the user to manipulate the column mappings
+    
     :param admin: the admin object of the model in which to import
-    :param field_choices: the list of fields out of which the user can select
     :param entity: the class that is used to define the column mapping
+    :param field_choices: the list of fields out of which the user can select
     """
     
-    verbose_name = _('Select fields')
-    
-    field_attributes = { 'show_row' : { 'editable':True,
-                                        'calculator':False,
-                                        'delegate':delegates.IntegerDelegate }
-                         }
-    
-    form_actions = [ CallMethod( _('Show next'), ColumnMapping.show_next ),
-                     CallMethod( _('Show previous'), ColumnMapping.show_previous ),
-                     CallMethod( _('Match names'), ColumnMapping.match_names ),
-                     ]
-    
-    def __init__( self, columns, admin, field_choices, entity = ColumnMapping ):
-        self.columns = columns
-        self.admin = admin
-        self.field_choices = field_choices
-        self.column_field_expression = re.compile('^column_([0-9]*)_field$')
-        super( ColumnMappingAdmin, self ).__init__( admin, entity )
-        
-    def verbose_name_for_column( self, column ):
-        """Create a column name starting from an index starting at 0
-        eg : column=0 -> name='A'
-        """
-        if column <= 25:
-            return string.uppercase[column];
-        else:
-            return self.verbose_name_for_column(column/26 - 1) + self.verbose_name_for_column(column%26)        
+    verbose_name = _('Select field')
+    verbose_name_plural = _('Select fields')
 
-    def get_field_attributes( self, field_name ):
-        fa = ObjectAdmin.get_field_attributes( self, field_name )
-        match = self.column_field_expression.match( field_name )
-        if match != None:
-            column = int( match.group(1) )
-            fa.update( { 'delegate':delegates.ComboBoxDelegate,
-                         'editable':True,
-                         'name':self.verbose_name_for_column( column ),
-                         'choices': [(None,'')] + self.field_choices } )
-        return fa
-            
-    def get_form_display( self ):
-        columns = self.columns
-        rows = [ [ 'column_%i_value'%i,
-                   'column_%i_field'%i ] for i in range( columns ) 
-                                 ]
-        return forms.Form( [ forms.GridForm( rows ) ], scrollbars = True )
+    list_action = None
+    list_display = ['column_name', 'field', 'value']
+    field_attributes = {'column_name': {'name':_('Column'),},}
     
-class ColumnSelectionAdmin( ColumnMappingAdmin ):
+    def __init__(self, admin, entity = ColumnMapping, field_choices=[]):
+        super(ColumnMappingAdmin, self).__init__(admin, entity)
+        self.field_choices = [(None,'')] + field_choices
+        
+    def get_field_attributes( self, field_name ):
+        fa = ObjectAdmin.get_field_attributes(self, field_name)
+        if field_name=='field':
+            fa.update({'delegate':delegates.ComboBoxDelegate,
+                        'editable':True,
+                        'choices': self.field_choices })
+        return fa
+    
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        return [ShowNext(), ShowPrevious(), MatchNames()]
+
+class ColumnSelectionAdmin(ColumnMappingAdmin):
     """Admin to edit a `ColumnMapping` class without data preview
     """
     
-    form_actions = []
+    list_display = ['column_name', 'field']
+    list_actions = []
+    related_toolbar_actions = []
     
-    def get_form_display( self ):
-        columns = self.columns
-        return forms.Form( [ 'column_%i_field'%i for i in range( columns ) ], 
-                           scrollbars = True )    
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        return self.related_toolbar_actions
 
 # see http://docs.python.org/library/csv.html
-class UTF8Recoder( object ):
+class UTF8Recoder( six.Iterator ):
     """Iterator that reads an encoded stream and reencodes the input to
     UTF-8."""
 
     def __init__(self, f, encoding):
-        self.reader = codecs.getreader(encoding)(f)
+        self.reader = f
 
     def __iter__(self):
         return self
 
-    def next(self):
-        return self.reader.next().encode('utf-8')
+    def __next__(self):
+        return six.next(self.reader).encode('utf-8')
 
 # see http://docs.python.org/library/csv.html
-class UnicodeReader( object ):
+class UnicodeReader( six.Iterator ):
     """A CSV reader which will iterate over lines in the CSV file "f", which is
     encoded in the given encoding."""
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        f = UTF8Recoder(f, encoding)
+        if six.PY3==False:
+            f = UTF8Recoder(f, encoding)
         self.encoding = encoding
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.line = 0
 
-    def next( self ):
+    def __next__( self ):
         self.line += 1
         try:
-            row = self.reader.next()
-            return [unicode(s, 'utf-8') for s in row]
-        except UnicodeError, exception:
+            row = six.next(self.reader)
+            if six.PY3==False:
+                return [six.text_type(s, 'utf-8') for s in row]
+            else:
+                return row
+        except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
-                                 detail = ugettext('Exception occured at line %s : ') % self.line + unicode( exception ) )
+                                 detail = ugettext('Exception occured at line %s : ') % self.line + six.text_type( exception ) )
 
     def __iter__( self ):
         return self
     
-class XlsReader( object ):
+class XlsReader( six.Iterator ):
     """Read an XLS/XLSX file and iterator over its lines.
     
     The iterator returns each line of the excel as a list of strings.
     
     The to_string field attribute is supposed to be able to interprete those
     strings and create a valid datatype.
+    
+    :param filename: the name of the xls or xlsx file
     """
     
     def __init__( self, filename ):
-        import xlrd
-        # assume a single sheet xls doc
-        formatting_info = True
-        # xlsx does not yet support formatting info
-        if filename.endswith('.xlsx'):
-            formatting_info = False
-        workbook = xlrd.open_workbook( filename,
-                                       formatting_info = formatting_info )
-        self.xf_list = workbook.xf_list
-        self.datemode = workbook.datemode
-        self.format_map = workbook.format_map
-        self.sheet = workbook.sheets()[0]
-        self.current_row = 0
-        self.rows = self.sheet.nrows
+        SUPPORTED_FORMATS = ('.xlsx', '.xlsm', '.xltx', '.xltm')
+        extension = os.path.splitext(filename)[1]
+        if extension not in SUPPORTED_FORMATS:
+            raise UserException(
+                u'{0} is not a supported file format'.format(extension),
+                detail = u'supported formats are ' + u', '.join(SUPPORTED_FORMATS)
+            )
+        import openpyxl
+        # use these options to keep memory usage under control
+        workbook = openpyxl.load_workbook(
+            filename, data_only=True, keep_vba=False, read_only=True
+        )
+        self.sheets = workbook.worksheets
+        self.sheet = workbook.active
         self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
-        
-    def get_format_string( self, xf_index ):
-        """:return: the string that specifies the format of a cell"""
-        # xlsx has no formatting info, as such the xf_index is None
-        if xf_index == None:
-            return '0.00'
-        try:
-            xf = self.xf_list[ xf_index ]
-        except IndexError:
-            return '0.00'
-        if xf._format_flag == 0:
-            return self.get_format_string( xf.parent_style_index )
-        f = self.format_map[ xf.format_key ]
-        return f.format_str
-        
-    def next( self ):
-        import xlrd
-        if self.current_row < self.rows:
-            vector = []    
-            for column in range( self.sheet.ncols ):
-                cell = self.sheet.cell( self.current_row, column )
-                ctype = cell.ctype
-                value = ''
-                if ctype in( xlrd.XL_CELL_EMPTY, 
-                             xlrd.XL_CELL_ERROR,
-                             xlrd.XL_CELL_BLANK ):
-                    pass
-                elif ctype == xlrd.XL_CELL_TEXT:
-                    value = unicode( cell.value )
-                elif ctype == xlrd.XL_CELL_NUMBER:
-                    format_string = self.get_format_string( cell.xf_index )
-                    # try to display the number with the same precision as
-                    # it was displayed in excel
-                    precision = max( 0, format_string.count('0') - 1 )
-                    # see the arguments format documentation of QString
-                    # format can be eiter 'f' or 'e', where 'e' is scientific
-                    # so maybe the format string should be parsed further to
-                    # see if it specifies scientific notation.  scientific
-                    # notation is not used because it loses precision when 
-                    # converting to a string
-                    value = unicode( self.locale.toString( cell.value, 
-                                                           format = 'f',
-                                                           precision = precision ) )
-                elif ctype == xlrd.XL_CELL_DATE:
-                    # this only handles dates, no datetime or time
-                    date_tuple = xlrd.xldate_as_tuple( cell.value, 
-                                                       self.datemode )
-                    dt = QtCore.QDate( *date_tuple[:3] )
-                    value = unicode( dt.toString( self.date_format ) )
-                elif ctype == xlrd.XL_CELL_BOOLEAN:
-                    value = 'false'
-                    if cell.value == 1:
-                        value = 'true'
-                else:
-                    logger.error( 'unknown ctype %s when importing excel'%ctype )
-                vector.append( value )
-            self.current_row += 1
-            return vector
-        else:
-            raise StopIteration()
 
     def __iter__( self ):
-        return self
-    
-class RowDataAdmin(object):
+        for row in self.sheet.iter_rows():
+            vector = []
+            for cell in row:
+                value = cell.value
+                if value is None:
+                    value = u''
+                if value is True:
+                    value = u'true'
+                elif value is False:
+                    value = u'false'
+                elif isinstance(value, six.integer_types):
+                    # QLocale.toString doesn't seems to work with long ints
+                    value = six.text_type(value)
+                elif isinstance(value, float):
+                    format_string = cell.number_format
+                    ## try to display the number with the same precision as
+                    ## it was displayed in excel
+                    precision = max( 0, format_string.count('0') - 1 )
+                    ## see the arguments format documentation of QString
+                    ## format can be eiter 'f' or 'e', where 'e' is scientific
+                    ## so maybe the format string should be parsed further to
+                    ## see if it specifies scientific notation.  scientific
+                    ## notation is not used because it loses precision when 
+                    ## converting to a string
+                    value = six.text_type(self.locale.toString(
+                        value, format = 'f', precision = precision
+                    ))
+                elif isinstance(value, datetime.datetime):
+                    dt = QtCore.QDate(value.year, value.month, value.day)
+                    value = six.text_type(dt.toString(self.date_format))
+                elif isinstance(value, six.binary_type):
+                    value = value.decode('utf-8')
+                elif isinstance(value, six.text_type):
+                    pass
+                else:
+                    logger.error('unknown type {0} when importing excel'.format(type(value)))
+                vector.append( value )
+            yield vector
+
+class RowDataAdmin(ObjectAdmin):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported.
@@ -327,28 +323,56 @@ class RowDataAdmin(object):
     
     :param admin: the `camelot.admin.object_admin.ObjectAdmin` admin object 
         of the objects that will be imported
-    :param column_mapping: the `ColumnMapping` object that maps the columns
+    :param column_mappings: list of `ColumnMapping` object that maps the columns
         in the row data to fields of the objects.
     """
 
-    list_action = None
+    list_action = RowNumberAction()
+    list_actions = [DeleteSelection()]
     
-    def __init__(self, admin, column_mapping):
+    def __init__(self, admin, column_mappings):
+        super(RowDataAdmin, self).__init__(admin, RowData)
         self.admin = admin
-        self.column_mapping = column_mapping
         self._new_field_attributes = {}
-        self._columns = None
+        self._columns = []
+        for column_mapping in column_mappings:
+            field_name = 'column_%i'%column_mapping.column
+            original_field = column_mapping.field
+            if original_field != None:
+                fa = self.new_field_attributes(original_field)
+                self._columns.append( (field_name, fa) )
+                self._new_field_attributes[field_name] = fa
 
-    def __getattr__(self, attr):
-        return getattr(self.admin, attr)
+    def get_columns(self):
+        return self._columns
+
+    def get_verbose_name(self):
+        return self.admin.get_verbose_name()
+
+    def get_verbose_name_plural(self):
+        return self.admin.get_verbose_name_plural()
+
+    def get_verbose_identifier(self, obj):
+        return six.text_type()
 
     def get_fields(self):
         return self.get_columns()
-    
+
+    def get_settings(self):
+        settings = self.admin.get_settings()
+        settings.beginGroup('import')
+        return settings
+
     def get_table(self):
         return Table( [fn for fn, _fa in self.get_columns()] )
 
-    def get_validator(self, model):
+    def get_all_fields_and_attributes(self):
+        """
+        reimplementation needed to support replace field contents during import
+        """
+        return self._new_field_attributes
+
+    def get_validator(self, model=None):
         """Creates a validator that validates the data to be imported, the
         validator will check if the background of the cell is pink, and if it
         is it will mark that object as invalid.
@@ -357,7 +381,7 @@ class RowDataAdmin(object):
 
         class NewObjectValidator(ObjectValidator):
 
-            def objectValidity(self, obj):
+            def validate_object(self, obj):
                 columns = self.admin.get_columns()
                 dynamic_attributes = self.admin.get_dynamic_field_attributes(
                     obj,
@@ -371,25 +395,29 @@ class RowDataAdmin(object):
 
         return NewObjectValidator(self, model)
 
-    def flush(self, obj):
-        """When flush is called, don't do anything, since we'll only save the
-        object when importing them for real"""
-        pass
-    
-    def delete(self, obj):
-        pass
+    def get_related_admin(self, cls):
+        return self.admin.get_related_admin(cls)
+
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        if toolbar_area==Qt.RightToolBarArea:
+            return self.list_actions
 
     def get_field_attributes(self, field_name):
         return self._new_field_attributes[field_name]
 
     def get_static_field_attributes(self, field_names):
-        for _field_name in field_names:
-            yield {'editable':True}
+        for field_name in field_names:
+            attributes = self.get_field_attributes(field_name)
+            yield {'editable':True,
+                   'name': attributes['name'],
+                   'delegate': attributes['delegate'],
+                   'column_width': attributes['column_width'],
+                   'field_name': field_name}
 
     def get_dynamic_field_attributes(self, obj, field_names):
         for field_name in field_names:
             attributes = self.get_field_attributes(field_name)
-            string_value = attributes['getter'](obj)
+            string_value = getattr(obj, field_name)
             valid = True
             value = None
             if 'from_string' in attributes:
@@ -405,41 +433,21 @@ class RowDataAdmin(object):
             else:
                 yield {'background_color':ColorScheme.pink_1}
 
-    def new_field_attributes(self, i, original_field):
+    def new_field_attributes(self, original_field):
         from camelot.view.controls import delegates
 
-        def create_getter(i):
-            return lambda o:getattr(o, 'column_%i'%i)
-
-        original_field_attributes = self.admin.get_field_attributes( original_field )
+        original_field_attributes = self.admin.get_field_attributes(original_field)
         attributes = dict(original_field_attributes)
         attributes['delegate'] = delegates.PlainTextDelegate
         attributes['python_type'] = str
         attributes['original_field'] = original_field
-        attributes['getter'] = create_getter(i)
 
         # remove some attributes that might disturb the import wizard
         for attribute in ['background_color', 'tooltip']:
             attributes[attribute] = None
 
-        self._new_field_attributes['column_%i' %i] = attributes
-
         return attributes
 
-    def get_columns( self ):
-        if self._columns:
-            return self._columns
 
-        new_columns = []
-        for i in range( self.column_mapping.columns ):
-            field_name = 'column_%i' %i
-            original_field = getattr( self.column_mapping,
-                                      field_name + '_field' )
-            if original_field != None:
-                fa = self.new_field_attributes( i, original_field )
-                new_columns.append( (field_name, fa) )
-
-        self._columns = new_columns
-        return new_columns
 
 

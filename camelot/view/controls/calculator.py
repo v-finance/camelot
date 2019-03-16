@@ -1,79 +1,82 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
+from ...core.qt import QtCore, QtWidgets, q_string_type
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
-class Calculator(QtGui.QDialog):
+class Calculator(QtWidgets.QDialog):
     
-    calculation_finished_signal = QtCore.pyqtSignal(QtCore.QString)
+    calculation_finished_signal = QtCore.qt_signal(q_string_type)
     
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent)
-        mainLayout = QtGui.QVBoxLayout()
-        topLeftLayout = QtGui.QVBoxLayout()
-        topRightLayout = QtGui.QHBoxLayout()
-        bottomRightLayout = QtGui.QHBoxLayout()
-        bottomLayout = QtGui.QGridLayout()
+        QtWidgets.QDialog.__init__(self, parent)
+        mainLayout = QtWidgets.QVBoxLayout()
+        topLeftLayout = QtWidgets.QVBoxLayout()
+        topRightLayout = QtWidgets.QHBoxLayout()
+        bottomRightLayout = QtWidgets.QHBoxLayout()
+        bottomLayout = QtWidgets.QGridLayout()
 
         self.setWindowTitle(_('Calculator'))
-        self.input = QtGui.QLineEdit(self)
+        self.input = QtWidgets.QLineEdit(self)
         self.input.textEdited.connect(self.Calculate)
 
         #BUTTONS---
 
-        self.equals = QtGui.QPushButton('=', self)
-        self.discount = QtGui.QPushButton('Discount', self)
-        self.save = QtGui.QPushButton('&Save', self)
-        self.cancel = QtGui.QPushButton('Cancel', self)
+        self.equals = QtWidgets.QPushButton('=', self)
+        self.discount = QtWidgets.QPushButton('Discount', self)
+        self.save = QtWidgets.QPushButton('&Save', self)
+        self.cancel = QtWidgets.QPushButton('Cancel', self)
 
-        self.zero = QtGui.QPushButton('0', self)
-        self.one = QtGui.QPushButton('1', self)
-        self.two = QtGui.QPushButton('2', self)
-        self.three = QtGui.QPushButton('3', self)
-        self.four = QtGui.QPushButton('4', self)
-        self.five = QtGui.QPushButton('5', self)
-        self.six = QtGui.QPushButton('6', self)
-        self.seven = QtGui.QPushButton('7', self)
-        self.eight = QtGui.QPushButton('8', self)
-        self.nine = QtGui.QPushButton('9', self)
+        self.zero = QtWidgets.QPushButton('0', self)
+        self.one = QtWidgets.QPushButton('1', self)
+        self.two = QtWidgets.QPushButton('2', self)
+        self.three = QtWidgets.QPushButton('3', self)
+        self.four = QtWidgets.QPushButton('4', self)
+        self.five = QtWidgets.QPushButton('5', self)
+        self.six = QtWidgets.QPushButton('6', self)
+        self.seven = QtWidgets.QPushButton('7', self)
+        self.eight = QtWidgets.QPushButton('8', self)
+        self.nine = QtWidgets.QPushButton('9', self)
 
-        self.clear = QtGui.QPushButton('&Clear', self)
+        self.clear = QtWidgets.QPushButton('&Clear', self)
 
-        self.backspace = QtGui.QToolButton()
+        self.backspace = QtWidgets.QToolButton()
         icon = Icon('tango/16x16/actions/go-previous.png').getQIcon()
         self.backspace.setIcon(icon)
         self.backspace.setAutoRaise(True)
 
-        self.plus = QtGui.QPushButton('+', self)
-        self.min = QtGui.QPushButton('-', self)
-        self.multiply = QtGui.QPushButton('x', self)
-        self.devide = QtGui.QPushButton('/', self)
-        self.comma = QtGui.QPushButton(',', self)
+        self.plus = QtWidgets.QPushButton('+', self)
+        self.min = QtWidgets.QPushButton('-', self)
+        self.multiply = QtWidgets.QPushButton('x', self)
+        self.devide = QtWidgets.QPushButton('/', self)
+        self.comma = QtWidgets.QPushButton(',', self)
 
         #Button-Connects---
         self.equals.clicked.connect(self.ShowCalculate)
@@ -98,7 +101,7 @@ class Calculator(QtGui.QDialog):
         self.save.clicked.connect(self.SaveValue)
         self.discount.clicked.connect(self.discountClick)
 
-        self.output = QtGui.QLabel(self)
+        self.output = QtWidgets.QLabel(self)
         #self.output.move(3, 8)
 
         mainLayout.addLayout(topLeftLayout)
@@ -131,14 +134,14 @@ class Calculator(QtGui.QDialog):
         self.setLayout(mainLayout)
 
     def keyPressEvent(self, event):
-        #QtGui.QWidget.keyPressEvent(self, event)
+        #QtWidgets.QWidget.keyPressEvent(self, event)
 
         key = event.key()
         if key == QtCore.Qt.Key_S:
             self.SaveValue()
             return
         else:
-            QtGui.QDialog.keyPressEvent(self, event)
+            QtWidgets.QDialog.keyPressEvent(self, event)
 
     def SaveValue(self):
         self.calculation_finished_signal.emit( self.output.text() )
@@ -171,15 +174,15 @@ class Calculator(QtGui.QDialog):
             return
 
         if input == str(self.output.text()):
-            reply = QtGui.QMessageBox.question(
+            reply = QtWidgets.QMessageBox.question(
                 self,
                 'Message',
                 'Do you want to Save and Quit?',
-                QtGui.QMessageBox.Yes,
-                QtGui.QMessageBox.No
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
             )
 
-            if reply == QtGui.QMessageBox.Yes:
+            if reply == QtWidgets.QMessageBox.Yes:
                 self.SaveValue()
 
         try:
@@ -203,7 +206,7 @@ class Calculator(QtGui.QDialog):
 
         #self.input.setText(str(eval(self.output.text())))
 
-        text, ok = QtGui.QInputDialog.getText(
+        text, ok = QtWidgets.QInputDialog.getText(
             self, 'Input Dialog', 'Enter percentage'
         )
 
@@ -219,6 +222,7 @@ class Calculator(QtGui.QDialog):
         self.input.setText('')
         self.Calculate()
         self.input.setFocus()
+
 
 
 

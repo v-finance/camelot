@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -34,7 +39,10 @@ import collections
 import datetime
 import logging
 
-from sqlalchemy import func, sql, orm, exc
+from sqlalchemy import sql, orm, exc
+
+import six
+
 
 from camelot.core.utils import ugettext
 
@@ -70,7 +78,7 @@ class Change( object ):
         self.by = row.by
         self.changes = None
         if row.previous_attributes:
-            self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
+            self.changes = u', '.join( ugettext('%s was %s')%(k,six.text_type(v)) for k,v in six.iteritems(row.previous_attributes) )
         self.memento_type = row.memento_type
         
 class SqlMemento( object ):
@@ -116,22 +124,24 @@ class SqlMemento( object ):
         :param memento_changes: an iterator over `memento_change` tuples that 
         need to be stored in the memento table.
         """
-        rows = list()
+        from camelot.core.orm import Session
+        from camelot.model.memento import Memento
         authentication_id = self._get_authentication_id()
+        connection = Session().connection(mapper=orm.class_mapper( Memento ))
+        session = orm.Session(bind=connection, autocommit=True)
+        mementos = []
         for m in memento_changes:
             if len( m.primary_key ) == 1:
-                rows.append( { 'model':m.model,
-                               'primary_key':m.primary_key[0],
-                               'previous_attributes':m.previous_attributes,
-                               'memento_type':self.memento_id_by_type.get(m.memento_type, None),
-                               'authentication_id':authentication_id,
-                                } )
-        if len( rows ):
-            table = self._get_memento_table()
-            clause = table.insert( creation_date = func.current_timestamp() )
+                mementos.append( Memento( model=m.model,
+                                          primary_key=m.primary_key[0],
+                                          previous_attributes=m.previous_attributes,
+                                          memento_type=self.memento_id_by_type.get(m.memento_type, None),
+                                          authentication_id=authentication_id,
+                                          _session=session ) )
+        if len( mementos ):
             try:
-                clause.execute( rows )
-            except exc.DatabaseError, e:
+                session.flush()
+            except exc.DatabaseError as e:
                 LOGGER.error( 'Programming Error, could not flush history', exc_info = e )                
     
     def get_changes( self, 
@@ -168,4 +178,5 @@ class SqlMemento( object ):
         query = query.order_by( memento_c.creation_date.desc() )
         for row in authentication_table.bind.execute( query ):
             yield Change( self, row )
+
 

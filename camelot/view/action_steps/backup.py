@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -27,13 +32,14 @@
 :class:`camelot.admin.action.application.Restore` action
 """
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+import six
+
+from ...core.qt import QtGui, QtCore, QtWidgets, py_to_variant, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext, variant_to_pyobject
+from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.art import Icon
@@ -41,7 +47,7 @@ import logging
 
 logger = logging.getLogger('camelot.view.action_step.backup')
 
-class LabelLineEdit( QtGui.QLineEdit ):
+class LabelLineEdit( QtWidgets.QLineEdit ):
     
     _file_name = ''
 
@@ -63,7 +69,7 @@ class LabelLineEdit( QtGui.QLineEdit ):
     def filename(self):
         return self._file_name
 
-class LabelComboBox(QtGui.QComboBox):
+class LabelComboBox(QtWidgets.QComboBox):
     
     _file_name = ''
 
@@ -72,12 +78,12 @@ class LabelComboBox(QtGui.QComboBox):
         for i, stored_file in enumerate( stored_files):
             if i == 0:
                 self._file_name = stored_file.name
-            self.addItem( unicode( stored_file.verbose_name ), 
-                          QtCore.QVariant( stored_file ) )            
+            self.addItem( six.text_type( stored_file.verbose_name ), 
+                          py_to_variant( stored_file ) )            
         self.currentIndexChanged[int].connect(self._onCurrentIndexChanged)
 
     def _onCurrentIndexChanged( self, index ):
-        self._file_name = variant_to_pyobject( self.itemData(index) ).name
+        self._file_name = variant_to_py( self.itemData(index) ).name
 
     def filename( self ):
         return self._file_name
@@ -109,19 +115,19 @@ class SelectDialog( StandaloneWizardPage ):
         # controls
         self._default_radio = QtGui.QRadioButton(ugettext('Default Location'))
         self._custom_radio = QtGui.QRadioButton(ugettext('Custom Location'))
-        self._custom_edit = QtGui.QLineEdit()
-        self._custom_button = QtGui.QPushButton(ugettext('Browse...'))
+        self._custom_edit = QtWidgets.QLineEdit()
+        self._custom_button = QtWidgets.QPushButton(ugettext('Browse...'))
         button_group = QtGui.QButtonGroup(self)
         button_group.addButton(self._default_radio)
         button_group.addButton(self._custom_radio)
 
         # layout
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self._default_radio)
-        self._hlayout = QtGui.QHBoxLayout()
+        self._hlayout = QtWidgets.QHBoxLayout()
         layout.addLayout(self._hlayout)
         layout.addWidget(self._custom_radio)
-        hlayout2 = QtGui.QHBoxLayout()
+        hlayout2 = QtWidgets.QHBoxLayout()
         hlayout2.addWidget(self._custom_edit)
         hlayout2.addWidget(self._custom_button)
         layout.addLayout(hlayout2)        
@@ -134,12 +140,12 @@ class SelectDialog( StandaloneWizardPage ):
         self._custom_edit.textChanged.connect(self.complete_changed)
         
         # buttons
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
+        cancel_button = QtWidgets.QPushButton( ugettext('Cancel') )
+        ok_button = QtWidgets.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
-        layout = QtGui.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout = QtWidgets.QHBoxLayout()
+        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
         layout.addStretch()
@@ -157,7 +163,7 @@ class SelectDialog( StandaloneWizardPage ):
 
     def _customButtonClicked(self):
         settings = QtCore.QSettings()
-        previous_location = settings.value( self.settings_key ).toString()
+        previous_location = variant_to_py(settings.value( self.settings_key ))
         path = self._setPath( previous_location )
         if path:
             self._custom_edit.setText(QtCore.QDir.toNativeSeparators(path))
@@ -180,7 +186,7 @@ class SelectBackupDialog( SelectDialog ):
         
     def setup_widgets( self ):
         super( SelectBackupDialog, self ).setup_widgets()
-        self._default_label = QtGui.QLabel( ugettext('Label:') )
+        self._default_label = QtWidgets.QLabel( ugettext('Label:') )
         self._default_edit = LabelLineEdit( self.default_storage )
         self._default_label.setBuddy( self._default_edit )
         self._hlayout.addWidget( self._default_label )
@@ -207,13 +213,15 @@ class SelectBackupDialog( SelectDialog ):
         else:
             self.storage = None
             self.label = self._custom_edit.text()
-        ok_button = self.findChild( QtGui.QPushButton, 'ok' )
+        ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         if ok_button:
             ok_button.setEnabled( self.label != '' )
             
-    def _setPath(self, dir):
-        path = QtGui.QFileDialog.getSaveFileName(
-                self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+    def _setPath(self, start_dir):
+        path = QtWidgets.QFileDialog.getSaveFileName(
+                self, six.text_type(self.caption),
+                start_dir or u'',
+                ugettext('Database files (*%s);;All files (*.*)' % self.extension),
             )
         return path
 
@@ -255,13 +263,13 @@ class SelectRestoreDialog( SelectDialog ):
         else:
             self.label = self._custom_edit.text()
             self.storage = None
-        ok_button = self.findChild( QtGui.QPushButton, 'ok' )
+        ok_button = self.findChild( QtWidgets.QPushButton, 'ok' )
         if ok_button:
             ok_button.setEnabled( self.label != '' )
 
     def _setPath(self, dir):
-        path = QtGui.QFileDialog.getOpenFileName(
-            self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+        path = QtWidgets.QFileDialog.getOpenFileName(
+            self, six.text_type(self.caption), dir or '', ugettext('Database files (*%s);;All files (*.*)' % self.extension),
         )
         return path
 
@@ -273,7 +281,7 @@ class SelectBackup( ActionStep ):
         formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
         # replace all non-ascii chars with underscores
         import string
-        formatted_date_time_str = unicode(formatted_date_time)
+        formatted_date_time_str = six.text_type(formatted_date_time)
         for c in formatted_date_time_str:
             if c not in string.ascii_letters and c not in string.digits:
                 formatted_date_time_str = formatted_date_time_str.replace(c, '_')                
@@ -289,7 +297,7 @@ class SelectBackup( ActionStep ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
-            if result == QtGui.QDialog.Rejected:
+            if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return ( dialog.label, dialog.storage )
 
@@ -302,5 +310,6 @@ class SelectRestore( SelectBackup ):
     def render( self ):
         dialog = SelectRestoreDialog( self.default_storage, self.stored_files )
         return dialog
+
 
 

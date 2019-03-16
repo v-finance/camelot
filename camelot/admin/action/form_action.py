@@ -1,36 +1,42 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+import six
 
+from ...core.qt import QtGui, QtWidgets
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
-from application_action import ( ApplicationActionGuiContext,
+from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-import list_action
+from . import list_action
 
 class FormActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -52,7 +58,12 @@ class FormActionModelContext( ApplicationActionModelContext ):
     .. attribute:: session
     
         The session to which the objects in the list belong.
-        
+
+    .. attribute:: proxy
+
+        A :class:`camelot.core.item_model.AbstractModelProxy` object that gives
+        access to the objects in the list
+
     The :attr:`selection_count` attribute allows the 
     :meth:`model_run` to quickly evaluate the size of the collection without 
     calling the potetially time consuming method :meth:`get_collection`.
@@ -60,27 +71,27 @@ class FormActionModelContext( ApplicationActionModelContext ):
     
     def __init__( self ):
         super( FormActionModelContext, self ).__init__()
-        self._model = None
+        self.proxy = None
         self.admin = None
         self.current_row = None
         self.collection_count = 0
-        self.selection_count = 1
+        self.selection_count = 0
         
     def get_object( self ):
         """
         :return: the object currently displayed in the form, None if no object
             is displayed yet
         """
-        if self.current_row != None:
-            return self._model._get_object( self.current_row )
-    
+        for obj in self.get_selection():
+            return obj
+
     def get_collection( self, yield_per = None ):
         """
         :param yield_per: an integer number giving a hint on how many objects
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self._model.get_collection():
+        for obj in self.proxy[0, self.collection_count]:
             yield obj
             
     def get_selection( self, yield_per = None ):
@@ -95,9 +106,10 @@ class FormActionModelContext( ApplicationActionModelContext ):
             form and does not yield anything if no object is displayed yet
             in the form.
         """
-        if self.current_row != None:
-            yield self._model._get_object( self.current_row )
-        
+        if self.selection_count:
+            for obj in self.proxy[self.current_row:self.current_row+1]:
+                yield obj
+
 class FormActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a form.  On top of the attributes of the 
     :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
@@ -122,11 +134,18 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         self.widget_mapper = None
         self.view = None
 
+    def get_window(self):
+        if self.view is not None:
+            return self.view.window()
+        return super(FormActionGuiContext, self).get_window()
+
     def create_model_context( self ):
         context = super( FormActionGuiContext, self ).create_model_context()
-        context._model = self.widget_mapper.model()
-        context.collection_count = context._model.rowCount()
-        context.current_row = self.widget_mapper.currentIndex()
+        context.proxy = self.widget_mapper.model().get_value()
+        current_index = self.widget_mapper.currentIndex()
+        if current_index >= 0:
+            context.current_row = current_index
+            context.selection_count = 1
         return context
         
     def copy( self, base_class = None ):
@@ -163,16 +182,17 @@ class ShowHistory( Action ):
             
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
-            if None not in primary_key:
-                changes = list( memento.get_changes( model = unicode( model_context.admin.entity.__name__ ),
-                                                     primary_key = primary_key,
-                                                     current_attributes = {} ) )
-                admin = ChangeAdmin( model_context.admin, object )
-                step = action_steps.ChangeObjects( changes, admin )
-                step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
-                step.title = _('Recent changes')
-                step.subtitle = model_context.admin.get_verbose_identifier( obj )
-                yield step
+            if primary_key is not None:
+                if None not in primary_key:
+                    changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
+                                                         primary_key = primary_key,
+                                                         current_attributes = {} ) )
+                    admin = ChangeAdmin( model_context.admin, object )
+                    step = action_steps.ChangeObjects( changes, admin )
+                    step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
+                    step.title = _('Recent changes')
+                    step.subtitle = model_context.admin.get_verbose_identifier( obj )
+                    yield step
         
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
@@ -182,91 +202,89 @@ class CloseForm( Action ):
     verbose_name = _('Close')
     tooltip = _('Close this form')
     
+    def step_when_valid(self):
+        """
+        :return: the `ActionStep` to take when the current object is valid
+        """
+        from camelot.view import action_steps
+        return action_steps.CloseView()
+    
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.submit()
         super( CloseForm, self ).gui_run( gui_context )
         
     def model_run( self, model_context ):
-        from PyQt4 import QtGui
         from camelot.view import action_steps
         yield action_steps.UpdateProgress( text = _('Closing form') )
         validator = model_context.admin.get_validator()
         obj = model_context.get_object()
         admin  = model_context.admin
-        if obj == None:
-            yield action_steps.CloseView()
+        if obj is None:
+            yield self.step_when_valid()
+            raise StopIteration
         #
         # validate the object, and if the object is valid, simply close
         # the view
         #
-        messages = validator.objectValidity( obj )
+        messages = validator.validate_object( obj )
         valid = ( len( messages ) == 0 )
         if valid:
-            yield action_steps.CloseView()
+            yield self.step_when_valid()
         else:
             #
             # if the object is not valid, request the user what to do
             #
             message = action_steps.MessageBox( '\n'.join( messages ),
-                                               QtGui.QMessageBox.Warning,
+                                               QtWidgets.QMessageBox.Warning,
                                                _('Invalid form'),
-                                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard )
+                                               QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Discard )
             reply = yield message
-            if reply == QtGui.QMessageBox.Discard:
-                yield action_steps.CloseView()
+            if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
-                    yield action_steps.UpdateObject( obj )
+                    yield action_steps.UpdateObjects((obj,))
                 else:
-                    yield action_steps.DeleteObject( obj )
+                    yield action_steps.DeleteObjects((obj,))
                     admin.expunge( obj )
+                # only close the form after the object has been discarded or
+                # deleted, to avoid yielding action steps after the widget mapper
+                # has been garbage collected
+                yield self.step_when_valid()
     
-class ToPreviousForm( list_action.ToPreviousRow ):
+class ToPreviousForm( list_action.AbstractToPrevious, CloseForm ):
     """Move to the previous form"""
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toPrevious()
-        
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
-class ToFirstForm( list_action.ToFirstRow ):
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToPreviousForm()
+
+class ToFirstForm( list_action.AbstractToFirst, CloseForm ):
     """Move to the form"""
     
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toFirst()
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToFirstForm()
 
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
-class ToNextForm( list_action.ToNextRow ):
+class ToNextForm( list_action.AbstractToNext, CloseForm ):
     """Move to the next form"""
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toNext()
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToNextForm()
 
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
-class ToLastForm( list_action.ToLastRow ):
+class ToLastForm( list_action.AbstractToLast, CloseForm ):
     """Move to the last form"""
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
-        gui_context.widget_mapper.toLast()
+    def step_when_valid(self):
+        from camelot.view import action_steps
+        return action_steps.ToLastForm()
 
-    def get_state( self, model_context ):
-        return Action.get_state( self, model_context )
-    
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.  If the python
     object is a tuple, a CallMethod is constructed with this tuple as arguments.  If
     the python object is an instance of as Action, it is kept as is.
     """
-    from list_action import CallMethod
+    from .list_action import CallMethod
     
     def object_to_action( o ):
         if isinstance( o, Action ):
@@ -274,5 +292,6 @@ def structure_to_form_actions( structure ):
         return CallMethod( o[0], o[1] )
 
     return [object_to_action( o ) for o in structure]
+
 
 

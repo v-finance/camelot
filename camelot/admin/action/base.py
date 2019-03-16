@@ -1,30 +1,37 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 import logging
 
-from PyQt4 import QtGui
+from ...core.qt import QtWidgets, QtGui
+
+import six
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -32,7 +39,7 @@ class ModelContext( object ):
     """
 The Model context in which an action is running.  The model context can contain
 reference to database sessions or other model related data. This object can not 
-contain references to widgets as those belong strictly to the :class:`GuiContext`.    
+contain references to widgets as those belong strictly to the :class:`GuiContext`.
 
 .. attribute:: mode_name
 
@@ -51,7 +58,7 @@ strictly to the :class:`ModelContext`
 
 .. attribute:: progress_dialog
 
-    an instance of :class:`QtGui.QProgressDialog` or :keyword:`None`
+    an instance of :class:`QtWidgets.QProgressDialog` or :keyword:`None`
     
 .. attribute:: mode_name
 
@@ -68,7 +75,16 @@ strictly to the :class:`ModelContext`
     def __init__( self ):
         self.progress_dialog = None
         self.mode_name = None
+
+    def get_window(self):
+        """
+        The window to be used as a reference to position new windows.  Returns
+        `None` if there is no window yet.
         
+        :return: a :class:`QtWidgets.QWidget`
+        """
+        return None
+
     def create_model_context( self ):
         """Create a :class:`ModelContext` filled with base information, 
         extracted from this GuiContext.  This function will be called in the
@@ -136,7 +152,6 @@ updated state for the widget.
 
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
-
     """
     
     def __init__( self ):
@@ -175,19 +190,21 @@ the default mode.
         :param icon: the icon of the mode
         """
         self.name = name
-        self.verbose_name = verbose_name or name.capitalize()
+        if verbose_name is None:
+            verbose_name = name.capitalize()
+        self.verbose_name = verbose_name
         self.icon = icon
         
     def render( self, parent ):
-        """Create a :class:`QtGui.QAction` that can be used to enable widget
+        """Create a :class:`QtWidgets.QAction` that can be used to enable widget
         to trigger the action in a specific mode.  The data attribute of the
         action will contain the name of the mode.
         
-        :return: a :class:`QtGui.QAction` class to use this mode
+        :return: a :class:`QtWidgets.QAction` class to use this mode
         """
-        action = QtGui.QAction( parent )
+        action = QtWidgets.QAction( parent )
         action.setData( self.name )
-        action.setText( unicode(self.verbose_name) )
+        action.setText( six.text_type(self.verbose_name) )
         action.setIconVisibleInMenu( False )
         return action
         
@@ -208,9 +225,16 @@ return immediately and the :meth:`model_run` will not be blocked.
 
     a :keyword:`boolean` indicating if the ActionStep is blocking, defaults
     to :const:`True`
+    
+.. attribute:: cancelable
+
+    a :keyword:`boolean` indicating if the ActionStep is allowed to raise
+    a `CancelRequest` exception when yielded, defaults to :const:`True`
+
     """
 
     blocking = True
+    cancelable = True
             
     def gui_run( self, gui_context ):
         """This method is called in the *GUI thread* upon execution of the
@@ -271,7 +295,7 @@ method.
 .. attribute:: tooltip
 
     The tooltip as displayed to the user, this should be of type 
-    :class:`camelot.core.utils.ugettext_lazy`
+    :class:`camelot.core.utils.ugettext_lazy` or :class:`QtGui.QKeySequence`
 
 .. attribute:: modes
 
@@ -319,24 +343,42 @@ direct manipulations of the user interface without a need to access the model.
         :attr:`shortcut` attribute
         """
         return self.shortcut
-        
+
+    def get_tooltip( self ):
+        """
+        :return: a `str` with the tooltip to display, by default this is
+            a combination of the :attr:`tooltip` and the :attr:`shortcut`
+            attribute
+        """
+        tooltip = None
+
+        if self.tooltip is not None:
+            tooltip = six.text_type(self.tooltip)
+
+        if isinstance(self.shortcut, QtGui.QKeySequence):
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+        elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
+            for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                break
+        elif self.shortcut is not None:
+            tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)
+
+        return tooltip
+
     def render( self, gui_context, parent ):
         """Create a widget to trigger the action.  Depending on the type of
         gui_context and parent, a different widget type might be returned.
         
         :param gui_context: the context available in the *GUI thread*, a
             subclass of :class:`camelot.action.GuiContext`
-        :param parent: the parent :class:`QtGui.QWidget`
-        :return: a :class:`QtGui.QWidget` which when triggered
+        :param parent: the parent :class:`QtWidgets.QWidget`
+        :return: a :class:`QtWidgets.QWidget` which when triggered
             will execute the :meth:`gui_run` method.
         """
-        from camelot.view.controls.action_widget import ( ActionLabel, 
-                                                          ActionPushButton,
+        from camelot.view.controls.action_widget import ( ActionPushButton,
                                                           ActionAction )
-        from camelot.view.workspace import DesktopBackground
-        if isinstance( parent, DesktopBackground ):
-            return ActionLabel( self, gui_context, parent )
-        if isinstance( parent, (QtGui.QToolBar, QtGui.QMenu) ):
+        if isinstance( parent, (QtWidgets.QToolBar, QtWidgets.QMenu) ):
             return ActionAction( self, gui_context, parent )
         return ActionPushButton( self, gui_context, parent )
         
@@ -348,6 +390,7 @@ direct manipulations of the user interface without a need to access the model.
             of type :class:`GuiContext`
             
         """
+        from ..application_admin import ApplicationAdmin
         from camelot.view.controls.progress_dialog import ProgressDialog
         progress_dialog = None
         # only create a progress dialog if there is none yet, or if the
@@ -355,11 +398,13 @@ direct manipulations of the user interface without a need to access the model.
         LOGGER.debug( 'action gui run started' )
         if gui_context.progress_dialog and gui_context.progress_dialog.wasCanceled():
             gui_context.progress_dialog = None
-        if gui_context.progress_dialog == None:
+        if gui_context.progress_dialog is None:
             LOGGER.debug( 'create new progress dialog' )
-            progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
+            progress_dialog = ProgressDialog( six.text_type( self.verbose_name ) )
             gui_context.progress_dialog = progress_dialog
             #progress_dialog.show()
+        if gui_context.admin is None:
+            gui_context.admin = ApplicationAdmin()
         super(Action, self).gui_run( gui_context )
         # only close the progress dialog if it was created here
         if progress_dialog != None:
@@ -378,8 +423,9 @@ direct manipulations of the user interface without a need to access the model.
         state = State()
         state.verbose_name = self.verbose_name
         state.icon = self.icon
-        state.tooltip = self.tooltip
+        state.tooltip = self.get_tooltip()
         state.modes = self.modes
         return state
+
 
 

@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,10 +31,12 @@ import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
+import six
+
+from ..qt import Qt, QtGui
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
-from camelot.view.model_thread import model_function
 
 class StoredFile( object ):
     """Helper class for the File field type.
@@ -66,23 +73,20 @@ class StoredImage( StoredFile ):
         super(StoredImage, self).__init__( storage, name )
         self._thumbnails = dict()
         
-    @model_function
     def checkout_image( self ):
         """Checkout the image from the storage, this function is only to be
         used in the model thread.
         
         :return: a QImage
         """
-        from PyQt4.QtGui import QImage
         p = self.storage.checkout( self )
-        image = QImage(p)
+        image = QtGui.QImage(p)
         
         if image.isNull():
-            return QImage(':/image_not_found.png')
+            return QtGui.QImage(':/image_not_found.png')
         else:
             return image
 
-    @model_function
     def checkout_thumbnail( self, width, height ):
         """Checkout a thumbnail for this image from the storage, this function
         is only to be used in the model thread
@@ -97,7 +101,6 @@ class StoredImage( StoredFile ):
             return thumbnail_image
         except KeyError:
             pass
-        from PyQt4.QtCore import Qt
         original_image = self.checkout_image()
         thumbnail_image = original_image.scaled( width, height, Qt.KeepAspectRatio )
         self._thumbnails[key] = thumbnail_image
@@ -142,7 +145,7 @@ class Storage( object ):
         if self._upload_to == None:
             root = self._root or settings.CAMELOT_MEDIA_ROOT
             import os
-            if callable( root ):
+            if six.callable( root ):
                 root = root()
             self._upload_to = os.path.join( root, self._subfolder )
         return self._upload_to
@@ -157,7 +160,7 @@ class Storage( object ):
             if not os.path.exists( self.upload_to ):
                 os.makedirs( self.upload_to )
             return True
-        except Exception, e:
+        except Exception as e:
             logger.warn( 'Could not access or create path %s, files will be unreachable' % self.upload_to, exc_info = e )
 
     def writeable(self):
@@ -196,7 +199,7 @@ class Storage( object ):
         #       able to get directory separators in here or something related
         try:
             return tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if not self.available():
                 raise UserException( text = ugettext('The directory %s does not exist')%(self.upload_to),
                                      resolution = ugettext( 'Contact your system administrator' ) )
@@ -283,4 +286,5 @@ class Storage( object ):
 
     def delete( self, name ):
         pass
+
 

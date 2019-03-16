@@ -1,37 +1,45 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """Helper functions for the view subpackage"""
 
-from HTMLParser import HTMLParser
+from six.moves import html_parser
 
-from PyQt4 import QtCore, QtGui
+import six
 
 from datetime import datetime, time, date
+import decimal
 import re
+import string
 import logging
 import operator
 
+from ..core.qt import QtCore, QtWidgets
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
@@ -45,16 +53,24 @@ logger = logging.getLogger('camelot.view.utils')
 _local_date_format = None
 _local_datetime_format = None
 _local_time_format = None
+_locale = None
+
+def locale():
+    """Get the default locale and cache it for reuse"""
+    global _locale
+    if _locale is None:
+        _locale = QtCore.QLocale()
+    return _locale
 
 def local_date_format():
     """Get the local data format and cache it for reuse"""
     global _local_date_format
     if not _local_date_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', unicode(locale.dateFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', six.text_type(locale.dateFormat(locale.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
-        _local_date_format = unicode(u''.join(format_sequence))
+        _local_date_format = six.text_type(u''.join(format_sequence))
     return _local_date_format
 
 def local_datetime_format():
@@ -62,10 +78,10 @@ def local_datetime_format():
     global _local_datetime_format
     if not _local_datetime_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', unicode(locale.dateTimeFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', six.text_type(locale.dateTimeFormat(locale.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
-        _local_datetime_format = unicode(u''.join(format_sequence))
+        _local_datetime_format = six.text_type(u''.join(format_sequence))
     return _local_datetime_format
 
 def local_time_format():
@@ -73,21 +89,21 @@ def local_time_format():
     global _local_time_format
     if not _local_time_format:
         locale = QtCore.QLocale()
-        _local_time_format = unicode(locale.timeFormat(locale.ShortFormat) )
+        _local_time_format = six.text_type(locale.timeFormat(locale.ShortFormat) )
     return _local_time_format
 
 def default_language(*args):
     """takes arguments, to be able to use this function as a
     default field attribute"""
     locale = QtCore.QLocale()
-    return unicode(locale.name())
+    return six.text_type(locale.name())
 
 class ParsingError(Exception): pass
 
 def string_from_string(s):
     if not s:
         return None
-    return unicode(s)
+    return six.text_type(s)
 
 def bool_from_string(s):
     if s is None: raise ParsingError()
@@ -102,10 +118,8 @@ def date_from_string(s):
     s = s.strip()
     if not s:
         return None
-    from PyQt4.QtCore import QDate
-    import string
     f = local_date_format()
-    dt = QDate.fromString(s, f)
+    dt = QtCore.QDate.fromString(s, f)
     if not dt.isValid():
         #
         # if there is a mismatch of 1 in length between format and
@@ -113,15 +127,15 @@ def date_from_string(s):
         #
         if len(f) == len(s) + 1:
             s = '0' + s
-            dt = QDate.fromString(s, f)
+            dt = QtCore.QDate.fromString(s, f)
     if not dt.isValid():
         #
-	# try alternative separators
+        # try alternative separators
         #
         separators = u''.join([c for c in f if c not in string.ascii_letters])
         if separators:
             alternative_string = u''.join([(c if c in string.digits else separators[0]) for c in s])
-            dt = QDate.fromString(alternative_string, f)
+            dt = QtCore.QDate.fromString(alternative_string, f)
     if not dt.isValid():
         # try parsing without separators
         # attention : using non ascii letters will fail on windows
@@ -129,11 +143,11 @@ def date_from_string(s):
         # encoding, so we cannot convert them to unicode to compare them
         only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
-        dt = QDate.fromString(only_letters_string, only_letters_format)
+        dt = QtCore.QDate.fromString(only_letters_string, only_letters_format)
         if not dt.isValid():
             # try parsing without the year, and take the current year by default
             only_letters_format = u''.join([c for c in only_letters_format if c not in ['y']])
-            dt = QDate.fromString(only_letters_string, only_letters_format)
+            dt = QtCore.QDate.fromString(only_letters_string, only_letters_format)
             if not dt.isValid():
                 raise ParsingError()
 #                # try parsing without year and month, and take the current year and month by default
@@ -152,9 +166,8 @@ def time_from_string(s):
     s = s.strip()
     if not s:
         return None
-    from PyQt4.QtCore import QTime
     f = local_time_format()
-    tm = QTime.fromString(s, f)
+    tm = QtCore.QTime.fromString(s, f)
     if not tm.isValid():
         raise ParsingError()
     return time( tm.hour(), tm.minute(), tm.second() )
@@ -163,29 +176,25 @@ def datetime_from_string(s):
     s = s.strip()
     if not s:
         return None
-    from PyQt4.QtCore import QDateTime
     f = local_datetime_format()
-    dt = QDateTime.fromString(s, f)
+    dt = QtCore.QDateTime.fromString(s, f)
     if not dt.isValid():
         raise ParsingError()
     return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 
                     dt.time().hour(), dt.time().minute(), dt.time().second())
 
-def code_from_string(s, separator):
-    return s.split(separator)
-
 def int_from_string(s):
     value = float_from_string(s)
     if value != None:
-	value = int( value )
+        value = int( value )
     return value
 
 def float_from_string(s):
     if s == None:
-	return None
+        return None
     s = s.strip()
     if len(s) == 0:
-	return None
+        return None
     locale = QtCore.QLocale()
     # floats in python are implemented as double in C
     f, ok = locale.toDouble(s)
@@ -193,11 +202,15 @@ def float_from_string(s):
         raise ParsingError()
     return f
 
+def decimal_from_string(s):
+    # direct conversion not possible, due to locale
+    return decimal.Decimal( float_from_string( s ) )
+
 def pyvalue_from_string(pytype, s):
     if pytype is str:
         return str(s)
-    elif pytype is unicode:
-        return unicode(s)
+    elif pytype is six.text_type:
+        return six.text_type(s)
     elif pytype is bool:
         return bool_from_string(s)
     elif pytype is date:
@@ -213,11 +226,11 @@ def pyvalue_from_string(pytype, s):
 
 def to_string( value ):
     if value == None:
-	return u''
-    return unicode( value )
+        return u''
+    return six.text_type( value )
 
 def enumeration_to_string(value):
-    return ugettext(unicode(value or u'').replace('_', ' ').capitalize())
+    return ugettext(six.text_type(value or u'').replace('_', ' ').capitalize())
 
 operator_names = {
     operator.eq : _( u'=' ),
@@ -238,9 +251,10 @@ def text_from_richtext( unstripped_text ):
     """
     strings = ['']
     if not unstripped_text:
-	    return strings
+        return strings
 
-    class HtmlToTextParser(HTMLParser):
+    class HtmlToTextParser(html_parser.HTMLParser):
+        
         def handle_endtag(self, tag):
             if tag == 'br':
                 strings.append('')
@@ -252,17 +266,25 @@ def text_from_richtext( unstripped_text ):
                 strings.append(escape(data))
 
     parser = HtmlToTextParser()
-    parser.feed(unstripped_text.strip())
+    try:
+        parser.feed(unstripped_text.strip())
+    except html_parser.HTMLParseError:
+        logger.debug('html parse error')
 
     return strings
 
+def richtext_to_string(value):
+    if value is None:
+        return u''
+    return u'\n'.join([line for line in text_from_richtext(value)])
+
 def resize_widget_to_screen( widget, fraction = 0.75 ):
     """Resize a widget to fill a certain fraction of the screen
-    
+
     :param widget: the widget to resize
     :param fraction: the fraction of the screen to fill after the resize
     """
-    desktop = QtGui.QApplication.desktop()
+    desktop = QtWidgets.QApplication.desktop()
     available_geometry = desktop.availableGeometry( widget )
     # use the size of the screen instead to set the dialog size
     widget.resize( available_geometry.width() * 0.75, 

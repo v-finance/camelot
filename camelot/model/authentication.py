@@ -1,47 +1,63 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Set of classes to store authentication and permissions
 """
-
+import base64
 import datetime
 import threading
 
-from sqlalchemy.types import Date, Unicode, DateTime, Integer
+import six
+
+from sqlalchemy import types
+
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy import orm
 
 import camelot.types
-from camelot.core.document import documented_entity
+from ..core.qt import QtCore, QtGui
 from camelot.core.orm import Entity, Session, ManyToMany
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view import forms
 from camelot.view.controls import delegates
 
+END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
+
+#
+# Enumeration of the types of authentication supported
+#
+authentication_types = [ (1, 'operating_system'),
+                         (2, 'database') ]
+
 def end_of_times():
-    return datetime.date( year = 2400, month = 12, day = 31 )
+    return END_OF_TIMES
 
 _current_authentication_ = threading.local()
 
@@ -52,7 +68,11 @@ def get_current_authentication( _obj = None ):
         or not _current_authentication_.mechanism \
         or not orm.object_session( _current_authentication_.mechanism ):
             import getpass
-            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
+            if six.PY3:
+                user = getpass.getuser()
+            else:
+                user = six.text_type( getpass.getuser(), encoding='utf-8', errors='ignore' )
+            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( user )
     return _current_authentication_.mechanism
 
 def clear_current_authentication():
@@ -88,21 +108,20 @@ def update_last_login( initial_group_name = None,
 #
 roles = []
 
-@documented_entity()
 class AuthenticationMechanism( Entity ):
     
     __tablename__ = 'authentication_mechanism'
     
-    authentication_type = Column( camelot.types.Enumeration( [ (1, 'operating_system'),
-                                                               (2, 'database') ] ),
+    authentication_type = Column( camelot.types.Enumeration(authentication_types),
                                   nullable = False, 
                                   index = True , 
-                                  default = 'operating_system' )
-    username = Column( Unicode( 40 ), nullable = False, index = True, unique = True )
-    password = Column( Unicode( 200 ), nullable = True, index = False, default = None )
-    from_date = Column( Date(), default = datetime.date.today, nullable = False, index = True )
-    thru_date = Column( Date(), default = end_of_times, nullable = False, index = True )
-    last_login = Column( DateTime() )
+                                  default = authentication_types[0][1] )
+    username = Column( types.Unicode( 40 ), nullable = False, index = True, unique = True )
+    password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
+    from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
+    thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
+    last_login = Column( types.DateTime() )
+    representation = Column( types.Text(), nullable=True )
 
     @classmethod
     def get_or_create( cls, username ):
@@ -114,6 +133,27 @@ class AuthenticationMechanism( Entity ):
             session.flush()
         return authentication
 
+    def get_representation(self):
+        """
+        :return: a :class:`QtGui.QImage` object with the avatar of the user,
+            or `None`.
+        """
+        if self.representation is None:
+            return self.representation
+        return QtGui.QImage.fromData(base64.b64decode(self.representation))
+    
+    def set_representation(self, image):
+        """
+        :param image: a :class:`QtGui.QImage` object with the avatar of the user,
+            or `None`.
+        """
+        if image is None:
+            self.representation=None
+        qbyte_array = QtCore.QByteArray()
+        qbuffer = QtCore.QBuffer( qbyte_array )
+        image.save( qbuffer, 'PNG' )
+        self.representation=base64.b64encode(qbyte_array.data())
+        
     def has_role( self, role_name ):
         """
         :param role_name: a string with the name of the role
@@ -133,7 +173,6 @@ class AuthenticationMechanism( Entity ):
         verbose_name = _('Authentication mechanism')
         list_display = ['authentication_type', 'username', 'from_date', 'thru_date', 'last_login']
 
-@documented_entity()
 class AuthenticationGroup( Entity ):
     """A group of users (defined by their :class:`AuthenticationMechanism`).
     Different roles can be assigned to a group.
@@ -141,7 +180,7 @@ class AuthenticationGroup( Entity ):
     
     __tablename__ = 'authentication_group'
     
-    name = Column( Unicode(256), nullable=False )
+    name = Column( types.Unicode(256), nullable=False )
     members = ManyToMany( AuthenticationMechanism, 
                           tablename = 'authentication_group_member',
                           backref = 'groups' )
@@ -177,6 +216,7 @@ class AuthenticationGroup( Entity ):
         verbose_name = _('Authentication group')
         verbose_name_plural = _('Authenication groups')
         list_display = [ 'name' ]
+        form_state = 'right'
         
         def get_form_display( self ):
             return forms.TabForm( [(_('Group'), ['name', 'members']),
@@ -197,15 +237,17 @@ class AuthenticationGroupRole( Entity ):
     
     __tablename__ = 'authentication_group_role'
     
-    role_id = Column( Integer(), 
+    role_id = Column( camelot.types.PrimaryKey(), 
                       nullable = False,
-                      primary_key = True)
-    group_id = Column( Integer(), 
+                      primary_key = True,
+                      autoincrement = False )
+    group_id = Column( camelot.types.PrimaryKey(), 
                        ForeignKey( 'authentication_group.id',
                                    onupdate = 'cascade',
                                    ondelete = 'cascade' ),
                        nullable = False,
-                       primary_key = True )
+                       primary_key = True,
+                       autoincrement = False )
 
 AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
                                               cascade = 'all, delete, delete-orphan')

@@ -1,32 +1,35 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QAbstractSpinBox
+import six
 
+from ....core.qt import QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
 from camelot.view.controls.editors.customeditor import ValueLoading
@@ -40,15 +43,13 @@ class MonthsEditor(CustomEditor):
 
     def __init__(self, parent=None, editable=True, field_name='months', **kw):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
-        self.years_spinbox.setMinimum(0)
-        self.years_spinbox.setMaximum(10000)
-        self.months_spinbox.setMinimum(0)
-        self.months_spinbox.setMaximum(12)
+        self.years_spinbox.setRange(-1, 10000)
+        self.months_spinbox.setRange(-1, 12)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
         
@@ -63,22 +64,21 @@ class MonthsEditor(CustomEditor):
         self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         
-        layout = QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.years_spinbox)
         layout.addWidget(self.months_spinbox)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
         
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        self.set_enabled(editable)
-        self.set_background_color(background_color)
-        self.years_spinbox.setToolTip(unicode(tooltip or ''))
+    def set_field_attributes(self, **kwargs):
+        super(MonthsEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
+        self.set_background_color(kwargs.get('background_color', None))
+        self.years_spinbox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
 
     def set_enabled(self, editable=True):
         self.years_spinbox.setReadOnly(not editable)
@@ -86,38 +86,38 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setReadOnly(not editable)
         self.months_spinbox.setEnabled(editable)
         if not editable:
-            self.years_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            self.years_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+            self.months_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         else:
-            self.years_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)
-            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)            
+            self.years_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows)
+            self.months_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows)
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading
-        CustomEditor.set_value(self, value)
-
-        # TODO: might be better to have accessors for these
-        if self._value_loading:
-            return
-
-        if self.value_is_none:
-            value = 0
-
-        # value comes as a months total
-        years, months = divmod( value, 12 )
-        self.years_spinbox.setValue(years)
-        self.months_spinbox.setValue(months)
+        value = CustomEditor.set_value(self, value)
+        if value is None:
+            self.years_spinbox.setValue(self.years_spinbox.minimum())
+            self.months_spinbox.setValue(self.months_spinbox.minimum())
+        else:
+            # value comes as a months total
+            years, months = divmod( value, 12 )
+            self.years_spinbox.setValue(years)
+            self.months_spinbox.setValue(months)
 
     def get_value(self):
         if CustomEditor.get_value(self) is ValueLoading:
             return ValueLoading
-
         self.years_spinbox.interpretText()
         years = int(self.years_spinbox.value())
         self.months_spinbox.interpretText()
         months = int(self.months_spinbox.value())
-        value = (years * 12) + months
-        return value
-
-
+        years_is_none = (years == self.years_spinbox.minimum())
+        months_is_none = (months == self.months_spinbox.minimum())
+        if years_is_none and months_is_none:
+            return None
+        if years_is_none:
+            years = 0
+        if months_is_none:
+            months = 0
+        return (years * 12) + months
 

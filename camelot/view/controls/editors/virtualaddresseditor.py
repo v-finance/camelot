@@ -1,66 +1,62 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-import re
+import six
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
-from customeditor import CustomEditor, set_background_color_palette
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
+from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 import camelot.types
 
-email_expression = re.compile('^\S+@\S+\.\S+$')
-phone_expression = re.compile('^[0-9 ]+$')
-any_character_expression =  re.compile('^.+$')
+# older versions of PyQt dont allow passing the regesp in the constructor
+# of the validator
+email_validator = QtGui.QRegExpValidator()
+email_validator.setRegExp(QtCore.QRegExp(r'^\S+\@\S+\.\S+$'))
+phone_validator = QtGui.QRegExpValidator()
+phone_validator.setRegExp(QtCore.QRegExp(r'^\+?[0-9\s]+$'))
+any_character_validator =  QtGui.QRegExpValidator()
+any_character_validator.setRegExp(QtCore.QRegExp(r'^.+$'))
 
-def default_address_validator( address_type, address ):
-    """Validates wether a virtual address is valid and
-    correct it if possible.
-    :param address_type: the type of address to validate, eg 'phone'
-    :param address: the address itself
-    :return: (valid, corrected_address) a tuple with a :type:`boolean`
-        indicating if the address is valid and a string with the corrected
-        address.
-    """
-    if not address:
-        return ( True, address )
-    if address_type == 'email':
-        return ( email_expression.match( address ), address )
-    if address_type in ('phone', 'pager', 'fax', 'mobile'):
-        return ( phone_expression.match( address ), address )
-    return ( any_character_expression.match( address ), address )
-                
+validators = {
+    'email': email_validator,
+    'phone': phone_validator,
+    'pager': phone_validator,
+    'fax': phone_validator,
+    'mobile': phone_validator
+    }
+
 class VirtualAddressEditor(CustomEditor):
 
-    def __init__(self, 
-                 parent = None, 
-                 editable = True, 
-                 address_type = None, 
-                 address_validator = default_address_validator,
+    def __init__(self,
+                 parent = None,
+                 address_type = None,
                  field_name = 'virtual_address',
                  **kwargs):
         """
@@ -72,27 +68,25 @@ class VirtualAddressEditor(CustomEditor):
         not yet taken into account.
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
-        self._address_validator = address_validator
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.setContentsMargins( 0, 0, 0, 0)
-        self.combo = QtGui.QComboBox()
+        self.combo = QtWidgets.QComboBox()
         self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
-        self.combo.setEnabled(editable)
+        self.layout.addWidget(self.combo)
+        self.editor = DecoratedLineEdit(self)
+        self.editor.set_minimum_width(30)
         if address_type:
             self.combo.setVisible(False)
-        self.layout.addWidget(self.combo)
-        self.editor = DecoratedLineEdit( self )
-        self.editor.setEnabled(editable)
-        self.editor.set_minimum_width( 30 )
+            idx = camelot.types.VirtualAddress.virtual_address_types.index(address_type)
+            self.combo.setCurrentIndex(idx)
         self.layout.addWidget(self.editor)
         self.setFocusProxy(self.editor)
-        self.editable = editable
         nullIcon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
-        self.label = QtGui.QToolButton()
+        self.label = QtWidgets.QToolButton()
         self.label.setIcon(nullIcon)
         self.label.setAutoRaise(True)
         self.label.setEnabled(False)
@@ -100,60 +94,44 @@ class VirtualAddressEditor(CustomEditor):
         self.label.setFocusPolicy(Qt.ClickFocus)
         self.label.clicked.connect( self.mail_click )
         self.label.hide()
-
         self.layout.addWidget(self.label)
         self.editor.editingFinished.connect(self.emit_editing_finished)
-        self.editor.textEdited.connect(self.editorValueChanged)
         self.combo.currentIndexChanged.connect(self.comboIndexChanged)
-
         self.setLayout(self.layout)
-        self.checkValue(self.editor.text())
+        self.update_validator()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def comboIndexChanged(self):
-        self.checkValue(self.editor.text())
+        self.update_validator()
         self.emit_editing_finished()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        if value:
+        if value is None:
+            self.editor.setText('')
+        else:
             self.editor.setText(value[1])
             idx = camelot.types.VirtualAddress.virtual_address_types.index(self._address_type or value[0])
             self.combo.setCurrentIndex(idx)
             icon = Icon('tango/16x16/devices/printer.png').getQIcon()
-# These icons don't exist any more in the new tango icon set
-#            if str(self.combo.currentText()) == 'phone':
-#                icon = Icon('tango/16x16/devices/phone.png').getQIcon()
-            if str(self.combo.currentText()) == 'fax':
+            if six.text_type(self.combo.currentText()) == 'fax':
                 icon = Icon('tango/16x16/devices/printer.png').getQIcon()
-#            if str(self.combo.currentText()) == 'mobile':
-#                icon = Icon('tango/16x16/devices/mobile.png').getQIcon()
-#            if str(self.combo.currentText()) == 'im':
-#                icon = Icon('tango/16x16/places/instant-messaging.png').getQIcon()
-#            if str(self.combo.currentText()) == 'pager':
-#                icon = Icon('tango/16x16/devices/pager.png').getQIcon()
-            if str(self.combo.currentText()) == 'email':
+            if six.text_type(self.combo.currentText()) == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
-                #self.label.setFocusPolicy(Qt.StrongFocus)
-                #self.label.setAutoFillBackground(True)
                 self.label.setIcon(icon)
-                self.label.setEnabled( self.editable )
                 self.label.show()
             else:
                 self.label.hide()
                 self.label.setIcon(icon)
-                self.label.setEnabled(self.editable)
                 self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
-
-#      self.update()
-#      self.label.update()
-#      self.layout.update()
-
-
-            self.checkValue(value[1])
+            self.update_validator()
 
     def get_value(self):
-        value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
+        address_value = six.text_type(self.editor.text())
+        if not len(address_value):
+            value = None
+        else:
+            value = (six.text_type(self.combo.currentText()), address_value)
         return CustomEditor.get_value(self) or value
 
     def set_enabled(self, editable=True):
@@ -165,25 +143,24 @@ class VirtualAddressEditor(CustomEditor):
             if self.combo.currentText() == 'email':
                 self.label.setEnabled(True)
 
-    def checkValue(self, text):
-        address_type = unicode( self.combo.currentText() )
-        valid, _corrected = self._address_validator( address_type, unicode( text ) )
-        self.editor.set_valid( valid )
+    def update_validator(self):
+        address_type = six.text_type(self.combo.currentText())
+        validator = validators.get(address_type, any_character_validator)
+        # change the validator instead of the regexp of the validator to inform
+        # the editor it needs to update its background color
+        self.editor.setValidator(validator)
 
-    def editorValueChanged(self, text):
-        self.checkValue(text)
-
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def mail_click(self):
         address = self.editor.text()
         url = QtCore.QUrl()
-        url.setUrl( u'mailto:%s?subject=Subject'%unicode(address) )
+        url.setUrl( u'mailto:%s?subject=Subject'%six.text_type(address) )
         QtGui.QDesktopServices.openUrl(url)
 
     def emit_editing_finished(self):
         self.value = []
-        self.value.append(str(self.combo.currentText()))
-        self.value.append(str(self.editor.text()))
+        self.value.append(six.text_type(self.combo.currentText()))
+        self.value.append(six.text_type(self.editor.text()))
         self.set_value(self.value)
         # emiting editingFinished without a value for the mechanism itself will lead to
         # integrity errors
@@ -193,12 +170,11 @@ class VirtualAddressEditor(CustomEditor):
     def set_background_color(self, background_color):
         set_background_color_palette( self.editor, background_color )
             
-    def set_field_attributes(self, editable = True,
-                                   background_color = None,
-                                   tooltip = None, **kwargs):
-        self.set_enabled(editable)
-        self.set_background_color(background_color)
-        self.setToolTip(unicode(tooltip or ''))
+    def set_field_attributes(self, **kwargs):
+        super(VirtualAddressEditor, self).set_field_attributes(**kwargs)
+        self.set_enabled(kwargs.get('editable', False))
+        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+
 
 
 

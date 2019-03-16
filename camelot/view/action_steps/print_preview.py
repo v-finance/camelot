@@ -1,28 +1,33 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-from PyQt4 import QtCore, QtGui
+from ...core.qt import QtCore, QtGui, QtPrintSupport, QtWidgets
 
 from camelot.admin.action import ( ActionStep,
                                    DocumentActionGuiContext )
@@ -32,39 +37,53 @@ from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
 
-class PrintPreviewDialog( QtGui.QPrintPreviewDialog ):
-    """A custom :class:`QtGui.QPrintPreviewDialog` that allows additional 
+class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
+    """A custom :class:`QtPrintSupport.QPrintPreviewDialog` that allows additional 
     actions on the toolbar.
     
-    :param printer: a :class:`QtGui.QPrinter`
+    :param printer: a :class:`QtPrintSupport.QPrinter`
     :param gui_context: the :class:`camelot.admin.action.base.GuiContext` to 
         pass to the actions    
     :param actions: a list of :class:`camelot.admin.action.base.Action` objects
-    :param parent: a :class:`QtGui.QWidget`
+    :param parent: a :class:`QtWidgets.QWidget`
     :param flags: a :class:`Qt.WindowFlags`
     """
     
     def __init__( self, printer, gui_context, 
                   actions = [], parent = None, flags = 0 ):
         super( PrintPreviewDialog, self ).__init__( printer, parent, flags )
-        toolbar = self.findChild( QtGui.QToolBar )
+        toolbar = self.findChild( QtWidgets.QToolBar )
         self.gui_context = gui_context
+        self.gui_context.view = self
+        # keep reference to printer alive as long as the dialog exists
+        self.printer = printer
         for action in actions:
-            qaction = action.render( self.gui_context, toolbar )
-            qaction.triggered.connect( self.action_triggered )
-            toolbar.addAction( qaction )
-        self.paintRequested.connect( self.paint_on_printer )
-            
-    @QtCore.pyqtSlot( bool )
+            qaction = action.render(self.gui_context, toolbar)
+            # it seems that the action is garbage collected when
+            # the parent remains the toolbar of the dialog, so
+            # change the parent to the dialog itself
+            qaction.setParent(self)
+            qaction.triggered.connect(self.action_triggered)
+            toolbar.addAction(qaction)
+
+    @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context ) 
-        preview_widget = self.findChild( QtGui.QPrintPreviewWidget )
+
+
+class UpdatePrintPreview(ActionStep):
+    """
+    Force the print preview dialog to update itself.
+
+    To be used inside a document action
+    """
+
+    def gui_run(self, gui_context):
+        preview_widget = gui_context.view.findChild(
+            QtPrintSupport.QPrintPreviewWidget
+        )
         preview_widget.updatePreview()
-        
-    @QtCore.pyqtSlot( QtGui.QPrinter )
-    def paint_on_printer( self, printer ):
-        self.gui_context.document.print_( printer )
 
 class PrintPreview( ActionStep ):
     """
@@ -99,17 +118,22 @@ class PrintPreview( ActionStep ):
 
     .. attribute:: page_size
     
-        the page size, by default :class:`QtGui.QPrinter.A4` is used
+        the page size, by default :class:`QtPrintSupport.QPrinter.A4` is used
     
     .. attribute:: page_orientation
     
-        the page orientation, by default :class:`QtGui.QPrinter.Portrait`
+        the page orientation, by default :class:`QtPrintSupport.QPrinter.Portrait`
         is used.
         
     .. attribute:: document
         
         the :class:`QtGui.QTextDocument` holding the document that will be shown in the print
         preview
+        
+    .. attribute:: actions
+    
+        the list of additional document actions to be displayed in the toolbar of the
+        print preview
     
     .. image:: /_static/simple_report.png
         """
@@ -122,37 +146,42 @@ class PrintPreview( ActionStep ):
         self.margin_top = None
         self.margin_right = None
         self.margin_bottom = None
-        self.margin_unit = QtGui.QPrinter.Millimeter
+        self.margin_unit = QtPrintSupport.QPrinter.Millimeter
         self.page_size = None
         self.page_orientation = None
+        self.actions = [EditDocument()]
 
-    def get_printer( self ):
-        if not self.printer:
-            self.printer = QtGui.QPrinter()
-        if not self.printer.isValid():
-            self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
-        return self.printer
+    def get_printer(self):
+        if self.printer is not None:
+            return self.printer
+        printer = QtPrintSupport.QPrinter()
+        if not printer.isValid():
+            printer.setOutputFormat( QtPrintSupport.QPrinter.PdfFormat )
+        return printer
 
-    def config_printer( self ):
-        self.printer = self.get_printer()
-        if self.page_size != None:
-            self.printer.setPageSize( self.page_size )
-        if self.page_orientation != None:
-            self.printer.setOrientation( self.page_orientation )
+    def config_printer(self, printer):
+        if self.page_size is not None:
+            printer.setPageSize( self.page_size )
+        if self.page_orientation is not None:
+            printer.setOrientation( self.page_orientation )
         if None not in [self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit]:
-            self.printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
-        return self.printer
+            printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
+
+    def paint_on_printer( self, printer ):
+        self.document.print_(printer)
 
     def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
         the action step."""
-        self.config_printer()
         gui_context = gui_context.copy( DocumentActionGuiContext )
         gui_context.document = self.document
-        dialog = PrintPreviewDialog( self.printer, 
-                                     gui_context, 
-                                     actions = [EditDocument()],
-                                     flags = QtCore.Qt.Window )
+        printer = self.get_printer()
+        self.config_printer(printer)
+        dialog = PrintPreviewDialog(printer,
+                                    gui_context,
+                                    actions = self.actions,
+                                    flags = QtCore.Qt.Window)
+        dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
         resize_widget_to_screen( dialog )
@@ -163,56 +192,17 @@ class PrintPreview( ActionStep ):
         with hide_progress_dialog( gui_context ):
             dialog.exec_()
         
-    def get_pdf( self ):
-        self.config_printer()
-        self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
-        filepath = OpenFile.create_temporary_file('.pdf')
-        self.printer.setOutputFileName(filepath)
-        self.document.print_(self.printer)
-        return filepath        
+    def get_pdf(self, filename=None):
+        printer = QtPrintSupport.QPrinter()
+        printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
+        self.config_printer(printer)
+        if filename is None:
+            filename = OpenFile.create_temporary_file('.pdf')
+        printer.setOutputFileName(filename)
+        self.paint_on_printer(printer)
+        return filename
 
-class ChartDocument( QtCore.QObject ):
-    """Helper class to print matplotlib charts
 
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
-        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
-
-    """
-    
-    def __init__( self, chart ):
-        from camelot.container.chartcontainer import structure_to_figure_container
-        super( ChartDocument, self ).__init__()
-        self.chart = structure_to_figure_container( chart )
-        
-    def print_( self, printer ):
-        from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        rect = printer.pageRect( QtGui.QPrinter.Inch )
-        dpi = printer.resolution()
-        fig = Figure( facecolor='#ffffff')
-        fig.set_size_inches( ( rect.width(), rect.height() ) )
-        fig.set_dpi( dpi )
-        self.chart.plot_on_figure( fig )
-        canvas = FigureCanvas( fig )
-        canvas.render( printer )   
-        
-class PrintChart( PrintPreview ):
-    """
-    Display a print preview dialog box for a matplotlib chart.
-    
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
-        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
-        
-    Example use of this action step :
-        
-    .. literalinclude:: ../../../test/test_action.py
-       :start-after: begin chart print
-       :end-before: end chart print
-    """
-
-    def __init__( self, chart ):
-        super( PrintChart, self ).__init__( ChartDocument( chart ) )
-    
 class PrintHtml( PrintPreview ):
     """
     Display a print preview dialog box for an html string.
@@ -251,4 +241,5 @@ class PrintJinjaTemplate( PrintHtml ):
         self.html = self.template.render( context )
         self.context = context
         super( PrintJinjaTemplate, self).__init__( self.html )
+
 

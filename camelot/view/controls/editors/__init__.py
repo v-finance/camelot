@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -38,42 +43,35 @@ ValueLoading until set_value is called with another argument.
 
 """
 
-from booleditor import BoolEditor, TextBoolEditor
-from charteditor import ChartEditor
-from choiceseditor import ChoicesEditor
-from codeeditor import CodeEditor
-from coloredfloateditor import ColoredFloatEditor
-from coloreditor import ColorEditor
-from customeditor import CustomEditor
-from dateeditor import DateEditor
-from datetimeeditor import DateTimeEditor
-from fileeditor import FileEditor
-from floateditor import FloatEditor
-from imageeditor import ImageEditor
-from integereditor import IntegerEditor
-from languageeditor import LanguageEditor
-from localfileeditor import LocalFileEditor
-from many2oneeditor import Many2OneEditor
-from one2manyeditor import One2ManyEditor
-from onetomanychoiceseditor import OneToManyChoicesEditor
-from richtexteditor import RichTextEditor
-from stareditor import StarEditor
-from textlineeditor import TextLineEditor
-from timeeditor import TimeEditor
-from virtualaddresseditor import VirtualAddressEditor
-from smileyeditor import SmileyEditor
-from textediteditor import TextEditEditor
-from wideeditor import WideEditor
-from noteeditor import NoteEditor
-from labeleditor import LabelEditor
-from monthseditor import MonthsEditor
+from .booleditor import BoolEditor
+from .choiceseditor import ChoicesEditor
+from .coloreditor import ColorEditor
+from .customeditor import CustomEditor
+from .dateeditor import DateEditor
+from .datetimeeditor import DateTimeEditor
+from .fileeditor import FileEditor
+from .floateditor import FloatEditor
+from .imageeditor import ImageEditor
+from .dbimageeditor import DbImageEditor
+from .integereditor import IntegerEditor
+from .languageeditor import LanguageEditor
+from .localfileeditor import LocalFileEditor
+from .many2oneeditor import Many2OneEditor
+from .one2manyeditor import One2ManyEditor
+from .onetomanychoiceseditor import OneToManyChoicesEditor
+from .richtexteditor import RichTextEditor
+from .textlineeditor import TextLineEditor
+from .timeeditor import TimeEditor
+from .virtualaddresseditor import VirtualAddressEditor
+from .textediteditor import TextEditEditor
+from .wideeditor import WideEditor
+from .noteeditor import NoteEditor
+from .labeleditor import LabelEditor
+from .monthseditor import MonthsEditor
 
 __all__ = [
     BoolEditor.__name__,
-    ChartEditor.__name__,
     ChoicesEditor.__name__,
-    CodeEditor.__name__,
-    ColoredFloatEditor.__name__,
     ColorEditor.__name__,
     CustomEditor.__name__,
     DateEditor.__name__,
@@ -81,6 +79,7 @@ __all__ = [
     FileEditor.__name__,
     FloatEditor.__name__,
     ImageEditor.__name__,
+    DbImageEditor.__name__,
     IntegerEditor.__name__,
     LabelEditor.__name__,
     LanguageEditor.__name__,
@@ -91,15 +90,13 @@ __all__ = [
     One2ManyEditor.__name__,
     OneToManyChoicesEditor.__name__,
     RichTextEditor.__name__,
-    StarEditor.__name__,
     TextLineEditor.__name__,
     TimeEditor.__name__,
     VirtualAddressEditor.__name__,
-    SmileyEditor.__name__,
-    TextBoolEditor.__name__,
     TextEditEditor.__name__,
     WideEditor.__name__,
 ]
+
 
 
 

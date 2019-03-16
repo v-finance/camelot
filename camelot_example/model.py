@@ -1,7 +1,31 @@
+#  ============================================================================
 #
-# Example model file, populate this file with your own models
-# to get started quickly
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
+#  www.conceptive.be / info@conceptive.be
 #
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  ============================================================================
 
 import time
 import datetime
@@ -16,19 +40,15 @@ import sqlalchemy.types
 # end basic imports
 
 import camelot.types
-from camelot.core.sql import metadata
-from camelot.core.orm import Entity, Field, ManyToOne, OneToMany, \
-                             ManyToMany, using_options, ColumnProperty
+from camelot.core.orm import (ManyToOne, OneToMany,
+                              ManyToMany, ColumnProperty)
 from camelot.admin.action import Action
-from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.action import list_filter
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.view import action_steps
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm, Stretch
-from camelot.view.controls import delegates
-from camelot.view.filters import ComboBoxFilter
 from camelot.view.art import ColorScheme
-from sqlalchemy.types import Unicode, Date, Integer
 
 from camelot_example.change_rating import ChangeRatingAction
 from camelot_example.drag_and_drop import DropAction
@@ -68,11 +88,12 @@ class BurnToDisk( Action ):
         """Turn the burn to disk button on, only if the title of the
         movie is entered"""
         state = super( BurnToDisk, self ).get_state( model_context )
-        obj = model_context.get_object()
-        if obj and obj.title:
-            state.enabled = True
-        else:
-            state.enabled = False
+        for obj in model_context.get_selection():
+            if obj.title:
+                state.enabled = True
+            else:
+                state.enabled = False
+                break
         return state
     
 # begin short movie definition
@@ -84,7 +105,7 @@ class Movie( Entity ):
     short_description = Column( sqlalchemy.types.Unicode(512) )
     releasedate = Column( sqlalchemy.types.Date )
     genre = Column( sqlalchemy.types.Unicode(15) )
-    rating = Column( camelot.types.Rating() )
+    rating = Column( sqlalchemy.types.Integer() )
     #
     # All relation types are covered with their own editor
     #
@@ -109,19 +130,6 @@ class Movie( Entity ):
     #
     script = Column( camelot.types.File( upload_to = 'script' ) )
     description = Column( camelot.types.RichText )
-    #
-    # Normal python properties can be used as well, but then the
-    # delegate needs be specified in the Admin.field_attributes
-    #
-    @property
-    def visitors_chart(self):
-        #
-        # Container classes are used to transport chunks of data between
-        # the model the gui, in this case a chart
-        #
-        from camelot.container.chartcontainer import BarContainer
-        return BarContainer( range(len(self.visitor_reports)),
-                             [vr.visitors for vr in self.visitor_reports] )
 
 # begin column_property
 
@@ -148,7 +156,7 @@ class Movie( Entity ):
         list_display = ['cover', 'title', 'releasedate', 'rating',]
         lines_per_row = 5
         # define filters to be available in the table view
-        list_filter = ['genre', ComboBoxFilter('director.full_name')]
+        list_filter = ['genre', list_filter.ComboBoxFilter('director.full_name')]
         # if the search function needs to look in related object attributes,
         # those should be specified within list_search
         list_search = ['director.full_name']
@@ -171,7 +179,6 @@ class Movie( Entity ):
             'genre',
             'description',], columns = 2)),
           ('Cast', WidgetOnlyForm('cast')),
-          ('Visitors', WidgetOnlyForm('visitors_chart')),
           ('Tags', WidgetOnlyForm('tags'))
         ])
 
@@ -188,7 +195,6 @@ class Movie( Entity ):
         field_attributes = dict(cast=dict(create_inline=True),
                                 genre=dict(choices=genre_choices, editable=lambda o:bool(o.title and len(o.title))),
                                 releasedate=dict(background_color=lambda o:ColorScheme.orange_1 if o.releasedate and o.releasedate < datetime.date(1920,1,1) else None),
-                                visitors_chart=dict(delegate=delegates.ChartDelegate),
                                 rating=dict(tooltip='''<table>
                                                           <tr><td>1 star</td><td>Not that good</td></tr>
                                                           <tr><td>2 stars</td><td>Almost good</td></tr>
@@ -196,7 +202,6 @@ class Movie( Entity ):
                                                           <tr><td>4 stars</td><td>Very good</td></tr>
                                                           <tr><td>5 stars</td><td>Awesome !</td></tr>
                                                        </table>'''),
-                                smiley=dict(delegate=delegates.SmileyDelegate),
                                 script=dict(remove_original=True))
 
     def __unicode__(self):
@@ -254,3 +259,4 @@ class VisitorReport(Entity):
         verbose_name = _('Visitor Report')
         list_display = ['movie', 'date', 'visitors']
         field_attributes = {'visitors':{'minimum':0}}
+

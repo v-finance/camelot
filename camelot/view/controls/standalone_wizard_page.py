@@ -1,52 +1,57 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
-    QWidget
+import six
 
+from ...core.qt import QtWidgets, Qt
 from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
 
-class HSeparator(QFrame):
+
+class HSeparator(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(HSeparator, self).__init__(parent)
-        self.setFrameStyle(QFrame.HLine | QFrame.Sunken)
+        self.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
 
-class StandaloneWizardPage(QDialog):
+
+class StandaloneWizardPage(QtWidgets.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
-        self.setWindowTitle( unicode(window_title or ' ') )
+        self.setWindowTitle( six.text_type(window_title or ' ') )
         self.set_layouts()
 
     def set_layouts(self):
         assert object_thread( self )
-        self._vlayout = QVBoxLayout()
+        self._vlayout = QtWidgets.QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)
 
@@ -56,20 +61,20 @@ class StandaloneWizardPage(QDialog):
         # therefor commented out
         #self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
 
-        banner_layout = QGridLayout()
+        banner_layout = QtWidgets.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
-        banner_layout.addWidget(QLabel(), 0, 1, Qt.AlignRight)
-        banner_layout.addLayout(QVBoxLayout(), 0, 0)
+        banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignRight)
+        banner_layout.addLayout(QtWidgets.QVBoxLayout(), 0, 0)
 
         # TODO: allow banner widget to be supplied
-        banner_widget = QWidget()
+        banner_widget = QtWidgets.QWidget()
         banner_widget.setLayout(banner_layout)
 
         self._vlayout.addWidget(banner_widget)
         self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QFrame(), 1)
+        self._vlayout.addWidget(QtWidgets.QFrame(), 1)
         self._vlayout.addWidget(HSeparator())
-        self._vlayout.addWidget(QWidget())
+        self._vlayout.addWidget(QtWidgets.QWidget())
         self.setLayout(self._vlayout)
 
     def banner_widget(self):
@@ -94,11 +99,11 @@ class StandaloneWizardPage(QDialog):
         self.banner_logo_holder().setPixmap(pixmap)
 
     def set_banner_title(self, title):
-        title_widget = QLabel('<dt><b>%s</b></dt>' % title)
+        title_widget = QtWidgets.QLabel('<dt><b>%s</b></dt>' % title)
         self.banner_text_layout().insertWidget(0, title_widget)
 
     def set_banner_subtitle(self, subtitle):
-        subtitle_widget = QLabel('<dd>%s</dd>' % subtitle)
+        subtitle_widget = QtWidgets.QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
 
     def set_default_buttons( self,
@@ -107,15 +112,15 @@ class StandaloneWizardPage(QDialog):
                              done = None ):
         """add an :guilabel:`ok` and a :guilabel:`cancel` button.
         """
-        layout = QtGui.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout = QtWidgets.QHBoxLayout()
+        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         if accept != None:
-            ok_button = QtGui.QPushButton( unicode( accept ), self )
-            ok_button.setObjectName( 'accept' )            
-            ok_button.pressed.connect( self.accept )   
+            ok_button = QtWidgets.QPushButton( six.text_type( accept ), self )
+            ok_button.setObjectName( 'accept' )
+            ok_button.pressed.connect( self.accept )
             layout.addWidget( ok_button )
         if reject != None:
-            cancel_button = QtGui.QPushButton( unicode( reject ), self )
+            cancel_button = QtWidgets.QPushButton( six.text_type( reject ), self )
             cancel_button.setObjectName( 'reject' )
             cancel_button.pressed.connect( self.reject )
             layout.addWidget( cancel_button )

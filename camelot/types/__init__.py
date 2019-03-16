@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -29,13 +34,44 @@ care of the visualisation.
 
 Those fields are stored in the :mod:`camelot.types` module.
 """
-
+import collections
 import logging
+
 logger = logging.getLogger('camelot.types')
+
+import six
 
 from sqlalchemy import types
 
+from camelot.core.orm import options
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
+
+"""
+The `__repr__` method of the types is implemented to be able to use Alembic.
+"""
+
+class PrimaryKey(types.TypeDecorator):
+    """Special type that can be used as the column type for a primary key.  This
+    type defererring the definition of the actual type of primary key to
+    compilation time.  This allows the changing of the primary key type through
+    the whole model by changing the `options.DEFAULT_AUTO_PRIMARYKEY_TYPE`
+    """
+    
+    impl = types.TypeEngine
+    _type_affinity = types.Integer
+    
+    def load_dialect_impl(self, dialect):
+        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
+    
+    @property
+    def python_type(self):
+        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE().python_type
+
+    def __repr__(self):
+        return 'PrimaryKey()'
+
+virtual_address = collections.namedtuple('virtual_address',
+                                        ['type', 'address'])
 
 class VirtualAddress(types.TypeDecorator):
     """A single field that can be used to enter phone numbers, fax numbers, email
@@ -54,6 +90,10 @@ class VirtualAddress(types.TypeDecorator):
     impl = types.Unicode
     virtual_address_types = ['phone', 'fax', 'mobile', 'email', 'im', 'pager',]
   
+    @property
+    def python_type(self):
+        return virtual_address
+    
     def bind_processor(self, dialect):
   
         impl_processor = self.impl.bind_processor(dialect)
@@ -81,87 +121,15 @@ class VirtualAddress(types.TypeDecorator):
             if value:
                 split = value.split('://')
                 if len(split)>1:
-                    return tuple(split)
-            return (u'phone',u'')
-            
-        return processor  
-    
-class Code(types.TypeDecorator):
-    """SQLAlchemy column type to store codes.  Where a code is a list of strings
-    on which a regular expression can be enforced.
-  
-    This column type accepts and returns a list of strings and stores them as a
-    string joined with points.
-  
-    eg: ``['08', 'AB']`` is stored as ``08.AB``
-    
-    .. image:: /_static/editors/CodeEditor_editable.png
-    
-    :param parts: a list of input masks specifying the mask for each part,
-        eg ``['99', 'AA']``. For valid input masks, see
-        `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_    
-        
-    :param separator: a string that will be used to separate the different parts
-        in the GUI and in the database
-        
-    :param length: the size of the underlying string field in the database, if no
-        length is specified, it will be calculated  from the parts
-    """
-    
-    impl = types.Unicode
-          
-    def __init__(self, parts, separator=u'.', length = None, **kwargs):
-        import string
-        translator = string.maketrans('', '')
-        self.parts = parts
-        self.separator = separator
-        max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)*len(self.separator)
-        types.TypeDecorator.__init__( self, length = length or max_length, **kwargs )
-        
-    def bind_processor(self, dialect):
-  
-        impl_processor = self.impl.bind_processor(dialect)
-        if not impl_processor:
-            impl_processor = lambda x:x
-          
-        def processor(value):
-            if value is not None:
-                value = self.separator.join(value)
-            return impl_processor(value)
-          
-        return processor
-    
-    def result_processor(self, dialect, coltype=None):
-      
-        impl_processor = self.impl.result_processor(dialect, coltype)
-        if not impl_processor:
-            impl_processor = lambda x:x
-      
-        def processor(value):
-    
-            if value:
-                return value.split(self.separator)
-            return ['' for _p in self.parts]
+                    return virtual_address(*split)
+            return virtual_address(u'phone',u'')
             
         return processor
+
+    def __repr__(self):
+        return 'VirtualAddress()'
+
     
-class IPAddress(Code):
-    def __init__(self, **kwargs):
-        super(IPAddress, self).__init__(parts=['900','900','900','900'])
-    
-class Rating(types.TypeDecorator):
-    """The rating field is an integer field that is visualized as a number of stars that
-  can be selected::
-  
-    class Movie( Entity ):
-      title = Column( Unicode(60), nullable = False )
-      rating = Column( camelot.types.Rating() )
-      
-  .. image:: /_static/editors/StarEditor_editable.png
-"""
-    
-    impl = types.Integer
-       
 class RichText(types.TypeDecorator):
     """RichText fields are unlimited text fields which contain html. The html will be
   rendered in a rich text editor.  
@@ -170,7 +138,14 @@ class RichText(types.TypeDecorator):
 """
     
     impl = types.UnicodeText
-     
+    
+    @property
+    def python_type(self):
+        return self.impl.python_type
+
+    def __repr__(self):
+        return 'RichText()'
+
 class Language(types.TypeDecorator):
     """The languages are stored as a string in the database of 
 the form *language*(_*country*), where :
@@ -187,6 +162,16 @@ used too much memory, so now it's implemented using QT.
     def __init__(self):
         types.TypeDecorator.__init__(self, length=20)
         
+    @property
+    def python_type(self):
+        return self.impl.python_type
+
+    def __repr__(self):
+        return 'Language()'
+
+color = collections.namedtuple('color',
+                               ('red', 'green', 'blue', 'alpha'))
+
 class Color(types.TypeDecorator):
     """The Color field returns and accepts tuples of the form (r,g,b,a) where
 r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
@@ -238,10 +223,17 @@ to convert a color tuple to a QColor.
         def processor(value):
     
             if value:
-                return (int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
+                return color(int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
               
         return processor
-        
+    
+    @property
+    def python_type(self):
+        return color
+
+    def __repr__(self):
+        return 'Color()'
+
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
   strings.  This allows efficient storage and querying while preserving readable code.
@@ -254,7 +246,7 @@ class Enumeration(types.TypeDecorator):
     class Movie(Entity):
       title = Column( Unicode(60), nullable = False )
       state = Column( camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
-                      index = True, nullable = False, default = 'planning' )
+                      index = True, nullable = False, default = 'planned' )
   
   .. image:: /_static/editors/ChoicesEditor_editable.png  
   
@@ -272,8 +264,8 @@ class Enumeration(types.TypeDecorator):
     def __init__(self, choices=[], **kwargs):
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)
-        self._string_to_int = dict((v,k) for (k,v) in choices)
-        self.choices = [v for (k,v) in choices]
+        self._string_to_int = dict((str_value,int_key) for (int_key,str_value) in choices)
+        self.choices = [value for (_key,value) in choices]
         
     def bind_processor(self, dialect):
   
@@ -286,8 +278,8 @@ class Enumeration(types.TypeDecorator):
                 try:
                     value = self._string_to_int[value]
                     return impl_processor(value)
-                except KeyError, e:
-                    logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(self._string_to_int.keys()))), exc_info=e)
+                except KeyError as e:
+                    logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(six.iterkeys(self._string_to_int)))), exc_info=e)
                     raise
             else:
                 impl_processor(value)
@@ -305,12 +297,19 @@ class Enumeration(types.TypeDecorator):
                 value = impl_processor(value)
                 try:
                     return self._int_to_string[value]
-                except KeyError, e:
+                except KeyError as e:
                     logger.error('could not process %s'%value, exc_info=e)
                     raise
                 
         return processor
     
+    @property
+    def python_type(self):
+        return str
+
+    def __repr__(self):
+        return 'Enumeration()'
+
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
@@ -383,6 +382,13 @@ class File(types.TypeDecorator):
               
         return processor
       
+    @property
+    def python_type(self):
+        return self.impl.python_type
+
+    def __repr__(self):
+        return 'File()'
+
 class Image(File):
     """Sqlalchemy column type to store images
     
@@ -397,4 +403,8 @@ class Image(File):
     """
   
     stored_file_implementation = StoredImage
+
+    def __repr__(self):
+        return 'Image()'
+
 

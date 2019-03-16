@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
@@ -30,7 +35,7 @@ To access the global configuration, simply import the settings object::
     
     from camelot.core.conf import settings
     
-    print settings.CAMELOT_MEDIA_ROOT
+    print(settings.CAMELOT_MEDIA_ROOT)
     
 Developers can add targets to the settings proxy, to enable reading settings
 from other sources.
@@ -52,7 +57,7 @@ class LazyProxy(list):
     is queried again.
     """
             
-    def get( self, name, default ):
+    def get( self, name, default=None ):
         """Get an attribute of the proxy, and when not found return default
         as value.  This function behaves the same as the get function of a
         dictionary.
@@ -68,7 +73,7 @@ class LazyProxy(list):
         for target in self:
             if hasattr(target, name):
                 return getattr(target, name)
-        LOGGER.warning( u'no such settings attribute : %s'%name )
+        LOGGER.debug( u'no such settings attribute : %s'%name )
         raise AttributeError()
         
     def append_settings_module(self):
@@ -78,9 +83,10 @@ class LazyProxy(list):
         
         try:
             mod = __import__('settings', {}, {}, [''])
-        except ImportError, e:
-            raise ImportError, "Could not import settings (Is it on sys.path? Does it have syntax errors?): %s" % (e)
+        except ImportError:
+            return False
         self.append( mod )
+        return True
 
 settings = LazyProxy()
 
@@ -108,22 +114,23 @@ class SimpleSettings( object ):
         self.data = data
         if ('win' in sys.platform) and ('darwin' not in sys.platform):
             import winpaths
-            self._local_folder = os.path.join( winpaths.get_local_appdata(), 
+            self.data_folder = os.path.join( winpaths.get_local_appdata(), 
                                                author, 
                                                name )
         else:
-            self._local_folder = os.path.join( os.path.expanduser('~'), 
+            self.data_folder = os.path.join( os.path.expanduser('~'), 
                                                u'.%s'%author, name )
-        if not os.path.exists( self._local_folder ):
-            os.makedirs( self._local_folder )
+        if not os.path.exists( self.data_folder ):
+            os.makedirs( self.data_folder )
             
-        LOGGER.info( u'store database and media in %s'%self._local_folder )
+        LOGGER.info( u'store database and media in %s'%self.data_folder )
             
     def CAMELOT_MEDIA_ROOT(self):
-        return os.path.join( self._local_folder, 'media' )
+        return os.path.join( self.data_folder, 'media' )
     
     def ENGINE( self ):
         from sqlalchemy import create_engine
-        return create_engine(u'sqlite:///%s/%s'%( self._local_folder,
+        return create_engine(u'sqlite:///%s/%s'%( self.data_folder,
                                                   self.data ) )
+
 

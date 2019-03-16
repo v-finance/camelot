@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 '''
@@ -28,15 +33,16 @@ Created on Sep 9, 2009
 '''
 import logging
 import sys
+import time
+
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
-from PyQt4 import QtCore
+import six
 
-from camelot.core.utils import pyqt
-from camelot.core.threading import synchronized
-from camelot.view.model_thread import ( AbstractModelThread, object_thread, 
-                                        setup_model )
-from camelot.view.controls.exception import register_exception
+from ...core.qt import QtCore, qt_api
+from ...core.threading import synchronized
+from ...view.model_thread import AbstractModelThread, object_thread
+from ...view.controls.exception import register_exception
 
 #
 # Wrap and unwrap None passed through signal/slot accross threads to
@@ -45,7 +51,7 @@ from camelot.view.controls.exception import register_exception
 # https://bugreports.qt-project.org/browse/PYSIDE-17
 #
 
-if pyqt:
+if qt_api.startswith('PyQt'):
     wrap_none = lambda x:x
     unwrap_none = lambda x:x
 else:
@@ -75,8 +81,8 @@ else:
 
 class Task(QtCore.QObject):
 
-    finished = QtCore.pyqtSignal(object)
-    exception = QtCore.pyqtSignal(object)
+    finished = QtCore.qt_signal(object)
+    exception = QtCore.qt_signal(object)
 
     def __init__(self, request, name='', args=()):
         """A task to be executed in a different thread
@@ -107,11 +113,10 @@ class Task(QtCore.QObject):
         #
         except StopIteration:
             self.finished.emit( StopIteration() )
-        except Exception, e:
+        except Exception as e:
             exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
             self.exception.emit( exc_info )
-            # the stack might contain references to QT objects which could be kept alive this way
-            sys.exc_clear()
+            self.clear_exception_info()
         except:
             logger.error( 'unhandled exception in model thread' )
             exc_info = ( 'Unhandled exception', 
@@ -120,6 +125,12 @@ class Task(QtCore.QObject):
                          'Please contact the application developer', '')
             # still emit the exception signal, to allow the gui to clean up things (such as closing dialogs)
             self.exception.emit( exc_info )
+            self.clear_exception_info()
+            
+    def clear_exception_info( self ):
+        # the exception info contains a stack that might contain references to 
+        # Qt objects which could be kept alive this way
+        if not six.PY3:
             sys.exc_clear()
 
 class TaskHandler(QtCore.QObject):
@@ -128,7 +139,7 @@ class TaskHandler(QtCore.QObject):
     that are in the queue.
     """
 
-    task_handler_busy_signal = QtCore.pyqtSignal(bool)
+    task_handler_busy_signal = QtCore.qt_signal(bool)
 
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
@@ -144,7 +155,7 @@ class TaskHandler(QtCore.QObject):
         """:return True/False: indicating if this task handler is busy"""
         return self._busy
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def handle_task(self):
         """Handle all tasks that are in the queue"""
         self._busy = True
@@ -176,41 +187,32 @@ class SignalSlotModelThread( AbstractModelThread ):
     since this model thread might not be THE model thread.
     """
 
-    task_available = QtCore.pyqtSignal()
+    task_available = QtCore.qt_signal()
 
-    def __init__( self, setup_thread = setup_model ):
-        """
-        @param setup_thread: function to be called at startup of the thread to initialize
-        everything, by default this will setup the model.  set to None if nothing should
-        be done.
-        """
-        super(SignalSlotModelThread, self).__init__( setup_thread )
+    def __init__( self ):
+        super(SignalSlotModelThread, self).__init__()
         self._task_handler = None
         self._mutex = QtCore.QMutex()
         self._request_queue = []
         self._connected = False
-        self._setup_busy = True
+
+    def _init_model_thread(self):
+        """
+        Initialize the objects that live in the model thread
+        """
+        self._task_handler = TaskHandler(self)
+        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
 
     def run( self ):
         self.logger.debug( 'model thread started' )
-        self._task_handler = TaskHandler(self)
-        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
-        self._thread_busy(True)
-        try:
-            self._setup_thread()
-        except Exception, e:
-            exc_info = register_exception(logger, 'Exception when setting up the SignalSlotModelThread', e)
-            self.setup_exception_signal.emit( exc_info )
-        self._thread_busy(False)
-        self.logger.debug('thread setup finished')
-        # Some tasks might have been posted before the signals were connected to the task handler,
-        # so once force the handling of tasks
+        self._init_model_thread()
+        # Some tasks might have been posted before the signals were connected
+        # to the task handler, so once force the handling of tasks
         self._task_handler.handle_task()
-        self._setup_busy = False
         self.exec_()
         self.logger.debug('model thread stopped')
 
-    @QtCore.pyqtSlot( bool )
+    @QtCore.qt_slot( bool )
     def _thread_busy(self, busy_state):
         self.thread_busy_signal.emit( busy_state )
 
@@ -221,15 +223,13 @@ class SignalSlotModelThread( AbstractModelThread ):
             self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.QueuedConnection )
             self._connected = True
         # response should be a slot method of a QObject
-        if response:
-            name = '%s -> %s.%s'%(request.__name__, response.im_self.__class__.__name__, response.__name__)
-        else:
-            name = request.__name__
+        name = request.__name__
         task = Task( wrap_none( request ), name = name, args = args )
         # QObject::connect is a thread safe function
         if response:
-            assert response.im_self != None
-            assert isinstance(response.im_self, QtCore.QObject)
+            assert getattr( response, six._meth_self ) != None
+            assert isinstance( getattr( response, six._meth_self ), 
+                               QtCore.QObject )
             # verify if the response has been defined as a slot
             #assert hasattr(response, '__pyqtSignature__')
             task.finished.connect( unwrap_none( response ), 
@@ -259,18 +259,17 @@ class SignalSlotModelThread( AbstractModelThread ):
         """Return True or False indicating wether either the model or the
         gui thread is doing something"""
         while not self._task_handler:
-            import time
-            time.sleep(1)
-        app = QtCore.QCoreApplication.instance()
-        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy() or self._setup_busy
+            time.sleep(0.1)
+        return len(self._request_queue) or self._task_handler.busy()
 
     def wait_on_work(self):
         """Wait for all work to be finished, this function should only be used
         to do unit testing and such, since it will block the calling thread until
         all work is done"""
         assert object_thread( self )
-        app = QtCore.QCoreApplication.instance()
         while self.busy():
-            app.processEvents()
+            time.sleep(0.1)
+
+
 
 

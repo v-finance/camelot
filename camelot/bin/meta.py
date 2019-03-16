@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
@@ -29,28 +34,15 @@ could be the start of MetaCamelot
 import os
 import logging
 
-from camelot.core.conf import settings
-from camelot.core.utils import ugettext_lazy as _
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.action import Action
-from camelot.view.controls import delegates
-
-from camelot.view.main import Application
+from ..core.qt import QtWidgets
+from ..core.utils import ugettext_lazy as _
+from ..admin.application_admin import ApplicationAdmin
+from ..admin.object_admin import ObjectAdmin
+from ..admin.action import Action
+from ..view.controls import delegates
+from ..view.main import main_action
 
 LOGGER = logging.getLogger( 'camelot.bin.meta' )
-
-class MetaSettings(object):
-    """settings target to be used within MetaCamelot, when no real
-    settings are available yet"""
-
-    CAMELOT_MEDIA_ROOT = '.'
-    
-    def ENGINE(self):
-        return 'sqlite:///'
-        
-    def setup_model(self):
-        pass
 
 class MetaCamelotAdmin( ApplicationAdmin ):
     """ApplicationAdmin class to be used within meta camelot"""
@@ -58,31 +50,8 @@ class MetaCamelotAdmin( ApplicationAdmin ):
     name = 'Meta Camelot'
 
 def launch_meta_camelot():
-    import sys
-    from camelot.view.model_thread import construct_model_thread, get_model_thread
-    from camelot.admin.action import GuiContext
-    from PyQt4 import QtGui
-    app = QtGui.QApplication([a for a in sys.argv if a])
-    construct_model_thread()
-    mt = get_model_thread()
-    mt.start()
-    settings.append( MetaSettings() )
-    new_project = CreateNewProject()
-    gui_context = GuiContext()
-    admin = MetaCamelotAdmin()
-    admin.get_stylesheet()
-    gui_context.admin = admin
-    new_project.gui_run( gui_context )
-    # keep app alive during running of app
-    return app
-    
-class MetaCamelotApplication( Application ):
-    """A Camelot application to build new Camelot
-    projects."""
-    
-    def initialization(self):
-        new_project = CreateNewProject('New Camelot Project')
-        new_project.run()
+    action = CreateNewProject()
+    main_action(action)
 
 #
 # The various features that can be set when creating a new Camelot project
@@ -201,9 +170,11 @@ settings.append( my_settings )
 # end custom settings
 
 def start_application():
-    from camelot.view.main import main
+    from camelot.admin.action.application import Application
+    from camelot.view.main import main_action
     from {{options.module}}.application_admin import MyApplicationAdmin
-    main(MyApplicationAdmin())
+    application = Application(MyApplicationAdmin())
+    main_action(application)
 
 if __name__ == '__main__':
     start_application()
@@ -318,13 +289,13 @@ class CreateNewProject( Action ):
     """Action to create a new project, based on a form with
     options the user fills in."""
             
-    def model_run(self, context = None):
+    def model_run(self, model_context):
         # begin change object
-        from PyQt4 import QtGui
         from camelot.view import action_steps
+        app_admin = MetaCamelotAdmin()
         options = NewProjectOptions()
         yield action_steps.UpdateProgress( text = 'Request information' )
-        yield action_steps.ChangeObject( options )
+        yield action_steps.ChangeObject( options, app_admin.get_related_admin(NewProjectOptions) )
         # end change object
         yield action_steps.UpdateProgress( text = 'Creating new project' )
         self.start_project( options )
@@ -354,11 +325,11 @@ class CreateNewProject( Action ):
                     if command == 'wininst_cloud':
                         yield action_steps.MessageBox( 'Use Inno Setup to process the file<br/>' \
                                                        '<b>%s</b><br/> to build the installer executable'% os.path.join( project_path, filename ),
-                                                       standard_buttons = QtGui.QMessageBox.Ok )
+                                                       standard_buttons = QtWidgets.QMessageBox.Ok )
 
         yield action_steps.MessageBox( 'All files for the new project<br/>' \
                                        'were created in <b>%s</b>'%project_path,
-                                       standard_buttons = QtGui.QMessageBox.Ok )
+                                       standard_buttons = QtWidgets.QMessageBox.Ok )
         yield action_steps.OpenFile( project_path )
         
     def start_project( self, options ):
@@ -374,4 +345,5 @@ class CreateNewProject( Action ):
                        'w' )
             fp.write( code )
             fp.close()
+
 

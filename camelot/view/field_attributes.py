@@ -1,37 +1,47 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Default field attributes for various sqlalchemy column types"""
 
+import itertools
+
+import six
+
 import sqlalchemy.types
+
 import camelot.types
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 import datetime
 import operator
 
-from controls import delegates
+from .controls import delegates
 from camelot.core import constants
 from camelot.view.utils import (
     bool_from_string,
@@ -43,7 +53,7 @@ from camelot.view.utils import (
     string_from_string,
     enumeration_to_string,
     default_language,
-    code_from_string,
+    richtext_to_string,
 )
 
 _numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
@@ -135,7 +145,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.IntegerDelegate,
         'from_string': int_from_string,
-        'to_string': unicode,
+        'to_string': six.text_type,
         'widget': 'int',
         'operators': _numerical_operators,
     },
@@ -162,27 +172,6 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
     },
 
-    camelot.types.Code: lambda f: {
-        'python_type': str,
-        'editable': True,
-        'delegate': delegates.CodeDelegate,
-        'nullable': True,
-        'parts': f.parts,
-        'separator': f.separator,
-        'operators' : _text_operators,
-        'from_string' : lambda s:code_from_string(s, f.separator),
-    },
-
-    camelot.types.IPAddress: lambda f: {
-        'python_type': str,
-        'editable': True,
-        'nullable': True,
-        'parts': f.parts,
-        'delegate': delegates.CodeDelegate,
-        'widget': 'code',
-        'operators' : _text_operators,
-    },
-
     camelot.types.VirtualAddress: lambda f: {
         'python_type': str,
         'editable': True,
@@ -199,6 +188,7 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.RichTextDelegate,
         'from_string': string_from_string,
         'operators' : [],
+        'to_string': richtext_to_string,
     },
 
     camelot.types.Color: lambda f: {
@@ -210,22 +200,12 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
     },
 
-    camelot.types.Rating: lambda f: {
-        'delegate': delegates.StarDelegate,
-        'editable': True,
-        'nullable': True,
-        'python_type': int,
-        'widget': 'star',
-        'from_string': int_from_string,
-        'operators' : _numerical_operators,
-    },
-
     camelot.types.Enumeration: lambda f: {
         'delegate': delegates.ComboBoxDelegate,
         'python_type': str,
         'choices': [(v, enumeration_to_string(v)) for v in f.choices],
         'from_string': lambda s:dict((enumeration_to_string(v), v) for v in f.choices)[s],
-        'minimal_column_width':max(len(enumeration_to_string(v)) for v in f.choices),
+        'minimal_column_width':max(itertools.chain((0,), (len(enumeration_to_string(v)) for v in f.choices))),
         'editable': True,
         'nullable': True,
         'widget': 'combobox',
@@ -276,8 +256,8 @@ doc = """Field types handled through introspection :
 """ + row_separator + """
 """
 
-field_types = _sqlalchemy_to_python_type_.keys()
-field_types.sort(lambda x, y: cmp(x.__name__, y.__name__))
+field_types = sorted( six.iterkeys(_sqlalchemy_to_python_type_),
+                      key = lambda ft:ft.__name__ )
 
 for field_type in field_types:
     field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
@@ -293,6 +273,7 @@ doc += """
 """
 
 __doc__ = doc
+
 
 
 
