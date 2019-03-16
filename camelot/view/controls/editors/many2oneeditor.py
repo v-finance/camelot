@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,12 +31,12 @@ from functools import update_wrapper, partial
 
 import six
 
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
+from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
+from ....admin.action.list_filter import SearchFilter
+from ...crud_signals import CrudSignalHandler
 from camelot.view.model_thread import post, object_thread
-from camelot.view.search import create_entity_search_query_decorator
-from camelot.view.remote_signals import get_signal_handler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
@@ -79,8 +84,8 @@ class Many2OneEditor( CustomEditor ):
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
         self.new_value = None
@@ -103,12 +108,12 @@ class Many2OneEditor( CustomEditor ):
         self.setFocusProxy(self.search_input)
 
         # Search Completer
-        self.completer = QtGui.QCompleter()
+        self.completer = QtWidgets.QCompleter()
         self.completions_model = self.CompletionsModel(self.completer)
         self.completer.setModel(self.completions_model)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtGui.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
@@ -118,7 +123,8 @@ class Many2OneEditor( CustomEditor ):
         self.layout.addWidget(self.search_input)
         self.setLayout(self.layout)
         self.add_actions(actions, self.layout)
-        get_signal_handler().connect_signals(self)
+        self.search_filter = SearchFilter(admin)
+        CrudSignalHandler().connect_signals(self)
 
     def set_field_attributes(self, **kwargs):
         super(Many2OneEditor, self).set_field_attributes(**kwargs)
@@ -148,16 +154,15 @@ class Many2OneEditor( CustomEditor ):
 
         :return: a list of tuples of (dict_of_object_representation, object)
         """
-        search_decorator = create_entity_search_query_decorator(
-            self.admin, text
-        )
-        if search_decorator:
-            sresult = [
-                self.admin.get_search_identifiers(e)
-                for e in search_decorator(self.admin.get_query()).limit(20)
-            ]
-            return text, sresult
-        return text, []
+        query = self.admin.get_query()
+        query = self.search_filter.decorate_query(query, text)
+
+        sresult = [
+            self.admin.get_search_identifiers(e)
+            for e in query.limit(20).all()
+        ]
+        return text, sresult
+
 
     def display_search_completions(self, prefix_and_completions):
         assert object_thread( self )
@@ -174,21 +179,26 @@ class Many2OneEditor( CustomEditor ):
         obj = index.data(Qt.EditRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_update( self, sender, entity ):
-        if entity is self.get_value():
-            self.set_object(entity, False)
+    @QtCore.qt_slot(object, tuple)
+    def objects_updated(self, sender, objects):
+        value = self.get_value()
+        for obj in objects:
+            if obj is value:
+                self.set_object(obj, False)
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_delete( self, sender, entity ):
-        if entity is self.get_value():
-            self.set_object(None, False)
+    @QtCore.qt_slot(object, tuple)
+    def objects_deleted(self, sender, objects):
+        value = self.get_value()
+        for obj in objects:
+            if obj is value:
+                self.set_object(None, False)
 
-    @QtCore.qt_slot( object, object )
-    def handle_entity_create( self, sender, entity ):
-        if entity is self.new_value:
-            self.new_value = None
-            self.set_object(entity)
+    @QtCore.qt_slot(object, tuple)
+    def objects_created(self, sender, objects):
+        for obj in objects:
+            if obj is self.new_value:
+                self.new_value = None
+                self.set_object(obj)
 
     def search_input_editing_finished(self):
         if self.obj is None:
@@ -248,3 +258,4 @@ class Many2OneEditor( CustomEditor ):
               self.set_instance_representation)
 
     selected_object = property(fset=set_object)
+

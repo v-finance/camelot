@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -29,13 +34,11 @@ import six
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
+from ..core import constants
 from ..core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.core.utils import ugettext as _
-from camelot.view.model_thread import object_thread, post
-from camelot.view.controls.action_widget import ( ActionLabel, 
-                                                  HOVER_ANIMATION_DISTANCE,
-                                                  NOTIFICATION_ANIMATION_DISTANCE )
+from camelot.view.model_thread import object_thread
 from .controls.view import AbstractView
 
 class DesktopBackground(AbstractView):
@@ -43,196 +46,41 @@ class DesktopBackground(AbstractView):
     A custom background widget for the desktop. This widget is contained
     by the first tab ('Start' tab) of the desktop workspace.
     """
-    
+
     def __init__(self, gui_context):
         super(DesktopBackground, self).__init__()
         self.gui_context = gui_context
-        mainLayout = QtWidgets.QVBoxLayout()
-        
-        actionButtonsLayout = QtGui.QGridLayout()
-        actionButtonsLayout.setObjectName('actionButtonsLayout')
-        actionButtonsLayout.setContentsMargins(200, 20, 200, 20)
-        
-        actionButtonInfoWidget = ActionButtonInfoWidget()
-        actionButtonInfoWidget.setObjectName('actionButtonInfoWidget')
-                
-        mainLayout.addWidget(actionButtonInfoWidget, 0, Qt.AlignCenter)
-        mainLayout.addLayout(actionButtonsLayout)
-        
-        self.setLayout(mainLayout)
-        
         # Set a white background color
         palette = self.palette()
         self.setAutoFillBackground(True)
         palette.setBrush(QtGui.QPalette.Window, Qt.white)
         self.setPalette(palette)
 
-    def set_actions(self, actions):
-        """
-        :param actions: a list of Actions
-        """
-        #
-        # Remove old actions
-        #
-        for actionButton in self.findChildren(ActionLabel):
-            actionButton.deleteLater()
-        
-        # Make sure that the action buttons aren't visually split
-        # up in two rows when there are e.g. only 3 of them.
-        # So:
-        #  <= 3 action buttons: 1 row and 1, 2 or 3 columns;
-        #  >= 4 action buttons: 2 rows and 2, 3, 4 or 5 columns.
-        actionButtonsLayoutMaxItemsPerRowCount = max((len(actions) + 1) / 2, 3)
-        
-        actionButtonsLayout = self.findChild(QtGui.QGridLayout, 'actionButtonsLayout')
-        if actionButtonsLayout is not None:
-            for position in range(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
-                action = actions[position]
-                actionButton = action.render( self.gui_context, self )
-                actionButton.entered.connect(self.onActionButtonEntered)
-                actionButton.left.connect(self.onActionButtonLeft)
-                actionButton.setInteractive(True)
-                actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 0, position, Qt.AlignCenter)
-
-            for position in range(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
-                action = actions[position]
-                actionButton = action.render( self.gui_context, self )
-                actionButton.entered.connect(self.onActionButtonEntered)
-                actionButton.left.connect(self.onActionButtonLeft)
-                actionButton.setInteractive(True)
-                actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
-            
-    @QtCore.qt_slot()
-    def onActionButtonEntered(self):
-        actionButton = self.sender()
-        actionButtonInfoWidget = self.findChild(QtWidgets.QWidget, 'actionButtonInfoWidget')
-        if actionButtonInfoWidget is not None:
-            # @todo : get state should be called with a model context as first
-            #         argument
-            post( actionButton.action.get_state,
-                  actionButtonInfoWidget.setInfoFromState,
-                  args = (None,) )
-       
-    @QtCore.qt_slot()
-    def onActionButtonLeft(self):
-        actionButtonInfoWidget = self.findChild(QtWidgets.QWidget, 'actionButtonInfoWidget')
-        if actionButtonInfoWidget is not None:
-            actionButtonInfoWidget.resetInfo()
-        
-    # This custom event handler makes sure that the action buttons aren't
-    # drawn in the wrong position on this widget after the screen has been
-    # e.g. maximized or resized by using the window handles.
-    
-    def resizeEvent(self, event):
-        for actionButton in self.findChildren(ActionLabel):
-            actionButton.resetLayout()
-
-        event.ignore()
-
-    # This slot is called after the navpane's animation has finished. During 
-    # this sliding animation, all action buttons are linearly moved to the right,
-    # giving the user a small window in which he or she may cause visual problems
-    # by already hovering the action buttons. This switch assures that the user 
-    # cannot perform mouse interaction with the action buttons until they're
-    # static.
-    @QtCore.qt_slot()
-    def makeInteractive(self, interactive=True):
-        for actionButton in self.findChildren(ActionLabel):
-            actionButton.setInteractive(interactive)
-            
     def refresh(self):
         pass
 
-class ActionButtonContainer(QtWidgets.QWidget):
-    def __init__(self, actionButton, parent = None):
-        super(ActionButtonContainer, self).__init__(parent)
-        
-        mainLayout = QtWidgets.QHBoxLayout()
-        # Set some margins to avoid the ActionButton being visually clipped
-        # when performing the hoverAnimation.
-        mainLayout.setContentsMargins(2*NOTIFICATION_ANIMATION_DISTANCE,
-                                      2*HOVER_ANIMATION_DISTANCE,
-                                      2*NOTIFICATION_ANIMATION_DISTANCE,
-                                      2*HOVER_ANIMATION_DISTANCE)
-        mainLayout.addWidget(actionButton)
-        self.setLayout(mainLayout)
-        
-    def mousePressEvent(self, event):
-        # Send this event to the ActionButton that is contained by this widget.
-        self.layout().itemAt(0).widget().onContainerMousePressEvent(event)
-            
-class ActionButtonInfoWidget(QtWidgets.QWidget):
-    def __init__(self, parent = None):
-        super(ActionButtonInfoWidget, self).__init__(parent)
-        
-        mainLayout = QtWidgets.QHBoxLayout()
-        
-        font = self.font()
-        font.setPointSize(14)
-        
-        actionNameLabel = QtWidgets.QLabel()
-        actionNameLabel.setFont(font)
-        actionNameLabel.setFixedSize(250, 50)
-        actionNameLabel.setAlignment(Qt.AlignCenter)
-        actionNameLabel.setObjectName('actionNameLabel')
-        
-        actionDescriptionLabel = QtWidgets.QLabel()
-        actionDescriptionLabel.setFixedSize(250, 200)
-        actionDescriptionLabel.setObjectName('actionDescriptionLabel')
 
-        mainLayout.addWidget(actionNameLabel, 0, Qt.AlignVCenter)
-        mainLayout.addWidget(actionDescriptionLabel)
-
-        self.setLayout(mainLayout)
-
-    @QtCore.qt_slot( object )
-    def setInfoFromState(self, state):
-        actionNameLabel = self.findChild(QtWidgets.QLabel, 'actionNameLabel')
-        if actionNameLabel is not None:
-            actionNameLabel.setText( six.text_type( state.verbose_name ) )
-        
-        actionDescriptionLabel = self.findChild(QtWidgets.QLabel, 'actionDescriptionLabel')
-        if actionDescriptionLabel is not None:
-            tooltip = six.text_type( state.tooltip or '' )
-            actionDescriptionLabel.setText(tooltip)
-            if tooltip:
-                # Do not use show() or hide() in this case, since it will
-                # cause the actionButtons to be drawn on the wrong position.
-                # Instead, just set the width of the widget to either 0 or 250.
-                actionDescriptionLabel.setFixedWidth(250)
-            else:
-                actionDescriptionLabel.setFixedWidth(0)
-            
-    def resetInfo(self):
-        actionNameLabel = self.findChild(QtWidgets.QLabel, 'actionNameLabel')
-        if actionNameLabel is not None:
-            actionNameLabel.setText('')
-        
-        actionDescriptionLabel = self.findChild(QtWidgets.QLabel, 'actionDescriptionLabel')
-        if actionDescriptionLabel is not None:
-            actionDescriptionLabel.setText('')
-    
 class DesktopTabbar(QtWidgets.QTabBar):
 
     change_view_mode_signal = QtCore.qt_signal()
-    
+
     def mouseDoubleClickEvent(self, event):
         self.change_view_mode_signal.emit()
         event.accept()
-        
+
     def tabSizeHint(self, index):
         originalSizeHint = super(DesktopTabbar, self).tabSizeHint(index)
         minimumWidth = max(160, originalSizeHint.width())
-        
+
         return QtCore.QSize(minimumWidth, originalSizeHint.height())
 
 class DesktopWorkspace(QtWidgets.QWidget):
     """
     A tab based workspace that can be used by views to display themselves.
-    
+
     In essence this is a wrapper around QTabWidget to do some initial setup
     and provide it with a background widget.
-    This was originallly implemented using the QMdiArea, but the QMdiArea has 
+    This was originallly implemented using the QMdiArea, but the QMdiArea has
     too many drawbacks, like not being able to add close buttons to the tabs
     in a decent way.
 
@@ -251,11 +99,11 @@ class DesktopWorkspace(QtWidgets.QWidget):
         self.gui_context.admin = app_admin
         self.gui_context.workspace = self
         self._app_admin = app_admin
-        
+
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         # Setup the tab widget
         self._tab_widget = QtWidgets.QTabWidget( self )
         tab_bar = DesktopTabbar(self._tab_widget)
@@ -272,12 +120,12 @@ class DesktopWorkspace(QtWidgets.QWidget):
     @QtCore.qt_slot()
     def _change_view_mode(self):
         self.change_view_mode_signal.emit()
-        
+
     @QtCore.qt_slot(int)
     def _tab_close_request(self, index):
         """
         Handle the request for the removal of a tab at index.
-        
+
         Note that only at-runtime added tabs are being closed, implying
         the immortality of the 'Start' tab.
         """
@@ -311,7 +159,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
         if sender is not None:
             index = self._tab_widget.indexOf(sender)
             self._tab_widget.setTabText(index, new_title)
-                
+
     @QtCore.qt_slot(QtGui.QIcon)
     def change_icon(self, new_icon):
         """
@@ -357,7 +205,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """Refresh all views on the desktop"""
         for i in range( self._tab_widget.count() ):
             self._tab_widget.widget(i).refresh()
-            
+
     def close_all_views(self):
         """
         Remove all views, except the 'Start' tab, from the workspace.
@@ -366,20 +214,61 @@ class DesktopWorkspace(QtWidgets.QWidget):
         # but removeTab does not really delete the page objects
         #self._tab_widget.clear()
         max_index = self._tab_widget.count()
-        
+
         while max_index > 0:
             self._tab_widget.tabCloseRequested.emit(max_index)
             max_index -= 1
 
 top_level_windows = []
 
-def show_top_level(view, parent):
+def apply_form_state(view, parent, state):
+    #
+    # position the new window in the center of the same screen
+    # as the parent.
+    # That parent might be a QWidget or a QWindow
+    if isinstance(parent, QtWidgets.QWidget):
+        screen = QtWidgets.QApplication.desktop().screenNumber(parent)
+    else:
+        screen = 0
+    geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
+    decoration_width, decoration_height = 0, 0
+    if parent is not None:
+        # here we use the incorrect assumption that we can use the size of
+        # the decorations of the parent window to know the size of the
+        # decorations of the new window
+        #
+        # http://doc.qt.io/qt-4.8/application-windows.html#window-geometry
+        parent_geometry = parent.geometry()
+        parent_frame = parent.frameGeometry()
+        decoration_width = parent_frame.width() - parent_geometry.width()
+        decoration_height = parent_frame.height() - parent_geometry.height()
+    if state == constants.MAXIMIZED:
+        view.setWindowState(QtCore.Qt.WindowMaximized)
+    elif state == constants.MINIMIZED:
+        view.setWindowState(QtCore.Qt.WindowMinimized)
+    elif state == constants.RIGHT:
+        geometry.setLeft(geometry.center().x())
+        view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
+        view.move(geometry.topLeft())
+    elif state == constants.LEFT:
+        geometry.setRight(geometry.center().x())
+        view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
+        view.move(geometry.topLeft())
+    else:
+        point = QtCore.QPoint(geometry.x() + geometry.width()/2,
+                              geometry.y() + geometry.height()/2)
+        point = QtCore.QPoint(point.x()-view.width()/2,
+                              point.y()-view.height()/2)
+        view.move(point)
+
+def show_top_level(view, parent, state=None):
     """Show a widget as a top level window.  If a parent window is given, the new
     window will have the same modality as the parent.
-    
+
     :param view: the widget extend AbstractView
     :param parent: the widget with regard to which the top level
-    window will be placed.
+        window will be placed.
+    :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
     from camelot.view.register import register
     #
@@ -390,11 +279,12 @@ def show_top_level(view, parent):
     #
     register( view, view )
     #
-    # set the parent to None to avoid the window being destructed
-    # once the parent gets destructed
+    # asset the parent is None to avoid the window being destructed
+    # once the parent gets destructed, do not set the parent itself here,
+    # nor the window flags, as this might cause windows to hide themselves
+    # again after being shown in Qt5
     #
-    view.setParent( None )
-    view.setWindowFlags(QtCore.Qt.Window)
+    assert view.parent() is None
     #
     # Make the window title blank to prevent the something
     # like main.py or pythonw being displayed
@@ -403,20 +293,15 @@ def show_top_level(view, parent):
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-    #
-    # position the new window in the center of the same screen
-    # as the parent
-    #
-    screen = QtWidgets.QApplication.desktop().screenNumber(parent)
-    available = QtWidgets.QApplication.desktop().availableGeometry(screen)
-
-    point = QtCore.QPoint(available.x() + available.width()/2,
-                          available.y() + available.height()/2)
-    point = QtCore.QPoint(point.x()-view.width()/2,
-                          point.y()-view.height()/2)
-    view.move( point )
-    if parent is not None:
+    # parent might be a QWidget or a QWindow
+    # the modality should be set before showing the window
+    if isinstance(parent, QtWidgets.QWidget):
         view.setWindowModality(parent.windowModality())
+    #
+    # There is a bug in certain versions of Qt5 (QTBUG-57882), that causes
+    # view.show() to unmax/min the window.
+    # Therefor show the window before moving/resizing it to its final position
+    #
     view.show()
-
+    apply_form_state(view, parent, state)
 

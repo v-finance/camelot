@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -41,10 +46,29 @@ Or use introspection of the SQLAlchemy session to update the GUI :
    
 """
 
-from camelot.admin.action.base import ActionStep
-from camelot.view.remote_signals import get_signal_handler
+import warnings
 
-class FlushSession( ActionStep ):
+from camelot.admin.action.base import ActionStep
+from ..crud_signals import CrudSignalHandler
+
+class AbstractCrudSignal(ActionStep):
+
+    def __init__(self):
+        self.objects_deleted = tuple()
+        self.objects_updated = tuple()
+        self.objects_created = tuple()
+
+    def gui_run(self, gui_context):
+        super(AbstractCrudSignal, self).gui_run(gui_context)
+        crud_signal_handler = CrudSignalHandler()
+        if len(self.objects_deleted):
+            crud_signal_handler.send_objects_deleted(self, self.objects_deleted)
+        if len(self.objects_updated):
+            crud_signal_handler.send_objects_updated(self, self.objects_updated)
+        if len(self.objects_created):
+            crud_signal_handler.send_objects_created(self, self.objects_created)
+
+class FlushSession(AbstractCrudSignal):
     """Flushes the session and informs the GUI about the
     changes.
     
@@ -54,15 +78,15 @@ class FlushSession( ActionStep ):
         This will make the flushing faster, but the GUI might become
         inconsistent.
     """
-        
-    def __init__( self, session, update_depending_objects = True ):
+
+    def __init__(self, session, update_depending_objects = True):
+        super(FlushSession, self).__init__()
         #
         # @todo : deleting of objects should be moved from the collection_proxy
         #         to here, once deleting rows is reimplemented as an action
         #
         # @todo : handle the creation of new objects
         #
-        signal_handler = get_signal_handler()
         # list of objects that need to receive an update signal
         dirty_objects = set( session.dirty )
         
@@ -70,67 +94,60 @@ class FlushSession( ActionStep ):
         #    obj_admin = admin.get_related_admin( type( dirty_object ) )
         #    if obj_admin:
         #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )
-        
-        for obj_to_delete in session.deleted:
-        #    obj_admin = admin.get_related_admin( type( obj_to_delete ) )
-        #    if obj_admin:
-        #        dirty_objects.update( obj_admin.get_depending_objects( obj_to_delete ) )
-            signal_handler.sendEntityDelete( self, obj_to_delete )
+        self.objects_deleted = tuple(session.deleted)
         #
         # Only now is the full list of dirty objects available, so the deleted
         # can be removed from them
         #
         for obj_to_delete in session.deleted:
             try:
-                dirty_objects.remove( obj_to_delete )
+                dirty_objects.remove(obj_to_delete)
             except KeyError:
                 pass
         
         session.flush()
-        for obj in dirty_objects:
-            signal_handler.sendEntityUpdate( self, obj )
-    
-    def gui_run( self, gui_context ):
-        pass
-    
-class UpdateObject( ActionStep ):
-    """Inform the GUI that obj has changed.
+        self.objects_updated = tuple(dirty_objects)
 
-    :param obj: the object that has changed
+
+class UpdateObjects(AbstractCrudSignal):
+    """Inform the GUI that objects have changed.
+
+    :param objects: the objects that have changed
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityUpdate( self, self.obj )
-    
-    def get_object(self):
-        return self.obj
 
-class DeleteObject( UpdateObject ):
-    """Inform the GUI that obj is going to be deleted.
+    def __init__(self, objects):
+        super(UpdateObjects, self).__init__()
+        self.objects_updated = tuple(objects)
 
-    :param obj: the object that is going to be deleted
+    def get_objects(self):
+        return self.objects_updated
+
+class DeleteObjects(AbstractCrudSignal):
+    """Inform the GUI that objects are going to be deleted.
+
+    :param objects: the objects that are going to be deleted
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityDelete( self, self.obj )
-    
-class CreateObject( UpdateObject ):
-    """Inform the GUI that obj was created.
 
-    :param obj: the object that was created
+    def __init__( self, objects ):
+        super(DeleteObjects, self).__init__()
+        self.objects_deleted = tuple(objects)
+
+    def get_objects(self):
+        return self.objects_deleted
+
+class CreateObjects(AbstractCrudSignal):
+    """Inform the GUI that objects were created.
+
+    :param objects: the objects that were created
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityCreate( self, self.obj )
+
+    def __init__( self, objects ):
+        super(CreateObjects, self).__init__()
+        self.objects_created = tuple(objects)
+
+    def get_objects(self):
+        return self.objects_created
+
 
 
 

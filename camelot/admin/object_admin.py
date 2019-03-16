@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -28,7 +33,8 @@ import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
-from ..core.qt import QtCore, Qt
+from ..core.item_model.list_proxy import ListModelProxy
+from ..core.qt import Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.controls.tableview import TableView
@@ -63,7 +69,8 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'precision',
                                                 'directory',
                                                 'visible',
-                                                'validator'])
+                                                'validator',
+                                                'completer'])
 
 
 class ObjectAdmin(object):
@@ -275,7 +282,7 @@ be specified using the verbose_name attribute.
         return 'Admin %s' % str(self.entity.__name__)
 
     def __repr__(self):
-        return 'ObjectAdmin(%s)' % str(self.entity.__name__)
+        return '{0.__name__}({1.__name__})'.format(type(self), self.entity)
 
     def get_name(self):
         """ The name of the group in settings in which user dependent settings 
@@ -314,6 +321,13 @@ be specified using the verbose_name attribute.
         Textual representation of the current object.
         """
         return six.text_type(obj)
+
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        return ListModelProxy(objects)
 
     def get_search_identifiers(self, obj):
         """Create a dict of identifiers to be used in search boxes.
@@ -511,13 +525,14 @@ be specified using the verbose_name attribute.
                     # as it might be the max of a column
                     continue
                 if six.callable(value):
-                    return_value = None
                     try:
                         return_value = value(obj)
                     except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
-                    finally:
-                        dynamic_field_attributes[name] = return_value
+                        # dont inject dummy field attributes, as the delegate logic
+                        # might assume the attributes having a specific type
+                        continue
+                    dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
 
     def get_descriptor_field_attributes(self, field_name):
@@ -585,6 +600,7 @@ be specified using the verbose_name attribute.
                 background_color=None,
                 editable=False,
                 nullable=True,
+                focus_policy=Qt.StrongFocus,
                 widget='str',
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
@@ -754,19 +770,7 @@ be specified using the verbose_name attribute.
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
             return structure_to_form(self.form_display)
-        if self.list_display:
-            return Form( self.get_table().get_fields() )
-        return Form([])
-
-    def _apply_form_state(self, widget):
-        """apply the consequences of the form_state class attribute
-        to a widget"""
-        if hasattr(self, 'form_state'):
-            from camelot.core import constants
-            if self.form_state == constants.MAXIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMaximized)
-            if self.form_state == constants.MINIMIZED:
-                widget.setWindowState(QtCore.Qt.WindowMinimized)
+        return Form( self.get_table().get_fields() )
 
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls
@@ -779,18 +783,26 @@ be specified using the verbose_name attribute.
         """
         setattr(obj, field_name, value)
 
-    def set_defaults(self, object_instance, include_nullable_fields=True):
+    def set_defaults(self, obj):
         """Set the defaults of an object
-        :param include_nullable_fields: also set defaults for nullable fields, 
-        depending on the context, this should be set to False to allow the user 
-        to set the field to None
+    
+        :return: `True` if a default value was set, `False` otherwise
         """
+        iterations = 0
+        while self._set_defaults(obj) == True:
+            iterations += 1
+            if iterations > 10:
+                raise Exception('More than 10 iterations while setting defaults')
+        return iterations > 0
+
+    def _set_defaults(self, object_instance):
         from sqlalchemy.schema import ColumnDefault
         from sqlalchemy import orm
 
         if self.is_deleted( object_instance ):
             return False
 
+        default_set = False
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
         for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
@@ -826,26 +838,32 @@ be specified using the verbose_name attribute.
                     default_value = default()
             else:
                 default_value = default
-            logger.debug(
-                'set default for %s to %s' % (
-                    field,
-                    six.text_type(default_value)
-                )
-            )
-            try:
-                setattr(object_instance, field, default_value)
-            except AttributeError as exc:
-                logger.error(
-                    'Programming Error : could not set'
-                    ' attribute %s to %s on %s' % (
+            if default_value is not None:
+                logger.debug(
+                    u'set default for %s to %s'%(
                         field,
-                        default_value,
-                        object_instance.__class__.__name__
-                        ),
-                    exc_info=exc
+                        six.text_type(default_value)
+                    )
                 )
+                try:
+                    setattr(object_instance, field, default_value)
+                    default_set = True
+                except AttributeError as exc:
+                    logger.error(
+                        u'Programming Error : could not set'
+                        u' attribute %s to %s on %s' % (
+                            field,
+                            default_value,
+                            object_instance.__class__.__name__
+                            ),
+                        exc_info=exc
+                    )
         for compounding_object in self.get_compounding_objects( object_instance ):
-            self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
+            compound_admin = self.get_related_admin( type( compounding_object ) )
+            compound_default_set = compound_admin.set_defaults(compounding_object)
+            default_set = default_set or compound_default_set
+
+        return default_set
 
     def primary_key( self, obj ):
         """Get the primary key of an object
@@ -894,7 +912,12 @@ be specified using the verbose_name attribute.
         """:return: True if the object has a persisted state, False otherwise"""
         return False
 
+    def is_dirty(self, _obj):
+        """:return: True if the object might have been modified"""
+        return True
+
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
+

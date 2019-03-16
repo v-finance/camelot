@@ -1,41 +1,52 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 import codecs
 import copy
 import datetime
+import functools
 import logging
 
 import six
 
+from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant
-from .base import Action
+from .base import Action, Mode
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
+from openpyxl.utils import get_column_letter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 
@@ -72,7 +83,12 @@ class ListActionModelContext( ApplicationActionModelContext ):
     .. attribute:: session
     
         The session to which the objects in the list belong.
-        
+
+    .. attribute:: proxy
+
+        A :class:`camelot.core.item_model.AbstractModelProxy` object that gives
+        access to the objects in the list
+
     .. attribute:: field_attributes
     
         The field attributes of the field to which the list relates, for example
@@ -88,7 +104,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
     
     def __init__( self ):
         super( ListActionModelContext, self ).__init__()
-        self._model = None
+        self.proxy = None
         self.admin = None
         self.current_row = None
         self.current_column = None
@@ -108,24 +124,25 @@ class ListActionModelContext( ApplicationActionModelContext ):
         # change, while the selection remains the same, so we should
         # be careful when using the collection to generate selection data
         for (first_row, last_row) in self.selected_rows:
-            for row in range( first_row, last_row + 1 ):
-                yield self._model._get_object( row )
-    
+            for obj in self.proxy[first_row:last_row + 1]:
+                yield obj
+
     def get_collection( self, yield_per = None ):
         """
         :param yield_per: an integer number giving a hint on how many objects
             should fetched from the database at the same time.
         :return: a generator over the objects in the list
         """
-        for obj in self._model.get_collection():
+        for obj in self.proxy[0:self.collection_count]:
             yield obj
             
     def get_object( self ):
         """
         :return: the object displayed in the current row or None
         """
-        if self.current_row is not None:
-            return self._model._get_object( self.current_row )
+        if self.current_row != None:
+            for obj in self.proxy[self.current_row:self.current_row+1]:
+                return obj
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a table view.  On top of the attributes of the 
@@ -169,7 +186,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
         current_row, current_column, current_field_name = None, None, None
-        model = None
+        proxy = None
         collection_count = 0
         selection_count = 0
         selected_rows = []
@@ -180,6 +197,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 current_column = current_index.column()
             model = self.item_view.model()
             if model is not None:
+                proxy = model.get_value()
                 collection_count = model.rowCount()
                 if current_column is not None:
                     current_field_name = variant_to_py(
@@ -200,7 +218,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.current_row = current_row
         context.current_column = current_column
         context.current_field_name = current_field_name
-        context._model = model
+        context.proxy = proxy
         return context
         
     def copy( self, base_class = None ):
@@ -232,7 +250,7 @@ class CallMethod( Action ):
     def model_run( self, model_context ):
         from camelot.view.action_steps import ( UpdateProgress, 
                                                 FlushSession,
-                                                UpdateObject )
+                                                UpdateObjects )
         step = max( 1, model_context.selection_count / 100 )
         for i, obj in enumerate( model_context.get_selection() ):
             if i%step == 0:
@@ -240,8 +258,8 @@ class CallMethod( Action ):
             self.method( obj )
             # the object might have changed without the need to be flushed
             # to the database
-            yield UpdateObject( obj )
-        yield FlushSession( model_context.session )
+            yield UpdateObjects((obj,))
+        yield FlushSession(model_context.session)
         
     def get_state( self, model_context ):
         state = super( CallMethod, self ).get_state( model_context )
@@ -273,7 +291,7 @@ class RowNumberAction( Action ):
 
     def get_state( self, model_context ):
         state = super(RowNumberAction, self).get_state(model_context)
-        state.verbose_name = str(model_context.current_row + 1)
+        state.verbose_name = six.text_type(model_context.current_row + 1)
         return state
 
 class EditAction( ListContextAction ):
@@ -304,6 +322,14 @@ class OpenFormView( ListContextAction ):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
 
+    def get_state( self, model_context ):
+        state = Action.get_state(self, model_context)
+        if model_context.current_row is not None:
+            state.verbose_name = six.text_type(model_context.current_row + 1)
+        else:
+            state.verbose_name = six.text_type()
+        return state
+
 class ChangeAdmin( Action ):
     """Change the admin of a tableview, this action is used to switch from
     one subclass to another in a table view.
@@ -321,25 +347,34 @@ class ChangeAdmin( Action ):
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
     
-    shortcut = QtGui.QKeySequence.Copy
+    # no shortcut here, as this is too dangerous if the user
+    # presses the shortcut without being aware of the consequences
     icon = Icon('tango/16x16/actions/edit-copy.png')
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        for i, obj in enumerate( model_context.get_selection() ):
-            yield action_steps.UpdateProgress( i, 
-                                               model_context.selection_count,
-                                               self.verbose_name )
-            new_object = model_context.admin.copy( obj )
-            model_context._model.append_object( new_object )
-        yield action_steps.FlushSession( model_context.session )
+        admin = model_context.admin
+        new_objects = list()
+        updated_objects = set()
+        for i, obj in enumerate(model_context.get_selection()):
+            yield action_steps.UpdateProgress(i, 
+                                              model_context.selection_count,
+                                              self.verbose_name )
+            new_object = admin.copy(obj)
+            model_context.proxy.append(new_object)
+            new_objects.append(new_object)
+            updated_objects.update(set(admin.get_depending_objects(new_object)))
+        yield action_steps.CreateObjects(new_objects)
+        yield action_steps.UpdateObjects(updated_objects)
+        yield action_steps.FlushSession(model_context.session)
             
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
     shortcut = QtGui.QKeySequence.Delete
+    name = 'delete_selection'
     icon = Icon('tango/16x16/places/user-trash.png')
     tooltip = _('Delete')
     verbose_name = _('Delete')
@@ -384,14 +419,14 @@ class DeleteSelection( EditAction ):
                 pass
             for step in self.handle_object( model_context, obj ):
                 yield step
-        for depending_obj in depending_objects:
-            yield action_steps.UpdateObject( depending_obj )
+        yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
         
     def handle_object( self, model_context, obj ):
         from camelot.view import action_steps
-        yield action_steps.DeleteObject( obj )
-        model_context.admin.delete( obj )
+        model_context.proxy.remove(obj)
+        yield action_steps.DeleteObjects((obj,))
+        model_context.admin.delete(obj)
 
 class AbstractToPrevious(object):
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
@@ -565,7 +600,7 @@ class RestoreExportMapping( SaveExportMapping ):
                             break
                 else:
                     column_mapping.field = None
-                yield action_steps.UpdateObject(column_mapping)
+            yield action_steps.UpdateObjects(model_context.get_collection())
 
 class RemoveExportMapping( SaveExportMapping ):
     """
@@ -585,6 +620,25 @@ class RemoveExportMapping( SaveExportMapping ):
             mappings.pop(mapping_name)
             self.write_mappings(mappings)
 
+
+class ClearMapping(Action):
+    """
+    Clear a selection of mappings
+    """
+
+    verbose_name = _('Clear')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+
+        cleared_mappings = list()
+        for mapping in model_context.get_selection():
+            if mapping.field is not None:
+                mapping.field = None
+                cleared_mappings.append(mapping)
+        yield action_steps.UpdateObjects(cleared_mappings)
+
+
 class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
     
@@ -592,13 +646,11 @@ class ExportSpreadsheet( ListContextAction ):
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
 
-    # xlwt options
-    max_width = 10000
-    font_name = 'Arial'
+    max_width = 40
+    font_name = 'Calibri'
     
     def model_run( self, model_context ):
         from decimal import Decimal
-        from xlwt import Font, Borders, XFStyle, Pattern, Workbook
         from camelot.view.import_utils import ( ColumnMapping,
                                                 ColumnSelectionAdmin )
         from camelot.view.utils import ( local_date_format, 
@@ -616,8 +668,12 @@ class ExportSpreadsheet( ListContextAction ):
         field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
                          six.iteritems(all_fields) ]
         field_choices.sort(key=lambda field_tuple:field_tuple[1])
-        row_data = [None] * len(all_fields)
-        column_range = six.moves.range(len(all_fields))
+        list_columns = admin.get_columns()
+        # the admin might show more columns then fields available, if the
+        # columns are generated dynamically
+        max_mapping_length = max(len(list_columns), len(all_fields))
+        row_data = [None] * max_mapping_length
+        column_range = six.moves.range(max_mapping_length)
         mappings = []
         for i, default_field in six.moves.zip_longest(column_range,
                                                       admin.get_columns(),
@@ -627,7 +683,9 @@ class ExportSpreadsheet( ListContextAction ):
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
                                                  RestoreExportMapping(settings),
-                                                 RemoveExportMapping(settings)]
+                                                 RemoveExportMapping(settings),
+                                                 ClearMapping(),
+                                                 ]
         change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
         change_mappings.title = _('Select field')
         change_mappings.subtitle = _('Specify for each column the field to export')
@@ -642,80 +700,89 @@ class ExportSpreadsheet( ListContextAction ):
         #
         yield action_steps.UpdateProgress( text = _('Create worksheet') )
         workbook = Workbook()
-        worksheet = workbook.add_sheet('Sheet1')
-        #
-        # keep a global cache of styles, since the number of styles that
-        # can be used is limited.
-        #
-        styles = dict()
-        freeze = lambda d:tuple(sorted(six.iteritems(d)))
-        
-        def get_style( font_specs=dict(), 
-                       border_specs = dict(), 
-                       pattern = None,
-                       num_format_str = None, ):
-            
-            style_key = ( freeze(font_specs), 
-                          freeze(border_specs), 
-                          pattern, 
-                          num_format_str )
-            
-            try:
-                return styles[style_key]
-            except KeyError:
-                style = XFStyle()
-                style.font = Font()
-                for key, value in six.iteritems(font_specs):
-                    setattr( style.font, key, value )
-                style.borders = Borders()
-                for key, value in six.iteritems(border_specs):
-                    setattr( style.borders, key, value )
-                if pattern:
-                    style.pattern = pattern
-                if num_format_str:
-                    style.num_format_str = num_format_str
-                styles[ style_key ] = style
-                return style
+        #Workbook contains by default an sheet
+        worksheet = workbook.active
+        worksheet.title = 'Sheet1'
         
         #
-        # write style
+        # write styles
         #
-        title_style = get_style( dict( font_name = self.font_name,
-                                       bold = True,
-                                       height = 240 ) )
-        worksheet.write( 0, 0, admin.get_verbose_name_plural(), title_style )
+        title_style = NamedStyle(name='title_style',
+                                font=Font(name=self.font_name,
+                                          bold=True,
+                                          size=12)
+                                )        
+        
+        header_style = NamedStyle(name='header_style', 
+                                  font=Font(bold=True,
+                                            name=self.font_name,
+                                            color='FFFFFF',
+                                            size=10),
+                                  fill=PatternFill(fill_type='solid',
+                                                   start_color='4F81BD',
+                                                   end_color='4F81BD'),
+                                  border=Border(top=Side(style='thin',
+                                                         color='95B3D7'),
+                                                bottom=Side(style='thin',
+                                                            color='95B3D7'))
+                                  )
+    
+        table_fill_odd = NamedStyle(name='table_fill_odd', 
+                                    font=Font(name=self.font_name,
+                                              size=10), 
+                                    fill=PatternFill(fill_type='solid', 
+                                                     start_color='C6D9F0', 
+                                                     end_color='C6D9F0')
+                                    )
+    
+        table_fill_even = NamedStyle(name='table_fill_even', 
+                                     font=Font(name=self.font_name,
+                                               size=10), 
+                                     fill=PatternFill(fill_type='solid', 
+                                                      start_color='FFFFFF', 
+                                                      end_color='FFFFFF')
+                                     )
+    
+        border_bottom = Border(bottom=Side(style='thin', color='95B3D7'))
+        border_left = Border(bottom=border_bottom.bottom, left=Side(style='thin', color='95B3D7'))
+        border_right = Border(bottom=border_bottom.bottom, right=Side(style='thin', color='95B3D7'))        
+        
+        worksheet.cell(row=1, column=1).value = admin.get_verbose_name_plural()
+        worksheet.cell(row=1, column=1).style = title_style
+        
         #
         # create some patterns and formats
         #
         date_format = local_date_format()
         datetime_format = local_datetime_format()
         time_format = local_time_format()
-        header_pattern = Pattern()
-        header_pattern.pattern = Pattern.SOLID_PATTERN
-        header_pattern.pattern_fore_colour = 0x16
+
         #
         # write headers
         #
+        worksheet.auto_filter.ref = 'A2:' + get_column_letter(len(columns)) + '2' 
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
             verbose_name = six.text_type( field_attributes.get( 'name', name ) )
             field_names.append( name )
-            font_specs = dict( font_name = self.font_name, 
-                               bold = True, 
-                               height = 200 )
-            border_specs = dict( top = 0x01 )
             name = six.text_type( name )
+            
             if i == 0:
-                border_specs[ 'left' ] = 0x01                
+                header_style.border = border_left
             elif i == len( columns ) - 1:
-                border_specs[ 'right' ] = 0x01 
-            header_style = get_style( font_specs, border_specs, header_pattern )
-            worksheet.write( 2, i, verbose_name, header_style)
+                header_style.border = border_right
+            else:
+                header_style.border = border_bottom
+            worksheet.cell(row=2, column=i+1).value = verbose_name
+            worksheet.cell(row=2, column=i+1).style = header_style
                 
             if len( name ) < 8:
-                worksheet.col( i ).width = 8 *  375
+                worksheet.column_dimensions[get_column_letter(i+1)].width = 8 * 1.3
             else:
-                worksheet.col( i ).width = len( verbose_name ) *  375
+                worksheet.column_dimensions[get_column_letter(i+1)].width = len( verbose_name ) * 1.3
+        
+        worksheet.auto_filter.add_filter_column(0, [])
+        
         #
         # write data
         #
@@ -733,18 +800,15 @@ class ExportSpreadsheet( ListContextAction ):
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
-                format_string = '0'
-                if value != None:
+                format_string = 'General'
+                if value is not None:
                     if isinstance( value, Decimal ):
-                        value = float( str( value ) )
-                    if isinstance( value, six.string_types ):
-                        if attributes.get( 'translate_content', False ) == True:
-                            value = ugettext( value )
+                        format_string = '0.00'
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
                         value = separator.join([six.text_type(el) for el in value])
                     elif isinstance( value, float ):
-                        precision = attributes.get( 'precision', 2 )
+                        precision = attributes.get('precision', 2)
                         format_string = '0.' + '0'*precision
                     elif isinstance( value, int ):
                         format_string = '0'
@@ -754,34 +818,44 @@ class ExportSpreadsheet( ListContextAction ):
                         format_string = datetime_format
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
+                    elif attributes.get('to_string') is not None:
+                        value = six.text_type(attributes['to_string'](value))
                     else:
-                        value = six.text_type( value )
+                        value = six.text_type(value)
                 else:
                     # empty cells should be filled as well, to get the
                     # borders right
                     value = ''
                         
-                font_specs = dict( font_name = self.font_name, height = 200 )
-                border_specs = dict()
-                if i == 0:
-                    border_specs[ 'left' ] = 0x01
-                elif i == len( columns ) - 1:
-                    border_specs[ 'right' ] = 0x01
-                if (row - offset + 1) == model_context.collection_count:
-                    border_specs[ 'bottom' ] = 0x01
-                style = get_style( font_specs, 
-                                   border_specs, 
-                                   None, 
-                                   format_string )
-                worksheet.write( row, i, value, style )
-                min_width = len( six.text_type( value ) ) * 300
-                worksheet.col( i ).width = min(self.max_width, max(
-                    min_width,
-                    worksheet.col( i ).width)
-                )
+                worksheet.cell(row=row, column=i+1).value = value
+                
+                if(row % 2 == 0):
+                    if i == 0:
+                        table_fill_even.border = border_left
+                    elif i == len(columns) - 1:
+                        table_fill_even.border = border_right
+                    else:
+                        table_fill_even.border = border_bottom
+                    worksheet.cell(row=row, column=i+1).style = table_fill_even
+                else:
+                    if i == 0:
+                        table_fill_odd.border = border_left 
+                    elif i == len(columns) - 1:
+                        table_fill_odd.border = border_right
+                    else:
+                        table_fill_odd.border = border_bottom
+                    worksheet.cell(row=row, column=i+1).style = table_fill_odd
+
+                min_width = len( six.text_type( value ) ) * 1
+                worksheet.column_dimensions[get_column_letter(i+1)].width = min(self.max_width, max(
+                    min_width, 
+                    worksheet.column_dimensions[get_column_letter(i+1)].width)
+                                                                               )
+                #number_format must be set at the end, otherwise it will not be applied
+                worksheet.cell(row=row, column=i+1).number_format = format_string
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
-        filename = action_steps.OpenFile.create_temporary_file( '.xls' )
+        filename = action_steps.OpenFile.create_temporary_file( '.xlsx' )
         workbook.save( filename )
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
@@ -867,7 +941,7 @@ class ImportFromFile( EditAction ):
             # in the field attributes
             #
             all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
-                         six.iteritems(admin.get_all_fields_and_attributes())]
+                         six.iteritems(admin.get_all_fields_and_attributes()) if entity_fa.get('from_string')]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
             for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
                                                           default_fields):
@@ -898,14 +972,10 @@ class ImportFromFile( EditAction ):
             # import the temporary objects into real objects
             #
             with model_context.session.begin():
-                for i,row in enumerate( collection ):
+                for i,row in enumerate(collection):
                     new_entity_instance = admin.entity()
                     for field_name, attributes in row_data_admin.get_columns():
-                        try:
-                            from_string = attributes['from_string']
-                        except KeyError:
-                            LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
-                            from_string = lambda _a:None
+                        from_string = attributes['from_string']
                         setattr(
                             new_entity_instance,
                             attributes['original_field'],
@@ -914,7 +984,7 @@ class ImportFromFile( EditAction ):
                     admin.add( new_entity_instance )
                     # in case the model is a collection proxy, the new objects should
                     # be appended
-                    model_context._model.append( new_entity_instance )
+                    model_context.proxy.append(new_entity_instance)
                     yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
                 yield action_steps.FlushSession( model_context.session )
             yield action_steps.Refresh()
@@ -929,6 +999,15 @@ class ReplaceFieldContents( EditAction ):
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.Replace
+
+    def gui_run( self, gui_context ):
+        #
+        # if there is an open editor on a row that will be deleted, there
+        # might be an assertion failure in QT, or the data of the editor 
+        # might be pushed to the changed row
+        #
+        gui_context.item_view.close_editor()
+        super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -946,9 +1025,148 @@ class ReplaceFieldContents( EditAction ):
                 setattr( obj, field_name, value )
                 # dont rely on the session to update the gui, since the objects
                 # might not be in a session
-                yield action_steps.UpdateObject(obj)
-            yield action_steps.FlushSession( model_context.session )
-        
+            yield action_steps.UpdateObjects(model_context.get_selection())
+            yield action_steps.FlushSession(model_context.session)
+
+
+class FieldFilter(object):
+    """
+    Helper class for the `SetFilters` action that allows the user to
+    configure a filter on an individual field.
+    """
+
+    def __init__(self, field_name=None, value=None):
+        self.field_name = field_name
+        self.value = value
+
+class SetFilters(Action, AbstractModelFilter):
+    """
+    Apply a set of filters on a list.
+    This action differs from those in `list_filter` in the sense that it will
+    pop up a dialog to configure a complete filter and wont allow the user
+    to apply filters from within its widget.
+    """
+
+    verbose_name = _('Find')
+    tooltip = _('Filter the data')
+    icon = Icon('tango/16x16/actions/system-search.png')
+
+    def filter(self, it, field_filters):
+        if field_filters is None:
+            for obj in it:
+                yield obj
+        else:
+            for obj in it:
+                for field_filter in field_filters:
+                    if field_filter.field_name is not None:
+                        if getattr(obj, field_filter.field_name) != field_filter.value:
+                            break
+                else:
+                    yield obj
+
+    def get_field_name_choices(self, model_context):
+        """
+        :return: a list of choices with the fields the user can select to
+           filter upon.
+        """
+        field_attributes = model_context.admin.get_all_fields_and_attributes()
+        field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+        field_choices.sort(key=lambda choice:choice[1])
+        return field_choices
+
+    def get_field_value_choices(self, model_context, field_filter):
+        """
+        :param field_filter: `FieldFilter` the filter the user is configuring.
+        :return: for a specific field name, the list of values from which the
+           user can select to filter upon.
+        """
+        field_name = field_filter.field_name
+        if field_name is None:
+            return []
+        field_attributes = model_context.admin.get_field_attributes(field_name)
+        to_string = field_attributes.get('to_string', six.text_type)
+        values = set(getattr(obj, field_name) for obj in model_context.proxy.get_model())
+        return [(value, to_string(value)) for value in values]
+
+    def model_run( self, model_context ):
+        from camelot.admin.object_admin import ObjectAdmin
+        from camelot.view import action_steps
+        from camelot.view.controls import delegates
+
+        # prepare a number of filters, for easy access
+        filters = [FieldFilter() for i in range(10)]
+
+        if model_context.mode_name == 'clear':
+            yield action_steps.SetFilter(self, None)
+            return
+        elif model_context.mode_name == 'change':
+            # don't just modify the old filters, but create new filters
+            # each time
+            old_filters = model_context.proxy.get_filter(self) or []
+            for old_filter, new_filter in zip(old_filters, filters):
+                if old_filter.field_name is not None:
+                    new_filter.field_name = old_filter.field_name
+                    new_filter.value = old_filter.value
+
+        current_field_name = model_context.current_field_name
+        current_field_value  = None
+        current_obj = model_context.get_object()
+
+        # if a field was selected when calling the action, use that
+        # field for the first empty filter
+        if (current_field_name is not None) and (current_obj is not None):
+            current_field_value = getattr(current_obj, current_field_name)
+            for field_filter in filters:
+                if field_filter.field_name is None:
+                    field_filter.field_name = current_field_name
+                    field_filter.value = current_field_value
+                    break
+
+        field_name_choices = self.get_field_name_choices(model_context)
+        field_value_choices = functools.partial(self.get_field_value_choices, model_context)
+
+        class FieldFilterAdmin(ObjectAdmin):
+            list_display = ['field_name', 'value']
+            field_attributes = {
+                'field_name': {
+                    'name': _('Name'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices':field_name_choices
+                    },
+                'value': {
+                    'name': _('Value'),
+                    'editable': True,
+                    'delegate': delegates.ComboBoxDelegate,
+                    'choices': field_value_choices,
+                    },
+            }
+
+        filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
+        change_filters = action_steps.ChangeObjects(filters, filter_admin)
+        change_filters.title = _('Filter')
+        change_filters.subtitle = _('Select field and value')
+        yield change_filters
+        for field_filter in filters:
+            if field_filter.field_name is not None:
+                break
+        else:
+            yield action_steps.SetFilter(self, None)
+        yield action_steps.SetFilter(self, filters)
+
+    def get_state(self, model_context):
+        state = super(SetFilters, self).get_state(model_context)
+        modes = []
+        if model_context.proxy.get_filter(self) is not None:
+            modes.append(Mode('change', _('Change filter')))
+            state.notification = True
+        modes.extend([
+            Mode('filter', _('Apply filter')),
+            Mode('clear', _('Clear filter')),
+        ])
+        state.modes = modes
+        return state
+
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
     list"""
@@ -960,13 +1178,14 @@ class AddExistingObject( EditAction ):
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
-        objs_to_add = yield action_steps.SelectObjects( model_context.admin )
+        objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
                 if obj_to_add == obj:
                     raise StopIteration()
-            model_context._model.append_object( obj_to_add )
-        yield action_steps.FlushSession( object_session( obj_to_add ) )
+            model_context.proxy.append(obj_to_add)
+        yield action_steps.UpdateObjects(objs_to_add)
+        yield action_steps.FlushSession(object_session(obj_to_add))
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
@@ -989,20 +1208,23 @@ class AddNewObject( EditAction ):
         new_object = admin.entity()
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        model_context._model.append_object(new_object)
+        model_context.proxy.append(new_object)
         # Give the default fields their value
         admin.set_defaults(new_object)
-        # if the object is valid, flush it
+        # if the object is valid, flush it, but in ancy case inform the gui
+        # the object has been created
+        yield action_steps.CreateObjects((new_object,))
         if not len(admin.get_validator().validate_object(new_object)):
             yield action_steps.FlushSession(model_context.session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
-        for depending_obj in admin.get_depending_objects( new_object ):
-            yield action_steps.UpdateObject(depending_obj)
+        yield action_steps.UpdateObjects(
+            tuple(admin.get_depending_objects(new_object))
+        )
         if create_inline is False:
             yield action_steps.OpenFormView([new_object], admin)
 
-class RemoveSelection( DeleteSelection ):
+class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""
     
     shortcut = None
@@ -1011,8 +1233,9 @@ class RemoveSelection( DeleteSelection ):
     icon = Icon( 'tango/16x16/actions/list-remove.png' )
             
     def handle_object( self, model_context, obj ):
-        model_context._model.remove( obj )
+        model_context.proxy.remove( obj )
         # no StopIteration, since the supergenerator needs to
         # continue to flush the session
         yield None
+
 

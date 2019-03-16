@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -27,12 +32,8 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
-from sqlalchemy.orm import Query
-
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt
-from ...view.proxy.collection_proxy import CollectionProxy
-from ...view.proxy.queryproxy import QueryTableProxy
 from ..workspace import show_top_level
 
 
@@ -52,6 +53,22 @@ class Sort( ActionStep ):
             model = gui_context.item_view.model()
             model.sort( self.column, self.order )
 
+class SetFilter( ActionStep ):
+
+    def __init__( self, list_filter, value ):
+        """Filter the items in the item view
+        
+        :param list_filter: the `AbstractModelFilter` to apply
+        :param value: the value on which to filter
+        """
+        self.list_filter = list_filter
+        self.value = value
+
+    def gui_run( self, gui_context ):
+        if gui_context.item_view != None:
+            model = gui_context.item_view.model()
+            model.set_filter(self.list_filter, self.value)
+
 class UpdateTableView( ActionStep ):
     """Change the admin and or value of an existing table view
     
@@ -64,12 +81,6 @@ class UpdateTableView( ActionStep ):
         self.admin = admin
         self.value = value
         self.title = admin.get_verbose_name_plural()
-        if isinstance(value, list):
-            self.proxy = CollectionProxy
-        elif isinstance(value, Query):
-            self.proxy = QueryTableProxy
-        else:
-            raise Exception('Unhandled value type : {0}'.format(type(value)))
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
         self.columns = self.admin.get_columns()
@@ -77,12 +88,12 @@ class UpdateTableView( ActionStep ):
     def update_table_view(self, table_view):
         table_view.set_admin(self.admin)
         model = table_view.get_model()
-        model.set_columns(self.columns)
+        list(model.add_columns((fn for fn, _fa in self.columns)))
         table_view.set_columns(self.columns)
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
-        table_view.set_value(self.value)
+        table_view.set_value(self.admin.get_proxy(self.value))
         table_view.set_list_actions(self.list_actions)
 
     def gui_run(self, gui_context):
@@ -116,8 +127,7 @@ class OpenTableView( UpdateTableView ):
         from camelot.view.controls.tableview import TableView
         table_view = TableView(gui_context, 
                                self.admin, 
-                               self.search_text,
-                               proxy = self.proxy)
+                               self.search_text)
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return table_view
@@ -141,3 +151,19 @@ class ClearSelection(ActionStep):
     def gui_run(self, gui_context):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
+
+class RefreshItemView(ActionStep):
+    """
+    Refresh only the current item view
+    """
+
+    def gui_run(self, gui_context):
+        if gui_context.item_view is not None:
+            model = gui_context.item_view.model()
+            if model is not None:
+                model.refresh()
+                # this should reset the sort, since a refresh might cause
+                # new row to appear, and so the proxy needs to be reindexed
+                # this sorting of reset is not implemented, therefor, we simply
+                # sort on the first column to force reindexing
+                model.sort(0, Qt.AscendingOrder)

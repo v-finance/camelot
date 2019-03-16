@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
@@ -34,7 +39,7 @@ import six
 from ..admin.action.application_action import ApplicationActionGuiContext
 from ..admin.entity_admin import EntityAdmin
 from ..core.orm import Session
-from ..core.qt import Qt, QtCore, QtGui, QtWidgets
+from ..core.qt import Qt, QtCore, QtGui, QtWidgets, qt_api
 from ..view import action_steps
 
 has_programming_error = False
@@ -102,7 +107,10 @@ class ModelThreadTestCase(unittest.TestCase):
         widget.repaint()
         QtWidgets.QApplication.flush()
         widget.repaint()
-        inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
+        if qt_api == 'PyQt5':
+            inner_pixmap = QtWidgets.QWidget.grab(widget)
+        else:
+            inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
         # add a border to the image
         border = 4
         outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
@@ -125,14 +133,11 @@ class ModelThreadTestCase(unittest.TestCase):
         from camelot.view import model_thread
         from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
         from camelot.view.model_thread import get_model_thread, has_model_thread
-        from camelot.view.remote_signals import construct_signal_handler, has_signal_handler
         if not has_model_thread():
             #
             # Run the tests without real threading, to avoid timing problems with screenshots etc.
             #
             model_thread._model_thread_.insert( 0, NoThreadModelThread() )
-        if not has_signal_handler():
-            construct_signal_handler()
         self.mt = get_model_thread()
         if not self.mt.isRunning():
             self.mt.start()
@@ -244,6 +249,7 @@ class EntityViewsTest(ModelThreadTestCase):
             if isinstance(admin, EntityAdmin):
                 obj = admin.get_query().first()
             if obj is None:
+                # TODO Make sure object can be created, FinancialAccountPremiumSchedule has an obligatory parameter so this fails now
                 obj = admin.entity()
                 new_obj = True
             # create a form view
@@ -259,3 +265,4 @@ class EntityViewsTest(ModelThreadTestCase):
             self.assertFalse( has_programming_error )
             if new_obj:
                 self.session.expunge(obj)
+

@@ -1,3 +1,31 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
+#  www.conceptive.be / info@conceptive.be
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  ============================================================================
 import logging
 import sys
 
@@ -39,8 +67,10 @@ class Application( Action ):
             # before anything else happens or is imported, the splash screen should be there
             #
             pixmap = self.application_admin.get_splashscreen()
+            progress_dialog = None
             if pixmap is not None:
-                self.gui_context.progress_dialog = SplashProgress( pixmap )
+                progress_dialog = SplashProgress(pixmap)
+                self.gui_context.progress_dialog = progress_dialog
                 gui_context.progress_dialog.show()
                 if sys.platform == 'darwin':
                     # Running on Mac OS X, focus application on launch
@@ -48,9 +78,10 @@ class Application( Action ):
                 gui_context.progress_dialog.setLabelText( _('Initialize application') )
             self.set_application_attributes()
             self.gui_context.admin = self.application_admin
-            super( Application, self ).gui_run( gui_context )
-            if gui_context.progress_dialog is not None:
-                gui_context.progress_dialog.close()
+            super(Application, self).gui_run(gui_context)
+            # only close the progress dialog if it was created in this method
+            if progress_dialog is not None:
+                progress_dialog.close()
         except Exception as e:
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
@@ -114,3 +145,4 @@ class Application( Action ):
         yield action_steps.MainWindow( self.application_admin )
         home_actions = self.application_admin.get_actions()
         yield action_steps.ActionView( _('Home'), home_actions )
+

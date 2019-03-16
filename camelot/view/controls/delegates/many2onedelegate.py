@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,8 +31,8 @@ import logging
 
 import six
 
-from ....core.qt import Qt, variant_to_py
-from ...proxy import ValueLoading
+from ....core.qt import py_to_variant
+from ....core.item_model import PreviewRole
 from .. import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -58,14 +63,12 @@ class Many2OneDelegate(CustomDelegate):
         self._kwargs = kwargs
         self._width = self._width * 2
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.data(Qt.DisplayRole))
-        if value in (None, ValueLoading):
-            value = ''
-        self.paint_text(painter, option, index, six.text_type(value) )
-        painter.restore()
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(Many2OneDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+        return item
 
     def createEditor(self, parent, option, index):
         editor = editors.Many2OneEditor( self.admin,
@@ -76,9 +79,6 @@ class Many2OneDelegate(CustomDelegate):
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
-
-#  def sizeHint(self, option, index):
-#    return self._dummy_editor.sizeHint()
 
 
 

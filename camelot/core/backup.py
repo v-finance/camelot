@@ -1,30 +1,36 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 import logging
 
 import six
-from sqlalchemy import types, sql
+from camelot.types import PrimaryKey
+from sqlalchemy import types, sql, PrimaryKeyConstraint
 
 from .qt import QtGui
 
@@ -161,7 +167,8 @@ class BackupMechanism(object):
                 to_table = from_table.tometadata(to_meta_data)
                 to_table.schema = None
                 to_table.constraints = set()
-                to_table.primary_key = []
+                to_table.indexes = set()
+                to_table.primary_key = PrimaryKeyConstraint()
                 to_table.foreign_keys = set()
                 from_and_to_tables.append((from_table, to_table))
         to_meta_data.create_all(to_connection)
@@ -183,6 +190,7 @@ class BackupMechanism(object):
             logger.info(u'check backfup file in to storage with name %s'%self.filename)
             self.storage.checkin( temp_file_name, self.filename )
             os.remove( temp_file_name )
+        yield (number_of_tables + 1, number_of_tables + 1, self.filename)
         yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))
     
     def restore(self, to_engine):
@@ -265,9 +273,13 @@ class BackupMechanism(object):
             to_connection.execute(to_table.insert(), table_data)
             if to_dialect == 'postgresql':
                 for column in to_table.columns:
-                    if isinstance(column.type, types.Integer) and column.autoincrement==True and column.primary_key==True:
+                    # Support both sqlalchemy's as Camelot's primary key type.
+                    if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
+                       column.autoincrement=='auto' and column.primary_key==True and \
+                       len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                         column_name = column.name
                         table_name = to_table.name
                         seq_name = table_name + "_" + column_name + "_seq"
                         to_connection.execute("select setval('%s', max(%s)) from %s" % (seq_name, column_name, table_name))
+
 

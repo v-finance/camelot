@@ -1,28 +1,33 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtWidgets
+from ...core.qt import QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -88,20 +93,18 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
 
 class SelectDialog(QtWidgets.QDialog):
     
-    def __init__(self, gui_context, admin, search_text, proxy, parent = None):
+    def __init__(self, gui_context, admin, search_text, parent = None):
         super( SelectDialog, self ).__init__( parent )
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
         self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
         self.setSizeGripEnabled(True)
-        table = TableView(gui_context, admin, search_text=search_text,
-                          proxy=proxy, parent=self)
+        table = TableView(gui_context, admin, search_text=search_text, parent=self)
         table.setObjectName('table_view')
         layout.addWidget(table)
         self.setLayout( layout )
         self.objects = []
-        self.setWindowState(Qt.WindowMaximized)
 
 class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step
@@ -126,7 +129,7 @@ class SelectObjects( OpenTableView ):
         self.search_text = search_text
 
     def render(self, gui_context):
-        dialog = SelectDialog(gui_context, self.admin, self.search_text, self.proxy)
+        dialog = SelectDialog(gui_context, self.admin, self.search_text)
         table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
@@ -135,7 +138,11 @@ class SelectObjects( OpenTableView ):
     def gui_run( self, gui_context ):
         dialog = self.render(gui_context)
         with hide_progress_dialog(gui_context):
+            # strange things happen on windows 7 and later with maximizing
+            # this dialog, maximizing it here appears to work
+            dialog.showMaximized()
             if dialog.exec_() == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return dialog.objects
+
 

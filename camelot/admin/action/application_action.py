@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -298,12 +303,14 @@ class ShowHelp( Action ):
     verbose_name = _('Help')
     
     def gui_run( self, gui_context ):
-        self.view = QtWebKit.QWebView( None )
-        self.view.load( gui_context.admin.get_application_admin().get_help_url() )
-        self.view.setWindowTitle( ugettext('Help Browser') )
-        self.view.setWindowIcon( self.icon.getQIcon() )
-        self.view.show()
-     
+        from camelot.view.register import register
+        view = QtWebKit.QWebView(None)
+        view.load(gui_context.admin.get_application_admin().get_help_url())
+        view.setWindowTitle(ugettext('Help Browser'))
+        view.setWindowIcon(self.icon.getQIcon())
+        view.show()
+        register(view, view)
+
 class ShowAbout( Action ):
     """Show the about dialog with the content returned by the
     :meth:`ApplicationAdmin.get_about` method
@@ -357,12 +364,10 @@ class Refresh( Action ):
         import sqlalchemy.exc as sa_exc
         from camelot.core.orm import Session
         from camelot.view import action_steps
-        from camelot.view.remote_signals import get_signal_handler
         LOGGER.debug('session refresh requested')
         progress_db_message = ugettext('Reload data from database')
         progress_view_message = ugettext('Update screens')
         session = Session()
-        signal_handler = get_signal_handler()
         refreshed_objects = []
         expunged_objects = []
         #
@@ -387,10 +392,8 @@ class Refresh( Action ):
                                                    session_items, 
                                                    progress_db_message )
         yield action_steps.UpdateProgress( text = progress_view_message )
-        for obj in refreshed_objects:
-            signal_handler.sendEntityUpdate( self, obj )
-        for obj in expunged_objects:
-            signal_handler.sendEntityDelete( self, obj )
+        yield action_steps.UpdateObjects(refreshed_objects)
+        yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
 
 class Restore(Refresh):
@@ -430,32 +433,49 @@ class Profiler( Action ):
     verbose_name = _('Profiler start/stop')
     
     def __init__(self):
-        self.profile = None
-    
+        self.model_profile = None
+        self.gui_profile = None
+
+    def gui_run(self, gui_context):
+        import cProfile
+        if self.gui_profile is None:
+            self.gui_profile = cProfile.Profile()
+            self.gui_profile.enable()
+        else:
+            self.gui_profile.disable()
+        super(Profiler, self).gui_run(gui_context)
+
     def model_run(self, model_context):
         from ...view import action_steps
         from six import StringIO
         import cProfile
         import pstats
-        if self.profile is None:
+        if self.model_profile is None:
             yield action_steps.MessageBox('Start profiler')
-            self.profile = cProfile.Profile()
-            self.profile.enable()
+            self.model_profile = cProfile.Profile()
+            self.model_profile.enable()
         else:
             yield action_steps.UpdateProgress(text='Creating statistics')
-            self.profile.disable()
-            stream = StringIO()
-            stats = pstats.Stats(self.profile, stream=stream)
-            self.profile = None
-            stats.sort_stats('cumulative')
-            yield action_steps.UpdateProgress(text='Create report')
-            stats.print_stats()
-            stream.seek(0)
-            yield action_steps.OpenStream(stream)
-            filename = action_steps.OpenFile.create_temporary_file('.prof')
-            stats.dump_stats(filename)
-            yield action_steps.MessageBox(
-                'Profile stored in {0}'.format(filename))
+            self.model_profile.disable()
+            profiles = [('model', self.model_profile), ('gui', self.gui_profile)]
+            self.model_profile = None
+            self.gui_profile = None
+            for label, profile in profiles:
+                stream = StringIO()
+                stats = pstats.Stats(profile, stream=stream)
+                stats.sort_stats('cumulative')
+                yield action_steps.UpdateProgress(
+                    text='Create {0} report'.format(label)
+                )
+                stats.print_stats()
+                stream.seek(0)
+                yield action_steps.OpenStream(stream)
+                filename = action_steps.OpenFile.create_temporary_file(
+                    '{0}.prof'.format(label)
+                )
+                stats.dump_stats(filename)
+                yield action_steps.MessageBox(
+                    'Profile stored in {0}'.format(filename))
             
 class Exit( Action ):
     """Exit the application"""
@@ -631,8 +651,6 @@ class RuntimeInfo( Action ):
         import sqlalchemy
         import chardet
         import jinja2
-        import xlrd
-        import xlwt
                 
         html = """<em>Python:</em> <b>%s</b><br>
                   <em>Qt:</em> <b>%s</b><br>
@@ -640,16 +658,12 @@ class RuntimeInfo( Action ):
                   <em>SQLAlchemy:</em> <b>%s</b><br>
                   <em>Chardet:</em> <b>%s</b><br>
                   <em>Jinja:</em> <b>%s</b><br>
-                  <em>xlrd:</em> <b>%s</b><br>
-                  <em>xlwt:</em> <b>%s</b><br><br>
                   <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
                                               float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
                                               QtCore.PYQT_VERSION_STR,
                                               sqlalchemy.__version__,
                                               chardet.__version__,
                                               jinja2.__version__,
-                                              xlrd.__VERSION__,
-                                              xlwt.__VERSION__,
                                               six.text_type(sys.path))        
         yield action_steps.PrintHtml( html )
         
@@ -723,5 +737,6 @@ def structure_to_application_action(structure, application_admin):
         return structure
     admin = application_admin.get_related_admin( structure )
     return OpenTableView( admin )
+
 
 

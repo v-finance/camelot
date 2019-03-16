@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -27,6 +32,8 @@ Actions to filter table views
 """
 
 import copy
+import datetime
+import decimal
 
 import six
 
@@ -263,4 +270,110 @@ class EditorFilter(Filter):
         state.modes = modes
         return state
 
+
+class SearchFilter(Filter):
+
+    def __init__(self, admin):
+        super(SearchFilter, self).__init__(None)
+        self.admin = admin
+
+    def render(self, gui_context, parent):
+        from camelot.view.controls.search import SimpleSearchControl
+        return SimpleSearchControl(parent)
+
+    def decorate_query(self, query, text):
+        import camelot.types
+        from camelot.view import utils
+    
+        if len(text.strip()):
+            # arguments for the where clause
+            args = []
+            # join conditions : list of join entities
+            joins = []
+    
+            def append_column( c, text, args ):
+                """add column c to the where clause using a clause that
+                is relevant for that type of column"""
+                arg = None
+                try:
+                    python_type = c.type.python_type
+                except NotImplementedError:
+                    return
+                # @todo : this should use the from_string field attribute, without
+                #         looking at the sql code
+                if issubclass(c.type.__class__, camelot.types.Color):
+                    pass
+                elif issubclass(c.type.__class__, camelot.types.File):
+                    pass
+                elif issubclass(c.type.__class__, camelot.types.Enumeration):
+                    pass
+                elif issubclass(python_type, camelot.types.virtual_address):
+                    arg = c.like(camelot.types.virtual_address('%', '%'+text+'%'))
+                elif issubclass(c.type.__class__, camelot.types.Image):
+                    pass
+                elif issubclass(python_type, bool):
+                    try:
+                        arg = (c==utils.bool_from_string(text))
+                    except ( Exception, utils.ParsingError ):
+                        pass
+                elif issubclass(python_type, int):
+                    try:
+                        arg = (c==utils.int_from_string(text))
+                    except ( Exception, utils.ParsingError ):
+                        pass
+                elif issubclass(python_type, datetime.date):
+                    try:
+                        arg = (c==utils.date_from_string(text))
+                    except ( Exception, utils.ParsingError ):
+                        pass
+                elif issubclass(python_type, datetime.timedelta):
+                    try:
+                        days = utils.int_from_string(text)
+                        arg = (c==datetime.timedelta(days=days))
+                    except ( Exception, utils.ParsingError ):
+                        pass
+                elif issubclass(python_type, (float, decimal.Decimal)):
+                    try:
+                        float_value = utils.float_from_string(text)
+                        precision = c.type.precision
+                        if isinstance(precision, (tuple)):
+                            precision = precision[1]
+                        delta = 0.1**( precision or 0 )
+                        arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
+                    except ( Exception, utils.ParsingError ):
+                        pass
+                elif issubclass(python_type, six.string_types):
+                    arg = sql.operators.ilike_op(c, '%'+text+'%')
+    
+                if arg is not None:
+                    arg = sql.and_(c != None, arg)
+                    args.append(arg)
+
+            for t in text.split(' '):
+                subexp = []
+                for column_name in self.admin.get_search_fields(t):
+                    path = column_name.split('.')
+                    target = self.admin.entity
+                    related_admin = self.admin
+                    for path_segment in path:
+                        # use the field attributes for the introspection, as these
+                        # have detected hybrid properties
+                        fa = related_admin.get_descriptor_field_attributes(path_segment)
+                        instrumented_attribute = getattr(target, path_segment)
+                        if fa.get('target', False):
+                            joins.append(instrumented_attribute)
+                            target = fa['target']
+                            related_admin = related_admin.get_related_admin(target)
+                        else:
+                            append_column(instrumented_attribute, t, subexp)
+
+                args.append(subexp)
+
+            for join in joins:
+                query = query.outerjoin(join)
+
+            subqueries = (sql.or_(*arg) for arg in args)
+            query = query.filter(sql.and_(*subqueries))
+
+        return query
 

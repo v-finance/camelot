@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -30,7 +35,7 @@ import six
 
 from ...admin.action.list_filter import All
 from ...core.utils import ugettext
-from ...core.qt import QtCore, QtGui, QtWidgets, py_to_variant, variant_to_py
+from ...core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 
 class AbstractFilterWidget(AbstractActionWidget):
@@ -38,8 +43,8 @@ class AbstractFilterWidget(AbstractActionWidget):
 
     def current_row_changed(self, _current_row):
         pass
-        
-    def data_changed(self, _index1, _index2):
+
+    def header_data_changed(self, _orientation, _first, _last):
         pass
 
     def set_menu(self, _state):
@@ -55,25 +60,25 @@ class AbstractFilterWidget(AbstractActionWidget):
         self.action.gui_run(gui_context, value)
 
 
-class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
+class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
     """A box containing a filter that can be applied on a table view, this filter is
     based on the distinct values in a certain column"""
 
     def __init__(self, action, gui_context, parent):
-        QtGui.QGroupBox.__init__(self, parent)
+        QtWidgets.QGroupBox.__init__(self, parent)
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 2, 2, 2, 2 )
         self.setLayout( layout )
         self.setFlat(True)
         self.modes = None
-        group = QtGui.QButtonGroup(self)
+        group = QtWidgets.QButtonGroup(self)
         group.setExclusive(action.exclusive)
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
         group.buttonClicked[int].connect(self.group_button_clicked)
         if action.exclusive == True:
-            self.button_type = QtGui.QRadioButton
+            self.button_type = QtWidgets.QRadioButton
         else:
             self.button_type = QtWidgets.QCheckBox
             all_button = self.button_type(ugettext('All'), self)
@@ -100,7 +105,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
     def get_value(self):
         values = []
-        group = self.findChild(QtGui.QButtonGroup)
+        group = self.findChild(QtWidgets.QButtonGroup)
         all_checked = True
         for button in self.findChildren(self.button_type):
             if button.objectName() != 'all_button':
@@ -118,7 +123,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
         self.setTitle(six.text_type(state.verbose_name))
-        group = self.findChild(QtGui.QButtonGroup)
+        group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
         self.modes = state.modes
@@ -132,12 +137,14 @@ class GroupBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
+        # run the filter action to apply the initial filter on the list
+        self.run_action()
 
-class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
+class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
     """Flter widget based on a QGroupBox"""
 
     def __init__(self, action, gui_context, parent):
-        QtGui.QGroupBox.__init__(self, parent)
+        QtWidgets.QGroupBox.__init__(self, parent)
         AbstractFilterWidget.init(self, action, gui_context)
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 2 )
@@ -160,6 +167,8 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
                 combobox.insertItem(i,
                                     six.text_type(mode.verbose_name),
                                     py_to_variant(mode))
+            # setting the current index will trigger the run of the action to
+            # apply the initial filter
             combobox.setCurrentIndex(current_index)
 
     def get_value(self):
@@ -173,7 +182,7 @@ class ComboBoxFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def group_button_clicked(self, index):
         self.run_action()
 
-class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
+class OperatorFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
     """Widget that allows applying various filter operators on a field
 
     :param cls: the class on which the filter will be applied
@@ -189,7 +198,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     """
 
     def __init__(self, action, gui_context, default_value_1, default_value_2, parent):
-        QtGui.QGroupBox.__init__(self, parent)
+        QtWidgets.QGroupBox.__init__(self, parent)
         self.setFlat(True)
         self.default_value_1 = default_value_1
         self.default_value_2 = default_value_2
@@ -215,11 +224,11 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
         combobox.setCurrentIndex( default_index )
         combobox.currentIndexChanged.connect( self.combobox_changed )
         delegate = state.field_attributes['delegate'](** state.field_attributes)
-        option = QtGui.QStyleOptionViewItem()
+        option = QtWidgets.QStyleOptionViewItem()
         option.version = 5
         self._editor = delegate.createEditor( self, option, None )
         self._editor2 = delegate.createEditor( self, option, None )
-        # explicitely set a value, otherways the current value remains 
+        # explicitely set a value, otherways the current value remains
         # ValueLoading
         self._editor.set_value(self.default_value_1)
         self._editor2.set_value(self.default_value_2)
@@ -259,7 +268,7 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
             self._editor.hide()
             self._editor2.setEnabled(False)
             self._editor2.hide()
-        
+
     @QtCore.qt_slot(int)
     def combobox_changed(self, index):
         """Whenever the combobox changes, show or hide the
@@ -277,4 +286,5 @@ class OperatorFilterWidget(QtGui.QGroupBox, AbstractFilterWidget):
     def get_value(self):
         mode = self.get_mode()
         return (mode.name, self._editor.get_value(), self._editor2.get_value())
+
 

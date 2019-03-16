@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """Helper functions for the view subpackage"""
@@ -178,9 +183,6 @@ def datetime_from_string(s):
     return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 
                     dt.time().hour(), dt.time().minute(), dt.time().second())
 
-def code_from_string(s, separator):
-    return s.split(separator)
-
 def int_from_string(s):
     value = float_from_string(s)
     if value != None:
@@ -228,7 +230,7 @@ def to_string( value ):
     return six.text_type( value )
 
 def enumeration_to_string(value):
-    return ugettext(six.text_type(value or u'').replace('_', ' ')).capitalize()
+    return ugettext(six.text_type(value or u'').replace('_', ' ').capitalize())
 
 operator_names = {
     operator.eq : _( u'=' ),
@@ -267,9 +269,14 @@ def text_from_richtext( unstripped_text ):
     try:
         parser.feed(unstripped_text.strip())
     except html_parser.HTMLParseError:
-        logger.warn('html parse error')
+        logger.debug('html parse error')
 
     return strings
+
+def richtext_to_string(value):
+    if value is None:
+        return u''
+    return u'\n'.join([line for line in text_from_richtext(value)])
 
 def resize_widget_to_screen( widget, fraction = 0.75 ):
     """Resize a widget to fill a certain fraction of the screen

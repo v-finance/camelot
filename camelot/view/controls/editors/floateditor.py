@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,10 +31,8 @@ import six
 
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
-from .customeditor import (CustomEditor, set_background_color_palette,
-                           draw_tooltip_visualization)
+from .customeditor import CustomEditor, set_background_color_palette
 from ...art import Icon
-from ...utils import locale
 from ....core import constants
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
@@ -64,12 +67,19 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         # Make sure that the Period key on the numpad is *always* 
         # represented by the systems locale decimal separator to 
         # facilitate user input.
-        if key_event.key() == Qt.Key_Period and decimal_point.unicode() != Qt.Key_Period:
+        if six.PY3:
+            decimal_point_in_unicode = ord(decimal_point)
+            decimal_point_string = decimal_point
+        elif six.PY2:
+            decimal_point_in_unicode = decimal_point.unicode()
+            decimal_point_string = QtCore.QString(decimal_point)
+        
+        if key_event.key() == Qt.Key_Period and decimal_point_in_unicode != Qt.Key_Period:
             # Dynamically build a 'new' event that holds this locales decimal separator
             new_key_event = QtGui.QKeyEvent( key_event.type(),
-                                             decimal_point.unicode(),
+                                             decimal_point_in_unicode,
                                              key_event.modifiers(),
-                                             QtCore.QString(decimal_point) )
+                                             decimal_point_string )
             key_event.accept() # Block 'old' event
             QtWidgets.QApplication.sendEvent(self, new_key_event)
         # Propagate all other events to the super class
@@ -79,11 +89,8 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = six.text_type( locale().toString( float(value),
-                                                 'f', 
-                                                 self.decimals() ) )
-        return text
-    
+        return super(CustomDoubleSpinBox, self).textFromValue(value)
+
     def stripped(self, qinput):
         """Strip a string from its prefix, suffix and spaces
         
@@ -123,11 +130,6 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         if len(self.stripped(text))==0:
             return self.minimum()
         return super(CustomDoubleSpinBox, self).valueFromText(text)
-        
-    def paintEvent(self, event):
-        super(CustomDoubleSpinBox, self).paintEvent(event)
-        if self.toolTip():
-            draw_tooltip_visualization(self)
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator button.  
@@ -144,11 +146,12 @@ class FloatEditor(CustomEditor):
                        decimal = False, 
                        option = None,
                        field_name = 'float',
+                       actions = [],
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
         action = QtWidgets.QAction(self)
@@ -185,20 +188,28 @@ class FloatEditor(CustomEditor):
         layout.setSpacing(0)
         layout.addWidget(spinBox)
         layout.addWidget(self.calculatorButton)
+        self.add_actions(actions, layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 
     def set_field_attributes(self, **kwargs):
         super(FloatEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
+        editable = kwargs.get('editable', False)
+        self.calculatorButton.setVisible(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        focus_policy = kwargs.get('focus_policy')
+        if focus_policy is not None:
+            spinBox.setFocusPolicy(focus_policy)
         spinBox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
         spinBox.setPrefix(six.text_type(kwargs.get('prefix', '')))
         spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
+        spinBox.setReadOnly(not editable)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
+        self.update_actions()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -207,6 +218,7 @@ class FloatEditor(CustomEditor):
             spinBox.setValue(spinBox.minimum())
         else:
             spinBox.setValue(float(value))
+        self.update_actions()
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
@@ -222,16 +234,6 @@ class FloatEditor(CustomEditor):
             import decimal
             return decimal.Decimal('%.*f' % (spinBox.decimals(), value))
         return value
-
-    def set_enabled(self, editable=True):
-        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setReadOnly(not editable)
-        spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable and self._calculator)
-        if editable:
-            spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
-        else:
-            spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
@@ -262,5 +264,7 @@ class FloatEditor(CustomEditor):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         set_background_color_palette(spinBox.lineEdit(), background_color)
         set_background_color_palette(spinBox, background_color)
+
+    value = property(fget=get_value,fset=set_value)
 
 

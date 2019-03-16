@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,6 +31,8 @@ import inspect
 import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
+
+from ..core.item_model import QueryModelProxy
 
 from camelot.admin.action import list_filter
 from camelot.admin.object_admin import ObjectAdmin
@@ -38,9 +45,10 @@ from camelot.core.qt import Qt
 
 import six
 
-from sqlalchemy import orm, schema, sql
+from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
+from sqlalchemy.orm.exc import UnmappedClassError
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -172,8 +180,17 @@ and used as a custom action.
         """
         return Session().query( self.entity )
 
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        if isinstance(objects, orm.Query):
+            return QueryModelProxy(objects)
+        return super(EntityAdmin, self).get_proxy(objects)
+
     def get_verbose_identifier(self, obj):
-        if obj:
+        if obj is not None:
             primary_key = self.mapper.primary_key_from_instance(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
@@ -183,6 +200,12 @@ and used as a custom action.
                         primary_key_representation,
                         six.text_type(obj)
                     )
+                elif six.PY3 and hasattr(obj, '__str__'):
+                    return u'%s %s : %s' % (
+                        self.get_verbose_name() or '',
+                        primary_key_representation,
+                        obj.__str__()
+                    )                
                 else:
                     return u'%s %s' % (
                         self.get_verbose_name() or '',
@@ -203,7 +226,6 @@ and used as a custom action.
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
         """
-        from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.controls import delegates
         attributes = super(EntityAdmin, self).get_descriptor_field_attributes(field_name)
         #
@@ -231,15 +253,27 @@ and used as a custom action.
                     # the 'appropriate' way to get it from the class.  Getting it
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
+                    # class attribute of hybrid properties is changed from
+                    # expression to comparator in sqla 1.2
+                    if sqlalchemy_version.startswith('1.2'):
+                        if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
+                            class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
-                        if isinstance(class_attribute, sql.Select):
-                            for k, v in six.iteritems(self.get_sql_field_attributes(class_attribute.columns)):
-                                # the defaults or the nullable status of the column
-                                # does not need to be the default or the nullable
-                                # of the hybrid property
-                                if k in ['default', 'nullable']:
-                                    continue
-                                attributes[k] = v
+                        columns = []
+                        if isinstance(class_attribute, sql.elements.Label):
+                            columns = [class_attribute]
+                        elif isinstance(class_attribute, sql.Select):
+                            columns = class_attribute.columns
+                        for k, v in six.iteritems(self.get_sql_field_attributes(columns)):
+                            # the defaults or the nullable status of the column
+                            # does not need to be the default or the nullable
+                            # of the hybrid property
+                            # changed 4/7/2017 DJK; editable added to avoid setting fields editable
+                            # when they should not be editable
+                            # Note that a primary key can be set editable by this change!!
+                            if k in ['default', 'nullable', 'editable']:
+                                continue
+                            attributes[k] = v
                 break
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
@@ -276,11 +310,6 @@ and used as a custom action.
                     attributes.update( direction = 'manytomany' )
                 else:
                     raise Exception('RelationshipProperty has unknown direction')
-
-                if property.direction in (orm.interfaces.ONETOMANY,
-                                          orm.interfaces.MANYTOMANY):
-                    if property.lazy == 'dynamic':
-                        attributes.update(proxy=QueryTableProxy)
 
                 if property.uselist == True:
                     attributes.update(
@@ -369,8 +398,6 @@ and used as a custom action.
         :return: a dictionary with the changed attributes and their old
            value
         """
-        from sqlalchemy import orm
-        from sqlalchemy.orm.exc import UnmappedClassError
         state = orm.attributes.instance_state( obj )
         dict_ = state.dict
         modifications = dict()
@@ -378,7 +405,7 @@ and used as a custom action.
             if not hasattr( attr.impl, 'get_history' ):
                 continue
             (added, unchanged, deleted) = \
-                attr.impl.get_history( state, dict_ )
+                attr.impl.get_history(state, dict_, passive=orm.base.PASSIVE_NO_FETCH)
             if added or deleted:
                 old_value = None
                 if deleted:
@@ -507,9 +534,8 @@ and used as a custom action.
 
     def is_persistent(self, obj):
         """:return: True if the object has a persisted state, False otherwise"""
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( obj )
-        if session:
+        session = orm.object_session(obj)
+        if session is not None:
             if obj in session.new:
                 return False
             if obj in session.deleted:
@@ -517,6 +543,12 @@ and used as a custom action.
             return True
         return False
 
+    def is_dirty(self, obj):
+        session = orm.object_session(obj)
+        if session is not None:
+            return (obj in session.dirty)
+        return True
+            
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent
@@ -619,4 +651,5 @@ and used as a custom action.
                          relationship_property.key,
                          getattr( obj, relationship_property.key ) )
         return new_obj
+
 

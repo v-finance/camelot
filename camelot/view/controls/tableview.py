@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -30,14 +35,14 @@ import six
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
+from camelot.admin.action.list_filter import SearchFilter
 from camelot.core.utils import ugettext as _
-from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
-from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
+from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .inheritance import SubclassTree
@@ -126,9 +131,12 @@ class TableWidget(QtWidgets.QTableView):
         self.setEditTriggers(QtWidgets.QAbstractItemView.SelectedClicked |
                              QtWidgets.QAbstractItemView.DoubleClicked |
                              QtWidgets.QAbstractItemView.CurrentChanged)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding)
-        self.horizontalHeader().setClickable(True)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
+        try:
+            self.horizontalHeader().setClickable(True)
+        except AttributeError:
+            self.horizontalHeader().setSectionsClickable(True)
         self._header_font_required = QtWidgets.QApplication.font()
         self._header_font_required.setBold(True)
         line_height = QtGui.QFontMetrics(QtWidgets.QApplication.font()
@@ -142,6 +150,21 @@ class TableWidget(QtWidgets.QTableView):
             self.horizontal_section_clicked)
         self.horizontalHeader().sectionResized.connect(
             self._save_section_width)
+        self.verticalScrollBar().sliderPressed.connect(self._slider_pressed)
+        self.horizontalScrollBar().sliderPressed.connect(self._slider_pressed)
+
+    @QtCore.qt_slot()
+    def selectAll(self):
+        """
+        Reimplement `QtWidgets.QAbstractItemView.selectAll` to add the
+        option of selecting nothing.
+        """
+        selection_model = self.selectionModel()
+        if selection_model is not None:
+            if selection_model.hasSelection():
+                selection_model.clear()
+            else:
+                super(TableWidget, self).selectAll()
 
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
@@ -164,6 +187,15 @@ class TableWidget(QtWidgets.QTableView):
                                            Qt.SizeHintRole)
         self._columns_changed = dict()
         super(TableWidget, self).timerEvent(event)
+
+    @QtCore.qt_slot()
+    def _slider_pressed(self):
+        """
+        Close the editor when scrolling starts, to prevent the table from
+        jumping back to the open editor, or to prevent the open editor from
+        being out of sight.
+        """
+        self.close_editor()
 
     @QtCore.qt_slot(int, int, int)
     def _save_section_width(self, logical_index, _old_size, new_width):
@@ -410,8 +442,8 @@ class HeaderWidget(QtWidgets.QWidget):
         self.setFocusProxy(search)
         search.expand_search_options_signal.connect(
             self.expand_search_options)
-        title = UserTranslatableLabel(
-            self.gui_context.admin.get_verbose_name_plural(), self)
+        title = QtWidgets.QLabel(
+            six.text_type(self.gui_context.admin.get_verbose_name_plural()), self)
         title.setFont(self._title_font)
         widget_layout.addWidget(title)
         widget_layout.addWidget(search)
@@ -424,7 +456,7 @@ class HeaderWidget(QtWidgets.QWidget):
         self._expanded_search.hide()
         layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.search = search
 
     @hybrid_property
@@ -513,7 +545,6 @@ class TableView(AbstractView):
                  gui_context,
                  admin,
                  search_text=None,
-                 proxy=QueryTableProxy,
                  parent=None):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
@@ -521,18 +552,17 @@ class TableView(AbstractView):
         self.search_text = search_text
         self.application_gui_context = gui_context
         self.gui_context = gui_context
-        self.proxy = proxy
         widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
-        splitter = QtGui.QSplitter(self)
+        splitter = QtWidgets.QSplitter(self)
         splitter.setObjectName('splitter')
         widget_layout.addWidget(splitter)
         table_widget = QtWidgets.QWidget(self)
         # make sure the table itself takes expands to fill the available
         # width of the view
-        size_policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-                                        QtGui.QSizePolicy.Expanding)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                            QtWidgets.QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(1)
         table_widget.setSizePolicy(size_policy)
         filters_widget = QtWidgets.QWidget(self)
@@ -555,8 +585,8 @@ class TableView(AbstractView):
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
-        self.search_filter = lambda q: q
-        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
+        self.search_filter = None
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                    self)
         shortcut.activated.connect(self.activate_search)
 
@@ -608,7 +638,6 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.set_value(value)
-            self.rebuild_query()
 
     @QtCore.qt_slot(object)
     def set_admin(self, admin):
@@ -627,7 +656,7 @@ class TableView(AbstractView):
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         self.table = self.AdminTableWidget(self.admin, splitter)
         self.table.setObjectName('AdminTableWidget')
-        new_model = self.proxy(admin)
+        new_model = CollectionProxy(admin)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
@@ -651,6 +680,7 @@ class TableView(AbstractView):
         header.search.cancel_signal.connect(self.cancelSearch)
         header.search.on_arrow_down_signal.connect(self.focusTable)
         self.setFocusProxy(header)
+        self.search_filter = SearchFilter(admin)
         if self.search_text:
             header.search.search(self.search_text)
             self.search_text = None
@@ -666,18 +696,6 @@ class TableView(AbstractView):
         logger.debug('tableview closed')
         event.accept()
 
-    @QtCore.qt_slot(object)
-    def _set_query(self, query):
-        assert object_thread(self)
-        if isinstance(self.table.model(), QueryTableProxy):
-            # apply the filters on the query, to activate the default filter
-            filters_widget = self.findChild(ActionsBox, 'filters')
-            if filters_widget is not None:
-                for filter_widget in filters_widget.get_action_widgets():
-                    filter_widget.run_action()
-            self.table.model().set_value(query)
-        self.table.clearSelection()
-
     @QtCore.qt_slot()
     def refresh(self):
         """Refresh the whole view"""
@@ -686,42 +704,21 @@ class TableView(AbstractView):
         if model is not None:
             model.refresh()
 
-    @QtCore.qt_slot()
-    def rebuild_query(self):
-        """resets the table model query"""
-
-        # table can be None during view initialization
-        if self.table is None:
-            return
-
-        if not isinstance(self.table.model(), QueryTableProxy):
-            return
-
-        def rebuild_query():
-            query = self.admin.get_query()
-            if self.search_filter:
-                query = self.search_filter(query)
-            return query
-
-        post(rebuild_query, self._set_query)
-
     @QtCore.qt_slot(str)
     def startSearch(self, text):
         """rebuilds query based on filtering text"""
         assert object_thread(self)
-        from camelot.view.search import create_entity_search_query_decorator
         logger.debug('search %s' % text)
-        self.search_filter = create_entity_search_query_decorator(
-            self.admin, six.text_type(text))
-        self.rebuild_query()
+        model = self.get_model()
+        if model is not None:
+            model.set_filter(self.search_filter, six.text_type(text))
 
     @QtCore.qt_slot()
     def cancelSearch(self):
         """resets search filtering to default"""
         assert object_thread(self)
         logger.debug('cancel search')
-        self.search_filter = lambda q: q
-        self.rebuild_query()
+        self.startSearch('')
 
     def set_columns(self, columns):
         delegate = DelegateManager(columns, parent=self)
@@ -763,3 +760,4 @@ class TableView(AbstractView):
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
+

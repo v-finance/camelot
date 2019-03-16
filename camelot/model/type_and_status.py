@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
@@ -61,6 +66,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
+from camelot.core.item_model.proxy import AbstractModelFilter
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view import action_steps
@@ -246,8 +252,10 @@ class Status( EntityBuilder ):
 
     def create_tables(self):
         self.status_history.__table__.schema = self.entity.__table__.schema
+        self.status_history.__table__.info = self.entity.__table__.info.copy()
         if self.status_type is not None:
             self.status_type.__table__.schema = self.entity.__table__.schema
+            self.status_type.__table__.info = self.entity.__table__.info.copy()
 
     def create_non_pk_cols( self ):
         table = orm.class_mapper( self.entity ).local_table
@@ -311,11 +319,12 @@ class StatusMixin( object ):
         :param status_class: the class or columns of the class that have a status
         :return: a select statement that looks for the current status of the status_class
         """
-        return sql.select( [status_history.classified_by],
-                           whereclause = sql.and_( status_history.status_for_id == status_class.id,
-                                                   status_history.status_from_date <= sql.functions.current_date(),
-                                                   status_history.status_thru_date >= sql.functions.current_date() ),
-                           from_obj = [status_history.table] ).order_by(status_history.status_from_date.desc(), status_history.id.desc()).limit(1)
+        SH = orm.aliased(status_history)
+        return sql.select( [SH.classified_by],
+                           whereclause = sql.and_( SH.status_for_id == status_class.id,
+                                                   SH.status_from_date <= sql.functions.current_date(),
+                                                   SH.status_thru_date >= sql.functions.current_date() ),
+                           from_obj = [SH.table] ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
 
     @hybrid.hybrid_property
     def current_status( self ):
@@ -324,7 +333,7 @@ class StatusMixin( object ):
             return status_history.classified_by
 
     @current_status.expression
-    def current_status_expression( cls ):
+    def current_status( cls ):
         return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
 
     def change_status(self, new_status, 
@@ -410,7 +419,7 @@ class ChangeStatus( Action ):
                 if number_of_statuses != history_count:
                     if obj not in model_context.session.new:
                         model_context.session.expire(obj)
-                    yield action_steps.UpdateObject(obj)
+                    yield action_steps.UpdateObjects([obj])
                     raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
@@ -420,10 +429,10 @@ class ChangeStatus( Action ):
                     obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObject(obj)
+                    yield action_steps.UpdateObjects([obj])
             yield action_steps.FlushSession(model_context.session)
 
-class StatusFilter(list_filter.GroupBoxFilter):
+class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     """
     Filter to be used in a table view to enable filtering on the status
     of an object.  This filter will display all available statuses, and as
@@ -443,6 +452,25 @@ class StatusFilter(list_filter.GroupBoxFilter):
         query = query.filter(sql.or_(*where_clauses))
         return query
 
+    def filter(self, it, value):
+        """
+        Allow the status filter to work on list of objects instead of
+        queries.
+        """
+        if list_filter.All in value:
+            for obj in it:
+                yield obj
+        elif len(value) > 0:
+            today = datetime.date.today()
+            for obj in it:
+                for history in getattr(obj, self.attribute):
+                    if history.status_from_date <= today <= history.status_thru_date:
+                        if history.classified_by in value:
+                            yield obj
+
+    def get_entity_id(self, model_context):
+        return model_context.admin.entity.id
+
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
         admin = model_context.admin
@@ -461,7 +489,7 @@ class StatusFilter(list_filter.GroupBoxFilter):
         modes = []
         current_date = sql.functions.current_date()
         self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                             history_type.status_for_id == admin.entity.id,
+                                             history_type.status_for_id == self.get_entity_id(model_context),
                                              history_type.status_thru_date >= current_date)
                       )
         self.column = getattr(history_type, 'classified_by')
@@ -564,4 +592,5 @@ class Type(EntityBuilder):
         if not self.property:
             self.property = orm.relationship(self.type_entity)
             setattr(self.entity, self.name, self.property)
+
 

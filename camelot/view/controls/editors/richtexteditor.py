@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
 #
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -31,13 +36,13 @@ from camelot.view.art import Icon
 
 class CustomTextEdit(QtWidgets.QTextEdit):
     """
-    A TextEdit editor that sends editingFinished events 
+    A TextEdit editor that sends editingFinished events
     when the text was changed and focus is lost.
     """
 
     editingFinished = QtCore.qt_signal()
     receivedFocus = QtCore.qt_signal()
-    
+
     def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
         self._changed = False
@@ -62,11 +67,11 @@ class CustomTextEdit(QtWidgets.QTextEdit):
     def setHtml(self, html):
         QtWidgets.QTextEdit.setHtml(self, html)
         self._changed = False
-                
+
 class RichTextEditor(CustomEditor, WideEditor):
 
-    def __init__(self, 
-                 parent = None, 
+    def __init__(self,
+                 parent = None,
                  field_name = 'richtext',
                  **kwargs):
         CustomEditor.__init__(self, parent)
@@ -81,11 +86,11 @@ class RichTextEditor(CustomEditor, WideEditor):
 
         toolbar = self.initToolbar() # Has to be invoked before the connect's below.
         toolbar.hide() # Should only be visible when textedit is focused.
-        
+
         self.textedit.editingFinished.connect(self.emit_editing_finished)
         self.textedit.receivedFocus.connect(toolbar.show)
         self.textedit.setAcceptRichText(True)
-        
+
         # Layout
         self.layout.addWidget(toolbar)
         self.layout.addWidget(self.textedit)
@@ -121,7 +126,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             toolbar.setHidden( hidden )
-        
+
     def initToolbar(self):
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setObjectName( 'toolbar' )
@@ -200,14 +205,14 @@ class RichTextEditor(CustomEditor, WideEditor):
         zoomin_button.setMaximumSize(QtCore.QSize(20, 20))
         zoomin_button.setToolTip('Zoom in')
         zoomin_button.clicked.connect(self.zoomin)
-        
+
         zoomout_button = QtWidgets.QToolButton(self)
         icon = Icon('tango/16x16/actions/list-remove.png').getQIcon()
         zoomout_button.setIcon(icon)
         zoomout_button.setMaximumSize(QtCore.QSize(20, 20))
         zoomout_button.setToolTip('Zoom out')
         zoomout_button.clicked.connect(self.zoomout)
-        
+
         color_button = QtWidgets.QToolButton(self)
         color_button.setMaximumSize(QtCore.QSize(20, 20))
         color_button.setToolTip('Color')
@@ -268,7 +273,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setAlignment(Qt.AlignRight)
 
     def set_color(self):
-        color = QtGui.QColorDialog.getColor(self.textedit.textColor())
+        color = QtWidgets.QColorDialog.getColor(self.textedit.textColor())
         if color.isValid():
             self.textedit.setTextColor(color)
 
@@ -283,7 +288,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         :param document: a :class:`QtGui.QTextDocument` object.
         """
         self.textedit.setDocument( document )
-        
+
     def set_value( self, value ):
         value = CustomEditor.set_value(self, value)
         if value!=None:
@@ -291,4 +296,5 @@ class RichTextEditor(CustomEditor, WideEditor):
                 self.textedit.setHtml(value)
         else:
             self.textedit.clear()
+
 

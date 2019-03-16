@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,7 +31,7 @@ import datetime
 
 import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant
+from ....core.qt import QtCore, QtWidgets, Qt, py_to_variant
 
 from .customeditor import CustomEditor, set_background_color_palette
 
@@ -34,7 +39,7 @@ from ...validator import DateValidator
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext
 
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
@@ -49,8 +54,8 @@ class DateEditor(CustomEditor):
                        validator = DateValidator(),
                        **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
@@ -64,19 +69,19 @@ class DateEditor(CustomEditor):
         # so don't change this without extensive testing on windows
         special_date_menu = QtWidgets.QMenu(self)
         calendar_widget_action = QtWidgets.QWidgetAction(special_date_menu)
-        self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
+        self.calendar_widget = QtWidgets.QCalendarWidget(special_date_menu)
         self.calendar_widget.activated.connect(self.calendar_widget_activated)
         self.calendar_widget.clicked.connect(self.calendar_widget_activated)
         calendar_widget_action.setDefaultWidget(self.calendar_widget)
 
         self.calendar_action_trigger.connect( special_date_menu.hide )
         special_date_menu.addAction(calendar_widget_action)
-        special_date_menu.addAction(_('Today'))
-        special_date_menu.addAction(_('Far future'))
+        special_date_menu.addAction(ugettext('Today'))
+        special_date_menu.addAction(ugettext('Far future'))
         self.special_date = QtWidgets.QToolButton(self)
         self.special_date.setIcon( self.special_date_icon.getQIcon() )
         self.special_date.setAutoRaise(True)
-        self.special_date.setToolTip(_('Calendar and special dates'))
+        self.special_date.setToolTip(ugettext('Calendar and special dates'))
         self.special_date.setMenu(special_date_menu)
         self.special_date.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
@@ -84,7 +89,7 @@ class DateEditor(CustomEditor):
         # end of sensitive part
 
         if nullable:
-            special_date_menu.addAction(_('Clear'))
+            special_date_menu.addAction(ugettext('Clear'))
 
         self.hlayout = QtWidgets.QHBoxLayout()
         self.hlayout.addWidget(line_edit)
@@ -171,13 +176,14 @@ class DateEditor(CustomEditor):
     def set_special_date(self, action):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
-            if action.text().compare(_('Today')) == 0:
+            if six.text_type(action.text()) == ugettext('Today'):
                 self.set_value(datetime.date.today())
-            elif action.text().compare(_('Far future')) == 0:
+            elif six.text_type(action.text()) == ugettext('Far future'):
                 self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-            elif action.text().compare(_('Clear')) == 0:
+            elif six.text_type(action.text()) == ugettext('Clear'):
                 self.set_value(None)
             line_edit.setFocus()
             self.editingFinished.emit()
+
 
 
