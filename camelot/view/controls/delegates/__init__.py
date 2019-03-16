@@ -35,7 +35,6 @@ from .datedelegate import DateDelegate
 from .datetimedelegate import DateTimeDelegate
 from .filedelegate import FileDelegate
 from .floatdelegate import FloatDelegate
-from .imagedelegate import ImageDelegate
 from .dbimagedelegate import DbImageDelegate
 from .integerdelegate import IntegerDelegate
 from .languagedelegate import LanguageDelegate
@@ -62,7 +61,6 @@ __all__ = [
     DateTimeDelegate.__name__,
     FileDelegate.__name__,
     FloatDelegate.__name__,
-    ImageDelegate.__name__,
     DbImageDelegate.__name__,
     IntegerDelegate.__name__,
     LanguageDelegate.__name__,
