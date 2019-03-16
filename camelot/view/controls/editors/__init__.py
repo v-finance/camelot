@@ -57,7 +57,6 @@ from .languageeditor import LanguageEditor
 from .localfileeditor import LocalFileEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
-from .onetomanychoiceseditor import OneToManyChoicesEditor
 from .richtexteditor import RichTextEditor
 from .textlineeditor import TextLineEditor
 from .timeeditor import TimeEditor
@@ -86,7 +85,6 @@ __all__ = [
     MonthsEditor.__name__,
     NoteEditor.__name__,
     One2ManyEditor.__name__,
-    OneToManyChoicesEditor.__name__,
     RichTextEditor.__name__,
     TextLineEditor.__name__,
     TimeEditor.__name__,
