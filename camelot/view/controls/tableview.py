@@ -754,6 +754,34 @@ class TableView(AbstractView):
             actions_widget.set_actions(actions)
             self.filters_layout.addWidget(actions_widget)
 
+    @QtCore.qt_slot( object, object )
+    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
+        """Set the toolbar for a specific area
+        :param toolbar_area: the area on which to put the toolbar, from
+            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
+        :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
+            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
+            method.
+        """
+        if toolbar_actions != None:
+            toolbar = self.findChild(QtWidgets.QToolBar)
+            for action in toolbar_actions:
+                rendered = action.render(self.gui_context, toolbar)
+                # both QWidgets and QActions can be put in a toolbar
+                if isinstance(rendered, QtWidgets.QWidget):
+                    toolbar.addWidget(rendered)
+                elif isinstance(rendered, QtWidgets.QAction):
+                    rendered.triggered.connect( self.action_triggered )
+                    toolbar.addAction( rendered )
+            toolbar.add_search_actions()
+
+    @QtCore.qt_slot(bool)
+    def action_triggered(self, _checked = False):
+        """Execute an action that was triggered somewhere in the main window,
+        such as the toolbar or the main menu"""
+        action_action = self.sender()
+        action_action.action.gui_run(self.gui_context)
+
     @QtCore.qt_slot()
     def focusTable(self):
         assert object_thread(self)
