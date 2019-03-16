@@ -64,35 +64,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         logger.debug('setting central widget to our workspace')
         self.setCentralWidget( self.workspace )
-
-        self.workspace.change_view_mode_signal.connect( self.change_view_mode )
-        self.workspace.last_view_closed_signal.connect( self.unmaximize_view )
         self.workspace.view_activated_signal.connect( self.view_activated )
-
         logger.debug('reading saved settings')
         self.read_settings()
-
         logger.debug('initialization complete')
-        
-    @QtCore.qt_slot()
-    def unmaximize_view( self ):
-        """Show the navigation pane and the menu bar if they exist """
-        if self.navpane:
-            self.navpane.show()
-        if self.menuBar():
-            self.menuBar().show()
-
-    @QtCore.qt_slot()
-    def change_view_mode( self ):
-        """Switch between hidden or shown menubar and navigation pane"""
-        if self.menuBar().isHidden():
-            if self.navpane:
-                self.navpane.show()
-            self.menuBar().show()
-        else:
-            if self.navpane:
-                self.navpane.hide()
-            self.menuBar().hide()
 
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
