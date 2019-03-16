@@ -324,8 +324,7 @@ shortcut confusion and reduce the number of status updates.
                            list_action.ReplaceFieldContents(),   
                            ]),
                  Menu( _('View'),
-                       [ application_action.Refresh(),
-                         Menu( _('Go To'), self.change_row_actions) ] ),
+                       [ application_action.Refresh(),] ),
                  Menu( _('&Help'),
                        self.help_actions + [
                            application_action.ShowAbout() ] )
