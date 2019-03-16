@@ -30,7 +30,6 @@
 from .fileeditor import FileEditor
 
 from camelot.view.art import Icon
-from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
 from camelot.view.action import ActionFactory
 
@@ -194,24 +193,3 @@ All files (*)"""
         self.label.setFrameShape(QtWidgets.QFrame.Box)
         self.label.setFrameShadow(QtWidgets.QFrame.Plain)
         self.label.setLineWidth(1)
-
-    def show_fullscreen(self, image):
-        lite_box = LiteBoxView(self)
-        lite_box.show_fullscreen_image(image)
-
-    def eventFilter(self, object, event):
-        if not object.isWidgetType():
-            return False
-        if event.type() != QtCore.QEvent.MouseButtonPress:
-            return False
-        if event.modifiers() != QtCore.Qt.NoModifier:
-            return False
-        if event.buttons() == QtCore.Qt.LeftButton:
-            if self.value:
-                post(
-                    lambda:self.value.checkout_thumbnail(640,480),
-                    self.show_fullscreen
-                )
-            return True
-        return False
-
