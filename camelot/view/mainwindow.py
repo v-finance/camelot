@@ -121,6 +121,7 @@ class MainWindow(QtWidgets.QMainWindow):
         menu_bar = self.menuBar()
         for menu in main_menu:
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
+        menu_bar.setCornerWidget( BusyWidget() )
         for qaction in menu_bar.findChildren( ActionAction ):
             qaction.triggered.connect( self.action_triggered )
 
@@ -173,7 +174,6 @@ class MainWindow(QtWidgets.QMainWindow):
                         rendered.triggered.connect( self.action_triggered )
                         toolbar.addAction( rendered )
             self.toolbars.append( toolbar )
-            toolbar.addWidget( BusyWidget() )
 
     @QtCore.qt_slot( object )
     def set_hidden_actions( self, hidden_actions ):
