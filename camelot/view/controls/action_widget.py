@@ -129,66 +129,6 @@ class AbstractActionWidget( object ):
             mode = six.text_type( variant_to_py(sender.data()) )
         self.run_action( mode )
 
-HOVER_ANIMATION_DISTANCE = 20
-NOTIFICATION_ANIMATION_DISTANCE = 8
-
-class ActionLabel( QtWidgets.QLabel, AbstractActionWidget ):
-
-    entered = QtCore.qt_signal()
-    left = QtCore.qt_signal()
-
-    """
-    A custom interactive desktop button for the desktop. Each 'button' is
-    actually an animated label.
-    """
-    def __init__( self, action, gui_context, parent ):
-        QtWidgets.QLabel.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
-
-        self.setObjectName('ActionButton')
-        self.setMouseTracking(True)
-
-        # This property holds if this button reacts to mouse events.
-        self.interactive = False
-
-        # This property is used to store the original position of this label
-        # so it can be visually reset when the user leaves before the ongoing
-        # animation has finished.
-        self.originalPosition = None
-        self.setMaximumHeight(160)
-
-
-    def set_state( self, state ):
-        AbstractActionWidget.set_state( self, state )
-        if state.icon:
-            self.setPixmap( state.icon.getQPixmap() )
-            self.resize( self.pixmap().width(), self.pixmap().height() )
-        self.resetLayout()
-
-    def resetLayout(self):
-        if self.sender() and self.originalPosition:
-            self.move(self.originalPosition)
-        self.setScaledContents(False)
-        if self.pixmap():
-            self.resize(self.pixmap().width(), self.pixmap().height())
-
-    def setInteractive(self, interactive):
-        self.interactive = interactive
-        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
-
-    def enterEvent(self, event):
-        if self.interactive:
-            self.entered.emit()
-        event.ignore()
-
-    def leaveEvent(self, event):
-        if self.interactive:
-            self.left.emit()
-        event.ignore()
-
-    def onContainerMousePressEvent(self, event):
-        self.run_action()
-        event.ignore()
 
 class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
 

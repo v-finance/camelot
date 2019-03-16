@@ -38,10 +38,7 @@ from ..core import constants
 from ..core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.core.utils import ugettext as _
-from camelot.view.model_thread import object_thread, post
-from camelot.view.controls.action_widget import ( ActionLabel,
-                                                  HOVER_ANIMATION_DISTANCE,
-                                                  NOTIFICATION_ANIMATION_DISTANCE )
+from camelot.view.model_thread import object_thread
 from .controls.view import AbstractView
 
 class DesktopBackground(AbstractView):
@@ -53,170 +50,15 @@ class DesktopBackground(AbstractView):
     def __init__(self, gui_context):
         super(DesktopBackground, self).__init__()
         self.gui_context = gui_context
-        mainLayout = QtWidgets.QVBoxLayout()
-
-        actionButtonsLayout = QtWidgets.QGridLayout()
-        actionButtonsLayout.setObjectName('actionButtonsLayout')
-        actionButtonsLayout.setContentsMargins(200, 20, 200, 20)
-
-        actionButtonInfoWidget = ActionButtonInfoWidget()
-        actionButtonInfoWidget.setObjectName('actionButtonInfoWidget')
-
-        mainLayout.addWidget(actionButtonInfoWidget, 0, Qt.AlignCenter)
-        mainLayout.addLayout(actionButtonsLayout)
-
-        self.setLayout(mainLayout)
-
         # Set a white background color
         palette = self.palette()
         self.setAutoFillBackground(True)
         palette.setBrush(QtGui.QPalette.Window, Qt.white)
         self.setPalette(palette)
 
-    def set_actions(self, actions):
-        """
-        :param actions: a list of Actions
-        """
-        #
-        # Remove old actions
-        #
-        for actionButton in self.findChildren(ActionLabel):
-            actionButton.deleteLater()
-
-        # Make sure that the action buttons aren't visually split
-        # up in two rows when there are e.g. only 3 of them.
-        # So:
-        #  <= 3 action buttons: 1 row and 1, 2 or 3 columns;
-        #  >= 4 action buttons: 2 rows and 2, 3, 4 or 5 columns.
-        actionButtonsLayoutMaxItemsPerRowCount = max((len(actions) + 1) / 2, 3)
-
-        actionButtonsLayout = self.findChild(QtWidgets.QGridLayout, 'actionButtonsLayout')
-        if actionButtonsLayout is not None:
-            for position in range(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
-                action = actions[position]
-                actionButton = action.render( self.gui_context, self )
-                actionButton.entered.connect(self.onActionButtonEntered)
-                actionButton.left.connect(self.onActionButtonLeft)
-                actionButton.setInteractive(True)
-                actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 0, position, Qt.AlignCenter)
-
-            for position in range(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
-                action = actions[position]
-                actionButton = action.render( self.gui_context, self )
-                actionButton.entered.connect(self.onActionButtonEntered)
-                actionButton.left.connect(self.onActionButtonLeft)
-                actionButton.setInteractive(True)
-                actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
-
-    @QtCore.qt_slot()
-    def onActionButtonEntered(self):
-        actionButton = self.sender()
-        actionButtonInfoWidget = self.findChild(QtWidgets.QWidget, 'actionButtonInfoWidget')
-        if actionButtonInfoWidget is not None:
-            # @todo : get state should be called with a model context as first
-            #         argument
-            post( actionButton.action.get_state,
-                  actionButtonInfoWidget.setInfoFromState,
-                  args = (None,) )
-
-    @QtCore.qt_slot()
-    def onActionButtonLeft(self):
-        actionButtonInfoWidget = self.findChild(QtWidgets.QWidget, 'actionButtonInfoWidget')
-        if actionButtonInfoWidget is not None:
-            actionButtonInfoWidget.resetInfo()
-
-    # This custom event handler makes sure that the action buttons aren't
-    # drawn in the wrong position on this widget after the screen has been
-    # e.g. maximized or resized by using the window handles.
-
-    def resizeEvent(self, event):
-        for actionButton in self.findChildren(ActionLabel):
-            actionButton.resetLayout()
-
-        event.ignore()
-
-    # This slot is called after the navpane's animation has finished. During
-    # this sliding animation, all action buttons are linearly moved to the right,
-    # giving the user a small window in which he or she may cause visual problems
-    # by already hovering the action buttons. This switch assures that the user
-    # cannot perform mouse interaction with the action buttons until they're
-    # static.
-    @QtCore.qt_slot()
-    def makeInteractive(self, interactive=True):
-        for actionButton in self.findChildren(ActionLabel):
-            actionButton.setInteractive(interactive)
-
     def refresh(self):
         pass
 
-class ActionButtonContainer(QtWidgets.QWidget):
-    def __init__(self, actionButton, parent = None):
-        super(ActionButtonContainer, self).__init__(parent)
-
-        mainLayout = QtWidgets.QHBoxLayout()
-        # Set some margins to avoid the ActionButton being visually clipped
-        # when performing the hoverAnimation.
-        mainLayout.setContentsMargins(2*NOTIFICATION_ANIMATION_DISTANCE,
-                                      2*HOVER_ANIMATION_DISTANCE,
-                                      2*NOTIFICATION_ANIMATION_DISTANCE,
-                                      2*HOVER_ANIMATION_DISTANCE)
-        mainLayout.addWidget(actionButton)
-        self.setLayout(mainLayout)
-
-    def mousePressEvent(self, event):
-        # Send this event to the ActionButton that is contained by this widget.
-        self.layout().itemAt(0).widget().onContainerMousePressEvent(event)
-
-class ActionButtonInfoWidget(QtWidgets.QWidget):
-    def __init__(self, parent = None):
-        super(ActionButtonInfoWidget, self).__init__(parent)
-
-        mainLayout = QtWidgets.QHBoxLayout()
-
-        font = self.font()
-        font.setPointSize(14)
-
-        actionNameLabel = QtWidgets.QLabel()
-        actionNameLabel.setFont(font)
-        actionNameLabel.setFixedSize(250, 50)
-        actionNameLabel.setAlignment(Qt.AlignCenter)
-        actionNameLabel.setObjectName('actionNameLabel')
-
-        actionDescriptionLabel = QtWidgets.QLabel()
-        actionDescriptionLabel.setFixedSize(250, 200)
-        actionDescriptionLabel.setObjectName('actionDescriptionLabel')
-
-        mainLayout.addWidget(actionNameLabel, 0, Qt.AlignVCenter)
-        mainLayout.addWidget(actionDescriptionLabel)
-
-        self.setLayout(mainLayout)
-
-    @QtCore.qt_slot( object )
-    def setInfoFromState(self, state):
-        actionNameLabel = self.findChild(QtWidgets.QLabel, 'actionNameLabel')
-        if actionNameLabel is not None:
-            actionNameLabel.setText( six.text_type( state.verbose_name ) )
-
-        actionDescriptionLabel = self.findChild(QtWidgets.QLabel, 'actionDescriptionLabel')
-        if actionDescriptionLabel is not None:
-            tooltip = six.text_type( state.tooltip or '' )
-            actionDescriptionLabel.setText(tooltip)
-            if tooltip:
-                # Do not use show() or hide() in this case, since it will
-                # cause the actionButtons to be drawn on the wrong position.
-                # Instead, just set the width of the widget to either 0 or 250.
-                actionDescriptionLabel.setFixedWidth(250)
-            else:
-                actionDescriptionLabel.setFixedWidth(0)
-
-    def resetInfo(self):
-        actionNameLabel = self.findChild(QtWidgets.QLabel, 'actionNameLabel')
-        if actionNameLabel is not None:
-            actionNameLabel.setText('')
-
-        actionDescriptionLabel = self.findChild(QtWidgets.QLabel, 'actionDescriptionLabel')
-        if actionDescriptionLabel is not None:
-            actionDescriptionLabel.setText('')
 
 class DesktopTabbar(QtWidgets.QTabBar):
 

@@ -38,7 +38,6 @@ from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
 from camelot.admin.action.list_filter import SearchFilter
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
-from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
@@ -443,8 +442,8 @@ class HeaderWidget(QtWidgets.QWidget):
         self.setFocusProxy(search)
         search.expand_search_options_signal.connect(
             self.expand_search_options)
-        title = UserTranslatableLabel(
-            self.gui_context.admin.get_verbose_name_plural(), self)
+        title = QtWidgets.QLabel(
+            six.text_type(self.gui_context.admin.get_verbose_name_plural()), self)
         title.setFont(self._title_font)
         widget_layout.addWidget(title)
         widget_layout.addWidget(search)
