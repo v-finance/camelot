@@ -33,7 +33,7 @@ import time
 import six
 
 from ...core.conf import settings
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtWebKit
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
