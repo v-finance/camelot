@@ -65,7 +65,7 @@ class EditorsTest(test.ModelThreadTestCase):
 
     def setUp(self):
         super(EditorsTest, self).setUp()
-        self.option = QtGui.QStyleOptionViewItem()
+        self.option = QtWidgets.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view, so it should not
         # set its background
@@ -100,21 +100,7 @@ class EditorsTest(test.ModelThreadTestCase):
 
     def assert_vertical_size( self, editor ):
         self.assertEqual( editor.sizePolicy().verticalPolicy(),
-                          QtGui.QSizePolicy.Fixed )
-
-    def test_ChartEditor(self):
-        import math
-        from camelot.container import chartcontainer
-        editor = self.editors.ChartEditor()
-        x_data = [x/100.0 for x in range(1, 700, 1)]
-        y_data = [math.sin(x) for x in x_data]
-        plot = chartcontainer.PlotContainer( x_data, y_data )
-        editor.set_value( plot )
-        editor.setMaximumSize( 400, 200 )
-        self.grab_widget( editor, 'editable' )
-        editor.set_field_attributes( editable=False )
-        self.grab_widget( editor, 'disabled' )
-        self.assert_valid_editor( editor, plot )
+                          QtWidgets.QSizePolicy.Fixed )
 
     def test_DateEditor(self):
         editor = self.editors.DateEditor()
@@ -1036,27 +1022,6 @@ class SnippetsTest(test.ModelThreadTestCase):
         from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
         self.gui_context = GuiContext()
-
-    def test_simple_plot(self):
-        from .snippet.chart.simple_plot import Wave
-        from camelot.view.action_steps import OpenFormView
-        wave = Wave()
-        admin = Wave.Admin( self.app_admin, Wave )
-        open_form_view = OpenFormView([wave], admin)
-        form = open_form_view.render(self.gui_context)
-        form.setMaximumSize( 400, 200 )
-        self.grab_widget(form)
-
-    def test_advanced_plot(self):
-        from .snippet.chart.advanced_plot import Wave
-        from camelot.view.action_steps import OpenFormView
-        wave = Wave()
-        #wave.phase = '2.89'
-        admin = Wave.Admin( self.app_admin, Wave )
-        open_form_view = OpenFormView([wave], admin)
-        form = open_form_view.render(self.gui_context)
-        form.setMaximumSize( 400, 200 )
-        self.grab_widget(form)
 
     def test_fields_with_actions(self):
         from .snippet.fields_with_actions import Coordinate
