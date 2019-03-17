@@ -1,4 +1,4 @@
-from camelot.core.qt import QtGui
+from camelot.core.qt import QtWidgets, QtGui
 
 from camelot.view import forms
 from camelot.admin.entity_admin import EntityAdmin
@@ -9,9 +9,9 @@ class CustomForm( forms.Form ):
         super( CustomForm, self ).__init__(['first_name', 'last_name'])
         
     def render( self, editor_factory, parent = None, nomargins = False ):
-        widget = QtGui.QWidget( parent )
-        layout = QtGui.QFormLayout()
-        layout.addRow( QtGui.QLabel('Please fill in the complete name :', widget ) )
+        widget = QtWidgets.QWidget( parent )
+        layout = QtWidgets.QFormLayout()
+        layout.addRow( QtWidgets.QLabel('Please fill in the complete name :', widget ) )
         for field_name in self.get_fields():
             field_editor = editor_factory.create_editor( field_name, widget )
             field_label = editor_factory.create_label( field_name, field_editor, widget )

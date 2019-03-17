@@ -133,7 +133,7 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual( editor.get_value(), '' )
         # pretend the user has entered some text
         editor.set_value(None)
-        editor.findChild(QtGui.QLineEdit).setText( u'foo' )
+        editor.findChild(QtWidgets.QLineEdit).setText( u'foo' )
         self.assertTrue( editor.get_value() is not None )
         self.assert_valid_editor( editor, u'za coś tam' )
 
@@ -206,7 +206,8 @@ class EditorsTest(test.ModelThreadTestCase):
         editor.set_choices( choices1 )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 2 )
-        self.assertEqual(editor.get_choices(), choices1 + [(None,'')] )
+        # None equals space for qml compatibility
+        self.assertEqual(editor.get_choices(), choices1 + [(None,' ')] )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 2 )
         # None is not in the list of choices, but we should still be able
@@ -218,9 +219,9 @@ class EditorsTest(test.ModelThreadTestCase):
         editor.set_value( 2 )
         choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
         editor.set_choices( choices2 )
-        self.assertEqual(editor.get_choices(), choices2 + [(None,''), (2,u'B')])
+        self.assertEqual(editor.get_choices(), choices2 + [(None,' '), (2,u'B')])
         editor.set_value(4)
-        self.assertEqual(editor.get_choices(), choices2 + [(None,'')])
+        self.assertEqual(editor.get_choices(), choices2 + [(None,' ')])
         # set a value that is not in the list, the value should be
         # accepted, to prevent damage to the actual data
         editor.set_value(33)
@@ -289,7 +290,7 @@ class EditorsTest(test.ModelThreadTestCase):
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
-        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         self.assertEqual(spinbox.minimum(), camelot_minfloat-1)
         self.assertEqual(spinbox.maximum(), camelot_maxfloat)
         spinbox.keyPressEvent(up)
@@ -297,7 +298,7 @@ class EditorsTest(test.ModelThreadTestCase):
         # pretend the user has entered something
         editor = self.editors.FloatEditor(parent=None)
         editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True)
-        spinbox = editor.findChild(QtGui.QWidget, 'spinbox')
+        spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
         self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
@@ -322,7 +323,7 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 3 )
         editor.set_value( None )
         # pretend the user changed the value
-        spinbox = editor.findChild(QtGui.QWidget, 'spin_box')
+        spinbox = editor.findChild(QtWidgets.QWidget, 'spin_box')
         spinbox.setValue( 0 )
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( None )
@@ -533,7 +534,7 @@ class DelegateCase(test.ModelThreadTestCase):
     def setUp(self):
         super(DelegateCase, self).setUp()
         self.kwargs = dict(editable=True)
-        self.option = QtGui.QStyleOptionViewItem()
+        self.option = QtWidgets.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view, so it should not
         # set its background
@@ -546,7 +547,7 @@ class DelegateCase(test.ModelThreadTestCase):
         model.setItem(0, 0, delegate.get_standard_item(self.locale, value, field_attributes))
         index = model.index(0, 0, QtCore.QModelIndex())
 
-        option = QtGui.QStyleOptionViewItem()
+        option = QtWidgets.QStyleOptionViewItem()
 
         if suffix == 'editable':
             self.assertTrue(delegate.sizeHint(option, index).height()>1)
@@ -558,14 +559,14 @@ class DelegateCase(test.ModelThreadTestCase):
         test_case_name = sys._getframe(1).f_code.co_name[5:]
 
         for state_name, state in zip(('selected', 'unselected'),
-                                     (QtGui.QStyle.State_Selected, 
-                                      QtGui.QStyle.State_None)):
+                                     (QtWidgets.QStyle.State_Selected, 
+                                      QtWidgets.QStyle.State_None)):
             tableview.adjustSize()
 
-            if state == QtGui.QStyle.State_Selected:
-                tableview.selectionModel().select(index, QtGui.QItemSelectionModel.Select)
+            if state == QtWidgets.QStyle.State_Selected:
+                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.Select)
             else:
-                tableview.selectionModel().select(index, QtGui.QItemSelectionModel.Clear)
+                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.Clear)
 
             cell_size = tableview.visualRect(index).size()
 
@@ -581,7 +582,7 @@ class DelegateCase(test.ModelThreadTestCase):
             delegate_images_path = os.path.join(static_images_path, 'delegates')
             if not os.path.exists(delegate_images_path):
                 os.makedirs(delegate_images_path)
-            pixmap = QtGui.QPixmap.grabWidget(tableview)
+            pixmap = QtWidgets.QWidget.grab(tableview)
             pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
                         'PNG')
 
@@ -590,7 +591,7 @@ class DelegateCase(test.ModelThreadTestCase):
                                                     length=30,
                                                     editable=True)
         editor = delegate.createEditor(None, self.option, None)
-        self.assertEqual(editor.findChild(QtGui.QLineEdit).maxLength(), 30)
+        self.assertEqual(editor.findChild(QtWidgets.QLineEdit).maxLength(), 30)
         self.assertTrue(isinstance(editor, editors.TextLineEditor))
         self.grab_delegate(delegate, 'Plain Text')
         delegate = delegates.PlainTextDelegate(parent=None,
@@ -608,11 +609,11 @@ class DelegateCase(test.ModelThreadTestCase):
     def test_texteditdelegate(self):
         delegate = delegates.TextEditDelegate(parent=None, **self.kwargs)
         editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, QtGui.QTextEdit))
+        self.assertTrue(isinstance(editor, QtWidgets.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text')
         delegate = delegates.TextEditDelegate(parent=None, editable=False)
         editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, QtGui.QTextEdit))
+        self.assertTrue(isinstance(editor, QtWidgets.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
     def test_richtextdelegate(self):
@@ -755,11 +756,6 @@ class DelegateCase(test.ModelThreadTestCase):
         self.grab_delegate(delegate, 1, 'disabled')
         item = delegate.get_standard_item(self.locale, '2', {'choices':CHOICES})
         self.assertEqual(variant_to_py(item.data(PreviewRole)), 'B')
-
-    def test_imagedelegate(self):
-        delegate = delegates.ImageDelegate(parent=None, **self.kwargs)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.ImageEditor))
 
     def test_virtualaddressdelegate(self):
         delegate = delegates.VirtualAddressDelegate(parent=None,
@@ -934,9 +930,9 @@ class ControlsTest(ExampleModelCase):
         from camelot.view.controls.tableview import ColumnGroupsWidget
         from camelot_example.view import VisitorsPerDirector
         table = VisitorsPerDirector.Admin.list_display
-        widget = QtGui.QWidget()
-        layout = QtGui.QVBoxLayout()
-        table_widget = QtGui.QTableWidget( 3, 6 )
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        table_widget = QtWidgets.QTableWidget( 3, 6 )
         table_widget.setHorizontalHeaderLabels( table.get_fields() )
         column_groups = ColumnGroupsWidget( table,
                                             table_widget )
@@ -959,19 +955,8 @@ class ControlsTest(ExampleModelCase):
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace, DesktopBackground
-        from camelot.admin.action import Action
-        from camelot.view.art import Icon
-
-        action1 = Action()
-        action1.icon=Icon('tango/32x32/places/network-server.png')
-        action2 = Action()
-        action2.icon=Icon('tango/32x32/places/user-trash.png')
-        action3 = Action()
-        action3.icon=Icon('tango/32x32/places/start-here.png')
-
-        home = DesktopBackground(self.gui_context)
-        home.set_actions([ action1, action2, action3 ])
         
+        home = DesktopBackground(self.gui_context)        
         workspace = DesktopWorkspace(self.app_admin, None)
         workspace.set_view(home)
 
