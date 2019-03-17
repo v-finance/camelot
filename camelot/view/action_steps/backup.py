@@ -34,7 +34,7 @@
 
 import six
 
-from ...core.qt import QtGui, QtCore, QtWidgets, py_to_variant, variant_to_py
+from ...core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest

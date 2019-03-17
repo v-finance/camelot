@@ -17,7 +17,6 @@ from camelot.view.proxy.collection_proxy import (
 from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
     VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
 )
-from camelot.container.collection_container import CollectionContainer
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls import delegates
 from camelot.admin.application_admin import ApplicationAdmin
