@@ -14,7 +14,7 @@ from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.item_model import PreviewRole
 from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, py_to_variant, variant_to_py, q_string
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.files.storage import StoredFile, StoredImage, Storage
+from camelot.core.files.storage import StoredFile, Storage
 from camelot import test
 from camelot.view.art import ColorScheme
 from camelot.view.controls.tableview import TableView, TableWidget
@@ -324,12 +324,6 @@ class EditorsTest(test.ModelThreadTestCase):
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
         self.assert_valid_editor( editor, 3.14 )
-
-    def test_ImageEditor(self):
-        editor = self.editors.ImageEditor(parent=None, editable=True)
-        self.assertEqual( editor.get_value(), self.ValueLoading )
-        self.grab_default_states( editor )
-        self.assert_valid_editor( editor, StoredImage( storage, 'test.png') )
 
     def test_IntegerEditor(self):
         editor = self.editors.IntegerEditor(parent=None, editable=True)
