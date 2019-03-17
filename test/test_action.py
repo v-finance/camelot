@@ -87,13 +87,6 @@ class ActionWidgetsCase( ModelThreadTestCase ):
             self.grab_widget( widget, suffix='%s_%s'%( suffix,
                                                        state_name ) )
 
-    def test_action_label( self ):
-        from camelot.view.controls.action_widget import ActionLabel
-        widget = ActionLabel( self.action,
-                              self.application_gui_context,
-                              self.parent )
-        self.grab_widget_states( widget, 'application' )
-
     def test_action_push_botton( self ):
         from camelot.view.controls.action_widget import ActionPushButton
         widget = ActionPushButton( self.action,
@@ -261,7 +254,7 @@ class ActionStepsCase( ModelThreadTestCase ):
                     # delete the email of the person
                     for contact_mechanism in person.contact_mechanisms:
                         model_context.session.delete( contact_mechanism )
-                        yield action_steps.DeleteObject( contact_mechanism )
+                        yield action_steps.DeleteObjects((contact_mechanism,))
                     # add a new email
                     m = ('email', '%s.%s@example.com'%( person.first_name,
                                                         person.last_name ) )
@@ -269,9 +262,9 @@ class ActionStepsCase( ModelThreadTestCase ):
                     pcm = party.PartyContactMechanism( party = person,
                                                        contact_mechanism = cm )
                     # immediately update the GUI
-                    yield action_steps.CreateObject( cm )
-                    yield action_steps.CreateObject( pcm )
-                    yield action_steps.UpdateObject( person )
+                    yield action_steps.CreateObjects((cm,))
+                    yield action_steps.CreateObjects((pcm,))
+                    yield action_steps.UpdateObjects((person,))
                 # flush the session on finish
                 model_context.session.flush()
 
@@ -782,14 +775,6 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
         self.gui_context.workspace = DesktopWorkspace( self.app_admin, None )
-
-    def test_authentication(self):
-        action = application_action.Authentication()
-        self.assertTrue( action.get_state(self.context) )
-        generator = action.model_run(self.context)
-        for step in generator:
-            if isinstance(step, action_steps.SelectFile):
-                generator.send(test_images)
 
     def test_refresh( self ):
         from camelot.core.orm import Session

@@ -96,7 +96,7 @@ class OpenStream( OpenFile ):
         import os
         import tempfile
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        output_stream = os.fdopen( file_descriptor, 'w' )
+        output_stream = os.fdopen( file_descriptor, 'wb' )
         output_stream.write( stream.read() )
         output_stream.close()
         super( OpenStream, self ).__init__( file_name )
