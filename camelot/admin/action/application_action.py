@@ -293,23 +293,7 @@ class OpenNewView( EntityAction ):
         admin.add(new_object)
         admin.set_defaults(new_object)
         yield action_steps.OpenFormView([new_object], admin)
-
-class ShowHelp( Action ):
-    """Open the help"""
-    
-    shortcut = QtGui.QKeySequence.HelpContents
-    icon = Icon('tango/16x16/apps/help-browser.png')
-    tooltip = _('Help content')
-    verbose_name = _('Help')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.register import register
-        view = QtWebKit.QWebView(None)
-        view.load(gui_context.admin.get_application_admin().get_help_url())
-        view.setWindowTitle(ugettext('Help Browser'))
-        view.setWindowIcon(self.icon.getQIcon())
-        view.show()
-        register(view, view)
+        
 
 class ShowAbout( Action ):
     """Show the about dialog with the content returned by the

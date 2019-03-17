@@ -835,10 +835,6 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
                 self.grab_widget( dialog, suffix = 'restore' )
                 generator.send( ('unittest', self.storage) )
 
-    def test_show_help( self ):
-        show_help_action = application_action.ShowHelp()
-        show_help_action.gui_run( self.gui_context )
-
     def test_change_logging( self ):
         change_logging_action = application_action.ChangeLogging()
         change_logging_action.model_run( self.context )

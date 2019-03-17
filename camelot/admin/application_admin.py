@@ -108,7 +108,7 @@ shortcut confusion and reduce the number of status updates.
     edit_actions = [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),]
-    help_actions = [ application_action.ShowHelp(), ]
+    help_actions = []
     export_actions = [ list_action.PrintPreview(),
                        list_action.ExportSpreadsheet() ]
     form_toolbar_actions = [ form_action.CloseForm(),
