@@ -48,13 +48,13 @@ class ProxySignalRegister( QtCore.QObject ):
         self.header_changes = []
         self.layout_changes = 0
 
-    @QtCore.qt_slot(object, object)
-    def register_data_change( self, from_index, thru_index ):
+    @QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex, "QVector<int>")
+    def register_data_change(self, from_index, thru_index, vector):
         LOGGER.debug('dataChanged(row={0}, column={1})'.format(from_index.row(), from_index.column()))
         self.data_changes.append( ((from_index.row(), from_index.column()),
                                    (thru_index.row(), thru_index.column())) )
 
-    @QtCore.qt_slot(int, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def register_header_change(self, orientation, first, last):
         self.header_changes.append((orientation, first, last))
 
@@ -198,7 +198,8 @@ class CollectionProxyCase( ProxyCase ):
         self.proxy.timeout_slot()
         self.process()
         self.assertEqual(self._data(1, 0, role=Qt.EditRole), 1)
-        self.assertEqual(self._data(1, 0, role=Qt.DisplayRole), '1')
+        # the prefix is prepended to the display role
+        self.assertEqual(self._data(1, 0, role=Qt.DisplayRole), 'pre 1')
         self.assertEqual(self._data(1, 0, role=ObjectRole), self.collection[1])
         self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['editable'], True)
         self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
@@ -491,10 +492,14 @@ class CollectionProxyCase( ProxyCase ):
         self.assertEqual(len(returned_list), len(a0.z))
         # manipulate the returned list, and see if the original is manipulated
         # as well
-        returned_list.append(3)
-        self.assertTrue( 3 in a0.z )
-        returned_list.remove(2)
-        self.assertFalse( 2 in a0.z )
+        new_z = object()
+        self.assertFalse(new_z in a0.z )
+        returned_list.append(new_z)
+        self.assertTrue( new_z in a0.z )
+        z0 = a0.z[0]
+        self.assertTrue( z0 in a0.z )
+        returned_list.remove(z0)
+        self.assertFalse( z0 in a0.z )
         
 class QueryProxyCase( ProxyCase ):
     """Test the functionality of the QueryProxy to perform CRUD operations on 
