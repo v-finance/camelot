@@ -255,7 +255,7 @@ class EntityViewsTest(ModelThreadTestCase):
             # create a form view
             form_view_step = OpenFormView([obj], admin)
             widget = form_view_step.render(gui_context)
-            mapper = widget.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
+            mapper = widget.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
             mapper.revert()
             self.process()
             if admin.form_state != None:

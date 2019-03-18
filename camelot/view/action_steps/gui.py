@@ -175,20 +175,6 @@ class SelectItem( ActionStep ):
         return dialog.get_value()
 
 
-class ShowPixmap( ActionStep ):
-    """Show a full screen pixmap
-
-    :param pixmap: a :class:`camelot.view.art.Pixmap` object
-    """
-
-    def __init__( self, pixmap ):
-        self.pixmap = pixmap
-
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.liteboxview import LiteBoxView
-        litebox = LiteBoxView( parent = gui_context.workspace )
-        litebox.show_fullscreen_pixmap( self.pixmap.getQPixmap() )
-
 class CloseView( ActionStep ):
     """
     Close the view that triggered the action, if such a view is available.

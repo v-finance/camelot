@@ -403,7 +403,7 @@ class Organization( Party ):
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.Image( upload_to = 'organization-logo' ))
+    logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
     tax_id = schema.Column( Unicode( 20 ) )
 
     def __str__(self):
@@ -440,7 +440,7 @@ class Person( Party ):
     social_security_number = schema.Column( Unicode( 12 ) )
     passport_number = schema.Column( Unicode( 20 ) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.Image( upload_to = 'person-pictures' ))
+    picture = schema.Column( camelot.types.File( upload_to = 'person-pictures' ))
     comment = schema.Column( camelot.types.RichText() )
 
     @property

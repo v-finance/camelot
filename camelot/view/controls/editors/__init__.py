@@ -51,14 +51,12 @@ from .dateeditor import DateEditor
 from .datetimeeditor import DateTimeEditor
 from .fileeditor import FileEditor
 from .floateditor import FloatEditor
-from .imageeditor import ImageEditor
 from .dbimageeditor import DbImageEditor
 from .integereditor import IntegerEditor
 from .languageeditor import LanguageEditor
 from .localfileeditor import LocalFileEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
-from .onetomanychoiceseditor import OneToManyChoicesEditor
 from .richtexteditor import RichTextEditor
 from .textlineeditor import TextLineEditor
 from .timeeditor import TimeEditor
@@ -78,7 +76,6 @@ __all__ = [
     DateTimeEditor.__name__,
     FileEditor.__name__,
     FloatEditor.__name__,
-    ImageEditor.__name__,
     DbImageEditor.__name__,
     IntegerEditor.__name__,
     LabelEditor.__name__,
@@ -88,7 +85,6 @@ __all__ = [
     MonthsEditor.__name__,
     NoteEditor.__name__,
     One2ManyEditor.__name__,
-    OneToManyChoicesEditor.__name__,
     RichTextEditor.__name__,
     TextLineEditor.__name__,
     TimeEditor.__name__,

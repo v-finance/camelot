@@ -122,7 +122,7 @@ class Movie( Entity ):
     # image on disk and keeps the reference to it in the database.
     #
 # begin image definition
-    cover = Column( camelot.types.Image( upload_to = 'covers' ) )
+    cover = Column( camelot.types.File( upload_to = 'covers' ) )
 # end image definition
     #
     # Or File, which stores a file in the upload_to directory and stores a

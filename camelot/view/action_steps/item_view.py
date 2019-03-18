@@ -84,6 +84,11 @@ class UpdateTableView( ActionStep ):
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
         self.columns = self.admin.get_columns()
+        app_admin = admin.get_application_admin()
+        self.left_toolbar_actions = app_admin.get_toolbar_actions(Qt.LeftToolBarArea)
+        self.right_toolbar_actions = app_admin.get_toolbar_actions(Qt.RightToolBarArea)
+        self.top_toolbar_actions = app_admin.get_toolbar_actions(Qt.TopToolBarArea)
+        self.bottom_toolbar_actions = app_admin.get_toolbar_actions(Qt.BottomToolBarArea)
     
     def update_table_view(self, table_view):
         table_view.set_admin(self.admin)
@@ -95,6 +100,18 @@ class UpdateTableView( ActionStep ):
         table_view.set_filters(self.filters)
         table_view.set_value(self.admin.get_proxy(self.value))
         table_view.set_list_actions(self.list_actions)
+        table_view.set_toolbar_actions(
+            Qt.LeftToolBarArea, self.left_toolbar_actions
+        )
+        table_view.set_toolbar_actions(
+            Qt.RightToolBarArea, self.right_toolbar_actions
+        )
+        table_view.set_toolbar_actions(
+            Qt.TopToolBarArea, self.top_toolbar_actions
+        )
+        table_view.set_toolbar_actions(
+            Qt.BottomToolBarArea, self.bottom_toolbar_actions
+        )        
 
     def gui_run(self, gui_context):
         self.update_table_view(gui_context.view)
