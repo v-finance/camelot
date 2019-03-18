@@ -681,9 +681,11 @@ class TableView(AbstractView):
         header.search.on_arrow_down_signal.connect(self.focusTable)
         self.setFocusProxy(header)
         self.search_filter = SearchFilter(admin)
-        if self.search_text:
-            header.search.search(self.search_text)
-            self.search_text = None
+
+    def set_search(self, search_text):
+        header = self.findChild(QtWidgets.QWidget, 'header_widget')
+        header.search.search_input.setText(self.search_text)
+        header.search.emit_search()
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):

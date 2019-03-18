@@ -111,7 +111,7 @@ class UpdateTableView( ActionStep ):
         )
         table_view.set_toolbar_actions(
             Qt.BottomToolBarArea, self.bottom_toolbar_actions
-        )        
+        )
 
     def gui_run(self, gui_context):
         self.update_table_view(gui_context.view)
@@ -142,11 +142,11 @@ class OpenTableView( UpdateTableView ):
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, 
-                               self.admin, 
-                               self.search_text)
+        table_view = TableView(gui_context, self.admin)
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
+        if self.search_text:
+            table_view.set_search(self.search_text)
         return table_view
         
     def gui_run( self, gui_context ):
