@@ -167,7 +167,7 @@ def time_from_string(s):
     if not s:
         return None
     f = local_time_format()
-    tm = QtCore.QTime.fromString(s, f)
+    tm = locale().toTime(s, f)
     if not tm.isValid():
         raise ParsingError()
     return time( tm.hour(), tm.minute(), tm.second() )
@@ -177,7 +177,7 @@ def datetime_from_string(s):
     if not s:
         return None
     f = local_datetime_format()
-    dt = QtCore.QDateTime.fromString(s, f)
+    dt = locale().toDateTime(s, f)
     if not dt.isValid():
         raise ParsingError()
     return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 
