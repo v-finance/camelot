@@ -102,8 +102,6 @@ shortcut confusion and reduce the number of status updates.
     # actions that will be shared between the toolbar and the main menu
     #
     change_row_actions = [ list_action.ToFirstRow(),
-                           list_action.ToPreviousRow(),
-                           list_action.ToNextRow(),
                            list_action.ToLastRow(), ]
     edit_actions = [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
@@ -341,7 +339,7 @@ shortcut confusion and reduce the number of status updates.
         """
         if toolbar_area == Qt.TopToolBarArea:
             return self.edit_actions + self.change_row_actions + \
-                   self.export_actions + self.help_actions
+                   [application_action.Refresh()] + self.export_actions
 
     def get_name(self):
         """

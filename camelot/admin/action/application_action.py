@@ -341,6 +341,7 @@ class Refresh( Action ):
     application."""
     
     verbose_name = _('Refresh')
+    tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
     icon = Icon('tango/16x16/actions/view-refresh.png')
     
