@@ -169,7 +169,7 @@ class DbImageEditor(CustomEditor):
                     self.set_value(image_data)
                     self.editingFinished.emit()
                 else:
-                    QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Invalid image file'))
+                    QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Chosen file was not recognized as a valid image'))
             else: 
                 QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(max_size/1000))
     
