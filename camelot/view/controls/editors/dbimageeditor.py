@@ -145,7 +145,7 @@ class DbImageEditor(CustomEditor):
     
     @QtCore.qt_slot()
     def open(self):
-        image_filter = "Images (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)"
+        image_filter = "Images (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm);; All files (*.*)"
         options = QtWidgets.QFileDialog.Options()
         file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "",image_filter, options=options)
         if file_name:
@@ -156,14 +156,20 @@ class DbImageEditor(CustomEditor):
             max_size = 50000            
             
             if image_size <= max_size:
-                image = QtGui.QImage( file_name )
-                ba = QtCore.QByteArray()
-                buffer = QtCore.QBuffer(ba)
-                buffer.open(QtCore.QIODevice.WriteOnly)
-                image.save(buffer, 'PNG')
-                image_data = ba.toBase64().data().decode()
-                self.set_value(image_data)
-                self.editingFinished.emit()
+                image_reader = QtGui.QImageReader()
+                image_reader.setDecideFormatFromContent(True)
+                image_reader.setFileName(file_name)
+                image = image_reader.read()
+                if not image.isNull():
+                    ba = QtCore.QByteArray()
+                    buffer = QtCore.QBuffer(ba)
+                    buffer.open(QtCore.QIODevice.WriteOnly)
+                    image.save(buffer, 'PNG')
+                    image_data = ba.toBase64().data().decode()
+                    self.set_value(image_data)
+                    self.editingFinished.emit()
+                else:
+                    QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Invalid image file'))
             else: 
                 QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(max_size/1000))
     
