@@ -353,11 +353,12 @@ class StatusMixin( object ):
                      history_type.status_from_date <= status_from_date,
                      history_type.status_thru_date >= status_from_date)
         )
-        new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
-        new_status_thru_date = status_from_date - datetime.timedelta(days=1)
-        for old_status in old_status_query.yield_per(10):
-            old_status.thru_date = new_thru_date
-            old_status.status_thru_date = new_status_thru_date
+        if self.id is not None:
+            new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
+            new_status_thru_date = status_from_date - datetime.timedelta(days=1)
+            for old_status in old_status_query.yield_per(10):
+                old_status.thru_date = new_thru_date
+                old_status.status_thru_date = new_status_thru_date
         new_status = history_type(status_for = self,
                                   classified_by = new_status,
                                   status_from_date = status_from_date,
