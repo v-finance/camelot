@@ -44,7 +44,7 @@ import six
 from sqlalchemy import types
 
 from camelot.core.orm import options
-from camelot.core.files.storage import StoredFile, StoredImage, Storage
+from camelot.core.files.storage import StoredFile, Storage
 
 """
 The `__repr__` method of the types is implemented to be able to use Alembic.
@@ -388,23 +388,3 @@ class File(types.TypeDecorator):
 
     def __repr__(self):
         return 'File()'
-
-class Image(File):
-    """Sqlalchemy column type to store images
-    
-  This column type accepts and returns a StoredImage, and stores them in the directory
-  specified by settings.CAMELOT_MEDIA_ROOT.  The name of the file is stored as a string in
-  the database.
-  
-  The Image field type provides the same functionallity as the File field type, but
-  the files stored should be images.
-  
-  .. image:: /_static/editors/ImageEditor_editable.png
-    """
-  
-    stored_file_implementation = StoredImage
-
-    def __repr__(self):
-        return 'Image()'
-
-

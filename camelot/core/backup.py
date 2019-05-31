@@ -32,7 +32,7 @@ import six
 from camelot.types import PrimaryKey
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
-from .qt import QtGui
+from .qt import QtCore
 
 from camelot.core.utils import ugettext as _
 from camelot.core.sql import metadata as default_metadata
@@ -88,7 +88,11 @@ class BackupMechanism(object):
         By default, this will return a Storage that puts the backup files
         in the DataLocation as specified by the QDesktopServices
         """
-        apps_folder = six.text_type(QtGui.QDesktopServices.storageLocation(QtGui.QDesktopServices.DataLocation))
+        apps_folder = six.text_type(
+            QtCore.QStandardPaths.writableLocation(
+                QtCore.QStandardPaths.DataLocation
+            )
+        )
         
         from camelot.core.files.storage import Storage
         return Storage(upload_to='backups', root=apps_folder)

@@ -254,8 +254,8 @@ and used as a custom action.
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
                     # class attribute of hybrid properties is changed from
-                    # expression to comparator in sqla 1.2
-                    if sqlalchemy_version.startswith('1.2'):
+                     # expression to comparator from sqla v1.2 onwards.
+                    if sqlalchemy_version.startswith('1.2') or sqlalchemy_version.startswith('1.3'):
                         if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
                             class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
