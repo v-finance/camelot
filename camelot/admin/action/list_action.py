@@ -1185,7 +1185,9 @@ class AddExistingObject( EditAction ):
                     raise StopIteration()
             model_context.proxy.append(obj_to_add)
         yield action_steps.UpdateObjects(objs_to_add)
-        yield action_steps.FlushSession(object_session(obj_to_add))
+        for obj_to_add in objs_to_add:
+            yield action_steps.FlushSession(object_session(obj_to_add))
+            break
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the

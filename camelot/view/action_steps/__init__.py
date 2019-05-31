@@ -32,8 +32,9 @@ from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
-from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
-                   ShowPixmap, SelectSubclass, UpdateEditor,)
+from .gui import (
+    CloseView, MessageBox, Refresh, SelectItem, SelectSubclass, UpdateEditor
+)
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
     RefreshItemView,
@@ -84,7 +85,6 @@ __all__ = [
     SelectRestore.__name__,
     SelectSubclass.__name__,
     SetFilter.__name__,
-    ShowPixmap.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,

@@ -309,8 +309,6 @@ class SearchFilter(Filter):
                     pass
                 elif issubclass(python_type, camelot.types.virtual_address):
                     arg = c.like(camelot.types.virtual_address('%', '%'+text+'%'))
-                elif issubclass(c.type.__class__, camelot.types.Image):
-                    pass
                 elif issubclass(python_type, bool):
                     try:
                         arg = (c==utils.bool_from_string(text))

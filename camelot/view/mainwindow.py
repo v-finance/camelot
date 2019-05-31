@@ -35,8 +35,6 @@ from ..core.qt import Qt, QtWidgets, QtCore, py_to_variant, variant_to_py
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.section_widget import NavigationPane
 
-from camelot.core.utils import ugettext as _
-
 class MainWindow(QtWidgets.QMainWindow):
     """Main window of a Desktop Camelot application
     
@@ -51,7 +49,6 @@ class MainWindow(QtWidgets.QMainWindow):
         logger.debug('initializing main window')
         QtWidgets.QMainWindow.__init__(self, parent)
 
-        self.toolbars = []
         self.nav_pane = None
         self.app_admin = gui_context.admin.get_application_admin()
         
@@ -64,35 +61,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         logger.debug('setting central widget to our workspace')
         self.setCentralWidget( self.workspace )
-
-        self.workspace.change_view_mode_signal.connect( self.change_view_mode )
-        self.workspace.last_view_closed_signal.connect( self.unmaximize_view )
         self.workspace.view_activated_signal.connect( self.view_activated )
-
         logger.debug('reading saved settings')
         self.read_settings()
-
         logger.debug('initialization complete')
-        
-    @QtCore.qt_slot()
-    def unmaximize_view( self ):
-        """Show the navigation pane and the menu bar if they exist """
-        if self.navpane:
-            self.navpane.show()
-        if self.menuBar():
-            self.menuBar().show()
-
-    @QtCore.qt_slot()
-    def change_view_mode( self ):
-        """Switch between hidden or shown menubar and navigation pane"""
-        if self.menuBar().isHidden():
-            if self.navpane:
-                self.navpane.show()
-            self.menuBar().show()
-        else:
-            if self.navpane:
-                self.navpane.hide()
-            self.menuBar().hide()
 
     def read_settings( self ):
         """Restore the geometry of the main window to its last saved state"""
@@ -121,6 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
         menu_bar = self.menuBar()
         for menu in main_menu:
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
+        menu_bar.setCornerWidget( BusyWidget() )
         for qaction in menu_bar.findChildren( ActionAction ):
             qaction.triggered.connect( self.action_triggered )
 
@@ -134,46 +107,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if active_view:
             return active_view.gui_context
         return self.gui_context
-        
-    @QtCore.qt_slot( object, object )
-    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
-        """Set the toolbar for a specific area
-        :param toolbar_area: the area on which to put the toolbar, from
-            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
-        :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
-            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
-            method.
-        """
-        from camelot.view.controls.action_widget import ActionAction
-        if toolbar_actions != None:
-            #
-            # gather menu bar actions to prevent duplication of QActions
-            #
-            qactions = dict()
-            menu_bar = self.menuBar()
-            if menu_bar:
-                for qaction in menu_bar.findChildren( ActionAction ):
-                    qactions[qaction.action] = qaction
-            toolbar = QtWidgets.QToolBar( _('Toolbar') )
-            self.addToolBar( toolbar_area, toolbar )
-            toolbar.setObjectName( 'MainWindowToolBar_%i'%toolbar_area )
-            toolbar.setMovable( False )
-            toolbar.setFloatable( False )
-            for action in toolbar_actions:
-                qaction = qactions.get( action, None )
-                if qaction != None:
-                    # the action already exists in the menu
-                    toolbar.addAction( qaction )
-                if qaction == None:
-                    rendered = action.render( self.gui_context, toolbar )
-                    # both QWidgets and QActions can be put in a toolbar
-                    if isinstance(rendered, QtWidgets.QWidget):
-                        toolbar.addWidget(rendered)
-                    elif isinstance(rendered, QtWidgets.QAction):
-                        rendered.triggered.connect( self.action_triggered )
-                        toolbar.addAction( rendered )
-            self.toolbars.append( toolbar )
-            toolbar.addWidget( BusyWidget() )
 
     @QtCore.qt_slot( object )
     def set_hidden_actions( self, hidden_actions ):
@@ -191,12 +124,6 @@ class MainWindow(QtWidgets.QMainWindow):
         from camelot.view.controls.action_widget import ActionAction
         gui_context = self.get_gui_context()
         model_context = gui_context.create_model_context()
-        for toolbar in self.toolbars:
-            for qaction in toolbar.actions():
-                if isinstance( qaction, ActionAction ):
-                    post( qaction.action.get_state,
-                          qaction.set_state,
-                          args = ( model_context, ) )
         menu_bar = self.menuBar()
         if menu_bar:
             for qaction in menu_bar.findChildren( ActionAction ):

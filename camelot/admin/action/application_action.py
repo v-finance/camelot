@@ -33,7 +33,7 @@ import time
 import six
 
 from ...core.conf import settings
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtWebKit
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -293,23 +293,7 @@ class OpenNewView( EntityAction ):
         admin.add(new_object)
         admin.set_defaults(new_object)
         yield action_steps.OpenFormView([new_object], admin)
-
-class ShowHelp( Action ):
-    """Open the help"""
-    
-    shortcut = QtGui.QKeySequence.HelpContents
-    icon = Icon('tango/16x16/apps/help-browser.png')
-    tooltip = _('Help content')
-    verbose_name = _('Help')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.register import register
-        view = QtWebKit.QWebView(None)
-        view.load(gui_context.admin.get_application_admin().get_help_url())
-        view.setWindowTitle(ugettext('Help Browser'))
-        view.setWindowIcon(self.icon.getQIcon())
-        view.show()
-        register(view, view)
+        
 
 class ShowAbout( Action ):
     """Show the about dialog with the content returned by the
@@ -357,6 +341,7 @@ class Refresh( Action ):
     application."""
     
     verbose_name = _('Refresh')
+    tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
     icon = Icon('tango/16x16/actions/view-refresh.png')
     
@@ -683,49 +668,6 @@ class SegmentationFault( Action ):
             import faulthandler
             faulthandler._read_null()        
         
-class Authentication( Action ):
-    """This action provides information of the currently active authentication
-    mechanism, in other words, it displays the active user and his permissions.
-    
-    Add this action to a toolbar if you want to show the authentication
-    information to the user.
-    """
-    
-    icon = Icon('tango/16x16/emotes/face-smile.png')
-    image_size = 32
-    
-    def render( self, gui_context, parent ):
-        from camelot.view.controls.action_widget import AuthenticationWidget
-        return AuthenticationWidget(self, gui_context, parent)
-    
-    def get_state(self, model_context):
-        from camelot.model.authentication import get_current_authentication
-        from camelot.view import art
-        state = super(Authentication, self).get_state(model_context)
-        authentication = get_current_authentication()
-        state.verbose_name = authentication.username
-        state.tooltip = ', '.join([g.name for g in authentication.groups])
-        representation = authentication.get_representation()
-        if representation is not None:
-            state.icon = art.IconFromImage(representation)
-        return state
-    
-    def model_run(self, model_context):
-        from camelot.model.authentication import get_current_authentication
-        from camelot.view import action_steps
-        from camelot.view.controls.editors.imageeditor import ImageEditor
-        select_file = action_steps.SelectFile(file_name_filter=ImageEditor.filter)
-        filenames = yield select_file
-        for filename in filenames:
-            yield action_steps.UpdateProgress(text=ugettext('Scale image'))
-            image = QtGui.QImage(filename)
-            image = image.scaled(self.image_size,
-                                 self.image_size,
-                                 Qt.KeepAspectRatio)
-            authentication = get_current_authentication()
-            authentication.set_representation(image)
-            yield action_steps.FlushSession(model_context.session)
-
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 
