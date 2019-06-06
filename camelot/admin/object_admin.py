@@ -796,7 +796,7 @@ be specified using the verbose_name attribute.
         return iterations > 0
 
     def _set_defaults(self, object_instance):
-        from sqlalchemy.schema import ColumnDefault
+        from sqlalchemy.schema import ColumnDefault, Sequence
         from sqlalchemy import orm
 
         if self.is_deleted( object_instance ):
@@ -828,6 +828,10 @@ be specified using the verbose_name attribute.
                     session = orm.object_session(object_instance)
                     bind = session.get_bind(mapper=self.mapper)
                     default_value = bind.execute(default)
+            elif isinstance(default, Sequence):
+                # Skip if the column default is a sequence, as setting it will cause an SQLA exception.
+                # The column should remain unset and will be set by the compilation to the next_val of the sequence automatically. 
+                continue
             elif six.callable(default):
                 import inspect
                 args, _varargs, _kwargs, _defs = \
