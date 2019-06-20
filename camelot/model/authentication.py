@@ -166,7 +166,7 @@ class AuthenticationMechanism( Entity ):
                 return True
         return False
         
-    def __unicode__( self ):
+    def __str__( self ):
         return self.username
     
     class Admin( EntityAdmin ):
@@ -209,7 +209,7 @@ class AuthenticationGroup( Entity ):
                 break
         return super( AuthenticationGroup, self ).__setattr__( name, value )
         
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name or ''
     
     class Admin( EntityAdmin ):
