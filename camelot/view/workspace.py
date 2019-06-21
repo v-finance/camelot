@@ -35,32 +35,12 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
-from ..core.qt import QtCore, QtGui, QtWidgets, Qt
+from ..core.qt import QtCore, QtGui, QtWidgets
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.view.model_thread import object_thread
-from .controls.view import AbstractView
-
-class DesktopBackground(AbstractView):
-    """
-    A custom background widget for the desktop. This widget is contained
-    by the first tab ('Start' tab) of the desktop workspace.
-    """
-
-    def __init__(self, gui_context):
-        super(DesktopBackground, self).__init__()
-        self.gui_context = gui_context
-        # Set a white background color
-        palette = self.palette()
-        self.setAutoFillBackground(True)
-        palette.setBrush(QtGui.QPalette.Window, Qt.white)
-        self.setPalette(palette)
-
-    def refresh(self):
-        pass
 
 
 class DesktopTabbar(QtWidgets.QTabBar):
-
 
     def tabSizeHint(self, index):
         originalSizeHint = super(DesktopTabbar, self).tabSizeHint(index)
