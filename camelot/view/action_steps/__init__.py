@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from .application import ActionView, MainWindow, InstallTranslator, Exit, RemoveTranslators
+from .application import MainWindow, InstallTranslator, Exit, RemoveTranslators
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -50,7 +50,6 @@ from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
 
 __all__ = [
-    ActionView.__name__,
     ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
