@@ -436,13 +436,13 @@ class FormTest(test.ModelThreadTestCase):
         ))
 
         delegate = DelegateManager(self.movie_admin.get_fields())
-        widget_mapper = QtWidgets.QDataWidgetMapper()
+        self.qt_parent = QtCore.QObject()
+        widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate(delegate)
-        self.widgets = FormEditors( self.movie_admin.get_fields(),
-                                    widget_mapper,
-                                    self.movie_admin )
-
+        self.widgets = FormEditors(
+            self.qt_parent, self.movie_admin.get_fields(), self.movie_admin
+        )
         self.person_entity = Person
         self.gui_context = GuiContext()
 
@@ -954,12 +954,8 @@ class ControlsTest(ExampleModelCase):
         self.grab_widget( widget, 'second_tab' )
 
     def test_desktop_workspace(self):
-        from camelot.view.workspace import DesktopWorkspace, DesktopBackground
-        
-        home = DesktopBackground(self.gui_context)        
+        from camelot.view.workspace import DesktopWorkspace
         workspace = DesktopWorkspace(self.app_admin, None)
-        workspace.set_view(home)
-
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):
