@@ -52,7 +52,7 @@ class FormEditors( object ):
     bold_font = None
 
     def __init__( self, columns, widget_mapper, admin ):
-        if self.option == None:
+        if self.option is None:
             self.option = QtWidgets.QStyleOptionViewItem()
             # set version to 5 to indicate the widget will appear on a
             # a form view and not on a table view
@@ -113,7 +113,6 @@ class FormWidget(QtWidgets.QWidget):
 
     def __init__(self, admin, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self._admin = admin
         widget_mapper = QtWidgets.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
@@ -122,8 +121,6 @@ class FormWidget(QtWidgets.QWidget):
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
         self._index = 0
-        self._form = None
-        self._columns = None
         self.setLayout(widget_layout)
         self.set_model(model)
         self.create_widgets(widget_mapper, columns, form_display, admin)
