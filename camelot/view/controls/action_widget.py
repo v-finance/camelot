@@ -34,8 +34,6 @@ import six
 from ...admin.action import State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
-from ..crud_signals import CrudSignalHandler
-from camelot.core.utils import ugettext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
