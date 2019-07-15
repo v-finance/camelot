@@ -214,13 +214,13 @@ class AuthenticationGroup( Entity ):
     
     class Admin( EntityAdmin ):
         verbose_name = _('Authentication group')
-        verbose_name_plural = _('Authenication groups')
+        verbose_name_plural = _('Authentication groups')
         list_display = [ 'name' ]
         form_state = 'right'
         
         def get_form_display( self ):
             return forms.TabForm( [(_('Group'), ['name', 'members']),
-                                   (_('Roles'), [role[1] for role in roles])
+                                   (_('Authentication roles'), [role[1] for role in roles])
                                    ])
         
         def get_field_attributes( self, field_name ):
