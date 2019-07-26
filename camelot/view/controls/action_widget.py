@@ -34,8 +34,6 @@ import six
 from ...admin.action import State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
-from ..crud_signals import CrudSignalHandler
-from camelot.core.utils import ugettext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
@@ -217,58 +215,3 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
     @QtCore.qt_slot()
     def action_triggered(self):
         self.action_triggered_by(self.sender())
-
-class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
-    """Widget that displays information on the active user"""
-
-    def __init__(self, action, gui_context, parent):
-        QtWidgets.QFrame.__init__(self, parent)
-        AbstractActionWidget.init(self, action, gui_context)
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        face = QtWidgets.QToolButton()
-        face.setObjectName('face')
-        face.setAutoRaise(True)
-        face.clicked.connect(self.face_clicked)
-        face.setToolTip(ugettext('Change avatar'))
-        layout.addWidget(face)
-        info_layout = QtWidgets.QVBoxLayout()
-        user_name = QtWidgets.QLabel()
-        font = user_name.font()
-        font.setBold(True)
-        font.setPointSize(10)
-        user_name.setFont(font)
-        user_name.setObjectName('user_name')
-        info_layout.addWidget(user_name)
-        groups = QtWidgets.QLabel()
-        font = groups.font()
-        font.setPointSize(8)
-        groups.setFont(font)
-        groups.setObjectName('groups')
-        info_layout.addWidget(groups)
-        info_layout.setSpacing(0)
-        info_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(info_layout)
-        self.setLayout(layout)
-        signal_handler = CrudSignalHandler()
-        signal_handler.objects_updated.connect(self.objects_updated)
-
-    @QtCore.qt_slot(object, tuple)
-    def objects_updated(self, sender, objects):
-        from ...model.authentication import AuthenticationMechanism
-        for obj in objects:
-            if isinstance(obj, AuthenticationMechanism):
-                self.current_row_changed(0)
-
-    @QtCore.qt_slot(bool)
-    def face_clicked(self, state):
-        self.run_action()
-
-    def set_state(self, state):
-        user_name = self.findChild(QtWidgets.QLabel, 'user_name')
-        user_name.setText(state.verbose_name)
-        groups = self.findChild(QtWidgets.QLabel, 'groups')
-        groups.setText(state.tooltip)
-        face = self.findChild(QtWidgets.QToolButton, 'face')
-        face.setIcon(state.icon.getQIcon())
-

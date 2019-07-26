@@ -383,6 +383,18 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         return app_admin.get_form_toolbar_actions( toolbar_area )
 
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_list_toolbar_actions(toolbar_area)
+
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
