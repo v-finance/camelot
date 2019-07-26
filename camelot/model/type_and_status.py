@@ -324,7 +324,7 @@ class StatusMixin( object ):
                            whereclause = sql.and_( SH.status_for_id == status_class.id,
                                                    SH.status_from_date <= sql.functions.current_date(),
                                                    SH.status_thru_date >= sql.functions.current_date() ),
-                           from_obj = [SH.table] ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
+                           ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
 
     @hybrid.hybrid_property
     def current_status( self ):
