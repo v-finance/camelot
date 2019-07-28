@@ -10,6 +10,7 @@ import time
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.admin.action.list_filter import SearchFilter
 
 from camelot.core.item_model import PreviewRole
 from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, py_to_variant, variant_to_py, q_string
@@ -913,7 +914,8 @@ class ControlsTest(ExampleModelCase):
 
     def test_search_control(self):
         from camelot.view.controls.search import SimpleSearchControl
-        search = SimpleSearchControl(None)
+        filter_action = SearchFilter(self.app_admin)
+        search = SimpleSearchControl(filter_action, self.gui_context, None)
         self.grab_widget(search)
 
     def test_header_widget(self):
@@ -923,7 +925,7 @@ class ControlsTest(ExampleModelCase):
         table = TableView(self.gui_context, city_admin)
         table.set_admin(city_admin)
         header = HeaderWidget(gui_context=table.gui_context, parent=None)
-        header.expand_search_options()
+        header.switch_expanded_search([])
         self.grab_widget(header)
 
     def test_column_groups_widget(self):
