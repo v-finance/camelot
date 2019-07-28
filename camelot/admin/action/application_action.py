@@ -454,7 +454,7 @@ class Profiler( Action ):
                 )
                 stats.print_stats()
                 stream.seek(0)
-                yield action_steps.OpenStream(stream)
+                yield action_steps.OpenString(stream.getvalue().encode('utf-8'))
                 filename = action_steps.OpenFile.create_temporary_file(
                     '{0}.prof'.format(label)
                 )
