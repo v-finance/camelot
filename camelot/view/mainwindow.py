@@ -118,19 +118,8 @@ class MainWindow(QtWidgets.QMainWindow):
         
     @QtCore.qt_slot()
     def view_activated( self ):
-        """Update the state of the actions when the active tab in the
-        desktop widget has changed"""
-        from camelot.view.model_thread import post
-        from camelot.view.controls.action_widget import ActionAction
-        gui_context = self.get_gui_context()
-        model_context = gui_context.create_model_context()
-        menu_bar = self.menuBar()
-        if menu_bar:
-            for qaction in menu_bar.findChildren( ActionAction ):
-                post( qaction.action.get_state,
-                      qaction.set_state,
-                      args = ( model_context, ) )
-        
+        pass
+
     @QtCore.qt_slot( bool )
     def action_triggered( self, _checked = False ):
         """Execute an action that was triggered somewhere in the main window,
