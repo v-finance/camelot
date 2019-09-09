@@ -29,7 +29,7 @@
 
 import six
 
-from ...core.qt import QtGui, QtWidgets
+from ...core.qt import QtGui, QtWidgets, is_deleted
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
@@ -210,7 +210,8 @@ class CloseForm( Action ):
         return action_steps.CloseView()
     
     def gui_run( self, gui_context ):
-        gui_context.widget_mapper.submit()
+        if not is_deleted(gui_context.widget_mapper):
+            gui_context.widget_mapper.submit()
         super( CloseForm, self ).gui_run( gui_context )
         
     def model_run( self, model_context ):
