@@ -137,6 +137,7 @@ if qt_api in ('', 'PyQt5'):
         QtQuick = DelayedModule('QtQuick')
         #QtWebKit = DelayedQtWebEngineWidgets('QtWebEngineWidgets')
         QtWebKit = DelayedModule('QtWebKitWidgets')
+        QtQuickWidgets = DelayedModule('QtQuickWidgets')
         is_deleted = sip.isdeleted
         delete = sip.delete
     except ImportError:

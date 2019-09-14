@@ -40,6 +40,7 @@ import six
 from sqlalchemy import sql
 
 from ...core.utils import ugettext
+from ...core.item_model.proxy import AbstractModelFilter
 from .base import Action, Mode
 
 class FilterMode(Mode):
@@ -271,21 +272,29 @@ class EditorFilter(Filter):
         return state
 
 
-class SearchFilter(Filter):
+class SearchFilter(Action, AbstractModelFilter):
+
+    #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
+                               #self)
 
     def __init__(self, admin):
-        super(SearchFilter, self).__init__(None)
+        Action.__init__(self)
+        # dirty : action requires admin as argument
         self.admin = admin
 
     def render(self, gui_context, parent):
         from camelot.view.controls.search import SimpleSearchControl
-        return SimpleSearchControl(parent)
+        return SimpleSearchControl(self, gui_context, parent)
+
+    def get_state(self, model_context):
+        state = Action.get_state(self, model_context)
+        return state
 
     def decorate_query(self, query, text):
         import camelot.types
         from camelot.view import utils
     
-        if len(text.strip()):
+        if (text is not None) and len(text.strip()):
             # arguments for the where clause
             args = []
             # join conditions : list of join entities
@@ -375,3 +384,9 @@ class SearchFilter(Filter):
 
         return query
 
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        value = model_context.mode_name
+        if (value is not None) and len(value) == 0:
+            value = None
+        yield action_steps.SetFilter(self, value)

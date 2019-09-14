@@ -166,7 +166,7 @@ class AuthenticationMechanism( Entity ):
                 return True
         return False
         
-    def __unicode__( self ):
+    def __str__( self ):
         return self.username
     
     class Admin( EntityAdmin ):
@@ -209,18 +209,18 @@ class AuthenticationGroup( Entity ):
                 break
         return super( AuthenticationGroup, self ).__setattr__( name, value )
         
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name or ''
     
     class Admin( EntityAdmin ):
         verbose_name = _('Authentication group')
-        verbose_name_plural = _('Authenication groups')
+        verbose_name_plural = _('Authentication groups')
         list_display = [ 'name' ]
         form_state = 'right'
         
         def get_form_display( self ):
             return forms.TabForm( [(_('Group'), ['name', 'members']),
-                                   (_('Roles'), [role[1] for role in roles])
+                                   (_('Authentication roles'), [role[1] for role in roles])
                                    ])
         
         def get_field_attributes( self, field_name ):

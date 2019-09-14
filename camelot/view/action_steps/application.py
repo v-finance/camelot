@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 
-from ..workspace import DesktopBackground
 from ...admin.action.base import ActionStep
 from ...core.qt import QtCore
 
@@ -83,28 +82,6 @@ class MainWindow( ActionStep ):
         main_window = self.render( gui_context )
         register( main_window, main_window )
         main_window.show()
-
-class ActionView( ActionStep ):
-    """
-    Open a new view which presents the user with a number of actions
-    to trigger.
-    
-    :param title: the tile of the view
-    :param actions: a list of actions
-    """
-
-    def __init__(self, title, actions):
-        self.title = title
-        self.actions = actions
-
-    def render(self, gui_context):
-        view = DesktopBackground(gui_context)
-        return view
-
-    def gui_run(self, gui_context):
-        workspace = gui_context.workspace
-        view = self.render(workspace.gui_context)
-        workspace.set_view(view, title=self.title)
 
 
 class InstallTranslator(ActionStep):

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from .application import ActionView, MainWindow, InstallTranslator, Exit, RemoveTranslators
+from .application import MainWindow, InstallTranslator, Exit, RemoveTranslators
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -37,7 +37,7 @@ from .gui import (
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView,
+    RefreshItemView, SwitchExpandedSearch,
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -50,7 +50,6 @@ from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
 
 __all__ = [
-    ActionView.__name__,
     ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
@@ -86,6 +85,7 @@ __all__ = [
     SelectSubclass.__name__,
     SetFilter.__name__,
     Sort.__name__,
+    SwitchExpandedSearch.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
     ToNextForm.__name__,

@@ -65,9 +65,19 @@ class SetFilter( ActionStep ):
         self.value = value
 
     def gui_run( self, gui_context ):
-        if gui_context.item_view != None:
+        if gui_context.item_view is not None:
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
+
+class SwitchExpandedSearch( ActionStep ):
+
+    def __init__( self, filters):
+        self.filters = filters
+
+    def gui_run( self, gui_context ):
+        if gui_context.item_view is not None:
+            gui_context.item_view.switch_expanded_search(self.filters)
+
 
 class UpdateTableView( ActionStep ):
     """Change the admin and or value of an existing table view
@@ -80,17 +90,18 @@ class UpdateTableView( ActionStep ):
     def __init__( self, admin, value ):
         self.admin = admin
         self.value = value
+        self.search_text = None
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
         self.columns = self.admin.get_columns()
-        app_admin = admin.get_application_admin()
-        self.left_toolbar_actions = app_admin.get_toolbar_actions(Qt.LeftToolBarArea)
-        self.right_toolbar_actions = app_admin.get_toolbar_actions(Qt.RightToolBarArea)
-        self.top_toolbar_actions = app_admin.get_toolbar_actions(Qt.TopToolBarArea)
-        self.bottom_toolbar_actions = app_admin.get_toolbar_actions(Qt.BottomToolBarArea)
+        self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
+        self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
+        self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
+        self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
     
     def update_table_view(self, table_view):
+        from camelot.view.controls.search import SimpleSearchControl
         table_view.set_admin(self.admin)
         model = table_view.get_model()
         list(model.add_columns((fn for fn, _fa in self.columns)))
@@ -112,6 +123,10 @@ class UpdateTableView( ActionStep ):
         table_view.set_toolbar_actions(
             Qt.BottomToolBarArea, self.bottom_toolbar_actions
         )
+        if self.search_text is not None:
+            search_control = table_view.findChild(SimpleSearchControl)
+            search_control.setText(self.search_text)
+            search_control.start_search()
 
     def gui_run(self, gui_context):
         self.update_table_view(gui_context.view)
@@ -137,7 +152,6 @@ class OpenTableView( UpdateTableView ):
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
         self.subclasses = admin.get_subclass_tree()
-        self.search_text = ''
         self.new_tab = False
 
     def render(self, gui_context):
@@ -145,8 +159,6 @@ class OpenTableView( UpdateTableView ):
         table_view = TableView(gui_context, self.admin)
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
-        if self.search_text:
-            table_view.set_search(self.search_text)
         return table_view
         
     def gui_run( self, gui_context ):

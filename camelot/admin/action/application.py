@@ -143,6 +143,3 @@ class Application( Action ):
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
         yield action_steps.MainWindow( self.application_admin )
-        home_actions = self.application_admin.get_actions()
-        yield action_steps.ActionView( _('Home'), home_actions )
-
