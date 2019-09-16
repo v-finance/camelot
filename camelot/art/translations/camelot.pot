@@ -1222,15 +1222,13 @@ msgstr ""
 msgid "Forever"
 msgstr ""
 
-#: camelot/view/controls/delegates/monthsdelegate.py:65
-#, python-format
-msgid "%i years "
-msgstr ""
+msgid "%n months"
+msgstr[0] ""
+msgstr[1] ""
 
-#: camelot/view/controls/delegates/monthsdelegate.py:67
-#, python-format
-msgid "%i months"
-msgstr ""
+msgid "%n years"
+msgstr[0] ""
+msgstr[1] ""
 
 #: camelot/view/controls/editors/charteditor.py:94
 msgid "Copy to clipboard"
