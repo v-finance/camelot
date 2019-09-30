@@ -37,7 +37,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
-from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py

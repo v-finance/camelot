@@ -85,6 +85,7 @@ __all__ = [
     SelectSubclass.__name__,
     SetFilter.__name__,
     Sort.__name__,
+    SwitchExpandedSearch.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
     ToNextForm.__name__,

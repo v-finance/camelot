@@ -320,7 +320,9 @@ class FormView(AbstractView):
 
     def close_view( self, accept ):
         self.accept_close_event = accept
-        if (accept == True) and not is_deleted(self):
+        if is_deleted(self):
+            return
+        if (accept == True):
             # clear mapping to prevent data being written again to the model,
             # when the underlying object would be reverted
             form = self.findChild( QtWidgets.QWidget, 'form' )

@@ -78,7 +78,7 @@ class BatchJobType( Entity ):
     parent = ManyToOne( 'BatchJobType' )
     
     def __str__(self):
-        return self.name
+        return self.name or ''
     
     @classmethod
     def get_or_create( cls, name ):
@@ -109,6 +109,11 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
     status  = type_and_status.Status( batch_job_statusses )
     message = orm.deferred(schema.Column(camelot.types.RichText()))
+
+    def __str__(self):
+        if self.type is not None:
+            return str(self.type)
+        return ''
 
     @classmethod
     def create( cls, batch_job_type = None, status = 'running' ):
