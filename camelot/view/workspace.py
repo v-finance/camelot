@@ -69,7 +69,6 @@ class DesktopWorkspace(QtWidgets.QWidget):
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = app_admin
         self.gui_context.workspace = self
-        self._app_admin = app_admin
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

@@ -193,7 +193,3 @@ class NavigationPane(QtWidgets.QDockWidget):
         toolbox.setCurrentIndex(0)
         # WARNING: hardcoded width
         #self._toolbox.setMinimumWidth(220)
-
-
-
-
