@@ -88,16 +88,20 @@ class NavigationPanel(ActionStep):
         objects, with the sections of the navigation panel
 
     """
-    
+     
     def __init__( self, sections ):
-        self.sections = sections
+        self.sections = [{
+            'verbose_name': str(section.get_verbose_name()),
+            'icon': section.get_icon().getQIcon(),
+            'items': section.get_items()
+        } for section in sections]
 
     def render( self, gui_context ):
         """create the navigation panel.
         this method is used to unit test the action step."""
         from ..controls.section_widget import NavigationPane
         navigation_panel = NavigationPane(
-            gui_context.workspace,
+            gui_context,
             gui_context.workspace
         )
         navigation_panel.set_sections(self.sections)
