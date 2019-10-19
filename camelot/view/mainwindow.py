@@ -30,10 +30,9 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from ..core.qt import Qt, QtWidgets, QtCore, py_to_variant, variant_to_py
+from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view.controls.section_widget import NavigationPane
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main window of a Desktop Camelot application
@@ -105,14 +104,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if active_view:
             return active_view.gui_context
         return self.gui_context
-
-    @QtCore.qt_slot( object )
-    def set_hidden_actions( self, hidden_actions ):
-        from camelot.view.controls.action_widget import ActionAction
-        for action in hidden_actions:
-            action_action = ActionAction( action, self.gui_context, self )
-            action_action.triggered.connect( self.action_triggered )
-            self.addAction( action_action )
         
     @QtCore.qt_slot()
     def view_activated( self ):

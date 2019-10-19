@@ -116,8 +116,6 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
-    hidden_actions = [ application_action.DumpState(),
-                       application_action.RuntimeInfo() ]
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -236,14 +234,6 @@ shortcut confusion and reduce the number of status updates.
             that should be displayed on the desktop of the user.
         """
         return []
-
-    def get_hidden_actions( self ):
-        """
-        :return: a list of :class:`camelot.admin.action.base.Action` objects
-            that can only be triggered using shortcuts and are not visibile in
-            the UI.
-        """
-        return self.hidden_actions
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every

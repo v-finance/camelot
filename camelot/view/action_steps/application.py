@@ -60,7 +60,6 @@ class MainWindow( ActionStep ):
         self.admin = admin
         self.window_title = admin.get_name()
         self.main_menu = admin.get_main_menu()
-        self.hidden_actions = admin.get_hidden_actions()
 
     def render( self, gui_context ):
         """create the main window. this method is used to unit test
