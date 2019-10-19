@@ -17,6 +17,7 @@ from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, py_to_variant, variant
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
 from camelot import test
+from camelot.view import action_steps
 from camelot.view.art import ColorScheme
 from camelot.view.controls.tableview import TableView, TableWidget
 from camelot.view.controls import delegates
@@ -883,8 +884,8 @@ class ControlsTest(ExampleModelCase):
     def test_section_widget(self):
         from camelot.view.controls import section_widget
         self.wait_for_animation()
-        widget = section_widget.NavigationPane(workspace=None, parent=None)
-        widget.set_sections(self.app_admin.get_sections())
+        action_step = action_steps.NavigationPanel(self.app_admin.get_sections())
+        widget = action_step.render(self.gui_context)
         self.grab_widget(widget)
 
     def test_main_window(self):
