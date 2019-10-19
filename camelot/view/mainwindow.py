@@ -48,8 +48,6 @@ class MainWindow(QtWidgets.QMainWindow):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtWidgets.QMainWindow.__init__(self, parent)
-
-        self.nav_pane = None
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
@@ -127,23 +125,6 @@ class MainWindow(QtWidgets.QMainWindow):
         action_action = self.sender()
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
-        
-    @QtCore.qt_slot( object )
-    def set_sections( self, sections ):
-        """Set the sections of the navigation pane
-        :param main_menu: a list of :class:`camelot.admin.section.Section` objects,
-            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_sections`
-            method.
-        """
-        if sections != None:
-            self.navpane = NavigationPane(
-                workspace=self.workspace,
-                parent=self
-            )
-            self.addDockWidget( Qt.LeftDockWidgetArea, self.navpane )
-            self.navpane.set_sections(sections)
-        else:
-            self.navpane = None
 
     def closeEvent( self, event ):
         from camelot.view.model_thread import get_model_thread

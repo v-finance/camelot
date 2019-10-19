@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from ...admin.action.base import ActionStep
-from ...core.qt import QtCore
+from ...core.qt import QtCore, Qt
 
 class Exit( ActionStep ):
     """
@@ -59,7 +59,6 @@ class MainWindow( ActionStep ):
                   admin ):
         self.admin = admin
         self.window_title = admin.get_name()
-        self.sections = admin.get_sections()
         self.main_menu = admin.get_main_menu()
         self.hidden_actions = admin.get_hidden_actions()
 
@@ -73,7 +72,6 @@ class MainWindow( ActionStep ):
         main_window = MainWindow( gui_context=main_window_context )
         gui_context.workspace = main_window_context.workspace
         main_window.setWindowTitle( self.window_title )
-        main_window.set_sections(self.sections)
         main_window.set_main_menu(self.main_menu)
         return main_window
         
@@ -83,6 +81,34 @@ class MainWindow( ActionStep ):
         register( main_window, main_window )
         main_window.show()
 
+class NavigationPanel(ActionStep):
+    """
+    Create a panel to navigate the application
+    
+    :param sections: a list of :class:`camelot.admin.section.Section'
+        objects, with the sections of the navigation panel
+
+    """
+    
+    def __init__( self, sections ):
+        self.sections = sections
+
+    def render( self, gui_context ):
+        """create the navigation panel.
+        this method is used to unit test the action step."""
+        from ..controls.section_widget import NavigationPane
+        navigation_panel = NavigationPane(
+            gui_context.workspace,
+            gui_context.workspace
+        )
+        navigation_panel.set_sections(self.sections)
+        return navigation_panel
+    
+    def gui_run( self, gui_context ):
+        navigation_panel = self.render(gui_context)
+        gui_context.workspace.parent().addDockWidget(
+            Qt.LeftDockWidgetArea, navigation_panel
+        )
 
 class InstallTranslator(ActionStep):
     """
