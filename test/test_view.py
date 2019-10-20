@@ -9,37 +9,53 @@ import sys
 import time
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
-from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.admin.action.list_filter import SearchFilter
 
+from camelot.admin.action import GuiContext
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.core.constants import camelot_minfloat, camelot_maxfloat
 from camelot.core.item_model import PreviewRole
-from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, py_to_variant, variant_to_py, q_string
+from camelot.core.orm import entities
+from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_string
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
 from camelot import test
 from camelot.view import action_steps
+from camelot.view.action_steps import OpenFormView
 from camelot.view.art import ColorScheme
 from camelot.view.controls.tableview import TableView, TableWidget
 from camelot.view.controls import delegates
+from camelot.view.controls.formview import FormEditors
 from camelot.view.controls import editors
+from camelot.view.controls.editors.datetimeeditor import TimeValidator
+from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.mainwindow import MainWindow
+from camelot.view import forms
+from camelot.view.proxy import ValueLoading
+from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.controls.delegates import DelegateManager
+from camelot.model.party import Person
+
+from .import app_admin
+
+from .test_proxy import A
+from .test_model import ExampleModelCase
+
+from .snippet.background_color import Admin as BackgroundColorAdmin
+from .snippet.fields_with_actions import Coordinate
+from .snippet.form.custom_layout import Admin as CustomLayoutAdmin
+from .snippet.form.inherited_form import InheritedAdmin
+
+from camelot_example.model import Movie
+from camelot_example.application_admin import MyApplicationAdmin
+
 
 logger = logging.getLogger('view.unittests')
 
 static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
 storage = Storage()
 
-from .test_proxy import A
-from .test_model import ExampleModelCase
-from .import app_admin
-
 admin = app_admin.get_related_admin(A)
-
-def create_getter(getable):
-
-    def getter():
-        return getable
-
-    return getter
 
 class SignalCounter( QtCore.QObject ):
 
@@ -62,9 +78,6 @@ class EditorsTest(test.ModelThreadTestCase):
 
     images_path = static_images_path
 
-    from camelot.view.controls import editors
-    from camelot.view.proxy import ValueLoading
-
     def setUp(self):
         super(EditorsTest, self).setUp()
         self.option = QtWidgets.QStyleOptionViewItem()
@@ -80,8 +93,8 @@ class EditorsTest(test.ModelThreadTestCase):
         #
         # The editor should remember its when its value is ValueLoading
         #
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         #
         # When a value is set, no editingFinished should be called
         #
@@ -105,9 +118,9 @@ class EditorsTest(test.ModelThreadTestCase):
                           QtWidgets.QSizePolicy.Fixed )
 
     def test_DateEditor(self):
-        editor = self.editors.DateEditor()
+        editor = editors.DateEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         editor.set_value( datetime.date(1980, 12, 31) )
@@ -116,17 +129,17 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assert_valid_editor( editor, datetime.date(1980, 12, 31) )
 
     def test_TextLineEditor(self):
-        editor = self.editors.TextLineEditor(parent=None, length=10)
+        editor = editors.TextLineEditor(parent=None, length=10)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), u'za coś tam' )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor = self.editors.TextLineEditor(parent=None, length=10)
+        editor.set_value( ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
+        editor = editors.TextLineEditor(parent=None, length=10)
         editor.set_field_attributes( editable=False )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
@@ -159,27 +172,27 @@ class EditorsTest(test.ModelThreadTestCase):
         self.grab_widget( editor, 'editable_tooltip')
 
     def test_LocalFileEditor( self ):
-        editor = self.editors.LocalFileEditor( parent=None )
+        editor = editors.LocalFileEditor( parent=None )
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( '/home/lancelot/quests.txt' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
         self.assert_valid_editor( editor, '/home/lancelot/quests.txt' )
 
     def test_BoolEditor(self):
-        editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
+        editor = editors.BoolEditor(parent=None, editable=False, nullable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( True )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor = self.editors.BoolEditor(parent=None, editable=False)
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
+        editor = editors.BoolEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( True )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
@@ -193,20 +206,20 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assert_valid_editor( editor, True )
 
     def test_ColorEditor(self):
-        editor = self.editors.ColorEditor(parent=None, editable=True)
+        editor = editors.ColorEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( (255, 200, 255, 255) )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
         self.assert_valid_editor( editor, (255, 200, 255, 255) )
 
     def test_ChoicesEditor(self):
-        editor = self.editors.ChoicesEditor(parent=None, editable=True)
+        editor = editors.ChoicesEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
         editor.set_choices( choices1 )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 2 )
         # None equals space for qml compatibility
         self.assertEqual(editor.get_choices(), choices1 + [(None,' ')] )
@@ -234,21 +247,20 @@ class EditorsTest(test.ModelThreadTestCase):
         editor.set_value(4)
         self.assertEqual(number_of_choices-1, len(editor.get_choices()))
         # try strings as keys
-        editor = self.editors.ChoicesEditor(parent=None, editable=True)
+        editor = editors.ChoicesEditor(parent=None, editable=True)
         editor.set_choices( [('a',u'A'), ('b',u'B'), ('c',u'C')] )
         editor.set_value( 'c' )
         self.assertEqual( editor.get_value(), 'c' )
         self.assert_valid_editor( editor, 'c' )
 
     def test_FileEditor(self):
-        editor = self.editors.FileEditor(parent=None, editable=True)
+        editor = editors.FileEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
 
     def test_DateTimeEditor(self):
-        from camelot.view.controls.editors.datetimeeditor import TimeValidator
         validator = TimeValidator()
         self.assertEqual(validator._validate('22', 0), (QtGui.QValidator.Intermediate, '22', 0))
         self.assertEqual(validator._validate('59', 0), (QtGui.QValidator.Intermediate, '59', 0))
@@ -260,9 +272,9 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual(validator._validate('22:7:', 0), (QtGui.QValidator.Invalid, '22:7:', 0))
         self.assertEqual(validator._validate('61', 0), (QtGui.QValidator.Invalid, '61', 0))
         self.assertEqual(validator._validate('611', 0), (QtGui.QValidator.Invalid, '611', 0))
-        editor = self.editors.DateTimeEditor(parent=None, editable=True)
+        editor = editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
         self.grab_default_states( editor )
@@ -271,19 +283,18 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
-        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-        editor = self.editors.FloatEditor(parent=None)
+        editor = editors.FloatEditor(parent=None)
         editor.set_field_attributes(prefix='prefix', editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor = self.editors.FloatEditor(parent=None, option=self.option)
+        editor = editors.FloatEditor(parent=None, option=self.option)
         editor.set_field_attributes(suffix=' suffix', editable=True)
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -298,7 +309,7 @@ class EditorsTest(test.ModelThreadTestCase):
         spinbox.keyPressEvent(up)
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor = self.editors.FloatEditor(parent=None)
+        editor = editors.FloatEditor(parent=None)
         editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
@@ -306,7 +317,7 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
         self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
-        editor = self.editors.FloatEditor(parent=None,
+        editor = editors.FloatEditor(parent=None,
                                           calculator=False)
         editor.set_field_attributes( editable=True )
         editor.set_value( 3.14 )
@@ -315,9 +326,9 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assert_valid_editor( editor, 3.14 )
 
     def test_IntegerEditor(self):
-        editor = self.editors.IntegerEditor(parent=None, editable=True)
+        editor = editors.IntegerEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0 )
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( 3 )
@@ -331,7 +342,7 @@ class EditorsTest(test.ModelThreadTestCase):
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # turn off the calculator
-        editor = self.editors.IntegerEditor(parent=None,
+        editor = editors.IntegerEditor(parent=None,
                                             calculator=False)
         editor.set_field_attributes( editable=True )
         editor.set_value( 3 )
@@ -340,78 +351,75 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assert_valid_editor( editor, 3 )
 
     def test_NoteEditor(self):
-        editor = self.editors.NoteEditor(parent=None)
+        editor = editors.NoteEditor(parent=None)
         editor.set_value('A person with this name already exists')
         self.grab_widget( editor )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, 'A person with this name already exists' )
 
     def test_LabelEditor(self):
-        editor = self.editors.LabelEditor(parent=None)
+        editor = editors.LabelEditor(parent=None)
         editor.set_value('Dynamic label')
         self.grab_default_states( editor )
 
     def test_LanguageEditor(self):
-        editor = self.editors.LanguageEditor(parent=None)
+        editor = editors.LanguageEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 'en_US' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'en_US' )
         self.assert_valid_editor( editor, 'en_US' )
 
     def test_Many2OneEditor(self):
-        editor = self.editors.Many2OneEditor(parent=None)
+        editor = editors.Many2OneEditor(parent=None)
         self.assert_vertical_size( editor )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, lambda:object )
 
     def test_RichTextEditor(self):
-        editor = self.editors.RichTextEditor(parent=None)
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = editors.RichTextEditor(parent=None)
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'<h1>Rich Text Editor</h1>' )
         self.grab_default_states( editor )
         self.assertTrue( u'Rich Text Editor' in editor.get_value() )
         self.assert_valid_editor( editor, u'<h1>Rich Text Editor</h1>' )
 
     def test_TimeEditor(self):
-
-        import datetime
-        editor = self.editors.TimeEditor(parent=None, editable=True)
+        editor = editors.TimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( datetime.time(21, 5, 0) )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
         self.assert_valid_editor( editor, datetime.time(21, 5, 0) )
 
     def test_TextEditEditor(self):
-        editor = self.editors.TextEditEditor(parent=None, editable=True)
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = editors.TextEditEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 'Plain text' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
         self.assert_valid_editor( editor, 'Plain text' )
 
     def test_VirtualAddressEditor(self):
-        editor = self.editors.VirtualAddressEditor(parent=None)
+        editor = editors.VirtualAddressEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( ('im','test') )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(),  ('im','test') )
         self.assert_valid_editor( editor, ('im','test') )
 
     def test_MonthsEditor(self):
-        editor = self.editors.MonthsEditor(parent=None)
+        editor = editors.MonthsEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual(editor.get_value(), self.ValueLoading)
+        self.assertEqual(editor.get_value(), ValueLoading)
         editor.set_value(12)
         self.grab_default_states( editor )
         self.assertEqual(editor.get_value(),  12)
         self.assert_valid_editor( editor, 12 )
 
-from camelot.view import forms
 
 class FormTest(test.ModelThreadTestCase):
 
@@ -419,15 +427,7 @@ class FormTest(test.ModelThreadTestCase):
 
     def setUp(self):
         test.ModelThreadTestCase.setUp(self)
-        from camelot.view.controls.formview import FormEditors
-        from camelot.core.orm import entities
         self.entities = [e for e in entities]
-        from camelot.admin.action import GuiContext
-        from camelot.admin.application_admin import ApplicationAdmin
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.view.controls.delegates import DelegateManager
-        from camelot.model.party import Person
-        from camelot_example.model import Movie
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
 
@@ -452,13 +452,11 @@ class FormTest(test.ModelThreadTestCase):
         #
         # The global list of entities should remain clean for subsequent tests
         #
-        from camelot.core.orm import entities
         for e in entities:
             if e not in self.entities:
                 entities.remove(e)
 
     def test_form(self):
-        from .snippet.form.simple_form import Movie
         self.grab_widget(Movie.Admin.form_display.render(self.widgets))
         form = forms.Form( ['title', 'short_description',
                             'director', 'releasedate'] )
@@ -506,23 +504,17 @@ class FormTest(test.ModelThreadTestCase):
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
-        from camelot.view.action_steps import OpenFormView
-        from .snippet.form.custom_layout import Admin
-        person_admin = Admin(self.app_admin, self.person_entity)
+        person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
-        from camelot.view.action_steps import OpenFormView
-        from .snippet.form.inherited_form import InheritedAdmin
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
-        from camelot.view.action_steps import OpenFormView
-        from .snippet.form.custom_layout import Admin
-        person_admin = Admin(self.app_admin, self.person_entity)
+        person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
@@ -784,7 +776,6 @@ class ControlsTest(ExampleModelCase):
 
     def setUp(self):
         super(ControlsTest, self).setUp()
-        from camelot_example.application_admin import MyApplicationAdmin
         self.app_admin = MyApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
@@ -796,9 +787,6 @@ class ControlsTest(ExampleModelCase):
             self.app.processEvents()
 
     def test_table_view(self):
-        from camelot.view.controls.tableview import TableView
-        from camelot.model.party import Person
-        from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
         widget = TableView( gui_context,
                             self.app_admin.get_entity_admin(Person) )
@@ -811,7 +799,7 @@ class ControlsTest(ExampleModelCase):
         
         table = TableView(self.gui_context, city_admin)
         table.set_admin(city_admin)
-        widget = RowsWidget(table.gui_context)
+        RowsWidget(table.gui_context)
         
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
@@ -829,7 +817,7 @@ class ControlsTest(ExampleModelCase):
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
         self.grab_widget( widget )
         model.timeout_slot()
-        header = widget.table.horizontalHeader()
+        widget.table.horizontalHeader()
 
         first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
         suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
@@ -857,7 +845,7 @@ class ControlsTest(ExampleModelCase):
         self.grab_widget( widget )
         model = widget.get_model()
         model.timeout_slot()
-        header = widget.table.horizontalHeader()
+        widget.table.horizontalHeader()
 
         first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
         suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
@@ -882,14 +870,12 @@ class ControlsTest(ExampleModelCase):
         self.grab_widget( widget )
 
     def test_section_widget(self):
-        from camelot.view.controls import section_widget
         self.wait_for_animation()
         action_step = action_steps.NavigationPanel(self.app_admin.get_sections())
         widget = action_step.render(self.gui_context)
         self.grab_widget(widget)
 
     def test_main_window(self):
-        from camelot.view.mainwindow import MainWindow
         widget = MainWindow( self.gui_context )
         self.wait_for_animation()
         self.grab_widget(widget)
@@ -1002,14 +988,10 @@ class SnippetsTest(test.ModelThreadTestCase):
 
     def setUp( self ):
         super( SnippetsTest, self ).setUp()
-        from camelot.admin.action.base import GuiContext
-        from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
         self.gui_context = GuiContext()
 
     def test_fields_with_actions(self):
-        from .snippet.fields_with_actions import Coordinate
-        from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView([coordinate], admin)
@@ -1017,8 +999,6 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
-        from .snippet.fields_with_tooltips import Coordinate
-        from camelot.view.action_steps import OpenFormView
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView([coordinate], admin)
@@ -1026,10 +1006,7 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_background_color(self):
-        from camelot.model.party import Person
-        from .snippet.background_color import Admin
-        person_admin = Admin( self.app_admin, Person )
-        from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+        person_admin = BackgroundColorAdmin( self.app_admin, Person )
         editor = One2ManyEditor(admin=person_admin)
         proxy = person_admin.get_proxy([
             Person(first_name='John', last_name='Cleese'),
