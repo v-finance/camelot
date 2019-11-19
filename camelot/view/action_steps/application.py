@@ -55,11 +55,9 @@ class MainWindow( ActionStep ):
 
     """
     
-    def __init__( self,
-                  admin ):
+    def __init__(self, admin):
         self.admin = admin
         self.window_title = admin.get_name()
-        self.main_menu = admin.get_main_menu()
 
     def render( self, gui_context ):
         """create the main window. this method is used to unit test
@@ -71,7 +69,6 @@ class MainWindow( ActionStep ):
         main_window = MainWindow( gui_context=main_window_context )
         gui_context.workspace = main_window_context.workspace
         main_window.setWindowTitle( self.window_title )
-        main_window.set_main_menu(self.main_menu)
         return main_window
         
     def gui_run( self, gui_context ):
@@ -112,6 +109,21 @@ class NavigationPanel(ActionStep):
         gui_context.workspace.parent().addDockWidget(
             Qt.LeftDockWidgetArea, navigation_panel
         )
+
+class MainMenu(ActionStep):
+    """
+    Create a main menu for the application window.
+    
+    :param menu: a list of :class:`camelot.admin.menu.Menu' objects
+
+    """
+     
+    def __init__( self, menu ):
+        self.menu = menu
+
+    def gui_run( self, gui_context ):
+        gui_context.workspace.parent().set_main_menu(self.menu)
+
 
 class InstallTranslator(ActionStep):
     """

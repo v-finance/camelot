@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 import logging
-import sys
 
 from ...core.qt import QtCore
 from ...core.utils import ugettext as _
@@ -60,28 +59,11 @@ class Application( Action ):
         """The main entry point of the application, method will show the splash,
         start the event loop, start the model thread and pass control asap to 
         the model thread"""
-        from ...view.controls.progress_dialog import SplashProgress
         try:
             self.gui_context = gui_context
-            #
-            # before anything else happens or is imported, the splash screen should be there
-            #
-            pixmap = self.application_admin.get_splashscreen()
-            progress_dialog = None
-            if pixmap is not None:
-                progress_dialog = SplashProgress(pixmap)
-                self.gui_context.progress_dialog = progress_dialog
-                gui_context.progress_dialog.show()
-                if sys.platform == 'darwin':
-                    # Running on Mac OS X, focus application on launch
-                    gui_context.progress_dialog.raise_()
-                gui_context.progress_dialog.setLabelText( _('Initialize application') )
             self.set_application_attributes()
             self.gui_context.admin = self.application_admin
             super(Application, self).gui_run(gui_context)
-            # only close the progress dialog if it was created in this method
-            if progress_dialog is not None:
-                progress_dialog.close()
         except Exception as e:
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
@@ -135,6 +117,7 @@ class Application( Action ):
         from ...core.conf import settings
         from ...core.utils import load_translations
         from ...view import action_steps
+        yield action_steps.MainWindow(self.application_admin)
         yield action_steps.UpdateProgress( 1, 5, _('Setup database') )
         settings.setup_model()
         yield action_steps.UpdateProgress( 2, 5, _('Load translations') )
@@ -142,7 +125,7 @@ class Application( Action ):
         yield action_steps.UpdateProgress( 3, 5, _('Install translator') )
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
-        yield action_steps.MainWindow( self.application_admin )
         yield action_steps.NavigationPanel(
             self.application_admin.get_sections()
         )
+        yield action_steps.MainMenu(self.application_admin.get_main_menu())

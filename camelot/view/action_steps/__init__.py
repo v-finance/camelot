@@ -28,7 +28,8 @@
 #  ============================================================================
 
 from .application import (
-    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel
+    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
+    MainMenu,
 )
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
@@ -63,6 +64,7 @@ __all__ = [
     Exit.__name__,
     FlushSession.__name__,
     InstallTranslator.__name__,
+    MainMenu,
     MainWindow.__name__,
     MessageBox.__name__,
     NavigationPanel.__name__,
