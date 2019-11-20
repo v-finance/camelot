@@ -95,6 +95,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         view = self._tab_widget.widget(index)
         if view is not None:
+            view.validate_close()
             # it's not enough to simply remove the tab, because this
             # would keep the underlying view widget alive
             view.deleteLater()
