@@ -857,14 +857,6 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
 
-    def test_dump_state( self ):
-        dump_state = application_action.DumpState()
-        list( dump_state.model_run( self.context ) )
-
-    def test_runtime_info( self ):
-        runtime_info = application_action.RuntimeInfo()
-        list( runtime_info.model_run( self.context ) )
-
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
         list( segmentation_fault.model_run( self.context ) )

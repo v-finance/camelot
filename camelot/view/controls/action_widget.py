@@ -211,6 +211,8 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         else:
             self.setToolTip( '' )
         self.set_menu( state )
+        if state.modes:
+            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
     @QtCore.qt_slot()
     def action_triggered(self):

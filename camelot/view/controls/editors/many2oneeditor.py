@@ -52,7 +52,7 @@ class Many2OneEditor( CustomEditor ):
 
     class CompletionsModel(QtCore.QAbstractListModel):
 
-        def __init__(self, parent=None):
+        def __init__(self, parent):
             QtCore.QAbstractListModel.__init__(self, parent)
             self._completions = []
 
@@ -93,9 +93,9 @@ class Many2OneEditor( CustomEditor ):
         self.obj = None
         self._last_highlighted_entity_getter = None
 
-        self.layout = QtWidgets.QHBoxLayout()
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins( 0, 0, 0, 0)
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
 
         # Search input
         self.search_input = DecoratedLineEdit(self)
@@ -109,8 +109,8 @@ class Many2OneEditor( CustomEditor ):
 
         # Search Completer
         self.completer = QtWidgets.QCompleter()
-        self.completions_model = self.CompletionsModel(self.completer)
-        self.completer.setModel(self.completions_model)
+        completions_model = self.CompletionsModel(self.completer)
+        self.completer.setModel(completions_model)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setCompletionMode(
             QtWidgets.QCompleter.UnfilteredPopupCompletion
@@ -120,9 +120,9 @@ class Many2OneEditor( CustomEditor ):
         self.search_input.setCompleter(self.completer)
 
         # Setup layout
-        self.layout.addWidget(self.search_input)
-        self.setLayout(self.layout)
-        self.add_actions(actions, self.layout)
+        layout.addWidget(self.search_input)
+        self.setLayout(layout)
+        self.add_actions(actions, layout)
         self.search_filter = SearchFilter(admin)
         CrudSignalHandler().connect_signals(self)
 
@@ -167,7 +167,7 @@ class Many2OneEditor( CustomEditor ):
     def display_search_completions(self, prefix_and_completions):
         assert object_thread( self )
         prefix, completions = prefix_and_completions
-        self.completions_model.setCompletions(completions)
+        self.completer.model().setCompletions(completions)
         self.completer.setCompletionPrefix(prefix)
         self.completer.complete()
 
@@ -208,9 +208,9 @@ class Many2OneEditor( CustomEditor ):
             # overwrite the current entity set)
             if self._last_highlighted_entity_getter:
                 self.set_object(self._last_highlighted_entity_getter)
-            elif self.completions_model.rowCount()==1:
+            elif self.completer.model().rowCount()==1:
                 # There is only one possible option
-                index = self.completions_model.index(0,0)
+                index = self.completer.model().index(0,0)
                 entity_getter = variant_to_py(index.data(Qt.EditRole))
                 self.set_object(entity_getter)
         self.search_input.setText(self._entity_representation or u'')

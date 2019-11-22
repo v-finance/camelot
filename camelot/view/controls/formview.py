@@ -44,22 +44,28 @@ from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view import register
 from .delegates.delegatemanager import DelegateManager
 
-class FormEditors( object ):
-    """A class that holds the editors used on a form
-    """
+class FormEditors(QtCore.QObject):
 
     option = None
     bold_font = None
 
-    def __init__( self, columns, widget_mapper, admin ):
-        if self.option == None:
+    def __init__(self, parent, columns, admin):
+        """
+        A class that holds the editors used on a form
+
+        :parent: should be a QObject which has a widget mapper as its child
+
+        """
+        QtCore.QObject.__init__(self, parent)
+        assert isinstance(parent, QtCore.QObject)
+        assert parent.findChild(QtWidgets.QDataWidgetMapper)
+        if self.option is None:
             self.option = QtWidgets.QStyleOptionViewItem()
             # set version to 5 to indicate the widget will appear on a
             # a form view and not on a table view
             self.option.version = 5
 
         self._admin = admin
-        self._widget_mapper = widget_mapper
         self._field_attributes = dict()
         self._index = dict()
         for i, (field_name, field_attributes ) in enumerate( columns):
@@ -71,9 +77,10 @@ class FormEditors( object ):
         :return: a :class:`QtWidgets.QWidget` or `None` if field_name is unknown
         """
         index = self._index[field_name]
-        model = self._widget_mapper.model()
-        delegate = self._widget_mapper.itemDelegate()
-        model_index = model.createIndex(self._widget_mapper.currentIndex(),
+        widget_mapper = self.parent().findChild(QtWidgets.QDataWidgetMapper)
+        model = widget_mapper.model()
+        delegate = widget_mapper.itemDelegate()
+        model_index = model.createIndex(widget_mapper.currentIndex(),
                                         index, 0)
         widget_editor = delegate.createEditor(
             parent,
@@ -84,7 +91,7 @@ class FormEditors( object ):
         stretch = self._field_attributes[field_name].get('stretch', 1)
         widget_editor.setProperty('stretch', py_to_variant(stretch))
         delegate.setEditorData( widget_editor, model_index )
-        self._widget_mapper.addMapping( widget_editor, index )
+        widget_mapper.addMapping( widget_editor, index )
         return widget_editor
 
     def create_label( self, field_name, editor, parent ):
@@ -113,7 +120,6 @@ class FormWidget(QtWidgets.QWidget):
 
     def __init__(self, admin, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self._admin = admin
         widget_mapper = QtWidgets.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
@@ -122,8 +128,6 @@ class FormWidget(QtWidgets.QWidget):
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
         self._index = 0
-        self._form = None
-        self._columns = None
         self.setLayout(widget_layout)
         self.set_model(model)
         self.create_widgets(widget_mapper, columns, form_display, admin)
@@ -194,7 +198,7 @@ class FormWidget(QtWidgets.QWidget):
     def create_widgets(self, widget_mapper, columns, form_display, admin):
         """Create value and label widgets"""
         LOGGER.debug( 'begin creating widgets' )
-        widgets = FormEditors( columns, widget_mapper, admin )
+        widgets = FormEditors(self, columns, admin)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, form_display.render( widgets, self, True) )

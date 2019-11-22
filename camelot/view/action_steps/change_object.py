@@ -81,7 +81,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         model = CollectionProxy(admin)
 
-        layout = QtWidgets.QVBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(admin=admin,
                                  model=model,

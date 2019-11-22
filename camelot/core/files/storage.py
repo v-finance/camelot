@@ -61,7 +61,7 @@ class StoredFile( object ):
         object"""
         return dict( name = self.name )
     
-    def __unicode__( self ):
+    def __str__( self ):
         return self.verbose_name
 
 class Storage( object ):
