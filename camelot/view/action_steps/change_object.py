@@ -83,16 +83,17 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
-        form_widget = FormWidget(admin=admin,
-                                 model=model,
-                                 form_display=form_display,
-                                 columns=columns,
-                                 parent=self)
+        form_widget = FormWidget(
+            admin=admin, model=model, form_display=form_display,
+            columns=columns, parent=self
+        )
+        note_layout = QtWidgets.QVBoxLayout()
         note = editors.NoteEditor( parent=self )
         note.set_value(None)
-        note.setObjectName( 'note' )
-        layout.addWidget( form_widget )
-        layout.addWidget( note )
+        note.setObjectName('note')
+        note_layout.addWidget(form_widget)
+        note_layout.addWidget(note)
+        layout.addLayout(note_layout)
         model.headerDataChanged.connect(self.header_data_changed)
         form_widget.setObjectName( 'form' )
         if hasattr(admin, 'form_size') and admin.form_size:
