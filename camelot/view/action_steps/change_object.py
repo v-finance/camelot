@@ -284,7 +284,11 @@ class ChangeObject( ActionStep ):
 
     def model_run(self, model_context):
         cls = self.obj.__class__
-        self.admin = self.admin or model_context.admin.get_related_admin( cls )
+        if self.admin is None:
+            # the model_context admin might be deep-readonly, which is not
+            # what we want in the case of a ChangeObject, therefor revert
+            app_admin = model_context.admin.get_application_admin()
+            self.admin = app_admin.get_related_admin(cls)
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)

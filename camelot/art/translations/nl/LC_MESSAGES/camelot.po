@@ -1227,11 +1227,13 @@ msgstr "Vertaling"
 msgid "Forever"
 msgstr "Voor altijd"
 
-msgid "%n months"
+msgid "%n month"
+msgid_plural "%n months"
 msgstr[0] "%n maand"
 msgstr[1] "%n maanden"
 
-msgid "%n years"
+msgid "%n year"
+msgid_plural "%n years"
 msgstr[0] "%n jaar"
 msgstr[1] "%n jaren"
 
