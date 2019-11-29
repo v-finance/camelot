@@ -384,6 +384,12 @@ class SearchFilter(Action, AbstractModelFilter):
 
         return query
 
+    def gui_run(self, gui_context):
+        # overload the action gui run to avoid a progress dialog
+        # popping up while searching
+        gui_context.progress_dialog = False
+        super(SearchFilter, self).gui_run(gui_context)
+
     def model_run(self, model_context):
         from camelot.view import action_steps
         value = model_context.mode_name
