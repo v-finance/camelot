@@ -49,7 +49,7 @@ class OpenFile( ActionStep ):
     def __init__( self, path ):
         self.path = path
 
-    def __unicode__( self ):
+    def __str__( self ):
         return u'Open file {}'.format( self.path )
     
     def get_path( self ):

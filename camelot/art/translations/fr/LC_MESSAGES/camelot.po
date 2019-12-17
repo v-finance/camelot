@@ -1275,11 +1275,13 @@ msgstr "Traduction"
 msgid "Forever"
 msgstr "Toujours"
 
-msgid "%n months"
+msgid "%n month"
+msgid_plural "%n months"
 msgstr[0] "%n mois"
 msgstr[1] "%n mois"
 
-msgid "%n years"
+msgid "%n year"
+msgid_plural "%n years"
 msgstr[0] "%n an"
 msgstr[1] "%n années"
 

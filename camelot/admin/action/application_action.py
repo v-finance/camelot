@@ -454,7 +454,7 @@ class Profiler( Action ):
                 )
                 stats.print_stats()
                 stream.seek(0)
-                yield action_steps.OpenStream(stream)
+                yield action_steps.OpenString(stream.getvalue().encode('utf-8'))
                 filename = action_steps.OpenFile.create_temporary_file(
                     '{0}.prof'.format(label)
                 )
@@ -577,80 +577,7 @@ class ChangeLogging( Action ):
                          self.connection_checkout)
             event.listen(Pool, 'checkin',
                          self.connection_checkin)
-            
-class DumpState( Action ):
-    """Dump the state of the application to the output, this method is
-    triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
-    
-    verbose_name = _('Dump state')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D )
-    
-    def model_run( self, model_context ):
-        import collections
-        import gc
-        from camelot.core.orm import Session
-        from camelot.view import action_steps
-        from camelot.view.register import dump_register
-        from camelot.view.proxy.collection_proxy import CollectionProxy
 
-        dump_logger = LOGGER.getChild('dump_state')
-        session = Session()
-        type_counter = collections.defaultdict(int)
-
-        yield action_steps.UpdateProgress( text = _('Dumping session state') )
-        gc.collect()
-        
-        dump_logger.warn( '======= begin register dump =============' )
-        dump_register( dump_logger )
-        dump_logger.warn( '======= end register dump ===============' )
-
-        for o in session:
-            type_counter[type(o).__name__] += 1
-        dump_logger.warn( '======= begin session dump ==============' )
-        for k,v in six.iteritems(type_counter):
-            dump_logger.warn( '%s : %s'%(k,v) )
-        dump_logger.warn( '======= end session dump ==============' )
-
-        yield action_steps.UpdateProgress( text = _('Dumping item model state') )
-        dump_logger.warn( '======= begin item model dump =========' )
-        for o in gc.get_objects():
-            if isinstance(o, CollectionProxy):
-                dump_logger.warn( '%s is used by :'%(six.text_type( o )) )
-                for r in gc.get_referrers(o):
-                    dump_logger.warn( ' ' + type(r).__name__ )
-                    for rr in gc.get_referrers(r):
-                        dump_logger.warn( '  ' + type(rr).__name__ )
-        dump_logger.warn( '======= end item model dump ===========' )
-
-class RuntimeInfo( Action ):
-    """Pops up a messagebox showing the version of certain
-    libraries used.  This is for debugging purposes., this action is
-    triggered by pressing :kbd:`Ctrl-Alt-I` in the GUI"""
-    
-    verbose_name = _('Show runtime info')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_I )
-    
-    def model_run( self, model_context ):
-        from camelot.view import action_steps
-        import sys
-        import sqlalchemy
-        import chardet
-        import jinja2
-                
-        html = """<em>Python:</em> <b>%s</b><br>
-                  <em>Qt:</em> <b>%s</b><br>
-                  <em>PyQt:</em> <b>%s</b><br>
-                  <em>SQLAlchemy:</em> <b>%s</b><br>
-                  <em>Chardet:</em> <b>%s</b><br>
-                  <em>Jinja:</em> <b>%s</b><br>
-                  <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
-                                              float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
-                                              QtCore.PYQT_VERSION_STR,
-                                              sqlalchemy.__version__,
-                                              chardet.__version__,
-                                              jinja2.__version__,
-                                              six.text_type(sys.path))        
-        yield action_steps.PrintHtml( html )
         
 class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test

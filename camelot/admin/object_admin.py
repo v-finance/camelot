@@ -37,6 +37,7 @@ from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
+from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -628,6 +629,14 @@ be specified using the verbose_name attribute.
             self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
+            #
+            # If there is an `admin` field attribute, instantiate it
+            #            
+            admin = forced_attributes.get('admin')
+            target = attributes.get('target', None)
+            if target is not None and admin is not None:
+                attributes['admin'] = admin(self, target)
+        
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
                 attributes['delegate'] = delegates.ComboBoxDelegate
@@ -642,25 +651,17 @@ be specified using the verbose_name attribute.
         derived from the given attributes.
         """
         column_width = field_attributes.get('column_width', None)
-        #
-        # If there is an `admin` field attribute, instantiate it
-        #
+        
         target = field_attributes.get('target', None)
         if target is not None:
-            admin = field_attributes.get('admin', None)
-            direction = field_attributes.get('direction', '')
-            if admin is not None:
-                related_admin = admin(self, target)
-            #
-            # In case of a 'target' field attribute, add an appropriate
-            # 'admin' attribute
-            #
-            else:
-                related_admin = self.get_related_admin(target)
+            # If there is a `target` field attribute, verify the `admin` attribute has been instantiated
+            related_admin = field_attributes.get('admin', self.get_related_admin(target))
+            assert isinstance(related_admin, ObjectAdmin) or isinstance(related_admin, ReadOnlyAdminDecorator)
             #
             # for an xtomany field, calculate the sum of the column widths, as
             # an estimate for the width of the table widget
             #
+            direction = field_attributes.get('direction', '')
             if column_width is None and direction.endswith('many') and related_admin:
                 table = related_admin.get_table()
                 fields = table.get_fields(column_group=0)

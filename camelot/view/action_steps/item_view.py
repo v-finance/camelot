@@ -55,6 +55,9 @@ class Sort( ActionStep ):
 
 class SetFilter( ActionStep ):
 
+    blocking = False
+    cancelable = False
+
     def __init__( self, list_filter, value ):
         """Filter the items in the item view
         

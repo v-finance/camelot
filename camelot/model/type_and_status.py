@@ -86,7 +86,7 @@ class TypeMixin(object):
     code = schema.Column(types.Unicode(10), index=True, nullable=False)
     description = schema.Column(types.Unicode( 40 ), index = True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.code or u''
 
 class StatusTypeMixin(TypeMixin):
@@ -122,7 +122,7 @@ class StatusHistory( object ):
                               default=end_of_times)
 
 
-    def __unicode__( self ):
+    def __str__( self ):
         return six.text_type(self.classified_by or u'')
 
     def sort_key(self):

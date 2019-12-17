@@ -78,8 +78,8 @@ class BusyWidget(QtWidgets.QLabel):
         """custom timer event, updating the animation"""
         self.update_pixmap()
         self.highlighted_orb += 1
-        if self.highlighted_orb > self.orbs:
-            self.highlighted_orb = 0
+        if self.highlighted_orb >= self.orbs:
+            self.highlighted_orb = 1
     
     def update_pixmap(self):
         pixmap = working_pixmap.getQPixmap()
