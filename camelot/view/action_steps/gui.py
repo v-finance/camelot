@@ -31,7 +31,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from ...core.qt import QtCore, QtWidgets
+from ...core.qt import QtCore, QtWidgets, is_deleted
 
 import six
 
@@ -58,6 +58,8 @@ class UpdateEditor(ActionStep):
         self.propagate = propagate
 
     def gui_run(self, gui_context):
+        if is_deleted(gui_context.editor):
+            return
         setattr(gui_context.editor, self.attribute, self.value)
         if self.propagate:
             gui_context.editor.editingFinished.emit()

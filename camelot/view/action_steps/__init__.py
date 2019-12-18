@@ -27,7 +27,10 @@
 #
 #  ============================================================================
 
-from .application import MainWindow, InstallTranslator, Exit, RemoveTranslators
+from .application import (
+    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
+    MainMenu,
+)
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -61,8 +64,10 @@ __all__ = [
     Exit.__name__,
     FlushSession.__name__,
     InstallTranslator.__name__,
+    MainMenu,
     MainWindow.__name__,
     MessageBox.__name__,
+    NavigationPanel.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
     OpenJinjaTemplate.__name__,

@@ -69,7 +69,6 @@ class DesktopWorkspace(QtWidgets.QWidget):
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = app_admin
         self.gui_context.workspace = self
-        self._app_admin = app_admin
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -96,6 +95,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         view = self._tab_widget.widget(index)
         if view is not None:
+            view.validate_close()
             # it's not enough to simply remove the tab, because this
             # would keep the underlying view widget alive
             view.deleteLater()
