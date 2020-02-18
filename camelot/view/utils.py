@@ -287,5 +287,7 @@ def resize_widget_to_screen( widget, fraction = 0.75 ):
     desktop = QtWidgets.QApplication.desktop()
     available_geometry = desktop.availableGeometry( widget )
     # use the size of the screen instead to set the dialog size
-    widget.resize( available_geometry.width() * 0.75, 
-                   available_geometry.height() * 0.75 )    
+    widget.resize(
+        available_geometry.width() * fraction, 
+        available_geometry.height() * fraction
+    )    
