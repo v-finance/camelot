@@ -858,7 +858,7 @@ class PartyContactMechanism( Entity ):
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = schema.Column( Unicode(40), index=True, nullable = False )
-    color = schema.Column( camelot.types.Color() )
+    color = schema.Column(Unicode(8))
 # end category definition
     parties = ManyToMany( 'Party', lazy = True, backref='categories',
                           tablename='party_category_party',

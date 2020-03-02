@@ -180,15 +180,6 @@ _sqlalchemy_to_python_type_ = {
         'to_string': richtext_to_string,
     },
 
-    camelot.types.Color: lambda f: {
-        'delegate': delegates.ColorDelegate,
-        'python_type': str,
-        'editable': True,
-        'nullable': True,
-        'widget': 'color',
-        'operators' : _text_operators,
-    },
-
     camelot.types.Enumeration: lambda f: {
         'delegate': delegates.ComboBoxDelegate,
         'python_type': str,
