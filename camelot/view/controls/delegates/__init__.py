@@ -35,14 +35,12 @@ from .datedelegate import DateDelegate
 from .datetimedelegate import DateTimeDelegate
 from .filedelegate import FileDelegate
 from .floatdelegate import FloatDelegate
-from .imagedelegate import ImageDelegate
 from .dbimagedelegate import DbImageDelegate
 from .integerdelegate import IntegerDelegate
 from .languagedelegate import LanguageDelegate
 from .localfiledelegate import LocalFileDelegate
 from .many2onedelegate import Many2OneDelegate
 from .one2manydelegate import One2ManyDelegate
-from .manytoonechoicesdelegate import ManyToOneChoicesDelegate
 from .plaintextdelegate import PlainTextDelegate
 from .richtextdelegate import RichTextDelegate
 from .texteditdelegate import TextEditDelegate
@@ -62,14 +60,12 @@ __all__ = [
     DateTimeDelegate.__name__,
     FileDelegate.__name__,
     FloatDelegate.__name__,
-    ImageDelegate.__name__,
     DbImageDelegate.__name__,
     IntegerDelegate.__name__,
     LanguageDelegate.__name__,
     LocalFileDelegate.__name__,
     Many2OneDelegate.__name__,
     One2ManyDelegate.__name__,
-    ManyToOneChoicesDelegate.__name__,
     PlainTextDelegate.__name__,
     RichTextDelegate.__name__,
     TextEditDelegate.__name__,

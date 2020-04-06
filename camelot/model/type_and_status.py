@@ -86,7 +86,7 @@ class TypeMixin(object):
     code = schema.Column(types.Unicode(10), index=True, nullable=False)
     description = schema.Column(types.Unicode( 40 ), index = True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.code or u''
 
 class StatusTypeMixin(TypeMixin):
@@ -122,7 +122,7 @@ class StatusHistory( object ):
                               default=end_of_times)
 
 
-    def __unicode__( self ):
+    def __str__( self ):
         return six.text_type(self.classified_by or u'')
 
     def sort_key(self):
@@ -324,7 +324,7 @@ class StatusMixin( object ):
                            whereclause = sql.and_( SH.status_for_id == status_class.id,
                                                    SH.status_from_date <= sql.functions.current_date(),
                                                    SH.status_thru_date >= sql.functions.current_date() ),
-                           from_obj = [SH.table] ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
+                           ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
 
     @hybrid.hybrid_property
     def current_status( self ):
@@ -353,11 +353,12 @@ class StatusMixin( object ):
                      history_type.status_from_date <= status_from_date,
                      history_type.status_thru_date >= status_from_date)
         )
-        new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
-        new_status_thru_date = status_from_date - datetime.timedelta(days=1)
-        for old_status in old_status_query.yield_per(10):
-            old_status.thru_date = new_thru_date
-            old_status.status_thru_date = new_status_thru_date
+        if self.id is not None:
+            new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
+            new_status_thru_date = status_from_date - datetime.timedelta(days=1)
+            for old_status in old_status_query.yield_per(10):
+                old_status.thru_date = new_thru_date
+                old_status.status_thru_date = new_status_thru_date
         new_status = history_type(status_for = self,
                                   classified_by = new_status,
                                   status_from_date = status_from_date,

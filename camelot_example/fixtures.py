@@ -34,11 +34,10 @@ def load_movie_fixtures():
     from camelot.model.fixture import Fixture
     from camelot.model.party import Person
     from camelot_example.model import Movie, VisitorReport
-    from camelot.core.files.storage import Storage, StoredImage
+    from camelot.core.files.storage import Storage
     from camelot.core.resources import resource_filename
 
-    storage = Storage(upload_to='covers',
-                      stored_file_implementation = StoredImage)
+    storage = Storage(upload_to='covers')
 
     movies = [
         [

@@ -1227,15 +1227,15 @@ msgstr "Vertaling"
 msgid "Forever"
 msgstr "Voor altijd"
 
-#: camelot/view/controls/delegates/monthsdelegate.py:65
-#, python-format
-msgid "%i years "
-msgstr "%i jaren"
+msgid "%n month"
+msgid_plural "%n months"
+msgstr[0] "%n maand"
+msgstr[1] "%n maanden"
 
-#: camelot/view/controls/delegates/monthsdelegate.py:67
-#, python-format
-msgid "%i months"
-msgstr "%i maanden"
+msgid "%n year"
+msgid_plural "%n years"
+msgstr[0] "%n jaar"
+msgstr[1] "%n jaren"
 
 #: camelot/view/controls/editors/charteditor.py:94
 msgid "Copy to clipboard"

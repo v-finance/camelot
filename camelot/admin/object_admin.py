@@ -37,6 +37,7 @@ from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
+from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -383,6 +384,18 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         return app_admin.get_form_toolbar_actions( toolbar_area )
 
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_list_toolbar_actions(toolbar_area)
+
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
@@ -616,6 +629,14 @@ be specified using the verbose_name attribute.
             self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
+            #
+            # If there is an `admin` field attribute, instantiate it
+            #            
+            admin = forced_attributes.get('admin')
+            target = attributes.get('target', None)
+            if target is not None and admin is not None:
+                attributes['admin'] = admin(self, target)
+        
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
                 attributes['delegate'] = delegates.ComboBoxDelegate
@@ -630,25 +651,17 @@ be specified using the verbose_name attribute.
         derived from the given attributes.
         """
         column_width = field_attributes.get('column_width', None)
-        #
-        # If there is an `admin` field attribute, instantiate it
-        #
+        
         target = field_attributes.get('target', None)
         if target is not None:
-            admin = field_attributes.get('admin', None)
-            direction = field_attributes.get('direction', '')
-            if admin is not None:
-                related_admin = admin(self, target)
-            #
-            # In case of a 'target' field attribute, add an appropriate
-            # 'admin' attribute
-            #
-            else:
-                related_admin = self.get_related_admin(target)
+            # If there is a `target` field attribute, verify the `admin` attribute has been instantiated
+            related_admin = field_attributes.get('admin', self.get_related_admin(target))
+            assert isinstance(related_admin, ObjectAdmin) or isinstance(related_admin, ReadOnlyAdminDecorator)
             #
             # for an xtomany field, calculate the sum of the column widths, as
             # an estimate for the width of the table widget
             #
+            direction = field_attributes.get('direction', '')
             if column_width is None and direction.endswith('many') and related_admin:
                 table = related_admin.get_table()
                 fields = table.get_fields(column_group=0)
@@ -796,7 +809,7 @@ be specified using the verbose_name attribute.
         return iterations > 0
 
     def _set_defaults(self, object_instance):
-        from sqlalchemy.schema import ColumnDefault
+        from sqlalchemy.schema import ColumnDefault, Sequence
         from sqlalchemy import orm
 
         if self.is_deleted( object_instance ):
@@ -828,6 +841,10 @@ be specified using the verbose_name attribute.
                     session = orm.object_session(object_instance)
                     bind = session.get_bind(mapper=self.mapper)
                     default_value = bind.execute(default)
+            elif isinstance(default, Sequence):
+                # Skip if the column default is a sequence, as setting it will cause an SQLA exception.
+                # The column should remain unset and will be set by the compilation to the next_val of the sequence automatically. 
+                continue
             elif six.callable(default):
                 import inspect
                 args, _varargs, _kwargs, _defs = \

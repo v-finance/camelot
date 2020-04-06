@@ -33,7 +33,6 @@ logger = logging.getLogger( 'camelot.core.files.storage' )
 
 import six
 
-from ..qt import Qt, QtGui
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
@@ -62,49 +61,8 @@ class StoredFile( object ):
         object"""
         return dict( name = self.name )
     
-    def __unicode__( self ):
+    def __str__( self ):
         return self.verbose_name
-
-class StoredImage( StoredFile ):
-    """Helper class for the Image field type Class linking an image and the
-    location and filename where the image is stored"""
-
-    def __init__( self, storage, name ):
-        super(StoredImage, self).__init__( storage, name )
-        self._thumbnails = dict()
-        
-    def checkout_image( self ):
-        """Checkout the image from the storage, this function is only to be
-        used in the model thread.
-        
-        :return: a QImage
-        """
-        p = self.storage.checkout( self )
-        image = QtGui.QImage(p)
-        
-        if image.isNull():
-            return QtGui.QImage(':/image_not_found.png')
-        else:
-            return image
-
-    def checkout_thumbnail( self, width, height ):
-        """Checkout a thumbnail for this image from the storage, this function
-        is only to be used in the model thread
-        :param width: the requested width of the thumbnail
-
-        
-        :return: a QImage
-        """
-        key = (width, height)
-        try:
-            thumbnail_image = self._thumbnails[key]
-            return thumbnail_image
-        except KeyError:
-            pass
-        original_image = self.checkout_image()
-        thumbnail_image = original_image.scaled( width, height, Qt.KeepAspectRatio )
-        self._thumbnails[key] = thumbnail_image
-        return thumbnail_image
 
 class Storage( object ):
     """Helper class that opens and saves StoredFile objects
