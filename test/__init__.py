@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 
 faulthandler.enable()
 
-import sip
+from PyQt5 import sip
 sip.setdestroyonexit(False)
 
 # import here because mac osx causes crashes with imports later on

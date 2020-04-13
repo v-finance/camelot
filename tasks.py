@@ -4,7 +4,6 @@ from invoke import task
 
 build_dir = 'build'
 default_test_env = os.path.join(build_dir, 'env')
-default_python_dir = os.path.join('/', 'usr', 'share', 'conda', 'miniconda3', 'envs', 'py34')
 
 @task()
 def test(ctx):
@@ -21,5 +20,7 @@ def create_test_environment(ctx):
     """
     env_dir = default_test_env
     if not os.path.exists(env_dir):
-        ctx.run('{}/bin/pyvenv {} --system-site-packages'.format(default_python_dir, env_dir))
-    ctx.run('{}/bin/python -m pip install -r requirements.txt'.format(env_dir))
+        ctx.run('pyvenv-3 {} --symlinks'.format(env_dir))
+    ctx.run('{}/bin/pip3 install --upgrade pip'.format(env_dir))
+    ctx.run('{}/bin/pip3 install nose'.format(env_dir))
+    ctx.run('{}/bin/pip3 install -r requirements.txt'.format(env_dir))
