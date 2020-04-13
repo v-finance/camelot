@@ -208,11 +208,10 @@ class EditorsTest(test.ModelThreadTestCase):
     def test_ColorEditor(self):
         editor = editors.ColorEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( (255, 200, 255, 255) )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
-        self.assert_valid_editor( editor, (255, 200, 255, 255) )
+        self.assertEqual(editor.get_value(), None)
+        editor.set_value('green')
+        self.grab_default_states(editor)
+        self.assertEqual(editor.get_value(), 'green')
 
     def test_ChoicesEditor(self):
         editor = editors.ChoicesEditor(parent=None, editable=True)
