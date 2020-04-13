@@ -264,11 +264,11 @@ class EntityAdminCase( TestMetaData ):
                 return self.a
 
             @h.setter
-            def h_setter(self, value):
+            def h(self, value):
                 self.a = value
 
             @h.expression
-            def h_expression(cls):
+            def h(cls):
                 return sql.select([cls.a]).where(cls.id==A.id)
 
             @hybrid.hybrid_property
@@ -276,7 +276,7 @@ class EntityAdminCase( TestMetaData ):
                 return self.a
 
             @i.expression
-            def i_expression(cls):
+            def i(cls):
                 return cls.a
 
             class Admin(EntityAdmin):
