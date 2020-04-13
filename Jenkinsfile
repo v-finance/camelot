@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Testing') {
             steps {
-                sh 'invoke -l'
+                sh '/usr/local/lib/invoke -l'
             }
         }
     }
