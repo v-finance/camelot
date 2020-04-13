@@ -1,9 +1,9 @@
 pipeline {
     agent any
     stages {
-        stage('Stage 1') {
+        stage('Testing') {
             steps {
-                echo 'Hello world!'
+                sh 'invoke -l'
             }
         }
     }
