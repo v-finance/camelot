@@ -11,7 +11,10 @@ def test(ctx):
     Run unittests
     """
     env_dir = default_test_env
-    ctx.run('{}/bin/python -m nose.core -v -s test'.format(env_dir))
+    ctx.run(
+        '{}/bin/python -m nose.core -v -s test'.format(env_dir),
+        env = {'QT_QPA_PLATFORM': 'offscreen'}
+    )
 
 @task()
 def create_test_environment(ctx):
