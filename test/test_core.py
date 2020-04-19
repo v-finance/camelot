@@ -5,11 +5,11 @@ import unittest
 
 from camelot.core.memento import memento_change, memento_types
 from camelot.core.profile import Profile, ProfileStore
-from camelot.test import ModelThreadTestCase
+from .test_model import ExampleModelCase
 
 memento_id_counter = 0
 
-class MementoCase( ModelThreadTestCase ):
+class MementoCase(ExampleModelCase):
     """test functions from camelot.core.memento
     """
     
