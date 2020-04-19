@@ -10,10 +10,6 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 faulthandler.enable()
-
-from PyQt5 import sip
-sip.setdestroyonexit(False)
-
 # import here because mac osx causes crashes with imports later on
 from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
