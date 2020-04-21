@@ -34,12 +34,14 @@ Camelot itself.
 
 import logging
 import unittest
+import sys
+import os
 import six
 
 from ..admin.action.application_action import ApplicationActionGuiContext
 from ..admin.entity_admin import EntityAdmin
 from ..core.orm import Session
-from ..core.qt import Qt, QtCore, QtGui, QtWidgets, qt_api
+from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view import action_steps
 
 has_programming_error = False
@@ -62,16 +64,12 @@ def get_application():
             application = QtWidgets.QApplication(sys.argv)
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
-            #try:
-            #    from PyTitan import QtnOfficeStyle
-            #    QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
-            #except:
-            #    pass 
         _application_.append( application )
     return _application_[0]
 
-class ModelThreadTestCase(unittest.TestCase):
-    """Base class for implementing test cases that need a running model_thread.
+class GrabMixinCase(object):
+    """
+    Methods to grab views to pixmaps during unittests
     """
 
     images_path = ''
@@ -85,8 +83,6 @@ class ModelThreadTestCase(unittest.TestCase):
     - the name of the png file is the name of the test case, without 'test_'
     - it is stored in the directory with the same name as the class, without 'test'
         """
-        import sys
-        import os
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
         else:
@@ -107,10 +103,7 @@ class ModelThreadTestCase(unittest.TestCase):
         widget.repaint()
         QtWidgets.QApplication.flush()
         widget.repaint()
-        if qt_api == 'PyQt5':
-            inner_pixmap = QtWidgets.QWidget.grab(widget)
-        else:
-            inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
+        inner_pixmap = QtWidgets.QWidget.grab(widget)
         # add a border to the image
         border = 4
         outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
@@ -122,6 +115,11 @@ class ModelThreadTestCase(unittest.TestCase):
                           QtCore.QRectF(0, 0, inner_pixmap.width(), inner_pixmap.height()))
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
+
+
+class ModelThreadTestCase(unittest.TestCase):
+    """Base class for implementing test cases that need a running model_thread.
+    """
 
     def process(self):
         """Wait until all events are processed and the queues of the model thread are empty"""
@@ -183,7 +181,7 @@ class ApplicationViewsTest(ModelThreadTestCase):
         widget = step.render(self.gui_context)
         self.grab_widget(widget, subdir='applicationviews')
     
-class EntityViewsTest(ModelThreadTestCase):
+class EntityViewsTest(ModelThreadTestCase, GrabMixinCase):
     """Test the views of all the Entity subclasses, subclass this class to test all views
     in your application.  This is done by calling the create_table_view and create_new_view
     on a set of admin objects.  To tell the test case which admin objects should be tested,

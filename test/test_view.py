@@ -20,6 +20,7 @@ from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_strin
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
 from camelot import test
+from camelot.test import GrabMixinCase
 from camelot.view import action_steps
 from camelot.view.action_steps import OpenFormView
 from camelot.view.art import ColorScheme
@@ -67,7 +68,7 @@ class SignalCounter( QtCore.QObject ):
     def signal_caught( self ):
         self.counter += 1
 
-class EditorsTest(test.ModelThreadTestCase):
+class EditorsTest(test.ModelThreadTestCase, GrabMixinCase):
     """
   Test the basic functionality of the editors :
 
@@ -420,7 +421,7 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assert_valid_editor( editor, 12 )
 
 
-class FormTest(test.ModelThreadTestCase):
+class FormTest(test.ModelThreadTestCase, GrabMixinCase):
 
     images_path = static_images_path
 
@@ -517,7 +518,7 @@ class FormTest(test.ModelThreadTestCase):
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
-class DelegateCase(test.ModelThreadTestCase):
+class DelegateCase(test.ModelThreadTestCase, GrabMixinCase):
     """Test the basic functionallity of the delegates :
   - createEditor
   - setEditorData
@@ -768,7 +769,7 @@ class DelegateCase(test.ModelThreadTestCase):
         self.grab_delegate(delegate, 12, 'disabled')
 
 
-class ControlsTest(ExampleModelCase):
+class ControlsTest(ExampleModelCase, GrabMixinCase):
     """Test some basic controls"""
 
     images_path = static_images_path
@@ -981,7 +982,7 @@ class CamelotEntityViewsTest(test.EntityViewsTest):
             if admin.entity.__module__.startswith('camelot.model'):
                 yield admin
 
-class SnippetsTest(test.ModelThreadTestCase):
+class SnippetsTest(test.ModelThreadTestCase, GrabMixinCase):
 
     images_path = static_images_path
 

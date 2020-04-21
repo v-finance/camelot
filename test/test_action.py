@@ -22,7 +22,7 @@ from camelot.core.orm import Session
 
 from camelot.model import party
 
-from camelot.test import ModelThreadTestCase
+from camelot.test import ModelThreadTestCase, GrabMixinCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -59,7 +59,7 @@ class ActionBaseCase( ModelThreadTestCase ):
         self.assertTrue( action.get_name() )
         self.assertTrue( action.get_shortcut() )
 
-class ActionWidgetsCase( ModelThreadTestCase ):
+class ActionWidgetsCase(ModelThreadTestCase, GrabMixinCase):
     """Test widgets related to actions.
     """
 
@@ -103,7 +103,7 @@ class ActionWidgetsCase( ModelThreadTestCase ):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase( ModelThreadTestCase ):
+class ActionStepsCase(ModelThreadTestCase, GrabMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -325,7 +325,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog.show()
         self.grab_widget(dialog)
 
-class ListActionsCase( test_model.ExampleModelCase ):
+class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     """Test the standard list actions.
     """
 
@@ -684,7 +684,7 @@ class ListActionsCase( test_model.ExampleModelCase ):
         table_view.set_filters([self.group_box_filter,
                                 self.combo_box_filter])
 
-class FormActionsCase( test_model.ExampleModelCase ):
+class FormActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     """Test the standard list actions.
     """
 
@@ -730,7 +730,7 @@ class FormActionsCase( test_model.ExampleModelCase ):
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )
 
-class ApplicationCase( test_model.ExampleModelCase ):
+class ApplicationCase(test_model.ExampleModelCase, GrabMixinCase):
 
     def setUp(self):
         super( ApplicationCase, self ).setUp()
@@ -758,7 +758,7 @@ class ApplicationCase( test_model.ExampleModelCase ):
         application = CustomApplication(self.app_admin)
         application.gui_run(GuiContext())
 
-class ApplicationActionsCase( test_model.ExampleModelCase ):
+class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     """Test application actions.
     """
 
@@ -861,7 +861,7 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         segmentation_fault = application_action.SegmentationFault()
         list( segmentation_fault.model_run( self.context ) )
 
-class DocumentActionsCase( ModelThreadTestCase ):
+class DocumentActionsCase(ModelThreadTestCase):
     """Test the standard document actions.
     """
 
