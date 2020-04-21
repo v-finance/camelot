@@ -1,6 +1,6 @@
 import logging
 import faulthandler
-import warnings
+import sys
 
 #warnings.filterwarnings( 'error' )
 
@@ -15,6 +15,17 @@ from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
 from camelot.core.qt import QtNetwork
+
+# a QApplication is needed to be able to construct other
+# objects.
+_application_ = []
+if QtWidgets.QApplication.instance() is None:
+    # set up a test application
+    _application_.append(QtWidgets.QApplication([a for a in sys.argv if a]))
+    # set up a specific locale to test import of files
+    QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
+    # to generate consistent screenshots
+    _application_[0].setStyle('fusion')
 
 getattr(QtCore, 'QObject')
 getattr(QtGui, 'QColor')

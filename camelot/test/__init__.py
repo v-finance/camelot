@@ -45,27 +45,8 @@ from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view import action_steps
 
 has_programming_error = False
-_application_ = []
-
 
 LOGGER = logging.getLogger('camelot.test')
-
-def get_application():
-    """Get the singleton QApplication"""
-    if not len(_application_):
-        #
-        # Uniform style for screenshot generation
-        #
-        application = QtWidgets.QApplication.instance()
-        if not application:
-            import sys
-            from camelot.view import art
-            QtWidgets.QApplication.setStyle('cleanlooks')
-            application = QtWidgets.QApplication(sys.argv)
-            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
-            QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
-        _application_.append( application )
-    return _application_[0]
 
 class GrabMixinCase(object):
     """
@@ -127,7 +108,7 @@ class ModelThreadTestCase(unittest.TestCase):
 
     def setUp(self):
         from camelot.core.conf import settings
-        self.app = get_application()
+        self.app = QtWidgets.QApplication.instance()
         from camelot.view import model_thread
         from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
         from camelot.view.model_thread import get_model_thread, has_model_thread
