@@ -14,7 +14,7 @@ from camelot.admin.action import (list_action, application_action,
                                   document_action, form_action,
                                   list_filter, ApplicationActionGuiContext)
 
-from camelot.core.item_model import ListModelProxy, ObjectRole
+from camelot.core.item_model import ListModelProxy, ObjectRole, QueryModelProxy
 from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt, QtPrintSupport
 from camelot.core.exception import CancelRequest, UserException
 from camelot.core.utils import ugettext_lazy as _
@@ -30,11 +30,10 @@ from camelot.view.controls import tableview, actionsbox, progress_dialog
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view import utils
 
-import openpyxl
-
 from . import test_view
-from . import test_proxy
 from . import test_model
+from .test_proxy import QueryQStandardItemModelMixinCase
+from .test_model import ExampleModelCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -103,7 +102,7 @@ class ActionWidgetsCase(ModelThreadTestCase, GrabMixinCase):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase(ModelThreadTestCase, GrabMixinCase):
+class ActionStepsCase(ExampleModelCase, GrabMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -111,9 +110,10 @@ class ActionStepsCase(ModelThreadTestCase, GrabMixinCase):
     images_path = test_view.static_images_path
 
     def setUp(self):
-        ModelThreadTestCase.setUp(self)
+        ExampleModelCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
+        self.load_test_data()
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
@@ -684,26 +684,28 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         table_view.set_filters([self.group_box_filter,
                                 self.combo_box_filter])
 
-class FormActionsCase(test_model.ExampleModelCase, GrabMixinCase):
+class FormActionsCase(
+    test_model.ExampleModelCase,
+    GrabMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
 
     images_path = test_view.static_images_path
 
     def setUp( self ):
-        super( FormActionsCase, self ).setUp()
+        super(FormActionsCase, self).setUp()
         from camelot.model.party import Person
         from camelot.admin.application_admin import ApplicationAdmin
-        self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
-        self.query_proxy_case.setUp()
         self.app_admin = ApplicationAdmin()
+        self.load_test_data()
+        self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.model_context = MockModelContext()
         self.model_context.obj = Person.query.first()
         self.model_context.admin = self.app_admin.get_related_admin( Person )
         self.gui_context = form_action.FormActionGuiContext()
-        self.gui_context._model = self.query_proxy_case.proxy
+        self.gui_context._model = self.item_model
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
-        self.gui_context.widget_mapper.setModel( self.query_proxy_case.proxy )
+        self.gui_context.widget_mapper.setModel(self.item_model)
         self.gui_context.admin = self.app_admin.get_related_admin( Person )
 
     def test_gui_context( self ):

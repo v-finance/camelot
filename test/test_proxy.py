@@ -28,7 +28,7 @@ from camelot.test import ModelThreadTestCase
 
 LOGGER = logging.getLogger(__name__)
 
-from .test_model import ExampleModelCase
+from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 
 class ProxySignalRegister( QtCore.QObject ):
@@ -499,35 +499,54 @@ class CollectionProxyCase( ProxyCase ):
         self.assertTrue( z0 in a0.z )
         returned_list.remove(z0)
         self.assertFalse( z0 in a0.z )
-        
-class QueryProxyCase( ProxyCase ):
-    """Test the functionality of the QueryProxy to perform CRUD operations on 
-    stand alone data"""
-  
-    def setUp(self, admin = None):
-        super( QueryProxyCase, self ).setUp()
-        if admin is None:
-            admin = self.person_admin
-        self.proxy = QueryTableProxy(admin)
-        self.proxy.set_value(admin.get_proxy(admin.get_query()))
-        self.columns = ('first_name', 'last_name')
-        list(self.proxy.add_columns(self.columns))
-        self.proxy.timeout_slot()
+
+class QueryQStandardItemModelMixinCase(object):
+    """
+    methods to setup a QStandardItemModel representing a query
+    """
+
+    @classmethod
+    def setup_item_model(cls, admin):
+        cls.item_model = QueryTableProxy(admin)
+        cls.item_model.set_value(admin.get_proxy(admin.get_query()))
+        cls.columns = ('first_name', 'last_name')
+        list(cls.item_model.add_columns(cls.columns))
+        cls.item_model.timeout_slot()
+
+class QueryQStandardItemModelCase(
+    ProxyCase,
+    QueryQStandardItemModelMixinCase, ExampleModelMixinCase):
+    """Test the functionality of A QStandardItemModel
+    representing a query
+    """
+
+    def setUp(self):
+        super(QueryQStandardItemModelCase, self).setUp()
+        self.setup_sample_model()
+        self.setup_item_model(self.app_admin.get_related_admin(Person))
+        self.load_test_data()
         self.process()
         self.query_counter = 0
+        # to keep 'ProxyCase working
+        self.proxy = self.item_model
         event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
+
+    def tearDown(self):
+        event.remove(Engine, 'after_cursor_execute', self.increase_query_counter)
+        self.tear_down_sample_model()
         
     def increase_query_counter(self, conn, cursor, statement, parameters, context, executemany):
         self.query_counter += 1
+        LOGGER.debug('Counted query {} : {}'.format(
+            self.query_counter, str(statement)
+        ))
 
-    def test_insert_after_sort( self ):
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.model.party import Person
-        self.proxy.timeout_slot()
-        self.assertTrue( self.proxy.columnCount() > 0 )
-        self.proxy.sort( 1, Qt.AscendingOrder )
+    def test_insert_after_sort(self):
+        self.item_model.timeout_slot()
+        self.assertTrue( self.item_model.columnCount() > 0 )
+        self.item_model.sort( 1, Qt.AscendingOrder )
         # check the query
-        self.assertTrue( self.proxy.columnCount() > 0 )
+        self.assertTrue( self.item_model.columnCount() > 0 )
         rowcount = self._row_count()
         self.assertTrue( rowcount > 0 )
         # check the sorting
@@ -535,28 +554,28 @@ class QueryProxyCase( ProxyCase ):
         data0 = self._data( 0, 1 )
         data1 = self._data( 1, 1 )
         self.assertTrue( data1 > data0 )
-        self.proxy.sort( 1, Qt.DescendingOrder )
+        self.item_model.sort( 1, Qt.DescendingOrder )
         self._load_data()
         data0 = self._data( 0, 1 )
         data1 = self._data( 1, 1 )
         self.assertTrue( data0 > data1 )
         # insert a new object
         person = Person()
-        self.proxy.get_value().append(person)
-        self.assertEqual(self.proxy.get_value().index(person), rowcount)
-        self.proxy.objects_created(None, (person,))
-        self.proxy.timeout_slot()
-        new_rowcount = self.proxy.rowCount()
+        self.item_model.get_value().append(person)
+        self.assertEqual(self.item_model.get_value().index(person), rowcount)
+        self.item_model.objects_created(None, (person,))
+        self.item_model.timeout_slot()
+        new_rowcount = self.item_model.rowCount()
         self.assertEqual(new_rowcount, rowcount + 1)
         new_row = new_rowcount - 1
-        self.assertEqual([person], list(self.proxy.get_value()[new_row:new_rowcount]))
+        self.assertEqual([person], list(self.item_model.get_value()[new_row:new_rowcount]))
         # fill in the required fields
         self.assertFalse( self.person_admin.is_persistent( person ) )
         self.assertEqual( self._data( new_row, 0 ), None )
         self.assertEqual( self._data( new_row, 1 ), None )
         self._set_data( new_row, 0, 'Foo' )
         self._set_data( new_row, 1, 'Bar' )
-        self.proxy.timeout_slot()
+        self.item_model.timeout_slot()
         self.assertEqual( person.first_name, 'Foo' )
         self.assertEqual( person.last_name, 'Bar' )
         self._load_data()
@@ -567,15 +586,21 @@ class QueryProxyCase( ProxyCase ):
         self.assertEqual( self._header_data(new_row, Qt.Vertical, ObjectRole), person)
 
     def test_single_query(self):
-        # after constructing a queryproxy, 2 queries are issued
-        # before data is returned (count query + get data query)
+        # after constructing a queryproxy, 4 queries are issued
+        # before data is returned : 
+        # - count query
+        # - person query
+        # - contact mechanism select in load
+        # - address select in load
+        # those last 2 are needed for the validation of the compounding objects
         first_person = self.person_admin.get_query().first()
         start = self.query_counter
         proxy = QueryTableProxy(self.person_admin)
         proxy.set_value(self.person_admin.get_proxy(self.person_admin.get_query().filter_by(id=first_person.id)))
         list(proxy.add_columns(self.columns))
         self._load_data(proxy)
-        self.assertEqual(self.query_counter, start+2)
+        self.assertEqual(self.item_model.columnCount(), 2)
+        self.assertEqual(self.query_counter, start+4)
         self.assertEqual(proxy.rowCount(), 1)
 
 class ListModelProxyCase(ExampleModelCase):
@@ -685,6 +710,7 @@ class QueryModelProxyCase(ListModelProxyCase):
 
     def setUp(self):
         super(QueryModelProxyCase, self).setUp()
+        self.load_test_data()
         self.query = self.session.query(Person)
         self.proxy = QueryModelProxy(self.query)
         self.attribute_name = 'first_name'
