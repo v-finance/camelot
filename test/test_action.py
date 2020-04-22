@@ -867,14 +867,13 @@ class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         segmentation_fault = application_action.SegmentationFault()
         list( segmentation_fault.model_run( self.context ) )
 
-class DocumentActionsCase(ModelThreadTestCase):
+class DocumentActionsCase(unittest.TestCase):
     """Test the standard document actions.
     """
 
     images_path = test_view.static_images_path
 
     def setUp( self ):
-        ModelThreadTestCase.setUp(self)
         self.gui_context = document_action.DocumentActionGuiContext()
         self.gui_context.document = QtGui.QTextDocument('Hello world')
 
