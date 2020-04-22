@@ -14,13 +14,14 @@ from camelot.admin.action import (list_action, application_action,
                                   document_action, form_action,
                                   list_filter, ApplicationActionGuiContext)
 
-from camelot.core.item_model import ListModelProxy, ObjectRole, QueryModelProxy
-from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt, QtPrintSupport
+from camelot.core.item_model import ListModelProxy, ObjectRole
+from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.core.exception import CancelRequest, UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.orm import Session
 
 from camelot.model import party
+from camelot.model.party import Person
 
 from camelot.test import ModelThreadTestCase, GrabMixinCase
 from camelot.test.action import MockModelContext
@@ -33,14 +34,14 @@ from camelot.view import utils
 from . import test_view
 from . import test_model
 from .test_proxy import QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelCase
+from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
-class ActionBaseCase( ModelThreadTestCase ):
+class ActionBaseCase(ModelThreadTestCase):
 
     def setUp(self):
-        ModelThreadTestCase.setUp(self)
+        super(ActionBaseCase, self).setUp()
         self.gui_context = GuiContext()
         self.gui_context.admin = ApplicationAdmin()
 
@@ -58,7 +59,7 @@ class ActionBaseCase( ModelThreadTestCase ):
         self.assertTrue( action.get_name() )
         self.assertTrue( action.get_shortcut() )
 
-class ActionWidgetsCase(ModelThreadTestCase, GrabMixinCase):
+class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     """Test widgets related to actions.
     """
 
@@ -66,7 +67,6 @@ class ActionWidgetsCase(ModelThreadTestCase, GrabMixinCase):
 
     def setUp(self):
         from camelot_example.importer import ImportCovers
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
         self.application_gui_context = ApplicationActionGuiContext()
@@ -685,8 +685,8 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
                                 self.combo_box_filter])
 
 class FormActionsCase(
-    test_model.ExampleModelCase,
-    GrabMixinCase, QueryQStandardItemModelMixinCase):
+    unittest.TestCase,
+    ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
 
@@ -694,9 +694,8 @@ class FormActionsCase(
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
-        from camelot.model.party import Person
-        from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
+        self.setup_sample_model()
         self.load_test_data()
         self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.model_context = MockModelContext()
@@ -707,6 +706,10 @@ class FormActionsCase(
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
         self.gui_context.widget_mapper.setModel(self.item_model)
         self.gui_context.admin = self.app_admin.get_related_admin( Person )
+
+    def tearDown(self):
+        super(FormActionsCase, self).tearDown()
+        self.tear_down_sample_model()
 
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
@@ -863,14 +866,13 @@ class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         segmentation_fault = application_action.SegmentationFault()
         list( segmentation_fault.model_run( self.context ) )
 
-class DocumentActionsCase(ModelThreadTestCase):
+class DocumentActionsCase(unittest.TestCase):
     """Test the standard document actions.
     """
 
     images_path = test_view.static_images_path
 
     def setUp( self ):
-        ModelThreadTestCase.setUp(self)
         self.gui_context = document_action.DocumentActionGuiContext()
         self.gui_context.document = QtGui.QTextDocument('Hello world')
 
