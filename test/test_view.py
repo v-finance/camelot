@@ -6,7 +6,7 @@ import datetime
 import logging
 import os
 import sys
-import time
+import unittest
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.list_filter import SearchFilter
@@ -40,7 +40,7 @@ from camelot.model.party import Person
 from .import app_admin
 
 from .test_proxy import A
-from .test_model import ExampleModelCase, ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -769,23 +769,24 @@ class DelegateCase(test.ModelThreadTestCase, GrabMixinCase):
         self.grab_delegate(delegate, 12, 'disabled')
 
 
-class ControlsTest(ExampleModelCase, GrabMixinCase):
+class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
     """Test some basic controls"""
 
     images_path = static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+        cls.app_admin = MyApplicationAdmin()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def setUp(self):
-        super(ControlsTest, self).setUp()
-        self.app_admin = MyApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
-
-    def wait_for_animation( self ):
-        # wait a while to make sure all animations are finished
-        for i in range(10):
-            time.sleep(0.1)
-            self.app.processEvents()
-
+        
     def test_table_view(self):
         gui_context = GuiContext()
         widget = TableView( gui_context,
@@ -870,14 +871,14 @@ class ControlsTest(ExampleModelCase, GrabMixinCase):
         self.grab_widget( widget )
 
     def test_section_widget(self):
-        self.wait_for_animation()
-        action_step = action_steps.NavigationPanel(self.app_admin.get_sections())
+        action_step = action_steps.NavigationPanel(
+            self.app_admin.get_sections()
+        )
         widget = action_step.render(self.gui_context)
         self.grab_widget(widget)
 
     def test_main_window(self):
         widget = MainWindow( self.gui_context )
-        self.wait_for_animation()
         self.grab_widget(widget)
 
     def test_reduced_main_window(self):
@@ -890,7 +891,6 @@ class ControlsTest(ExampleModelCase, GrabMixinCase):
         widget = MainWindow( gui_context )
         widget.setStyleSheet( app_admin.get_stylesheet() )
         widget.show()
-        self.wait_for_animation()
         self.grab_widget( widget )
 
     def test_busy_widget(self):
