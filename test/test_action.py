@@ -14,8 +14,8 @@ from camelot.admin.action import (list_action, application_action,
                                   document_action, form_action,
                                   list_filter, ApplicationActionGuiContext)
 
-from camelot.core.item_model import ListModelProxy, ObjectRole, QueryModelProxy
-from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt, QtPrintSupport
+from camelot.core.item_model import ListModelProxy, ObjectRole
+from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.core.exception import CancelRequest, UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.orm import Session
@@ -38,10 +38,10 @@ from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
-class ActionBaseCase( ModelThreadTestCase ):
+class ActionBaseCase(ModelThreadTestCase):
 
     def setUp(self):
-        ModelThreadTestCase.setUp(self)
+        super(ActionBaseCase, self).setUp()
         self.gui_context = GuiContext()
         self.gui_context.admin = ApplicationAdmin()
 
@@ -59,7 +59,7 @@ class ActionBaseCase( ModelThreadTestCase ):
         self.assertTrue( action.get_name() )
         self.assertTrue( action.get_shortcut() )
 
-class ActionWidgetsCase(ModelThreadTestCase, GrabMixinCase):
+class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     """Test widgets related to actions.
     """
 
@@ -67,7 +67,6 @@ class ActionWidgetsCase(ModelThreadTestCase, GrabMixinCase):
 
     def setUp(self):
         from camelot_example.importer import ImportCovers
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
         self.application_gui_context = ApplicationActionGuiContext()
