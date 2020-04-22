@@ -22,13 +22,12 @@ from camelot.view.controls import delegates
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.conf import settings
-from camelot.core.orm import Session
 from camelot.core.qt import variant_to_py, QtCore, Qt, py_to_variant, delete
 from camelot.test import ModelThreadTestCase
 
 LOGGER = logging.getLogger(__name__)
 
-from .test_model import ExampleModelCase, ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase
 
 
 class ProxySignalRegister( QtCore.QObject ):
@@ -603,7 +602,7 @@ class QueryQStandardItemModelCase(
         self.assertEqual(self.query_counter, start+4)
         self.assertEqual(proxy.rowCount(), 1)
 
-class ListModelProxyCase(ExampleModelCase):
+class ListModelProxyCase(unittest.TestCase):
 
     def setUp(self):
         super(ListModelProxyCase, self).setUp()
@@ -706,11 +705,22 @@ class ListModelProxyCase(ExampleModelCase):
         self.assertEqual(len(self.proxy), 3)
 
 
-class QueryModelProxyCase(ListModelProxyCase):
+class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(QueryModelProxyCase, cls).setUpClass()
+        cls.setup_sample_model()
+        cls.load_test_data()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(QueryModelProxyCase, cls).tearDownClass()
+        cls.tear_down_sample_model()
 
     def setUp(self):
         super(QueryModelProxyCase, self).setUp()
-        self.load_test_data()
+        self.session.expunge_all()
         self.query = self.session.query(Person)
         self.proxy = QueryModelProxy(self.query)
         self.attribute_name = 'first_name'
