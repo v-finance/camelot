@@ -39,7 +39,7 @@ from camelot.model.party import Person
 
 from .import app_admin
 
-from .test_proxy import A
+from .test_proxy import A, ProxyCase
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -68,7 +68,7 @@ class SignalCounter( QtCore.QObject ):
     def signal_caught( self ):
         self.counter += 1
 
-class EditorsTest(test.ModelThreadTestCase, GrabMixinCase):
+class EditorsTest(unittest.TestCase, GrabMixinCase):
     """
   Test the basic functionality of the editors :
 
@@ -421,12 +421,11 @@ class EditorsTest(test.ModelThreadTestCase, GrabMixinCase):
         self.assert_valid_editor( editor, 12 )
 
 
-class FormTest(test.ModelThreadTestCase, GrabMixinCase):
+class FormTest(unittest.TestCase, GrabMixinCase):
 
     images_path = static_images_path
 
     def setUp(self):
-        test.ModelThreadTestCase.setUp(self)
         self.entities = [e for e in entities]
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
@@ -518,7 +517,7 @@ class FormTest(test.ModelThreadTestCase, GrabMixinCase):
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
-class DelegateCase(test.ModelThreadTestCase, GrabMixinCase):
+class DelegateCase(unittest.TestCase, GrabMixinCase):
     """Test the basic functionallity of the delegates :
   - createEditor
   - setEditorData
@@ -992,12 +991,12 @@ class CamelotEntityViewsTest(
             if admin.entity.__module__.startswith('camelot.model'):
                 yield admin
 
-class SnippetsTest(test.ModelThreadTestCase, GrabMixinCase):
+class SnippetsTest(ProxyCase, GrabMixinCase):
 
     images_path = static_images_path
 
-    def setUp( self ):
-        super( SnippetsTest, self ).setUp()
+    def setUp(self):
+        super(SnippetsTest, self).setUp()
         self.app_admin = ApplicationAdmin()
         self.gui_context = GuiContext()
 
@@ -1016,12 +1015,12 @@ class SnippetsTest(test.ModelThreadTestCase, GrabMixinCase):
         self.grab_widget(form)
 
     def test_background_color(self):
-        person_admin = BackgroundColorAdmin( self.app_admin, Person )
+        person_admin = BackgroundColorAdmin(self.app_admin, Person)
         editor = One2ManyEditor(admin=person_admin)
         proxy = person_admin.get_proxy([
             Person(first_name='John', last_name='Cleese'),
             Person(first_name='eric', last_name='Idle')
         ])
         editor.set_value(proxy)
-        self.process()
+        self._load_data(editor.get_model())
         self.grab_widget(editor)
