@@ -3,6 +3,8 @@
 Tests for the Admin classes
 """
 
+import unittest
+
 from camelot.core.orm import (Entity, OneToMany, ManyToMany, ManyToOne,
                               OneToOne)
 from camelot.core.qt import Qt
@@ -12,16 +14,15 @@ from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
-from camelot.view.art import Icon
 
 from sqlalchemy import schema, types, sql
 from sqlalchemy.ext import hybrid
 
 from .test_orm import TestMetaData
 
-class ApplicationAdminCase( ModelThreadTestCase ):
+class ApplicationAdminCase(unittest.TestCase):
 
-    def test_application_admin( self ):
+    def test_application_admin(self):
         app_admin = ApplicationAdmin()
         self.assertTrue( app_admin.get_sections() )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
@@ -39,7 +40,7 @@ class ApplicationAdminCase( ModelThreadTestCase ):
 
     def test_admin_for_exising_database( self ):
         from .snippet.existing_database import app_admin
-        self.assertTrue( app_admin.get_sections() )
+        self.assertTrue(app_admin.get_sections())
 
 class ObjectAdminCase( ModelThreadTestCase ):
     """Test the ObjectAdmin
