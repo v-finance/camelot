@@ -107,7 +107,6 @@ class ModelThreadTestCase(unittest.TestCase):
         self.mt.wait_on_work()
 
     def setUp(self):
-        from camelot.core.conf import settings
         self.app = QtWidgets.QApplication.instance()
         from camelot.view import model_thread
         from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
@@ -120,8 +119,6 @@ class ModelThreadTestCase(unittest.TestCase):
         self.mt = get_model_thread()
         if not self.mt.isRunning():
             self.mt.start()
-        # make sure the startup sequence has passed
-        self.mt.post( settings.setup_model )
         self.process()
 
     def tearDown(self):

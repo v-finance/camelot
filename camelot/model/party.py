@@ -914,9 +914,8 @@ class PartyAdmin( EntityAdmin ):
 
     def get_query( self ):
         query = super( PartyAdmin, self ).get_query()
-        #query = query.options( orm.subqueryload('contact_mechanisms') )
-        #query = query.options( orm.subqueryload('addresses') )
-        #query = query.options( orm.subqueryload('addresses.address') )
+        query = query.options( orm.selectinload('contact_mechanisms') )
+        query = query.options( orm.selectinload('addresses').joinedload('address') )
         return query
 
     #def flush(self, party):

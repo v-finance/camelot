@@ -40,7 +40,7 @@ from camelot.model.party import Person
 from .import app_admin
 
 from .test_proxy import A
-from .test_model import ExampleModelCase
+from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -972,10 +972,20 @@ class ControlsTest(ExampleModelCase, GrabMixinCase):
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )
 
-class CamelotEntityViewsTest(test.EntityViewsTest):
+class CamelotEntityViewsTest(
+    test.EntityViewsTest,
+    ExampleModelMixinCase):
     """Test the views of all the Entity subclasses"""
 
     images_path = static_images_path
+
+    def setUp(self):
+        super(CamelotEntityViewsTest, self).setUp()
+        self.setup_sample_model()
+
+    def tearDown(self):
+        self.tear_down_sample_model()
+        super(CamelotEntityViewsTest, self).tearDown()
 
     def get_admins(self):
         for admin in super(CamelotEntityViewsTest, self).get_admins():

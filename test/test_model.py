@@ -8,36 +8,64 @@ from sqlalchemy import schema, types
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session
+from camelot.core.orm import Session, process_deferred_properties
+
 from camelot.core.sql import metadata
 from camelot.core.conf import settings
 from camelot.model import party
+from camelot.model.authentication import update_last_login
+
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
+
+from camelot_example.fixtures import load_movie_fixtures
+from camelot_example import model
+from camelot_example.view import setup_views
+
 from .test_orm import TestMetaData
 
 app_admin = ApplicationAdmin()
 
-class ExampleModelCase( ModelThreadTestCase ):
+class ExampleModelMixinCase(object):
+
+    @classmethod
+    def setup_sample_model(cls):
+        from camelot.model import (
+            authentication, batch_job, fixture,
+            party, i18n, memento
+        )
+        process_deferred_properties()
+        setup_views()
+        cls.engine = settings.ENGINE()
+        metadata.bind = cls.engine
+        metadata.create_all()
+        cls.session = Session()
+        cls.session.expunge_all()
+        update_last_login()
+
+    @classmethod
+    def tear_down_sample_model(cls):
+        metadata.drop_all()
+        cls.session.expunge_all()
+
+    @classmethod
+    def load_test_data(cls):
+        load_movie_fixtures()
+
+class ExampleModelCase(ModelThreadTestCase, ExampleModelMixinCase):
     """
     Test case that makes sure the example tables are available in
     the Camelot metadata
     """
     
-    def setUp( self ):
-        super( ExampleModelCase, self ).setUp()
-        from camelot.model import ( authentication, batch_job, fixture,
-                                    party, i18n, memento )
-        self.engine = settings.ENGINE()
-        metadata.bind = self.engine
-        metadata.create_all()
-        self.session = Session()
-        self.session.expunge_all()
+    def setUp(self):
+        super(ExampleModelCase, self).setUp()
+        self.setup_sample_model()
         
-    def tearDown( self ):
-        metadata.drop_all()
-        self.session.expunge_all()
-        
+    def tearDown(self):
+        self.tear_down_sample_model()
+
+
 class ModelCase( ExampleModelCase ):
     """Test the build in camelot model"""
         
