@@ -12,7 +12,6 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
 
 from sqlalchemy import schema, types, sql
@@ -42,7 +41,7 @@ class ApplicationAdminCase(unittest.TestCase):
         from .snippet.existing_database import app_admin
         self.assertTrue(app_admin.get_sections())
 
-class ObjectAdminCase( ModelThreadTestCase ):
+class ObjectAdminCase(unittest.TestCase):
     """Test the ObjectAdmin
     """
 
@@ -204,7 +203,7 @@ class ObjectAdminCase( ModelThreadTestCase ):
         self.assertEqual(changed, False)
 
 
-class EntityAdminCase( TestMetaData ):
+class EntityAdminCase(TestMetaData):
     """Test the EntityAdmin
     """
 
