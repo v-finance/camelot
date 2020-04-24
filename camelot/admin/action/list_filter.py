@@ -310,9 +310,7 @@ class SearchFilter(Action, AbstractModelFilter):
                     return
                 # @todo : this should use the from_string field attribute, without
                 #         looking at the sql code
-                if issubclass(c.type.__class__, camelot.types.Color):
-                    pass
-                elif issubclass(c.type.__class__, camelot.types.File):
+                if issubclass(c.type.__class__, camelot.types.File):
                     pass
                 elif issubclass(c.type.__class__, camelot.types.Enumeration):
                     pass
