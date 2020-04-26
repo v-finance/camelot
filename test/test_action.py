@@ -23,7 +23,7 @@ from camelot.core.orm import Session
 from camelot.model import party
 from camelot.model.party import Person
 
-from camelot.test import ModelThreadTestCase, GrabMixinCase
+from camelot.test import ModelThreadTestCase, GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -38,7 +38,7 @@ from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
-class ActionBaseCase(ModelThreadTestCase):
+class ActionBaseCase(RunningThreadCase):
 
     def setUp(self):
         super(ActionBaseCase, self).setUp()

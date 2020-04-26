@@ -42,7 +42,8 @@ from ..admin.action.application_action import ApplicationActionGuiContext
 from ..admin.entity_admin import EntityAdmin
 from ..core.orm import Session
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..view import action_steps
+from ..view import action_steps, model_thread
+from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
 has_programming_error = False
 
@@ -97,6 +98,21 @@ class GrabMixinCase(object):
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
+class RunningThreadCase(unittest.TestCase):
+    """
+    Test case that starts a model thread when setting up the case class
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.thread = SignalSlotModelThread()
+        model_thread._model_thread_.insert(0, cls.thread)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        model_thread._model_thread_.remove(cls.thread)
+        cls.thread.stop()
 
 class ModelThreadTestCase(unittest.TestCase):
     """Base class for implementing test cases that need a running model_thread.
@@ -108,7 +124,6 @@ class ModelThreadTestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = QtWidgets.QApplication.instance()
-        from camelot.view import model_thread
         from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
         from camelot.view.model_thread import get_model_thread, has_model_thread
         if not has_model_thread():
