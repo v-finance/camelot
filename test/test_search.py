@@ -18,7 +18,6 @@ from camelot.admin.action.list_filter import SearchFilter
 from camelot.core.conf import settings
 from camelot.core.orm import has_field
 import camelot.types
-
 #
 # build a list of the various column types for which the search functions
 # should be tested
@@ -39,6 +38,8 @@ for i, (name, definition) in enumerate(possible_types):
                                          sqlalchemy.types.NullType,
                                          sqlalchemy.types._Binary,
                                          sqlalchemy.types.Enum,
+                                         sqlalchemy.types.ARRAY,
+                                         sqlalchemy.types.JSON,
                                          sqlalchemy.types.PickleType,
                                          camelot.types.File,
                                          camelot.types.Enumeration) ):
@@ -63,8 +64,6 @@ class SearchCase( test_orm.TestMetaData ):
             value = datetime.timedelta(days=i)
         elif issubclass( definition, camelot.types.VirtualAddress ):
             value =('email', str(i))
-        elif issubclass( definition, camelot.types.Color ):
-            value =(i, i, i, i)            
         return value
 
     def setUp(self):

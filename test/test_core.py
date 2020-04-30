@@ -3,28 +3,33 @@ import os
 import tempfile
 import unittest
 
-from camelot.core.memento import memento_change, memento_types
+from camelot.core.conf import settings, SimpleSettings
+from camelot.core.memento import memento_change, SqlMemento, memento_types
 from camelot.core.profile import Profile, ProfileStore
-from camelot.test import ModelThreadTestCase
+from camelot.core.qt import py_to_variant, variant_to_py
+
+from .test_model import ExampleModelMixinCase
 
 memento_id_counter = 0
 
-class MementoCase( ModelThreadTestCase ):
+class MementoCase(unittest.TestCase, ExampleModelMixinCase):
     """test functions from camelot.core.memento
     """
     
     def setUp( self ):
         super( MementoCase, self ).setUp()
-        from camelot.core.memento import SqlMemento, memento_types
+        self.setup_sample_model()
         global memento_id_counter
         custom_memento_types = memento_types + [(100, 'custom')]
         self.memento = SqlMemento( memento_types = custom_memento_types )
         memento_id_counter += 1
         self.id_counter = memento_id_counter
         self.model = 'TestMemento'
-        
+
+    def tearDown(self):
+        self.tear_down_sample_model()
+
     def test_lifecycle( self ):
-        
         memento_changes = [
             memento_change( self.model, 
                             [self.id_counter], 
@@ -111,7 +116,6 @@ class ConfCase(unittest.TestCase):
     """Test the global configuration"""
     
     def test_import_settings(self):
-        from camelot.core.conf import settings
         self.assertEqual( settings.get('FOO', None), None )
         self.assertRaises( AttributeError, lambda:settings.FOO )
         self.assertTrue( settings.CAMELOT_MEDIA_ROOT.endswith( 'media' ) )
@@ -128,7 +132,6 @@ class ConfCase(unittest.TestCase):
             pass
         
     def test_simple_settings(self):
-        from camelot.core.conf import SimpleSettings
         settings = SimpleSettings( 'Conceptive Engineering', 'Camelot Test')
         self.assertTrue( settings.ENGINE() )
         self.assertTrue( settings.CAMELOT_MEDIA_ROOT() )
@@ -138,6 +141,5 @@ class QtCase(unittest.TestCase):
     """
 
     def test_variant(self):
-        from camelot.core.qt import py_to_variant, variant_to_py
         for obj in ['a', 5]:
             self.assertEqual(variant_to_py(py_to_variant(obj)), obj)

@@ -1,6 +1,6 @@
 import logging
 import faulthandler
-import warnings
+import sys
 
 #warnings.filterwarnings( 'error' )
 
@@ -10,15 +10,22 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 faulthandler.enable()
-
-import sip
-sip.setdestroyonexit(False)
-
 # import here because mac osx causes crashes with imports later on
 from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
 from camelot.core.qt import QtNetwork
+
+# a QApplication is needed to be able to construct other
+# objects.
+_application_ = []
+if QtWidgets.QApplication.instance() is None:
+    # set up a test application
+    _application_.append(QtWidgets.QApplication([a for a in sys.argv if a]))
+    # set up a specific locale to test import of files
+    QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
+    # to generate consistent screenshots
+    _application_[0].setStyle('fusion')
 
 getattr(QtCore, 'QObject')
 getattr(QtGui, 'QColor')
@@ -30,35 +37,18 @@ from camelot.admin.application_admin import ApplicationAdmin
 app_admin = ApplicationAdmin()
 
 class TestSettings( object ):
-    
+
+    CAMELOT_MEDIA_ROOT = 'media'
+
     def __init__( self ): 
         from sqlalchemy.pool import StaticPool
         from sqlalchemy import create_engine
         # static pool to preserve tables and data accross threads
-        self.engine = create_engine( 'sqlite:///', poolclass = StaticPool )
-        
-    def setup_model( self ):
-        from camelot.core.sql import metadata
-        metadata.bind = self.ENGINE()
-        from camelot.model import authentication
-        from camelot.model import party
-        from camelot.model import i18n
-        from camelot.model import memento
-        from camelot.model import fixture
-        from camelot.model import batch_job
-        import camelot_example.model
+        self.engine = create_engine('sqlite:///', poolclass = StaticPool)
 
-        from camelot_example.view import setup_views
-        from camelot_example.fixtures import load_movie_fixtures
-        from camelot.model.authentication import update_last_login
-        from camelot.core.orm import setup_all
-        setup_all(create_tables=True)
-        setup_views()
-        load_movie_fixtures()
-        update_last_login()
-    
-    CAMELOT_MEDIA_ROOT = 'media'
-    
+    def setup_model(self):
+        pass
+
     def ENGINE( self ):
         return self.engine
    

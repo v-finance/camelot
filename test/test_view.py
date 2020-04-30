@@ -6,7 +6,7 @@ import datetime
 import logging
 import os
 import sys
-import time
+import unittest
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.list_filter import SearchFilter
@@ -20,6 +20,7 @@ from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_strin
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
 from camelot import test
+from camelot.test import GrabMixinCase
 from camelot.view import action_steps
 from camelot.view.action_steps import OpenFormView
 from camelot.view.art import ColorScheme
@@ -38,8 +39,8 @@ from camelot.model.party import Person
 
 from .import app_admin
 
-from .test_proxy import A
-from .test_model import ExampleModelCase
+from .test_proxy import A, ProxyCase
+from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -67,7 +68,7 @@ class SignalCounter( QtCore.QObject ):
     def signal_caught( self ):
         self.counter += 1
 
-class EditorsTest(test.ModelThreadTestCase):
+class EditorsTest(unittest.TestCase, GrabMixinCase):
     """
   Test the basic functionality of the editors :
 
@@ -208,11 +209,10 @@ class EditorsTest(test.ModelThreadTestCase):
     def test_ColorEditor(self):
         editor = editors.ColorEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( (255, 200, 255, 255) )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
-        self.assert_valid_editor( editor, (255, 200, 255, 255) )
+        self.assertEqual(editor.get_value(), None)
+        editor.set_value('green')
+        self.grab_default_states(editor)
+        self.assertEqual(editor.get_value(), 'green')
 
     def test_ChoicesEditor(self):
         editor = editors.ChoicesEditor(parent=None, editable=True)
@@ -421,12 +421,11 @@ class EditorsTest(test.ModelThreadTestCase):
         self.assert_valid_editor( editor, 12 )
 
 
-class FormTest(test.ModelThreadTestCase):
+class FormTest(unittest.TestCase, GrabMixinCase):
 
     images_path = static_images_path
 
     def setUp(self):
-        test.ModelThreadTestCase.setUp(self)
         self.entities = [e for e in entities]
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
@@ -518,7 +517,7 @@ class FormTest(test.ModelThreadTestCase):
         open_form_view = OpenFormView([self.person_entity()], person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
-class DelegateCase(test.ModelThreadTestCase):
+class DelegateCase(unittest.TestCase, GrabMixinCase):
     """Test the basic functionallity of the delegates :
   - createEditor
   - setEditorData
@@ -769,23 +768,24 @@ class DelegateCase(test.ModelThreadTestCase):
         self.grab_delegate(delegate, 12, 'disabled')
 
 
-class ControlsTest(ExampleModelCase):
+class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
     """Test some basic controls"""
 
     images_path = static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+        cls.app_admin = MyApplicationAdmin()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def setUp(self):
-        super(ControlsTest, self).setUp()
-        self.app_admin = MyApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
-
-    def wait_for_animation( self ):
-        # wait a while to make sure all animations are finished
-        for i in range(10):
-            time.sleep(0.1)
-            self.app.processEvents()
-
+        
     def test_table_view(self):
         gui_context = GuiContext()
         widget = TableView( gui_context,
@@ -870,14 +870,14 @@ class ControlsTest(ExampleModelCase):
         self.grab_widget( widget )
 
     def test_section_widget(self):
-        self.wait_for_animation()
-        action_step = action_steps.NavigationPanel(self.app_admin.get_sections())
+        action_step = action_steps.NavigationPanel(
+            self.app_admin.get_sections()
+        )
         widget = action_step.render(self.gui_context)
         self.grab_widget(widget)
 
     def test_main_window(self):
         widget = MainWindow( self.gui_context )
-        self.wait_for_animation()
         self.grab_widget(widget)
 
     def test_reduced_main_window(self):
@@ -890,7 +890,6 @@ class ControlsTest(ExampleModelCase):
         widget = MainWindow( gui_context )
         widget.setStyleSheet( app_admin.get_stylesheet() )
         widget.show()
-        self.wait_for_animation()
         self.grab_widget( widget )
 
     def test_busy_widget(self):
@@ -972,22 +971,32 @@ class ControlsTest(ExampleModelCase):
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )
 
-class CamelotEntityViewsTest(test.EntityViewsTest):
+class CamelotEntityViewsTest(
+    test.EntityViewsTest,
+    ExampleModelMixinCase):
     """Test the views of all the Entity subclasses"""
 
     images_path = static_images_path
+
+    def setUp(self):
+        super(CamelotEntityViewsTest, self).setUp()
+        self.setup_sample_model()
+
+    def tearDown(self):
+        self.tear_down_sample_model()
+        super(CamelotEntityViewsTest, self).tearDown()
 
     def get_admins(self):
         for admin in super(CamelotEntityViewsTest, self).get_admins():
             if admin.entity.__module__.startswith('camelot.model'):
                 yield admin
 
-class SnippetsTest(test.ModelThreadTestCase):
+class SnippetsTest(ProxyCase, GrabMixinCase):
 
     images_path = static_images_path
 
-    def setUp( self ):
-        super( SnippetsTest, self ).setUp()
+    def setUp(self):
+        super(SnippetsTest, self).setUp()
         self.app_admin = ApplicationAdmin()
         self.gui_context = GuiContext()
 
@@ -1006,12 +1015,12 @@ class SnippetsTest(test.ModelThreadTestCase):
         self.grab_widget(form)
 
     def test_background_color(self):
-        person_admin = BackgroundColorAdmin( self.app_admin, Person )
+        person_admin = BackgroundColorAdmin(self.app_admin, Person)
         editor = One2ManyEditor(admin=person_admin)
         proxy = person_admin.get_proxy([
             Person(first_name='John', last_name='Cleese'),
             Person(first_name='eric', last_name='Idle')
         ])
         editor.set_value(proxy)
-        self.process()
+        self._load_data(editor.get_model())
         self.grab_widget(editor)

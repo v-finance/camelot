@@ -187,6 +187,9 @@ class Storage( object ):
         self.available()
         import shutil
         import os
+        if filename is None and len(os.path.basename( local_path )) > 100:
+            raise UserException( text = ugettext('The filename of the selected file is too long'),
+                                     resolution = ugettext( 'Please rename the file' ) )
         to_path = os.path.join( self.upload_to, filename or os.path.basename( local_path ) )
         if os.path.exists(to_path):
             # only if the default to_path exists, we'll give it a new name

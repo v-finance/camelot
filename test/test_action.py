@@ -15,14 +15,15 @@ from camelot.admin.action import (list_action, application_action,
                                   list_filter, ApplicationActionGuiContext)
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt, QtPrintSupport
+from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.core.exception import CancelRequest, UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.orm import Session
 
 from camelot.model import party
+from camelot.model.party import Person
 
-from camelot.test import ModelThreadTestCase
+from camelot.test import ModelThreadTestCase, GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -30,18 +31,17 @@ from camelot.view.controls import tableview, actionsbox, progress_dialog
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view import utils
 
-import openpyxl
-
 from . import test_view
-from . import test_proxy
 from . import test_model
+from .test_proxy import QueryQStandardItemModelMixinCase
+from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
-class ActionBaseCase( ModelThreadTestCase ):
+class ActionBaseCase(RunningThreadCase):
 
     def setUp(self):
-        ModelThreadTestCase.setUp(self)
+        super(ActionBaseCase, self).setUp()
         self.gui_context = GuiContext()
         self.gui_context.admin = ApplicationAdmin()
 
@@ -59,7 +59,7 @@ class ActionBaseCase( ModelThreadTestCase ):
         self.assertTrue( action.get_name() )
         self.assertTrue( action.get_shortcut() )
 
-class ActionWidgetsCase( ModelThreadTestCase ):
+class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     """Test widgets related to actions.
     """
 
@@ -67,7 +67,6 @@ class ActionWidgetsCase( ModelThreadTestCase ):
 
     def setUp(self):
         from camelot_example.importer import ImportCovers
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
         self.application_gui_context = ApplicationActionGuiContext()
@@ -103,7 +102,7 @@ class ActionWidgetsCase( ModelThreadTestCase ):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase( ModelThreadTestCase ):
+class ActionStepsCase(ExampleModelCase, GrabMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -111,9 +110,10 @@ class ActionStepsCase( ModelThreadTestCase ):
     images_path = test_view.static_images_path
 
     def setUp(self):
-        ModelThreadTestCase.setUp(self)
+        ExampleModelCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
+        self.load_test_data()
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
@@ -325,7 +325,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog.show()
         self.grab_widget(dialog)
 
-class ListActionsCase( test_model.ExampleModelCase ):
+class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     """Test the standard list actions.
     """
 
@@ -684,27 +684,32 @@ class ListActionsCase( test_model.ExampleModelCase ):
         table_view.set_filters([self.group_box_filter,
                                 self.combo_box_filter])
 
-class FormActionsCase( test_model.ExampleModelCase ):
+class FormActionsCase(
+    unittest.TestCase,
+    ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
 
     images_path = test_view.static_images_path
 
     def setUp( self ):
-        super( FormActionsCase, self ).setUp()
-        from camelot.model.party import Person
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
-        self.query_proxy_case.setUp()
+        super(FormActionsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
+        self.setup_sample_model()
+        self.load_test_data()
+        self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.model_context = MockModelContext()
         self.model_context.obj = Person.query.first()
         self.model_context.admin = self.app_admin.get_related_admin( Person )
         self.gui_context = form_action.FormActionGuiContext()
-        self.gui_context._model = self.query_proxy_case.proxy
+        self.gui_context._model = self.item_model
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
-        self.gui_context.widget_mapper.setModel( self.query_proxy_case.proxy )
+        self.gui_context.widget_mapper.setModel(self.item_model)
         self.gui_context.admin = self.app_admin.get_related_admin( Person )
+
+    def tearDown(self):
+        super(FormActionsCase, self).tearDown()
+        self.tear_down_sample_model()
 
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
@@ -730,7 +735,7 @@ class FormActionsCase( test_model.ExampleModelCase ):
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )
 
-class ApplicationCase( test_model.ExampleModelCase ):
+class ApplicationCase(test_model.ExampleModelCase, GrabMixinCase):
 
     def setUp(self):
         super( ApplicationCase, self ).setUp()
@@ -758,7 +763,7 @@ class ApplicationCase( test_model.ExampleModelCase ):
         application = CustomApplication(self.app_admin)
         application.gui_run(GuiContext())
 
-class ApplicationActionsCase( test_model.ExampleModelCase ):
+class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     """Test application actions.
     """
 
@@ -861,14 +866,13 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         segmentation_fault = application_action.SegmentationFault()
         list( segmentation_fault.model_run( self.context ) )
 
-class DocumentActionsCase( ModelThreadTestCase ):
+class DocumentActionsCase(unittest.TestCase):
     """Test the standard document actions.
     """
 
     images_path = test_view.static_images_path
 
     def setUp( self ):
-        ModelThreadTestCase.setUp(self)
         self.gui_context = document_action.DocumentActionGuiContext()
         self.gui_context.document = QtGui.QTextDocument('Hello world')
 
