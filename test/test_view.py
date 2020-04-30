@@ -33,13 +33,13 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.mainwindow import MainWindow
 from camelot.view import forms
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
 from camelot.model.party import Person
 
 from .import app_admin
 
-from .test_proxy import A, ProxyCase
+from .test_item_model import A, ItemModelCase
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -430,7 +430,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
 
-        self.movie_model = QueryTableProxy( self.movie_admin)
+        self.movie_model = CollectionProxy(self.movie_admin)
         self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
@@ -991,7 +991,7 @@ class CamelotEntityViewsTest(
             if admin.entity.__module__.startswith('camelot.model'):
                 yield admin
 
-class SnippetsTest(ProxyCase, GrabMixinCase):
+class SnippetsTest(ItemModelCase, GrabMixinCase):
 
     images_path = static_images_path
 
