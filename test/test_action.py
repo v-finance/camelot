@@ -23,7 +23,7 @@ from camelot.core.orm import Session
 from camelot.model import party
 from camelot.model.party import Person
 
-from camelot.test import ModelThreadTestCase, GrabMixinCase, RunningThreadCase
+from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -33,7 +33,7 @@ from camelot.view import utils
 
 from . import test_view
 from . import test_model
-from .test_proxy import QueryQStandardItemModelMixinCase
+from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
@@ -560,7 +560,6 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
                 generator.send( ('rating', 3) )
 
     def test_drag_and_drop( self ):
-        from camelot.view.proxy.queryproxy import QueryTableProxy
 
         class DropAction( Action ):
             pass
@@ -570,7 +569,7 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         admin = self.context.admin
         admin.drop_action = DropAction()
 
-        proxy = QueryTableProxy(admin)
+        proxy = CollectionProxy(admin)
         proxy.dropMimeData( mime_data,
                             Qt.MoveAction,
                             -1,
