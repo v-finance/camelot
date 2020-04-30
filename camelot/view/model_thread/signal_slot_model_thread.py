@@ -39,45 +39,11 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 import six
 
-from ...core.qt import QtCore, qt_api
+from ...core.qt import QtCore
 from ...core.threading import synchronized
 from ...view.model_thread import AbstractModelThread, object_thread
 from ...view.controls.exception import register_exception
 
-#
-# Wrap and unwrap None passed through signal/slot accross threads to
-# prevent segfaults with PySide
-#
-# https://bugreports.qt-project.org/browse/PYSIDE-17
-#
-
-if qt_api.startswith('PyQt'):
-    wrap_none = lambda x:x
-    unwrap_none = lambda x:x
-else:
-    class Null( object ):
-        pass
-    
-    null = Null()
-    
-    def wrap_none( func ):
-        
-        def new_func( *args ):
-            y = func( *args )
-            if y == None:
-                return null
-            return y
-        
-        return new_func
-    
-    def unwrap_none( func ):
-        
-        def new_func( x ):
-            if x == null:
-                x = None
-            return func( x )
-        
-        return new_func
 
 class Task(QtCore.QObject):
 
@@ -224,7 +190,7 @@ class SignalSlotModelThread( AbstractModelThread ):
             self._connected = True
         # response should be a slot method of a QObject
         name = request.__name__
-        task = Task( wrap_none( request ), name = name, args = args )
+        task = Task(request, name = name, args = args)
         # QObject::connect is a thread safe function
         if response:
             assert getattr( response, six._meth_self ) != None
@@ -232,8 +198,7 @@ class SignalSlotModelThread( AbstractModelThread ):
                                QtCore.QObject )
             # verify if the response has been defined as a slot
             #assert hasattr(response, '__pyqtSignature__')
-            task.finished.connect( unwrap_none( response ), 
-                                   QtCore.Qt.QueuedConnection )
+            task.finished.connect(response, QtCore.Qt.QueuedConnection)
         if exception:
             task.exception.connect( exception, QtCore.Qt.QueuedConnection )
         # task.moveToThread(self)
