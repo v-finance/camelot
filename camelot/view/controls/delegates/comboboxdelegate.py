@@ -34,7 +34,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import six
 
-from ....core.item_model import PreviewRole
+from ....core.item_model import PreviewRole, FieldAttributesRole
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
 
@@ -62,7 +62,7 @@ class ComboBoxDelegate(CustomDelegate):
 
     def setEditorData(self, editor, index):
         value = variant_to_py(index.data(Qt.EditRole))
-        field_attributes = variant_to_py(index.data(Qt.UserRole))
+        field_attributes = variant_to_py(index.data(FieldAttributesRole))
         editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)
 

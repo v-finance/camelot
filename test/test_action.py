@@ -13,7 +13,7 @@ from camelot.admin.action import Action, GuiContext, ActionStep, State, Mode
 from camelot.admin.action import (list_action, application_action,
                                   document_action, form_action,
                                   list_filter, ApplicationActionGuiContext)
-
+from camelot.admin.action.application import Application
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.core.exception import CancelRequest, UserException
@@ -109,11 +109,16 @@ class ActionStepsCase(ExampleModelCase, GrabMixinCase):
 
     images_path = test_view.static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        super(ActionStepsCase, cls).setUpClass()
+        cls.setup_sample_model()
+
     def setUp(self):
         ExampleModelCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
-        self.load_test_data()
+        self.load_example_data()
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
@@ -333,15 +338,19 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.group_box_filter = list_filter.GroupBoxFilter('director.last_name',
-                                                          exclusive=True)
+        super(ListActionsCase, cls).setUpClass()
+        cls.setup_sample_model()
+        cls.group_box_filter = list_filter.GroupBoxFilter(
+            'director.last_name', exclusive=True
+        )
         cls.combo_box_filter = list_filter.ComboBoxFilter('director.last_name')
         cls.editor_filter = list_filter.EditorFilter('title')
 
     def setUp( self ):
-        super( ListActionsCase, self ).setUp()
+        super(ListActionsCase, self).setUp()
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
+        self.load_example_data()
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin(Movie)
         item_model = CollectionProxy(self.movie_admin)
@@ -582,9 +591,11 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         list_model = item_view.model()
         list_model.sort(1, Qt.DescendingOrder)
         list_model.timeout_slot()
+        self.process()
         list_model.headerData(0, Qt.Vertical, ObjectRole)
         list_model.data(list_model.index(0, 0), Qt.DisplayRole)
         list_model.timeout_slot()
+        self.process()
         self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))
         model_context = self.gui_context.create_model_context()
         open_form_view_action = list_action.OpenFormView()
@@ -691,11 +702,15 @@ class FormActionsCase(
 
     images_path = test_view.static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        super(FormActionsCase, cls).setUpClass()
+        cls.setup_sample_model()
+
     def setUp( self ):
         super(FormActionsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
-        self.setup_sample_model()
-        self.load_test_data()
+        self.load_example_data()
         self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.model_context = MockModelContext()
         self.model_context.obj = Person.query.first()
@@ -705,10 +720,6 @@ class FormActionsCase(
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
         self.gui_context.widget_mapper.setModel(self.item_model)
         self.gui_context.admin = self.app_admin.get_related_admin( Person )
-
-    def tearDown(self):
-        super(FormActionsCase, self).tearDown()
-        self.tear_down_sample_model()
 
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
@@ -734,22 +745,19 @@ class FormActionsCase(
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )
 
-class ApplicationCase(test_model.ExampleModelCase, GrabMixinCase):
+class ApplicationCase(RunningThreadCase, GrabMixinCase):
 
     def setUp(self):
         super( ApplicationCase, self ).setUp()
-        from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.admin = self.app_admin
 
     def test_application(self):
-        from camelot.admin.action.application import Application
         app = Application(self.app_admin)
         list(app.model_run(self.context))
         
     def test_custom_application(self):
-        from camelot.admin.action.application import Application
 
         # begin custom application
         class CustomApplication(Application):
@@ -767,6 +775,11 @@ class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     """
 
     images_path = test_view.static_images_path
+
+    @classmethod
+    def setUpClass(cls):
+        super(ApplicationActionsCase, cls).setUpClass()
+        cls.setup_sample_model()
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
