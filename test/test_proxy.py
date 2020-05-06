@@ -3,7 +3,7 @@ import logging
 import unittest
 
 from camelot.core.item_model import (
-    AbstractModelFilter,ListModelProxy, QueryModelProxy
+    AbstractModelFilter, ListModelProxy, QueryModelProxy
 )
 
 from camelot.model.party import Person, Party
@@ -158,7 +158,7 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
     def setUpClass(cls):
         super(QueryModelProxyCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_test_data()
+        cls.load_example_data()
 
     @classmethod
     def tearDownClass(cls):

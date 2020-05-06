@@ -613,9 +613,9 @@ class SetColumns(object):
             #
             # Set the header data
             #
-            
             set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
+            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
+            set_header_data(py_to_variant({'editable': fa.get('editable', True)}), FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.FontRole)
             else:
@@ -1104,16 +1104,19 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # prevent data of being set in rows not actually in this model
         #
         if (not index.isValid()) or (index.model()!=self):
+            self.logger.debug('set data index is invalid')
             return False
         if role == Qt.EditRole:
+            column = index.column()
             # if the field is not editable, don't waste any time and get out of here
-            field_attributes = variant_to_py(self.data(index, FieldAttributesRole))
-            if field_attributes.get('editable') != True:
+            field_attributes = variant_to_py(self.headerData(column, Qt.Horizontal, FieldAttributesRole))
+            if field_attributes.get('editable', True) != True:
+                self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
                 return
             row = index.row()
-            column = index.column()
             obj = variant_to_py(self.headerData(row, Qt.Vertical, ObjectRole))
             if obj is None:
+                logger.debug('set data called on row without object')
                 return
             self.logger.debug('set data ({0},{1})'.format(row, column))
             self._update_requests.append((row, obj, column, value))

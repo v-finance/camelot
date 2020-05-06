@@ -114,6 +114,12 @@ class RunningThreadCase(unittest.TestCase):
         model_thread._model_thread_.remove(cls.thread)
         cls.thread.stop()
 
+    @classmethod
+    def process(cls):
+        """Wait until all events are processed and the queues of the model thread are empty"""
+        cls.thread.wait_on_work()
+        QtCore.QCoreApplication.instance().processEvents()
+
 class ModelThreadTestCase(unittest.TestCase):
     """Base class for implementing test cases that need a running model_thread.
     """

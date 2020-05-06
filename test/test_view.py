@@ -20,7 +20,7 @@ from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_strin
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
 from camelot import test
-from camelot.test import GrabMixinCase
+from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import action_steps
 from camelot.view.action_steps import OpenFormView
 from camelot.view.art import ColorScheme
@@ -39,7 +39,7 @@ from camelot.model.party import Person
 
 from .import app_admin
 
-from .test_item_model import A, ItemModelCase
+from .test_item_model import A, ItemModelCaseMixin
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -991,14 +991,18 @@ class CamelotEntityViewsTest(
             if admin.entity.__module__.startswith('camelot.model'):
                 yield admin
 
-class SnippetsTest(ItemModelCase, GrabMixinCase):
+class SnippetsTest(RunningThreadCase,
+    ExampleModelMixinCase, ItemModelCaseMixin, GrabMixinCase
+    ):
 
     images_path = static_images_path
 
-    def setUp(self):
-        super(SnippetsTest, self).setUp()
-        self.app_admin = ApplicationAdmin()
-        self.gui_context = GuiContext()
+    @classmethod
+    def setUpClass(cls):
+        super(SnippetsTest, cls).setUpClass()
+        cls.thread.post(cls.setup_sample_model)
+        cls.app_admin = ApplicationAdmin()
+        cls.gui_context = GuiContext()
 
     def test_fields_with_actions(self):
         coordinate = Coordinate()
@@ -1022,5 +1026,6 @@ class SnippetsTest(ItemModelCase, GrabMixinCase):
             Person(first_name='eric', last_name='Idle')
         ])
         editor.set_value(proxy)
+        self.process()
         self._load_data(editor.get_model())
         self.grab_widget(editor)
