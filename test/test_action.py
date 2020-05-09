@@ -102,7 +102,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase(ExampleModelCase, GrabMixinCase):
+class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
