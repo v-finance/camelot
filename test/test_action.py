@@ -352,7 +352,6 @@ class ListActionsCase(
     @classmethod
     def setUpClass(cls):
         super(ListActionsCase, cls).setUpClass()
-        ##cls.setup_sample_model()
         cls.thread.post(cls.setup_sample_model)
         cls.thread.post(cls.load_example_data)
         cls.group_box_filter = list_filter.GroupBoxFilter(
@@ -366,28 +365,16 @@ class ListActionsCase(
         super(ListActionsCase, self).setUp()
         self.thread.post(self.session.close)
         self.process()
-        ##self.load_example_data()
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
         self.setup_item_model(self.admin)
         self.movie_admin = self.app_admin.get_related_admin(Movie)
-        
-        ##item_model = CollectionProxy(self.movie_admin)
-        ##list(item_model.add_columns(self.movie_admin.list_display))
-        ##item_model.set_value(self.movie_admin.get_proxy(self.session.query(Movie)))
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        ##item_model.rowCount()
-        ##item_model.timeout_slot()
-        ##item_model.headerData(0, Qt.Vertical, ObjectRole)
-        ##item_model.timeout_slot()
         table_view = tableview.AdminTableWidget(self.admin)
         table_view.setModel(self.item_model)
-        # make sure there is data at (0,0), so it can be selected
-        ##item_model.data(item_model.index(0,0), Qt.DisplayRole)
-        ##item_model.timeout_slot()
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         # create gui context
