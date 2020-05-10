@@ -517,7 +517,7 @@ class CollectionProxyCase(RunningThreadCase, ItemModelCaseMixin):
         returned_list.remove(z0)
         self.assertFalse( z0 in a0.z )
 
-class QueryQStandardItemModelMixinCase(object):
+class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
     """
@@ -525,14 +525,14 @@ class QueryQStandardItemModelMixinCase(object):
     @classmethod
     def setup_item_model(cls, admin):
         cls.item_model = CollectionProxy(admin)
-        cls.item_model.set_value(admin.get_proxy(admin.get_query()))
+        cls.item_model.set_value(admin.get_proxy(admin.get_query(cls.session)))
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
         cls.item_model.timeout_slot()
 
 class QueryQStandardItemModelCase(
     RunningThreadCase,
-    QueryQStandardItemModelMixinCase, ExampleModelMixinCase, ItemModelCaseMixin):
+    QueryQStandardItemModelMixinCase, ExampleModelMixinCase):
     """Test the functionality of A QStandardItemModel
     representing a query
     """

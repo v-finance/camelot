@@ -32,7 +32,6 @@ import time
 
 import six
 
-from ...core.conf import settings
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext

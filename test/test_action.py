@@ -25,11 +25,14 @@ from camelot.model.party import Person
 
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
+from camelot.view.action_runner import ActionRunner
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls import tableview, actionsbox, progress_dialog
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view import utils
+
+from camelot_example.model import Movie
 
 from . import test_view
 from . import test_model
@@ -37,6 +40,9 @@ from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
+
+LOGGER = logging.getLogger(__name__)
+
 
 class ActionBaseCase(RunningThreadCase):
 
@@ -330,7 +336,9 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         dialog.show()
         self.grab_widget(dialog)
 
-class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
+class ListActionsCase(
+    RunningThreadCase,
+    GrabMixinCase, ExampleModelMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
 
@@ -339,43 +347,47 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     @classmethod
     def setUpClass(cls):
         super(ListActionsCase, cls).setUpClass()
-        cls.setup_sample_model()
+        ##cls.setup_sample_model()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
         cls.group_box_filter = list_filter.GroupBoxFilter(
             'director.last_name', exclusive=True
         )
         cls.combo_box_filter = list_filter.ComboBoxFilter('director.last_name')
         cls.editor_filter = list_filter.EditorFilter('title')
+        cls.process()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
-        from camelot_example.model import Movie
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.load_example_data()
+        ##self.load_example_data()
         self.app_admin = ApplicationAdmin()
+        self.admin = self.app_admin.get_related_admin(Person)
+        self.setup_item_model(self.admin)
         self.movie_admin = self.app_admin.get_related_admin(Movie)
-        item_model = CollectionProxy(self.movie_admin)
-        list(item_model.add_columns(self.movie_admin.list_display))
-        item_model.set_value(self.movie_admin.get_proxy(self.session.query(Movie)))
+        
+        ##item_model = CollectionProxy(self.movie_admin)
+        ##list(item_model.add_columns(self.movie_admin.list_display))
+        ##item_model.set_value(self.movie_admin.get_proxy(self.session.query(Movie)))
         # make sure the model has rows and header data
-        item_model.rowCount()
-        item_model.timeout_slot()
-        item_model.headerData(0, Qt.Vertical, ObjectRole)
-        item_model.timeout_slot()
-        table_view = tableview.AdminTableWidget(self.movie_admin)
-        table_view.setModel(item_model)
+        self._load_data(self.item_model)
+        ##item_model.rowCount()
+        ##item_model.timeout_slot()
+        ##item_model.headerData(0, Qt.Vertical, ObjectRole)
+        ##item_model.timeout_slot()
+        table_view = tableview.AdminTableWidget(self.admin)
+        table_view.setModel(self.item_model)
         # make sure there is data at (0,0), so it can be selected
-        item_model.data(item_model.index(0,0), Qt.DisplayRole)
-        item_model.timeout_slot()
+        ##item_model.data(item_model.index(0,0), Qt.DisplayRole)
+        ##item_model.timeout_slot()
         # select the first row
-        table_view.setCurrentIndex(item_model.index(0, 0))
+        table_view.setCurrentIndex(self.item_model.index(0, 0))
         # create gui context
         self.gui_context = list_action.ListActionGuiContext()
-        self.gui_context.admin = self.movie_admin
+        self.gui_context.admin = self.admin
         self.gui_context.view = table_view
         self.gui_context.item_view = table_view.findChild(QtWidgets.QTableView)
-        self.context = self.gui_context.create_model_context()
+        self.model_context = self.gui_context.create_model_context()
         # create a model context
-        self.context = self.gui_context.create_model_context()
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
     def tearDown( self ):
@@ -612,22 +624,71 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         post_duplication = query.count()
         #self.assertEqual( pre_duplication + 1, post_duplication )
 
-    def test_delete_selection( self ):
-        selected_object = self.context.get_object()
-        session = orm.object_session(selected_object)
-        self.assertTrue(selected_object in session )
+    def test_delete_selection(self):
+        selected_object = self.model_context.get_object()
+        self.assertTrue(selected_object in self.session)
         delete_selection_action = list_action.DeleteSelection()
         delete_selection_action.gui_run( self.gui_context )
-        list( delete_selection_action.model_run( self.context ) )
-        self.assertFalse(selected_object in session )
+        self.process()
+        self.assertFalse(selected_object in self.session)
 
-    def test_add_existing_object( self ):
-        from camelot_example.model import Movie
-        add_existing_object_action = list_action.AddExistingObject()
-        generator = add_existing_object_action.model_run( self.gui_context.create_model_context() )
-        select_objects_step = six.advance_iterator(generator)
-        generator.send([Movie(title='Unknown')])
-        list(generator)
+    @classmethod
+    def gui_run(cls, action, gui_context):
+        """
+        Simulates the gui_run of an action, but instead of blocking,
+        yields progress each time a message is received from the model.
+        """
+
+        class IteratingActionRunner(ActionRunner):
+
+            def __init__(self, generator_function, gui_context):
+                super(IteratingActionRunner, self).__init__(
+                    generator_function, gui_context
+                )
+                self.return_queue = []
+                cls.process()
+
+            @QtCore.qt_slot( object )
+            def generator(self, generator):
+                LOGGER.debug('got generator')
+                self._generator = generator
+
+            @QtCore.qt_slot( object )
+            def __next__(self, yielded):
+                LOGGER.debug('got step {}'.format(yielded))
+                self.return_queue.append(yielded)
+
+            def run(self):
+                super(IteratingActionRunner, self).generator(self._generator)
+                cls.process()
+                step = self.return_queue.pop()
+                LOGGER.debug('yield step {}'.format(step))
+                gui_result = yield step
+                LOGGER.debug('post result {}'.format(gui_result))
+                cls.thread.post(
+                    self._iterate_until_blocking,
+                    self.__next__,
+                    args = (self._generator.send, gui_result,)
+                )
+                cls.process()
+                update = self.return_queue.pop()
+                LOGGER.debug('run update')
+                update.gui_run(gui_context)
+                LOGGER.debug("iterator finished")
+                yield None
+
+        runner = IteratingActionRunner(action.model_run, gui_context)
+        yield from runner.run()
+
+    def test_add_existing_object(self):
+        initial_row_count = self._row_count(self.item_model)
+        action = list_action.AddExistingObject()
+        steps = self.gui_run(action, self.gui_context)
+        for step in steps:
+            if isinstance(step, action_steps.SelectObjects):
+                steps.send([Person(first_name='Unknown', last_name='Unknown')])
+        new_row_count = self._row_count(self.item_model)
+        self.assertEqual(new_row_count, initial_row_count+1)
 
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
@@ -770,7 +831,9 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase):
         application = CustomApplication(self.app_admin)
         application.gui_run(GuiContext())
 
-class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
+class ApplicationActionsCase(
+    RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
+    ):
     """Test application actions.
     """
 

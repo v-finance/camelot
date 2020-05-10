@@ -912,8 +912,8 @@ class PartyAdmin( EntityAdmin ):
         for party_address in party.addresses:
             yield party_address
 
-    def get_query( self ):
-        query = super( PartyAdmin, self ).get_query()
+    def get_query(self, session=None):
+        query = super(PartyAdmin, self).get_query(session)
         query = query.options( orm.selectinload('contact_mechanisms') )
         query = query.options( orm.selectinload('addresses').joinedload('address') )
         return query
