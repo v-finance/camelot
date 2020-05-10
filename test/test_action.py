@@ -602,12 +602,12 @@ class ListActionsCase(
         self.assertTrue(isinstance(form_value, ListModelProxy))
         
     def test_duplicate_selection( self ):
-        query = self.context.admin.entity.query
-        pre_duplication = query.count()
-        duplicate_selection_action = list_action.DuplicateSelection()
-        duplicate_selection_action.model_run( self.context )
-        post_duplication = query.count()
-        #self.assertEqual( pre_duplication + 1, post_duplication )
+        initial_row_count = self._row_count(self.item_model)
+        action = list_action.DuplicateSelection()
+        action.gui_run(self.gui_context)
+        self.process()
+        new_row_count = self._row_count(self.item_model)
+        self.assertEqual(new_row_count, initial_row_count+1)
 
     def test_delete_selection(self):
         selected_object = self.model_context.get_object()
