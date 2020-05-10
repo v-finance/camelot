@@ -369,6 +369,8 @@ class ListActionsCase(
         ##self.load_example_data()
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(Person)
+        self.thread.post(self.setup_proxy)
+        self.process()
         self.setup_item_model(self.admin)
         self.movie_admin = self.app_admin.get_related_admin(Movie)
         
@@ -761,7 +763,7 @@ class ListActionsCase(
                                 self.combo_box_filter])
 
 class FormActionsCase(
-    unittest.TestCase,
+    RunningThreadCase,
     ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
@@ -777,6 +779,8 @@ class FormActionsCase(
         super(FormActionsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
         self.load_example_data()
+        self.thread.post(self.setup_proxy)
+        self.process()
         self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.model_context = MockModelContext()
         self.model_context.obj = Person.query.first()
