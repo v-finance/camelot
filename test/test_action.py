@@ -723,11 +723,11 @@ class ListActionsCase(
         list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
 
     def test_set_filters(self):
-        set_filters = list_action.SetFilters()
-        generator = set_filters.model_run(self.context)
-        for step in generator:
+        action = list_action.SetFilters()
+        steps = self.gui_run(action, self.gui_context)
+        for step in steps:
             if isinstance(step, action_steps.ChangeField):
-                generator.send(('name', 'test'))
+                steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
