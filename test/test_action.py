@@ -529,8 +529,9 @@ class ListActionsCase(
         self.assertEqual( mapping.field, 'rating' )
 
     def test_import_from_xls_file( self ):
-        with self.assertRaises(UserException):
-            self.test_import_from_file( 'import_example.xls' )
+        with self.assertRaises(Exception) as ec:
+            self.test_import_from_file('import_example.xls')
+        self.assertIn('xls is not a supported', str(ec.exception))
 
     def test_import_from_xlsx_file( self ):
         self.test_import_from_file( 'import_example.xlsx' )
@@ -655,12 +656,18 @@ class ListActionsCase(
                     generator_function, gui_context
                 )
                 self.return_queue = []
+                self.exception_queue = []
                 cls.process()
 
             @QtCore.qt_slot( object )
             def generator(self, generator):
                 LOGGER.debug('got generator')
                 self._generator = generator
+
+            @QtCore.qt_slot( object )
+            def exception(self, exception_info):
+                LOGGER.debug('got exception {}'.format(exception_info))
+                self.exception_queue.append(exception_info)
 
             @QtCore.qt_slot( object )
             def __next__(self, yielded):
@@ -681,9 +688,12 @@ class ListActionsCase(
                     cls.thread.post(
                         self._iterate_until_blocking,
                         self.__next__,
+                        self.exception,
                         args = (self._generator.send, gui_result,)
                     )
                     cls.process()
+                    if len(self.exception_queue):
+                        raise Exception(self.exception_queue.pop().text)
                     step = self.return_queue.pop()
                 LOGGER.debug("iteration finished")
                 yield None
