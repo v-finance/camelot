@@ -281,16 +281,13 @@ class ToLastForm( list_action.AbstractToLast, CloseForm ):
         return action_steps.ToLastForm()
 
 def structure_to_form_actions( structure ):
-    """Convert a list of python objects to a list of form actions.  If the python
-    object is a tuple, a CallMethod is constructed with this tuple as arguments.  If
-    the python object is an instance of as Action, it is kept as is.
+    """Convert a list of python objects to a list of form actions.
+    If the python object is an instance of as Action, it is kept as is.
     """
-    from .list_action import CallMethod
-    
+
     def object_to_action( o ):
-        if isinstance( o, Action ):
-            return o
-        return CallMethod( o[0], o[1] )
+        assert isinstance( o, Action )
+        return o
 
     return [object_to_action( o ) for o in structure]
 

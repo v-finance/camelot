@@ -698,10 +698,6 @@ class ListActionsCase(
         remove_selection_action = list_action.RemoveSelection()
         list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
 
-    def test_call_method(self):
-        call_method_action = list_action.CallMethod( 'Call', lambda x:True )
-        list( call_method_action.model_run( self.context ) )
-
     def test_set_filters(self):
         set_filters = list_action.SetFilters()
         generator = set_filters.model_run(self.context)
