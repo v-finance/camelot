@@ -3,6 +3,8 @@ import logging
 import os
 import unittest
 
+import openpyxl
+
 from sqlalchemy import orm
 
 import six
@@ -25,6 +27,7 @@ from camelot.model.party import Person
 
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
+from camelot.view.action_steps.orm import AbstractCrudSignal
 from camelot.view.action_runner import ActionRunner
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -453,12 +456,13 @@ class ListActionsCase(
             self.grab_widget( dialog )
 
     def test_export_spreadsheet( self ):
-        export_spreadsheet = list_action.ExportSpreadsheet()
-        for step in export_spreadsheet.model_run( self.context ):
-            if isinstance( step, action_steps.OpenFile ):
-                # see if the generated file can be parsed
+        action = list_action.ExportSpreadsheet()
+        for step in self.gui_run(action, self.gui_context):
+            if isinstance(step, action_steps.OpenFile):
                 filename = step.get_path()
-                #openpyxl.load_workbook(filename)
+        self.assertTrue(filename)
+        # see if the generated file can be parsed
+        openpyxl.load_workbook(filename)
 
     def test_save_restore_export_mapping(self):
         from camelot_example.model import Movie
@@ -672,19 +676,21 @@ class ListActionsCase(
                 super(IteratingActionRunner, self).generator(self._generator)
                 cls.process()
                 step = self.return_queue.pop()
-                LOGGER.debug('yield step {}'.format(step))
-                gui_result = yield step
-                LOGGER.debug('post result {}'.format(gui_result))
-                cls.thread.post(
-                    self._iterate_until_blocking,
-                    self.__next__,
-                    args = (self._generator.send, gui_result,)
-                )
-                cls.process()
-                update = self.return_queue.pop()
-                LOGGER.debug('run update')
-                update.gui_run(gui_context)
-                LOGGER.debug("iterator finished")
+                while isinstance(step, ActionStep):
+                    if isinstance(step, AbstractCrudSignal):
+                        LOGGER.debug('crud step, update view')
+                        step.gui_run(gui_context)
+                    LOGGER.debug('yield step {}'.format(step))
+                    gui_result = yield step
+                    LOGGER.debug('post result {}'.format(gui_result))
+                    cls.thread.post(
+                        self._iterate_until_blocking,
+                        self.__next__,
+                        args = (self._generator.send, gui_result,)
+                    )
+                    cls.process()
+                    step = self.return_queue.pop()
+                LOGGER.debug("iteration finished")
                 yield None
 
         runner = IteratingActionRunner(action.model_run, gui_context)
