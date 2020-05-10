@@ -633,6 +633,31 @@ class ListActionsCase(
         self.assertFalse(selected_object in self.session)
 
     @classmethod
+    def get_state(cls, action, gui_context):
+        """
+        Get the state of an action in the model thread and return
+        the result.
+        """
+        model_context = gui_context.create_model_context()
+
+        class StateRegister(QtCore.QObject):
+
+            def __init__(self):
+                super(StateRegister, self).__init__()
+                self.state = None
+
+            @QtCore.qt_slot(object)
+            def set_state(self, state):
+                self.state = state
+
+        state_register = StateRegister()
+        cls.thread.post(
+            action.get_state, state_register.set_state, args=(model_context,)
+        )
+        cls.process()
+        return state_register.state
+
+    @classmethod
     def gui_run(cls, action, gui_context):
         """
         Simulates the gui_run of an action, but instead of blocking,
@@ -715,7 +740,7 @@ class ListActionsCase(
         self.grab_widget(widget)
 
     def test_combo_box_filter(self):
-        state = self.combo_box_filter.get_state(self.context)
+        state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
         widget = self.combo_box_filter.render(self.gui_context, None)
         widget.set_state(state)
