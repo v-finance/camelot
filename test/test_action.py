@@ -574,16 +574,16 @@ class ListActionsCase(
                 self.grab_widget(dialog, suffix='confirmation')
 
     def test_replace_field_contents( self ):
-        replace = list_action.ReplaceFieldContents()
-        generator = replace.model_run( self.context )
-        for step in generator:
-            if isinstance( step, action_steps.ChangeField ):
+        action = list_action.ReplaceFieldContents()
+        steps = self.gui_run(action, self.gui_context)
+        for step in steps:
+            if isinstance(step, action_steps.ChangeField):
                 dialog = step.render()
                 field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
-                field_editor.set_value( 'rating' )
+                field_editor.set_value('first_name')
                 dialog.show()
                 self.grab_widget( dialog )
-                generator.send( ('rating', 3) )
+                steps.send(('first_name', 'known'))
 
     def test_open_form_view( self ):
         # sort and filter the original model
