@@ -227,49 +227,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context.view = self.view
         return new_context
 
-class CallMethod( Action ):
-    """
-    Call a method on all objects in a selection, and flush the
-    session.
-    
-    :param verbose_name: the name of the action, as it should appear
-        to the user
-    :param method: the method to call on the objects
-    :param enabled: method to call on objects to verify if the action is
-        enabled, by default the action is always enabled
-        
-    This action can be used either within :attr:`list_actions` or within
-    :attr:`form_actions`.
-    """
-        
-    def __init__( self, verbose_name, method, enabled=None ):
-        self.verbose_name = verbose_name
-        self.method = method
-        self.enabled = enabled
-        
-    def model_run( self, model_context ):
-        from camelot.view.action_steps import ( UpdateProgress, 
-                                                FlushSession,
-                                                UpdateObjects )
-        step = max( 1, model_context.selection_count / 100 )
-        for i, obj in enumerate( model_context.get_selection() ):
-            if i%step == 0:
-                yield UpdateProgress( i, model_context.selection_count )
-            self.method( obj )
-            # the object might have changed without the need to be flushed
-            # to the database
-            yield UpdateObjects((obj,))
-        yield FlushSession(model_context.session)
-        
-    def get_state( self, model_context ):
-        state = super( CallMethod, self ).get_state( model_context )
-        if self.enabled != None:
-            for obj in model_context.get_selection():
-                if not self.enabled( obj ):
-                    state.enabled = False
-                    break
-        return state
-            
+
 class ListContextAction( Action ):
     """An base class for actions that should only be enabled if the
     gui_context is a :class:`ListActionModelContext`

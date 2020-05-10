@@ -3,6 +3,8 @@ import logging
 import os
 import unittest
 
+import openpyxl
+
 from sqlalchemy import orm
 
 import six
@@ -25,11 +27,17 @@ from camelot.model.party import Person
 
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
+from camelot.view.action_steps.orm import AbstractCrudSignal
+from camelot.view.action_runner import ActionRunner
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls import tableview, actionsbox, progress_dialog
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view import utils
+from camelot.view.import_utils import (
+    RowData, ColumnMapping, MatchNames, ColumnMappingAdmin
+)
+
+from camelot_example.model import Movie
 
 from . import test_view
 from . import test_model
@@ -37,6 +45,9 @@ from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelCase, ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
+
+LOGGER = logging.getLogger(__name__)
+
 
 class ActionBaseCase(RunningThreadCase):
 
@@ -102,7 +113,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase(ExampleModelCase, GrabMixinCase):
+class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -330,7 +341,9 @@ class ActionStepsCase(ExampleModelCase, GrabMixinCase):
         dialog.show()
         self.grab_widget(dialog)
 
-class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
+class ListActionsCase(
+    RunningThreadCase,
+    GrabMixinCase, ExampleModelMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
 
@@ -339,43 +352,38 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
     @classmethod
     def setUpClass(cls):
         super(ListActionsCase, cls).setUpClass()
-        cls.setup_sample_model()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
         cls.group_box_filter = list_filter.GroupBoxFilter(
-            'director.last_name', exclusive=True
+            'last_name', exclusive=True
         )
-        cls.combo_box_filter = list_filter.ComboBoxFilter('director.last_name')
-        cls.editor_filter = list_filter.EditorFilter('title')
+        cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
+        cls.editor_filter = list_filter.EditorFilter('last_name')
+        cls.process()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
-        from camelot_example.model import Movie
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.load_example_data()
+        self.thread.post(self.session.close)
+        self.process()
         self.app_admin = ApplicationAdmin()
+        self.admin = self.app_admin.get_related_admin(Person)
+        self.thread.post(self.setup_proxy)
+        self.process()
+        self.setup_item_model(self.admin)
         self.movie_admin = self.app_admin.get_related_admin(Movie)
-        item_model = CollectionProxy(self.movie_admin)
-        list(item_model.add_columns(self.movie_admin.list_display))
-        item_model.set_value(self.movie_admin.get_proxy(self.session.query(Movie)))
         # make sure the model has rows and header data
-        item_model.rowCount()
-        item_model.timeout_slot()
-        item_model.headerData(0, Qt.Vertical, ObjectRole)
-        item_model.timeout_slot()
-        table_view = tableview.AdminTableWidget(self.movie_admin)
-        table_view.setModel(item_model)
-        # make sure there is data at (0,0), so it can be selected
-        item_model.data(item_model.index(0,0), Qt.DisplayRole)
-        item_model.timeout_slot()
+        self._load_data(self.item_model)
+        table_view = tableview.AdminTableWidget(self.admin)
+        table_view.setModel(self.item_model)
         # select the first row
-        table_view.setCurrentIndex(item_model.index(0, 0))
+        table_view.setCurrentIndex(self.item_model.index(0, 0))
         # create gui context
         self.gui_context = list_action.ListActionGuiContext()
-        self.gui_context.admin = self.movie_admin
+        self.gui_context.admin = self.admin
         self.gui_context.view = table_view
         self.gui_context.item_view = table_view.findChild(QtWidgets.QTableView)
-        self.context = self.gui_context.create_model_context()
+        self.model_context = self.gui_context.create_model_context()
         # create a model context
-        self.context = self.gui_context.create_model_context()
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
     def tearDown( self ):
@@ -390,21 +398,6 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         list( model_context.get_collection() )
         list( model_context.get_selection() )
         model_context.get_object()
-
-    def test_sqlalchemy_command( self ):
-        model_context = self.context
-        from camelot.model.batch_job import BatchJobType
-        # create a batch job to test with
-        bt = BatchJobType( name = 'audit' )
-        model_context.session.add( bt )
-        bt.flush()
-        # begin issue a query through the model_context
-        model_context.session.query( BatchJobType ).update( values = {'name':'accounting audit'},
-                                                            synchronize_session = 'evaluate' )
-        # end issue a query through the model_context
-        #
-        # the batch job should have changed
-        self.assertEqual( bt.name, 'accounting audit' )
 
     def test_change_row_actions( self ):
         from camelot.test.action import MockListActionGuiContext
@@ -431,20 +424,23 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         #self.assertTrue( get_state( to_first ).enabled )
         #self.assertTrue( get_state( to_previous ).enabled )
 
-    def test_print_preview( self ):
-        print_preview = list_action.PrintPreview()
-        for step in print_preview.model_run( self.context ):
-            dialog = step.render( self.gui_context )
-            dialog.show()
-            self.grab_widget( dialog )
+    def test_print_preview(self):
+        action = list_action.PrintPreview()
+        for step in self.gui_run(action, self.gui_context):
+            if isinstance(step, action_steps.PrintPreview):
+                dialog = step.render(self.gui_context)
+                dialog.show()
+                self.grab_widget(dialog)
+        self.assertTrue(dialog)
 
     def test_export_spreadsheet( self ):
-        export_spreadsheet = list_action.ExportSpreadsheet()
-        for step in export_spreadsheet.model_run( self.context ):
-            if isinstance( step, action_steps.OpenFile ):
-                # see if the generated file can be parsed
+        action = list_action.ExportSpreadsheet()
+        for step in self.gui_run(action, self.gui_context):
+            if isinstance(step, action_steps.OpenFile):
                 filename = step.get_path()
-                #openpyxl.load_workbook(filename)
+        self.assertTrue(filename)
+        # see if the generated file can be parsed
+        openpyxl.load_workbook(filename)
 
     def test_save_restore_export_mapping(self):
         from camelot_example.model import Movie
@@ -490,29 +486,29 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
 
         self.assertEqual(model_context.selection[0].field, 'field_1')
 
-    def test_match_names( self ):
-        from camelot.view.import_utils import (RowData, ColumnMapping, MatchNames,
-                                               ColumnMappingAdmin)
-
-        rows = [['rating', 'name'],
-                ['5',      'The empty bitbucket']
-                ]
-        fields = [field for field, _fa in self.context.admin.get_columns()]
+    def test_match_names(self):
+        rows = [
+            ['first_name', 'last_name'],
+            ['Unknown',    'Unknown'],
+        ]
+        fields = [field for field, _fa in self.gui_context.admin.get_columns()]
         mapping = ColumnMapping(0, rows)
-        self.assertNotEqual( mapping.field, 'rating' )
+        self.assertNotEqual(mapping.field, 'first_name' )
         
         match_names = MatchNames()
         model_context = MockModelContext()
         model_context.obj = mapping
-        model_context.admin = ColumnMappingAdmin(self.context.admin,
-                                                 field_choices=[(f,f) for f in fields])
-        
+        model_context.admin = ColumnMappingAdmin(
+            self.gui_context.admin,
+            field_choices=[(f,f) for f in fields]
+        )
         list(match_names.model_run(model_context))
-        self.assertEqual( mapping.field, 'rating' )
+        self.assertEqual(mapping.field, 'first_name')
 
     def test_import_from_xls_file( self ):
-        with self.assertRaises(UserException):
-            self.test_import_from_file( 'import_example.xls' )
+        with self.assertRaises(Exception) as ec:
+            self.test_import_from_file('import_example.xls')
+        self.assertIn('xls is not a supported', str(ec.exception))
 
     def test_import_from_xlsx_file( self ):
         self.test_import_from_file( 'import_example.xlsx' )
@@ -532,58 +528,36 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         self.assertEqual(utils.bool_from_string(row[5]), True)
         self.assertEqual(utils.bool_from_string(row[6]), False)
 
-    def test_import_from_file( self, filename = 'import_example.csv' ):
-        from camelot.model.party import Person
-        self.context.obj = Person.query.first() # need an object, to have a
-                                                # session
-        #self.assertTrue( self.context.obj != None )
-        self.context.admin = self.app_admin.get_related_admin( Person )
-        import_from_file = list_action.ImportFromFile()
-        generator = import_from_file.model_run( self.context )
+    def test_import_from_file(self, filename='import_example.csv'):
+        action = list_action.ImportFromFile()
+        generator = self.gui_run(action, self.gui_context)
         for step in generator:
-            if isinstance( step, action_steps.SelectFile ):
+            if isinstance(step, action_steps.SelectFile):
                 generator.send([os.path.join(self.example_folder, filename)])
-            if isinstance( step, action_steps.ChangeObject ):
-                dialog = step.render( self.gui_context )
+            if isinstance(step, action_steps.ChangeObject):
+                dialog = step.render(self.gui_context)
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'column_selection' )
-            if isinstance( step, action_steps.ChangeObjects ):
+                self.grab_widget(dialog, suffix='column_selection')
+            if isinstance(step, action_steps.ChangeObjects):
                 dialog = step.render()
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'preview' )
-            if isinstance( step, action_steps.MessageBox ):
+                self.grab_widget(dialog, suffix='preview')
+            if isinstance(step, action_steps.MessageBox):
                 dialog = step.render()
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'confirmation' )
+                self.grab_widget(dialog, suffix='confirmation')
 
     def test_replace_field_contents( self ):
-        replace = list_action.ReplaceFieldContents()
-        generator = replace.model_run( self.context )
-        for step in generator:
-            if isinstance( step, action_steps.ChangeField ):
+        action = list_action.ReplaceFieldContents()
+        steps = self.gui_run(action, self.gui_context)
+        for step in steps:
+            if isinstance(step, action_steps.ChangeField):
                 dialog = step.render()
                 field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
-                field_editor.set_value( 'rating' )
+                field_editor.set_value('first_name')
                 dialog.show()
                 self.grab_widget( dialog )
-                generator.send( ('rating', 3) )
-
-    def test_drag_and_drop( self ):
-
-        class DropAction( Action ):
-            pass
-
-
-        mime_data = QtCore.QMimeData()
-        admin = self.context.admin
-        admin.drop_action = DropAction()
-
-        proxy = CollectionProxy(admin)
-        proxy.dropMimeData( mime_data,
-                            Qt.MoveAction,
-                            -1,
-                            -1,
-                            QtCore.QModelIndex() )
+                steps.send(('first_name', 'known'))
 
     def test_open_form_view( self ):
         # sort and filter the original model
@@ -605,29 +579,114 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         self.assertTrue(isinstance(form_value, ListModelProxy))
         
     def test_duplicate_selection( self ):
-        query = self.context.admin.entity.query
-        pre_duplication = query.count()
-        duplicate_selection_action = list_action.DuplicateSelection()
-        duplicate_selection_action.model_run( self.context )
-        post_duplication = query.count()
-        #self.assertEqual( pre_duplication + 1, post_duplication )
+        initial_row_count = self._row_count(self.item_model)
+        action = list_action.DuplicateSelection()
+        action.gui_run(self.gui_context)
+        self.process()
+        new_row_count = self._row_count(self.item_model)
+        self.assertEqual(new_row_count, initial_row_count+1)
 
-    def test_delete_selection( self ):
-        selected_object = self.context.get_object()
-        session = orm.object_session(selected_object)
-        self.assertTrue(selected_object in session )
+    def test_delete_selection(self):
+        selected_object = self.model_context.get_object()
+        self.assertTrue(selected_object in self.session)
         delete_selection_action = list_action.DeleteSelection()
         delete_selection_action.gui_run( self.gui_context )
-        list( delete_selection_action.model_run( self.context ) )
-        self.assertFalse(selected_object in session )
+        self.process()
+        self.assertFalse(selected_object in self.session)
 
-    def test_add_existing_object( self ):
-        from camelot_example.model import Movie
-        add_existing_object_action = list_action.AddExistingObject()
-        generator = add_existing_object_action.model_run( self.gui_context.create_model_context() )
-        select_objects_step = six.advance_iterator(generator)
-        generator.send([Movie(title='Unknown')])
-        list(generator)
+    @classmethod
+    def get_state(cls, action, gui_context):
+        """
+        Get the state of an action in the model thread and return
+        the result.
+        """
+        model_context = gui_context.create_model_context()
+
+        class StateRegister(QtCore.QObject):
+
+            def __init__(self):
+                super(StateRegister, self).__init__()
+                self.state = None
+
+            @QtCore.qt_slot(object)
+            def set_state(self, state):
+                self.state = state
+
+        state_register = StateRegister()
+        cls.thread.post(
+            action.get_state, state_register.set_state, args=(model_context,)
+        )
+        cls.process()
+        return state_register.state
+
+    @classmethod
+    def gui_run(cls, action, gui_context):
+        """
+        Simulates the gui_run of an action, but instead of blocking,
+        yields progress each time a message is received from the model.
+        """
+
+        class IteratingActionRunner(ActionRunner):
+
+            def __init__(self, generator_function, gui_context):
+                super(IteratingActionRunner, self).__init__(
+                    generator_function, gui_context
+                )
+                self.return_queue = []
+                self.exception_queue = []
+                cls.process()
+
+            @QtCore.qt_slot( object )
+            def generator(self, generator):
+                LOGGER.debug('got generator')
+                self._generator = generator
+
+            @QtCore.qt_slot( object )
+            def exception(self, exception_info):
+                LOGGER.debug('got exception {}'.format(exception_info))
+                self.exception_queue.append(exception_info)
+
+            @QtCore.qt_slot( object )
+            def __next__(self, yielded):
+                LOGGER.debug('got step {}'.format(yielded))
+                self.return_queue.append(yielded)
+
+            def run(self):
+                super(IteratingActionRunner, self).generator(self._generator)
+                cls.process()
+                step = self.return_queue.pop()
+                while isinstance(step, ActionStep):
+                    if isinstance(step, AbstractCrudSignal):
+                        LOGGER.debug('crud step, update view')
+                        step.gui_run(gui_context)
+                    LOGGER.debug('yield step {}'.format(step))
+                    gui_result = yield step
+                    LOGGER.debug('post result {}'.format(gui_result))
+                    cls.thread.post(
+                        self._iterate_until_blocking,
+                        self.__next__,
+                        self.exception,
+                        args = (self._generator.send, gui_result,)
+                    )
+                    cls.process()
+                    if len(self.exception_queue):
+                        raise Exception(self.exception_queue.pop().text)
+                    step = self.return_queue.pop()
+                LOGGER.debug("iteration finished")
+                yield None
+
+        runner = IteratingActionRunner(action.model_run, gui_context)
+        yield from runner.run()
+
+    def test_add_existing_object(self):
+        initial_row_count = self._row_count(self.item_model)
+        action = list_action.AddExistingObject()
+        steps = self.gui_run(action, self.gui_context)
+        for step in steps:
+            if isinstance(step, action_steps.SelectObjects):
+                steps.send([Person(first_name='Unknown', last_name='Unknown')])
+        new_row_count = self._row_count(self.item_model)
+        self.assertEqual(new_row_count, initial_row_count+1)
 
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
@@ -637,19 +696,15 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         remove_selection_action = list_action.RemoveSelection()
         list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
 
-    def test_call_method(self):
-        call_method_action = list_action.CallMethod( 'Call', lambda x:True )
-        list( call_method_action.model_run( self.context ) )
-
     def test_set_filters(self):
-        set_filters = list_action.SetFilters()
-        generator = set_filters.model_run(self.context)
-        for step in generator:
+        action = list_action.SetFilters()
+        steps = self.gui_run(action, self.gui_context)
+        for step in steps:
             if isinstance(step, action_steps.ChangeField):
-                generator.send(('name', 'test'))
+                steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
-        state = self.group_box_filter.get_state(self.context)
+        state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
         widget = self.group_box_filter.render(self.gui_context, None)
         widget.set_state(state)
@@ -658,7 +713,7 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         self.grab_widget(widget)
 
     def test_combo_box_filter(self):
-        state = self.combo_box_filter.get_state(self.context)
+        state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
         widget = self.combo_box_filter.render(self.gui_context, None)
         widget.set_state(state)
@@ -667,7 +722,7 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
         self.grab_widget(widget)
 
     def test_editor_filter(self):
-        state = self.editor_filter.get_state(self.context)
+        state = self.get_state(self.editor_filter, self.gui_context)
         self.assertTrue(len(state.modes))
         widget = self.editor_filter.render(self.gui_context, None)
         widget.set_state(state)
@@ -695,7 +750,7 @@ class ListActionsCase(test_model.ExampleModelCase, GrabMixinCase):
                                 self.combo_box_filter])
 
 class FormActionsCase(
-    unittest.TestCase,
+    RunningThreadCase,
     ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
@@ -711,6 +766,8 @@ class FormActionsCase(
         super(FormActionsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
         self.load_example_data()
+        self.thread.post(self.setup_proxy)
+        self.process()
         self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.model_context = MockModelContext()
         self.model_context.obj = Person.query.first()
@@ -770,7 +827,9 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase):
         application = CustomApplication(self.app_admin)
         application.gui_run(GuiContext())
 
-class ApplicationActionsCase(test_model.ExampleModelCase, GrabMixinCase):
+class ApplicationActionsCase(
+    RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
+    ):
     """Test application actions.
     """
 

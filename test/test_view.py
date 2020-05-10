@@ -10,6 +10,7 @@ import unittest
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.list_filter import SearchFilter
+from camelot.model.party import Person
 
 from camelot.admin.action import GuiContext
 from camelot.admin.application_admin import ApplicationAdmin
@@ -39,7 +40,7 @@ from camelot.model.party import Person
 
 from .import app_admin
 
-from .test_item_model import A, ItemModelCaseMixin
+from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -768,21 +769,24 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, 12, 'disabled')
 
 
-class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
+class ControlsTest(
+    RunningThreadCase,
+    QueryQStandardItemModelMixinCase, ExampleModelMixinCase, GrabMixinCase
+    ):
     """Test some basic controls"""
 
     images_path = static_images_path
 
     @classmethod
     def setUpClass(cls):
-        cls.setup_sample_model()
+        super(ControlsTest, cls).setUpClass()
+        cls.thread.post(cls.setup_sample_model)
         cls.app_admin = MyApplicationAdmin()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.tear_down_sample_model()
+        cls.process()
 
     def setUp(self):
+        self.thread.post(self.setup_proxy)
+        self.process()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
         
@@ -803,8 +807,6 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
         
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
-        from camelot.view.controls.tableview import TableView
-        from camelot.model.party import Person
 
         class SmallColumnsAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
@@ -813,21 +815,22 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
         widget = TableView(self.gui_context, admin)
         widget.set_admin(admin)
         model = widget.get_model()
-        model.set_value(admin.get_proxy(self.session.query(Person)))
+        model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
+        model.timeout_slot()
+        self.process()
         self.grab_widget( widget )
         model.timeout_slot()
+        self.process()
         widget.table.horizontalHeader()
 
-        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
-        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
 
-        self.assertTrue( first_name_width > suffix_width )
+        self.assertTrue(first_name_width > suffix_width)
 
     def test_column_width( self ):
         #create a table view for an Admin interface with small columns
-        from camelot.view.controls.tableview import TableView
-        from camelot.model.party import Person
 
         class ColumnWidthAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
@@ -840,17 +843,20 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
         widget = TableView(self.gui_context, admin)
         widget.set_admin(admin)
         model = widget.get_model()
-        model.set_value(admin.get_proxy(self.session.query(Person)))
+        model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
-        self.grab_widget( widget )
+        model.timeout_slot()
+        self.process()
+        self.grab_widget(widget)
         model = widget.get_model()
         model.timeout_slot()
+        self.process()
         widget.table.horizontalHeader()
 
-        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
-        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
 
-        self.assertEqual( first_name_width, suffix_width )
+        self.assertEqual(first_name_width, suffix_width)
 
     def test_column_group( self ):
         from camelot.admin.table import ColumnGroup

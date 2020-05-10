@@ -173,12 +173,21 @@ and used as a custom action.
             break
         return sql_attributes
 
-    def get_query(self):
-        """:return: an sqlalchemy query for all the objects that should be
+    def get_query(self, session=None):
+        """
+        Overwrite this method to configure eager loading strategies
+        to be used in a specific admin.
+
+        :param session: the session to be used to create a query.
+           Uses the default session if None is given.
+           Not passing the session is considered deprecated behavior.
+
+        :return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
         change the default query, which selects all rows in the database.
         """
-        return Session().query( self.entity )
+        session = session or Session()
+        return session.query(self.entity)
 
     def get_proxy(self, objects):
         """

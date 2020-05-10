@@ -517,24 +517,9 @@ class CollectionProxyCase(RunningThreadCase, ItemModelCaseMixin):
         returned_list.remove(z0)
         self.assertFalse( z0 in a0.z )
 
-class QueryQStandardItemModelMixinCase(object):
+class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
-    """
-
-    @classmethod
-    def setup_item_model(cls, admin):
-        cls.item_model = CollectionProxy(admin)
-        cls.item_model.set_value(admin.get_proxy(admin.get_query()))
-        cls.columns = ('first_name', 'last_name')
-        list(cls.item_model.add_columns(cls.columns))
-        cls.item_model.timeout_slot()
-
-class QueryQStandardItemModelCase(
-    RunningThreadCase,
-    QueryQStandardItemModelMixinCase, ExampleModelMixinCase, ItemModelCaseMixin):
-    """Test the functionality of A QStandardItemModel
-    representing a query
     """
 
     @classmethod
@@ -542,18 +527,34 @@ class QueryQStandardItemModelCase(
         cls.proxy = QueryModelProxy(cls.session.query(Person))
 
     @classmethod
+    def setup_item_model(cls, admin):
+        cls.item_model = CollectionProxy(admin)
+        cls.item_model.set_value(cls.proxy)
+        cls.columns = ('first_name', 'last_name')
+        list(cls.item_model.add_columns(cls.columns))
+        cls.item_model.timeout_slot()
+
+class QueryQStandardItemModelCase(
+    RunningThreadCase,
+    QueryQStandardItemModelMixinCase, ExampleModelMixinCase):
+    """Test the functionality of A QStandardItemModel
+    representing a query
+    """
+
+    @classmethod
     def setUpClass(cls):
         super(QueryQStandardItemModelCase, cls).setUpClass()
         cls.first_person_id = None
         cls.thread.post(cls.setup_sample_model)
         cls.thread.post(cls.load_example_data)
-        cls.thread.post(cls.setup_proxy)
         cls.process()
 
     def setUp(self):
         super(QueryQStandardItemModelCase, self).setUp()
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
+        self.thread.post(self.setup_proxy)
+        self.process()
         self.setup_item_model(self.app_admin.get_related_admin(Person))
         self.process()
         self.query_counter = 0
@@ -568,6 +569,13 @@ class QueryQStandardItemModelCase(
         LOGGER.debug('Counted query {} : {}'.format(
             self.query_counter, str(statement)
         ))
+
+    def insert_object(self):
+        person = Person()
+        count = len(self.proxy)
+        self.proxy.append(person)
+        self.assertEqual(self.proxy.index(person), count)
+        self.person = person
 
     def test_insert_after_sort(self):
         self.item_model.timeout_slot()
@@ -588,9 +596,9 @@ class QueryQStandardItemModelCase(
         data1 = self._data( 1, 1, self.item_model )
         self.assertTrue( data0 > data1 )
         # insert a new object
-        person = Person()
-        self.item_model.get_value().append(person)
-        self.assertEqual(self.item_model.get_value().index(person), rowcount)
+        self.thread.post(self.insert_object)
+        self.process()
+        person = self.person
         self.item_model.objects_created(None, (person,))
         self.item_model.timeout_slot()
         self.process()
