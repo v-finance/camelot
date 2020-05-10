@@ -351,10 +351,10 @@ class ListActionsCase(
         cls.thread.post(cls.setup_sample_model)
         cls.thread.post(cls.load_example_data)
         cls.group_box_filter = list_filter.GroupBoxFilter(
-            'director.last_name', exclusive=True
+            'last_name', exclusive=True
         )
-        cls.combo_box_filter = list_filter.ComboBoxFilter('director.last_name')
-        cls.editor_filter = list_filter.EditorFilter('title')
+        cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
+        cls.editor_filter = list_filter.EditorFilter('last_name')
         cls.process()
 
     def setUp( self ):
@@ -734,7 +734,7 @@ class ListActionsCase(
         self.grab_widget(widget)
 
     def test_editor_filter(self):
-        state = self.editor_filter.get_state(self.context)
+        state = self.get_state(self.editor_filter, self.gui_context)
         self.assertTrue(len(state.modes))
         widget = self.editor_filter.render(self.gui_context, None)
         widget.set_state(state)
