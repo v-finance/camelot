@@ -722,7 +722,7 @@ class ListActionsCase(
                 generator.send(('name', 'test'))
 
     def test_group_box_filter(self):
-        state = self.group_box_filter.get_state(self.context)
+        state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
         widget = self.group_box_filter.render(self.gui_context, None)
         widget.set_state(state)
