@@ -32,8 +32,10 @@ from camelot.view.action_runner import ActionRunner
 from camelot.view import action_steps, import_utils
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls import tableview, actionsbox, progress_dialog
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view import utils
+from camelot.view.import_utils import (
+    RowData, ColumnMapping, MatchNames, ColumnMappingAdmin
+)
 
 from camelot_example.model import Movie
 
@@ -508,25 +510,24 @@ class ListActionsCase(
 
         self.assertEqual(model_context.selection[0].field, 'field_1')
 
-    def test_match_names( self ):
-        from camelot.view.import_utils import (RowData, ColumnMapping, MatchNames,
-                                               ColumnMappingAdmin)
-
-        rows = [['rating', 'name'],
-                ['5',      'The empty bitbucket']
-                ]
-        fields = [field for field, _fa in self.context.admin.get_columns()]
+    def test_match_names(self):
+        rows = [
+            ['first_name', 'last_name'],
+            ['Unknown',    'Unknown'],
+        ]
+        fields = [field for field, _fa in self.gui_context.admin.get_columns()]
         mapping = ColumnMapping(0, rows)
-        self.assertNotEqual( mapping.field, 'rating' )
+        self.assertNotEqual(mapping.field, 'first_name' )
         
         match_names = MatchNames()
         model_context = MockModelContext()
         model_context.obj = mapping
-        model_context.admin = ColumnMappingAdmin(self.context.admin,
-                                                 field_choices=[(f,f) for f in fields])
-        
+        model_context.admin = ColumnMappingAdmin(
+            self.gui_context.admin,
+            field_choices=[(f,f) for f in fields]
+        )
         list(match_names.model_run(model_context))
-        self.assertEqual( mapping.field, 'rating' )
+        self.assertEqual(mapping.field, 'first_name')
 
     def test_import_from_xls_file( self ):
         with self.assertRaises(Exception) as ec:
