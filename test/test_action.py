@@ -550,29 +550,24 @@ class ListActionsCase(
         self.assertEqual(utils.bool_from_string(row[5]), True)
         self.assertEqual(utils.bool_from_string(row[6]), False)
 
-    def test_import_from_file( self, filename = 'import_example.csv' ):
-        from camelot.model.party import Person
-        self.context.obj = Person.query.first() # need an object, to have a
-                                                # session
-        #self.assertTrue( self.context.obj != None )
-        self.context.admin = self.app_admin.get_related_admin( Person )
-        import_from_file = list_action.ImportFromFile()
-        generator = import_from_file.model_run( self.context )
+    def test_import_from_file(self, filename='import_example.csv'):
+        action = list_action.ImportFromFile()
+        generator = self.gui_run(action, self.gui_context)
         for step in generator:
-            if isinstance( step, action_steps.SelectFile ):
+            if isinstance(step, action_steps.SelectFile):
                 generator.send([os.path.join(self.example_folder, filename)])
-            if isinstance( step, action_steps.ChangeObject ):
-                dialog = step.render( self.gui_context )
+            if isinstance(step, action_steps.ChangeObject):
+                dialog = step.render(self.gui_context)
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'column_selection' )
-            if isinstance( step, action_steps.ChangeObjects ):
+                self.grab_widget(dialog, suffix='column_selection')
+            if isinstance(step, action_steps.ChangeObjects):
                 dialog = step.render()
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'preview' )
-            if isinstance( step, action_steps.MessageBox ):
+                self.grab_widget(dialog, suffix='preview')
+            if isinstance(step, action_steps.MessageBox):
                 dialog = step.render()
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'confirmation' )
+                self.grab_widget(dialog, suffix='confirmation')
 
     def test_replace_field_contents( self ):
         replace = list_action.ReplaceFieldContents()
