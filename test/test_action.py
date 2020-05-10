@@ -410,21 +410,6 @@ class ListActionsCase(
         list( model_context.get_selection() )
         model_context.get_object()
 
-    def test_sqlalchemy_command( self ):
-        model_context = self.context
-        from camelot.model.batch_job import BatchJobType
-        # create a batch job to test with
-        bt = BatchJobType( name = 'audit' )
-        model_context.session.add( bt )
-        bt.flush()
-        # begin issue a query through the model_context
-        model_context.session.query( BatchJobType ).update( values = {'name':'accounting audit'},
-                                                            synchronize_session = 'evaluate' )
-        # end issue a query through the model_context
-        #
-        # the batch job should have changed
-        self.assertEqual( bt.name, 'accounting audit' )
-
     def test_change_row_actions( self ):
         from camelot.test.action import MockListActionGuiContext
 
