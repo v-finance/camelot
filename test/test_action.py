@@ -359,6 +359,8 @@ class ListActionsCase(
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
+        self.thread.post(self.session.close)
+        self.process()
         ##self.load_example_data()
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(Person)
@@ -579,23 +581,6 @@ class ListActionsCase(
                 dialog.show()
                 self.grab_widget( dialog )
                 generator.send( ('rating', 3) )
-
-    def test_drag_and_drop( self ):
-
-        class DropAction( Action ):
-            pass
-
-
-        mime_data = QtCore.QMimeData()
-        admin = self.context.admin
-        admin.drop_action = DropAction()
-
-        proxy = CollectionProxy(admin)
-        proxy.dropMimeData( mime_data,
-                            Qt.MoveAction,
-                            -1,
-                            -1,
-                            QtCore.QModelIndex() )
 
     def test_open_form_view( self ):
         # sort and filter the original model
