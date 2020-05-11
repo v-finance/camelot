@@ -977,25 +977,6 @@ class ControlsTest(
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )
 
-class CamelotEntityViewsTest(
-    test.EntityViewsTest,
-    ExampleModelMixinCase):
-    """Test the views of all the Entity subclasses"""
-
-    images_path = static_images_path
-
-    def setUp(self):
-        super(CamelotEntityViewsTest, self).setUp()
-        self.setup_sample_model()
-
-    def tearDown(self):
-        self.tear_down_sample_model()
-        super(CamelotEntityViewsTest, self).tearDown()
-
-    def get_admins(self):
-        for admin in super(CamelotEntityViewsTest, self).get_admins():
-            if admin.entity.__module__.startswith('camelot.model'):
-                yield admin
 
 class SnippetsTest(RunningThreadCase,
     ExampleModelMixinCase, ItemModelCaseMixin, GrabMixinCase

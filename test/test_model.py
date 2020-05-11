@@ -22,7 +22,6 @@ from camelot.model.batch_job import BatchJob, BatchJobType
 from camelot.model.fixture import Fixture, FixtureVersion
 from camelot.model.i18n import Translation, ExportAsPO
 
-from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 
 from camelot_example.fixtures import load_movie_fixtures
