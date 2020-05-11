@@ -62,12 +62,6 @@ class ExampleModelMixinCase(object):
         load_movie_fixtures()
         cls.first_person_id = cls.session.query(Person).first().id
 
-class ExampleModelCase(ModelThreadTestCase, ExampleModelMixinCase):
-    """
-    Test case that makes sure the example tables are available in
-    the Camelot metadata
-    """
-
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model"""
