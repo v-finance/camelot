@@ -18,7 +18,7 @@ from camelot.admin.action import (list_action, application_action,
 from camelot.admin.action.application import Application
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt
-from camelot.core.exception import CancelRequest, UserException
+from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.orm import Session
 
@@ -30,19 +30,17 @@ from camelot.test.action import MockModelContext
 from camelot.view.action_steps.orm import AbstractCrudSignal
 from camelot.view.action_runner import ActionRunner
 from camelot.view import action_steps, import_utils
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls import tableview, actionsbox, progress_dialog
 from camelot.view import utils
 from camelot.view.import_utils import (
-    RowData, ColumnMapping, MatchNames, ColumnMappingAdmin
+    ColumnMapping, MatchNames, ColumnMappingAdmin
 )
 
 from camelot_example.model import Movie
 
 from . import test_view
-from . import test_model
 from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelCase, ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -126,7 +124,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         cls.setup_sample_model()
 
     def setUp(self):
-        ExampleModelCase.setUp(self)
+        super(ActionStepsCase, self).setUp()
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
         self.load_example_data()

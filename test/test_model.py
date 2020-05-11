@@ -22,7 +22,6 @@ from camelot.model.batch_job import BatchJob, BatchJobType
 from camelot.model.fixture import Fixture, FixtureVersion
 from camelot.model.i18n import Translation, ExportAsPO
 
-from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 
 from camelot_example.fixtures import load_movie_fixtures
@@ -61,12 +60,6 @@ class ExampleModelMixinCase(object):
         """
         load_movie_fixtures()
         cls.first_person_id = cls.session.query(Person).first().id
-
-class ExampleModelCase(ModelThreadTestCase, ExampleModelMixinCase):
-    """
-    Test case that makes sure the example tables are available in
-    the Camelot metadata
-    """
 
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
