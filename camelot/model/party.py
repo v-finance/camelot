@@ -657,15 +657,15 @@ class Addressable(object):
     @hybrid.hybrid_property
     def street2( self ):
         return self._get_address_field( u'street2' )
-    
-    @street2.expression
-    def street2_expression( self ):
-        return Address.street2    
-    
+
     @street2.setter
-    def street2_setter( self, value ):
-        return self._set_address_field( u'street2', value )    
-    
+    def street2( self, value ):
+        return self._set_address_field( u'street2', value )
+
+    @street2.expression
+    def street2( self ):
+        return Address.street2
+
     @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
@@ -914,9 +914,8 @@ class PartyAdmin( EntityAdmin ):
 
     def get_query( self ):
         query = super( PartyAdmin, self ).get_query()
-        #query = query.options( orm.subqueryload('contact_mechanisms') )
-        #query = query.options( orm.subqueryload('addresses') )
-        #query = query.options( orm.subqueryload('addresses.address') )
+        query = query.options( orm.selectinload('contact_mechanisms') )
+        query = query.options( orm.selectinload('addresses').joinedload('address') )
         return query
 
     #def flush(self, party):

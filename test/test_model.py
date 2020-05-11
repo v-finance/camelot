@@ -1,5 +1,6 @@
 import datetime
 import os
+import unittest
 
 import six
 
@@ -8,42 +9,79 @@ from sqlalchemy import schema, types
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session
+from camelot.core.orm import Session, process_deferred_properties
+
 from camelot.core.sql import metadata
 from camelot.core.conf import settings
-from camelot.model import party
+
+from camelot.model import party, memento, authentication
+from camelot.model.party import Person
+from camelot.model.authentication import (
+    update_last_login, get_current_authentication
+)
+from camelot.model.batch_job import BatchJob, BatchJobType
+from camelot.model.fixture import Fixture, FixtureVersion
+from camelot.model.i18n import Translation, ExportAsPO
+
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
+
+from camelot_example.fixtures import load_movie_fixtures
+from camelot_example import model
+from camelot_example.view import setup_views
+
 from .test_orm import TestMetaData
 
 app_admin = ApplicationAdmin()
 
-class ExampleModelCase( ModelThreadTestCase ):
+class ExampleModelMixinCase(object):
+
+    @classmethod
+    def setup_sample_model(cls):
+        process_deferred_properties()
+        setup_views()
+        cls.engine = settings.ENGINE()
+        metadata.bind = cls.engine
+        metadata.create_all()
+        cls.session = Session()
+        cls.session.expunge_all()
+        update_last_login()
+
+    @classmethod
+    def tear_down_sample_model(cls):
+        metadata.drop_all()
+        cls.session.expunge_all()
+
+    @classmethod
+    def load_test_data(cls):
+        load_movie_fixtures()
+
+class ExampleModelCase(ModelThreadTestCase, ExampleModelMixinCase):
     """
     Test case that makes sure the example tables are available in
     the Camelot metadata
     """
     
-    def setUp( self ):
-        super( ExampleModelCase, self ).setUp()
-        from camelot.model import ( authentication, batch_job, fixture,
-                                    party, i18n, memento )
-        self.engine = settings.ENGINE()
-        metadata.bind = self.engine
-        metadata.create_all()
-        self.session = Session()
-        self.session.expunge_all()
+    def setUp(self):
+        super(ExampleModelCase, self).setUp()
+        self.setup_sample_model()
         
-    def tearDown( self ):
-        metadata.drop_all()
-        self.session.expunge_all()
-        
-class ModelCase( ExampleModelCase ):
+    def tearDown(self):
+        self.tear_down_sample_model()
+
+
+class ModelCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model"""
-        
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def test_memento( self ):
-        from camelot.model import memento
-        from camelot.model.authentication import get_current_authentication
         m = memento.Memento( primary_key = 1,
                              model = 'TestCase',
                              authentication = get_current_authentication(),
@@ -52,7 +90,6 @@ class ModelCase( ExampleModelCase ):
         self.assertTrue( m.previous )
         
     def test_i18n( self ):
-        from camelot.model.i18n import Translation, ExportAsPO
         session = Session()
         session.execute( Translation.__table__.delete() )
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), None )
@@ -81,7 +118,6 @@ class ModelCase( ExampleModelCase ):
         
     def test_batch_job_example( self ):
         # begin batch job example
-        from camelot.model.batch_job import BatchJob, BatchJobType
         synchronize = BatchJobType.get_or_create( u'Synchronize' )
         with BatchJob.create( synchronize ) as batch_job:
             batch_job.add_strings_to_message( [ u'Synchronize part A',
@@ -90,7 +126,6 @@ class ModelCase( ExampleModelCase ):
         # end batch job example
             
     def test_batch_job( self ):
-        from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
         self.assertTrue( six.text_type( batch_job_type ) )
         batch_job = BatchJob.create( batch_job_type )
@@ -111,7 +146,6 @@ class ModelCase( ExampleModelCase ):
         self.assertEqual( batch_job.current_status, 'errors' )
     
     def test_current_authentication( self ):
-        from camelot.model import authentication
         authentication.clear_current_authentication()
         mechanism = authentication.get_current_authentication()
         # current authentication cache should survive 
@@ -124,7 +158,6 @@ class ModelCase( ExampleModelCase ):
         
     def test_authentication_group( self ):
         # begin roles definition
-        from camelot.model import authentication
         authentication.clear_current_authentication()
         authentication.roles.extend( [ (1, 'administrator'),
                                        (2, 'movie_editor') ] )
@@ -137,20 +170,24 @@ class ModelCase( ExampleModelCase ):
         self.assertTrue( auth.has_role( 'administrator' ) )
         self.assertFalse( auth.has_role( 'movie_editor' ) )
 
-class PartyCase( ExampleModelCase ):
+class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in party - address - contact mechanism model"""
-  
-    def setUp(self):
-        super( PartyCase, self ).setUp()
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.session = Session()
-        self.app_admin = ApplicationAdmin()
-        self.person_admin = self.app_admin.get_related_admin( party.Person )
-        self.organization_admin = self.app_admin.get_related_admin( party.Organization )
-        
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+        cls.session = Session()
+        cls.app_admin = ApplicationAdmin()
+        cls.person_admin = cls.app_admin.get_related_admin(party.Person)
+        cls.organization_admin = cls.app_admin.get_related_admin(party.Organization)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def tearDown(self):
         self.session.expunge_all()
-       
+
     def test_party( self ):
         p = party.Party()
         self.assertFalse( p.name )
@@ -369,12 +406,18 @@ class PartyCase( ExampleModelCase ):
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
         self.assertTrue( six.text_type( category ) )
 
-class FixtureCase( ExampleModelCase ):
+class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model for fixtures"""
-      
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def test_fixture( self ):
-        from camelot.model.party import Person
-        from camelot.model.fixture import Fixture
         session = Session()
         self.assertEqual( Fixture.find_fixture_key( Person, -1 ), None )
         p1 = Person()
@@ -404,8 +447,6 @@ class FixtureCase( ExampleModelCase ):
         Fixture.remove_all_fixtures( Person )
         
     def test_fixture_version( self ):
-        from camelot.model.party import Person
-        from camelot.model.fixture import FixtureVersion
         session = self.session
         self.assertEqual( FixtureVersion.get_current_version( u'unexisting' ),
                           0 )        
@@ -431,7 +472,7 @@ class FixtureCase( ExampleModelCase ):
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           1 )
         
-class CustomizationCase( ExampleModelCase ):
+class CustomizationCase(unittest.TestCase):
     
     def test_add_field( self ):
         metadata.drop_all()

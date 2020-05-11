@@ -69,10 +69,6 @@ class ModelViewRegister(QtCore.QObject):
 class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
 
-    def setUp(self):
-        from camelot.test import get_application
-        self.app = get_application()
-
     def test_table_view_garbage_collection(self):
         """Create a table view and force its garbage collection, while
         a common reference exists to both the table view and its model.
@@ -108,13 +104,7 @@ class SignalReceiver(QtCore.QObject):
         self.sender()
 
 class GarbageCollectionCase( unittest.TestCase ):
-    
-    def setUp(self):
-        self.application = QtWidgets.QApplication.instance()
-        if not self.application:
-            import sys
-            self.application = QtWidgets.QApplication(sys.argv)
-        
+
     def test_cyclic_dependency( self ):
         """Create 2 widgets with a cyclic dependency, so that they can
         only be removed by the garbage collector, and then invoke the

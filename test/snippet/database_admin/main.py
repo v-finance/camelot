@@ -44,7 +44,6 @@ class DatabaseAdministrator(Application):
             list_display = ['description']
 
         table_admin = TableAdmin(model_context.admin, Table)
-        import wingdbstub
         while True:
             LOGGER.info('show all tables')
             selected_tables = yield action_steps.SelectObjects(table_admin, value=tables)
@@ -61,9 +60,7 @@ class DatabaseAdministrator(Application):
                 #admin = model_context.admin.get_related_admin(TableClass)
                 query = model_context.session.query(TableClass)
                 LOGGER.info('open table view')
-                print admin.get_columns()
                 yield action_steps.OpenTableView(admin, query)
-        print 'exit'
 
 # begin application start magic
 from camelot.view.main import main_action

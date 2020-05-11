@@ -490,14 +490,16 @@ shortcut confusion and reduce the number of status updates.
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
                                QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
-            translators.append( qt_translator )
-        camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
-                                                              'art/translations/' )
+            translators.append(qt_translator)
+        logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
+        camelot_translator = self._load_translator_from_file(
+            'camelot', 
+            os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
+            'art/translations/'
+        )
+        logger.debug("Camelot translator found for {} : {}".format(locale_name, camelot_translator is not None))
         if camelot_translator:
             translators.append( camelot_translator )
-        else:
-            logger.debug( 'no camelot translations found for %s'%locale_name )
         return translators
 
     def get_about(self):

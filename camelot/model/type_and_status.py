@@ -338,7 +338,8 @@ class StatusMixin( object ):
 
     def change_status(self, new_status, 
                       status_from_date=None,
-                      status_thru_date=end_of_times()):
+                      status_thru_date=end_of_times(),
+                      session=None):
         """
         Change the status of this object.  This method does not start a
         transaction, but it is advised to run this method in a transaction.
@@ -346,7 +347,7 @@ class StatusMixin( object ):
         if not status_from_date:
             status_from_date = datetime.date.today()
         history_type = self._status_history
-        session = orm.object_session( self )
+        session = session or orm.object_session( self )
         old_status_query = session.query(history_type)
         old_status_query = old_status_query.filter(
             sql.and_(history_type.status_for==self,
