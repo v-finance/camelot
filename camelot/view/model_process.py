@@ -5,6 +5,7 @@ import os
 LOGGER = logging.getLogger(__name__)
 
 class StopProcess(object):
+    """Sentinel task to and all tasks to be executed by a process"""
     pass
 
 
@@ -13,7 +14,7 @@ class ModelProcess(multiprocessing.Process):
 
     def __init__(self):
         super(ModelProcess, self).__init__()
-        self._gui_end, self._model_end = multiprocessing.Pipe()
+        self._request_queue = multiprocessing.JoinableQueue()
 
     def start(self):
         LOGGER.info("Starting model process")
@@ -22,24 +23,26 @@ class ModelProcess(multiprocessing.Process):
     def run(self):
         LOGGER = logging.getLogger("model_process")
         while True:
+            task = self._request_queue.get()
             try:
-                task = self._receive_task()
-            # EOFError will be raised if the pipe has been closed by the parent
-            except EOFError:
-                LOGGER.info("Pipe closed, terminating")
-                break
-            if isinstance(task, StopProcess):
-                LOGGER.info("Request to stop process, terminating")
-                break
-            try:
-               task()
+                if isinstance(task, StopProcess):
+                    LOGGER.info("Request to stop process, terminating")
+                    break
+                else:
+                    request, args = task
+                    request(*args)
             except Exception as e:
                 LOGGER.error('Unhandled exception in model process', exc_info=e)
                 import traceback
                 traceback.print_exc()
             except:
                 LOGGER.error('Unhandled event in model process')
+            finally:
+                self._request_queue.task_done()
         LOGGER.info("Terminated")
+
+    def post(self, request, args = ()):
+        self._request_queue.put((request, args))
 
     def _validate_parent(self):
         if not self.is_alive():
@@ -49,17 +52,10 @@ class ModelProcess(multiprocessing.Process):
 
     def stop(self):
         """
-        Request the worker to finish its ongoing work and stop
+        Request the worker to finish its ongoing tasks and stop
         """
-        self._gui_end.send(StopProcess())
-        self._gui_end.close()
+        self._request_queue.put(StopProcess())
+        self.join()
 
-    def _receive_task(self):
-        """
-        Receive a task to be executed in the model
-        """
-        if self.pid != os.getpid():
-            raise Exception('only the worker can receive work')
-        if not self.is_alive():
-            raise Exception('Worker is not alive, and cannot send results')
-        return self._model_end.recv()
+    def wait_on_work(self):
+        self._request_queue.join()
