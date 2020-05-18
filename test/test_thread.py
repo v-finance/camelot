@@ -1,6 +1,4 @@
-import queue
-
-from camelot.test import RunningThreadCase
+from camelot.test import RunningThreadCase, RunningProcessCase
 from camelot.view.model_thread.signal_slot_model_thread import (
     Task, TaskHandler
 )
@@ -39,8 +37,18 @@ class ModelThreadCase(RunningThreadCase):
         task_handler.handle_task()
         self.assertFalse(len(task_queue))
 
-    def test_post_tasks_before_run(self):
+    def test_post_task(self):
         self.thread.post(lambda:None)
         self.thread.wait_on_work()
         self.assertFalse(len(self.thread._request_queue))
 
+class ModelProcessCase(RunningProcessCase):
+
+    @staticmethod
+    def _request():
+        pass
+
+    def test_post_task(self):
+        self.thread.post(self._request)
+        self.thread.wait_on_work()
+        self.assertFalse(self.thread._request_queue.qsize())
