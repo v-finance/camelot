@@ -12,7 +12,7 @@ from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
     VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
-from camelot.test import RunningThreadCase
+from camelot.test import RunningThreadCase, RunningProcessCase
 
 from sqlalchemy import event, create_engine
 from sqlalchemy.engine import Engine
@@ -149,10 +149,27 @@ class ItemModelCaseMixin(object):
         self.process()
         return item_model.rowCount()
 
-class CollectionProxyCase(RunningThreadCase, ItemModelCaseMixin):
+class ItemModelTests(object):
+    """
+    Item model tests to be run both with a thread and with a process
+    """
+
+    def test_invalid_item(self):
+        self.assertEqual(variant_to_py(invalid_item.data(Qt.EditRole)), None)
+        self.assertEqual(variant_to_py(invalid_item.data(FieldAttributesRole)), {'editable': False, 'focus_policy': 0})
+        invalid_clone = invalid_item.clone()
+        self.assertEqual(variant_to_py(invalid_clone.data(Qt.EditRole)), None)
+        self.assertEqual(variant_to_py(invalid_clone.data(FieldAttributesRole)), {'editable': False, 'focus_policy': 0})
+
+
+class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
+    pass
+
+
+class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests):
 
     def setUp( self ):
-        super(CollectionProxyCase, self).setUp()
+        super(ItemModelThreadCase, self).setUp()
         self.A = A
         self.collection = [A(0), A(1), A(2)]
         self.app_admin = ApplicationAdmin()
@@ -165,13 +182,6 @@ class CollectionProxyCase(RunningThreadCase, ItemModelCaseMixin):
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
 
-    def test_invalid_item(self):
-        self.assertEqual(variant_to_py(invalid_item.data(Qt.EditRole)), None)
-        self.assertEqual(variant_to_py(invalid_item.data(FieldAttributesRole)), {'editable': False, 'focus_policy': 0})
-        invalid_clone = invalid_item.clone()
-        self.assertEqual(variant_to_py(invalid_clone.data(Qt.EditRole)), None)
-        self.assertEqual(variant_to_py(invalid_clone.data(FieldAttributesRole)), {'editable': False, 'focus_policy': 0})
-        
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed
         self.assertEqual(self.item_model.rowCount(), 0)
