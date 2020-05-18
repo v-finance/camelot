@@ -27,8 +27,6 @@
 #
 #  ============================================================================
 
-from functools import update_wrapper, partial
-
 import six
 
 from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
@@ -232,30 +230,15 @@ class Many2OneEditor( CustomEditor ):
             return value
         return self.obj
 
-    @QtCore.qt_slot(tuple)
-    def set_instance_representation(self, representation_and_propagate):
+    def set_verbose_name(self, verbose_name):
         """Update the gui"""
-        (desc, propagate) = representation_and_propagate
-        self._entity_representation = desc
-        self.search_input.setText(desc or u'')
-
-        if propagate:
-            self.editingFinished.emit()
+        self._entity_representation = verbose_name
+        self.search_input.setText(verbose_name or u'')
 
     def set_object(self, obj, propagate=True):
         self.obj = obj
-
-        def get_instance_representation( obj, propagate ):
-            """Get a representation of the instance"""
-            if obj is not None:
-                return (self.admin.get_verbose_object_name(obj), propagate)
-            return (None, propagate)
-
-        post( update_wrapper( partial( get_instance_representation,
-                                       obj,
-                                       propagate ),
-                              get_instance_representation ),
-              self.set_instance_representation)
+        if propagate==True:
+            self.editingFinished.emit()
 
     selected_object = property(fset=set_object)
 
