@@ -14,7 +14,7 @@ from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.test import RunningThreadCase, RunningProcessCase
 
-from sqlalchemy import event, create_engine
+from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase
@@ -526,6 +526,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.assertTrue( z0 in a0.z )
         returned_list.remove(z0)
         self.assertFalse( z0 in a0.z )
+
+    def test_completion(self):
+        pass
 
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """

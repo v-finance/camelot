@@ -15,18 +15,34 @@ LOGGER = logging.getLogger(__name__)
 
 from .test_model import ExampleModelMixinCase
 
+class B(object):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return '{}'.format(self.value)
+
+    class Admin(ObjectAdmin):
+        list_display = ['value']
+
 
 class A(object):
 
     def __init__(self, x):
+        self.w = B(x)
         self.x = x
         self.y = 0
         self.z = [object(), object()]
         self.created = datetime.datetime.now()
 
     class Admin(ObjectAdmin):
-        list_display = ['x', 'y', 'z', 'created']
+        list_display = ['x', 'y', 'z', 'created', 'w']
         field_attributes = {
+            'w': {'editable': True,
+                  'delegate': delegates.Many2OneDelegate,
+                  'target': B,
+                  },
             'x': {'editable': True,
                   'static':'static',
                   'prefix':lambda o:'pre',
