@@ -63,6 +63,13 @@ class A(object):
         def get_verbose_identifier(self, obj):
             return 'A : {0}'.format(obj.x)
 
+        def get_completions(self, obj, field_name, prefix):
+            if field_name == 'w':
+                return [
+                    B('{0}_{1.x}_1'.format(prefix, obj)),
+                    B('{0}_{1.x}_2'.format(prefix, obj)),
+                    B('{0}_{1.x}_3'.format(prefix, obj)),
+                    ]
 
 
 class ListModelProxyCase(unittest.TestCase):

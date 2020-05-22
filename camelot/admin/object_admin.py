@@ -548,6 +548,26 @@ be specified using the verbose_name attribute.
                     dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
 
+    def get_completions(self, obj, field_name, prefix):
+        """
+        Generate autocompletion possibilities for a specific field.
+        Autocompletion differs from dynamic field attributes such as choices :
+
+        - The possible autocompletion values are not needed to display
+          the content of a field.
+        - The autocompletion process depends on a text entered by the user
+          to guide the process.
+
+        :param obj: the instance of the object on which to do autocompletion.
+        :param field_name: the field of the object on which to do autocompletion.
+        :param prefix: text entered by the user to guide the autocompletion
+
+        :return: `None` if the field does not support autocompletion, an empty
+            list if there are no possible values for the requested prefix,
+            otherwise a list of possible values for the field.
+        """
+        return None
+
     def get_descriptor_field_attributes(self, field_name):
         """
         Returns a set of default field attributes based on introspection

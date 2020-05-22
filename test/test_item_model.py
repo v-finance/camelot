@@ -10,6 +10,7 @@ from camelot.view.proxy.collection_proxy import (
     CollectionProxy, invalid_item)
 from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
     VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
+    CompletionsRole, CompletionPrefixRole
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.test import RunningThreadCase, RunningProcessCase
@@ -18,7 +19,7 @@ from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase
-from .test_proxy import A
+from .test_proxy import A, B
 
 LOGGER = logging.getLogger(__name__)
 
@@ -128,12 +129,12 @@ class ItemModelCaseMixin(object):
             raise Exception('Index ({0},{1}) is not valid with {2} rows, {3} columns'.format(index.row(), index.column(), item_model.rowCount(), item_model.columnCount()))
         return variant_to_py(item_model.data( index, role))
     
-    def _set_data(self, row, column, value, item_model, validate_index=True):
+    def _set_data(self, row, column, value, item_model, role=Qt.EditRole, validate_index=True):
         """Set data to the QAbstractItemModel"""
         index = item_model.index( row, column )
         if validate_index and not index.isValid():
             raise Exception('Index ({0},{1}) is not valid with {2} rows, {3} columns'.format(index.row(), index.column(), item_model.rowCount(), item_model.columnCount()))
-        return item_model.setData( index, py_to_variant(value) )
+        return item_model.setData( index, py_to_variant(value), role )
 
     def _header_data(self, section, orientation, role, item_model):
         return variant_to_py(item_model.headerData(section, orientation, role))
@@ -528,7 +529,13 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.assertFalse( z0 in a0.z )
 
     def test_completion(self):
-        pass
+        self._load_data(self.item_model)
+        self.assertIsInstance(self._data(0, 4, self.item_model, role=Qt.EditRole), B)
+        self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
+        self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
+        self.item_model.timeout_slot()
+        self.process()
+        self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
 
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """

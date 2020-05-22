@@ -229,7 +229,7 @@ and used as a custom action.
         search_identifiers[Qt.EditRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
-        return search_identifiers                
+        return search_identifiers
 
     def get_list_toolbar_actions( self, toolbar_area ):
         """
