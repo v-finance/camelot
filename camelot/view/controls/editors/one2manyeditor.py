@@ -66,6 +66,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  field_name='onetomany',
                  column_width=None,
                  proxy=None,
+                 columns=[],
+                 toolbar_actions=[],
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
@@ -99,10 +101,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = table
-        post(self.admin.get_related_toolbar_actions,
-             self.set_right_toolbar_actions,
-             args=(Qt.RightToolBarArea, self.direction))
-        post(self.get_columns, self.set_columns)
+        self.set_right_toolbar_actions(toolbar_actions)
+        self.set_columns(columns)
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, toolbar_actions):
@@ -130,9 +130,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
         self.gui_context.field_attributes = kwargs
         self.update_action_status()
-
-    def get_columns(self):
-        return self.admin.get_columns()
 
     def update_action_status(self):
         toolbar = self.findChild(QtWidgets.QToolBar)
