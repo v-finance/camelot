@@ -31,8 +31,10 @@ import logging
 
 import six
 
-from ....core.qt import py_to_variant, variant_to_py
-from ....core.item_model import PreviewRole
+from ....core.qt import QtCore, py_to_variant, variant_to_py
+from ....core.item_model import (
+    PreviewRole, CompletionPrefixRole, CompletionsRole
+)
 from .. import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -79,7 +81,8 @@ class Many2OneDelegate(CustomDelegate):
                                          **self._kwargs )
         if option.version != 5:
             editor.setAutoFillBackground(True)
-        editor.editingFinished.connect( self.commitAndCloseEditor )
+        editor.editingFinished.connect(self.commitAndCloseEditor)
+        editor.completionPrefixChanged.connect(self.completion_prefix_changed)
         return editor
 
     def setEditorData(self, editor, index):
@@ -87,7 +90,16 @@ class Many2OneDelegate(CustomDelegate):
         if index.model() is None:
             return
         verbose_name = variant_to_py(index.model().data(index, PreviewRole))
+        prefix = variant_to_py(index.model().data(index, CompletionPrefixRole))
+        completions = variant_to_py(index.model().data(index, CompletionsRole))
         editor.set_verbose_name(verbose_name)
+        editor.index = index
+        if (prefix is not None) and (completions is not None):
+            editor.display_search_completions(prefix, completions)
 
-
-
+    @QtCore.qt_slot(str)
+    def completion_prefix_changed(self, prefix):
+        editor = self.sender()
+        index = editor.index
+        if (index is not None) and (index.model() is not None):
+            index.model().setData(index, prefix, CompletionPrefixRole)

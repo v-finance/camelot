@@ -418,14 +418,14 @@ class SetData(Update):
     def __repr__(self):
         return '{0.__class__.__name__}([{1}])'.format(
             self,
-            ', '.join(['(row={0}, column={1}, role={2})'.format(row, column, role) for row, _o, column, _v, role in self.updates])
+            ', '.join(['(row={0}, column={1})'.format(row, column) for row, _o, column, _v in self.updates])
         )
 
     def model_run(self, model_context):
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects = set(), set()
-        for row, obj, column, value, role in self.updates:
-            grouped_requests[(row, obj)].append((column, value, role))
+        for row, obj, column, value in self.updates:
+            grouped_requests[(row, obj)].append((column, value))
         admin = model_context.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
             object_slice = list(model_context.proxy[row:row+1])
@@ -442,9 +442,7 @@ class SetData(Update):
             if admin.is_deleted(obj):
                 continue
             changed = False
-            for column, value, role in request_group:
-                if role==CompletionPrefixRole:
-                    continue
+            for column, value in request_group:
 
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
@@ -583,16 +581,18 @@ class Completion(object):
 
     def model_run(self, model_context):
         field_name = model_context.static_field_attributes[self.column]['field_name']
+        admin = model_context.static_field_attributes[self.column]['admin']
         object_slice = list(model_context.proxy[self.row:self.row+1])
         if not len(object_slice):
             logger.error('Cannot generate completions : no object in row {0}'.format(self.row))
             return
         obj = object_slice[0]
-        self.completions = model_context.admin.get_completions(
+        completions = model_context.admin.get_completions(
             obj,
             field_name,
             self.prefix,
         )
+        self.completions = [admin.get_search_identifiers(e) for e in completions]
         return self
 
     def gui_run(self, item_model):
@@ -602,8 +602,9 @@ class Completion(object):
         logger.debug('begin gui update {0} completions'.format(len(self.completions)))
         child = root_item.child(self.row, self.column)
         if child is not None:
+            child.setData(self.prefix, CompletionPrefixRole)
             child.setData(self.completions, CompletionsRole)
-        logger.debug('end gui update rows {0.row}, column {1.column}'.format(self))
+        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
 
     def __repr__(self):
         return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
@@ -1161,7 +1162,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 logger.debug('set data called on row without object')
                 return
             self.logger.debug('set data ({0},{1})'.format(row, column))
-            self._update_requests.append((row, obj, column, value, role))
+            self._update_requests.append((row, obj, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()

@@ -392,6 +392,21 @@ and used as a custom action.
                     attributes['editable'] = False
             yield attributes
 
+    def get_completions(self, obj, field_name, prefix):
+        """
+        Overwrites `ObjectAdmin.get_completions` and searches for autocompletion
+        along relationships.
+        """
+        all_attributes = self.get_field_attributes(field_name)
+        admin = all_attributes.get('admin')
+        session = orm.object_session(obj)
+        if (admin is not None) and (session is not None):
+            search_filter = list_filter.SearchFilter(admin)
+            query = admin.get_query(session)
+            query = search_filter.decorate_query(query, prefix)
+            return [e for e in query.limit(20).all()]
+        return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
+
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 

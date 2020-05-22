@@ -27,14 +27,10 @@
 #
 #  ============================================================================
 
-import six
-
 from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
-from ....admin.action.list_filter import SearchFilter
 from ...crud_signals import CrudSignalHandler
-from camelot.view.model_thread import post, object_thread
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
@@ -95,6 +91,8 @@ class Many2OneEditor( CustomEditor ):
         layout.setSpacing(0)
         layout.setContentsMargins( 0, 0, 0, 0)
 
+        self.index = None
+
         # Search input
         self.search_input = DecoratedLineEdit(self)
         self.search_input.setPlaceholderText(_('Search...'))
@@ -121,7 +119,6 @@ class Many2OneEditor( CustomEditor ):
         layout.addWidget(self.search_input)
         self.setLayout(layout)
         self.add_actions(actions, layout)
-        self.search_filter = SearchFilter(admin)
         CrudSignalHandler().connect_signals(self)
 
     def set_field_attributes(self, **kwargs):
@@ -136,35 +133,10 @@ class Many2OneEditor( CustomEditor ):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
-        text = six.text_type( self.search_input.text() )
+        self.completionPrefixChanged.emit(str(text))
 
-        def create_search_completion(text):
-            return lambda: self.search_completions(text)
-
-        post(
-            create_search_completion(six.text_type(text)),
-            self.display_search_completions
-        )
-        self.completer.complete()
-
-    def search_completions(self, text):
-        """Search for object that match text, to fill the list of completions
-
-        :return: a list of tuples of (dict_of_object_representation, object)
-        """
-        query = self.admin.get_query()
-        query = self.search_filter.decorate_query(query, text)
-
-        sresult = [
-            self.admin.get_search_identifiers(e)
-            for e in query.limit(20).all()
-        ]
-        return text, sresult
-
-
-    def display_search_completions(self, prefix_and_completions):
-        assert object_thread( self )
-        prefix, completions = prefix_and_completions
+    def display_search_completions(self, prefix, completions):
+        self.search_input.setText(prefix)
         self.completer.model().setCompletions(completions)
         self.completer.setCompletionPrefix(prefix)
         self.completer.complete()
