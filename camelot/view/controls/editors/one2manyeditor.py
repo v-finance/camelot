@@ -177,12 +177,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # one, still need to set it, since the content of the collection
             # might have changed.
             model.set_value(collection)
-            model_context = self.gui_context.create_model_context()
-            for toolbar in self.findChildren(QtWidgets.QToolBar):
-                for qaction in toolbar.actions():
-                    post(qaction.action.get_state,
-                         qaction.set_state,
-                         args=(model_context, ))
+            self.update_action_status()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):

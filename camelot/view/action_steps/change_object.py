@@ -174,6 +174,8 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     def __init__( self,
                   objects,
                   admin,
+                  columns,
+                  toolbar_actions,
                   invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.Window ):
@@ -183,6 +185,8 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             admin = admin,
             parent = self,
             create_inline = True,
+            columns=columns,
+            toolbar_actions=toolbar_actions,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -335,6 +339,10 @@ class ChangeObjects( ActionStep ):
         self.subtitle = _('Please review the data below.')
         self.icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
         self.invalid_rows = set()
+        self.columns = admin.get_columns()
+        self.toolbar_actions = admin.get_related_toolbar_actions(
+            Qt.RightToolBarArea, 'onetomany'
+        )
         if validate==True:
             validator = self.admin.get_validator()
             for row, obj in enumerate(objects):
@@ -355,6 +363,8 @@ class ChangeObjects( ActionStep ):
         the action step."""
         dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
                                      self.admin,
+                                     self.columns,
+                                     self.toolbar_actions,
                                      self.invalid_rows)
         dialog.setWindowTitle( six.text_type( self.window_title ) )
         dialog.set_banner_title( six.text_type( self.title ) )
