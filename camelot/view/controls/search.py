@@ -29,25 +29,21 @@
 
 import six
 
-from ...core.qt import QtCore, QtWidgets
-from camelot.view.art import Icon
+from ...core.qt import QtCore, QtWidgets, QtGui
 from camelot.core.utils import ugettext as _
-from .abstract_widget import AbstractSearchWidget
 from .decorated_line_edit import DecoratedLineEdit
+from .action_widget import AbstractActionWidget
 
-class SimpleSearchControl(AbstractSearchWidget):
+class SimpleSearchControl(DecoratedLineEdit, AbstractActionWidget):
     """A control that displays a single text field in which search keywords can
     be typed
 
     emits a search and a cancel signal if the user starts or cancels the search
     """
 
-    def __init__(self, parent):
-        QtWidgets.QWidget.__init__(self, parent)
-        layout = QtWidgets.QHBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(3, 3, 3, 3)
-        
+    def __init__( self, action, gui_context, parent ):
+        DecoratedLineEdit.__init__(self, parent)
+        self.init(action, gui_context)
         #
         # The search timer reduced the number of search signals that are
         # emitted, by waiting for the next keystroke before emitting the
@@ -57,44 +53,18 @@ class SimpleSearchControl(AbstractSearchWidget):
         timer.setInterval( 300 )
         timer.setSingleShot( True )
         timer.setObjectName( 'timer' )
-        timer.timeout.connect( self.emit_search )
+        timer.timeout.connect(self.start_search)
+        self.setPlaceholderText(_('Search...'))
+        self.returnPressed.connect(self.start_search)
+        self.textEdited.connect(self._start_search_timer)
+        shortcut = QtWidgets.QShortcut(
+            QtGui.QKeySequence(QtGui.QKeySequence.Find), self
+        )
+        shortcut.activated.connect(self.activate_search)
 
-        # Search button
-        self.search_button = QtWidgets.QToolButton()
-        icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
-        self.search_button.setIcon(icon)
-        self.search_button.setIconSize(QtCore.QSize(14, 14))
-        self.search_button.setAutoRaise(True)
-        self.search_button.setToolTip(_('Expand or collapse search options'))
-        self.search_button.clicked.connect( self.emit_expand_search_options )
-
-        # Search input
-        self.search_input = DecoratedLineEdit(self)
-        self.search_input.setPlaceholderText(_('Search...'))
-        #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
-        self.search_input.returnPressed.connect( self.emit_search )
-        self.search_input.textEdited.connect( self._start_search_timer )
-        self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
-        self.setFocusProxy(self.search_input)
-
-        # Cancel button
-        self.cancel_button = QtWidgets.QToolButton()
-        icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
-        self.cancel_button.setIcon(icon)
-        self.cancel_button.setIconSize(QtCore.QSize(14, 14))
-        self.cancel_button.setAutoRaise(True)
-        self.cancel_button.clicked.connect( self.emit_cancel )
-
-        # Setup layout
-        layout.addWidget(self.search_button)
-        layout.addWidget(self.search_input)
-        layout.addWidget(self.cancel_button)
-        self.setLayout(layout)
-
-    def search(self, search_text):
-        """Start searching for search_text"""
-        self.search_input.setText(search_text)
-        self.emit_search()
+    @QtCore.qt_slot()
+    def activate_search(self):
+        self.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)
@@ -102,31 +72,12 @@ class SimpleSearchControl(AbstractSearchWidget):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer is not None:
             timer.start()
-        
-    @QtCore.qt_slot()
-    def emit_expand_search_options(self):
-        self.expand_search_options_signal.emit()
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)
-    def emit_search(self, str=''):
+    def start_search(self, str=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer is not None:
             timer.stop()
-        text = six.text_type(self.search_input.text())
-        self.search_signal.emit( text )
-
-    @QtCore.qt_slot()
-    def emit_cancel(self):
-        timer = self.findChild( QtCore.QTimer, 'timer' )
-        if timer is not None:
-            timer.stop()
-        self.search_input.setText('')
-        self.cancel_signal.emit()
-
-    @QtCore.qt_slot()
-    def on_arrow_down_key_pressed(self):
-        self.on_arrow_down_signal.emit()
-
-
-
+        text = six.text_type(self.text())
+        self.run_action(text)

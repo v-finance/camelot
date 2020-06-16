@@ -1167,6 +1167,17 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes
         return state
 
+class SetExpandedSearch(Action):
+
+    icon = Icon('tango/16x16/actions/system-search.png')
+    verbose_name = _('Search')
+    tooltip = _('Expand or collapse search options')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        filters = model_context.admin.get_expanded_search_filters()
+        yield action_steps.SwitchExpandedSearch(filters)
+
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
     list"""
@@ -1185,7 +1196,9 @@ class AddExistingObject( EditAction ):
                     raise StopIteration()
             model_context.proxy.append(obj_to_add)
         yield action_steps.UpdateObjects(objs_to_add)
-        yield action_steps.FlushSession(object_session(obj_to_add))
+        for obj_to_add in objs_to_add:
+            yield action_steps.FlushSession(object_session(obj_to_add))
+            break
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
@@ -1238,4 +1251,21 @@ class RemoveSelection(DeleteSelection):
         # continue to flush the session
         yield None
 
+class ActionGroup(EditAction):
+    """Group a number of actions in a pull down"""
 
+    tooltip = _('More')
+    icon = Icon( 'tango/16x16/emblems/emblem-system.png' )
+    actions = (ImportFromFile(), ReplaceFieldContents())
+    
+    def get_state(self, model_context):
+        state = super(ActionGroup, self).get_state(model_context)
+        state.modes = [
+            Mode(str(i), a.verbose_name, a.icon) for i, a in enumerate(self.actions)
+        ]
+        return state
+    
+    def model_run(self, model_context):
+        if model_context.mode_name is not None:
+            action = self.actions[int(model_context.mode_name)]
+            yield from action.model_run(model_context)

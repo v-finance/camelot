@@ -34,7 +34,7 @@
 
 import six
 
-from ...core.qt import QtGui, QtCore, QtWidgets, py_to_variant, variant_to_py
+from ...core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -113,11 +113,11 @@ class SelectDialog( StandaloneWizardPage ):
     
     def setup_widgets(self):
         # controls
-        self._default_radio = QtGui.QRadioButton(ugettext('Default Location'))
-        self._custom_radio = QtGui.QRadioButton(ugettext('Custom Location'))
+        self._default_radio = QtWidgets.QRadioButton(ugettext('Default Location'))
+        self._custom_radio = QtWidgets.QRadioButton(ugettext('Custom Location'))
         self._custom_edit = QtWidgets.QLineEdit()
         self._custom_button = QtWidgets.QPushButton(ugettext('Browse...'))
-        button_group = QtGui.QButtonGroup(self)
+        button_group = QtWidgets.QButtonGroup(self)
         button_group.addButton(self._default_radio)
         button_group.addButton(self._custom_radio)
 
@@ -134,8 +134,8 @@ class SelectDialog( StandaloneWizardPage ):
         self.main_widget().setLayout( layout )
 
         # connect signals to slots
-        button_group.buttonClicked[QtGui.QAbstractButton].connect( self.show_widgets )
-        button_group.buttonClicked[QtGui.QAbstractButton].connect( self.complete_changed )
+        button_group.buttonClicked[QtWidgets.QAbstractButton].connect( self.show_widgets )
+        button_group.buttonClicked[QtWidgets.QAbstractButton].connect( self.complete_changed )
         self._custom_button.clicked.connect(self._customButtonClicked)
         self._custom_edit.textChanged.connect(self.complete_changed)
         

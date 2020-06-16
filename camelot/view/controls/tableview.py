@@ -35,10 +35,8 @@ import six
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
-from camelot.admin.action.list_filter import SearchFilter
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
-from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view import register
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
@@ -46,7 +44,6 @@ from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .inheritance import SubclassTree
-from .search import SimpleSearchControl
 
 logger = logging.getLogger('camelot.view.controls.tableview')
 
@@ -363,6 +360,12 @@ class AdminTableWidget(QtWidgets.QWidget):
             table_widget.setModel(model)
             column_groups.model_reset()
 
+    def switch_expanded_search(self, filters):
+        # dirty hack to keep expanded search working while tranforming
+        # everything to actions
+        header = self.parent().parent().parent().findChild(QtWidgets.QWidget, 'header_widget')
+        if header is not None:
+            header.switch_expanded_search(filters)
 
 class RowsWidget(QtWidgets.QLabel):
     """
@@ -427,7 +430,6 @@ class HeaderWidget(QtWidgets.QWidget):
     the number of rows in the table
     """
 
-    search_widget = SimpleSearchControl
     rows_widget = RowsWidget
 
     filters_changed_signal = QtCore.qt_signal()
@@ -438,15 +440,13 @@ class HeaderWidget(QtWidgets.QWidget):
         self.gui_context = gui_context
         layout = QtWidgets.QVBoxLayout()
         widget_layout = QtWidgets.QHBoxLayout()
-        search = self.search_widget(self)
-        self.setFocusProxy(search)
-        search.expand_search_options_signal.connect(
-            self.expand_search_options)
+        #search.expand_search_options_signal.connect(
+        #    self.expand_search_options)
         title = QtWidgets.QLabel(
             six.text_type(self.gui_context.admin.get_verbose_name_plural()), self)
         title.setFont(self._title_font)
         widget_layout.addWidget(title)
-        widget_layout.addWidget(search)
+        widget_layout.addWidget(QtWidgets.QToolBar())
         number_of_rows = self.rows_widget(gui_context, parent=self)
         number_of_rows.setObjectName('number_of_rows')
         widget_layout.addWidget(number_of_rows)
@@ -457,7 +457,6 @@ class HeaderWidget(QtWidgets.QWidget):
         layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.search = search
 
     @hybrid_property
     def _title_font(cls):
@@ -486,13 +485,11 @@ class HeaderWidget(QtWidgets.QWidget):
         assert object_thread(self)
         self.filters_changed_signal.emit()
 
-    @QtCore.qt_slot()
-    def expand_search_options(self):
+    def switch_expanded_search(self, filters):
         assert object_thread(self)
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
-                post(self.gui_context.admin.get_expanded_search_filters,
-                     self._fill_expanded_search_options)
+                self._fill_expanded_search_options(filters)
             self._expanded_search.show()
         else:
             self._expanded_search.hide()
@@ -502,7 +499,6 @@ class TableView(AbstractView):
     """
     :param gui_context: a :class:`camelot.admin.action.application_action.ApplicationActionGuiContext` object.
     :param admin: an :class:`camelot.admin.entity_admin.EntityAdmin` object
-    :param search_text: a predefined search text to put in the search widget
     :param proxy: a class implementing :class:`QtCore.QAbstractTableModel` that
       will be used as a model for the table view.
     :param parent: a :class:`QtWidgets.QWidget` object
@@ -544,12 +540,10 @@ class TableView(AbstractView):
     def __init__(self,
                  gui_context,
                  admin,
-                 search_text=None,
                  parent=None):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
         self.admin = admin
-        self.search_text = search_text
         self.application_gui_context = gui_context
         self.gui_context = gui_context
         widget_layout = QtWidgets.QVBoxLayout()
@@ -585,19 +579,8 @@ class TableView(AbstractView):
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
-        self.search_filter = None
-        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
-                                   self)
-        shortcut.activated.connect(self.activate_search)
-
         self.gui_context.admin = self.admin
         self.gui_context.view = self
-
-    @QtCore.qt_slot()
-    def activate_search(self):
-        assert object_thread(self)
-        header = self.findChild(self.header_widget)
-        header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     @QtCore.qt_slot(object)
     def set_subclass_tree(self, subclasses):
@@ -670,20 +653,10 @@ class TableView(AbstractView):
         header = self.findChild(QtWidgets.QWidget, 'header_widget')
         if header is not None:
             header.deleteLater()
-        # when a new header is set, the old one can no longer cancel its
-        # search
-        self.search_filter = lambda q: q
         header = self.header_widget(self.gui_context, self)
         header.setObjectName('header_widget')
         self.widget_layout.insertWidget(0, header)
-        header.search.search_signal.connect(self.startSearch)
-        header.search.cancel_signal.connect(self.cancelSearch)
-        header.search.on_arrow_down_signal.connect(self.focusTable)
         self.setFocusProxy(header)
-        self.search_filter = SearchFilter(admin)
-        if self.search_text:
-            header.search.search(self.search_text)
-            self.search_text = None
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
@@ -703,22 +676,6 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.refresh()
-
-    @QtCore.qt_slot(str)
-    def startSearch(self, text):
-        """rebuilds query based on filtering text"""
-        assert object_thread(self)
-        logger.debug('search %s' % text)
-        model = self.get_model()
-        if model is not None:
-            model.set_filter(self.search_filter, six.text_type(text))
-
-    @QtCore.qt_slot()
-    def cancelSearch(self):
-        """resets search filtering to default"""
-        assert object_thread(self)
-        logger.debug('cancel search')
-        self.startSearch('')
 
     def set_columns(self, columns):
         delegate = DelegateManager(columns, parent=self)
@@ -753,6 +710,34 @@ class TableView(AbstractView):
             actions_widget.setObjectName('actions')
             actions_widget.set_actions(actions)
             self.filters_layout.addWidget(actions_widget)
+
+    @QtCore.qt_slot( object, object )
+    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
+        """Set the toolbar for a specific area
+        :param toolbar_area: the area on which to put the toolbar, from
+            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
+        :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
+            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
+            method.
+        """
+        if toolbar_actions != None:
+            toolbar = self.findChild(QtWidgets.QToolBar)
+            assert toolbar
+            for action in toolbar_actions:
+                rendered = action.render(self.gui_context, toolbar)
+                # both QWidgets and QActions can be put in a toolbar
+                if isinstance(rendered, QtWidgets.QWidget):
+                    toolbar.addWidget(rendered)
+                elif isinstance(rendered, QtWidgets.QAction):
+                    rendered.triggered.connect( self.action_triggered )
+                    toolbar.addAction( rendered )
+
+    @QtCore.qt_slot(bool)
+    def action_triggered(self, _checked = False):
+        """Execute an action that was triggered somewhere in the main window,
+        such as the toolbar or the main menu"""
+        action_action = self.sender()
+        action_action.action.gui_run(self.gui_context)
 
     @QtCore.qt_slot()
     def focusTable(self):

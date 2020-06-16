@@ -102,13 +102,11 @@ shortcut confusion and reduce the number of status updates.
     # actions that will be shared between the toolbar and the main menu
     #
     change_row_actions = [ list_action.ToFirstRow(),
-                           list_action.ToPreviousRow(),
-                           list_action.ToNextRow(),
                            list_action.ToLastRow(), ]
     edit_actions = [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),]
-    help_actions = [ application_action.ShowHelp(), ]
+    help_actions = []
     export_actions = [ list_action.PrintPreview(),
                        list_action.ExportSpreadsheet() ]
     form_toolbar_actions = [ form_action.CloseForm(),
@@ -118,8 +116,6 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
-    hidden_actions = [ application_action.DumpState(),
-                       application_action.RuntimeInfo() ]
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -239,14 +235,6 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
-    def get_hidden_actions( self ):
-        """
-        :return: a list of :class:`camelot.admin.action.base.Action` objects
-            that can only be triggered using shortcuts and are not visibile in
-            the UI.
-        """
-        return self.hidden_actions
-
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
@@ -298,6 +286,19 @@ shortcut confusion and reduce the number of status updates.
                         if type(action) != form_action.CloseForm]
             return self.form_toolbar_actions
 
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
+            return self.edit_actions + self.change_row_actions + self.export_actions
+        return []
+
     def get_main_menu( self ):
         """
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
@@ -309,40 +310,14 @@ shortcut confusion and reduce the number of status updates.
                        [ application_action.Backup(),
                          application_action.Restore(),
                          None,
-                         Menu( _('Export To'),
-                               self.export_actions ),
-                         Menu( _('Import From'),
-                               [list_action.ImportFromFile()] ),
-                         None,
                          application_action.Exit(),
                          ] ),
-                 Menu( _('&Edit'),
-                       self.edit_actions + [
-                           None,
-                           list_action.SelectAll(),
-                           None,
-                           list_action.ReplaceFieldContents(),   
-                           ]),
                  Menu( _('View'),
-                       [ application_action.Refresh(),
-                         Menu( _('Go To'), self.change_row_actions) ] ),
+                       [ application_action.Refresh(),] ),
                  Menu( _('&Help'),
                        self.help_actions + [
                            application_action.ShowAbout() ] )
                  ]
-
-    def get_toolbar_actions( self, toolbar_area ):
-        """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
-        :return: a list of :class:`camelot.admin.action.base.Action` objects
-            that should be displayed on the toolbar of the application.  return
-            None if no toolbar should be created.
-        """
-        if toolbar_area == Qt.TopToolBarArea:
-            return self.edit_actions + self.change_row_actions + \
-                   self.export_actions + self.help_actions
 
     def get_name(self):
         """
@@ -515,14 +490,16 @@ shortcut confusion and reduce the number of status updates.
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
                                QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
-            translators.append( qt_translator )
-        camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
-                                                              'art/translations/' )
+            translators.append(qt_translator)
+        logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
+        camelot_translator = self._load_translator_from_file(
+            'camelot', 
+            os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
+            'art/translations/'
+        )
+        logger.debug("Camelot translator found for {} : {}".format(locale_name, camelot_translator is not None))
         if camelot_translator:
             translators.append( camelot_translator )
-        else:
-            logger.debug( 'no camelot translations found for %s'%locale_name )
         return translators
 
     def get_about(self):

@@ -44,7 +44,7 @@ import six
 from sqlalchemy import types
 
 from camelot.core.orm import options
-from camelot.core.files.storage import StoredFile, StoredImage, Storage
+from camelot.core.files.storage import StoredFile, Storage
 
 """
 The `__repr__` method of the types is implemented to be able to use Alembic.
@@ -168,71 +168,6 @@ used too much memory, so now it's implemented using QT.
 
     def __repr__(self):
         return 'Language()'
-
-color = collections.namedtuple('color',
-                               ('red', 'green', 'blue', 'alpha'))
-
-class Color(types.TypeDecorator):
-    """The Color field returns and accepts tuples of the form (r,g,b,a) where
-r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
-string of the form AARRGGBB into the database, where AA is the transparency, 
-RR is red, GG is green BB is blue::
-  
-    class MovieType( Entity ):
-        color = Column( camelot.types.Color() )
-
-.. image:: /_static/editors/ColorEditor_editable.png  
-  
-The colors are stored in the database as strings.
-  
-Use::
-    
-    QColor(*color) 
-    
-to convert a color tuple to a QColor.
-    """
-    
-    impl = types.Unicode
-    
-    def __init__(self):
-        types.TypeDecorator.__init__(self, length=8)
-        
-    def bind_processor(self, dialect):
-  
-        impl_processor = self.impl.bind_processor(dialect)
-        if not impl_processor:
-            impl_processor = lambda x:x
-          
-        def processor(value):
-            if value is not None:
-                assert len(value) == 4
-                for i in range(4):
-                    assert value[i] >= 0
-                    assert value[i] <= 255
-                return '%02X%02X%02X%02X'%(value[3], value[0], value[1], value[2])
-            return impl_processor(value)
-          
-        return processor
-      
-    def result_processor(self, dialect, coltype=None):
-      
-        impl_processor = self.impl.result_processor(dialect, coltype)
-        if not impl_processor:
-            impl_processor = lambda x:x
-            
-        def processor(value):
-    
-            if value:
-                return color(int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
-              
-        return processor
-    
-    @property
-    def python_type(self):
-        return color
-
-    def __repr__(self):
-        return 'Color()'
 
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
@@ -388,23 +323,3 @@ class File(types.TypeDecorator):
 
     def __repr__(self):
         return 'File()'
-
-class Image(File):
-    """Sqlalchemy column type to store images
-    
-  This column type accepts and returns a StoredImage, and stores them in the directory
-  specified by settings.CAMELOT_MEDIA_ROOT.  The name of the file is stored as a string in
-  the database.
-  
-  The Image field type provides the same functionallity as the File field type, but
-  the files stored should be images.
-  
-  .. image:: /_static/editors/ImageEditor_editable.png
-    """
-  
-    stored_file_implementation = StoredImage
-
-    def __repr__(self):
-        return 'Image()'
-
-
