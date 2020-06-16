@@ -34,20 +34,17 @@ logger = logging.getLogger('camelot.view.controls.section_widget')
 
 import six
 
-from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt, qt_api
-from camelot.admin.action.application_action import ApplicationActionGuiContext
+from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
 from camelot.admin.section import Section, SectionItem
-from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
 class PaneSection(QtWidgets.QWidget):
 
-    def __init__(self, parent, section, workspace):
+    def __init__(self, parent, items, gui_context):
         super(PaneSection, self).__init__(parent)
         self._items = []
-        self._workspace = workspace
-        self._section = section
+        self.gui_context = gui_context
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         section_tree = ModelTree(parent=self)
@@ -62,7 +59,7 @@ class PaneSection(QtWidgets.QWidget):
         section_tree.setWordWrap( False )
         layout.addWidget( section_tree )
         self.setLayout(layout)
-        post( section.get_items, self.set_items )
+        self.set_items(items)
 
     @QtCore.qt_slot(object)
     def set_items(self, items, parent = None):
@@ -132,17 +129,15 @@ class PaneSection(QtWidgets.QWidget):
                 section_item = self._items[index.row()]
             if not isinstance( section_item, SectionItem ):
                 return
-            gui_context = ApplicationActionGuiContext()
+            gui_context = self.gui_context.copy()
             gui_context.mode_name = mode_name
-            gui_context.workspace = self._workspace
-            gui_context.admin = self._section.admin
             section_item.get_action().gui_run( gui_context )
                         
 class NavigationPane(QtWidgets.QDockWidget):
 
-    def __init__(self, workspace, parent):
+    def __init__(self, gui_context, parent):
         super(NavigationPane, self).__init__(parent)
-        self._workspace = workspace
+        self.gui_context = gui_context
         tb = QtWidgets.QToolBox()
         tb.setMinimumWidth(220)
         tb.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -157,10 +152,7 @@ class NavigationPane(QtWidgets.QDockWidget):
         self.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
 
     def wheelEvent(self, wheel_event):
-        if qt_api=='PyQt5':
-            steps = -1 * wheel_event.angleDelta().y() / (8 * 15)
-        else:
-            steps = -1 * wheel_event.delta() / (8 * 15)
+        steps = -1 * wheel_event.angleDelta().y() / (8 * 15)
         toolbox = self.findChild(QtWidgets.QWidget, 'toolbox')
         if steps and toolbox:
             current_index = toolbox.currentIndex()
@@ -185,15 +177,9 @@ class NavigationPane(QtWidgets.QDockWidget):
             
         for section in sections:
             # TODO: old navpane used translation here
-            name = six.text_type( section.get_verbose_name() )
-            icon = section.get_icon().getQIcon()
-            pwdg = PaneSection(toolbox, section, self._workspace)
-            toolbox.addItem(pwdg, icon, name)
+            pwdg = PaneSection(toolbox, section['items'], self.gui_context)
+            toolbox.addItem(pwdg, section['icon'], section['verbose_name'])
 
         toolbox.setCurrentIndex(0)
         # WARNING: hardcoded width
         #self._toolbox.setMinimumWidth(220)
-
-
-
-

@@ -125,7 +125,7 @@ class AbstractModelThread(QtCore.QThread):
         exception
         :param args: arguments with which the request function will be called        
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def busy(self):
         """Return True or False indicating wether either the model or the gui
