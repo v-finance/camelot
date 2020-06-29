@@ -59,7 +59,8 @@ from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
-    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy
+    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
+    CompletionsRole, CompletionPrefixRole
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -102,6 +103,7 @@ invalid_item.setData(invalid_data, Qt.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
+invalid_item.setData(invalid_data, CompletionsRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -441,6 +443,7 @@ class SetData(Update):
                 continue
             changed = False
             for column, value in request_group:
+
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
 
@@ -566,6 +569,46 @@ class Sort(RowCount):
 
     def __repr__(self):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
+
+
+class Completion(object):
+
+    def __init__(self, row, column, prefix):
+        self.row = row
+        self.column = column
+        self.prefix = prefix
+        self.completions = None
+
+    def model_run(self, model_context):
+        field_name = model_context.static_field_attributes[self.column]['field_name']
+        admin = model_context.static_field_attributes[self.column]['admin']
+        object_slice = list(model_context.proxy[self.row:self.row+1])
+        if not len(object_slice):
+            logger.error('Cannot generate completions : no object in row {0}'.format(self.row))
+            return
+        obj = object_slice[0]
+        completions = model_context.admin.get_completions(
+            obj,
+            field_name,
+            self.prefix,
+        )
+        self.completions = [admin.get_search_identifiers(e) for e in completions]
+        return self
+
+    def gui_run(self, item_model):
+        root_item = item_model.invisibleRootItem()
+        if is_deleted(root_item):
+            return
+        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
+        child = root_item.child(self.row, self.column)
+        if child is not None:
+            child.setData(self.prefix, CompletionPrefixRole)
+            child.setData(self.completions, CompletionsRole)
+        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+
+    def __repr__(self):
+        return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
+
 
 class SetColumns(object):
 
@@ -1123,6 +1166,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()
+        elif role == CompletionPrefixRole:
+            self._append_request(Completion(index.row(), index.column(), value))
         return True
 
     def get_admin( self ):

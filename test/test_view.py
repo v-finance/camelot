@@ -20,7 +20,6 @@ from camelot.core.orm import entities
 from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_string
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
-from camelot import test
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import action_steps
 from camelot.view.action_steps import OpenFormView
@@ -36,11 +35,10 @@ from camelot.view import forms
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
-from camelot.model.party import Person
 
 from .import app_admin
 
-from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
+from .test_item_model import A, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -979,7 +977,7 @@ class ControlsTest(
 
 
 class SnippetsTest(RunningThreadCase,
-    ExampleModelMixinCase, ItemModelCaseMixin, GrabMixinCase
+    ExampleModelMixinCase, QueryQStandardItemModelMixinCase, GrabMixinCase
     ):
 
     images_path = static_images_path
@@ -988,8 +986,11 @@ class SnippetsTest(RunningThreadCase,
     def setUpClass(cls):
         super(SnippetsTest, cls).setUpClass()
         cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.thread.post(cls.setup_proxy)
         cls.app_admin = ApplicationAdmin()
         cls.gui_context = GuiContext()
+        cls.process()
 
     def test_fields_with_actions(self):
         coordinate = Coordinate()
@@ -1007,12 +1008,14 @@ class SnippetsTest(RunningThreadCase,
 
     def test_background_color(self):
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
-        editor = One2ManyEditor(admin=person_admin)
-        proxy = person_admin.get_proxy([
-            Person(first_name='John', last_name='Cleese'),
-            Person(first_name='eric', last_name='Idle')
-        ])
-        editor.set_value(proxy)
+        person_columns = list(person_admin.get_columns())
+        editor = One2ManyEditor(
+            admin=person_admin,
+            columns=person_columns,
+        )
+        editor.set_value(self.proxy)
         self.process()
-        self._load_data(editor.get_model())
+        editor_model = editor.get_model()
+        self.assertTrue(editor_model)
+        self._load_data(editor_model)
         self.grab_widget(editor)
