@@ -138,8 +138,6 @@ class FloatEditor(CustomEditor):
     calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
     
     def __init__(self, parent,
-                       minimum = constants.camelot_minfloat,
-                       maximum = constants.camelot_maxfloat,
                        calculator = True,
                        decimal = False, 
                        option = None,
@@ -158,8 +156,7 @@ class FloatEditor(CustomEditor):
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
         
-
-        spinBox.setRange(minimum-1, maximum)
+        spinBox.setRange(constants.camelot_minfloat-1, constants.camelot_maxfloat)
         spinBox.setDecimals(2)
         spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
@@ -207,6 +204,9 @@ class FloatEditor(CustomEditor):
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
+        minimum = kwargs.get('minimum') if kwargs.get('minimum') is not None else constants.camelot_minfloat-1
+        maximum = kwargs.get('maximum') if kwargs.get('maximum') is not None else constants.camelot_maxfloat
+        spinBox.setRange(minimum, maximum)
         self.update_actions()
 
     def set_value(self, value):
