@@ -33,7 +33,6 @@ from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import CustomEditor, set_background_color_palette
 from ...art import Icon
-from ....core import constants
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -156,7 +155,6 @@ class FloatEditor(CustomEditor):
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
         
-        spinBox.setRange(constants.camelot_minfloat-1, constants.camelot_maxfloat)
         spinBox.setDecimals(2)
         spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
@@ -204,9 +202,9 @@ class FloatEditor(CustomEditor):
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
-        minimum = kwargs.get('minimum') if kwargs.get('minimum') is not None else constants.camelot_minfloat-1
-        maximum = kwargs.get('maximum') if kwargs.get('maximum') is not None else constants.camelot_maxfloat
-        spinBox.setRange(minimum, maximum)
+        minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
+        if None not in (minimum, maximum):
+            spinBox.setRange(minimum, maximum)
         self.update_actions()
 
     def set_value(self, value):
