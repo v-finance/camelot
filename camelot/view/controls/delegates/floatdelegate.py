@@ -43,18 +43,18 @@ class FloatDelegate(CustomDelegate):
     horizontal_align = Qt.AlignRight | Qt.AlignVCenter
 
     def __init__( self,
-                 minimum=constants.camelot_minfloat,
-                 maximum=constants.camelot_maxfloat,
                  parent=None,
                  **kwargs ):
         super(FloatDelegate, self).__init__(parent=parent,
-                                            minimum=minimum, maximum=maximum,
                                             **kwargs )
-        self.minimum = minimum
-        self.maximum = maximum
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
+        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
+        fa_values.update({
+            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
+            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+        })
         item = super(FloatDelegate, cls).get_standard_item(locale, value, fa_values)
         precision = fa_values.get('precision', 2)
         if value is not None:
