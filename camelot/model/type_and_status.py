@@ -160,8 +160,8 @@ class StatusHistoryAdmin( EntityAdmin ):
         if obj.status_for is not None:
             yield obj.status_for
     
-     def get_related_toolbar_actions( self, toolbar_area, direction ):
-         return []
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        return []
 
 class Status( EntityBuilder ):
     """EntityBuilder that adds a related status table(s) to an `Entity`.
