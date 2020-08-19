@@ -353,7 +353,7 @@ class DeleteSelection( EditAction ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         if model_context.selection_count <= 0:
-            raise StopIteration
+            return
         admin = model_context.admin
         objects_to_remove = list( model_context.get_selection() )
         #
@@ -1151,7 +1151,7 @@ class AddExistingObject( EditAction ):
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
                 if obj_to_add == obj:
-                    raise StopIteration()
+                    return
             model_context.proxy.append(obj_to_add)
         yield action_steps.UpdateObjects(objs_to_add)
         for obj_to_add in objs_to_add:
