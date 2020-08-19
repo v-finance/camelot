@@ -150,12 +150,18 @@ class StatusHistory( object ):
 class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
     field_attributes = {'from_date': {'name': _('From date')},
-                        'thru_date': {'name': _('Thru date')}
+                        'thru_date': {'name': _('Thru date')},
+                        'status_from_date': {'editable': False},
+                        'status_thru_date': {'editable': False},
+                        'classified_by': {'editable': False},
                         }
 
     def get_depending_objects(self, obj):
         if obj.status_for is not None:
             yield obj.status_for
+    
+     def get_related_toolbar_actions( self, toolbar_area, direction ):
+         return []
 
 class Status( EntityBuilder ):
     """EntityBuilder that adds a related status table(s) to an `Entity`.
