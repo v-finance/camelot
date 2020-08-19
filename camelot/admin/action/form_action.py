@@ -222,7 +222,7 @@ class CloseForm( Action ):
         admin  = model_context.admin
         if obj is None:
             yield self.step_when_valid()
-            raise StopIteration
+            return
         #
         # validate the object, and if the object is valid, simply close
         # the view
