@@ -54,7 +54,6 @@ class MainWindow(QtCore.QObject):
             self.window = QtWidgets.QMainWindow(parent)
         else:
             self.window = window
-            self.window.setParent(parent)
 
         window.installEventFilter(self)
 
