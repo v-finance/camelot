@@ -882,7 +882,7 @@ class ControlsTest(
 
     def test_main_window(self):
         widget = MainWindow( self.gui_context )
-        self.grab_widget(widget)
+        self.grab_widget(widget.window)
 
     def test_reduced_main_window(self):
         from camelot.view.mainwindow import MainWindow
@@ -892,9 +892,9 @@ class ControlsTest(
         gui_context = ApplicationActionGuiContext()
         gui_context.admin = app_admin
         widget = MainWindow( gui_context )
-        widget.setStyleSheet( app_admin.get_stylesheet() )
-        widget.show()
-        self.grab_widget( widget )
+        widget.window.setStyleSheet( app_admin.get_stylesheet() )
+        widget.window.show()
+        self.grab_widget( widget.window )
 
     def test_busy_widget(self):
         from camelot.view.controls.busy_widget import BusyWidget
