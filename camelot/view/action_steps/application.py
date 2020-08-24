@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from ...admin.action.base import ActionStep
-from ...core.qt import QtCore, Qt
+from ...core.qt import QtCore, Qt, QtWidgets
 
 class Exit( ActionStep ):
     """
@@ -66,16 +66,25 @@ class MainWindow( ActionStep ):
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
         main_window_context.admin = self.admin
-        main_window = MainWindow( gui_context=main_window_context )
+
+        # Check if a QMainWindow already exists
+        window = None
+        app = QtWidgets.QApplication.instance()
+        for widget in app.allWidgets():
+            if widget.__class__.__name__ == 'QMainWindow':
+                window = widget
+                break
+
+        main_window = MainWindow( gui_context=main_window_context, parent=None, window=window )
         gui_context.workspace = main_window_context.workspace
-        main_window.setWindowTitle( self.window_title )
+        main_window.window.setWindowTitle( self.window_title )
         return main_window
         
     def gui_run( self, gui_context ):
         from camelot.view.register import register
         main_window = self.render( gui_context )
         register( main_window, main_window )
-        main_window.show()
+        main_window.window.show()
 
 class NavigationPanel(ActionStep):
     """
