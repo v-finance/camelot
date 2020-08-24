@@ -55,7 +55,7 @@ class MainWindow(QtCore.QObject):
         else:
             self.window = window
 
-        window.installEventFilter(self)
+        self.window.installEventFilter(self)
 
         self.app_admin = gui_context.admin.get_application_admin()
         
