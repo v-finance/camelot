@@ -56,6 +56,8 @@ class MainWindow(QtCore.QObject):
             self.window = window
             self.window.setParent(parent)
 
+        window.installEventFilter(self)
+
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
@@ -126,14 +128,15 @@ class MainWindow(QtCore.QObject):
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
 
-    def closeEvent( self, event ):
-        from camelot.view.model_thread import get_model_thread
-        model_thread = get_model_thread()
-        self.workspace.close_all_views()
-        self.write_settings()
-        logger.info( 'closing mainwindow' )
-        model_thread.stop()
-        #super( MainWindow, self ).closeEvent( event )
-        self.window.closeEvent( event )
-        QtCore.QCoreApplication.exit(0)
+    def eventFilter(self, qobject, event):
+        if event.type() == QtCore.QEvent.Close:
+            from camelot.view.model_thread import get_model_thread
+            model_thread = get_model_thread()
+            self.workspace.close_all_views()
+            self.write_settings()
+            logger.info( 'closing mainwindow' )
+            model_thread.stop()
+            QtCore.QCoreApplication.exit(0)
 
+        # allow events to propagate
+        return False
