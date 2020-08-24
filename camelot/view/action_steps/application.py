@@ -71,7 +71,7 @@ class MainWindow( ActionStep ):
         window = None
         app = QtWidgets.QApplication.instance()
         for widget in app.allWidgets():
-            if widget.__class__.__name__ == 'QMainWindow':
+            if isinstance(widget, QtWidgets.QMainWindow):
                 window = widget
                 break
 
