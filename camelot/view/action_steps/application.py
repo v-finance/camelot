@@ -40,7 +40,7 @@ class Exit( ActionStep ):
         
     def gui_run( self, gui_context ):
         QtCore.QCoreApplication.exit(self.return_code)
-        
+
 class MainWindow( ActionStep ):
     """
     Open a top level application window
@@ -63,6 +63,8 @@ class MainWindow( ActionStep ):
         """create the main window. this method is used to unit test
         the action step."""
         from ..mainwindowproxy import MainWindowProxy
+        from camelot.view.register import register
+
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
         main_window_context.admin = self.admin
@@ -76,14 +78,16 @@ class MainWindow( ActionStep ):
                 break
 
         main_window_proxy = MainWindowProxy( gui_context=main_window_context, parent=None, window=window )
+        register( main_window_proxy, main_window_proxy )
+
         gui_context.workspace = main_window_context.workspace
         main_window_proxy.parent().setWindowTitle( self.window_title )
         return main_window_proxy
         
     def gui_run( self, gui_context ):
-        from camelot.view.register import register
+        #from camelot.view.register import register
         main_window_proxy = self.render( gui_context )
-        register( main_window_proxy, main_window_proxy )
+        #register( main_window_proxy, main_window_proxy )
         main_window_proxy.parent().show()
 
 class NavigationPanel(ActionStep):
