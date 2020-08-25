@@ -30,7 +30,7 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls import editors
 from camelot.view.controls.editors.datetimeeditor import TimeValidator
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from camelot.view.mainwindow import MainWindow
+from camelot.view.mainwindowproxy import MainWindowProxy
 from camelot.view import forms
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -881,20 +881,19 @@ class ControlsTest(
         self.grab_widget(widget)
 
     def test_main_window(self):
-        widget = MainWindow( self.gui_context )
-        self.grab_widget(widget.window)
+        proxy = MainWindowProxy( self.gui_context )
+        self.grab_widget(proxy.parent())
 
     def test_reduced_main_window(self):
-        from camelot.view.mainwindow import MainWindow
         from camelot_example.application_admin import MiniApplicationAdmin
         from camelot.admin.action.application_action import ApplicationActionGuiContext
         app_admin = MiniApplicationAdmin()
         gui_context = ApplicationActionGuiContext()
         gui_context.admin = app_admin
-        widget = MainWindow( gui_context )
-        widget.window.setStyleSheet( app_admin.get_stylesheet() )
-        widget.window.show()
-        self.grab_widget( widget.window )
+        proxy = MainWindowProxy( gui_context )
+        proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
+        proxy.parent().show()
+        self.grab_widget( proxy.parent() )
 
     def test_busy_widget(self):
         from camelot.view.controls.busy_widget import BusyWidget
@@ -947,7 +946,7 @@ class ControlsTest(
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        workspace = DesktopWorkspace(self.app_admin, None, None)
+        workspace = DesktopWorkspace(self.app_admin, None)
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):

@@ -62,7 +62,7 @@ class MainWindow( ActionStep ):
     def render( self, gui_context ):
         """create the main window. this method is used to unit test
         the action step."""
-        from ..mainwindow import MainWindow
+        from ..mainwindowproxy import MainWindowProxy
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
         main_window_context.admin = self.admin
@@ -75,16 +75,16 @@ class MainWindow( ActionStep ):
                 window = widget
                 break
 
-        main_window = MainWindow( gui_context=main_window_context, parent=None, window=window )
+        main_window_proxy = MainWindowProxy( gui_context=main_window_context, parent=None, window=window )
         gui_context.workspace = main_window_context.workspace
-        main_window.window.setWindowTitle( self.window_title )
-        return main_window
+        main_window_proxy.parent().setWindowTitle( self.window_title )
+        return main_window_proxy
         
     def gui_run( self, gui_context ):
         from camelot.view.register import register
-        main_window = self.render( gui_context )
-        register( main_window, main_window )
-        main_window.window.show()
+        main_window_proxy = self.render( gui_context )
+        register( main_window_proxy, main_window_proxy )
+        main_window_proxy.parent().show()
 
 class NavigationPanel(ActionStep):
     """
@@ -131,7 +131,13 @@ class MainMenu(ActionStep):
         self.menu = menu
 
     def gui_run( self, gui_context ):
-        gui_context.workspace.main_window.set_main_menu(self.menu)
+        from ..mainwindowproxy import MainWindowProxy
+        main_window = gui_context.workspace.parent()
+        if main_window is None:
+            return
+        main_window_proxy = main_window.findChild(MainWindowProxy)
+        if main_window_proxy is not None:
+            main_window_proxy.set_main_menu(self.menu)
 
 
 class InstallTranslator(ActionStep):

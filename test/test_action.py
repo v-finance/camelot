@@ -848,7 +848,7 @@ class ApplicationActionsCase(
         self.storage = Storage()
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
-        self.gui_context.workspace = DesktopWorkspace( self.app_admin, None, None )
+        self.gui_context.workspace = DesktopWorkspace( self.app_admin, None )
 
     def test_refresh( self ):
         from camelot.core.orm import Session
