@@ -34,8 +34,8 @@ from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
 
-class MainWindow(QtCore.QObject):
-    """Main window of a Desktop Camelot application
+class MainWindowProxy(QtCore.QObject):
+    """Proxy for a main window of a Desktop Camelot application
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
@@ -43,6 +43,7 @@ class MainWindow(QtCore.QObject):
     :param window: a :class:`QtWidgets.QMainWindow` object or :class:`None`
     
     If window is None, a new QMainWindow will be created.
+    The QMainWindow will be set as parent of this QObject.
     """
 
     def __init__(self, gui_context, parent=None, window=None):
@@ -51,23 +52,26 @@ class MainWindow(QtCore.QObject):
         QtCore.QObject.__init__(self)
 
         if window is None:
-            self.window = QtWidgets.QMainWindow(parent)
-        else:
-            self.window = window
+            window = QtWidgets.QMainWindow(parent)
+            # keep the window alive
+            self._window = window
 
-        self.window.installEventFilter(self)
+        # make the QMainWindow the parent of this QObject
+        self.setParent(window)
+
+        window.installEventFilter(self)
 
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
         self.gui_context = gui_context
-        self.workspace = DesktopWorkspace( self.app_admin, self.window )
+        self.workspace = DesktopWorkspace( self.app_admin, window )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')
 
         logger.debug('setting central widget to our workspace')
-        self.window.setCentralWidget( self.workspace )
+        window.setCentralWidget( self.workspace )
         self.workspace.view_activated_signal.connect( self.view_activated )
         logger.debug('reading saved settings')
         self.read_settings()
@@ -78,13 +82,13 @@ class MainWindow(QtCore.QObject):
         settings = QtCore.QSettings()
         geometry = variant_to_py( settings.value('geometry') )
         if geometry:
-            self.window.restoreGeometry( geometry )
+            self.parent().restoreGeometry( geometry )
 
     def write_settings(self):
         """Store the current geometry of the main window"""
         logger.debug('writing application settings')
         settings = QtCore.QSettings()
-        settings.setValue('geometry', py_to_variant(self.window.saveGeometry()))
+        settings.setValue('geometry', py_to_variant(self.parent().saveGeometry()))
         logger.debug('settings written')
 
     @QtCore.qt_slot( object )
@@ -97,7 +101,7 @@ class MainWindow(QtCore.QObject):
         from camelot.view.controls.action_widget import ActionAction
         if main_menu == None:
             return
-        menu_bar = self.window.menuBar()
+        menu_bar = self.parent().menuBar()
         for menu in main_menu:
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
         menu_bar.setCornerWidget( BusyWidget() )
