@@ -131,7 +131,7 @@ class MainMenu(ActionStep):
         self.menu = menu
 
     def gui_run( self, gui_context ):
-        gui_context.workspace.parent().set_main_menu(self.menu)
+        gui_context.workspace.main_window.set_main_menu(self.menu)
 
 
 class InstallTranslator(ActionStep):

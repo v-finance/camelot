@@ -61,7 +61,7 @@ class MainWindow(QtCore.QObject):
         
         logger.debug('setting up workspace')
         self.gui_context = gui_context
-        self.workspace = DesktopWorkspace( self.app_admin, self.window )
+        self.workspace = DesktopWorkspace( self.app_admin, self.window, self )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')

@@ -947,7 +947,7 @@ class ControlsTest(
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        workspace = DesktopWorkspace(self.app_admin, None)
+        workspace = DesktopWorkspace(self.app_admin, None, None)
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):
