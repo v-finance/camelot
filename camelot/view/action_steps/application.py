@@ -74,8 +74,11 @@ class MainWindow( ActionStep ):
         app = QtWidgets.QApplication.instance()
         for widget in app.allWidgets():
             if isinstance(widget, QtWidgets.QMainWindow):
-                window = widget
-                break
+                # Make sure a QMainWindow is reused only once
+                if not hasattr(widget, '_reused_by_view_action_steps_application'):
+                    widget._reused_by_view_action_steps_application = True
+                    window = widget
+                    break
 
         main_window_proxy = MainWindowProxy( gui_context=main_window_context, window=window )
 
