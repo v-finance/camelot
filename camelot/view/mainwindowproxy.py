@@ -33,32 +33,37 @@ logger = logging.getLogger('camelot.view.mainwindow')
 from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
+from camelot.view.register import register
+import sip
 
 class MainWindowProxy(QtCore.QObject):
     """Proxy for a main window of a Desktop Camelot application
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
-    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None` 
     :param window: a :class:`QtWidgets.QMainWindow` object or :class:`None`
     
     If window is None, a new QMainWindow will be created.
     The QMainWindow will be set as parent of this QObject.
     """
 
-    def __init__(self, gui_context, parent=None, window=None):
+    def __init__(self, gui_context, window=None):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtCore.QObject.__init__(self)
 
         if window is None:
-            window = QtWidgets.QMainWindow(parent)
-            # keep the window alive
-            self._window = window
+            window = QtWidgets.QMainWindow()
+        else:
+            # transfer ownership to python if this window was created in C++
+            if not sip.ispycreated(window):
+                sip.transferback(window)
 
         # make the QMainWindow the parent of this QObject
         self.setParent(window)
-
+        # register QMainWindow to keep it alive
+        register( window, window )
+        # install event filter to capture close event
         window.installEventFilter(self)
 
         self.app_admin = gui_context.admin.get_application_admin()

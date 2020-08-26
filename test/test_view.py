@@ -895,6 +895,41 @@ class ControlsTest(
         proxy.parent().show()
         self.grab_widget( proxy.parent() )
 
+    def test_multiple_main_windows(self):
+        """Make sure we can still create multiple QMainWindows"""
+        from camelot.view.action_steps.application import MainWindow
+        from camelot_example.application_admin import MiniApplicationAdmin
+        from camelot.admin.action.application_action import ApplicationActionGuiContext
+
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication([])
+
+        def count_main_windows():
+            result = 0
+            for widget in app.allWidgets():
+                if isinstance(widget, QtWidgets.QMainWindow):
+                    result += 1
+            return result
+
+        app_admin1 = MiniApplicationAdmin()
+        gui_context1 = ApplicationActionGuiContext()
+        gui_context1.admin = app_admin1
+        action_step1 = MainWindow(app_admin1)
+        main_window1 = action_step1.render(gui_context1)
+
+        num_main_windows1 = count_main_windows()
+
+        app_admin2 = MiniApplicationAdmin()
+        gui_context2 = ApplicationActionGuiContext()
+        gui_context2.admin = app_admin2
+        action_step2 = MainWindow(app_admin2)
+        main_window2 = action_step2.render(gui_context2)
+
+        num_main_windows2 = count_main_windows()
+
+        self.assertEqual( num_main_windows1 + 1, num_main_windows2 )
+
     def test_busy_widget(self):
         from camelot.view.controls.busy_widget import BusyWidget
         busy_widget = BusyWidget()
