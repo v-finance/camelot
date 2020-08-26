@@ -34,6 +34,7 @@ from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.register import register
+import sip
 
 class MainWindowProxy(QtCore.QObject):
     """Proxy for a main window of a Desktop Camelot application
@@ -53,11 +54,16 @@ class MainWindowProxy(QtCore.QObject):
 
         if window is None:
             window = QtWidgets.QMainWindow()
-            register( window, window )
+        else:
+            # transfer ownership to python if this window was created in C++
+            if not sip.ispycreated(window):
+                sip.transferback(window)
 
         # make the QMainWindow the parent of this QObject
         self.setParent(window)
-
+        # register QMainWindow to keep it alive
+        register( window, window )
+        # install event filter to capture close event
         window.installEventFilter(self)
 
         self.app_admin = gui_context.admin.get_application_admin()
