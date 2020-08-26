@@ -85,6 +85,8 @@ class MainWindow( ActionStep ):
         
     def gui_run( self, gui_context ):
         main_window = self.render( gui_context )
+        if main_window.statusBar() is not None:
+            main_window.statusBar().hide()
         main_window.show()
 
 class NavigationPanel(ActionStep):
