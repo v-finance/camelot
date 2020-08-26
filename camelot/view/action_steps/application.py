@@ -79,18 +79,12 @@ class MainWindow( ActionStep ):
 
         main_window_proxy = MainWindowProxy( gui_context=main_window_context, window=window )
 
-        # register the QMainWindow if it was created by the proxy
-        if window is None:
-            register( main_window_proxy.parent(), main_window_proxy.parent() )
-
         gui_context.workspace = main_window_context.workspace
         main_window_proxy.parent().setWindowTitle( self.window_title )
         return main_window_proxy.parent()
         
     def gui_run( self, gui_context ):
-        #from camelot.view.register import register
         main_window = self.render( gui_context )
-        #register( main_window_proxy, main_window_proxy )
         main_window.show()
 
 class NavigationPanel(ActionStep):

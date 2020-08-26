@@ -33,6 +33,7 @@ logger = logging.getLogger('camelot.view.mainwindow')
 from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
+from camelot.view.register import register
 
 class MainWindowProxy(QtCore.QObject):
     """Proxy for a main window of a Desktop Camelot application
@@ -52,8 +53,7 @@ class MainWindowProxy(QtCore.QObject):
 
         if window is None:
             window = QtWidgets.QMainWindow()
-            # keep the window alive
-            self._window = window
+            register( window, window )
 
         # make the QMainWindow the parent of this QObject
         self.setParent(window)
