@@ -82,7 +82,7 @@ class MainWindow( ActionStep ):
 
         gui_context.workspace = main_window_context.workspace
         main_window_proxy.parent().setWindowTitle( self.window_title )
-        return main_window_proxy
+        return main_window_proxy.parent()
         
     def gui_run( self, gui_context ):
         #from camelot.view.register import register
