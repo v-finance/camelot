@@ -77,7 +77,7 @@ class MainWindow( ActionStep ):
                 window = widget
                 break
 
-        main_window_proxy = MainWindowProxy( gui_context=main_window_context, parent=None, window=window )
+        main_window_proxy = MainWindowProxy( gui_context=main_window_context, window=window )
         register( main_window_proxy, main_window_proxy )
 
         gui_context.workspace = main_window_context.workspace
@@ -86,9 +86,9 @@ class MainWindow( ActionStep ):
         
     def gui_run( self, gui_context ):
         #from camelot.view.register import register
-        main_window_proxy = self.render( gui_context )
+        main_window = self.render( gui_context )
         #register( main_window_proxy, main_window_proxy )
-        main_window_proxy.parent().show()
+        main_window.show()
 
 class NavigationPanel(ActionStep):
     """

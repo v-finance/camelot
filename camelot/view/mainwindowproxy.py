@@ -39,20 +39,19 @@ class MainWindowProxy(QtCore.QObject):
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
-    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None` 
     :param window: a :class:`QtWidgets.QMainWindow` object or :class:`None`
     
     If window is None, a new QMainWindow will be created.
     The QMainWindow will be set as parent of this QObject.
     """
 
-    def __init__(self, gui_context, parent=None, window=None):
+    def __init__(self, gui_context, window=None):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtCore.QObject.__init__(self)
 
         if window is None:
-            window = QtWidgets.QMainWindow(parent)
+            window = QtWidgets.QMainWindow()
             # keep the window alive
             self._window = window
 
