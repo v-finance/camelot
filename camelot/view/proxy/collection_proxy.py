@@ -592,7 +592,11 @@ class Completion(object):
             field_name,
             self.prefix,
         )
-        self.completions = [admin.get_search_identifiers(e) for e in completions]
+        if completions is None:
+            # the field does not support autocompletions
+            self.completions = []
+        else:
+            self.completions = [admin.get_search_identifiers(e) for e in completions]
         return self
 
     def gui_run(self, item_model):
