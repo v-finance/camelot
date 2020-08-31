@@ -4,15 +4,14 @@ import unittest
 
 import six
 
-from sqlalchemy import orm
-from sqlalchemy import schema, types
+from sqlalchemy import orm, schema, types, create_engine
+from sqlalchemy.pool import StaticPool
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Session, process_deferred_properties
-
-from camelot.core.sql import metadata
 from camelot.core.conf import settings
+from camelot.core.sql import metadata
 
 from camelot.model import party, memento, authentication
 from camelot.model.party import Person
@@ -23,7 +22,6 @@ from camelot.model.batch_job import BatchJob, BatchJobType
 from camelot.model.fixture import Fixture, FixtureVersion
 from camelot.model.i18n import Translation, ExportAsPO
 
-from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 
 from camelot_example.fixtures import load_movie_fixtures
@@ -34,40 +32,34 @@ from .test_orm import TestMetaData
 
 app_admin = ApplicationAdmin()
 
+#
+# This creates an in memory database per thread
+#
+model_engine = create_engine('sqlite://')
+
 class ExampleModelMixinCase(object):
 
     @classmethod
     def setup_sample_model(cls):
         process_deferred_properties()
         setup_views()
-        cls.engine = settings.ENGINE()
-        metadata.bind = cls.engine
-        metadata.create_all()
+        metadata.bind = model_engine
+        metadata.create_all(model_engine)
         cls.session = Session()
         cls.session.expunge_all()
         update_last_login()
 
     @classmethod
     def tear_down_sample_model(cls):
-        metadata.drop_all()
         cls.session.expunge_all()
 
     @classmethod
-    def load_test_data(cls):
+    def load_example_data(cls):
+        """
+        set cls.first_person_id, to have the id of a person available in the gui
+        """
         load_movie_fixtures()
-
-class ExampleModelCase(ModelThreadTestCase, ExampleModelMixinCase):
-    """
-    Test case that makes sure the example tables are available in
-    the Camelot metadata
-    """
-    
-    def setUp(self):
-        super(ExampleModelCase, self).setUp()
-        self.setup_sample_model()
-        
-    def tearDown(self):
-        self.tear_down_sample_model()
+        cls.first_person_id = cls.session.query(Person).first().id
 
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
@@ -175,8 +167,8 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
 
     @classmethod
     def setUpClass(cls):
+        super(PartyCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.session = Session()
         cls.app_admin = ApplicationAdmin()
         cls.person_admin = cls.app_admin.get_related_admin(party.Person)
         cls.organization_admin = cls.app_admin.get_related_admin(party.Organization)
@@ -185,12 +177,13 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     def tearDownClass(cls):
         cls.tear_down_sample_model()
 
-    def tearDown(self):
-        self.session.expunge_all()
+    def setUp(self):
+        self.session = Session()
+        self.session.close()
 
     def test_party( self ):
         p = party.Party()
-        self.assertFalse( p.name )
+        self.assertFalse(p.name)
         
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
@@ -208,7 +201,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
                                                city = city )
         self.assertTrue( six.text_type( address ) )
         return address
-    
+
     def test_party_address( self ):
         city = self.test_geographic_boundary()
         org = party.Organization( name = 'PSF' )
@@ -217,16 +210,21 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         party_address.street2 = 'Boite 4'
         party_address.city = city
         party_address_admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
+        self.assertEqual(len(org.addresses), 1)
         self.assertTrue( party_address.address in party_address_admin.get_compounding_objects( party_address ) )
         self.assertTrue( party_address.address in self.session.new )
         # everything should be flushed through the party admin
         org_admin = self.app_admin.get_related_admin( party.Organization )
         org_validator = org_admin.get_validator()
         self.assertTrue( party_address in org_admin.get_compounding_objects( org ) )
-        org_admin.flush( org )
-        self.assertFalse( party_address.address in self.session.new )
-        party_address_admin.refresh( party_address )
+        org_admin.flush(org)
+        self.assertFalse(party_address.address in self.session.new)
+        self.assertFalse(party_address in self.session.new)
+        self.assertFalse(org in self.session.new)
+        self.assertEqual(len(org.addresses), 1)
+        party_address_admin.refresh(party_address)
         # test hybrid property getters on Party and PartyAddress
+        self.assertEqual(len(org.addresses), 1)
         self.assertEqual( party_address.street1, 'Avenue Louise 5' )
         self.assertEqual( party_address.street2, 'Boite 4' )
         self.assertEqual( party_address.city, city )
@@ -423,7 +421,7 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
         p1 = Person()
         self.assertEqual( Fixture.find_fixture_key_and_class( p1 ), 
                           (None, None) )
-        session.expunge( p1 )
+        session.expunge(p1)
         # insert a new Fixture
         p2 = Fixture.insert_or_update_fixture( Person, 'test',
                                                {'first_name':'Peter',
@@ -436,7 +434,7 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual( Fixture.find_fixture_keys_and_classes( Person )[p2.id],
                           ('test', 'test') )
         # delete the person, and insert it back in the same fixture
-        session.delete( p2 )
+        session.delete(p2)
         session.flush()
         p3 = Fixture.insert_or_update_fixture( Person, 'test',
                                                {'first_name':'Peter',
@@ -447,11 +445,10 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
         Fixture.remove_all_fixtures( Person )
         
     def test_fixture_version( self ):
-        session = self.session
         self.assertEqual( FixtureVersion.get_current_version( u'unexisting' ),
                           0 )        
         FixtureVersion.set_current_version( u'demo_data', 0 )
-        session.flush()
+        self.session.flush()
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           0 )
         example_file = os.path.join( os.path.dirname(__file__), 
@@ -466,14 +463,18 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
             for line in reader:
                 Person( first_name = line[0], last_name = line[1] )
             FixtureVersion.set_current_version( u'demo_data', 1 )
-            session.flush()
+            self.session.flush()
         # end load csv if fixture version
         self.assertTrue( Person.query.count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           1 )
         
-class CustomizationCase(unittest.TestCase):
-    
+class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+
     def test_add_field( self ):
         metadata.drop_all()
         session = Session()

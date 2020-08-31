@@ -27,16 +27,10 @@
 #
 #  ============================================================================
 
-from functools import update_wrapper, partial
-
-import six
-
 from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
 from ....admin.action import field_action
-from ....admin.action.list_filter import SearchFilter
 from ...crud_signals import CrudSignalHandler
-from camelot.view.model_thread import post, object_thread
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
@@ -97,6 +91,8 @@ class Many2OneEditor( CustomEditor ):
         layout.setSpacing(0)
         layout.setContentsMargins( 0, 0, 0, 0)
 
+        self.index = None
+
         # Search input
         self.search_input = DecoratedLineEdit(self)
         self.search_input.setPlaceholderText(_('Search...'))
@@ -123,7 +119,6 @@ class Many2OneEditor( CustomEditor ):
         layout.addWidget(self.search_input)
         self.setLayout(layout)
         self.add_actions(actions, layout)
-        self.search_filter = SearchFilter(admin)
         CrudSignalHandler().connect_signals(self)
 
     def set_field_attributes(self, **kwargs):
@@ -138,35 +133,10 @@ class Many2OneEditor( CustomEditor ):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
-        text = six.text_type( self.search_input.text() )
+        self.completionPrefixChanged.emit(str(text))
 
-        def create_search_completion(text):
-            return lambda: self.search_completions(text)
-
-        post(
-            create_search_completion(six.text_type(text)),
-            self.display_search_completions
-        )
-        self.completer.complete()
-
-    def search_completions(self, text):
-        """Search for object that match text, to fill the list of completions
-
-        :return: a list of tuples of (dict_of_object_representation, object)
-        """
-        query = self.admin.get_query()
-        query = self.search_filter.decorate_query(query, text)
-
-        sresult = [
-            self.admin.get_search_identifiers(e)
-            for e in query.limit(20).all()
-        ]
-        return text, sresult
-
-
-    def display_search_completions(self, prefix_and_completions):
-        assert object_thread( self )
-        prefix, completions = prefix_and_completions
+    def display_search_completions(self, prefix, completions):
+        self.search_input.setText(prefix)
         self.completer.model().setCompletions(completions)
         self.completer.setCompletionPrefix(prefix)
         self.completer.complete()
@@ -232,30 +202,15 @@ class Many2OneEditor( CustomEditor ):
             return value
         return self.obj
 
-    @QtCore.qt_slot(tuple)
-    def set_instance_representation(self, representation_and_propagate):
+    def set_verbose_name(self, verbose_name):
         """Update the gui"""
-        (desc, propagate) = representation_and_propagate
-        self._entity_representation = desc
-        self.search_input.setText(desc or u'')
-
-        if propagate:
-            self.editingFinished.emit()
+        self._entity_representation = verbose_name
+        self.search_input.setText(verbose_name or u'')
 
     def set_object(self, obj, propagate=True):
         self.obj = obj
-
-        def get_instance_representation( obj, propagate ):
-            """Get a representation of the instance"""
-            if obj is not None:
-                return (self.admin.get_verbose_object_name(obj), propagate)
-            return (None, propagate)
-
-        post( update_wrapper( partial( get_instance_representation,
-                                       obj,
-                                       propagate ),
-                              get_instance_representation ),
-              self.set_instance_representation)
+        if propagate==True:
+            self.editingFinished.emit()
 
     selected_object = property(fset=set_object)
 

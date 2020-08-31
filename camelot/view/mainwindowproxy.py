@@ -33,31 +33,50 @@ logger = logging.getLogger('camelot.view.mainwindow')
 from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
 
 from camelot.view.controls.busy_widget import BusyWidget
+from camelot.view.register import register
+import sip
 
-class MainWindow(QtWidgets.QMainWindow):
-    """Main window of a Desktop Camelot application
+class MainWindowProxy(QtCore.QObject):
+    """Proxy for a main window of a Desktop Camelot application
     
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
-    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None` 
+    :param window: a :class:`QtWidgets.QMainWindow` object or :class:`None`
     
+    If window is None, a new QMainWindow will be created.
+    The QMainWindow will be set as parent of this QObject.
     """
 
-    def __init__(self, gui_context, parent=None):
+    def __init__(self, gui_context, window=None):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
-        QtWidgets.QMainWindow.__init__(self, parent)
+        QtCore.QObject.__init__(self)
+
+        if window is None:
+            window = QtWidgets.QMainWindow()
+        else:
+            # transfer ownership to python if this window was created in C++
+            if not sip.ispycreated(window):
+                sip.transferback(window)
+
+        # make the QMainWindow the parent of this QObject
+        self.setParent(window)
+        # register QMainWindow to keep it alive
+        register( window, window )
+        # install event filter to capture close event
+        window.installEventFilter(self)
+
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')
         self.gui_context = gui_context
-        self.workspace = DesktopWorkspace( self.app_admin, self )
+        self.workspace = DesktopWorkspace( self.app_admin, window )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')
 
         logger.debug('setting central widget to our workspace')
-        self.setCentralWidget( self.workspace )
+        window.setCentralWidget( self.workspace )
         self.workspace.view_activated_signal.connect( self.view_activated )
         logger.debug('reading saved settings')
         self.read_settings()
@@ -68,13 +87,13 @@ class MainWindow(QtWidgets.QMainWindow):
         settings = QtCore.QSettings()
         geometry = variant_to_py( settings.value('geometry') )
         if geometry:
-            self.restoreGeometry( geometry )
+            self.parent().restoreGeometry( geometry )
 
     def write_settings(self):
         """Store the current geometry of the main window"""
         logger.debug('writing application settings')
         settings = QtCore.QSettings()
-        settings.setValue('geometry', py_to_variant(self.saveGeometry()))
+        settings.setValue('geometry', py_to_variant(self.parent().saveGeometry()))
         logger.debug('settings written')
 
     @QtCore.qt_slot( object )
@@ -87,7 +106,7 @@ class MainWindow(QtWidgets.QMainWindow):
         from camelot.view.controls.action_widget import ActionAction
         if main_menu == None:
             return
-        menu_bar = self.menuBar()
+        menu_bar = self.parent().menuBar()
         for menu in main_menu:
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
         menu_bar.setCornerWidget( BusyWidget() )
@@ -117,13 +136,15 @@ class MainWindow(QtWidgets.QMainWindow):
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
 
-    def closeEvent( self, event ):
-        from camelot.view.model_thread import get_model_thread
-        model_thread = get_model_thread()
-        self.workspace.close_all_views()
-        self.write_settings()
-        logger.info( 'closing mainwindow' )
-        model_thread.stop()
-        super( MainWindow, self ).closeEvent( event )
-        QtCore.QCoreApplication.exit(0)
+    def eventFilter(self, qobject, event):
+        if event.type() == QtCore.QEvent.Close:
+            from camelot.view.model_thread import get_model_thread
+            model_thread = get_model_thread()
+            self.workspace.close_all_views()
+            self.write_settings()
+            logger.info( 'closing mainwindow' )
+            model_thread.stop()
+            QtCore.QCoreApplication.exit(0)
 
+        # allow events to propagate
+        return False

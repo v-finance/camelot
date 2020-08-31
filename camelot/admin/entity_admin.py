@@ -173,12 +173,21 @@ and used as a custom action.
             break
         return sql_attributes
 
-    def get_query(self):
-        """:return: an sqlalchemy query for all the objects that should be
+    def get_query(self, session=None):
+        """
+        Overwrite this method to configure eager loading strategies
+        to be used in a specific admin.
+
+        :param session: the session to be used to create a query.
+           Uses the default session if None is given.
+           Not passing the session is considered deprecated behavior.
+
+        :return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
         change the default query, which selects all rows in the database.
         """
-        return Session().query( self.entity )
+        session = session or Session()
+        return session.query(self.entity)
 
     def get_proxy(self, objects):
         """
@@ -220,7 +229,7 @@ and used as a custom action.
         search_identifiers[Qt.EditRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
-        return search_identifiers                
+        return search_identifiers
 
     def get_list_toolbar_actions( self, toolbar_area ):
         """
@@ -382,6 +391,21 @@ and used as a custom action.
                 if all_attributes.get('direction', False) in directions:
                     attributes['editable'] = False
             yield attributes
+
+    def get_completions(self, obj, field_name, prefix):
+        """
+        Overwrites `ObjectAdmin.get_completions` and searches for autocompletion
+        along relationships.
+        """
+        all_attributes = self.get_field_attributes(field_name)
+        admin = all_attributes.get('admin')
+        session = orm.object_session(obj)
+        if (admin is not None) and (session is not None):
+            search_filter = list_filter.SearchFilter(admin)
+            query = admin.get_query(session)
+            query = search_filter.decorate_query(query, prefix)
+            return [e for e in query.limit(20).all()]
+        return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is

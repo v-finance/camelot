@@ -32,8 +32,8 @@ import time
 
 import six
 
-from ...core.conf import settings
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
+from ...core.sql import metadata
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -330,7 +330,7 @@ Backup the database to disk
         label, storage = yield SelectBackup( self.backup_mechanism )
         yield UpdateProgress( text = _('Backup in progress') )
         backup_mechanism = self.backup_mechanism(label, storage)
-        backup_iterator = backup_mechanism.backup(settings.ENGINE())
+        backup_iterator = backup_mechanism.backup(metadata.bind)
         for completed, total, description in backup_iterator:
             yield UpdateProgress(completed,
                                  total,
@@ -402,7 +402,7 @@ Restore the database to disk
         label, storage = yield SelectRestore( self.backup_mechanism )
         yield UpdateProgress( text = _('Restore in progress') )
         backup_mechanism = self.backup_mechanism(label, storage)
-        restore_iterator = backup_mechanism.restore(settings.ENGINE())
+        restore_iterator = backup_mechanism.restore(metadata.bind)
         for completed, total, description in restore_iterator:
             yield UpdateProgress(completed,
                                  total,

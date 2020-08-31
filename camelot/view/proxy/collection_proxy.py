@@ -59,7 +59,8 @@ from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
-    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy
+    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
+    CompletionsRole, CompletionPrefixRole
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -102,6 +103,7 @@ invalid_item.setData(invalid_data, Qt.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
+invalid_item.setData(invalid_data, CompletionsRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -441,6 +443,7 @@ class SetData(Update):
                 continue
             changed = False
             for column, value in request_group:
+
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
 
@@ -567,6 +570,50 @@ class Sort(RowCount):
     def __repr__(self):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
 
+
+class Completion(object):
+
+    def __init__(self, row, column, prefix):
+        self.row = row
+        self.column = column
+        self.prefix = prefix
+        self.completions = None
+
+    def model_run(self, model_context):
+        field_name = model_context.static_field_attributes[self.column]['field_name']
+        admin = model_context.static_field_attributes[self.column]['admin']
+        object_slice = list(model_context.proxy[self.row:self.row+1])
+        if not len(object_slice):
+            logger.error('Cannot generate completions : no object in row {0}'.format(self.row))
+            return
+        obj = object_slice[0]
+        completions = model_context.admin.get_completions(
+            obj,
+            field_name,
+            self.prefix,
+        )
+        if completions is None:
+            # the field does not support autocompletions
+            self.completions = []
+        else:
+            self.completions = [admin.get_search_identifiers(e) for e in completions]
+        return self
+
+    def gui_run(self, item_model):
+        root_item = item_model.invisibleRootItem()
+        if is_deleted(root_item):
+            return
+        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
+        child = root_item.child(self.row, self.column)
+        if child is not None:
+            child.setData(self.prefix, CompletionPrefixRole)
+            child.setData(self.completions, CompletionsRole)
+        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+
+    def __repr__(self):
+        return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
+
+
 class SetColumns(object):
 
     def __init__(self, columns):
@@ -613,9 +660,9 @@ class SetColumns(object):
             #
             # Set the header data
             #
-            
             set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
+            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
+            set_header_data(py_to_variant({'editable': fa.get('editable', True)}), FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.FontRole)
             else:
@@ -1104,22 +1151,27 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # prevent data of being set in rows not actually in this model
         #
         if (not index.isValid()) or (index.model()!=self):
+            self.logger.debug('set data index is invalid')
             return False
         if role == Qt.EditRole:
+            column = index.column()
             # if the field is not editable, don't waste any time and get out of here
-            field_attributes = variant_to_py(self.data(index, FieldAttributesRole))
-            if field_attributes.get('editable') != True:
+            field_attributes = variant_to_py(self.headerData(column, Qt.Horizontal, FieldAttributesRole))
+            if field_attributes.get('editable', True) != True:
+                self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
                 return
             row = index.row()
-            column = index.column()
             obj = variant_to_py(self.headerData(row, Qt.Vertical, ObjectRole))
             if obj is None:
+                logger.debug('set data called on row without object')
                 return
             self.logger.debug('set data ({0},{1})'.format(row, column))
             self._update_requests.append((row, obj, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()
+        elif role == CompletionPrefixRole:
+            self._append_request(Completion(index.row(), index.column(), value))
         return True
 
     def get_admin( self ):

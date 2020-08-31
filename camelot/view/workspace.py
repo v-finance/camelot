@@ -60,6 +60,10 @@ class DesktopWorkspace(QtWidgets.QWidget):
     .. attribute:: background
 
     The widget class to be used as the view for the uncloseable 'Start' tab.
+
+    :param app_admin: the application admin object for this application
+    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None`
+
     """
 
     view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
