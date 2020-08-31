@@ -15,7 +15,7 @@ from camelot.model.party import Person
 from camelot.admin.action import GuiContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-from camelot.core.item_model import PreviewRole
+from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.orm import entities
 from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_string
 from camelot.core.utils import ugettext_lazy as _
@@ -282,8 +282,13 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
+        # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
+        delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
+        item = delegate.get_standard_item(QtCore.QLocale(), 3, {})
+        field_attributes = item.data(FieldAttributesRole)
+        
         editor = editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix', editable=True)
+        editor.set_field_attributes(prefix='prefix', editable=True, **field_attributes)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
@@ -292,7 +297,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
         editor = editors.FloatEditor(parent=None, option=self.option)
-        editor.set_field_attributes(suffix=' suffix', editable=True)
+        editor.set_field_attributes(suffix=' suffix', editable=True, **field_attributes)
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -309,7 +314,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
         editor = editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True)
+        editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True, **field_attributes)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
@@ -318,7 +323,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(parent=None,
                                           calculator=False)
-        editor.set_field_attributes( editable=True )
+        editor.set_field_attributes( editable=True, **field_attributes )
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
