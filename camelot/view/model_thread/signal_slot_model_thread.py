@@ -38,6 +38,7 @@ import time
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 import six
+import sip
 
 from ...core.qt import QtCore
 from ...core.threading import synchronized
@@ -205,7 +206,8 @@ class SignalSlotModelThread( AbstractModelThread ):
         # only put the task in the queue when it is completely set up
         self._request_queue.append(task)
         #print 'task created --->', id(task)
-        self.task_available.emit()
+        if not sip.isdeleted(self):
+            self.task_available.emit()
 
     @synchronized
     def stop( self ):
