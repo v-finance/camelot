@@ -1,6 +1,6 @@
 import os
 
-from ....view.art import Icon
+from ....view.art import FontIcon
 from ....view.action import ActionFactory
 from ....core.qt import QtCore, QtWidgets, Qt, QtGui
 from ....core.utils import ugettext as _
@@ -40,7 +40,7 @@ class DbImageEditor(CustomEditor):
         open_button.setDefaultAction( ActionFactory.create_action(text=_('Open'),
                                                                       slot=self.open,
                                                                       parent=self,
-                                                                      actionicon=Icon('tango/16x16/actions/list-add.png'),
+                                                                      actionicon=FontIcon('plus'), # 'tango/16x16/actions/list-add.png'
                                                                       tip=_('Attach file')))        
     
         clear_button = QtWidgets.QToolButton()
@@ -50,7 +50,7 @@ class DbImageEditor(CustomEditor):
         clear_button.setDefaultAction( ActionFactory.create_action(text=_('Clear'),
                                                                    slot=self.clear,
                                                                    parent=self,
-                                                                   actionicon=Icon('tango/16x16/actions/edit-clear.png'),
+                                                                   actionicon=FontIcon('trash'), # 'tango/16x16/actions/edit-clear.png'
                                                                    tip=_('clear')))
     
         copy_button = QtWidgets.QToolButton()
@@ -181,7 +181,7 @@ class DbImageEditor(CustomEditor):
         super(DbImageEditor, self).set_field_attributes(**kwargs)
 
     def clear_image(self):
-        dummy_image = Icon('tango/32x32/mimetypes/image-x-generic.png')
+        dummy_image = FontIcon('image') # 'tango/32x32/mimetypes/image-x-generic.png'
         self.set_pixmap(dummy_image.getQPixmap())
         
     def set_pixmap(self, pixmap):

@@ -33,7 +33,7 @@ a model thread"""
 import logging
 
 from camelot.core.utils import ugettext
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 import six
 
@@ -48,7 +48,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 .. image:: /_static/controls/progress_dialog.png
     """
 
-    progress_icon = Icon('tango/32x32/actions/appointment-new.png')
+    progress_icon = FontIcon('hourglass') # 'tango/32x32/actions/appointment-new.png'
 
     def __init__(self, name, icon=progress_icon):
         QtWidgets.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
