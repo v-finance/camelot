@@ -68,8 +68,7 @@ class Calculator(QtWidgets.QDialog):
         self.clear = QtWidgets.QPushButton('&Clear', self)
 
         self.backspace = QtWidgets.QToolButton()
-        #icon = FontIcon('backspace').getQIcon() # 'tango/16x16/actions/go-previous.png'
-        icon = FontIcon('arrow-left').getQIcon() # 'tango/16x16/actions/go-previous.png'
+        icon = FontIcon('backspace').getQIcon() # 'tango/16x16/actions/go-previous.png'
         self.backspace.setIcon(icon)
         self.backspace.setAutoRaise(True)
 
