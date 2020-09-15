@@ -40,7 +40,7 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
@@ -69,7 +69,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   reject,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
-                  icon = Icon('tango/22x22/categories/preferences-system.png'),
+                  icon = FontIcon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
@@ -326,7 +326,7 @@ class ChangeObjects( ActionStep ):
 
     .. attribute:: icon
 
-        the :class:`camelot.view.art.Icon` in the top right corner of
+        the :class:`camelot.view.art.FontIcon` in the top right corner of
         the dialog
 
     """
@@ -337,7 +337,7 @@ class ChangeObjects( ActionStep ):
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
-        self.icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
+        self.icon = FontIcon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.invalid_rows = set()
         self.columns = admin.get_columns()
         self.toolbar_actions = admin.get_related_toolbar_actions(

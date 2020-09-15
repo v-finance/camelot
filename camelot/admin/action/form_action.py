@@ -32,7 +32,7 @@ import six
 from ...core.qt import QtGui, QtWidgets, is_deleted
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -156,7 +156,7 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
 
 class ShowHistory( Action ):
     
-    icon = Icon('tango/16x16/actions/format-justify-fill.png')
+    icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
         
@@ -189,7 +189,7 @@ class ShowHistory( Action ):
                                                          current_attributes = {} ) )
                     admin = ChangeAdmin( model_context.admin, object )
                     step = action_steps.ChangeObjects( changes, admin )
-                    step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
+                    step.icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
                     step.title = _('Recent changes')
                     step.subtitle = model_context.admin.get_verbose_identifier( obj )
                     yield step
@@ -198,7 +198,7 @@ class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
     
     shortcut = QtGui.QKeySequence.Close
-    icon = Icon('tango/16x16/actions/system-log-out.png')
+    icon = FontIcon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
     

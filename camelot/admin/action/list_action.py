@@ -42,7 +42,7 @@ from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
@@ -270,7 +270,7 @@ class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
     shortcut = QtGui.QKeySequence.Open
-    icon = Icon('tango/16x16/places/folder.png')
+    icon = FontIcon('folder') # 'tango/16x16/places/folder.png'
     tooltip = _('Open')
     # verbose name is set to None to avoid displaying it in the vertical
     # header of the table view
@@ -307,7 +307,8 @@ class DuplicateSelection( EditAction ):
     
     # no shortcut here, as this is too dangerous if the user
     # presses the shortcut without being aware of the consequences
-    icon = Icon('tango/16x16/actions/edit-copy.png')
+    icon = FontIcon('copy') # 'tango/16x16/actions/edit-copy.png'
+    #icon = FontIcon('clone') # 'tango/16x16/actions/edit-copy.png'
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     
@@ -333,7 +334,7 @@ class DeleteSelection( EditAction ):
     
     shortcut = QtGui.QKeySequence.Delete
     name = 'delete_selection'
-    icon = Icon('tango/16x16/places/user-trash.png')
+    icon = FontIcon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
     verbose_name = _('Delete')
     
@@ -388,7 +389,7 @@ class DeleteSelection( EditAction ):
 
 class AbstractToPrevious(object):
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
-    icon = Icon('tango/16x16/actions/go-previous.png')
+    icon = FontIcon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
     verbose_name = _('Previous')
     
@@ -416,7 +417,7 @@ class ToPreviousRow( AbstractToPrevious, ListContextAction ):
 
 class AbstractToFirst(object):
     shortcut = QtGui.QKeySequence.MoveToStartOfDocument
-    icon = Icon('tango/16x16/actions/go-first.png')
+    icon = FontIcon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
     verbose_name = _('First')
 
@@ -428,7 +429,7 @@ class ToFirstRow( AbstractToFirst, ToPreviousRow ):
 
 class AbstractToNext(object):
     shortcut = QtGui.QKeySequence.MoveToNextPage
-    icon = Icon('tango/16x16/actions/go-next.png')
+    icon = FontIcon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
     verbose_name = _('Next')
     
@@ -457,7 +458,7 @@ class ToNextRow( AbstractToNext, ListContextAction ):
 
 class AbstractToLast(object):
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
-    icon = Icon('tango/16x16/actions/go-last.png')
+    icon = FontIcon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
     verbose_name = _('Last')
     
@@ -600,7 +601,7 @@ class ClearMapping(Action):
 class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
     
-    icon = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
+    icon = FontIcon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
 
@@ -821,7 +822,7 @@ class ExportSpreadsheet( ListContextAction ):
 class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
     
-    icon = Icon('tango/16x16/actions/document-print-preview.png')
+    icon = FontIcon('print') # 'tango/16x16/actions/document-print-preview.png'
     tooltip = _('Print Preview')
     verbose_name = _('Print Preview')
 
@@ -857,7 +858,7 @@ class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
     
     verbose_name = _('Import from file')
-    icon = Icon('tango/16x16/mimetypes/text-x-generic.png')
+    icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
     tooltip = _('Import from file')
 
     def model_run( self, model_context ):
@@ -953,7 +954,7 @@ class ReplaceFieldContents( EditAction ):
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
-    icon = Icon('tango/16x16/actions/edit-find-replace.png')
+    icon = FontIcon('edit') # 'tango/16x16/actions/edit-find-replace.png'
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.Replace
@@ -1007,7 +1008,7 @@ class SetFilters(Action, AbstractModelFilter):
 
     verbose_name = _('Find')
     tooltip = _('Filter the data')
-    icon = Icon('tango/16x16/actions/system-search.png')
+    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
 
     def filter(self, it, field_filters):
         if field_filters is None:
@@ -1127,7 +1128,7 @@ class SetFilters(Action, AbstractModelFilter):
 
 class SetExpandedSearch(Action):
 
-    icon = Icon('tango/16x16/actions/system-search.png')
+    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
     verbose_name = _('Search')
     tooltip = _('Expand or collapse search options')
 
@@ -1142,7 +1143,7 @@ class AddExistingObject( EditAction ):
     
     tooltip = _('Add')
     verbose_name = _('Add')
-    icon = Icon( 'tango/16x16/actions/list-add.png' )
+    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
     
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
@@ -1167,7 +1168,8 @@ class AddNewObject( EditAction ):
     """
 
     shortcut = QtGui.QKeySequence.New
-    icon = Icon('tango/16x16/actions/document-new.png')
+    #icon = FontIcon('plus-square') # 'tango/16x16/actions/document-new.png'
+    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')
 
@@ -1201,7 +1203,7 @@ class RemoveSelection(DeleteSelection):
     shortcut = None
     tooltip = _('Remove')
     verbose_name = _('Remove')
-    icon = Icon( 'tango/16x16/actions/list-remove.png' )
+    icon = FontIcon('minus') # 'tango/16x16/actions/list-remove.png'
             
     def handle_object( self, model_context, obj ):
         model_context.proxy.remove( obj )
@@ -1213,7 +1215,7 @@ class ActionGroup(EditAction):
     """Group a number of actions in a pull down"""
 
     tooltip = _('More')
-    icon = Icon( 'tango/16x16/emblems/emblem-system.png' )
+    icon = FontIcon('cog') # 'tango/16x16/emblems/emblem-system.png'
     actions = (ImportFromFile(), ReplaceFieldContents())
     
     def get_state(self, model_context):

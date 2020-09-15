@@ -36,7 +36,7 @@ from ....core.qt import QtCore, QtWidgets, Qt, py_to_variant
 from .customeditor import CustomEditor, set_background_color_palette
 
 from ...validator import DateValidator
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext
@@ -45,7 +45,7 @@ class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
     calendar_action_trigger = QtCore.qt_signal()
-    special_date_icon = Icon('tango/16x16/apps/office-calendar.png')
+    special_date_icon = FontIcon('calendar-alt') # 'tango/16x16/apps/office-calendar.png'
     
     def __init__(self, parent = None,
                        editable = True,

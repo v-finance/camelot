@@ -34,7 +34,7 @@ import six
 from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -42,7 +42,7 @@ from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 class LocalFileEditor( CustomEditor ):
     """Widget for browsing local files and directories"""
 
-    browse_icon =  Icon( 'tango/16x16/places/folder-saved-search.png' )
+    browse_icon =  FontIcon('columns') # 'tango/16x16/places/folder-saved-search.png'
 
     def __init__(self,
                  parent = None,

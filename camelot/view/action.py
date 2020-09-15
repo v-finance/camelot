@@ -31,7 +31,7 @@
 that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 
 from ..core.qt import QtGui, QtWidgets
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 class ActionFactory(object):
@@ -42,7 +42,7 @@ class ActionFactory(object):
     a default text, icon and shortcut.
     """
 
-    icon_copy = Icon('tango/16x16/actions/edit-copy.png')
+    icon_copy = FontIcon('copy') # 'tango/16x16/actions/edit-copy.png'
         
     @classmethod
     def create_action(*a, **kw):
@@ -82,7 +82,7 @@ class ActionFactory(object):
             slot=slot,
             parent=parent,
             shortcut=QtGui.QKeySequence.Copy,
-            actionicon=Icon('tango/16x16/actions/edit-copy.png'),
+            actionicon=FontIcon('copy'), # 'tango/16x16/actions/edit-copy.png'
             tip=_('Duplicate')
         )
         default.update(kwargs)
@@ -95,7 +95,7 @@ class ActionFactory(object):
             slot=slot,
             parent=parent,
             shortcut=QtGui.QKeySequence.Paste,
-            actionicon=Icon('tango/16x16/actions/edit-paste.png'),
+            actionicon=FontIcon('paste'), # 'tango/16x16/actions/edit-paste.png'
             tip=_('Paste content from clipboard')
         )
         default.update(kwargs)
