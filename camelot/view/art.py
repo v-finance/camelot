@@ -191,9 +191,8 @@ class FontIcon:
 
     @staticmethod
     def _load_name_to_code():
-        path = file_('awesome/name_to_code.json')
-        with open(path) as f:
-            FontIcon._name_to_code = json.load(f)
+        content = read('awesome/name_to_code.json')
+        FontIcon._name_to_code = json.loads(content)
 
     def getQIcon(self):
         if self._name not in FontIcon._name_to_code:
