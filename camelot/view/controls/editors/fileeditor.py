@@ -33,14 +33,14 @@ from ....core.qt import QtWidgets, Qt
 from ....admin.action import field_action
 from .customeditor import CustomEditor, set_background_color_palette
 
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
 
-    document_pixmap = Icon( 'tango/16x16/mimetypes/x-office-document.png' )
+    document_pixmap = FontIcon('edit', 16) # 'tango/16x16/mimetypes/x-office-document.png'
         
     def __init__(self, parent=None,
                  storage=None,

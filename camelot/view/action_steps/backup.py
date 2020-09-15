@@ -42,7 +42,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 import logging
 
 logger = logging.getLogger('camelot.view.action_step.backup')
@@ -171,7 +171,7 @@ class SelectDialog( StandaloneWizardPage ):
 
 class SelectBackupDialog( SelectDialog ):    
     
-    icon = Icon('tango/32x32/actions/document-save.png')
+    icon = FontIcon('save') # 'tango/32x32/actions/document-save.png'
 
     def __init__( self, default_storage, default_label, parent = None ):
         super(SelectBackupDialog, self).__init__( ugettext('Select backup file'),
@@ -227,7 +227,7 @@ class SelectBackupDialog( SelectDialog ):
 
 class SelectRestoreDialog( SelectDialog ):
     
-    icon = Icon('tango/32x32/devices/drive-harddisk.png')
+    icon = FontIcon('hdd') # 'tango/32x32/devices/drive-harddisk.png'
 
     def __init__( self, default_storage, stored_files, parent = None ):
         self.stored_files = stored_files

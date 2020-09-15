@@ -35,7 +35,7 @@ from .base import Action
 from .application_action import ( ApplicationActionGuiContext, 
                                   ApplicationActionModelContext )
 from ...core.utils import ugettext_lazy as _
-from ...view.art import Icon
+from ...view.art import FontIcon
 
 class DocumentActionModelContext( ApplicationActionModelContext ):
     
@@ -80,7 +80,7 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
 class EditDocument( Action ):
     
     verbose_name = _('Edit')
-    icon = Icon('tango/16x16/apps/accessories-text-editor.png')
+    icon = FontIcon('edit') # 'tango/16x16/apps/accessories-text-editor.png'
     tooltip = _('Edit this document')
     
     def model_run( self, model_context ):

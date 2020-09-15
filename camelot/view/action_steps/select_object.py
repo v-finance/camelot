@@ -33,7 +33,7 @@ from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.tableview import TableView
 
@@ -52,7 +52,7 @@ class SetSelectedObjects(ActionStep):
 class ConfirmSelection(Action):
 
     verbose_name = _('OK')
-    icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
+    icon = FontIcon('check') # 'tango/16x16/emblems/emblem-symbolic-link.png'
 
     def model_run(self, model_context):
         yield SetSelectedObjects(list(model_context.get_selection()))
