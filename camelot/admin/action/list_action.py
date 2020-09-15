@@ -858,8 +858,7 @@ class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
     
     verbose_name = _('Import from file')
-    #icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
-    icon = FontIcon('download') # 'tango/16x16/mimetypes/text-x-generic.png'
+    icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
     tooltip = _('Import from file')
 
     def model_run( self, model_context ):
