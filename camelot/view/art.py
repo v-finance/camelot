@@ -125,7 +125,7 @@ class FontIconEngine(QtGui.QIconEngine):
 
     def __init__(self):
         super().__init__()
-        self.font_family = 'FontAwesome'
+        self.font_family = 'Font Awesome 5 Free'
         self.code = 'X'
         self.color = QtGui.QColor()
 
@@ -137,6 +137,7 @@ class FontIconEngine(QtGui.QIconEngine):
         :param state: a :class:`QtGui.QIcon.State` object
         """
         font = QtGui.QFont(self.font_family)
+        font.setStyleStrategy(QtGui.QFont.NoFontMerging)
         drawSize = QtCore.qRound(rect.height() * 0.8)
         font.setPixelSize(drawSize)
 
@@ -199,7 +200,7 @@ class FontIcon:
             raise Exception("Unknown font awesome icon: {}".format(self._name))
 
         engine = FontIconEngine()
-        engine.font_family = 'FontAwesome'
+        engine.font_family = 'Font Awesome 5 Free'
         engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
         engine.color = QtGui.QColor('#009999')
 
@@ -211,7 +212,7 @@ class FontIcon:
             raise Exception("Unknown font awesome icon: {}".format(self._name))
 
         engine = FontIconEngine()
-        engine.font_family = 'FontAwesome'
+        engine.font_family = 'Font Awesome 5 Free'
         engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
         engine.color = QtGui.QColor('#009999')
 
