@@ -31,7 +31,7 @@ from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import Pixmap
 from camelot.view.model_thread import get_model_thread
 
-working_pixmap = Pixmap( 'tango/16x16/animations/process-working.png' )
+working_pixmap = Pixmap( 'process-working.png' )
 
 class BusyWidget(QtWidgets.QLabel):
     """A widget indicating the application is performing some background task.
