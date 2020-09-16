@@ -723,6 +723,7 @@ class TableView(AbstractView):
         if toolbar_actions != None:
             toolbar = self.findChild(QtWidgets.QToolBar)
             assert toolbar
+            toolbar.setIconSize(QtCore.QSize(16, 16))
             for action in toolbar_actions:
                 rendered = action.render(self.gui_context, toolbar)
                 # both QWidgets and QActions can be put in a toolbar
