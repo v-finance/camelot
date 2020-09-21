@@ -111,6 +111,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def set_right_toolbar_actions(self, toolbar_actions):
         if toolbar_actions is not None:
             toolbar = QtWidgets.QToolBar(self)
+            toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
             for action in toolbar_actions:
                 qaction = action.render(self.gui_context, toolbar)

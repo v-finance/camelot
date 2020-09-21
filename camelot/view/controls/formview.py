@@ -297,6 +297,7 @@ class FormView(AbstractView):
         layout = self.findChild( QtWidgets.QLayout, 'layout' )
         if layout and actions:
             toolbar = QtWidgets.QToolBar()
+            toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
                 qaction = action.render( self.gui_context, toolbar )
                 qaction.triggered.connect( self.action_triggered )
