@@ -455,7 +455,8 @@ class HeaderWidget(QtWidgets.QWidget):
         close_icon = FontIcon('times-circle').getQIcon()
         close_button.setIcon(close_icon)
         close_button.setToolTip(_('Close'))
-        close_button.clicked.connect(self.close_clicked)
+        if isinstance(parent, AbstractView):
+            close_button.clicked.connect(parent.close_clicked_signal)
         close_toolbar.addWidget(close_button)
         # setup remaining widgets
         widget_layout.addWidget(title)
@@ -473,23 +474,6 @@ class HeaderWidget(QtWidgets.QWidget):
         layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-
-    @QtCore.qt_slot()
-    def close_clicked(self):
-        app = QtWidgets.QApplication.instance()
-        assert app
-        window = app.activeWindow()
-        assert window
-        tab_widget = window.findChild(QtWidgets.QTabWidget, 'workspace_tab_widget')
-        assert tab_widget
-        index = tab_widget.currentIndex()
-        view = tab_widget.widget(index)
-        if view is not None:
-            view.validate_close()
-            # it's not enough to simply remove the tab, because this
-            # would keep the underlying view widget alive
-            view.deleteLater()
-            tab_widget.removeTab(index)
 
     @hybrid_property
     def _title_font(cls):

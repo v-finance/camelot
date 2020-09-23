@@ -140,6 +140,16 @@ class DesktopWorkspace(QtWidgets.QWidget):
             index = self._tab_widget.indexOf(sender)
             self._tab_widget.setTabIcon(index, new_icon)
 
+    @QtCore.qt_slot()
+    def close_view(self):
+        """
+        Slot to be called when a view requests to be closed.
+        """
+        sender = self.sender()
+        if sender is not None:
+            index = self._tab_widget.indexOf(sender)
+            self._tab_close_request(index)
+
     def set_view(self, view, icon = None, title = '...'):
         """
         Remove the currently active view and replace it with a new view.
@@ -152,6 +162,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
             self._tab_close_request(index)
             view.title_changed_signal.connect(self.change_title)
             view.icon_changed_signal.connect(self.change_icon)
+            view.close_clicked_signal.connect(self.close_view)
             if icon:
                 index = self._tab_widget.insertTab(index, view, icon, title)
             else:
@@ -165,6 +176,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
         assert object_thread(self)
         view.title_changed_signal.connect(self.change_title)
         view.icon_changed_signal.connect(self.change_icon)
+        view.close_clicked_signal.connect(self.close_view)
         if icon:
             index = self._tab_widget.addTab(view, icon, title)
         else:

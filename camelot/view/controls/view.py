@@ -49,6 +49,7 @@ class AbstractView(QtWidgets.QWidget):
 
     title_changed_signal = QtCore.qt_signal(six.text_type)
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
+    close_clicked_signal = QtCore.qt_signal()
 
     @QtCore.qt_slot()
     def validate_close(self):
