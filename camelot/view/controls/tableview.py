@@ -36,6 +36,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
 from camelot.core.utils import ugettext as _
+from camelot.view.art import FontIcon
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
 from camelot.view import register
@@ -445,8 +446,23 @@ class HeaderWidget(QtWidgets.QWidget):
         title = QtWidgets.QLabel(
             six.text_type(self.gui_context.admin.get_verbose_name_plural()), self)
         title.setFont(self._title_font)
+        # setup close button
+        close_toolbar = QtWidgets.QToolBar()
+        close_toolbar.setObjectName('close_toolbar')
+        close_toolbar.setIconSize(QtCore.QSize(16, 16))
+        widget_layout.addWidget(close_toolbar)
+        close_button = QtWidgets.QToolButton(self)
+        close_icon = FontIcon('times-circle').getQIcon()
+        close_button.setIcon(close_icon)
+        close_button.setToolTip(_('Close'))
+        close_button.clicked.connect(self.close_clicked)
+        close_toolbar.addWidget(close_button)
+        # setup remaining widgets
         widget_layout.addWidget(title)
-        widget_layout.addWidget(QtWidgets.QToolBar())
+        actions_toolbar = QtWidgets.QToolBar()
+        actions_toolbar.setObjectName('actions_toolbar')
+        actions_toolbar.setIconSize(QtCore.QSize(16, 16))
+        widget_layout.addWidget(actions_toolbar)
         number_of_rows = self.rows_widget(gui_context, parent=self)
         number_of_rows.setObjectName('number_of_rows')
         widget_layout.addWidget(number_of_rows)
@@ -457,6 +473,23 @@ class HeaderWidget(QtWidgets.QWidget):
         layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+
+    @QtCore.qt_slot()
+    def close_clicked(self):
+        app = QtWidgets.QApplication.instance()
+        assert app
+        window = app.activeWindow()
+        assert window
+        tab_widget = window.findChild(QtWidgets.QTabWidget, 'workspace_tab_widget')
+        assert tab_widget
+        index = tab_widget.currentIndex()
+        view = tab_widget.widget(index)
+        if view is not None:
+            view.validate_close()
+            # it's not enough to simply remove the tab, because this
+            # would keep the underlying view widget alive
+            view.deleteLater()
+            tab_widget.removeTab(index)
 
     @hybrid_property
     def _title_font(cls):
@@ -721,9 +754,8 @@ class TableView(AbstractView):
             method.
         """
         if toolbar_actions != None:
-            toolbar = self.findChild(QtWidgets.QToolBar)
+            toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
             assert toolbar
-            toolbar.setIconSize(QtCore.QSize(16, 16))
             for action in toolbar_actions:
                 rendered = action.render(self.gui_context, toolbar)
                 # both QWidgets and QActions can be put in a toolbar

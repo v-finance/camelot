@@ -80,6 +80,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
 
         # Setup the tab widget
         self._tab_widget = QtWidgets.QTabWidget( self )
+        self._tab_widget.setObjectName('workspace_tab_widget')
         tab_bar = DesktopTabbar(self._tab_widget)
         self._tab_widget.setTabBar(tab_bar)
         self._tab_widget.setDocumentMode(True)
