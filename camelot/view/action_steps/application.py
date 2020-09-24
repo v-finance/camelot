@@ -63,7 +63,6 @@ class MainWindow( ActionStep ):
         """create the main window. this method is used to unit test
         the action step."""
         from ..mainwindowproxy import MainWindowProxy
-        from camelot.view.register import register
 
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None

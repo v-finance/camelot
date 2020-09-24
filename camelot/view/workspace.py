@@ -40,26 +40,11 @@ from camelot.admin.action import ApplicationActionGuiContext
 from camelot.view.model_thread import object_thread
 
 
-class DesktopTabbar(QtWidgets.QTabBar):
-
-    def tabSizeHint(self, index):
-        originalSizeHint = super(DesktopTabbar, self).tabSizeHint(index)
-        minimumWidth = max(160, originalSizeHint.width())
-        return QtCore.QSize(minimumWidth, originalSizeHint.height())
-
 class DesktopWorkspace(QtWidgets.QWidget):
     """
     A tab based workspace that can be used by views to display themselves.
 
-    In essence this is a wrapper around QTabWidget to do some initial setup
-    and provide it with a background widget.
-    This was originallly implemented using the QMdiArea, but the QMdiArea has
-    too many drawbacks, like not being able to add close buttons to the tabs
-    in a decent way.
-
-    .. attribute:: background
-
-    The widget class to be used as the view for the uncloseable 'Start' tab.
+    In essence this is a wrapper around QTabWidget with initial setup.
 
     :param app_admin: the application admin object for this application
     :param parent: a :class:`QtWidgets.QWidget` object or :class:`None`
@@ -81,11 +66,8 @@ class DesktopWorkspace(QtWidgets.QWidget):
         # Setup the tab widget
         self._tab_widget = QtWidgets.QTabWidget( self )
         self._tab_widget.setObjectName('workspace_tab_widget')
-        tab_bar = DesktopTabbar(self._tab_widget)
-        self._tab_widget.setTabBar(tab_bar)
+        self._tab_widget.setTabPosition(QtWidgets.QTabWidget.East)
         self._tab_widget.setDocumentMode(True)
-        self._tab_widget.setTabsClosable(True)
-        self._tab_widget.tabCloseRequested.connect(self._tab_close_request)
         self._tab_widget.currentChanged.connect(self._tab_changed)
         layout.addWidget(self._tab_widget)
         self.setLayout(layout)

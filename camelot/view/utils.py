@@ -39,7 +39,7 @@ import string
 import logging
 import operator
 
-from ..core.qt import QtCore, QtWidgets
+from ..core.qt import QtCore
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
