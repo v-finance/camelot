@@ -40,7 +40,7 @@ from camelot.admin.action import ApplicationActionGuiContext
 from camelot.view.model_thread import object_thread
 
 
-class DesktopWorkspace(QtWidgets.QWidget):
+class DesktopWorkspace(QtWidgets.QTabWidget):
     """
     A tab based workspace that can be used by views to display themselves.
 
@@ -54,23 +54,15 @@ class DesktopWorkspace(QtWidgets.QWidget):
     view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
 
     def __init__(self, app_admin, parent):
-        super(DesktopWorkspace, self).__init__(parent)
+        super().__init__(parent)
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = app_admin
         self.gui_context.workspace = self
 
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        # Setup the tab widget
-        self._tab_widget = QtWidgets.QTabWidget( self )
-        self._tab_widget.setObjectName('workspace_tab_widget')
-        self._tab_widget.setTabPosition(QtWidgets.QTabWidget.East)
-        self._tab_widget.setDocumentMode(True)
-        self._tab_widget.currentChanged.connect(self._tab_changed)
-        layout.addWidget(self._tab_widget)
-        self.setLayout(layout)
+        self.setObjectName('workspace_tab_widget')
+        self.setTabPosition(QtWidgets.QTabWidget.East)
+        self.setDocumentMode(True)
+        self.currentChanged.connect(self._tab_changed)
 
     @QtCore.qt_slot(int)
     def _tab_close_request(self, index):
@@ -80,13 +72,13 @@ class DesktopWorkspace(QtWidgets.QWidget):
         Note that only at-runtime added tabs are being closed, implying
         the immortality of the 'Start' tab.
         """
-        view = self._tab_widget.widget(index)
+        view = self.widget(index)
         if view is not None:
             view.validate_close()
             # it's not enough to simply remove the tab, because this
             # would keep the underlying view widget alive
             view.deleteLater()
-            self._tab_widget.removeTab(index)
+            self.removeTab(index)
 
     @QtCore.qt_slot(int)
     def _tab_changed(self, _index):
@@ -99,8 +91,8 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         :return: The currently active view or None in case of the 'Start' tab.
         """
-        i = self._tab_widget.currentIndex()
-        return self._tab_widget.widget(i)
+        i = self.currentIndex()
+        return self.widget(i)
 
     @QtCore.qt_slot(six.text_type)
     def change_title(self, new_title):
@@ -109,8 +101,8 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         sender = self.sender()
         if sender is not None:
-            index = self._tab_widget.indexOf(sender)
-            self._tab_widget.setTabText(index, new_title)
+            index = self.indexOf(sender)
+            self.setTabText(index, new_title)
 
     @QtCore.qt_slot(QtGui.QIcon)
     def change_icon(self, new_icon):
@@ -119,8 +111,8 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         sender = self.sender()
         if sender is not None:
-            index = self._tab_widget.indexOf(sender)
-            self._tab_widget.setTabIcon(index, new_icon)
+            index = self.indexOf(sender)
+            self.setTabIcon(index, new_icon)
 
     @QtCore.qt_slot()
     def close_view(self):
@@ -129,15 +121,15 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         sender = self.sender()
         if sender is not None:
-            index = self._tab_widget.indexOf(sender)
+            index = self.indexOf(sender)
             self._tab_close_request(index)
 
     def set_view(self, view, icon = None, title = '...'):
         """
         Remove the currently active view and replace it with a new view.
         """
-        index = self._tab_widget.currentIndex()
-        current_view = self._tab_widget.widget(index)
+        index = self.currentIndex()
+        current_view = self.widget(index)
         if (current_view is None) or (current_view.close() == False):
             self.add_view(view, icon, title)
         else:
@@ -146,10 +138,10 @@ class DesktopWorkspace(QtWidgets.QWidget):
             view.icon_changed_signal.connect(self.change_icon)
             view.close_clicked_signal.connect(self.close_view)
             if icon:
-                index = self._tab_widget.insertTab(index, view, icon, title)
+                index = self.insertTab(index, view, icon, title)
             else:
-                index = self._tab_widget.insertTab(index, view, title)
-            self._tab_widget.setCurrentIndex(index)
+                index = self.insertTab(index, view, title)
+            self.setCurrentIndex(index)
 
     def add_view(self, view, icon = None, title = '...'):
         """
@@ -160,15 +152,15 @@ class DesktopWorkspace(QtWidgets.QWidget):
         view.icon_changed_signal.connect(self.change_icon)
         view.close_clicked_signal.connect(self.close_view)
         if icon:
-            index = self._tab_widget.addTab(view, icon, title)
+            index = self.addTab(view, icon, title)
         else:
-            index = self._tab_widget.addTab(view, title)
-        self._tab_widget.setCurrentIndex(index)
+            index = self.addTab(view, title)
+        self.setCurrentIndex(index)
 
     def refresh(self):
         """Refresh all views on the desktop"""
-        for i in range( self._tab_widget.count() ):
-            self._tab_widget.widget(i).refresh()
+        for i in range( self.count() ):
+            self.widget(i).refresh()
 
     def close_all_views(self):
         """
@@ -177,10 +169,10 @@ class DesktopWorkspace(QtWidgets.QWidget):
         # NOTE: will call removeTab until tab widget is cleared
         # but removeTab does not really delete the page objects
         #self._tab_widget.clear()
-        max_index = self._tab_widget.count()
+        max_index = self.count()
 
         while max_index > 0:
-            self._tab_widget.tabCloseRequested.emit(max_index)
+            self.tabCloseRequested.emit(max_index)
             max_index -= 1
 
 top_level_windows = []
