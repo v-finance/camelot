@@ -103,7 +103,7 @@ class ApplicationActionGuiContext( GuiContext ):
         return context
         
     def copy( self, base_class=None ):
-        new_context = super( ApplicationActionGuiContext, self ).copy( base_class )
+        new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
         new_context.workspace = self.workspace
         new_context.admin = self.admin
         return new_context
