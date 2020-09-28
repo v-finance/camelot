@@ -37,7 +37,7 @@ from camelot.view.art import FontIcon
 
 import six
 
-from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -128,6 +128,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def pop_level(self):
         self.levels.pop()
+        if is_deleted(self):
+            return
         if len(self.levels):
             label = self.findChild(QtWidgets.QLabel)
             if label is not None:
