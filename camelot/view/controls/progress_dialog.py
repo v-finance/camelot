@@ -37,7 +37,7 @@ from camelot.view.art import FontIcon
 
 import six
 
-from ...core.qt import QtModel, QtCore, QtWidgets, Qt, q_string, py_to_variant
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -50,9 +50,12 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     progress_icon = FontIcon('hourglass') # 'tango/32x32/actions/appointment-new.png'
 
-    def __init__(self, name, icon=progress_icon):
-        QtWidgets.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
-        label = QtWidgets.QLabel( six.text_type(name) )
+    def __init__(self, parent):
+        super().__init__(parent=parent)
+        self.setRange(0, 0)
+        self.levels = []
+        label = QtWidgets.QLabel('')
+        label.setObjectName('label')
         progress_bar = QtWidgets.QProgressBar()
         progress_bar.setObjectName('progress_bar')
         cancel_button = QtWidgets.QPushButton( ugettext('Cancel') )
@@ -89,10 +92,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         layout.addWidget( details )
         layout.addLayout( button_layout )
         self.setLayout( layout )
-        # show immediately, to prevent a pop up before another window
-        # opened in an action_step
-        self.show()
-        #QtCore.QTimer.singleShot( 1000, self.show )
+        # avoid showing the dialog when it is created
+        self.reset()
 
     @property
     def title(self):
@@ -118,6 +119,23 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         if model is not None:
             text = u'\n'.join([six.text_type(s) for s in model.stringList()])
             QtWidgets.QApplication.clipboard().setText(text)
+
+    def push_level(self, verbose_name):
+        self.levels.append(verbose_name)
+        label = self.findChild(QtWidgets.QLabel)
+        if label is not None:
+            label.setText(verbose_name)
+
+    def pop_level(self):
+        self.levels.pop()
+        if is_deleted(self):
+            return
+        if len(self.levels):
+            label = self.findChild(QtWidgets.QLabel)
+            if label is not None:
+                label.setText(self.levels[-1])
+        else:
+            self.hide()
 
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog

@@ -88,7 +88,7 @@ updated.
         
         :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
         """
-        progress_dialog = gui_context.progress_dialog
+        progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
             if self._maximum is not None:
                 progress_dialog.setMaximum( self._maximum )

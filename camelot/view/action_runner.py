@@ -33,7 +33,7 @@ import logging
 
 import six
 
-from ..core.qt import QtCore, QtWidgets
+from ..core.qt import QtCore
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog
@@ -45,11 +45,10 @@ LOGGER = logging.getLogger( 'camelot.view.action_runner' )
 def hide_progress_dialog( gui_context ):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
-    progress_dialog = gui_context.progress_dialog
+    progress_dialog = gui_context.get_progress_dialog()
     original_state, original_minimum_duration = None, None
-    if isinstance(progress_dialog, QtWidgets.QWidget):
-        original_state = progress_dialog.isHidden()
-        original_minimum_duration = progress_dialog.minimumDuration()
+    original_state = progress_dialog.isHidden()
+    original_minimum_duration = progress_dialog.minimumDuration()
     try:
         progress_dialog.setMinimumDuration(0)
         if original_state == False:
@@ -180,11 +179,11 @@ class ActionRunner( QtCore.QEventLoop ):
         user pressed the cancel button of the progress dialog in the
         gui_context.
         """
-        if isinstance(gui_context.progress_dialog, QtWidgets.QProgressDialog):
-            if gui_context.progress_dialog.wasCanceled():
-                LOGGER.debug( 'progress dialog was canceled, raise request' )
-                raise CancelRequest()
-            
+        progress_dialog = gui_context.get_progress_dialog()
+        if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
+            LOGGER.debug( 'progress dialog was canceled, raise request' )
+            raise CancelRequest()
+
     @QtCore.qt_slot( object )
     def __next__( self, yielded ):
         """Handle the result of the __next__ call of the generator
