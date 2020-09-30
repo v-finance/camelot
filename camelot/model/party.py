@@ -56,13 +56,23 @@ from .authentication import end_of_times
 @six.python_2_unicode_compatible
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
-    using_options( tablename = 'geographic_boundary' )
+    __tablename__ = 'geographic_boundary'
+    
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False )
+    
     __mapper_args__ = { 'polymorphic_on' : row_type }
-
+    
+    __table_args__ = (
+        schema.Index(
+            'ix_geographic_boundary_name', name,
+            postgresql_ops={"name": "gin_trgm_ops"},
+            postgresql_using='gin'
+        ),
+    )
+    
     @ColumnProperty
     def full_name( self ):
         return self.code + ' ' + self.name
