@@ -84,9 +84,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # parent set by layout manager
         table = AdminTableWidget(admin, self)
         table.setObjectName('table')
-        layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding)
+        layout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
         self.setMinimumHeight((self._font_height + 5) * rows)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
