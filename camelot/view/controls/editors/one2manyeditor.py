@@ -54,6 +54,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     :param column_width: the width of the editor in number of characters
 
+    :param rows: minimum number of rows visible
+
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
@@ -68,6 +70,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  proxy=None,
                  columns=[],
                  toolbar_actions=[],
+                 rows=5,
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
@@ -81,10 +84,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # parent set by layout manager
         table = AdminTableWidget(admin, self)
         table.setObjectName('table')
-        layout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
-        self.setMinimumHeight((self._font_height + 5) * 5)
+        layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                           QtGui.QSizePolicy.Expanding)
+        self.setMinimumHeight((self._font_height + 5) * rows)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
