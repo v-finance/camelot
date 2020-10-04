@@ -63,7 +63,6 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         ok_button = QtWidgets.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.clicked.connect( self.accept )
-        ok_button.hide()
         copy_button = QtWidgets.QPushButton( ugettext('Copy') )
         copy_button.setObjectName( 'copy' )
         copy_button.clicked.connect( self.copy_clicked )
@@ -93,7 +92,18 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         layout.addLayout( button_layout )
         self.setLayout( layout )
         # avoid showing the dialog when it is created
+        self.setAutoClose(True)
         self.reset()
+
+    @QtCore.qt_slot()
+    def reset(self):
+        super().reset()
+        self.clear_details()
+        self.set_ok_hidden()
+        copy_button = self.findChild(QtWidgets.QPushButton, 'copy')
+        if copy_button is not None:
+            copy_button.hide()
+        self.adjustSize()
 
     @property
     def title(self):
@@ -121,10 +131,12 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             QtWidgets.QApplication.clipboard().setText(text)
 
     def push_level(self, verbose_name):
-        self.levels.append(verbose_name)
         label = self.findChild(QtWidgets.QLabel)
         if label is not None:
             label.setText(verbose_name)
+        if len(self.levels)==0:
+            self.show()
+        self.levels.append(verbose_name)
 
     def pop_level(self):
         self.levels.pop()
@@ -135,7 +147,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             if label is not None:
                 label.setText(self.levels[-1])
         else:
-            self.hide()
+            self.reset()
 
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
@@ -163,9 +175,12 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def clear_details( self ):
         """Clear the detail text"""
-        details = self.findChild( QtWidgets.QListView, 'details' )
+        details = self.findChild(QtWidgets.QListView, 'details')
         if details is not None:
             details.hide()
+            model = details.model()
+            if model is not None:
+                model.setStringList([])
 
     def enlarge(self):
         """ Increase the size of the dialog window """
