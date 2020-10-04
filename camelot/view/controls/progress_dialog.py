@@ -93,6 +93,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         self.setLayout( layout )
         # avoid showing the dialog when it is created
         self.setAutoClose(True)
+        self.setMinimumDuration(1000)
         self.reset()
 
     @QtCore.qt_slot()
@@ -134,8 +135,6 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         label = self.findChild(QtWidgets.QLabel)
         if label is not None:
             label.setText(verbose_name)
-        if len(self.levels)==0:
-            self.show()
         self.levels.append(verbose_name)
 
     def pop_level(self):
