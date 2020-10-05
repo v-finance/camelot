@@ -46,6 +46,9 @@ def hide_progress_dialog( gui_context ):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.get_progress_dialog()
+    if progress_dialog is None:
+        yield
+        return
     original_state, original_minimum_duration = None, None
     original_state = progress_dialog.isHidden()
     original_minimum_duration = progress_dialog.minimumDuration()

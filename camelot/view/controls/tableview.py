@@ -448,7 +448,7 @@ class HeaderWidget(QtWidgets.QWidget):
         title.setFont(self._title_font)
         # setup close button
         close_button = QtWidgets.QToolButton(self)
-        close_icon = FontIcon('times-circle').getQIcon()
+        close_icon = FontIcon('backspace').getQIcon()
         close_button.setIcon(close_icon)
         close_button.setToolTip(_('Close'))
         if isinstance(parent, AbstractView):
