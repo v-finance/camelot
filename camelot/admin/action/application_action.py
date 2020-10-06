@@ -32,7 +32,7 @@ import time
 
 import six
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtQuick, QtQml
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtQuick, QtQml, is_deleted
 from ...core.sql import metadata
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
@@ -109,7 +109,7 @@ class ApplicationActionGuiContext( GuiContext ):
         return super( ApplicationActionGuiContext, self ).get_progress_dialog()
 
     def get_window(self):
-        if self.workspace is not None:
+        if self.workspace is not None and not is_deleted(self.workspace):
             return self.workspace.window()
 
     def create_model_context( self ):

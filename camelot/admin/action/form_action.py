@@ -30,7 +30,7 @@
 import six
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
-from camelot.admin.action.base import Action
+from camelot.admin.action.base import Action, GuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
 
@@ -134,8 +134,11 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         self.widget_mapper = None
         self.view = None
 
+    def get_progress_dialog(self):
+        return GuiContext.get_progress_dialog(self)
+
     def get_window(self):
-        if self.view is not None:
+        if self.view is not None and not is_deleted(self.view):
             return self.view.window()
         return super(FormActionGuiContext, self).get_window()
 
