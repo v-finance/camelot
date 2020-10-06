@@ -29,7 +29,7 @@
 
 import logging
 
-from ...core.qt import QtWidgets, QtGui
+from ...core.qt import QtWidgets, QtGui, Qt
 
 import six
 
@@ -56,10 +56,6 @@ references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
 
-.. attribute:: progress_dialog
-
-    an instance of :class:`QtWidgets.QProgressDialog` or :keyword:`None`
-    
 .. attribute:: mode_name
 
     the name of the mode in which the action was triggered
@@ -73,8 +69,24 @@ strictly to the :class:`ModelContext`
     model_context = ModelContext
     
     def __init__( self ):
-        self.progress_dialog = None
         self.mode_name = None
+
+    def get_progress_dialog(self):
+        """
+        :return: an instance of :class:`QtWidgets.QProgressDialog`
+                 or :keyword:`None`
+        """
+        from camelot.view.controls.progress_dialog import ProgressDialog
+        window = self.get_window()
+        if window is not None:
+            progress_dialog = window.findChild(
+                QtWidgets.QProgressDialog, 'application_progress',
+                Qt.FindDirectChildrenOnly
+            )
+            if progress_dialog is None:
+                progress_dialog = ProgressDialog(parent=window)
+                progress_dialog.setObjectName('application_progress')
+            return progress_dialog
 
     def get_window(self):
         """
@@ -107,10 +119,9 @@ strictly to the :class:`ModelContext`
             if the new context should be of the same type as the copied context.
         """
         new_context = (base_class or self.__class__)()
-        new_context.progress_dialog = self.progress_dialog
         new_context.mode_name = self.mode_name
         return new_context
-                    
+
 class State( object ):
     """A state represents the appearance and behavior of the widget that
 triggers the action.  When the objects in the model change, the 
@@ -267,6 +278,26 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         yield
 
+class ProgressLevel(object):
+
+    def __init__(self, gui_context, verbose_name):
+        self.verbose_name = verbose_name
+        self.gui_context = gui_context
+        self.progress_dialog = None
+
+    def __enter__(self):
+        self.progress_dialog = self.gui_context.get_progress_dialog()
+        if self.progress_dialog is not None:
+            self.progress_dialog.push_level(self.verbose_name)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.progress_dialog is not None:
+            self.progress_dialog.pop_level()
+        self.progress_dialog = None
+        return False
+
+
 class Action( ActionStep ):
     """An action has a set of attributes that define its appearance in the
 GUI.  
@@ -391,26 +422,13 @@ direct manipulations of the user interface without a need to access the model.
             
         """
         from ..application_admin import ApplicationAdmin
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        progress_dialog = None
         # only create a progress dialog if there is none yet, or if the
         # existing dialog was canceled
         LOGGER.debug( 'action gui run started' )
-        if isinstance(gui_context.progress_dialog, QtWidgets.QProgressDialog):
-            if gui_context.progress_dialog.wasCanceled():
-                gui_context.progress_dialog = None
-        if gui_context.progress_dialog is None:
-            LOGGER.debug( 'create new progress dialog' )
-            progress_dialog = ProgressDialog( six.text_type( self.verbose_name ) )
-            gui_context.progress_dialog = progress_dialog
-            #progress_dialog.show()
-        if gui_context.admin is None:
-            gui_context.admin = ApplicationAdmin()
-        super(Action, self).gui_run( gui_context )
-        # only close the progress dialog if it was created here
-        if progress_dialog is not None:
-            progress_dialog.close()
-            gui_context.progress_dialog = None
+        with ProgressLevel(gui_context, str(self.verbose_name)):
+            if gui_context.admin is None:
+                gui_context.admin = ApplicationAdmin()
+            super(Action, self).gui_run(gui_context)
         LOGGER.debug( 'gui run finished' )
         
     def get_state( self, model_context ):

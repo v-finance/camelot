@@ -88,7 +88,7 @@ updated.
         
         :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
         """
-        progress_dialog = gui_context.progress_dialog
+        progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
             if self._maximum is not None:
                 progress_dialog.setMaximum( self._maximum )
@@ -107,8 +107,10 @@ updated.
                 progress_dialog.enlarge()
             if self.blocking:
                 progress_dialog.set_ok_hidden( False )
+                progress_dialog.set_cancel_hidden( True )
                 progress_dialog.exec_()
                 progress_dialog.set_ok_hidden( True )
+                progress_dialog.set_cancel_hidden( False )
             if progress_dialog.wasCanceled():
                 progress_dialog.reset()
                 raise CancelRequest()

@@ -32,12 +32,12 @@ a model thread"""
 
 import logging
 
-from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext, ugettext_lazy
 from camelot.view.art import FontIcon
 
 import six
 
-from ...core.qt import QtModel, QtCore, QtWidgets, Qt, q_string, py_to_variant
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -50,9 +50,12 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     progress_icon = FontIcon('hourglass') # 'tango/32x32/actions/appointment-new.png'
 
-    def __init__(self, name, icon=progress_icon):
-        QtWidgets.QProgressDialog.__init__( self, q_string(u''), q_string(u''), 0, 0 )
-        label = QtWidgets.QLabel( six.text_type(name) )
+    def __init__(self, parent):
+        super().__init__(parent=parent)
+        self.setRange(0, 0)
+        self.levels = []
+        label = QtWidgets.QLabel('')
+        label.setObjectName('label')
         progress_bar = QtWidgets.QProgressBar()
         progress_bar.setObjectName('progress_bar')
         cancel_button = QtWidgets.QPushButton( ugettext('Cancel') )
@@ -60,7 +63,6 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         ok_button = QtWidgets.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.clicked.connect( self.accept )
-        ok_button.hide()
         copy_button = QtWidgets.QPushButton( ugettext('Copy') )
         copy_button.setObjectName( 'copy' )
         copy_button.clicked.connect( self.copy_clicked )
@@ -89,10 +91,20 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         layout.addWidget( details )
         layout.addLayout( button_layout )
         self.setLayout( layout )
-        # show immediately, to prevent a pop up before another window
-        # opened in an action_step
-        self.show()
-        #QtCore.QTimer.singleShot( 1000, self.show )
+        # avoid showing the dialog when it is created
+        self.setAutoClose(True)
+        self.setMinimumDuration(1000)
+        self.reset()
+
+    @QtCore.qt_slot()
+    def reset(self):
+        super().reset()
+        self.clear_details()
+        self.set_ok_hidden()
+        copy_button = self.findChild(QtWidgets.QPushButton, 'copy')
+        if copy_button is not None:
+            copy_button.hide()
+        self.adjustSize()
 
     @property
     def title(self):
@@ -119,10 +131,30 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             text = u'\n'.join([six.text_type(s) for s in model.stringList()])
             QtWidgets.QApplication.clipboard().setText(text)
 
+    def push_level(self, verbose_name):
+        label = self.findChild(QtWidgets.QLabel)
+        if label is not None:
+            label.setText(verbose_name)
+        self.levels.append(verbose_name)
+
+    def pop_level(self):
+        self.levels.pop()
+        if is_deleted(self):
+            return
+        if len(self.levels):
+            label = self.findChild(QtWidgets.QLabel)
+            if label is not None:
+                label.setText(self.levels[-1])
+        else:
+            self.reset()
+
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
         :param text: a string
         """
+        # force evaluation of ugettext_lazy (if needed)
+        if isinstance(text, ugettext_lazy):
+            text = str(text)
         details = self.findChild( QtWidgets.QListView, 'details' )
         copy_button = self.findChild( QtWidgets.QPushButton, 'copy' )
         if copy_button is not None:
@@ -145,9 +177,12 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def clear_details( self ):
         """Clear the detail text"""
-        details = self.findChild( QtWidgets.QListView, 'details' )
+        details = self.findChild(QtWidgets.QListView, 'details')
         if details is not None:
             details.hide()
+            model = details.model()
+            if model is not None:
+                model.setStringList([])
 
     def enlarge(self):
         """ Increase the size of the dialog window """
