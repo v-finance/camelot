@@ -107,8 +107,10 @@ updated.
                 progress_dialog.enlarge()
             if self.blocking:
                 progress_dialog.set_ok_hidden( False )
+                progress_dialog.set_cancel_hidden( True )
                 progress_dialog.exec_()
                 progress_dialog.set_ok_hidden( True )
+                progress_dialog.set_cancel_hidden( False )
             if progress_dialog.wasCanceled():
                 progress_dialog.reset()
                 raise CancelRequest()
