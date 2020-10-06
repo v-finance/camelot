@@ -100,7 +100,7 @@ class ApplicationActionGuiContext( GuiContext ):
             if view is not None:
                 if view.objectName() == 'dashboard':
                     # return the QML progress dialog
-                    quick_view = view.quick_view # FIXME: use findChild?
+                    quick_view = view.quick_view
                     progress_dialog = quick_view.findChild(QtCore.QObject, 'progress_dialog')
                     if progress_dialog is None:
                         progress_dialog = QmlProgressDialog(quick_view)
