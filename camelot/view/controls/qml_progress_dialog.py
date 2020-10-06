@@ -92,7 +92,6 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         item.copyClicked.connect(self.copy_clicked)
 
         self.levels = []
-        self._detail_model = None
         self._detail_hidden = True
         self._was_canceled = False
 
@@ -284,9 +283,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     @QtCore.qt_slot()
     def copy_clicked(self):
-        if self._detail_model is not None:
-            text = u'\n'.join([six.text_type(s) for s in self._detail_model.stringList()])
-            QtWidgets.QApplication.clipboard().setText(text)
+        detail_model = self._get_detail_model()
+        text = u'\n'.join([six.text_type(s) for s in detail_model.stringList()])
+        QtWidgets.QApplication.clipboard().setText(text)
 
     def push_level(self, verbose_name):
         LOGGER.debug('push_level()')
@@ -331,6 +330,21 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         else:
             self.hide()
 
+    def _get_detail_model(self):
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
+        detail_model = self.findChild(QtModel.QStringListModel, 'detail_model')
+        if detail_model is None:
+            # a standarditem model is used, in the ideal case, the item
+            # model with the real data should live in the model thread, and
+            # this should only be a proxy
+            detail_model = QtModel.QStringListModel( parent = self )
+            detail_model.setObjectName('detail_model')
+            detail_list = item.findChild( QtCore.QObject, 'detailList' )
+            if detail_list is not None:
+                QtQml.QQmlProperty(detail_list, 'model').write(detail_model)
+        return detail_model
+
     def add_detail( self, text, add_to_level=True ):
         """Add detail text to the list of details in the progress dialog
         :param text: a string
@@ -348,19 +362,14 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
         detail_list = item.findChild( QtCore.QObject, 'detailList' )
         if detail_list is not None:
-            if self._detail_model is None:
-                # a standarditem model is used, in the ideal case, the item
-                # model with the real data should live in the model thread, and
-                # this should only be a proxy
-                self._detail_model = QtModel.QStringListModel( parent = self )
-                QtQml.QQmlProperty(detail_list, 'model').write(self._detail_model)
+            detail_model = self._get_detail_model()
             if self._detail_hidden:
-                self._detail_model.removeRows(0, self._detail_model.rowCount())
+                detail_model.removeRows(0, detail_model.rowCount())
                 detail_list.setProperty('visible', True)
                 self._detail_hidden = False
-            self._detail_model.insertRow(self._detail_model.rowCount())
-            index = self._detail_model.index(self._detail_model.rowCount()-1, 0)
-            self._detail_model.setData(index,
+            detail_model.insertRow(detail_model.rowCount())
+            index = detail_model.index(detail_model.rowCount()-1, 0)
+            detail_model.setData(index,
                           py_to_variant(text),
                           Qt.DisplayRole)
 
@@ -373,8 +382,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
         assert item is not None
         # remove all rows from model
-        if self._detail_model is not None:
-            self._detail_model.removeRows(0, self._detail_model.rowCount())
+        detail_model = self._get_detail_model()
+        detail_model.removeRows(0, detail_model.rowCount())
         # hide the details list
         self._detail_hidden = True
         detail_list = item.findChild( QtCore.QObject, 'detailList' )
