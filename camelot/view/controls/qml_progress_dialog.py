@@ -32,7 +32,7 @@ a model thread"""
 
 import logging
 
-from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext, ugettext_lazy
 from camelot.view.art import FontIcon
 
 import six
@@ -320,6 +320,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         :param text: a string
         """
         LOGGER.debug('add_detail("{}")'.format(text))
+        # force evaluation of ugettext_lazy (if needed)
+        if isinstance(text, ugettext_lazy):
+            text = str(text)
         # show copy button
         copy_button = self._item.findChild(QtCore.QObject, 'copyButton')
         if copy_button is not None:
