@@ -36,8 +36,8 @@ import logging
 import six
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant
-from .base import Action, Mode
+from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
+from .base import Action, Mode, GuiContext
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
@@ -177,8 +177,11 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         self.view = None
         self.field_attributes = dict()
 
+    def get_progress_dialog(self):
+        return GuiContext.get_progress_dialog(self)
+
     def get_window(self):
-        if self.item_view is not None:
+        if self.item_view is not None and not is_deleted(self.item_view):
             return self.item_view.window()
         return super(ListActionGuiContext, self).get_window()
 
