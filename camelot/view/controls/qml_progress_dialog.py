@@ -37,7 +37,7 @@ from camelot.view.art import FontIcon
 
 import six
 
-from ...core.qt import QtModel, QtCore, QtWidgets, Qt, QtQml, py_to_variant, is_deleted
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, QtQuick, QtQml, py_to_variant, is_deleted
 
 LOGGER = logging.getLogger( 'camelot.view.controls.qml_progress_dialog' )
 #LOGGER.setLevel(logging.DEBUG)
@@ -79,15 +79,17 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         engine = quick_view.engine()
         component = QtQml.QQmlComponent(engine)
         component.loadUrl(QtCore.QUrl("qrc:/qml/progress_dialog/progress_dialog.qml"))
-        self._item = component.create()
+        item = component.create()
 
-        if self._item is None:
+        if item is None:
             raise Exception(component.errorString())
 
-        self._item.setParentItem(quick_view.rootObject())
-        self._item.cancelClicked.connect(self.cancel)
-        self._item.cancelClicked.connect(self.canceled)
-        self._item.copyClicked.connect(self.copy_clicked)
+        item.setParent(self)
+        item.setObjectName('progress_dialog_item')
+        item.setParentItem(quick_view.rootObject())
+        item.cancelClicked.connect(self.cancel)
+        item.cancelClicked.connect(self.canceled)
+        item.copyClicked.connect(self.copy_clicked)
 
         self.levels = []
         self._detail_model = None
@@ -104,25 +106,33 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     @QtCore.qt_slot(str)
     def setLabelText(self, text):
-        label_text = self._item.findChild(QtCore.QObject, 'labelText')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
+        label_text = item.findChild(QtCore.QObject, 'labelText')
         if label_text is not None:
             label_text.setProperty('text', text)
         if len(self.levels):
             self.levels[-1].label = text
 
     def isHidden(self):
-        return not self._item.property('visible')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
+        return not item.property('visible')
 
     def hide(self):
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         if len(self.levels):
             self.levels[-1].hidden = True
-        self._item.setProperty('visible', False)
+        item.setProperty('visible', False)
         self._detail_hidden = True
 
     def show(self):
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         if len(self.levels):
             self.levels[-1].hidden = False
-        self._item.setProperty('visible', True)
+        item.setProperty('visible', True)
 
     def minimum(self):
         assert len(self.levels)
@@ -237,6 +247,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         pass
 
     def _update_progress(self):
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         # update the progress bar width
         assert len(self.levels)
         state = self.levels[-1]
@@ -248,9 +260,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         else:
             percent = 0
         LOGGER.debug('_update_progress: percent={}  min={}  max={}  val={}'.format(100*percent, self.levels[-1].minimum, self.levels[-1].maximum, self.levels[-1].value))
-        self._item.setProperty('progress', percent)
+        item.setProperty('progress', percent)
 
-        offset_rectangle = self._item.findChild(QtCore.QObject, 'offsetRectangle')
+        offset_rectangle = item.findChild(QtCore.QObject, 'offsetRectangle')
         if offset_rectangle is not None:
             offset_rectangle.setProperty('width', 0)
 
@@ -262,7 +274,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     @title.setter
     def title(self, value):
-        title_text = self._item.findChild(QtCore.QObject, 'titleText')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
+        title_text = item.findChild(QtCore.QObject, 'titleText')
         if title_text is not None:
             title_text.setProperty('text', value)
         if len(self.levels):
@@ -285,6 +299,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         self.set_cancel_hidden(self.levels[-1].cancel_hidden)
 
     def pop_level(self):
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         LOGGER.debug('pop_level()')
         self.levels.pop()
         LOGGER.debug('# levels: {}'.format(len(self.levels)))
@@ -306,11 +322,11 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
             # reconnect ok button with event loop
             try:
-                self._item.okClicked.disconnect()
+                item.okClicked.disconnect()
             except TypeError:
                 pass
             if self.levels[-1].event_loop is not None:
-                self._item.okClicked.connect(self.levels[-1].event_loop.quit)
+                item.okClicked.connect(self.levels[-1].event_loop.quit)
 
         else:
             self.hide()
@@ -320,15 +336,17 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         :param text: a string
         """
         LOGGER.debug('add_detail("{}")'.format(text))
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         # force evaluation of ugettext_lazy (if needed)
         if isinstance(text, ugettext_lazy):
             text = str(text)
         # show copy button
-        copy_button = self._item.findChild(QtCore.QObject, 'copyButton')
+        copy_button = item.findChild(QtCore.QObject, 'copyButton')
         if copy_button is not None:
             copy_button.setProperty('visible', True)
 
-        detail_list = self._item.findChild( QtCore.QObject, 'detailList' )
+        detail_list = item.findChild( QtCore.QObject, 'detailList' )
         if detail_list is not None:
             if self._detail_model is None:
                 # a standarditem model is used, in the ideal case, the item
@@ -352,12 +370,14 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     def clear_details( self, clear_in_level=True ):
         """Clear the detail text"""
         LOGGER.debug('clear_details()')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         # remove all rows from model
         if self._detail_model is not None:
             self._detail_model.removeRows(0, self._detail_model.rowCount())
         # hide the details list
         self._detail_hidden = True
-        detail_list = self._item.findChild( QtCore.QObject, 'detailList' )
+        detail_list = item.findChild( QtCore.QObject, 'detailList' )
         if detail_list is not None:
             detail_list.setProperty('visible', False)
         if clear_in_level and len(self.levels):
@@ -371,11 +391,13 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def set_ok_hidden( self, hidden = True ):
         # hide/show ok button
-        ok_button = self._item.findChild(QtCore.QObject, 'okButton')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
+        ok_button = item.findChild(QtCore.QObject, 'okButton')
         if ok_button is not None:
             ok_button.setProperty('visible', not hidden)
         # set title to Completed if not hidden
-        title_text = self._item.findChild(QtCore.QObject, 'titleText')
+        title_text = item.findChild(QtCore.QObject, 'titleText')
         if title_text is not None:
             if hidden:
                 assert len(self.levels)
@@ -390,20 +412,24 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def exec_(self):
         assert len(self.levels)
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         LOGGER.debug('ENTER exec_()')
         event_loop = QtCore.QEventLoop()
         self.levels[-1].event_loop = event_loop
         # disconnect event loop from lower levels
         try:
-            self._item.okClicked.disconnect()
+            item.okClicked.disconnect()
         except TypeError:
             pass
-        self._item.okClicked.connect(event_loop.quit)
+        item.okClicked.connect(event_loop.quit)
         event_loop.exec_()
         LOGGER.debug('LEAVE exec_()')
 
     def set_cancel_hidden( self, hidden = True ):
-        cancel_button = self._item.findChild(QtCore.QObject, 'cancelButton')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
+        cancel_button = item.findChild(QtCore.QObject, 'cancelButton')
         if cancel_button is not None:
             cancel_button.setProperty('visible', not hidden)
         if len(self.levels):
@@ -421,18 +447,20 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         left to right and back.
         """
         LOGGER.debug('_update_animation()')
+        item = self.findChild(QtQuick.QQuickItem, 'progress_dialog_item')
+        assert item is not None
         if len(self.levels) and self.levels[-1].setValue_called:
             return
         if self.isHidden():
             return
 
         bar_width = 200
-        total_width = self._item.property('width')
+        total_width = item.property('width')
 
-        offset_rectangle = self._item.findChild(QtCore.QObject, 'offsetRectangle')
+        offset_rectangle = item.findChild(QtCore.QObject, 'offsetRectangle')
         if offset_rectangle is None:
             return
-        progress_rectangle = self._item.findChild(QtCore.QObject, 'progressRectangle')
+        progress_rectangle = item.findChild(QtCore.QObject, 'progressRectangle')
         if progress_rectangle is None:
             return
 
