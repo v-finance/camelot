@@ -35,8 +35,8 @@ by Len Silverston, Chapter 2
 """
 
 import datetime
-
 import six
+import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode
@@ -91,6 +91,26 @@ class GeographicBoundary( Entity ):
                 'editable': False,
             }
         }
+    
+class GeographicBoundaryAlternativeName(Entity):
+    
+    __tablename__ = 'geographic_boundary_alternative_name'
+    
+    name = schema.Column(Unicode(40), nullable=False)
+    
+    alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
+                                            schema.ForeignKey(GeographicBoundary.id, ondelete='cascade', onupdate='cascade'),
+                                            nullable = False,
+                                            index = True)
+    alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan'))
+    
+    __table_args__ = (
+        schema.Index(
+            'ix_geographic_boundary_alternative_name', name,
+            postgresql_ops={"name": "gin_trgm_ops"},
+            postgresql_using='gin'
+        ),
+    )
 
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
