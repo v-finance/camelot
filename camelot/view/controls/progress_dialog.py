@@ -93,7 +93,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         self.setLayout( layout )
         # avoid showing the dialog when it is created
         self.setAutoClose(True)
-        self.setMinimumDuration(1000)
+        self.setMinimumDuration(0)
         self.reset()
 
     @QtCore.qt_slot()
