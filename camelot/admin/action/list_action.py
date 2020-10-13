@@ -285,10 +285,7 @@ class OpenFormView( ListContextAction ):
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
-        if model_context.current_row is not None:
-            state.verbose_name = six.text_type(model_context.current_row + 1)
-        else:
-            state.verbose_name = six.text_type()
+        state.verbose_name = six.text_type()
         return state
 
 class ChangeAdmin( Action ):
