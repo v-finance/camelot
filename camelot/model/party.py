@@ -96,8 +96,7 @@ class GeographicBoundaryAlternativeName(Entity):
     
     __tablename__ = 'geographic_boundary_alternative_name'
     
-    name = schema.Column(Unicode(40), nullable=False)
-    
+    name = schema.Column(Unicode(100), nullable=False)
     alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
                                             schema.ForeignKey(GeographicBoundary.id, ondelete='cascade', onupdate='cascade'),
                                             nullable = False,
