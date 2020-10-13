@@ -75,18 +75,11 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
     def __init__(self, quick_view):
         super().__init__(parent=quick_view)
         self.setObjectName('progress_dialog')
-        # create QML component
-        engine = quick_view.engine()
-        component = QtQml.QQmlComponent(engine)
-        component.loadUrl(QtCore.QUrl("qrc:/qml/progress_dialog/progress_dialog.qml"))
-        item = component.create()
 
-        if item is None:
-            raise Exception(component.errorString())
+        item = quick_view.findChild(QtCore.QObject, "progress_dialog_item")
+        assert item is not None
 
         item.setParent(self)
-        item.setObjectName('progress_dialog_item')
-        item.setParentItem(quick_view.rootObject())
         item.cancelClicked.connect(self.cancel)
         item.cancelClicked.connect(self.canceled)
         item.copyClicked.connect(self.copy_clicked)
@@ -464,7 +457,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             return
 
         bar_width = 200
-        total_width = item.property('width')
+        total_width = item.property('width') - 200 # 200 from left/right margin
 
         offset_rectangle = item.findChild(QtCore.QObject, 'offsetRectangle')
         if offset_rectangle is None:
