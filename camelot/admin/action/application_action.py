@@ -95,16 +95,17 @@ class ApplicationActionGuiContext( GuiContext ):
         self.admin = None
     
     def get_progress_dialog(self):
-        if self.workspace is not None:
+        if self.workspace is not None and not is_deleted(self.workspace):
             view = self.workspace.active_view()
             if view is not None:
                 if view.objectName() == 'dashboard':
                     # return the QML progress dialog
                     quick_view = view.quick_view
-                    progress_dialog = quick_view.findChild(QtCore.QObject, 'progress_dialog')
-                    if progress_dialog is None:
-                        progress_dialog = QmlProgressDialog(quick_view)
-                    return progress_dialog
+                    if not is_deleted(quick_view):
+                        progress_dialog = quick_view.findChild(QtCore.QObject, 'progress_dialog')
+                        if progress_dialog is None:
+                            progress_dialog = QmlProgressDialog(quick_view)
+                        return progress_dialog
         # return the regular progress dialog
         return super( ApplicationActionGuiContext, self ).get_progress_dialog()
 
