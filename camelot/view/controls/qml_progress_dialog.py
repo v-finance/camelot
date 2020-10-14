@@ -456,8 +456,12 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         if self.isHidden():
             return
 
+        progress_bar_rectangle = item.findChild(QtCore.QObject, 'progressBarRectangle')
+        if progress_bar_rectangle is None:
+            return
+
         bar_width = 200
-        total_width = item.property('width') - 200 # 200 from left/right margin
+        total_width = progress_bar_rectangle.property('width')
 
         offset_rectangle = item.findChild(QtCore.QObject, 'offsetRectangle')
         if offset_rectangle is None:
