@@ -137,7 +137,8 @@ class DbImageEditor(CustomEditor):
         paste_button = self.findChild(QtWidgets.QWidget, 'paste')
         if paste_button:
             mime_data = QtWidgets.QApplication.clipboard().mimeData()
-            paste_button.setVisible( mime_data.hasImage() )    
+            if mime_data is not None:
+                paste_button.setVisible( mime_data.hasImage() )    
     
     @QtCore.qt_slot()
     def copy_to_clipboard(self):
