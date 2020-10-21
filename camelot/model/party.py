@@ -97,11 +97,19 @@ class GeographicBoundaryAlternativeName(Entity):
     __tablename__ = 'geographic_boundary_alternative_name'
     
     name = schema.Column(Unicode(100), nullable=False)
+    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable = True)
+    language = schema.Column(sqlalchemy.types.Unicode(6), nullable=True)
+    
     alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
                                             schema.ForeignKey(GeographicBoundary.id, ondelete='cascade', onupdate='cascade'),
                                             nullable = False,
                                             index = True)
     alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan'))
+    
+    __mapper_args__ = {
+        'polymorphic_on' : row_type,
+        'polymorphic_identity': None,
+    }
     
     __table_args__ = (
         schema.Index(
@@ -109,7 +117,20 @@ class GeographicBoundaryAlternativeName(Entity):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
+        schema.UniqueConstraint(
+            alternative_name_for_id, language, row_type,
+            name = 'language_unique',
+        ),
+        schema.CheckConstraint("row_type = 'translation' AND language IS NOT NULL OR row_type != 'translation'", name='translation_language'),
     )
+
+class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
+    
+    __mapper_args__ = {'polymorphic_identity': 'translation'}
+    
+class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
+    
+    __mapper_args__ = {'polymorphic_identity': 'main_municipality'}
 
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
