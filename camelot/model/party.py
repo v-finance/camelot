@@ -97,7 +97,7 @@ class GeographicBoundaryAlternativeName(Entity):
     __tablename__ = 'geographic_boundary_alternative_name'
     
     name = schema.Column(Unicode(100), nullable=False)
-    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable = True)
+    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable=True, index=True)
     language = schema.Column(sqlalchemy.types.Unicode(6), nullable=True)
     
     alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
