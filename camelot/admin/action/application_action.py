@@ -32,7 +32,7 @@ import time
 
 import six
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtQuick, QtQml, is_deleted
 from ...core.sql import metadata
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
@@ -40,6 +40,7 @@ from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 from camelot.view.art import FontIcon
+from camelot.view.controls.qml_progress_dialog import QmlProgressDialog
 
 """ModelContext, GuiContext and Actions that run in the context of an 
 application.
@@ -93,8 +94,23 @@ class ApplicationActionGuiContext( GuiContext ):
         self.workspace = None
         self.admin = None
     
+    def get_progress_dialog(self):
+        if self.workspace is not None and not is_deleted(self.workspace):
+            view = self.workspace.active_view()
+            if view is not None:
+                if view.objectName() == 'dashboard':
+                    # return the QML progress dialog
+                    quick_view = view.quick_view
+                    if not is_deleted(quick_view):
+                        progress_dialog = quick_view.findChild(QtCore.QObject, 'progress_dialog')
+                        if progress_dialog is None:
+                            progress_dialog = QmlProgressDialog(quick_view)
+                        return progress_dialog
+        # return the regular progress dialog
+        return super( ApplicationActionGuiContext, self ).get_progress_dialog()
+
     def get_window(self):
-        if self.workspace is not None:
+        if self.workspace is not None and not is_deleted(self.workspace):
             return self.workspace.window()
 
     def create_model_context( self ):
@@ -103,7 +119,7 @@ class ApplicationActionGuiContext( GuiContext ):
         return context
         
     def copy( self, base_class=None ):
-        new_context = super( ApplicationActionGuiContext, self ).copy( base_class )
+        new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
         new_context.workspace = self.workspace
         new_context.admin = self.admin
         return new_context

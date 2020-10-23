@@ -51,7 +51,7 @@ class ActionBaseCase(RunningThreadCase):
 
     def setUp(self):
         super(ActionBaseCase, self).setUp()
-        self.gui_context = GuiContext()
+        self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = ApplicationAdmin()
 
     def test_action_step( self ):
@@ -326,7 +326,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
         self.assertTrue( six.text_type( update_progress ) )
         # give the gui context a progress dialog, so it can be updated
-        self.gui_context.progress_dialog = ProgressDialog('Progress')
+        self.gui_context.progress_dialog = ProgressDialog(parent=None)
         update_progress.gui_run( self.gui_context )
         # now press the cancel button
         self.gui_context.progress_dialog.cancel()

@@ -8,15 +8,20 @@ from ....core.utils import ugettext as _
 from .customeditor import CustomEditor
 
 class DbImageEditor(CustomEditor):   
+    """
+    :param max_size: Size of allowed images in bytes, defaults to 50Kb
+    """
 
     def __init__(self,
                  parent,
                  field_name='db_image',
                  preview_width=100,
-                 preview_height=100,                 
+                 preview_height=100,
+                 max_size=50000,
                  **kwargs):
         self.preview_width = preview_width
         self.preview_height = preview_height
+        self.max_size = max_size
         CustomEditor.__init__(self, parent)
         
         layout = QtWidgets.QHBoxLayout()
@@ -132,7 +137,8 @@ class DbImageEditor(CustomEditor):
         paste_button = self.findChild(QtWidgets.QWidget, 'paste')
         if paste_button:
             mime_data = QtWidgets.QApplication.clipboard().mimeData()
-            paste_button.setVisible( mime_data.hasImage() )    
+            if mime_data is not None:
+                paste_button.setVisible( mime_data.hasImage() )    
     
     @QtCore.qt_slot()
     def copy_to_clipboard(self):
@@ -150,12 +156,9 @@ class DbImageEditor(CustomEditor):
         file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "",image_filter, options=options)
         if file_name:
             statinfo = os.stat(file_name)
-            image_size = statinfo.st_size
+            image_size = statinfo.st_size         
             
-            # Allow images of sizes up to 50Kb
-            max_size = 50000            
-            
-            if image_size <= max_size:
+            if image_size <= self.max_size:
                 image_reader = QtGui.QImageReader()
                 image_reader.setDecideFormatFromContent(True)
                 image_reader.setFileName(file_name)
@@ -171,7 +174,7 @@ class DbImageEditor(CustomEditor):
                 else:
                     QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Chosen file was not recognized as a valid image'))
             else: 
-                QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(max_size/1000))
+                QtWidgets.QMessageBox.warning(self, _('Uploading failed'), _('Image is too big! Maximum allowed file size: {0}kb').format(self.max_size/1000))
     
     def set_image_to_clipboard(self, image):
         clipboard = QtWidgets.QApplication.clipboard()
