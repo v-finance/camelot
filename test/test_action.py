@@ -5,8 +5,6 @@ import unittest
 
 import openpyxl
 
-from sqlalchemy import orm
-
 import six
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
@@ -35,7 +33,7 @@ from camelot.view import utils
 from camelot.view.import_utils import (
     ColumnMapping, MatchNames, ColumnMappingAdmin
 )
-
+from camelot.view.workspace import DesktopWorkspace
 from camelot_example.model import Movie
 
 from . import test_view
@@ -78,7 +76,8 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         from camelot_example.importer import ImportCovers
         self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
-        self.application_gui_context = ApplicationActionGuiContext()
+        self.workspace = DesktopWorkspace(self.app_admin, None)
+        self.gui_context = self.workspace.gui_context
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -98,16 +97,15 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     def test_action_push_botton( self ):
         from camelot.view.controls.action_widget import ActionPushButton
         widget = ActionPushButton( self.action,
-                                   self.application_gui_context,
+                                   self.gui_context,
                                    self.parent )
         self.grab_widget_states( widget, 'application' )
 
     def test_hide_progress_dialog( self ):
         from camelot.view.action_runner import hide_progress_dialog
-        dialog = progress_dialog.ProgressDialog("test")
+        dialog = self.gui_context.get_progress_dialog()
         dialog.show()
-        self.application_gui_context.progress_dialog = dialog
-        with hide_progress_dialog( self.application_gui_context ):
+        with hide_progress_dialog(self.gui_context):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
@@ -131,7 +129,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
-        self.gui_context = GuiContext()
+        self.workspace = DesktopWorkspace(self.app_admin, None)
+        self.gui_context = self.workspace.gui_context
 
 # begin test application action
     def test_example_application_action( self ):
@@ -322,14 +321,13 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
             step.gui_run( self.gui_context )
 
     def test_update_progress( self ):
-        from camelot.view.controls.progress_dialog import ProgressDialog
         update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
         self.assertTrue( six.text_type( update_progress ) )
         # give the gui context a progress dialog, so it can be updated
-        self.gui_context.progress_dialog = ProgressDialog(parent=None)
+        progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run( self.gui_context )
         # now press the cancel button
-        self.gui_context.progress_dialog.cancel()
+        progress_dialog.cancel()
         with self.assertRaises( CancelRequest ):
             update_progress.gui_run( self.gui_context )
 
