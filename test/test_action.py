@@ -60,7 +60,7 @@ class ActionBaseCase(RunningThreadCase):
             shortcut = QtGui.QKeySequence.New
 
         action = CustomAction()
-        self.gui_run(action, self.gui_context)
+        list(self.gui_run(action, self.gui_context))
         state = self.get_state(action, self.gui_context)
         self.assertTrue( action.get_name() )
         self.assertTrue( action.get_shortcut() )
@@ -682,23 +682,22 @@ class FormActionsCase(
     @classmethod
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
-        cls.setup_sample_model()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.process()
 
     @classmethod
     def tearDownClass(cls):
-        cls.tear_down_sample_model()
+        cls.thread.post(cls.tear_down_sample_model)
+        cls.process()
         super().tearDownClass()
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
-        self.load_example_data()
         self.thread.post(self.setup_proxy)
         self.process()
         self.setup_item_model(self.app_admin.get_related_admin(Person))
-        self.model_context = MockModelContext()
-        self.model_context.obj = Person.query.first()
-        self.model_context.admin = self.app_admin.get_related_admin( Person )
         self.gui_context = form_action.FormActionGuiContext()
         self.gui_context._model = self.item_model
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
@@ -713,21 +712,21 @@ class FormActionsCase(
 
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
-        previous_action.gui_run( self.gui_context )
+        list(self.gui_run(previous_action, self.gui_context))
         next_action = form_action.ToNextForm()
-        next_action.gui_run( self.gui_context )
+        list(self.gui_run(next_action, self.gui_context))
         first_action = form_action.ToFirstForm()
-        first_action.gui_run( self.gui_context )
+        list(self.gui_run(first_action, self.gui_context))
         last_action = form_action.ToLastForm()
-        last_action.gui_run( self.gui_context )
+        list(self.gui_run(last_action, self.gui_context))
 
     def test_show_history( self ):
         show_history_action = form_action.ShowHistory()
-        list( show_history_action.model_run( self.model_context ) )
+        list(self.gui_run(show_history_action, self.gui_context))
 
     def test_close_form( self ):
         close_form_action = form_action.CloseForm()
-        list( close_form_action.model_run( self.model_context ) )
+        list(self.gui_run(close_form_action, self.gui_context))
 
 class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
@@ -746,11 +745,12 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
     def setUp(self):
         super().setUp()
-        self.app_admin = ApplicationAdmin()
+        self.gui_context = ApplicationActionGuiContext()
+        self.gui_context.admin = ApplicationAdmin()
 
     def test_application(self):
-        app = Application(self.app_admin)
-        self.gui_run(app, GuiContext())
+        app = Application(self.gui_context.admin)
+        list(self.gui_run(app, self.gui_context))
 
     def test_custom_application(self):
 
@@ -762,8 +762,8 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
 
-        application = CustomApplication(self.app_admin)
-        self.gui_run(application, GuiContext())
+        application = CustomApplication(self.gui_context.admin)
+        list(self.gui_run(application, self.gui_context))
 
 class ApplicationActionsCase(
     RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
