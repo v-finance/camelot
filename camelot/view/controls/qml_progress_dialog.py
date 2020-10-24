@@ -33,7 +33,6 @@ a model thread"""
 import logging
 
 from camelot.core.utils import ugettext, ugettext_lazy
-from camelot.view.art import FontIcon
 
 import six
 

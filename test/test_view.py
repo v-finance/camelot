@@ -35,6 +35,7 @@ from camelot.view import forms
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
+from camelot.view.controls.progress_dialog import ProgressDialog
 
 from .import app_admin
 
@@ -990,8 +991,8 @@ class ControlsTest(
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        dialog = ProgressDialog( 'Import cover images' )
+        dialog = ProgressDialog(None)
+        dialog.title = 'Import cover images'
         self.grab_widget(dialog)
         dialog.add_detail('toy_story.png imported')
         dialog.add_detail('matrix.png imported')

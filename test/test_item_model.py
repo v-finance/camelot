@@ -290,7 +290,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         # after the timeout, the data is available
         for row in range(row_count):
             self.assertIn('Open', self._header_data(row, Qt.Vertical, Qt.ToolTipRole, self.item_model))
-            self.assertEqual(self._header_data(row, Qt.Vertical, Qt.DisplayRole, self.item_model), str(row+1))
+            # dont display any data if there is a decoration, otherwise
+            # both are displayed mixed
+            self.assertEqual(self._header_data(row, Qt.Vertical, Qt.DisplayRole, self.item_model), '')
             self.assertTrue(self._header_data(row, Qt.Vertical, Qt.DecorationRole, self.item_model))
             self.assertEqual(self._header_data(row, Qt.Vertical, ObjectRole, self.item_model), self.collection[row])
             self.assertEqual(self._header_data(row, Qt.Vertical, VerboseIdentifierRole, self.item_model), 'A : {0}'.format(row))

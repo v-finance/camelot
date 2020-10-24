@@ -32,7 +32,7 @@ import time
 
 import six
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtQuick, QtQml, is_deleted
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
