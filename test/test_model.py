@@ -51,6 +51,7 @@ class ExampleModelMixinCase(object):
     @classmethod
     def tear_down_sample_model(cls):
         cls.session.expunge_all()
+        metadata.bind = None
 
     @classmethod
     def load_example_data(cls):

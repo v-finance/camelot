@@ -118,8 +118,13 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
     @classmethod
     def setUpClass(cls):
-        super(ActionStepsCase, cls).setUpClass()
+        super().setUpClass()
         cls.setup_sample_model()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+        super().tearDownClass()
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
@@ -356,6 +361,12 @@ class ListActionsCase(
         cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
         cls.editor_filter = list_filter.EditorFilter('last_name')
         cls.process()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.thread.post(cls.tear_down_sample_model)
+        cls.process()
+        super().tearDownClass()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
@@ -758,6 +769,11 @@ class FormActionsCase(
         super(FormActionsCase, cls).setUpClass()
         cls.setup_sample_model()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+        super().tearDownClass()
+
     def setUp( self ):
         super(FormActionsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
@@ -805,6 +821,11 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         super().setUpClass()
         cls.setup_sample_model()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+        super().tearDownClass()
+
     def setUp(self):
         super( ApplicationCase, self ).setUp()
         self.app_admin = ApplicationAdmin()
@@ -840,6 +861,11 @@ class ApplicationActionsCase(
     def setUpClass(cls):
         super(ApplicationActionsCase, cls).setUpClass()
         cls.setup_sample_model()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+        super().tearDownClass()
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
