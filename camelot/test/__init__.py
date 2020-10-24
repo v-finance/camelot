@@ -37,7 +37,10 @@ import unittest
 import sys
 import os
 
+from ..admin.action.base import ActionStep
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
+from ..view.action_steps.orm import AbstractCrudSignal
+from ..view.action_runner import ActionRunner
 from ..view.model_process import ModelProcess
 from ..view import model_thread
 from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
@@ -95,7 +98,97 @@ class GrabMixinCase(object):
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
-class RunningThreadCase(unittest.TestCase):
+class ActionMixinCase(object):
+    """
+    Helper methods to simulate running actions in a different thread
+    """
+
+    @classmethod
+    def get_state(cls, action, gui_context):
+        """
+        Get the state of an action in the model thread and return
+        the result.
+        """
+        model_context = gui_context.create_model_context()
+
+        class StateRegister(QtCore.QObject):
+
+            def __init__(self):
+                super(StateRegister, self).__init__()
+                self.state = None
+
+            @QtCore.qt_slot(object)
+            def set_state(self, state):
+                self.state = state
+
+        state_register = StateRegister()
+        cls.thread.post(
+            action.get_state, state_register.set_state, args=(model_context,)
+        )
+        cls.process()
+        return state_register.state
+
+    @classmethod
+    def gui_run(cls, action, gui_context):
+        """
+        Simulates the gui_run of an action, but instead of blocking,
+        yields progress each time a message is received from the model.
+        """
+
+        class IteratingActionRunner(ActionRunner):
+
+            def __init__(self, generator_function, gui_context):
+                super(IteratingActionRunner, self).__init__(
+                    generator_function, gui_context
+                )
+                self.return_queue = []
+                self.exception_queue = []
+                cls.process()
+
+            @QtCore.qt_slot( object )
+            def generator(self, generator):
+                LOGGER.debug('got generator')
+                self._generator = generator
+
+            @QtCore.qt_slot( object )
+            def exception(self, exception_info):
+                LOGGER.debug('got exception {}'.format(exception_info))
+                self.exception_queue.append(exception_info)
+
+            @QtCore.qt_slot( object )
+            def __next__(self, yielded):
+                LOGGER.debug('got step {}'.format(yielded))
+                self.return_queue.append(yielded)
+
+            def run(self):
+                super(IteratingActionRunner, self).generator(self._generator)
+                cls.process()
+                step = self.return_queue.pop()
+                while isinstance(step, ActionStep):
+                    if isinstance(step, AbstractCrudSignal):
+                        LOGGER.debug('crud step, update view')
+                        step.gui_run(gui_context)
+                    LOGGER.debug('yield step {}'.format(step))
+                    gui_result = yield step
+                    LOGGER.debug('post result {}'.format(gui_result))
+                    cls.thread.post(
+                        self._iterate_until_blocking,
+                        self.__next__,
+                        self.exception,
+                        args = (self._generator.send, gui_result,)
+                    )
+                    cls.process()
+                    if len(self.exception_queue):
+                        raise Exception(self.exception_queue.pop().text)
+                    step = self.return_queue.pop()
+                LOGGER.debug("iteration finished")
+                yield None
+
+        runner = IteratingActionRunner(action.model_run, gui_context)
+        yield from runner.run()
+
+
+class RunningThreadCase(unittest.TestCase, ActionMixinCase):
     """
     Test case that starts a model thread when setting up the case class
     """
@@ -117,7 +210,7 @@ class RunningThreadCase(unittest.TestCase):
         cls.thread.wait_on_work()
         QtCore.QCoreApplication.instance().processEvents()
 
-class RunningProcessCase(unittest.TestCase):
+class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     """
     Test case that starts a model thread when setting up the case class
     """

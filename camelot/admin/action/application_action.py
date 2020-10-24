@@ -611,7 +611,7 @@ class SegmentationFault( Action ):
         if ok == QtWidgets.QMessageBox.Yes:
             import faulthandler
             faulthandler._read_null()        
-        
+
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 
