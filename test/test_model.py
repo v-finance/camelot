@@ -5,7 +5,6 @@ import unittest
 import six
 
 from sqlalchemy import orm, schema, types, create_engine
-from sqlalchemy.pool import StaticPool
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
@@ -52,6 +51,7 @@ class ExampleModelMixinCase(object):
     @classmethod
     def tear_down_sample_model(cls):
         cls.session.expunge_all()
+        metadata.bind = None
 
     @classmethod
     def load_example_data(cls):

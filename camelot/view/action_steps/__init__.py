@@ -31,7 +31,6 @@ from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
     MainMenu,
 )
-from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
@@ -81,12 +80,10 @@ __all__ = [
     RefreshItemView.__name__,
     RemoveTranslators.__name__,
     SaveFile.__name__,
-    SelectBackup.__name__,
     SelectDirectory.__name__,
     SelectFile.__name__,
     SelectItem.__name__,
     SelectObjects.__name__,
-    SelectRestore.__name__,
     SelectSubclass.__name__,
     SetFilter.__name__,
     Sort.__name__,
