@@ -61,6 +61,33 @@ class ExampleModelMixinCase(object):
         load_movie_fixtures()
         cls.first_person_id = cls.session.query(Person).first().id
 
+    @classmethod
+    def dirty_session(cls):
+        """
+        Create objects in various states to make the session dirty
+        """
+        cls.session.expunge_all()
+        # create objects in various states
+        #
+        p1 = Person(first_name = u'p1', last_name = u'persistent' )
+        p2 = Person(first_name = u'p2', last_name = u'dirty' )
+        p3 = Person(first_name = u'p3', last_name = u'deleted' )
+        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
+        p5 = Person(first_name = u'p5', last_name = u'detached' )
+        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
+        cls.session.flush()
+        p3.delete()
+        cls.session.flush()
+        p4.delete()
+        p2.last_name = u'clean'
+        #
+        # delete p6 without the session being aware
+        #
+        person_table = Person.table
+        cls.session.execute(
+            person_table.delete().where( person_table.c.party_id == p6.id )
+        )
+
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model"""

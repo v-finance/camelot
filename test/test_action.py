@@ -9,13 +9,12 @@ import six
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.action import Action, GuiContext, ActionStep, State, Mode
+from camelot.admin.action import Action, ActionStep, State
 from camelot.admin.action import (list_action, application_action,
                                   document_action, form_action,
                                   list_filter, ApplicationActionGuiContext)
 from camelot.admin.action.application import Application
-from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.core.qt import QtGui, QtWidgets, QtCore, Qt
+from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.orm import Session
@@ -26,7 +25,7 @@ from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils
-from camelot.view.controls import tableview, actionsbox, progress_dialog
+from camelot.view.controls import tableview, actionsbox
 from camelot.view import utils
 from camelot.view.import_utils import (
     ColumnMapping, MatchNames, ColumnMappingAdmin
@@ -57,13 +56,14 @@ class ActionBaseCase(RunningThreadCase):
     def test_action(self):
 
         class CustomAction( Action ):
+            verbose_name = 'Custom Action'
             shortcut = QtGui.QKeySequence.New
 
         action = CustomAction()
         list(self.gui_run(action, self.gui_context))
         state = self.get_state(action, self.gui_context)
-        self.assertTrue( action.get_name() )
-        self.assertTrue( action.get_shortcut() )
+        self.assertTrue(state.verbose_name)
+
 
 class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     """Test widgets related to actions.
@@ -118,42 +118,21 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.setup_sample_model()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.process()
 
     @classmethod
     def tearDownClass(cls):
-        cls.tear_down_sample_model()
+        cls.thread.post(cls.tear_down_sample_model)
+        cls.process()
         super().tearDownClass()
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
-        from camelot_example.model import Movie
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.load_example_data()
         self.app_admin = ApplicationAdmin()
-        self.context = MockModelContext()
-        self.context.obj = Movie.query.first()
         self.workspace = DesktopWorkspace(self.app_admin, None)
         self.gui_context = self.workspace.gui_context
-
-# begin test application action
-    def test_example_application_action( self ):
-        from camelot_example.importer import ImportCovers
-        from camelot_example.model import Movie
-        # count the number of movies before the import
-        movies = Movie.query.count()
-        # create an import action
-        action = ImportCovers()
-        generator = action.model_run( None )
-        select_file = six.advance_iterator( generator )
-        self.assertFalse( select_file.single )
-        # pretend the user selected a file
-        generator.send(test_images)
-        # continue the action till the end
-        list( generator )
-        # a movie should be inserted
-        self.assertEqual( movies + 1, Movie.query.count() )
-# end test application action
 
     def test_change_object( self ):
         from camelot.bin.meta import NewProjectOptions
@@ -168,8 +147,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         self.grab_widget( dialog )
 
     def test_select_file( self ):
-        from camelot.view.action_steps import SelectFile
-        select_file = SelectFile( 'Image Files (*.png *.jpg);;All Files (*)' )
+        action_steps.SelectFile('Image Files (*.png *.jpg);;All Files (*)')
 
     def test_select_item( self ):
         from camelot.view.action_steps import SelectItem
@@ -183,13 +161,16 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                             ('post',  'By postal mail') ]
                 method = yield SelectItem( methods, value='email' )
                 # handle sending of the document
+                LOGGER.info('selected {}'.format(method))
 
         # end select item
 
         action = SendDocumentAction()
-        for step in action.model_run( self.context ):
-            dialog = step.render()
-            self.grab_widget( dialog )
+        for step in self.gui_run(action, self.gui_context):
+            if isinstance(step, ActionStep):
+                dialog = step.render()
+                self.grab_widget(dialog)
+        self.assertTrue(dialog)
 
     def test_text_document( self ):
         # begin text document
@@ -202,28 +183,11 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         # end text document
 
         action = EditDocumentAction()
-        for step in action.model_run( self.context ):
-            dialog = step.render()
-            self.grab_widget( dialog )
-
-    def test_print_html( self ):
-
-        # begin html print
-        class MovieSummary( Action ):
-
-            verbose_name = _('Summary')
-
-            def model_run(self, model_context):
-                from camelot.view.action_steps import PrintHtml
-                movie = model_context.get_object()
-                yield PrintHtml( "<h1>This will become the movie report of %s!</h1>" % movie.title )
-        # end html print
-
-        action = MovieSummary()
-        steps = list( action.model_run( self.context ) )
-        dialog = steps[0].render( self.gui_context )
-        dialog.show()
-        self.grab_widget( dialog )
+        for step in self.gui_run(action, self.gui_context):
+            if isinstance(step, ActionStep):
+                dialog = step.render()
+                self.grab_widget(dialog)
+        self.assertTrue(dialog)
 
     def test_edit_profile(self):
         from camelot.view.action_steps.profile import EditProfiles
@@ -241,88 +205,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                     'table':[[1,2],[3,4]] }
         action_steps.OpenJinjaTemplate( 'list.html', context )
         action_steps.WordJinjaTemplate( 'list.html', context )
-
-    def test_orm( self ):
-        # prepare the model context
-        contact = party.ContactMechanism( mechanism = ('email', 'info@test.be') )
-        person = party.Person( first_name = u'Living',
-                               last_name = u'Stone',
-                               social_security_number = u'2003030212345' )
-        party.PartyContactMechanism( party = person,
-                                     contact_mechanism = contact )
-        self.context.obj = person
-        self.context.session.flush()
-
-        # begin manual update
-
-        class UpdatePerson( Action ):
-
-            verbose_name = _('Update person')
-
-            def model_run( self, model_context ):
-                for person in model_context.get_selection():
-                    soc_number = person.social_security_number
-                    if soc_number:
-                        # assume the social sec number contains the birth date
-                        person.birth_date = datetime.date( int(soc_number[0:4]),
-                                                           int(soc_number[4:6]),
-                                                           int(soc_number[6:8])
-                                                           )
-                    # delete the email of the person
-                    for contact_mechanism in person.contact_mechanisms:
-                        model_context.session.delete( contact_mechanism )
-                        yield action_steps.DeleteObjects((contact_mechanism,))
-                    # add a new email
-                    m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                        person.last_name ) )
-                    cm = party.ContactMechanism( mechanism = m )
-                    pcm = party.PartyContactMechanism( party = person,
-                                                       contact_mechanism = cm )
-                    # immediately update the GUI
-                    yield action_steps.CreateObjects((cm,))
-                    yield action_steps.CreateObjects((pcm,))
-                    yield action_steps.UpdateObjects((person,))
-                # flush the session on finish
-                model_context.session.flush()
-
-        # end manual update
-
-        update_person = UpdatePerson()
-        for step in update_person.model_run( self.context ):
-            step.gui_run( self.gui_context )
-
-        # begin auto update
-
-        class UpdatePerson( Action ):
-
-            verbose_name = _('Update person')
-
-            def model_run( self, model_context ):
-                for person in model_context.get_selection():
-                    soc_number = person.social_security_number
-                    if soc_number:
-                        # assume the social sec number contains the birth date
-                        person.birth_date = datetime.date( int(soc_number[0:4]),
-                                                           int(soc_number[4:6]),
-                                                           int(soc_number[6:8])
-                                                           )
-                        # delete the email of the person
-                        for contact_mechanism in person.contact_mechanisms:
-                            model_context.session.delete( contact_mechanism )
-                        # add a new email
-                        m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                            person.last_name ) )
-                        cm = party.ContactMechanism( mechanism = m )
-                        party.PartyContactMechanism( party = person,
-                                                    contact_mechanism = cm )
-                # flush the session on finish and update the GUI
-                yield action_steps.FlushSession( model_context.session )
-
-        # end auto update
-
-        update_person = UpdatePerson()
-        for step in update_person.model_run( self.context ):
-            step.gui_run( self.gui_context )
 
     def test_update_progress( self ):
         update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
@@ -351,7 +233,7 @@ class ListActionsCase(
 
     @classmethod
     def setUpClass(cls):
-        super(ListActionsCase, cls).setUpClass()
+        super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
         cls.thread.post(cls.load_example_data)
         cls.group_box_filter = list_filter.GroupBoxFilter(
@@ -409,7 +291,6 @@ class ListActionsCase(
         from camelot.test.action import MockListActionGuiContext
 
         gui_context = MockListActionGuiContext()
-        get_state = lambda action:action.get_state( gui_context.create_model_context() )
         to_first = list_action.ToFirstRow()
         to_previous = list_action.ToPreviousRow()
         to_next = list_action.ToNextRow()
@@ -671,6 +552,104 @@ class ListActionsCase(
         table_view.set_filters([self.group_box_filter,
                                 self.combo_box_filter])
 
+    def test_orm( self ):
+
+        class UpdatePerson( Action ):
+
+            verbose_name = _('Update person')
+
+            def model_run( self, model_context ):
+                for person in model_context.get_selection():
+                    soc_number = person.social_security_number
+                    if soc_number:
+                        # assume the social sec number contains the birth date
+                        person.birth_date = datetime.date( int(soc_number[0:4]),
+                                                           int(soc_number[4:6]),
+                                                           int(soc_number[6:8])
+                                                           )
+                    # delete the email of the person
+                    for contact_mechanism in person.contact_mechanisms:
+                        model_context.session.delete( contact_mechanism )
+                        yield action_steps.DeleteObjects((contact_mechanism,))
+                    # add a new email
+                    m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                        person.last_name ) )
+                    cm = party.ContactMechanism( mechanism = m )
+                    pcm = party.PartyContactMechanism( party = person,
+                                                       contact_mechanism = cm )
+                    # immediately update the GUI
+                    yield action_steps.CreateObjects((cm,))
+                    yield action_steps.CreateObjects((pcm,))
+                    yield action_steps.UpdateObjects((person,))
+                # flush the session on finish
+                model_context.session.flush()
+
+        # end manual update
+
+        action_step = None
+        update_person = UpdatePerson()
+        for step in self.gui_run(update_person, self.gui_context):
+            if isinstance(step, ActionStep):
+                action_step = step
+                action_step.gui_run(self.gui_context)
+        self.assertTrue(action_step)
+
+        # begin auto update
+
+        class UpdatePerson( Action ):
+
+            verbose_name = _('Update person')
+
+            def model_run( self, model_context ):
+                for person in model_context.get_selection():
+                    soc_number = person.social_security_number
+                    if soc_number:
+                        # assume the social sec number contains the birth date
+                        person.birth_date = datetime.date( int(soc_number[0:4]),
+                                                           int(soc_number[4:6]),
+                                                           int(soc_number[6:8])
+                                                           )
+                        # delete the email of the person
+                        for contact_mechanism in person.contact_mechanisms:
+                            model_context.session.delete( contact_mechanism )
+                        # add a new email
+                        m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                            person.last_name ) )
+                        cm = party.ContactMechanism( mechanism = m )
+                        party.PartyContactMechanism( party = person,
+                                                    contact_mechanism = cm )
+                # flush the session on finish and update the GUI
+                yield action_steps.FlushSession( model_context.session )
+
+        # end auto update
+
+        action_step = None
+        update_person = UpdatePerson()
+        for step in self.gui_run(update_person, self.gui_context):
+            if isinstance(step, ActionStep):
+                action_step = step
+                action_step.gui_run(self.gui_context)
+        self.assertTrue(action_step)
+
+    def test_print_html( self ):
+
+        # begin html print
+        class PersonSummary(Action):
+
+            verbose_name = _('Summary')
+
+            def model_run(self, model_context):
+                from camelot.view.action_steps import PrintHtml
+                person = model_context.get_object()
+                yield PrintHtml("<h1>This will become the personal report of {}!</h1>".format(person))
+        # end html print
+
+        action = PersonSummary()
+        steps = list(self.gui_run(action, self.gui_context))
+        dialog = steps[0].render(self.gui_context)
+        dialog.show()
+        self.grab_widget(dialog)
+
 class FormActionsCase(
     RunningThreadCase,
     ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
@@ -775,55 +754,39 @@ class ApplicationActionsCase(
 
     @classmethod
     def setUpClass(cls):
-        super(ApplicationActionsCase, cls).setUpClass()
-        cls.setup_sample_model()
+        super().setUpClass()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.process()
 
     @classmethod
     def tearDownClass(cls):
-        cls.tear_down_sample_model()
+        cls.thread.post(cls.tear_down_sample_model)
+        cls.process()
         super().tearDownClass()
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
         from camelot.admin.application_admin import ApplicationAdmin
-        from camelot.core.files.storage import Storage
         from camelot.view.workspace import DesktopWorkspace
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext(session=self.session)
-        self.storage = Storage()
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.admin = self.app_admin
         self.gui_context.workspace = DesktopWorkspace( self.app_admin, None )
 
-    def test_refresh( self ):
-        from camelot.core.orm import Session
-        from camelot.model.party import Person
+    def test_refresh(self):
         refresh_action = application_action.Refresh()
-        session = Session()
-        session.expunge_all()
-        # create objects in various states
-        #
-        p1 = Person(first_name = u'p1', last_name = u'persistent' )
-        p2 = Person(first_name = u'p2', last_name = u'dirty' )
-        p3 = Person(first_name = u'p3', last_name = u'deleted' )
-        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
-        p5 = Person(first_name = u'p5', last_name = u'detached' )
-        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
-        session.flush()
-        p3.delete()
-        session.flush()
-        p4.delete()
-        p2.last_name = u'clean'
-        #
-        # delete p6 without the session being aware
-        #
-        person_table = Person.table
-        session.execute( person_table.delete().where( person_table.c.party_id == p6.id ) )
+        self.thread.post(self.dirty_session)
+        self.process()
         #
         # refresh the session through the action
         #
-        list( refresh_action.model_run( self.context ) )
-        self.assertEqual( p2.last_name, u'dirty' )
+        generator = self.gui_run(refresh_action, self.gui_context)
+        for step in generator:
+            if isinstance(step, action_steps.UpdateObjects):
+                updates = step.get_objects()
+        self.assertTrue(len(updates))
 
     def test_select_profile(self):
         from . import test_core
@@ -831,38 +794,43 @@ class ApplicationActionsCase(
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
         action = application_action.SelectProfile(profile_store)
-        generator = action.model_run(self.context)
+        generator = self.gui_run(action, self.gui_context)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send(profile_store.get_last_profile())
+                profile_selected = True
+        self.assertTrue(profile_selected)
 
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()
-        generator = backup_action.model_run( self.context )
+        generator = self.gui_run(backup_action, self.gui_context)
+        file_saved = False
         for step in generator:
             if isinstance(step, action_steps.SaveFile):
                 generator.send('unittest-backup.db')
+                file_saved = True
+        self.assertTrue(file_saved)
         restore_action = application_action.Restore()
-        generator = restore_action.model_run( self.context )
+        generator = self.gui_run(restore_action, self.gui_context)
+        file_selected = False
         for step in generator:
             if isinstance(step, action_steps.SelectFile):
                 generator.send(['unittest-backup.db'])
+                file_selected = True
+        self.assertTrue(file_selected)
 
-    def test_change_logging( self ):
-        change_logging_action = application_action.ChangeLogging()
-        change_logging_action.model_run( self.context )
-
-    def test_open_table_view( self ):
-        from camelot.model.party import Person
+    def test_open_table_view(self):
         person_admin = self.app_admin.get_related_admin( Person )
-        open_table_view_action = application_action.OpenTableView( person_admin )
-        open_table_view_action.gui_run( self.gui_context )
+        open_table_view_action = application_action.OpenTableView(person_admin)
+        list(self.gui_run(open_table_view_action, self.gui_context))
 
     def test_open_new_view( self ):
-        from camelot.model.party import Person
-        person_admin = self.app_admin.get_related_admin( Person )
-        open_new_view_action = application_action.OpenNewView( person_admin )
-        open_new_view_action.gui_run( self.gui_context )
+        person_admin = self.app_admin.get_related_admin(Person)
+        open_new_view_action = application_action.OpenNewView(person_admin)
+        generator = self.gui_run(open_new_view_action, self.gui_context)
+        for step in generator:
+            if isinstance(step, action_steps.SelectSubclass):
+                generator.send(person_admin)
 
     def test_change_logging( self ):
         change_logging_action = application_action.ChangeLogging()
@@ -872,7 +840,8 @@ class ApplicationActionsCase(
 
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
-        list( segmentation_fault.model_run( self.context ) )
+        list(self.gui_run(segmentation_fault, self.gui_context))
+
 
 class DocumentActionsCase(unittest.TestCase):
     """Test the standard document actions.
