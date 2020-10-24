@@ -893,19 +893,13 @@ class ApplicationActionsCase(
         backup_action = application_action.Backup()
         generator = backup_action.model_run( self.context )
         for step in generator:
-            if isinstance( step, action_steps.SelectBackup ):
-                dialog = step.render()
-                dialog.show()
-                self.grab_widget( dialog, suffix = 'backup' )
-                generator.send( ('unittest', self.storage) )
+            if isinstance(step, action_steps.SaveFile):
+                generator.send('unittest-backup.db')
         restore_action = application_action.Restore()
         generator = restore_action.model_run( self.context )
         for step in generator:
-            if isinstance( step, action_steps.SelectRestore ):
-                dialog = step.render()
-                dialog.show()
-                self.grab_widget( dialog, suffix = 'restore' )
-                generator.send( ('unittest', self.storage) )
+            if isinstance(step, action_steps.SelectFile):
+                generator.send(['unittest-backup.db'])
 
     def test_change_logging( self ):
         change_logging_action = application_action.ChangeLogging()

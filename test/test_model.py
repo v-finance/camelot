@@ -5,7 +5,6 @@ import unittest
 import six
 
 from sqlalchemy import orm, schema, types, create_engine
-from sqlalchemy.pool import StaticPool
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
