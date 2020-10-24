@@ -798,7 +798,12 @@ class FormActionsCase(
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )
 
-class ApplicationCase(RunningThreadCase, GrabMixinCase):
+class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.setup_sample_model()
 
     def setUp(self):
         super( ApplicationCase, self ).setUp()
