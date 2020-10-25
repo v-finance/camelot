@@ -41,7 +41,6 @@ from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view import register
 from .delegates.delegatemanager import DelegateManager
 
 class FormEditors(QtCore.QObject):
@@ -140,9 +139,9 @@ class FormWidget(QtWidgets.QWidget):
             model.modelReset.connect(self._layout_changed)
             model.rowsInserted.connect(self._layout_changed)
             model.rowsRemoved.connect(self._layout_changed)
+            model.setParent(self)
             if widget_mapper is not None:
-                widget_mapper.setModel( model )
-                register.register( model, widget_mapper )
+                widget_mapper.setModel(model)
 
     def get_model(self):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
