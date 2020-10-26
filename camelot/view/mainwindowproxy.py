@@ -30,10 +30,11 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
+from ..core.qt import (
+    QtWidgets, QtCore, py_to_variant, variant_to_py, transferto
+)
 
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view.register import register
 import sip
 
 class MainWindowProxy(QtCore.QObject):
@@ -54,15 +55,12 @@ class MainWindowProxy(QtCore.QObject):
 
         if window is None:
             window = QtWidgets.QMainWindow()
-        else:
-            # transfer ownership to python if this window was created in C++
-            if not sip.ispycreated(window):
-                sip.transferback(window)
 
         # make the QMainWindow the parent of this QObject
         self.setParent(window)
-        # register QMainWindow to keep it alive
-        register( window, window )
+        # prevent garbage collection of the mainwindow, by keeping it
+        # out of the garbage collection cyle
+        transferto(window, window)
         # install event filter to capture close event
         window.installEventFilter(self)
 
