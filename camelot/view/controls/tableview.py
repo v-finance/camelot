@@ -39,7 +39,6 @@ from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
-from camelot.view import register
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
@@ -249,7 +248,7 @@ class TableWidget(QtWidgets.QTableView):
         # Editor, closed. it should be safe to change the model
         #
         QtWidgets.QTableView.setModel(self, model)
-        register.register(model, self)
+        model.setParent(self)
         # assign selection model to local variable to keep it alive during
         # method call, or PySide segfaults
         selection_model = self.selectionModel()

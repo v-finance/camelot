@@ -154,6 +154,7 @@ class OpenTableView( UpdateTableView ):
     
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
+        self.admin_name = admin.get_name()
         self.subclasses = admin.get_subclass_tree()
         self.new_tab = False
 
@@ -172,6 +173,9 @@ class OpenTableView( UpdateTableView ):
             else:
                 gui_context.workspace.set_view(table_view)
         else:
+            table_view.setObjectName('table.{}.{}'.format(
+                self.admin_name, id(table_view)
+            ))
             show_top_level(table_view, None)
         table_view.change_title(self.title)
         table_view.setFocus(Qt.PopupFocusReason)

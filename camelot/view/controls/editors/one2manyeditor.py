@@ -31,7 +31,7 @@ import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
-from camelot.view import register
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
 from ..action_widget import ActionAction
@@ -49,9 +49,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
     :param create_inline: if False, then a new entity will be created within a
     new window, if True, it will be created inline
 
-    :param proxy: the proxy class to use to present the data in the list or
-        the query to the table view
-
     :param column_width: the width of the editor in number of characters
 
     :param rows: minimum number of rows visible
@@ -67,7 +64,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  direction='onetomany',
                  field_name='onetomany',
                  column_width=None,
-                 proxy=None,
                  columns=[],
                  toolbar_actions=[],
                  rows=5,
@@ -80,7 +76,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # Setup table
         #
         from camelot.view.controls.tableview import AdminTableWidget
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         # parent set by layout manager
         table = AdminTableWidget(admin, self)
         table.setObjectName('table')
@@ -91,9 +86,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = (proxy or CollectionProxy)(admin)
+        model = CollectionProxy(admin)
+        model.setParent(self)
         table.setModel(model)
-        register.register(model, table)
         self.admin = admin
         self.direction = direction
         self.create_inline = create_inline

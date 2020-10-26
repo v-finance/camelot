@@ -71,6 +71,7 @@ class OpenFormView( ActionStep ):
     """
 
     def __init__( self, objects, admin ):
+        self.admin_name = admin.get_name()
         self.objects = objects
         self.admin = admin
         self.row = 0
@@ -130,6 +131,9 @@ class OpenFormView( ActionStep ):
         formview = self.render(gui_context)
         if formview is not None:
             if self.top_level == True:
+                formview.setObjectName('form.{}.{}'.format(
+                    self.admin_name, id(formview)
+                ))
                 show_top_level(formview, window, self.admin.form_state)
             else:
                 gui_context.workspace.set_view(formview)

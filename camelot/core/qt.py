@@ -140,6 +140,7 @@ if qt_api in ('', 'PyQt5'):
         QtQuickWidgets = DelayedModule('QtQuickWidgets')
         is_deleted = sip.isdeleted
         delete = sip.delete
+        transferto = sip.transferto
     except ImportError:
         LOGGER.warn('Could not load PyQt5')
         qt_api = ''

@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
-from ..core.qt import QtCore, QtGui, QtWidgets
+from ..core.qt import QtCore, QtGui, QtWidgets, transferto
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.view.model_thread import object_thread
 
@@ -226,26 +226,31 @@ def show_top_level(view, parent, state=None):
         window will be placed.
     :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
-    from camelot.view.register import register
     #
-    # Register the view with reference to itself.  This will keep
-    # the Python object alive as long as the Qt object is not
-    # destroyed.  Hence Python will not trigger the deletion of the
-    # view as long as the window is not closed
+    # assert the view has an objectname, so it can be retrieved later
+    # by this object name, since a top level view might have no references
+    # from other objects.
     #
-    register( view, view )
+    assert len(view.objectName())
     #
-    # asset the parent is None to avoid the window being destructed
+    # assert the parent is None to avoid the window being destructed
     # once the parent gets destructed, do not set the parent itself here,
     # nor the window flags, as this might cause windows to hide themselves
     # again after being shown in Qt5
     #
     assert view.parent() is None
     #
+    # Register the view with reference to itself.  This will keep
+    # the Python object alive as long as the Qt object is not
+    # destroyed.  Hence Python will not trigger the deletion of the
+    # view as long as the window is not closed
+    #
+    transferto(view, view)
+    #
     # Make the window title blank to prevent the something
     # like main.py or pythonw being displayed
     #
-    view.setWindowTitle( u' ' )
+    view.setWindowTitle(' ')
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
