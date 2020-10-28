@@ -27,15 +27,13 @@
 #
 #  ============================================================================
 
-import six
-
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2._text} {2._detail}'
 
-@six.python_2_unicode_compatible
-class UpdateProgress( ActionStep ):
+
+class UpdateProgress(ActionStep):
     """
 Inform the user about the progress the application is making
 while executing an action.  This ActionStep is not blocking.  So it can
@@ -60,15 +58,9 @@ updated.
     useful when there are a lot of details displayed.
 """
     
-    def __init__( self,
-                  value=None, 
-                  maximum=None, 
-                  text=None, 
-                  detail=None, 
-                  clear_details=False,
-                  title=None,
-                  blocking=False,
-                  enlarge=False):
+    def __init__(self, value=None, maximum=None, text=None, detail=None, 
+                 clear_details=False, title=None, blocking=False, enlarge=False
+                 ):
         super(UpdateProgress, self).__init__()
         self._value = value
         self._maximum = maximum
@@ -79,10 +71,10 @@ updated.
         self.blocking = blocking
         self.enlarge = enlarge
         
-    def __str__( self ):
+    def __str__(self):
         return _detail_format.format(self._value or 0, self._maximum or 0, self)
     
-    def gui_run( self, gui_context ):
+    def gui_run(self, gui_context):
         """This method will update the progress dialog, if such dialog exists
         within the GuiContext
         
@@ -96,11 +88,11 @@ updated.
                 progress_dialog.setValue( self._value )
             progress_dialog.set_cancel_hidden(not self.cancelable)
             if self._text is not None:
-                progress_dialog.setLabelText( six.text_type(self._text) )
+                progress_dialog.setLabelText(str(self._text))
             if self._clear_details is True:
                 progress_dialog.clear_details()
             if self._detail is not None:
-                progress_dialog.add_detail( self._detail )
+                progress_dialog.add_detail(self._detail)
             if self._title is not None:
                 progress_dialog.title = self._title
             if self.enlarge:
