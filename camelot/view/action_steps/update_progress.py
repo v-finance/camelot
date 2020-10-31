@@ -33,7 +33,7 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.serializable import Serializable
 
-_detail_format = u'Update Progress {0:03d}/{1:03d} {2._text} {2._detail}'
+_detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
 
 class UpdateProgress(ActionStep, Serializable):
@@ -65,26 +65,27 @@ updated.
                  clear_details=False, title=None, blocking=False, enlarge=False
                  ):
         super(UpdateProgress, self).__init__()
-        self._value = value
-        self._maximum = maximum
-        self._text = str(text)
-        self._detail = str(detail)
-        self._clear_details = clear_details
-        self._title = str(title)
+        self.value = value
+        self.maximum = maximum
+        self.text = str(text) if (text is not None) else None
+        self.detail = str(detail) if (detail is not None) else None
+        self.clear_details = clear_details
+        self.title = str(title) if (title is not None) else None
         self.blocking = blocking
         self.enlarge = enlarge
 
     def __str__(self):
-        return _detail_format.format(self._value or 0, self._maximum or 0, self)
+        return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
-    def writeStream(self, stream):
+    def write_object(self, stream):
         stream.write(json.dumps({
-            'value': self._value,
-            'maximum': self._maximum,
-            'text': self._text,
-            'detail': self._detail,
-            'clear_details': self._clear_details,
-            'title': self._title,
+            'blocking': self.blocking,
+            'value': self.value,
+            'maximum': self.maximum,
+            'text': self.text,
+            'detail': self.detail,
+            'clear_details': self.clear_details,
+            'title': self.title,
             'enlarge': self.enlarge,
         }).encode())
 
@@ -96,27 +97,27 @@ updated.
         """
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
-            if self._maximum is not None:
-                progress_dialog.setMaximum( self._maximum )
-            if self._value is not None:
-                progress_dialog.setValue( self._value )
+            if self.maximum is not None:
+                progress_dialog.setMaximum(self.maximum)
+            if self.value is not None:
+                progress_dialog.setValue(self.value)
             progress_dialog.set_cancel_hidden(not self.cancelable)
-            if self._text is not None:
-                progress_dialog.setLabelText(str(self._text))
-            if self._clear_details is True:
+            if self.text is not None:
+                progress_dialog.setLabelText(self.text)
+            if self.clear_details is True:
                 progress_dialog.clear_details()
-            if self._detail is not None:
-                progress_dialog.add_detail(self._detail)
-            if self._title is not None:
-                progress_dialog.title = self._title
+            if self.detail is not None:
+                progress_dialog.add_detail(self.detail)
+            if self.title is not None:
+                progress_dialog.title = self.title
             if self.enlarge:
                 progress_dialog.enlarge()
             if self.blocking:
-                progress_dialog.set_ok_hidden( False )
-                progress_dialog.set_cancel_hidden( True )
+                progress_dialog.set_ok_hidden(False)
+                progress_dialog.set_cancel_hidden(True)
                 progress_dialog.exec_()
-                progress_dialog.set_ok_hidden( True )
-                progress_dialog.set_cancel_hidden( False )
+                progress_dialog.set_ok_hidden(True)
+                progress_dialog.set_cancel_hidden(False)
             if progress_dialog.wasCanceled():
                 progress_dialog.reset()
                 raise CancelRequest()
