@@ -1,4 +1,6 @@
 import datetime
+import json
+import io
 import logging
 import os
 import unittest
@@ -209,6 +211,11 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
     def test_update_progress( self ):
         update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
         self.assertTrue( six.text_type( update_progress ) )
+        stream = io.BytesIO()
+        update_progress.writeStream(stream)
+        stream.seek(0)
+        update_progress_state = json.load(stream)
+        self.assertTrue(update_progress_state)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run( self.gui_context )

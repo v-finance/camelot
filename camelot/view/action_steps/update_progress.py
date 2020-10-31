@@ -27,13 +27,16 @@
 #
 #  ============================================================================
 
+import json
+
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
+from camelot.core.serializable import Serializable
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2._text} {2._detail}'
 
 
-class UpdateProgress(ActionStep):
+class UpdateProgress(ActionStep, Serializable):
     """
 Inform the user about the progress the application is making
 while executing an action.  This ActionStep is not blocking.  So it can
@@ -64,16 +67,27 @@ updated.
         super(UpdateProgress, self).__init__()
         self._value = value
         self._maximum = maximum
-        self._text = text
-        self._detail = detail
+        self._text = str(text)
+        self._detail = str(detail)
         self._clear_details = clear_details
-        self._title = title
+        self._title = str(title)
         self.blocking = blocking
         self.enlarge = enlarge
-        
+
     def __str__(self):
         return _detail_format.format(self._value or 0, self._maximum or 0, self)
-    
+
+    def writeStream(self, stream):
+        stream.write(json.dumps({
+            'value': self._value,
+            'maximum': self._maximum,
+            'text': self._text,
+            'detail': self._detail,
+            'clear_details': self._clear_details,
+            'title': self._title,
+            'enlarge': self.enlarge,
+        }).encode())
+
     def gui_run(self, gui_context):
         """This method will update the progress dialog, if such dialog exists
         within the GuiContext
