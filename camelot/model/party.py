@@ -84,6 +84,7 @@ class GeographicBoundary( Entity ):
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
         list_display = ['row_type', 'name', 'code']
+        form_display = ['name', 'code', 'alternative_names']
         form_state = 'right'
         field_attributes = {
             'row_type': {
@@ -124,13 +125,27 @@ class GeographicBoundaryAlternativeName(Entity):
         schema.CheckConstraint("row_type = 'translation' AND language IS NOT NULL OR row_type != 'translation'", name='translation_language'),
     )
 
+    class Admin(EntityAdmin):
+        verbose_name = _('Alternative name')
+        verbose_name_plural = _('Alternative names')
+        list_display = ['name', 'row_type', 'language']
+        form_state = 'right'
+        field_attributes = {
+            'row_type': {
+                'name': _('Type'),
+                'editable': False,
+            }
+        }
+
 class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'translation'}
     
+
 class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'main_municipality'}
+
 
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
