@@ -35,7 +35,7 @@ from ..core.qt import (
 )
 
 from camelot.view.controls.busy_widget import BusyWidget
-import sip
+
 
 class MainWindowProxy(QtCore.QObject):
     """Proxy for a main window of a Desktop Camelot application
