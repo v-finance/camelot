@@ -155,6 +155,8 @@ class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'translation'}
     
+GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic')
+    
 
 class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
     
