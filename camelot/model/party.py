@@ -197,9 +197,16 @@ class City( GeographicBoundary ):
                                    primary_key = True,
                                    autoincrement = False )
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
-
+    
     __mapper_args__ = {'polymorphic_identity': 'city'}
-
+    
+    def main_municipality_name(self, language=None):
+        main_municipality = self.main_municipality_alternative_names\
+           .order_by(GeographicBoundaryMainMunicipality.language==language,
+                     GeographicBoundaryMainMunicipality.language==None).first()
+        if main_municipality is not None:
+            return main_municipality.name
+    
     def __str__(self):
         if None not in (self.code, self.name, self.country):
             return u'{0.code} {0.name} [{1.code}]'.format( self, self.country )
