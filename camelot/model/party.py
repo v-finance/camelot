@@ -206,6 +206,14 @@ class City( GeographicBoundary ):
                      GeographicBoundaryMainMunicipality.language==None).first()
         if main_municipality is not None:
             return main_municipality.name
+
+    def translation(self, language):
+        translated_name = super().translation(language)
+        main_municipality = self.main_municipality_name(language)
+        main_municipality_suffix = ''
+        if main_municipality is not None:
+            main_municipality_suffix = ' ({})'.format(main_municipality)
+        return translated_name + main_municipality_suffix
     
     def __str__(self):
         if None not in (self.code, self.name, self.country):
