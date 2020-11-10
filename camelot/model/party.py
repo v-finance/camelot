@@ -63,6 +63,20 @@ class GeographicBoundary( Entity ):
 
     row_type = schema.Column( Unicode(40), nullable = False )
     
+    def translation(self, language='nl_BE'):
+       translation = self.translations.filter(GeographicBoundaryTranslation.language==language).one_or_none()
+       if translation is not None:
+           return translation.name
+       return self.name
+    
+    @property
+    def name_NL(self):
+        return self.translation(language='nl_BE')
+    
+    @property
+    def name_FR(self):
+        return self.translation(language='fr_BE')
+    
     __mapper_args__ = { 'polymorphic_on' : row_type }
     
     __table_args__ = (
@@ -84,7 +98,7 @@ class GeographicBoundary( Entity ):
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
         list_display = ['row_type', 'name', 'code']
-        form_display = ['name', 'code', 'alternative_names']
+        form_display = ['name', 'code', 'name_NL', 'name_FR', 'alternative_names']
         form_state = 'right'
         field_attributes = {
             'row_type': {
