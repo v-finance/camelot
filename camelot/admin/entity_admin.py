@@ -622,7 +622,7 @@ and used as a custom action.
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
 
-    def get_search_fields(self, substring):
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the fields in the `list_search` attribute as well as the 

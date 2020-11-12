@@ -356,7 +356,7 @@ class SearchFilter(Action, AbstractModelFilter):
 
             for t in text.split(' '):
                 subexp = []
-                for column_name in self.admin.get_search_fields(t):
+                for column_name in self.admin._get_search_fields(t):
                     path = column_name.split('.')
                     target = self.admin.entity
                     related_admin = self.admin
