@@ -45,7 +45,6 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.qt import QtCore
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -78,10 +77,6 @@ class GeographicBoundary( Entity ):
     @property
     def name_FR(self):
         return self.translation(language='fr_BE')
-    
-    @property
-    def locale_name(self):
-        return self.translation(language=QtCore.QLocale().name())
     
     __mapper_args__ = { 'polymorphic_on' : row_type }
     
@@ -239,10 +234,6 @@ class City( GeographicBoundary ):
     @property
     def administrative_name(self):
        return self.administrative_translation(language=None)
-    
-    @property
-    def administrative_locale_name(self):
-        return self.administrative_translation(language=QtCore.QLocale().name())
 
     @property
     def administrative_name_NL(self):
