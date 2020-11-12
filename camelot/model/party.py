@@ -105,7 +105,12 @@ class GeographicBoundary( Entity ):
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
         list_display = ['row_type', 'name', 'code']
-        form_display = ['name', 'code', 'name_NL', 'name_FR', 'alternative_names']
+        form_display = Form(
+            [GroupBoxForm(_('General'), ['name', 'code'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL'], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR'], columns=2),
+             'alternative_names'],
+            columns=2)
         
         form_state = 'right'
         field_attributes = {
@@ -263,7 +268,17 @@ class City( GeographicBoundary ):
     class Admin(GeographicBoundary.Admin):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        list_display = ['code', 'name', 'country']
+        list_display = ['code', 'name', 'administrative_name', 'country']
+        form_display = Form(
+            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
+             'alternative_names'],
+            columns=2)
+        field_attributes = {k:copy.copy(v) for k,v in six.iteritems(GeographicBoundary.Admin.field_attributes)}
+        field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
+        field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
         
 @six.python_2_unicode_compatible
 class Address( Entity ):
