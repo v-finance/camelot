@@ -34,6 +34,7 @@ These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
 
+import copy
 import datetime
 import six
 import sqlalchemy.types
@@ -46,10 +47,10 @@ from sqlalchemy import orm, schema, sql, ForeignKey
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
-from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
 from .authentication import end_of_times
 
@@ -93,18 +94,22 @@ class GeographicBoundary( Entity ):
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
-
+    
     class Admin(EntityAdmin):
+        
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
         list_display = ['row_type', 'name', 'code']
         form_display = ['name', 'code', 'name_NL', 'name_FR', 'alternative_names']
+        
         form_state = 'right'
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
                 'editable': False,
-            }
+            },
+            'name_NL': {'name': _('Name')},
+            'name_FR': {'name': _('Name')},
         }
     
 class GeographicBoundaryAlternativeName(Entity):
@@ -148,6 +153,8 @@ class GeographicBoundaryAlternativeName(Entity):
             'row_type': {
                 'name': _('Type'),
                 'editable': False,
+                'choices': [('translation', _('Translation')),
+                            ('main_municipality', _('Main municipality'))]
             }
         }
 
@@ -206,14 +213,34 @@ class City( GeographicBoundary ):
                      GeographicBoundaryMainMunicipality.language==None).first()
         if main_municipality is not None:
             return main_municipality.name
-
-    def translation(self, language):
-        translated_name = super().translation(language)
+    
+    def administrative_translation(self, language):
+        translated_name = self.translation(language)
         main_municipality = self.main_municipality_name(language)
         main_municipality_suffix = ''
         if main_municipality is not None:
             main_municipality_suffix = ' ({})'.format(main_municipality)
-        return translated_name + main_municipality_suffix
+        return translated_name + main_municipality_suffix        
+    
+    @property
+    def main_municipality(self):
+        return self.main_municipality_name(None)
+    
+    @property
+    def administrative_name(self):
+       return self.administrative_translation(language=None)
+    
+    @property
+    def administrative_locale_name(self):
+        return self.administrative_translation(language=QtCore.QLocale().name())
+
+    @property
+    def administrative_name_NL(self):
+        return self.administrative_translation(language='nl_BE')
+    
+    @property    
+    def administrative_name_FR(self):
+        return self.administrative_translation(language='fr_BE')
     
     def __str__(self):
         if None not in (self.code, self.name, self.country):
@@ -232,7 +259,7 @@ class City( GeographicBoundary ):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
         list_display = ['code', 'name', 'country']
-
+        
 @six.python_2_unicode_compatible
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
