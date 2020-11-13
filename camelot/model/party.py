@@ -44,6 +44,7 @@ from sqlalchemy.types import Date, Unicode
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
+from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
@@ -113,6 +114,7 @@ class GeographicBoundary( Entity ):
                 'name': _('Type'),
                 'editable': False,
             },
+            'name': {'search_strategy': list_filter.NoSearch},
             'name_NL': {'name': _('Name')},
             'name_FR': {'name': _('Name')},
         }
