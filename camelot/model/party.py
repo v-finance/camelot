@@ -62,7 +62,7 @@ class GeographicBoundary( Entity ):
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
-    row_type = schema.Column( Unicode(40), nullable = False )
+    row_type = schema.Column( Unicode(40), nullable = False, index=True)
     
     def translation(self, language='nl_BE'):
        translation = self.translations.filter(GeographicBoundaryTranslation.language==language).one_or_none()
