@@ -273,30 +273,14 @@ class EditorFilter(Filter):
         return state
 
 class SearchFieldStrategy(object):
-    
-    @classmethod
-    def append_column(cls, column, text, args):
-        """Add column to the given args clause using a clause that is relevant for this type of search strategy type of column"""        
-        arg = cls.get_clause(column, text)
-        if arg is not None:
-            arg = sql.and_(column != None, arg)
-            args.append(arg)
+    """Abstract class for search field strategies.
+       It offers an interface for defining a search clause for a given column and search text.
+    """
         
     @classmethod
     def get_clause(cls, column, text):
+        """Return a search clause for the given column and search text, if applicable."""
         raise NotImplementedError
-
-class NoSearch(SearchFieldStrategy):
-    
-    @classmethod
-    def get_clause(cls, column, text):
-        return None
-
-class SimilaritySearch(SearchFieldStrategy):
-    
-    @classmethod
-    def get_clause(cls, column, text):
-        pass
   
 class BasicSearch(SearchFieldStrategy):
     
@@ -349,6 +333,12 @@ class BasicSearch(SearchFieldStrategy):
         elif issubclass(python_type, six.string_types):
             clause = sql.operators.ilike_op(c, '%'+text+'%')
         return clause
+
+class NoSearch(SearchFieldStrategy):
+    
+    @classmethod
+    def get_clause(cls, column, text):
+        return None
     
 class SearchFilter(Action, AbstractModelFilter):
 
