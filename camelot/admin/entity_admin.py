@@ -649,6 +649,12 @@ and used as a custom action.
         return self._search_fields
 
     def decorate_search_query(self, query, text):
+        """
+        Decorate the given sqlalchemy query for the objects that should be displayed in the table or selection view,
+        with the needed clauses for filtering based on the given search text.
+        By default all 'simple' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
+        Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
+        """
         if (text is not None) and len(text.strip()):
             # arguments for the where clause
             args = []
