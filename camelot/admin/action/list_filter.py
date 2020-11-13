@@ -31,9 +31,13 @@
 Actions to filter table views
 """
 
+import camelot.types
 import copy
+import datetime
+import decimal
 import six
 
+from camelot.view import utils
 from sqlalchemy import sql
 
 from ...core.utils import ugettext
@@ -268,12 +272,25 @@ class EditorFilter(Filter):
         state.modes = modes
         return state
 
-
+class SearchFieldStrategy(object):
+    
+    @classmethod
+    def append_column(cls, column, text, args):
+        """Add column to the given args clause using a clause that is relevant for this type of search strategy type of column"""        
+        arg = cls.get_clause(column, text)
+        if arg is not None:
+            arg = sql.and_(column != None, arg)
+            args.append(arg)
+        
+    @classmethod
+    def get_clause(cls, column, text):
+        raise NotImplementedError
+    
 class SearchFilter(Action, AbstractModelFilter):
 
     #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                #self)
-
+    
     def __init__(self, admin):
         Action.__init__(self)
         # dirty : action requires admin as argument
