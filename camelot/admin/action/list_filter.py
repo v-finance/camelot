@@ -285,6 +285,58 @@ class SearchFieldStrategy(object):
     @classmethod
     def get_clause(cls, column, text):
         raise NotImplementedError
+  
+class BasicSearch(SearchFieldStrategy):
+    
+    @classmethod
+    def get_clause(cls, c, text):
+        clause = None
+        try:
+            python_type = c.type.python_type
+        except NotImplementedError:
+            return
+        # @todo : this should use the from_string field attribute, without
+        #         looking at the sql code
+        if issubclass(c.type.__class__, camelot.types.File):
+            pass
+        elif issubclass(c.type.__class__, camelot.types.Enumeration):
+            pass
+        elif issubclass(python_type, camelot.types.virtual_address):
+            clause = c.like(camelot.types.virtual_address('%', '%'+text+'%'))
+        elif issubclass(python_type, bool):
+            try:
+                clause = (c==utils.bool_from_string(text))
+            except ( Exception, utils.ParsingError ):
+                pass
+        elif issubclass(python_type, int):
+            try:
+                clause = (c==utils.int_from_string(text))
+            except ( Exception, utils.ParsingError ):
+                pass
+        elif issubclass(python_type, datetime.date):
+            try:
+                clause = (c==utils.date_from_string(text))
+            except ( Exception, utils.ParsingError ):
+                pass
+        elif issubclass(python_type, datetime.timedelta):
+            try:
+                days = utils.int_from_string(text)
+                clause = (c==datetime.timedelta(days=days))
+            except ( Exception, utils.ParsingError ):
+                pass
+        elif issubclass(python_type, (float, decimal.Decimal)):
+            try:
+                float_value = utils.float_from_string(text)
+                precision = c.type.precision
+                if isinstance(precision, (tuple)):
+                    precision = precision[1]
+                delta = 0.1**( precision or 0 )
+                clause = sql.and_(c>=float_value-delta, c<=float_value+delta)
+            except ( Exception, utils.ParsingError ):
+                pass
+        elif issubclass(python_type, six.string_types):
+            clause = sql.operators.ilike_op(c, '%'+text+'%')
+        return clause
     
 class SearchFilter(Action, AbstractModelFilter):
 
