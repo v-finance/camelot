@@ -285,6 +285,18 @@ class SearchFieldStrategy(object):
     @classmethod
     def get_clause(cls, column, text):
         raise NotImplementedError
+
+class NoSearch(SearchFieldStrategy):
+    
+    @classmethod
+    def get_clause(cls, column, text):
+        return None
+
+class SimilaritySearch(SearchFieldStrategy):
+    
+    @classmethod
+    def get_clause(cls, column, text):
+        pass
   
 class BasicSearch(SearchFieldStrategy):
     
