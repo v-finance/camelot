@@ -114,9 +114,13 @@ class GeographicBoundary( Entity ):
                 'name': _('Type'),
                 'editable': False,
             },
-            'name': {'search_strategy': list_filter.NoSearch},
             'name_NL': {'name': _('Name')},
             'name_FR': {'name': _('Name')},
+            # Exclude columns from default search strategy, this is replaced by a 
+            # customized similarity search with alternative names in search query decoration.
+            'name': {'search_strategy': list_filter.NoSearch},
+            'code': {'search_strategy': list_filter.NoSearch},
+            'row_type': {'search_strategy': list_filter.NoSearch},
         }
     
 class GeographicBoundaryAlternativeName(Entity):
