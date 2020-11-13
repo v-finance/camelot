@@ -673,9 +673,13 @@ and used as a custom action.
                             target = fa['target']
                             related_admin = related_admin.get_related_admin(target)
                         else:
+                            # Append a search clause for the column using a set search strategy, or the basic strategy by default.
                             search_strategy = fa.get('search_strategy', list_filter.BasicSearch)
-                            search_strategy.append_column(instrumented_attribute, t, subexp)
-    
+                            arg = search_strategy.get_clause(instrumented_attribute, t)
+                            if arg is not None:
+                                arg = sql.and_(instrumented_attribute != None, arg)
+                                subexp.append(arg)
+                            
                 args.append(subexp)
     
             for join in joins:
