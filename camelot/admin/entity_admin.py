@@ -112,6 +112,7 @@ and used as a custom action.
     copy_deep = {}
     copy_exclude = []
     validator = EntityValidator
+    search_strategy = list_filter.BasicSearch
 
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
@@ -675,11 +676,12 @@ and used as a custom action.
                         else:
                             # Append a search clause for the column using a set search strategy, or the basic strategy by default.
                             fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                            search_strategy = fa.get('search_strategy', list_filter.BasicSearch)
-                            arg = search_strategy.get_clause(instrumented_attribute, t)
-                            if arg is not None:
-                                arg = sql.and_(instrumented_attribute != None, arg)
-                                subexp.append(arg)
+                            search_strategy = fa.get('search_strategy', related_admin.search_strategy)
+                            if search_strategy is not None:
+                                arg = search_strategy.get_clause(instrumented_attribute, t)
+                                if arg is not None:
+                                    arg = sql.and_(instrumented_attribute != None, arg)
+                                    subexp.append(arg)
                             
                 args.append(subexp)
     
