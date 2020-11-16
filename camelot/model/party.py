@@ -100,6 +100,11 @@ class GeographicBoundary( Entity ):
         
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
+
+        # Exclude basic columns from the default basic search strategy, this is replaced by a 
+        # customized similarity search with alternative names in search query decoration.
+        search_strategy = list_filter.NoSearch
+        
         list_display = ['row_type', 'name', 'code']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', 'code'], columns=2),
@@ -116,11 +121,6 @@ class GeographicBoundary( Entity ):
             },
             'name_NL': {'name': _('Name')},
             'name_FR': {'name': _('Name')},
-            # Exclude columns from default search strategy, this is replaced by a 
-            # customized similarity search with alternative names in search query decoration.
-            'name': {'search_strategy': list_filter.NoSearch},
-            'code': {'search_strategy': list_filter.NoSearch},
-            'row_type': {'search_strategy': list_filter.NoSearch},
         }
     
 class GeographicBoundaryAlternativeName(Entity):
