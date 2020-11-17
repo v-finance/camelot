@@ -35,6 +35,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
+from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -640,7 +641,8 @@ be specified using the verbose_name attribute.
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
-                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
+                search_strategy=list_filter.NoSearch,
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
