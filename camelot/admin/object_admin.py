@@ -713,7 +713,7 @@ be specified using the verbose_name attribute.
             )
         field_attributes['column_width'] = column_width
 
-    def get_search_fields(self, substring):
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the `list_search` attribute.
