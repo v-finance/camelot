@@ -100,10 +100,10 @@ class GeographicBoundary( Entity ):
         
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
-
-        # Exclude basic columns from the default basic search strategy, this is replaced by a 
+        
+        # Exclude basic column search, as this is replaced by a
         # customized similarity search with alternative names in search query decoration.
-        search_strategy = list_filter.NoSearch
+        basic_search = False
         
         list_display = ['row_type', 'name', 'code']
         form_display = Form(
