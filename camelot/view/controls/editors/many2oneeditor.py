@@ -92,11 +92,25 @@ class Many2OneEditor( CustomEditor ):
         layout.setContentsMargins( 0, 0, 0, 0)
 
         self.index = None
+        
 
+        #
+        # The search timer reduced the number of search signals that are
+        # emitted, by waiting for the next keystroke before emitting the
+        # search signal
+        #
+        timer = QtCore.QTimer( self )
+        timer.setInterval( 300 )
+        timer.setSingleShot( True )
+        timer.setObjectName( 'timer' )
+        timer.timeout.connect(self.start_search)
+        
         # Search input
         self.search_input = DecoratedLineEdit(self)
         self.search_input.setPlaceholderText(_('Search...'))
-        self.search_input.textEdited.connect(self.textEdited)
+        # Replaced by timer start, which will call textEdited if it runs out.
+        #self.search_input.textEdited.connect(self.textEdited)
+        self.search_input.textEdited.connect(self._start_search_timer)
         self.search_input.set_minimum_width( 20 )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
         # suppose garbage was entered, we need to refresh the content
@@ -114,13 +128,28 @@ class Many2OneEditor( CustomEditor ):
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
         self.search_input.setCompleter(self.completer)
-
+        
         # Setup layout
         layout.addWidget(self.search_input)
         self.setLayout(layout)
         self.add_actions(actions, layout)
         CrudSignalHandler().connect_signals(self)
 
+    @QtCore.qt_slot()
+    @QtCore.qt_slot(str)
+    def _start_search_timer(self, str=''):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer is not None:
+            timer.start()
+
+    @QtCore.qt_slot()
+    @QtCore.qt_slot(str)
+    def start_search(self, str=''):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer is not None:
+            timer.stop()
+        self.textEdited(self.search_input.text())
+        
     def set_field_attributes(self, **kwargs):
         super(Many2OneEditor, self).set_field_attributes(**kwargs)
         set_background_color_palette(self.search_input, kwargs.get('background_color'))

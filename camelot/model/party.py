@@ -44,7 +44,6 @@ from sqlalchemy.types import Date, Unicode
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
-from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
@@ -100,10 +99,10 @@ class GeographicBoundary( Entity ):
         
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
-
-        # Exclude basic columns from the default basic search strategy, this is replaced by a 
+        
+        # Exclude basic column search, as this is replaced by a
         # customized similarity search with alternative names in search query decoration.
-        search_strategy = list_filter.NoSearch
+        basic_search = False
         
         list_display = ['row_type', 'name', 'code']
         form_display = Form(
