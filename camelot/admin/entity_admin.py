@@ -680,7 +680,7 @@ and used as a custom action.
                             fa = related_admin.get_field_attributes(instrumented_attribute.key)
                             search_strategy = fa['search_strategy']
                             if search_strategy is not None:
-                                arg = search_strategy.get_clause(instrumented_attribute, t)
+                                arg = search_strategy.get_clause(instrumented_attribute, t, fa)
                                 if arg is not None:
                                     arg = sql.and_(instrumented_attribute != None, arg)
                                     subexp.append(arg)

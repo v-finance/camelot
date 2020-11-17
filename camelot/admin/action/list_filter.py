@@ -278,14 +278,14 @@ class SearchFieldStrategy(object):
     """
         
     @classmethod
-    def get_clause(cls, column, text):
+    def get_clause(cls, column, text, field_attributes):
         """Return a search clause for the given column and search text, if applicable."""
         raise NotImplementedError
 
 class NoSearch(SearchFieldStrategy):
     
     @classmethod
-    def get_clause(cls, column, text):
+    def get_clause(cls, column, text, field_attributes):
         return None
   
 class BasicSearch(SearchFieldStrategy):
@@ -293,13 +293,13 @@ class BasicSearch(SearchFieldStrategy):
     python_type = None
     
     @classmethod
-    def get_clause(cls, c, text):
+    def get_clause(cls, c, text, field_attributes):
         assert isinstance(c, orm.attributes.InstrumentedAttribute)
         assert issubclass(c.type.python_type, cls.python_type)
-        return cls.get_type_clause(c, text)
+        return cls.get_type_clause(c, text, field_attributes)
         
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         raise NotImplementedError
 
 class StringSearch(BasicSearch):
@@ -307,7 +307,7 @@ class StringSearch(BasicSearch):
     python_type = str
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         return sql.operators.ilike_op(c, '%'+text+'%')
     
 class DecimalSearch(BasicSearch):
@@ -315,9 +315,9 @@ class DecimalSearch(BasicSearch):
     python_type = (float, decimal.Decimal)
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            float_value = utils.float_from_string(text)
+            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
             precision = c.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
@@ -331,9 +331,9 @@ class TimeDeltaSearch(BasicSearch):
     python_type = datetime.timedelta
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            days = utils.int_from_string(text)
+            days = field_attributes.get('from_string', utils.int_from_string)(text)
             return (c==datetime.timedelta(days=days))
         except utils.ParsingError:
             pass
@@ -343,9 +343,9 @@ class TimeSearch(BasicSearch):
     python_type = datetime.time
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            return (c==utils.time_from_string(text))
+            return (c==field_attributes.get('from_string', utils.time_from_string)(text))
         except utils.ParsingError:
             pass
 
@@ -354,9 +354,9 @@ class DateSearch(BasicSearch):
     python_type = datetime.date
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            return (c==utils.date_from_string(text))
+            return (c==field_attributes.get('from_string', utils.date_from_string)(text))
         except utils.ParsingError:
             pass
         
@@ -365,9 +365,9 @@ class IntSearch(BasicSearch):
     python_type = int
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            return (c==utils.int_from_string(text))
+            return (c==field_attributes.get('from_string', utils.int_from_string)(text))
         except utils.ParsingError:
             pass  
 
@@ -376,9 +376,9 @@ class BoolSearch(BasicSearch):
     python_type = bool
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            return (c==utils.bool_from_string(text))
+            return (c==field_attributes.get('from_string', utils.bool_from_string)(text))
         except utils.ParsingError:
             pass
 
@@ -387,7 +387,7 @@ class VirtualAddressSearch(BasicSearch):
     python_type = camelot.types.virtual_address
     
     @classmethod
-    def get_type_clause(cls, c, text):
+    def get_type_clause(cls, c, text, field_attributes):
         return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
     
 class SearchFilter(Action, AbstractModelFilter):
