@@ -112,7 +112,7 @@ and used as a custom action.
     copy_deep = {}
     copy_exclude = []
     validator = EntityValidator
-    search_strategy = list_filter.BasicSearch
+    basic_search = True
 
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
@@ -640,9 +640,11 @@ and used as a custom action.
         if self._search_fields is None:
             self._search_fields = list(self.list_search)
             # list to avoid p3k fixes
-            for field_name, col_property in list(self.mapper.column_attrs.items()):
-                if isinstance(col_property.expression, schema.Column):
-                    self._search_fields.append(field_name)
+            # Only include basic search columns if it is set as such (True by default).
+            if self.basic_search:
+                for field_name, col_property in list(self.mapper.column_attrs.items()):
+                    if isinstance(col_property.expression, schema.Column):
+                        self._search_fields.append(field_name)
         return self._search_fields
 
     def decorate_search_query(self, query, text):
@@ -676,7 +678,7 @@ and used as a custom action.
                         else:
                             # Append a search clause for the column using a set search strategy, or the basic strategy by default.
                             fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                            search_strategy = fa.get('search_strategy', related_admin.search_strategy)
+                            search_strategy = fa['search_strategy']
                             if search_strategy is not None:
                                 arg = search_strategy.get_clause(instrumented_attribute, t)
                                 if arg is not None:
