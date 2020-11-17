@@ -38,7 +38,7 @@ import decimal
 import six
 
 from camelot.view import utils
-from sqlalchemy import sql
+from sqlalchemy import orm, sql
 
 from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
@@ -281,64 +281,114 @@ class SearchFieldStrategy(object):
     def get_clause(cls, column, text):
         """Return a search clause for the given column and search text, if applicable."""
         raise NotImplementedError
-  
-class BasicSearch(SearchFieldStrategy):
-    
-    @classmethod
-    def get_clause(cls, c, text):
-        clause = None
-        try:
-            python_type = c.type.python_type
-        except NotImplementedError:
-            return
-        # @todo : this should use the from_string field attribute, without
-        #         looking at the sql code
-        if issubclass(c.type.__class__, camelot.types.File):
-            pass
-        elif issubclass(c.type.__class__, camelot.types.Enumeration):
-            pass
-        elif issubclass(python_type, camelot.types.virtual_address):
-            clause = c.like(camelot.types.virtual_address('%', '%'+text+'%'))
-        elif issubclass(python_type, bool):
-            try:
-                clause = (c==utils.bool_from_string(text))
-            except ( Exception, utils.ParsingError ):
-                pass
-        elif issubclass(python_type, int):
-            try:
-                clause = (c==utils.int_from_string(text))
-            except ( Exception, utils.ParsingError ):
-                pass
-        elif issubclass(python_type, datetime.date):
-            try:
-                clause = (c==utils.date_from_string(text))
-            except ( Exception, utils.ParsingError ):
-                pass
-        elif issubclass(python_type, datetime.timedelta):
-            try:
-                days = utils.int_from_string(text)
-                clause = (c==datetime.timedelta(days=days))
-            except ( Exception, utils.ParsingError ):
-                pass
-        elif issubclass(python_type, (float, decimal.Decimal)):
-            try:
-                float_value = utils.float_from_string(text)
-                precision = c.type.precision
-                if isinstance(precision, (tuple)):
-                    precision = precision[1]
-                delta = 0.1**( precision or 0 )
-                clause = sql.and_(c>=float_value-delta, c<=float_value+delta)
-            except ( Exception, utils.ParsingError ):
-                pass
-        elif issubclass(python_type, six.string_types):
-            clause = sql.operators.ilike_op(c, '%'+text+'%')
-        return clause
 
 class NoSearch(SearchFieldStrategy):
     
     @classmethod
     def get_clause(cls, column, text):
         return None
+  
+class BasicSearch(SearchFieldStrategy):
+    
+    python_type = None
+    
+    @classmethod
+    def get_clause(cls, c, text):
+        assert isinstance(c, orm.attributes.InstrumentedAttribute)
+        assert issubclass(c.type.python_type, cls.python_type)
+        return cls.get_type_clause(c, text)
+        
+    @classmethod
+    def get_type_clause(cls, c, text):
+        raise NotImplementedError
+
+class StringSearch(BasicSearch):
+    
+    python_type = str
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        return sql.operators.ilike_op(c, '%'+text+'%')
+    
+class DecimalSearch(BasicSearch):
+    
+    python_type = (float, decimal.Decimal)
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        try:
+            float_value = utils.float_from_string(text)
+            precision = c.type.precision
+            if isinstance(precision, (tuple)):
+                precision = precision[1]
+            delta = 0.1**( precision or 0 )
+            return sql.and_(c>=float_value-delta, c<=float_value+delta)
+        except utils.ParsingError:
+            pass       
+        
+class TimeDeltaSearch(BasicSearch):
+    
+    python_type = datetime.timedelta
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        try:
+            days = utils.int_from_string(text)
+            return (c==datetime.timedelta(days=days))
+        except utils.ParsingError:
+            pass
+        
+class TimeSearch(BasicSearch):
+    
+    python_type = datetime.time
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        try:
+            return (c==utils.time_from_string(text))
+        except utils.ParsingError:
+            pass
+
+class DateSearch(BasicSearch):
+    
+    python_type = datetime.date
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        try:
+            return (c==utils.date_from_string(text))
+        except utils.ParsingError:
+            pass
+        
+class IntSearch(BasicSearch):
+    
+    python_type = int
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        try:
+            return (c==utils.int_from_string(text))
+        except utils.ParsingError:
+            pass  
+
+class BoolSearch(BasicSearch):
+    
+    python_type = bool
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        try:
+            return (c==utils.bool_from_string(text))
+        except utils.ParsingError:
+            pass
+
+class VirtualAddressSearch(BasicSearch):
+    
+    python_type = camelot.types.virtual_address
+    
+    @classmethod
+    def get_type_clause(cls, c, text):
+        return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
     
 class SearchFilter(Action, AbstractModelFilter):
 
