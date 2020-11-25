@@ -32,7 +32,7 @@ import time
 
 import six
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtQuick, is_deleted
 from ...core.sql import metadata
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
@@ -99,13 +99,24 @@ class ApplicationActionGuiContext( GuiContext ):
             view = self.workspace.active_view()
             if view is not None:
                 if view.objectName() == 'dashboard':
-                    # return the QML progress dialog
                     quick_view = view.quick_view
                     if not is_deleted(quick_view):
-                        progress_dialog = quick_view.findChild(QtCore.QObject, 'progress_dialog')
-                        if progress_dialog is None:
-                            progress_dialog = QmlProgressDialog(quick_view)
-                        return progress_dialog
+                        # try to return the C++ QML progress dialog
+                        main_window = self.workspace.parent()
+                        qml_progress_dialog = main_window.findChild(QtCore.QObject, 'qml_progress_dialog')
+
+                        if qml_progress_dialog is None:
+                            # return the python QML progress dialog
+                            progress_dialog = quick_view.findChild(QtCore.QObject, 'progress_dialog')
+                            if progress_dialog is None:
+                                progress_dialog = QmlProgressDialog(quick_view)
+                            return progress_dialog
+
+                        if QtCore.QMetaObject.invokeMethod(qml_progress_dialog, 'quickView', QtCore.Q_RETURN_ARG(QtQuick.QQuickView)) is None:
+                            QtCore.QMetaObject.invokeMethod(qml_progress_dialog, 'setQuickView', QtCore.Q_ARG(QtQuick.QQuickView, quick_view))
+                        return qml_progress_dialog
+
+
         # return the regular progress dialog
         return super( ApplicationActionGuiContext, self ).get_progress_dialog()
 

@@ -29,9 +29,13 @@
 
 import json
 
+from camelot.core.qt import QtCore, QtWidgets
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.serializable import Serializable
+from camelot.view.controls.qml_progress_dialog import QmlProgressDialog
+
+import io
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
@@ -97,28 +101,35 @@ updated.
         """
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
-            if self.maximum is not None:
-                progress_dialog.setMaximum(self.maximum)
-            if self.value is not None:
-                progress_dialog.setValue(self.value)
-            progress_dialog.set_cancel_hidden(not self.cancelable)
-            if self.text is not None:
-                progress_dialog.setLabelText(self.text)
-            if self.clear_details is True:
-                progress_dialog.clear_details()
-            if self.detail is not None:
-                progress_dialog.add_detail(self.detail)
-            if self.title is not None:
-                progress_dialog.title = self.title
-            if self.enlarge:
-                progress_dialog.enlarge()
-            if self.blocking:
-                progress_dialog.set_ok_hidden(False)
-                progress_dialog.set_cancel_hidden(True)
-                progress_dialog.exec_()
-                progress_dialog.set_ok_hidden(True)
-                progress_dialog.set_cancel_hidden(False)
-            if progress_dialog.wasCanceled():
-                progress_dialog.reset()
-                raise CancelRequest()
-
+            if isinstance(progress_dialog, QtWidgets.QProgressDialog) or isinstance(progress_dialog, QmlProgressDialog):
+                # QProgressDialog or python QmlProgressDialog
+                if self.maximum is not None:
+                    progress_dialog.setMaximum(self.maximum)
+                if self.value is not None:
+                    progress_dialog.setValue(self.value)
+                progress_dialog.set_cancel_hidden(not self.cancelable)
+                if self.text is not None:
+                    progress_dialog.setLabelText(self.text)
+                if self.clear_details is True:
+                    progress_dialog.clear_details()
+                if self.detail is not None:
+                    progress_dialog.add_detail(self.detail)
+                if self.title is not None:
+                    progress_dialog.title = self.title
+                if self.enlarge:
+                    progress_dialog.enlarge()
+                if self.blocking:
+                    progress_dialog.set_ok_hidden(False)
+                    progress_dialog.set_cancel_hidden(True)
+                    progress_dialog.exec_()
+                    progress_dialog.set_ok_hidden(True)
+                    progress_dialog.set_cancel_hidden(False)
+                if progress_dialog.wasCanceled():
+                    progress_dialog.reset()
+                    raise CancelRequest()
+            else:
+                # C++ QmlProgressDialog
+                stream = io.BytesIO()
+                self.write_object(stream)
+                obj = QtCore.QByteArray(stream.getvalue())
+                QtCore.QMetaObject.invokeMethod(progress_dialog, 'readObject', QtCore.Q_ARG(QtCore.QByteArray, obj))
