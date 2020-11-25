@@ -31,13 +31,14 @@
 Actions to filter table views
 """
 
+import camelot.types
 import copy
 import datetime
 import decimal
-
 import six
 
-from sqlalchemy import sql
+from camelot.view import utils
+from sqlalchemy import orm, sql
 
 from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
@@ -271,12 +272,129 @@ class EditorFilter(Filter):
         state.modes = modes
         return state
 
+class SearchFieldStrategy(object):
+    """Abstract class for search field strategies.
+       It offers an interface for defining a search clause for a given column and search text.
+    """
+        
+    @classmethod
+    def get_clause(cls, column, text, field_attributes):
+        """Return a search clause for the given column and search text, if applicable."""
+        raise NotImplementedError
 
+class NoSearch(SearchFieldStrategy):
+    
+    @classmethod
+    def get_clause(cls, column, text, field_attributes):
+        return None
+  
+class BasicSearch(SearchFieldStrategy):
+    
+    python_type = None
+    
+    @classmethod
+    def get_clause(cls, c, text, field_attributes):
+        assert isinstance(c, orm.attributes.InstrumentedAttribute)
+        assert issubclass(c.type.python_type, cls.python_type)
+        return cls.get_type_clause(c, text, field_attributes)
+        
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        raise NotImplementedError
+
+class StringSearch(BasicSearch):
+    
+    python_type = str
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        return sql.operators.ilike_op(c, '%'+text+'%')
+    
+class DecimalSearch(BasicSearch):
+    
+    python_type = (float, decimal.Decimal)
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
+            precision = c.type.precision
+            if isinstance(precision, (tuple)):
+                precision = precision[1]
+            delta = 0.1**( precision or 0 )
+            return sql.and_(c>=float_value-delta, c<=float_value+delta)
+        except utils.ParsingError:
+            pass       
+        
+class TimeDeltaSearch(BasicSearch):
+    
+    python_type = datetime.timedelta
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            days = field_attributes.get('from_string', utils.int_from_string)(text)
+            return (c==datetime.timedelta(days=days))
+        except utils.ParsingError:
+            pass
+        
+class TimeSearch(BasicSearch):
+    
+    python_type = datetime.time
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.time_from_string)(text))
+        except utils.ParsingError:
+            pass
+
+class DateSearch(BasicSearch):
+    
+    python_type = datetime.date
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.date_from_string)(text))
+        except utils.ParsingError:
+            pass
+        
+class IntSearch(BasicSearch):
+    
+    python_type = int
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.int_from_string)(text))
+        except utils.ParsingError:
+            pass  
+
+class BoolSearch(BasicSearch):
+    
+    python_type = bool
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.bool_from_string)(text))
+        except utils.ParsingError:
+            pass
+
+class VirtualAddressSearch(BasicSearch):
+    
+    python_type = camelot.types.virtual_address
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
+    
 class SearchFilter(Action, AbstractModelFilter):
 
     #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                #self)
-
+    
     def __init__(self, admin):
         Action.__init__(self)
         # dirty : action requires admin as argument
@@ -291,96 +409,7 @@ class SearchFilter(Action, AbstractModelFilter):
         return state
 
     def decorate_query(self, query, text):
-        import camelot.types
-        from camelot.view import utils
-    
-        if (text is not None) and len(text.strip()):
-            # arguments for the where clause
-            args = []
-            # join conditions : list of join entities
-            joins = []
-    
-            def append_column( c, text, args ):
-                """add column c to the where clause using a clause that
-                is relevant for that type of column"""
-                arg = None
-                try:
-                    python_type = c.type.python_type
-                except NotImplementedError:
-                    return
-                # @todo : this should use the from_string field attribute, without
-                #         looking at the sql code
-                if issubclass(c.type.__class__, camelot.types.File):
-                    pass
-                elif issubclass(c.type.__class__, camelot.types.Enumeration):
-                    pass
-                elif issubclass(python_type, camelot.types.virtual_address):
-                    arg = c.like(camelot.types.virtual_address('%', '%'+text+'%'))
-                elif issubclass(python_type, bool):
-                    try:
-                        arg = (c==utils.bool_from_string(text))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, int):
-                    try:
-                        arg = (c==utils.int_from_string(text))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, datetime.date):
-                    try:
-                        arg = (c==utils.date_from_string(text))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, datetime.timedelta):
-                    try:
-                        days = utils.int_from_string(text)
-                        arg = (c==datetime.timedelta(days=days))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, (float, decimal.Decimal)):
-                    try:
-                        float_value = utils.float_from_string(text)
-                        precision = c.type.precision
-                        if isinstance(precision, (tuple)):
-                            precision = precision[1]
-                        delta = 0.1**( precision or 0 )
-                        arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, six.string_types):
-                    arg = sql.operators.ilike_op(c, '%'+text+'%')
-    
-                if arg is not None:
-                    arg = sql.and_(c != None, arg)
-                    args.append(arg)
-
-            for t in text.split(' '):
-                subexp = []
-                for column_name in self.admin.get_search_fields(t):
-                    path = column_name.split('.')
-                    target = self.admin.entity
-                    related_admin = self.admin
-                    for path_segment in path:
-                        # use the field attributes for the introspection, as these
-                        # have detected hybrid properties
-                        fa = related_admin.get_descriptor_field_attributes(path_segment)
-                        instrumented_attribute = getattr(target, path_segment)
-                        if fa.get('target', False):
-                            joins.append(instrumented_attribute)
-                            target = fa['target']
-                            related_admin = related_admin.get_related_admin(target)
-                        else:
-                            append_column(instrumented_attribute, t, subexp)
-
-                args.append(subexp)
-
-            for join in joins:
-                query = query.outerjoin(join)
-
-            subqueries = (sql.or_(*arg) for arg in args)
-            query = query.filter(sql.and_(*subqueries))
-
-        return query
+        return self.admin.decorate_search_query(query, text)
 
     def gui_run(self, gui_context):
         # overload the action gui run to avoid a progress dialog

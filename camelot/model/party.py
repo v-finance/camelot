@@ -34,6 +34,7 @@ These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
 
+import copy
 import datetime
 import six
 import sqlalchemy.types
@@ -49,7 +50,7 @@ from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
-from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
 from .authentication import end_of_times
 
@@ -61,7 +62,21 @@ class GeographicBoundary( Entity ):
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
-    row_type = schema.Column( Unicode(40), nullable = False )
+    row_type = schema.Column( Unicode(40), nullable = False, index=True)
+    
+    def translation(self, language='nl_BE'):
+       translation = self.translations.filter(GeographicBoundaryTranslation.language==language).one_or_none()
+       if translation is not None:
+           return translation.name
+       return self.name
+    
+    @property
+    def name_NL(self):
+        return self.translation(language='nl_BE')
+    
+    @property
+    def name_FR(self):
+        return self.translation(language='fr_BE')
     
     __mapper_args__ = { 'polymorphic_on' : row_type }
     
@@ -79,17 +94,32 @@ class GeographicBoundary( Entity ):
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
-
+    
     class Admin(EntityAdmin):
+        
         verbose_name = _('Geographic Boundary')
         verbose_name_plural = _('Geographic Boundaries')
+        
+        # Exclude basic column search, as this is replaced by a
+        # customized similarity search with alternative names in search query decoration.
+        basic_search = False
+        
         list_display = ['row_type', 'name', 'code']
+        form_display = Form(
+            [GroupBoxForm(_('General'), ['name', 'code'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL'], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR'], columns=2),
+             'alternative_names'],
+            columns=2)
+        
         form_state = 'right'
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
                 'editable': False,
-            }
+            },
+            'name_NL': {'name': _('Name')},
+            'name_FR': {'name': _('Name')},
         }
     
 class GeographicBoundaryAlternativeName(Entity):
@@ -124,13 +154,30 @@ class GeographicBoundaryAlternativeName(Entity):
         schema.CheckConstraint("row_type = 'translation' AND language IS NOT NULL OR row_type != 'translation'", name='translation_language'),
     )
 
+    class Admin(EntityAdmin):
+        verbose_name = _('Alternative name')
+        verbose_name_plural = _('Alternative names')
+        list_display = ['name', 'row_type', 'language']
+        form_state = 'right'
+        field_attributes = {
+            'row_type': {
+                'name': _('Type'),
+                'editable': False,
+                'choices': [('translation', _('Translation')),
+                            ('main_municipality', _('Main municipality'))]
+            }
+        }
+
 class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'translation'}
     
+GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic')
+
 class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'main_municipality'}
+
 
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
@@ -166,9 +213,41 @@ class City( GeographicBoundary ):
                                    ForeignKey('geographic_boundary.id'),
                                    primary_key = True,
                                    autoincrement = False )
-
+    main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
+    
     __mapper_args__ = {'polymorphic_identity': 'city'}
+    
+    def main_municipality_name(self, language=None):
+        main_municipality = self.main_municipality_alternative_names\
+           .order_by(GeographicBoundaryMainMunicipality.language==language,
+                     GeographicBoundaryMainMunicipality.language==None).first()
+        if main_municipality is not None:
+            return main_municipality.name
+    
+    def administrative_translation(self, language):
+        translated_name = self.translation(language)
+        main_municipality = self.main_municipality_name(language)
+        main_municipality_suffix = ''
+        if main_municipality is not None:
+            main_municipality_suffix = ' ({})'.format(main_municipality)
+        return translated_name + main_municipality_suffix        
+    
+    @property
+    def main_municipality(self):
+        return self.main_municipality_name(None)
+    
+    @property
+    def administrative_name(self):
+       return self.administrative_translation(language=None)
 
+    @property
+    def administrative_name_NL(self):
+        return self.administrative_translation(language='nl_BE')
+    
+    @property    
+    def administrative_name_FR(self):
+        return self.administrative_translation(language='fr_BE')
+    
     def __str__(self):
         if None not in (self.code, self.name, self.country):
             return u'{0.code} {0.name} [{1.code}]'.format( self, self.country )
@@ -185,8 +264,18 @@ class City( GeographicBoundary ):
     class Admin(GeographicBoundary.Admin):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        list_display = ['code', 'name', 'country']
-
+        list_display = ['code', 'name', 'administrative_name', 'country']
+        form_display = Form(
+            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
+             'alternative_names'],
+            columns=2)
+        field_attributes = {k:copy.copy(v) for k,v in six.iteritems(GeographicBoundary.Admin.field_attributes)}
+        field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
+        field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
+        
 @six.python_2_unicode_compatible
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""

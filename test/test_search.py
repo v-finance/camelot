@@ -89,7 +89,7 @@ class SearchCase( test_orm.TestMetaData ):
         # check if all columns are searched for
         #
         admin = self.TAdmin(self.app_admin, self.T)
-        search_fields = admin.get_search_fields(u'foo')
+        search_fields = admin._get_search_fields(u'foo')
         for (_i,name) in types_to_test.keys():
             self.assertTrue(name in search_fields)
         #
@@ -97,7 +97,7 @@ class SearchCase( test_orm.TestMetaData ):
         #
         self.T.id_max = orm.column_property(sql.select([sql.func.max(self.T.id)]))
         admin = self.TAdmin(self.app_admin, self.T)
-        search_fields = admin.get_search_fields(u'foo')
+        search_fields = admin._get_search_fields(u'foo')
         self.assertTrue('id_max' not in search_fields)
 
     def test_search_filter( self ):
