@@ -91,6 +91,7 @@ updated.
             'clear_details': self.clear_details,
             'title': self.title,
             'enlarge': self.enlarge,
+            'cancelable': self.cancelable
         }).encode())
 
     def gui_run(self, gui_context):
@@ -132,4 +133,4 @@ updated.
                 stream = io.BytesIO()
                 self.write_object(stream)
                 obj = QtCore.QByteArray(stream.getvalue())
-                QtCore.QMetaObject.invokeMethod(progress_dialog, 'readObject', QtCore.Q_ARG(QtCore.QByteArray, obj))
+                progress_dialog.readObject(obj)
