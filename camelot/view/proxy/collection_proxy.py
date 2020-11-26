@@ -45,7 +45,6 @@ returned and an update signal is emitted when the correct data is available.
 import collections
 import itertools
 import logging
-import weakref
 
 logger = logging.getLogger(__name__)
 
