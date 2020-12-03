@@ -683,7 +683,11 @@ be specified using the verbose_name attribute.
             # for an xtomany field, calculate the sum of the column widths, as
             # an estimate for the width of the table widget
             #
-            direction = field_attributes.get('direction', '')
+            # if no direction specified, assume onetomany to have the aditional
+            # field attributes available in case a OneToMany editor needs to
+            # constructed
+            #
+            direction = field_attributes.get('direction', 'onetomany')
             if direction.endswith('many') and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
                 field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
