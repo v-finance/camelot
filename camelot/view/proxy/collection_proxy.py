@@ -818,6 +818,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
     @QtCore.qt_slot()
     def timeout_slot(self):
         self.logger.debug('timout slot')
+        if is_deleted(self):
+            return
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             if self._update_requests:
