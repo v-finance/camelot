@@ -72,15 +72,6 @@ class SetFilter( ActionStep ):
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
 
-class SwitchExpandedSearch( ActionStep ):
-
-    def __init__( self, filters):
-        self.filters = filters
-
-    def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            gui_context.item_view.switch_expanded_search(self.filters)
-
 
 class UpdateTableView( ActionStep ):
     """Change the admin and or value of an existing table view

@@ -39,7 +39,7 @@ from .gui import (
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView, SwitchExpandedSearch,
+    RefreshItemView,
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -87,7 +87,6 @@ __all__ = [
     SelectSubclass.__name__,
     SetFilter.__name__,
     Sort.__name__,
-    SwitchExpandedSearch.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
     ToNextForm.__name__,
