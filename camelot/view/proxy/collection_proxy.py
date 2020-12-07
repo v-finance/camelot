@@ -712,7 +712,13 @@ class CollectionProxy(QtGui.QStandardItemModel):
     :attr instances: the set of `CollectionProxy` instances.  To be used
         during unit testing to fire the timer events of all models without
         waiting
+
+    :attr max_row_count: the maximum number of rows that can be loaded in the
+        model.  each row, even when not yet displayed will consume a certain
+        amount of memory, this maximum puts an upper limit on that.
     """
+
+    max_row_count = 10000000 # display maxium 10M rows
 
     instances = weakref.WeakSet()
 
@@ -938,8 +944,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.setRowCount(0)
         root_item = self.invisibleRootItem()
         root_item.setFlags(Qt.NoItemFlags)
-        root_item.setEnabled(row_count != None)
-        self.setRowCount(row_count or 0)
+        root_item.setEnabled(row_count is not None)
+        self.setRowCount(min(row_count or 0, self.max_row_count))
         self.logger.debug('_reset end')
 
     def set_value(self, value):
