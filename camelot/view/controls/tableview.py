@@ -360,12 +360,6 @@ class AdminTableWidget(QtWidgets.QWidget):
             table_widget.setModel(model)
             column_groups.model_reset()
 
-    def switch_expanded_search(self, filters):
-        # dirty hack to keep expanded search working while tranforming
-        # everything to actions
-        header = self.parent().parent().parent().findChild(QtWidgets.QWidget, 'header_widget')
-        if header is not None:
-            header.switch_expanded_search(filters)
 
 class RowsWidget(QtWidgets.QLabel):
     """
@@ -462,10 +456,6 @@ class HeaderWidget(QtWidgets.QWidget):
         number_of_rows.setObjectName('number_of_rows')
         widget_layout.addWidget(number_of_rows)
         layout.addLayout(widget_layout, 0)
-        self._expanded_filters_created = False
-        self._expanded_search = QtWidgets.QWidget()
-        self._expanded_search.hide()
-        layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
 
@@ -475,35 +465,9 @@ class HeaderWidget(QtWidgets.QWidget):
         font.setBold(True)
         return font
 
-    def _fill_expanded_search_options(self, filters):
-        """
-        Given the columns in the table view, present the user with more options
-        to filter rows in the table
-        :param columns: a list of tuples with field names and attributes
-        """
-        assert object_thread(self)
-        from camelot.view.flowlayout import FlowLayout
-        layout = FlowLayout()
-        layout.setSpacing(2)
-        layout.setContentsMargins(0, 0, 0, 0)
-        for filter_ in filters:
-            widget = filter_.render(self.gui_context, self)
-            layout.addWidget(widget)
-        self._expanded_search.setLayout(layout)
-        self._expanded_filters_created = True
-
     def _filter_changed(self):
         assert object_thread(self)
         self.filters_changed_signal.emit()
-
-    def switch_expanded_search(self, filters):
-        assert object_thread(self)
-        if self._expanded_search.isHidden():
-            if not self._expanded_filters_created:
-                self._fill_expanded_search_options(filters)
-            self._expanded_search.show()
-        else:
-            self._expanded_search.hide()
 
 
 class TableView(AbstractView):

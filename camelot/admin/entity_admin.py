@@ -245,7 +245,7 @@ and used as a custom action.
         if toolbar_area == Qt.TopToolBarArea:
             return toolbar_actions + [
                 list_filter.SearchFilter(self),
-                list_action.SetExpandedSearch(),
+                list_action.SetFilters(),
                 application_action.Refresh()
             ]
         return toolbar_actions

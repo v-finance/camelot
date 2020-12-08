@@ -1126,16 +1126,6 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes
         return state
 
-class SetExpandedSearch(Action):
-
-    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
-    verbose_name = _('Search')
-    tooltip = _('Expand or collapse search options')
-
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        filters = model_context.admin.get_expanded_search_filters()
-        yield action_steps.SwitchExpandedSearch(filters)
 
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
