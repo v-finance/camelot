@@ -39,7 +39,7 @@ from .gui import (
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView,
+    RefreshItemView, OpenQmlTableView
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -73,6 +73,7 @@ __all__ = [
     OpenStream.__name__,
     OpenString.__name__,
     OpenTableView.__name__,
+    OpenQmlTableView.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
