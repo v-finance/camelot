@@ -44,9 +44,7 @@ from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
-from openpyxl import Workbook
-from openpyxl.styles import Font, Border, Side, NamedStyle, PatternFill
-from openpyxl.utils import get_column_letter
+import xlsxwriter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 
@@ -658,56 +656,30 @@ class ExportSpreadsheet( ListContextAction ):
         # setup worksheet
         #
         yield action_steps.UpdateProgress( text = _('Create worksheet') )
-        workbook = Workbook()
-        #Workbook contains by default an sheet
-        worksheet = workbook.active
-        worksheet.title = 'Sheet1'
+        filename = action_steps.OpenFile.create_temporary_file( '.xlsx' )
+        workbook = xlsxwriter.Workbook(filename, {'constant_memory': True})
+        sheet = workbook.add_worksheet()
         
         #
         # write styles
         #
-        title_style = NamedStyle(name='title_style',
-                                font=Font(name=self.font_name,
-                                          bold=True,
-                                          size=12)
-                                )        
-        
-        header_style = NamedStyle(name='header_style', 
-                                  font=Font(bold=True,
-                                            name=self.font_name,
-                                            color='FFFFFF',
-                                            size=10),
-                                  fill=PatternFill(fill_type='solid',
-                                                   start_color='4F81BD',
-                                                   end_color='4F81BD'),
-                                  border=Border(top=Side(style='thin',
-                                                         color='95B3D7'),
-                                                bottom=Side(style='thin',
-                                                            color='95B3D7'))
-                                  )
-    
-        table_fill_odd = NamedStyle(name='table_fill_odd', 
-                                    font=Font(name=self.font_name,
-                                              size=10), 
-                                    fill=PatternFill(fill_type='solid', 
-                                                     start_color='C6D9F0', 
-                                                     end_color='C6D9F0')
-                                    )
-    
-        table_fill_even = NamedStyle(name='table_fill_even', 
-                                     font=Font(name=self.font_name,
-                                               size=10), 
-                                     fill=PatternFill(fill_type='solid', 
-                                                      start_color='FFFFFF', 
-                                                      end_color='FFFFFF')
-                                     )
-    
-        border_bottom = Border(bottom=Side(style='thin', color='95B3D7'))
-        border_left = Border(bottom=border_bottom.bottom, left=Side(style='thin', color='95B3D7'))
-        border_right = Border(bottom=border_bottom.bottom, right=Side(style='thin', color='95B3D7'))        
-        
-        worksheet.cell(row=1, column=1).value = admin.get_verbose_name_plural()
-        worksheet.cell(row=1, column=1).style = title_style
+        title_style = workbook.add_format({
+                                            'font_name':       self.font_name,
+                                            'bold':            True,
+                                            'font_size':       12,
+                                            })
+        header_style = workbook.add_format({
+                                            'font_name':       self.font_name,
+                                            'bold':            True,
+                                            'font_color':      '#FFFFFF',
+                                            'font_size':       10,
+                                            'bg_color':        '#4F81BD',
+                                            'bottom':          1,
+                                            'top':             1,
+                                            'border_color':    '#95B3D7',
+                                            })
+
+        sheet.write(0, 0, admin.get_verbose_name_plural(), title_style)
         
         #
         # create some patterns and formats
@@ -719,33 +691,20 @@ class ExportSpreadsheet( ListContextAction ):
         #
         # write headers
         #
-        worksheet.auto_filter.ref = 'A2:' + get_column_letter(len(columns)) + '2' 
+        sheet.autofilter(1, 0, 1, len(columns) - 1)
+        sheet.set_column(0, len(columns) - 1, 20)
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
-            verbose_name = six.text_type( field_attributes.get( 'name', name ) )
+            verbose_name = str( field_attributes.get( 'name', name ) )
             field_names.append( name )
-            name = six.text_type( name )
+            name = str( name )
             
-            if i == 0:
-                header_style.border = border_left
-            elif i == len( columns ) - 1:
-                header_style.border = border_right
-            else:
-                header_style.border = border_bottom
-            worksheet.cell(row=2, column=i+1).value = verbose_name
-            worksheet.cell(row=2, column=i+1).style = header_style
-                
-            if len( name ) < 8:
-                worksheet.column_dimensions[get_column_letter(i+1)].width = 8 * 1.3
-            else:
-                worksheet.column_dimensions[get_column_letter(i+1)].width = len( verbose_name ) * 1.3
-        
-        worksheet.auto_filter.add_filter_column(0, [])
+            sheet.write(1, i, verbose_name, header_style)
         
         #
         # write data
         #
-        offset = 3
+        offset = 2
         static_attributes = list(admin.get_static_field_attributes(field_names)) 
         for j, obj in enumerate( model_context.get_collection( yield_per = 100 ) ):
             dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
@@ -759,13 +718,13 @@ class ExportSpreadsheet( ListContextAction ):
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
-                format_string = 'General'
+                format_string = '0'
                 if value is not None:
                     if isinstance( value, Decimal ):
                         format_string = '0.00'
                     elif isinstance( value, list ):
                         separator = attributes.get('separator', u', ')
-                        value = separator.join([six.text_type(el) for el in value])
+                        value = separator.join([str(el) for el in value])
                     elif isinstance( value, float ):
                         precision = attributes.get('precision', 2)
                         format_string = '0.' + '0'*precision
@@ -778,44 +737,17 @@ class ExportSpreadsheet( ListContextAction ):
                     elif isinstance( value, datetime.time ):
                         format_string = time_format
                     elif attributes.get('to_string') is not None:
-                        value = six.text_type(attributes['to_string'](value))
+                        value = str(attributes['to_string'](value))
                     else:
-                        value = six.text_type(value)
+                        value = str(value)
                 else:
                     # empty cells should be filled as well, to get the
                     # borders right
                     value = ''
-                        
-                worksheet.cell(row=row, column=i+1).value = value
-                
-                if(row % 2 == 0):
-                    if i == 0:
-                        table_fill_even.border = border_left
-                    elif i == len(columns) - 1:
-                        table_fill_even.border = border_right
-                    else:
-                        table_fill_even.border = border_bottom
-                    worksheet.cell(row=row, column=i+1).style = table_fill_even
-                else:
-                    if i == 0:
-                        table_fill_odd.border = border_left 
-                    elif i == len(columns) - 1:
-                        table_fill_odd.border = border_right
-                    else:
-                        table_fill_odd.border = border_bottom
-                    worksheet.cell(row=row, column=i+1).style = table_fill_odd
-
-                min_width = len( six.text_type( value ) ) * 1
-                worksheet.column_dimensions[get_column_letter(i+1)].width = min(self.max_width, max(
-                    min_width, 
-                    worksheet.column_dimensions[get_column_letter(i+1)].width)
-                                                                               )
-                #number_format must be set at the end, otherwise it will not be applied
-                worksheet.cell(row=row, column=i+1).number_format = format_string
+                sheet.write(row, i, value, workbook.add_format({'num_format': format_string}))
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
-        filename = action_steps.OpenFile.create_temporary_file( '.xlsx' )
-        workbook.save( filename )
+        workbook.close()
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
     
