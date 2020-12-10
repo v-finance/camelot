@@ -684,9 +684,15 @@ class ExportSpreadsheet( ListContextAction ):
         #
         # create some patterns and formats
         #
-        date_format = local_date_format()
-        datetime_format = local_datetime_format()
-        time_format = local_time_format()
+        date_format = workbook.add_format({'num_format': local_date_format()})
+        datetime_format = workbook.add_format({'num_format': local_datetime_format()})
+        time_format = workbook.add_format({'num_format': local_time_format()})
+        int_format = workbook.add_format({'num_format': '0'})
+        decimal_format = workbook.add_format({'num_format': '0.00'})
+        numeric_style = []
+        for i in range(12):
+            style = workbook.add_format({'num_format': '0.' + ('0' * i)})
+            numeric_style.append(style)
 
         #
         # write headers
@@ -697,8 +703,6 @@ class ExportSpreadsheet( ListContextAction ):
         for i, (name, field_attributes) in enumerate( columns ):
             verbose_name = str( field_attributes.get( 'name', name ) )
             field_names.append( name )
-            name = str( name )
-            
             sheet.write(1, i, verbose_name, header_style)
         
         #
@@ -718,24 +722,24 @@ class ExportSpreadsheet( ListContextAction ):
             for i, (name, attributes, delta_attributes) in fields:
                 attributes.update( delta_attributes )
                 value = getattr( obj, name )
-                format_string = '0'
+                style = None
                 if value is not None:
                     if isinstance( value, Decimal ):
-                        format_string = '0.00'
+                        style = decimal_format
                     elif isinstance( value, list ):
-                        separator = attributes.get('separator', u', ')
+                        separator = attributes.get('separator', ', ')
                         value = separator.join([str(el) for el in value])
                     elif isinstance( value, float ):
                         precision = attributes.get('precision', 2)
-                        format_string = '0.' + '0'*precision
+                        style = numeric_style[precision]
                     elif isinstance( value, int ):
-                        format_string = '0'
+                        style = int_format
                     elif isinstance( value, datetime.date ):
-                        format_string = date_format
+                        style = date_format
                     elif isinstance( value, datetime.datetime ):
-                        format_string = datetime_format
+                        style = datetime_format
                     elif isinstance( value, datetime.time ):
-                        format_string = time_format
+                        style = time_format
                     elif attributes.get('to_string') is not None:
                         value = str(attributes['to_string'](value))
                     else:
@@ -744,7 +748,7 @@ class ExportSpreadsheet( ListContextAction ):
                     # empty cells should be filled as well, to get the
                     # borders right
                     value = ''
-                sheet.write(row, i, value, workbook.add_format({'num_format': format_string}))
+                sheet.write(row, i, value, style)
 
         yield action_steps.UpdateProgress( text = _('Saving file') )
         workbook.close()
