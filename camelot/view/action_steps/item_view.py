@@ -175,8 +175,10 @@ class OpenQmlTableView(UpdateTableView):
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
         list_gui_context.admin = self.admin
-        action = ActionAction(self.list_action, list_gui_context, quick_view)
-        table.activated.connect(action.action_triggered, type=Qt.QueuedConnection)
+        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
+        table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        for action in self.top_toolbar_actions:
+            item_view._qml_item.addAction(str(action))
 
 
 class OpenTableView( UpdateTableView ):
