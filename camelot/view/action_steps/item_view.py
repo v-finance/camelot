@@ -33,8 +33,12 @@ the `ListActionGuiContext`.
 """
 
 from ...admin.action.base import ActionStep
-from ...core.qt import Qt
+from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
+from ...core.qt import Qt, QtCore
+from ..controls.action_widget import ActionAction
+from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
+from ..proxy.collection_proxy import CollectionProxy
 
 
 class Sort( ActionStep ):
@@ -71,15 +75,6 @@ class SetFilter( ActionStep ):
         if gui_context.item_view is not None:
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
-
-class SwitchExpandedSearch( ActionStep ):
-
-    def __init__( self, filters):
-        self.filters = filters
-
-    def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            gui_context.item_view.switch_expanded_search(self.filters)
 
 
 class UpdateTableView( ActionStep ):
@@ -134,6 +129,57 @@ class UpdateTableView( ActionStep ):
     def gui_run(self, gui_context):
         self.update_table_view(gui_context.view)
         gui_context.view.change_title(self.title)
+
+        gui_context.view.findChild(Qt)
+
+class OpenQmlTableView(UpdateTableView):
+    """Open a new table view in the workspace.
+    
+    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param value: a list of objects or a query
+
+    .. attribute:: title
+        the title of the the new view
+
+    .. attribute:: new_tab
+        open the view in a new tab instead of the current tab
+        
+    """
+
+    def __init__(self, admin, value):
+        super().__init__(admin, value)
+        self.admin_name = admin.get_name()
+        self.new_tab = False
+        self.list_action = admin.get_list_action()
+
+    def gui_run(self, gui_context):
+        view = gui_context.workspace.active_view()
+        quick_view = view.quick_view
+        table = quick_view.findChild(QtCore.QObject, "qml_table")
+        horizontal_header = quick_view.findChild(QtCore.QObject, "qml_horizontal_header")
+        header_model = QtCore.QStringListModel(parent=quick_view)
+        header_model.setStringList(list(fn for fn, _fa in self.columns))
+        new_model = CollectionProxy(self.admin)
+        new_model.setParent(quick_view)
+        new_model.set_value(self.admin.get_proxy(self.value))
+        list(new_model.add_columns((fn for fn, _fa in self.columns)))
+        horizontal_header.setProperty('model', header_model)
+        table.setProperty('model', new_model)
+        item_view = ItemViewProxy(table)
+
+        class QmlListActionGuiContext(ListActionGuiContext):
+
+            def get_progress_dialog(self):
+                return ApplicationActionGuiContext.get_progress_dialog(self)
+
+        list_gui_context = gui_context.copy(QmlListActionGuiContext)
+        list_gui_context.item_view = item_view
+        list_gui_context.admin = self.admin
+        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
+        table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        for action in self.top_toolbar_actions:
+            item_view._qml_item.addAction(str(action))
+
 
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
