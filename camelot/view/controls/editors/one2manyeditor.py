@@ -113,17 +113,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
-                    qaction.triggered.connect(self.action_triggered)
                     toolbar.addAction(qaction)
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
             self.update_action_status()
-
-    @QtCore.qt_slot(bool)
-    def action_triggered(self, _checked=False):
-        action_action = self.sender()
-        action_action.action.gui_run(self.gui_context)
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)

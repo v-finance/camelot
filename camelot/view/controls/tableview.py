@@ -740,7 +740,6 @@ class TableView(AbstractView):
                 if isinstance(rendered, QtWidgets.QWidget):
                     toolbar.addWidget(rendered)
                 elif isinstance(rendered, QtWidgets.QAction):
-                    rendered.triggered.connect( self.action_triggered )
                     toolbar.addAction( rendered )
 
     @QtCore.qt_slot(bool)

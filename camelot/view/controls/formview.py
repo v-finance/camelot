@@ -299,7 +299,6 @@ class FormView(AbstractView):
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
                 qaction = action.render( self.gui_context, toolbar )
-                qaction.triggered.connect( self.action_triggered )
                 toolbar.addAction( qaction )
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
@@ -308,11 +307,6 @@ class FormView(AbstractView):
             # be solved using windowflags, since this causes some
             # flicker
             self.show()
-
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        action_action = self.sender()
-        action_action.action.gui_run( self.gui_context )
 
     @QtCore.qt_slot()
     def validate_close( self ):
