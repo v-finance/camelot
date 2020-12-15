@@ -137,5 +137,5 @@ updated.
                 result = json.loads(result_json.data())
                 if 'was_canceled' in result and result['was_canceled']:
                     # reset progress dialog
-                    progress_dialog.render('', QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
+                    progress_dialog.render([], QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
                     raise CancelRequest()
