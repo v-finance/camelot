@@ -132,7 +132,7 @@ updated.
                 stream = io.BytesIO()
                 self.write_object(stream)
                 obj = QtCore.QByteArray(stream.getvalue())
-                result_json = progress_dialog.render('', obj)
+                result_json = progress_dialog.render([], obj)
                 # process returned json
                 result = json.loads(result_json.data())
                 if 'was_canceled' in result and result['was_canceled']:
