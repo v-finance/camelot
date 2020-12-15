@@ -135,6 +135,7 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         AbstractActionWidget.init( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
+        self.triggered.connect(self.action_triggered)
 
     @QtCore.qt_slot()
     def action_triggered(self):
