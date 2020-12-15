@@ -228,8 +228,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context = super( ListActionGuiContext, self ).copy( base_class )
         new_context.item_view = self.item_view
         new_context.view = self.view
+        new_context.field_attributes = self.field_attributes
         return new_context
-
 
 class ListContextAction( Action ):
     """An base class for actions that should only be enabled if the
