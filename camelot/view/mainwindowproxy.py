@@ -101,7 +101,6 @@ class MainWindowProxy(QtCore.QObject):
             as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_main_menu`
             method.
         """
-        from camelot.view.controls.action_widget import ActionAction
         if main_menu == None:
             return
         menu_bar = self.parent().menuBar()
