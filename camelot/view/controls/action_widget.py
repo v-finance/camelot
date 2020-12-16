@@ -183,6 +183,10 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
             self.setIcon( state.icon.getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
+        if state.tooltip != None:
+            self.setToolTip( six.text_type( state.tooltip ) )
+        else:
+            self.setToolTip( '' )            
         self.set_menu( state )
 
     @QtCore.qt_slot()

@@ -36,13 +36,10 @@ import logging
 import unittest
 import sys
 import os
-import six
 
-from ..admin.action.application_action import ApplicationActionGuiContext
-from ..admin.entity_admin import EntityAdmin
-from ..core.orm import Session
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..view import action_steps, model_thread
+from ..view.model_process import ModelProcess
+from ..view import model_thread
 from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
 has_programming_error = False
@@ -114,146 +111,30 @@ class RunningThreadCase(unittest.TestCase):
         model_thread._model_thread_.remove(cls.thread)
         cls.thread.stop()
 
-class ModelThreadTestCase(unittest.TestCase):
-    """Base class for implementing test cases that need a running model_thread.
-    """
-
-    def process(self):
+    @classmethod
+    def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
-        self.mt.wait_on_work()
+        cls.thread.wait_on_work()
+        QtCore.QCoreApplication.instance().processEvents()
 
-    def setUp(self):
-        self.app = QtWidgets.QApplication.instance()
-        from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
-        from camelot.view.model_thread import get_model_thread, has_model_thread
-        if not has_model_thread():
-            #
-            # Run the tests without real threading, to avoid timing problems with screenshots etc.
-            #
-            model_thread._model_thread_.insert( 0, NoThreadModelThread() )
-        self.mt = get_model_thread()
-        if not self.mt.isRunning():
-            self.mt.start()
-        self.process()
-
-    def tearDown(self):
-        self.process()
-        #self.mt.exit(0)
-        #self.mt.wait()
-
-class ApplicationViewsTest(ModelThreadTestCase):
-    """Test various application level views, like the main window, the
-    sidepanel"""
-    
-    def setUp(self):
-        super(ApplicationViewsTest, self).setUp()
-        self.gui_context = ApplicationActionGuiContext()
-
-    def get_application_admin(self):
-        """Overwrite this method to make use of a custom application admin"""
-        from camelot.admin.application_admin import ApplicationAdmin
-        return ApplicationAdmin()
-    
-    def install_translators(self, app_admin):
-        for translator in app_admin.get_translator():
-            QtCore.QCoreApplication.installTranslator(translator)
-
-    def test_navigation_pane(self):
-        from camelot.view.controls.section_widget import NavigationPane
-        app_admin = self.get_application_admin()
-        self.install_translators(app_admin)
-        nav_pane = NavigationPane(None, None)
-        nav_pane.set_sections(app_admin.get_sections())
-        self.grab_widget(nav_pane, subdir='applicationviews')
-      
-    def test_main_window(self):
-        app_admin = self.get_application_admin()
-        self.gui_context.admin = app_admin
-        self.install_translators(app_admin)
-        step = action_steps.MainWindow(app_admin)
-        widget = step.render(self.gui_context)
-        self.grab_widget(widget, subdir='applicationviews')
-    
-class EntityViewsTest(ModelThreadTestCase, GrabMixinCase):
-    """Test the views of all the Entity subclasses, subclass this class to test all views
-    in your application.  This is done by calling the create_table_view and create_new_view
-    on a set of admin objects.  To tell the test case which admin objects should be tested,
-    overwrite the get_admins method.
+class RunningProcessCase(unittest.TestCase):
+    """
+    Test case that starts a model thread when setting up the case class
     """
 
-    def setUp(self):
-        super(EntityViewsTest, self).setUp()
-        global has_programming_error
-        translators = self.get_application_admin().get_translator()
-        for translator in translators:
-            QtCore.QCoreApplication.installTranslator(translator)
-        has_programming_error = False
-        self.session = Session()
+    @classmethod
+    def setUpClass(cls):
+        cls.thread = ModelProcess()
+        model_thread._model_thread_.insert(0, cls.thread)
+        cls.thread.start()
 
-    def get_application_admin(self):
-        """Overwrite this method to make use of a custom application admin"""
-        from camelot.admin.application_admin import ApplicationAdmin
-        return ApplicationAdmin()
-            
-    def get_admins(self):
-        """Should return all admin for which a table and a form view should be displayed,
-        by default, returns for all entities their default admin"""
-        from sqlalchemy.orm.mapper import _mapper_registry
-         
-        classes = []
-        for mapper in six.iterkeys(_mapper_registry):
-            if hasattr(mapper, 'class_'):
-                classes.append( mapper.class_ )
-            else:
-                raise Exception()
-            
-        app_admin = self.get_application_admin()
-        
-        for cls in classes:
-            admin = app_admin.get_related_admin(cls)
-            if admin is not None:
-                yield admin
+    @classmethod
+    def tearDownClass(cls):
+        model_thread._model_thread_.remove(cls.thread)
+        cls.thread.stop()
 
-    def test_table_view(self):
-        from camelot.admin.action.base import GuiContext
-        from camelot.view.action_steps import OpenTableView
-        gui_context = GuiContext()
-        for admin in self.get_admins():
-            if isinstance(admin, EntityAdmin):
-                step = OpenTableView(admin, admin.get_query())
-                widget = step.render(gui_context)
-                self.grab_widget(widget, suffix=admin.entity.__name__.lower(),
-                                 subdir='entityviews')
-                self.assertFalse( has_programming_error )
-
-    def test_new_view(self):
-        from camelot.admin.action.base import GuiContext
-        from camelot.admin.entity_admin import EntityAdmin
-        from ..view.action_steps import OpenFormView
-        gui_context = GuiContext()
-        for admin in self.get_admins():
-            verbose_name = six.text_type(admin.get_verbose_name())
-            LOGGER.debug('create new view for admin {0}'.format(verbose_name))
-            # create an object or take one from the db
-            obj = None
-            new_obj = False
-            if isinstance(admin, EntityAdmin):
-                obj = admin.get_query().first()
-            if obj is None:
-                # TODO Make sure object can be created, FinancialAccountPremiumSchedule has an obligatory parameter so this fails now
-                obj = admin.entity()
-                new_obj = True
-            # create a form view
-            form_view_step = OpenFormView([obj], admin)
-            widget = form_view_step.render(gui_context)
-            mapper = widget.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
-            mapper.revert()
-            self.process()
-            if admin.form_state != None:
-                # virtually maximize the widget
-                widget.setMinimumSize(1200, 800)
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
-            if new_obj:
-                self.session.expunge(obj)
-
+    @classmethod
+    def process(cls):
+        """Wait until all events are processed and the queues of the model thread are empty"""
+        cls.thread.wait_on_work()
+        QtCore.QCoreApplication.instance().processEvents()

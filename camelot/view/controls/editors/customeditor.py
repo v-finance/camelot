@@ -132,6 +132,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
+    completionPrefixChanged = QtCore.qt_signal(str)
 
     _font_height = None
     _font_width = None
