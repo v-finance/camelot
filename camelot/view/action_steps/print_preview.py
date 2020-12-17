@@ -63,13 +63,7 @@ class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
             # the parent remains the toolbar of the dialog, so
             # change the parent to the dialog itself
             qaction.setParent(self)
-            qaction.triggered.connect(self.action_triggered)
             toolbar.addAction(qaction)
-
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        action_action = self.sender()
-        action_action.action.gui_run( self.gui_context ) 
 
 
 class UpdatePrintPreview(ActionStep):

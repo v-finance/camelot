@@ -101,15 +101,12 @@ class MainWindowProxy(QtCore.QObject):
             as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_main_menu`
             method.
         """
-        from camelot.view.controls.action_widget import ActionAction
         if main_menu == None:
             return
         menu_bar = self.parent().menuBar()
         for menu in main_menu:
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
         menu_bar.setCornerWidget( BusyWidget() )
-        for qaction in menu_bar.findChildren( ActionAction ):
-            qaction.triggered.connect( self.action_triggered )
 
     def get_gui_context( self ):
         """Get the :class:`GuiContext` of the active view in the mainwindow,
@@ -125,14 +122,6 @@ class MainWindowProxy(QtCore.QObject):
     @QtCore.qt_slot()
     def view_activated( self ):
         pass
-
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        """Execute an action that was triggered somewhere in the main window,
-        such as the toolbar or the main menu"""
-        action_action = self.sender()
-        gui_context = self.get_gui_context()
-        action_action.action.gui_run( gui_context )
 
     def eventFilter(self, qobject, event):
         if event.type() == QtCore.QEvent.Close:

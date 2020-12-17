@@ -34,7 +34,7 @@ from camelot.view.model_thread import post
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
-from ..action_widget import ActionAction
+from ..action_widget import ActionAction, ActionToolbutton
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
@@ -113,17 +113,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
-                    qaction.triggered.connect(self.action_triggered)
                     toolbar.addAction(qaction)
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
             self.update_action_status()
-
-    @QtCore.qt_slot(bool)
-    def action_triggered(self, _checked=False):
-        action_action = self.sender()
-        action_action.action.gui_run(self.gui_context)
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
@@ -134,11 +128,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
         toolbar = self.findChild(QtWidgets.QToolBar)
         if toolbar:
             model_context = self.gui_context.create_model_context()
-            for qaction in toolbar.actions():
-                if isinstance(qaction, ActionAction):
+            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton):
+                if isinstance(qaction, (ActionAction, ActionToolbutton)):
                     post(qaction.action.get_state,
                          qaction.set_state,
-                         args=(model_context, ))
+                         args=(model_context,))
 
     def get_model(self):
         """
