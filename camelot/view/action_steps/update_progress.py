@@ -33,7 +33,6 @@ from camelot.core.qt import QtCore, QtWidgets
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.serializable import Serializable
-from camelot.view.controls.qml_progress_dialog import QmlProgressDialog
 
 import io
 
@@ -102,8 +101,8 @@ updated.
         """
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
-            if isinstance(progress_dialog, QtWidgets.QProgressDialog) or isinstance(progress_dialog, QmlProgressDialog):
-                # QProgressDialog or python QmlProgressDialog
+            if isinstance(progress_dialog, QtWidgets.QProgressDialog):
+                # QProgressDialog
                 if self.maximum is not None:
                     progress_dialog.setMaximum(self.maximum)
                 if self.value is not None:
@@ -133,4 +132,10 @@ updated.
                 stream = io.BytesIO()
                 self.write_object(stream)
                 obj = QtCore.QByteArray(stream.getvalue())
-                progress_dialog.readObject(obj)
+                result_json = progress_dialog.render([], obj)
+                # process returned json
+                result = json.loads(result_json.data())
+                if result.get('was_canceled', False):
+                    # reset progress dialog
+                    progress_dialog.render([], QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
+                    raise CancelRequest()

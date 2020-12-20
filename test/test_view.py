@@ -955,7 +955,6 @@ class ControlsTest(
         table = TableView(self.gui_context, city_admin)
         table.set_admin(city_admin)
         header = HeaderWidget(gui_context=table.gui_context, parent=None)
-        header.switch_expanded_search([])
         self.grab_widget(header)
 
     def test_column_groups_widget(self):
