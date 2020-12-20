@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtGui, QtCore, QtWidgets, variant_to_py, is_deleted
+from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
 
 import six
 
@@ -123,8 +123,8 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance( sender, QtWidgets.QAction ):
-            mode = six.text_type( variant_to_py(sender.data()) )
+        if isinstance(sender, (QtWidgets.QAction, QtQuick.QQuickItem)):
+            mode = str(variant_to_py(sender.data()))
         self.run_action( mode )
 
 
