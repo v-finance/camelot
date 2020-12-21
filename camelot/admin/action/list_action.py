@@ -37,7 +37,7 @@ import six
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
-from .base import Action, Mode, GuiContext
+from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
@@ -258,6 +258,8 @@ class EditAction( ListContextAction ):
     disabled when the field_attributes for the relation field are set to 
     not-editable.
     """
+
+    render_hint = RenderHint.TOOL_BUTTON
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
@@ -598,7 +600,8 @@ class ClearMapping(Action):
 
 class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     icon = FontIcon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')

@@ -27,10 +27,12 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py
+from ....admin.action.base import RenderHint
+from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
+
 from ...model_thread import post
 from ..action_widget import ActionToolbutton
 
@@ -121,6 +123,14 @@ class AbstractCustomEditor(object):
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            button = ActionToolbutton(action, self.gui_context, parent)
+            button.setAutoRaise(True)
+            button.setFocusPolicy(Qt.ClickFocus)
+            return button
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
 
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
@@ -161,7 +171,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     def add_actions(self, actions, layout):
         for action in actions:
-            action_widget = action.render(self.gui_context, self)
+            action_widget = self.render_action(action, self)
             action_widget.setFixedHeight(self.get_height())
             layout.addWidget(action_widget)
 

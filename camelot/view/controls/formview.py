@@ -36,12 +36,14 @@ LOGGER = logging.getLogger('camelot.view.controls.formview')
 from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
 
+from ...admin.action.base import RenderHint
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager
+from .action_widget import ActionAction
 
 class FormEditors(QtCore.QObject):
 
@@ -298,8 +300,7 @@ class FormView(AbstractView):
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
-                qaction = action.render( self.gui_context, toolbar )
-                toolbar.addAction( qaction )
+                toolbar.addAction(self.render_action(action, toolbar))
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
             # @todo : this show is needed on OSX or the form window
@@ -307,6 +308,11 @@ class FormView(AbstractView):
             # be solved using windowflags, since this causes some
             # flicker
             self.show()
+
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            return ActionAction(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     @QtCore.qt_slot()
     def validate_close( self ):

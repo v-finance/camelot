@@ -32,6 +32,7 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
 from ..action_widget import ActionAction, ActionToolbutton
@@ -102,6 +103,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.set_right_toolbar_actions(toolbar_actions)
         self.set_columns(columns)
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            return ActionAction(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, toolbar_actions):
         if toolbar_actions is not None:
@@ -109,7 +115,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
             for action in toolbar_actions:
-                qaction = action.render(self.gui_context, toolbar)
+                qaction = self.render_action(action, toolbar)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:

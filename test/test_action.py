@@ -12,9 +12,10 @@ import six
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.action import Action, ActionStep, State
-from camelot.admin.action import (list_action, application_action,
-                                  document_action, form_action,
-                                  list_filter, ApplicationActionGuiContext)
+from camelot.admin.action import (
+    list_action, application_action, form_action, list_filter,
+    ApplicationActionGuiContext
+)
 from camelot.admin.action.application import Application
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
@@ -174,23 +175,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                 self.grab_widget(dialog)
         self.assertTrue(dialog)
 
-    def test_text_document( self ):
-        # begin text document
-        class EditDocumentAction( Action ):
-
-            def model_run( self, model_context ):
-                document = QtGui.QTextDocument()
-                document.setHtml( '<h3>Hello World</h3>')
-                yield action_steps.EditTextDocument( document )
-        # end text document
-
-        action = EditDocumentAction()
-        for step in self.gui_run(action, self.gui_context):
-            if isinstance(step, ActionStep):
-                dialog = step.render()
-                self.grab_widget(dialog)
-        self.assertTrue(dialog)
-
     def test_edit_profile(self):
         from camelot.view.action_steps.profile import EditProfiles
         step = EditProfiles([], '')
@@ -249,7 +233,6 @@ class ListActionsCase(
             'last_name', exclusive=True
         )
         cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
-        cls.editor_filter = list_filter.EditorFilter('last_name')
         cls.process()
 
     @classmethod
@@ -270,15 +253,12 @@ class ListActionsCase(
         self.movie_admin = self.app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        table_view = tableview.AdminTableWidget(self.admin)
-        table_view.setModel(self.item_model)
+        table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin)
+        table_view.set_admin(self.admin)
+        table_view.table.setModel(self.item_model)
         # select the first row
-        table_view.setCurrentIndex(self.item_model.index(0, 0))
-        # create gui context
-        self.gui_context = list_action.ListActionGuiContext()
-        self.gui_context.admin = self.admin
-        self.gui_context.view = table_view
-        self.gui_context.item_view = table_view.findChild(QtWidgets.QTableView)
+        table_view.table.setCurrentIndex(self.item_model.index(0, 0))
+        self.gui_context = table_view.gui_context
         self.model_context = self.gui_context.create_model_context()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
@@ -518,7 +498,7 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.group_box_filter.render(self.gui_context, None)
+        widget = self.gui_context.view.render_action(self.group_box_filter, None)
         widget.set_state(state)
         self.assertTrue(len(widget.get_value()))
         widget.run_action()
@@ -527,25 +507,18 @@ class ListActionsCase(
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.combo_box_filter.render(self.gui_context, None)
-        widget.set_state(state)
-        self.assertTrue(len(widget.get_value()))
-        widget.run_action()
-        self.grab_widget(widget)
-
-    def test_editor_filter(self):
-        state = self.get_state(self.editor_filter, self.gui_context)
-        self.assertTrue(len(state.modes))
-        widget = self.editor_filter.render(self.gui_context, None)
+        widget = self.gui_context.view.render_action(self.combo_box_filter, None)
         widget.set_state(state)
         self.assertTrue(len(widget.get_value()))
         widget.run_action()
         self.grab_widget(widget)
 
     def test_filter_list(self):
-        action_box = actionsbox.ActionsBox(self.gui_context, None)
-        action_box.set_actions([self.group_box_filter,
-                                self.combo_box_filter])
+        action_box = actionsbox.ActionsBox(None)
+        for action in [self.group_box_filter,
+                       self.combo_box_filter]:
+            action_widget = self.gui_context.view.render_action(action, None)
+            action_box.layout().addWidget(action_widget)
         self.grab_widget(action_box)
         return action_box
 
@@ -850,25 +823,3 @@ class ApplicationActionsCase(
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
         list(self.gui_run(segmentation_fault, self.gui_context))
-
-
-class DocumentActionsCase(unittest.TestCase):
-    """Test the standard document actions.
-    """
-
-    images_path = test_view.static_images_path
-
-    def setUp( self ):
-        self.gui_context = document_action.DocumentActionGuiContext()
-        self.gui_context.document = QtGui.QTextDocument('Hello world')
-
-    def test_gui_context( self ):
-        self.assertTrue( isinstance( self.gui_context.copy(),
-                                     document_action.DocumentActionGuiContext ) )
-        self.assertTrue( isinstance( self.gui_context.create_model_context(),
-                                     document_action.DocumentActionModelContext ) )
-
-    def test_edit_document( self ):
-        edit_document_action = document_action.EditDocument()
-        model_context = self.gui_context.create_model_context()
-        list( edit_document_action.model_run( model_context ) )

@@ -37,6 +37,7 @@ from camelot.view.art import FontIcon
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from . import list_action
+from .base import RenderHint
 
 class FormActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -158,7 +159,8 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         return new_context
 
 class ShowHistory( Action ):
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
@@ -199,7 +201,8 @@ class ShowHistory( Action ):
         
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.Close
     icon = FontIcon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')

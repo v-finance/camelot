@@ -39,10 +39,13 @@ from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
+from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
+from .action_widget import ActionAction
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
+from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
 from .inheritance import SubclassTree
 
 logger = logging.getLogger('camelot.view.controls.tableview')
@@ -657,6 +660,15 @@ class TableView(AbstractView):
         table = self.table
         table.setItemDelegate(delegate)
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            return ActionAction(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.COMBO_BOX:
+            return ComboBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.GROUP_BOX:
+            return GroupBoxFilterWidget(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
     def set_filters(self, filters):
         logger.debug('setting filters for tableview')
         filters_widget = self.findChild(ActionsBox, 'filters')
@@ -668,11 +680,12 @@ class TableView(AbstractView):
             if widget is not None:
                 widget.deleteLater()
         if filters:
-            filters_widget = ActionsBox(gui_context=self.gui_context,
-                                        parent=self)
+            filters_widget = ActionsBox(parent=self)
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget(filters_widget)
-            filters_widget.set_actions(filters)
+            for action in filters:
+                action_widget = self.render_action(action, filters_widget)
+                filters_widget.layout().addWidget(action_widget)
         self.filters_layout.addStretch(1)
 
     def set_list_actions(self, actions):
