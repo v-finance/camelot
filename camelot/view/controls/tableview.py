@@ -681,10 +681,12 @@ class TableView(AbstractView):
         assert object_thread(self)
         actions_widget = self.findChild(ActionsBox, 'actions')
         if actions:
-            actions_widget = ActionsBox(parent=self,
-                                        gui_context=self.gui_context)
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions(actions)
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
             self.filters_layout.addWidget(actions_widget)
 
     @QtCore.qt_slot( object, object )
