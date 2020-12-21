@@ -178,8 +178,22 @@ class OpenQmlTableView(UpdateTableView):
         qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
         for action in self.top_toolbar_actions:
-            item_view._qml_item.addAction(str(action))
-
+            if action.icon is not None:
+                button = item_view._qml_item.addAction(str(action), action.icon._name)
+                qt_action = ActionAction(action, list_gui_context, quick_view)
+                button.clicked.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+            else:
+                search = item_view._qml_item.addSearch(str(action))
+                qt_action = ActionAction(action, list_gui_context, quick_view)
+                search.textEdited.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        for action in self.list_actions:
+            button = item_view._qml_item.addListAction(str(action.verbose_name))
+            qt_action = ActionAction(action, list_gui_context, quick_view)
+            button.clicked.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        for filter_action in self.filters:
+            button = item_view._qml_item.addListFilter(str(filter_action.verbose_name))
+            qt_action = ActionAction(filter_action, list_gui_context, quick_view)
+            button.clicked.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
 
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
