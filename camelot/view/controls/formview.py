@@ -36,14 +36,12 @@ LOGGER = logging.getLogger('camelot.view.controls.formview')
 from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
 
-from ...admin.action.base import RenderHint
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager
-from .action_widget import ActionAction
 
 class FormEditors(QtCore.QObject):
 
@@ -285,13 +283,15 @@ class FormView(AbstractView):
             side_panel_layout = QtWidgets.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox( parent = self,
-                                         gui_context = self.gui_context )
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions( actions )
-            side_panel_layout.addWidget( actions_widget )
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
+            side_panel_layout.addWidget(actions_widget)
             side_panel_layout.addStretch()
-            layout.addLayout( side_panel_layout )
+            layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(list)
     def set_toolbar_actions(self, actions):
@@ -308,11 +308,6 @@ class FormView(AbstractView):
             # be solved using windowflags, since this causes some
             # flicker
             self.show()
-
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.TOOL_BUTTON:
-            return ActionAction(action, self.gui_context, parent)
-        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     @QtCore.qt_slot()
     def validate_close( self ):

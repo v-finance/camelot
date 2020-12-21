@@ -39,15 +39,11 @@ from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
-from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
-from .action_widget import ActionAction
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
-from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
 from .inheritance import SubclassTree
-from .search import SimpleSearchControl
 
 logger = logging.getLogger('camelot.view.controls.tableview')
 
@@ -660,17 +656,6 @@ class TableView(AbstractView):
         delegate = DelegateManager(columns, parent=self)
         table = self.table
         table.setItemDelegate(delegate)
-
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.TOOL_BUTTON:
-            return ActionAction(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.COMBO_BOX:
-            return ComboBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.GROUP_BOX:
-            return GroupBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.SEARCH_BUTTON:
-            return SimpleSearchControl(action, self.gui_context, parent)
-        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     def set_filters(self, filters):
         logger.debug('setting filters for tableview')
