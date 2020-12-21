@@ -47,6 +47,7 @@ from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
 from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
 from .inheritance import SubclassTree
+from .search import SimpleSearchControl
 
 logger = logging.getLogger('camelot.view.controls.tableview')
 
@@ -667,6 +668,8 @@ class TableView(AbstractView):
             return ComboBoxFilterWidget(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.GROUP_BOX:
             return GroupBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.SEARCH_BUTTON:
+            return SimpleSearchControl(action, self.gui_context, parent)
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     def set_filters(self, filters):
@@ -712,7 +715,7 @@ class TableView(AbstractView):
             toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
             assert toolbar
             for action in toolbar_actions:
-                rendered = action.render(self.gui_context, toolbar)
+                rendered = self.render_action(action, toolbar)
                 # both QWidgets and QActions can be put in a toolbar
                 if isinstance(rendered, QtWidgets.QWidget):
                     toolbar.addWidget(rendered)

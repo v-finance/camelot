@@ -388,6 +388,8 @@ class DeleteSelection( EditAction ):
         model_context.admin.delete(obj)
 
 class AbstractToPrevious(object):
+
+    render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
     icon = FontIcon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
@@ -416,6 +418,8 @@ class ToPreviousRow( AbstractToPrevious, ListContextAction ):
         return state
 
 class AbstractToFirst(object):
+
+    render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToStartOfDocument
     icon = FontIcon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
@@ -428,6 +432,8 @@ class ToFirstRow( AbstractToFirst, ToPreviousRow ):
         gui_context.item_view.selectRow( 0 )
 
 class AbstractToNext(object):
+
+    render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToNextPage
     icon = FontIcon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
@@ -457,6 +463,8 @@ class ToNextRow( AbstractToNext, ListContextAction ):
         return state
 
 class AbstractToLast(object):
+
+    render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
     icon = FontIcon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
@@ -760,7 +768,8 @@ class ExportSpreadsheet( ListContextAction ):
     
 class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     icon = FontIcon('print') # 'tango/16x16/actions/document-print-preview.png'
     tooltip = _('Print Preview')
     verbose_name = _('Print Preview')
@@ -795,7 +804,8 @@ class SelectAll( ListContextAction ):
         
 class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Import from file')
     icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
     tooltip = _('Import from file')
@@ -945,6 +955,7 @@ class SetFilters(Action, AbstractModelFilter):
     to apply filters from within its widget.
     """
 
+    render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Find')
     tooltip = _('Filter the data')
     icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
