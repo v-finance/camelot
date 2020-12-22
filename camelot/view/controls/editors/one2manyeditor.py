@@ -35,7 +35,7 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
-from ..action_widget import ActionAction, ActionToolbutton
+from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
@@ -106,6 +106,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def render_action(self, action, parent):
         if action.render_hint == RenderHint.TOOL_BUTTON:
             return ActionAction(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.PUSH_BUTTON:
+            return ActionPushButton(action, self.gui_context, parent)
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     @QtCore.qt_slot(object)
