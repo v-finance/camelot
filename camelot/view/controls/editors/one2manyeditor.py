@@ -106,7 +106,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def render_action(self, action, parent):
         if action.render_hint == RenderHint.TOOL_BUTTON:
-            return ActionAction(action, self.gui_context, parent)
+            # Use tool button, because this one sets the popup mode
+            # to instant if there are modes in the state
+            return ActionToolbutton(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.PUSH_BUTTON:
             return ActionPushButton(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.COMBO_BOX:
@@ -139,8 +141,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         toolbar = self.findChild(QtWidgets.QToolBar)
         if toolbar:
             model_context = self.gui_context.create_model_context()
-            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton):
-                if isinstance(qaction, (ActionAction, ActionToolbutton)):
+            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton) + toolbar.findChildren(ActionPushButton):
+                if isinstance(qaction, (ActionAction, ActionToolbutton, ActionPushButton)):
                     post(qaction.action.get_state,
                          qaction.set_state,
                          args=(model_context,))
