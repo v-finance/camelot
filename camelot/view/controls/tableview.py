@@ -668,11 +668,12 @@ class TableView(AbstractView):
             if widget is not None:
                 widget.deleteLater()
         if filters:
-            filters_widget = ActionsBox(gui_context=self.gui_context,
-                                        parent=self)
+            filters_widget = ActionsBox(parent=self)
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget(filters_widget)
-            filters_widget.set_actions(filters)
+            for action in filters:
+                action_widget = self.render_action(action, filters_widget)
+                filters_widget.layout().addWidget(action_widget)
         self.filters_layout.addStretch(1)
 
     def set_list_actions(self, actions):
@@ -680,10 +681,12 @@ class TableView(AbstractView):
         assert object_thread(self)
         actions_widget = self.findChild(ActionsBox, 'actions')
         if actions:
-            actions_widget = ActionsBox(parent=self,
-                                        gui_context=self.gui_context)
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions(actions)
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
             self.filters_layout.addWidget(actions_widget)
 
     @QtCore.qt_slot( object, object )
@@ -699,7 +702,7 @@ class TableView(AbstractView):
             toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
             assert toolbar
             for action in toolbar_actions:
-                rendered = action.render(self.gui_context, toolbar)
+                rendered = self.render_action(action, toolbar)
                 # both QWidgets and QActions can be put in a toolbar
                 if isinstance(rendered, QtWidgets.QWidget):
                     toolbar.addWidget(rendered)

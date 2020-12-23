@@ -32,8 +32,9 @@ import time
 
 import six
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtQuick, is_deleted
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
+from .base import RenderHint
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -358,7 +359,8 @@ Backup the database to disk
 class Refresh( Action ):
     """Reload all objects from the database and update all views in the
     application."""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )

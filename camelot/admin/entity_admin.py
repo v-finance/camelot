@@ -601,16 +601,6 @@ and used as a custom action.
             return True
         return False
 
-    def get_expanded_search_filters(self):
-        """
-        :return: a list of tuples of type [(field_name, field_attributes)]
-        """
-        if self.expanded_list_search == None:
-            field_list = self.get_table().get_fields()
-        else:
-            field_list = self.expanded_list_search
-        return [list_filter.EditorFilter(field_name) for field_name in field_list]
-
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
         or through the field_attributes, this method returns all the fields

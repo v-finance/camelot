@@ -32,17 +32,15 @@ Actions to filter table views
 """
 
 import camelot.types
-import copy
 import datetime
 import decimal
-import six
 
 from camelot.view import utils
 from sqlalchemy import orm, sql
 
 from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
-from .base import Action, Mode
+from .base import Action, Mode, RenderHint
 
 class FilterMode(Mode):
 
@@ -170,107 +168,18 @@ class Filter(Action):
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
 
+    render_hint = RenderHint.GROUP_BOX
+
     def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
         super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
         self.exclusive = exclusive
-
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import GroupBoxFilterWidget
-        return GroupBoxFilterWidget(self, gui_context, parent)
 
 
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
 
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import ComboBoxFilterWidget
-        return ComboBoxFilterWidget(self, gui_context, parent)
-    
-class EditorFilter(Filter):
-    """Filter that presents the user with an editor, allowing the user to enter
-    a value on which to filter, and at the same time to show 'All' or 'None'
-    
-    :param field_name: the name fo the field on the class on which to filter
-    :param default_operator: a default operator to be used, on of the attributes
-        of the python module :mod:`operator`, such as `operator.eq`
-    :param default_value_1: a default value for the first editor (in case the
-        default operator in unary or binary
-    :param default_value_2: a default value for the second editor (in case the
-        default operator is binary)
-    """
+    render_hint = RenderHint.COMBO_BOX
 
-    def __init__( self, 
-                  field_name, 
-                  verbose_name = None,
-                  default_operator = None,
-                  default_value_1 = None,
-                  default_value_2 = None ):
-        super(EditorFilter, self).__init__(field_name, verbose_name=verbose_name)
-        self._field_name = field_name
-        self._verbose_name = verbose_name
-        self._default_operator = default_operator
-        self._default_value_1 = default_value_1
-        self._default_value_2 = default_value_2
-        self.column = None
-
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import OperatorFilterWidget
-        return OperatorFilterWidget(self, gui_context, self._default_value_1,
-                                    self._default_value_2, parent)
-
-    def get_arity(self, operator):
-        """:return: the current operator and its arity"""
-        try:
-            func_code = six.get_function_code(operator)
-        except AttributeError:
-            arity = 1 # probably a builtin function, assume arity == 1
-        else:
-            arity = func_code.co_argcount - 1
-        return arity
-
-    def decorate_query(self, query, values):
-        from camelot.view.field_attributes import order_operators
-        operator, value_1, value_2 = values
-        if operator is None:
-            return query.filter(self.column==None)
-        elif operator == All:
-            return query
-        arity = self.get_arity(operator)
-        values = [value_1, value_2][:arity]
-        none_values = sum( v == None for v in values )
-        if (operator in order_operators) and none_values > 0:
-            return query
-        return query.filter(operator(self.column, *values))
-
-    def get_state(self, model_context):
-        from ...view.utils import operator_names
-        state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        field_attributes = admin.get_field_attributes(self._field_name)
-        field_attributes = copy.copy( field_attributes )
-        field_attributes['editable'] = True
-        state.field_attributes = field_attributes
-        state.verbose_name = self.verbose_name or field_attributes['name']
-
-        entity = admin.entity
-        self.column = getattr(entity, self._field_name)
-
-        all_mode = FilterMode(All, ugettext('All'),
-                              checked=(self.default==All))
-        modes = [all_mode,
-                 FilterMode(None, ugettext('None')),
-                 ]
-        
-        operators = field_attributes.get('operators', [])
-        for operator in operators:
-            mode = FilterMode(operator,
-                              six.text_type(operator_names[operator]),
-                              checked=(operator==self._default_operator),
-                              )
-            modes.append(mode)
-
-        state.modes = modes
-        return state
 
 class SearchFieldStrategy(object):
     """Abstract class for search field strategies.
@@ -392,6 +301,8 @@ class VirtualAddressSearch(BasicSearch):
     
 class SearchFilter(Action, AbstractModelFilter):
 
+    render_hint = RenderHint.SEARCH_BUTTON
+
     #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                #self)
     
@@ -399,10 +310,6 @@ class SearchFilter(Action, AbstractModelFilter):
         Action.__init__(self)
         # dirty : action requires admin as argument
         self.admin = admin
-
-    def render(self, gui_context, parent):
-        from camelot.view.controls.search import SimpleSearchControl
-        return SimpleSearchControl(self, gui_context, parent)
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)

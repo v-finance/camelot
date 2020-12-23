@@ -27,6 +27,7 @@
 #
 #  ============================================================================
 
+from enum import Enum
 import logging
 
 from ...core.qt import QtWidgets, QtGui, Qt
@@ -298,6 +299,19 @@ class ProgressLevel(object):
         return False
 
 
+class RenderHint(Enum):
+    """
+    How an action wants to be rendered in the ui
+    """
+
+    PUSH_BUTTON = 'push_button'
+    TOOL_BUTTON = 'tool_button'
+    SEARCH_BUTTON = 'search_button'
+    GROUP_BOX = 'group_box'
+    COMBO_BOX = 'combo_box'
+
+
+
 class Action( ActionStep ):
     """An action has a set of attributes that define its appearance in the
 GUI.  
@@ -306,6 +320,11 @@ GUI.
 
     The internal name of the action, this can be used to store preferences
     concerning the action in the settings
+
+.. attribute:: render_hint
+
+    a :class:`RenderHint` instance indicating the preffered way to render
+    this action in the user interface
 
 These attributes are used at the default values for the creation of a
 :class:`camelot.admin.action.base.State` object that defines the appearance
@@ -355,6 +374,7 @@ direct manipulations of the user interface without a need to access the model.
         """
     
     name = u'action'
+    render_hint = RenderHint.PUSH_BUTTON
     verbose_name = None
     icon = None
     tooltip = None
@@ -397,22 +417,7 @@ direct manipulations of the user interface without a need to access the model.
 
         return tooltip
 
-    def render( self, gui_context, parent ):
-        """Create a widget to trigger the action.  Depending on the type of
-        gui_context and parent, a different widget type might be returned.
-        
-        :param gui_context: the context available in the *GUI thread*, a
-            subclass of :class:`camelot.action.GuiContext`
-        :param parent: the parent :class:`QtWidgets.QWidget`
-        :return: a :class:`QtWidgets.QWidget` which when triggered
-            will execute the :meth:`gui_run` method.
-        """
-        from camelot.view.controls.action_widget import ( ActionPushButton,
-                                                          ActionAction )
-        if isinstance( parent, (QtWidgets.QToolBar, QtWidgets.QMenu) ):
-            return ActionAction( self, gui_context, parent )
-        return ActionPushButton( self, gui_context, parent )
-        
+
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it
         executes the :meth:`model_run` in the Model thread.

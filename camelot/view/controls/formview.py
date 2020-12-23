@@ -283,13 +283,15 @@ class FormView(AbstractView):
             side_panel_layout = QtWidgets.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox( parent = self,
-                                         gui_context = self.gui_context )
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions( actions )
-            side_panel_layout.addWidget( actions_widget )
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
+            side_panel_layout.addWidget(actions_widget)
             side_panel_layout.addStretch()
-            layout.addLayout( side_panel_layout )
+            layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(list)
     def set_toolbar_actions(self, actions):
@@ -298,8 +300,7 @@ class FormView(AbstractView):
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
-                qaction = action.render( self.gui_context, toolbar )
-                toolbar.addAction( qaction )
+                toolbar.addAction(self.render_action(action, toolbar))
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
             # @todo : this show is needed on OSX or the form window

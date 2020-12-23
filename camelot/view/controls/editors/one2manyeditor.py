@@ -32,9 +32,11 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
-from ..action_widget import ActionAction, ActionToolbutton
+from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
+from ..filter_widget import ComboBoxFilterWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
@@ -102,6 +104,17 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.set_right_toolbar_actions(toolbar_actions)
         self.set_columns(columns)
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            # Use tool button, because this one sets the popup mode
+            # to instant if there are modes in the state
+            return ActionToolbutton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.PUSH_BUTTON:
+            return ActionPushButton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.COMBO_BOX:
+            return ComboBoxFilterWidget(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, toolbar_actions):
         if toolbar_actions is not None:
@@ -109,7 +122,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
             for action in toolbar_actions:
-                qaction = action.render(self.gui_context, toolbar)
+                qaction = self.render_action(action, toolbar)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
@@ -128,8 +141,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         toolbar = self.findChild(QtWidgets.QToolBar)
         if toolbar:
             model_context = self.gui_context.create_model_context()
-            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton):
-                if isinstance(qaction, (ActionAction, ActionToolbutton)):
+            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton) + toolbar.findChildren(ActionPushButton):
+                if isinstance(qaction, (ActionAction, ActionToolbutton, ActionPushButton)):
                     post(qaction.action.get_state,
                          qaction.set_state,
                          args=(model_context,))

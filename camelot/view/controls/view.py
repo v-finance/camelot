@@ -29,9 +29,11 @@
 
 """Functionality common to TableViews and FormViews"""
 
-import six
-
+from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
+from .action_widget import ActionAction, ActionPushButton
+from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
+from .search import SimpleSearchControl
 
 class AbstractView(QtWidgets.QWidget):
     """A string used to format the title of the view ::
@@ -47,7 +49,7 @@ class AbstractView(QtWidgets.QWidget):
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.qt_signal(six.text_type)
+    title_changed_signal = QtCore.qt_signal(str)
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
     close_clicked_signal = QtCore.qt_signal()
 
@@ -65,9 +67,22 @@ class AbstractView(QtWidgets.QWidget):
         """Will emit the title_changed_signal"""
         #import sip
         #if not sip.isdeleted(self):
-        self.title_changed_signal.emit( six.text_type(new_title) )
+        self.title_changed_signal.emit(str(new_title))
         
     @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
 
+
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            return ActionAction(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.COMBO_BOX:
+            return ComboBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.GROUP_BOX:
+            return GroupBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.SEARCH_BUTTON:
+            return SimpleSearchControl(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.PUSH_BUTTON:
+            return ActionPushButton(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))

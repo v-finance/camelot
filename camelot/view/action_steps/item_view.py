@@ -32,6 +32,8 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
+import itertools
+
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
@@ -177,23 +179,21 @@ class OpenQmlTableView(UpdateTableView):
         list_gui_context.admin = self.admin
         qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for action in self.top_toolbar_actions:
+        for action in itertools.chain(
+            self.top_toolbar_actions, self.list_actions, self.filters
+            ):
+            icon_name = None
             if action.icon is not None:
-                button = item_view._qml_item.addAction(str(action), action.icon._name)
+                icon_name = action.icon._name
+            button = item_view._qml_item.addAction(
+                action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name
+            )
+            if button is not None:
                 qt_action = ActionAction(action, list_gui_context, quick_view)
-                button.clicked.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-            else:
-                search = item_view._qml_item.addSearch(str(action))
-                qt_action = ActionAction(action, list_gui_context, quick_view)
-                search.textEdited.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for action in self.list_actions:
-            button = item_view._qml_item.addListAction(str(action.verbose_name))
-            qt_action = ActionAction(action, list_gui_context, quick_view)
-            button.clicked.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for filter_action in self.filters:
-            button = item_view._qml_item.addListFilter(str(filter_action.verbose_name))
-            qt_action = ActionAction(filter_action, list_gui_context, quick_view)
-            button.clicked.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+                button.clicked.connect(
+                    qt_action.action_triggered, type=Qt.QueuedConnection
+                )
+
 
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.

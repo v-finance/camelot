@@ -35,10 +35,10 @@ various actions that are beyond the icons shown in the editors of a form.
 import inspect
 import os
 
-from ...core.qt import Qt, QtWidgets
+from ...core.qt import QtWidgets
 from ...core.utils import ugettext_lazy as _
 from ...view.art import FontIcon
-from .base import Action
+from .base import Action, RenderHint
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
@@ -112,12 +112,8 @@ class FieldAction(Action):
     """Action class that renders itself as a toolbutton, small enough to
     fit in an editor"""
 
-    def render( self, gui_context, parent ):
-        from ...view.controls.action_widget import ActionToolbutton
-        button = ActionToolbutton(self, gui_context, parent)
-        button.setAutoRaise(True)
-        button.setFocusPolicy(Qt.ClickFocus)
-        return button
+    render_hint = RenderHint.TOOL_BUTTON
+
 
 class ShowFieldAttributes(Action):
     
