@@ -644,44 +644,44 @@ and used as a custom action.
         By default all 'simple' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
         Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
         """
-        if (text is not None) and len(text.strip()):
-            # arguments for the where clause
-            args = []
-            # join conditions : list of join entities
-            joins = []
-    
-            for t in text.split(' '):
-                subexp = []
-                for column_name in self._get_search_fields(t):
-                    path = column_name.split('.')
-                    target = self.entity
-                    related_admin = self
-                    for path_segment in path:
-                        # use the field attributes for the introspection, as these
-                        # have detected hybrid properties
-                        fa = related_admin.get_descriptor_field_attributes(path_segment)
-                        instrumented_attribute = getattr(target, path_segment)
-                        if fa.get('target', False):
-                            joins.append(instrumented_attribute)
-                            target = fa['target']
-                            related_admin = related_admin.get_related_admin(target)
-                        else:
-                            # Append a search clause for the column using a set search strategy, or the basic strategy by default.
-                            fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                            search_strategy = fa['search_strategy']
-                            if search_strategy is not None:
-                                arg = search_strategy.get_clause(instrumented_attribute, t, fa)
-                                if arg is not None:
-                                    arg = sql.and_(instrumented_attribute != None, arg)
-                                    subexp.append(arg)
-                            
-                args.append(subexp)
-    
-            for join in joins:
-                query = query.outerjoin(join)
-    
-            subqueries = (sql.or_(*arg) for arg in args)
-            query = query.filter(sql.and_(*subqueries))
+        assert len(text)
+        # arguments for the where clause
+        args = []
+        # join conditions : list of join entities
+        joins = []
+
+        for t in text.split(' '):
+            subexp = []
+            for column_name in self._get_search_fields(t):
+                path = column_name.split('.')
+                target = self.entity
+                related_admin = self
+                for path_segment in path:
+                    # use the field attributes for the introspection, as these
+                    # have detected hybrid properties
+                    fa = related_admin.get_descriptor_field_attributes(path_segment)
+                    instrumented_attribute = getattr(target, path_segment)
+                    if fa.get('target', False):
+                        joins.append(instrumented_attribute)
+                        target = fa['target']
+                        related_admin = related_admin.get_related_admin(target)
+                    else:
+                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
+                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
+                        search_strategy = fa['search_strategy']
+                        if search_strategy is not None:
+                            arg = search_strategy.get_clause(instrumented_attribute, t, fa)
+                            if arg is not None:
+                                arg = sql.and_(instrumented_attribute != None, arg)
+                                subexp.append(arg)
+                        
+            args.append(subexp)
+
+        for join in joins:
+            query = query.outerjoin(join)
+
+        subqueries = (sql.or_(*arg) for arg in args)
+        query = query.filter(sql.and_(*subqueries))
     
         return query
 
