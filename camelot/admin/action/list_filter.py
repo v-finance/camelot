@@ -316,6 +316,8 @@ class SearchFilter(Action, AbstractModelFilter):
         return state
 
     def decorate_query(self, query, text):
+        if (text is None) or (len(text.strip())==0):
+            return query
         return self.admin.decorate_search_query(query, text)
 
     def gui_run(self, gui_context):
