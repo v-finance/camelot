@@ -309,7 +309,7 @@ class RenderHint(Enum):
     SEARCH_BUTTON = 'search_button'
     GROUP_BOX = 'group_box'
     COMBO_BOX = 'combo_box'
-
+    LABEL = 'label'
 
 
 class Action( ActionStep ):

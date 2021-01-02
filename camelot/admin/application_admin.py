@@ -296,7 +296,9 @@ shortcut confusion and reduce the number of status updates.
             None if no toolbar should be created.
         """
         if toolbar_area == Qt.TopToolBarArea:
-            return self.edit_actions + self.change_row_actions + self.export_actions
+            return [
+                list_action.CloseList(), list_action.ListLabel()
+                ] + self.edit_actions + self.change_row_actions + self.export_actions
         return []
 
     def get_main_menu( self ):

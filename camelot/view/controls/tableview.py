@@ -36,7 +36,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
 from camelot.core.utils import ugettext as _
-from camelot.view.art import FontIcon
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
@@ -434,23 +433,9 @@ class HeaderWidget(QtWidgets.QWidget):
         self.gui_context = gui_context
         layout = QtWidgets.QVBoxLayout()
         widget_layout = QtWidgets.QHBoxLayout()
-        #search.expand_search_options_signal.connect(
-        #    self.expand_search_options)
-        title = QtWidgets.QLabel(
-            six.text_type(self.gui_context.admin.get_verbose_name_plural()), self)
-        title.setFont(self._title_font)
-        # setup close button
-        close_button = QtWidgets.QToolButton(self)
-        close_icon = FontIcon('backspace').getQIcon()
-        close_button.setIcon(close_icon)
-        close_button.setToolTip(_('Close'))
-        if isinstance(parent, AbstractView):
-            close_button.clicked.connect(parent.close_clicked_signal)
         actions_toolbar = QtWidgets.QToolBar()
         actions_toolbar.setObjectName('actions_toolbar')
         actions_toolbar.setIconSize(QtCore.QSize(16, 16))
-        actions_toolbar.addWidget(close_button)
-        actions_toolbar.addWidget(title)
         widget_layout.addWidget(actions_toolbar)
         number_of_rows = self.rows_widget(gui_context, parent=self)
         number_of_rows.setObjectName('number_of_rows')
@@ -556,6 +541,9 @@ class TableView(AbstractView):
         self.widget_layout = widget_layout
         self.gui_context.admin = self.admin
         self.gui_context.view = self
+
+    def close_view(self, accept):
+        self.close_clicked_signal.emit()
 
     @QtCore.qt_slot(object)
     def set_subclass_tree(self, subclasses):

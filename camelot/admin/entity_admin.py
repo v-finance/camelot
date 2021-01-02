@@ -246,7 +246,7 @@ and used as a custom action.
             return toolbar_actions + [
                 list_filter.SearchFilter(self),
                 list_action.SetFilters(),
-                application_action.Refresh()
+                application_action.Refresh(),
             ]
         return toolbar_actions
 
