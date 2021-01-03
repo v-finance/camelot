@@ -39,7 +39,6 @@ from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.controls import editors
-from camelot.view.controls.inheritance import SubclassDialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
 class UpdateEditor(ActionStep):
@@ -64,34 +63,6 @@ class UpdateEditor(ActionStep):
         if self.propagate:
             gui_context.editor.editingFinished.emit()
 
-class SelectSubclass(ActionStep):
-    """Allow the user to select a subclass out of a class hierarchy.  If the
-    hierarch has only one class, this step returns immediately.
-
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
-
-    yielding this step will return the admin for the subclass selected by the
-    user.
-    """
-
-    def __init__(self, admin):
-        self.admin = admin
-        self.subclass_tree = admin.get_subclass_tree()
-
-    def render(self):
-        subclass_dialog = SubclassDialog(admin=self.admin,
-                                         subclass_tree=self.subclass_tree)
-        subclass_dialog.setWindowTitle(ugettext('Select'))
-        return subclass_dialog
-
-    def gui_run(self, gui_context):
-        if not len(self.subclass_tree):
-            return self.admin
-        dialog = self.render()
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
-            raise CancelRequest()
-        return dialog.selected_subclass
 
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries
@@ -142,7 +113,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         if combobox != None:
             return combobox.set_value(value)
 
-class SelectItem( ActionStep ):
+class SelectItem(ActionStep):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
 
@@ -175,6 +146,34 @@ class SelectItem( ActionStep ):
         if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()
         return dialog.get_value()
+
+class SelectSubclass(SelectItem):
+    """Allow the user to select a subclass out of a class hierarchy.  If the
+    hierarch has only one class, this step returns immediately.
+
+    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
+
+    yielding this step will return the admin for the subclass selected by the
+    user.
+    """
+
+    def __init__(self, admin):
+        self.admin = admin
+        items = []
+        self._append_subclass_tree_to_items(items, admin.get_subclass_tree())
+        super().__init__(items)
+
+    def _append_subclass_tree_to_items(self, items, subclass_tree):
+        for admin, tree in subclass_tree:
+            if len(tree):
+                self._append_subclass_tree_to_items(items, tree)
+            else:
+                items.append((admin, admin.get_verbose_name_plural()))
+
+    def gui_run(self, gui_context):
+        if not len(self.items):
+            return self.admin
+        return super().gui_run(gui_context)
 
 
 class CloseView( ActionStep ):

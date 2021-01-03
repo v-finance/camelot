@@ -156,14 +156,12 @@ class OpenTableView( UpdateTableView ):
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
         self.admin_name = admin.get_name()
-        self.subclasses = admin.get_subclass_tree()
         self.new_tab = False
         # self.view_route = ViewRegister.register_view_route(admin)
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
         table_view = TableView(gui_context, self.admin)
-        table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return table_view
         
