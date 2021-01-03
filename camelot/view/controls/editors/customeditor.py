@@ -176,8 +176,11 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             layout.addWidget(action_widget)
 
     def update_actions(self):
-        model_context = self.gui_context.create_model_context()
+        model_context = None
         for action_action in self.findChildren(ActionToolbutton):
+            # only create the model context, when there is an action
+            if model_context is None:
+                model_context = self.gui_context.create_model_context()
             post(action_action.action.get_state, action_action.set_state,
                  args=(model_context,))
 

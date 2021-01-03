@@ -19,11 +19,15 @@ class ViewRegister(object):
     _max_views = 10
 
     @classmethod
+    def verbose_route(cls, route):
+        return '/'.join(route)
+
+    @classmethod
     def dump_routes(cls):
         for key, routes in cls._view_routes.items():
-            LOGGER.info(key)
+            LOGGER.info('{0} : {1} subroutes'.format(cls.verbose_route(key), len(routes)))
             for route in routes.keys():
-                LOGGER.info(key + route)
+                LOGGER.info(cls.verbose_route(key + route))
 
     @classmethod
     def action_for(self, route):
@@ -33,6 +37,34 @@ class ViewRegister(object):
         :return: an 'Action' object
         """
         assert isinstance(route, tuple)
+
+    @classmethod
+    def admin_for(cls, route):
+        """
+        Retrieve an admin from its route
+
+        :return: an 'Admin' object
+        """
+        assert isinstance(route, tuple)
+        try:
+            view_routes = cls._view_routes[route[:2]]
+        except KeyError:
+            cls.dump_routes()
+            raise UserException(
+                ugettext('View no longer available'),
+                resolution=ugettext('Restart the application or close the view'),
+                detail='/'.join(route),
+            )
+        try:
+            admin = view_routes[route[2:]]
+        except KeyError:
+            cls.dump_routes()
+            raise UserException(
+                ugettext('View is incomplete'),
+                resolution=ugettext('Restart the application or close the view'),
+                detail='/'.join(route),
+            )
+        return admin
 
     @classmethod
     def register_view_route(cls, admin):

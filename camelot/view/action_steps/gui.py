@@ -37,7 +37,7 @@ import six
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
