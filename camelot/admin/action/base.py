@@ -371,8 +371,12 @@ values for these attributes can reimplement the getter methods.
 An action has two important methods that can be reimplemented.  These are 
 :meth:`model_run` for manipulations of the model and :meth:`gui_run` for
 direct manipulations of the user interface without a need to access the model.
+
+To prevent an action object from being garbage collected, it can be registered
+with a view.
+
         """
-    
+
     name = u'action'
     render_hint = RenderHint.PUSH_BUTTON
     verbose_name = None
