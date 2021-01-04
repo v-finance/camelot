@@ -116,10 +116,10 @@ class ApplicationActionGuiContext( GuiContext ):
             return self.workspace.window()
 
     def create_model_context(self):
-        context = super( ApplicationActionGuiContext, self ).create_model_context()
         # the possibility of having no admin class is an aberation, needed
         # to keep the FieldAction working
-        context.admin = ViewRegister.admin_for(self.view_route + ('admin',)) if self.view_route else None
+        context = super( ApplicationActionGuiContext, self ).create_model_context()
+        context.admin = ViewRegister.admin_for(self.view_route + ('admin',)) if self.view_route is not None else None
         return context
         
     def copy(self, base_class=None):
@@ -584,11 +584,9 @@ class ChangeLogging( Action ):
                                      }
                 
         options = Options()
-        yield action_steps.ChangeObject(
-            options,
-            model_context.admin.get_application_admin().get_related_admin(Options)
-        )
-        logging.getLogger().setLevel( options.level )
+        options_admin = model_context.admin.get_related_admin(Options)
+        yield action_steps.ChangeObject(options, options_admin)
+        logging.getLogger().setLevel(options.level)
         if options.queries == True:
             event.listen(Engine, 'before_cursor_execute',
                          self.before_cursor_execute)

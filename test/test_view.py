@@ -797,7 +797,8 @@ class ControlsTest(
         self.gui_context.view_route = self.view_route
 
     def tearDown(self):
-        ViewRegister.unregister_view(self.view_route)
+        super().tearDown()
+        ViewRegister.unregister_view(self.gui_context.view_route)
 
     def test_table_view(self):
         gui_context = GuiContext()
@@ -898,9 +899,7 @@ class ControlsTest(
         from camelot_example.application_admin import MiniApplicationAdmin
         from camelot.admin.action.application_action import ApplicationActionGuiContext
         app_admin = MiniApplicationAdmin()
-        gui_context = ApplicationActionGuiContext()
-        gui_context.admin = app_admin
-        proxy = MainWindowProxy( gui_context )
+        proxy = MainWindowProxy(self.gui_context)
         proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
         proxy.parent().show()
         self.grab_widget( proxy.parent() )
@@ -923,18 +922,14 @@ class ControlsTest(
             return result
 
         app_admin1 = MiniApplicationAdmin()
-        gui_context1 = ApplicationActionGuiContext()
-        gui_context1.admin = app_admin1
         action_step1 = MainWindow(app_admin1)
-        main_window1 = action_step1.render(gui_context1)
+        main_window1 = action_step1.render(self.gui_context)
 
         num_main_windows1 = count_main_windows()
 
         app_admin2 = MiniApplicationAdmin()
-        gui_context2 = ApplicationActionGuiContext()
-        gui_context2.admin = app_admin2
         action_step2 = MainWindow(app_admin2)
-        main_window2 = action_step2.render(gui_context2)
+        main_window2 = action_step2.render(self.gui_context)
 
         num_main_windows2 = count_main_windows()
 
@@ -990,7 +985,7 @@ class ControlsTest(
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        workspace = DesktopWorkspace(self.app_admin, None)
+        workspace = DesktopWorkspace(self.gui_context.view_route, None)
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):
