@@ -175,7 +175,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.collection = [A(0), A(1), A(2)]
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
-        self.item_model = CollectionProxy(self.admin)
+        self.item_model = CollectionProxy(self.admin.get_name())
         self.item_model.set_value(self.admin.get_proxy(self.collection))
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
@@ -550,7 +550,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
     @classmethod
     def setup_item_model(cls, admin):
-        cls.item_model = CollectionProxy(admin)
+        cls.item_model = CollectionProxy(admin.get_name())
         cls.item_model.set_value(cls.proxy)
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))

@@ -322,24 +322,16 @@ class AdminTableWidget(QtWidgets.QWidget):
     of the table as specified in the admin class
     """
 
-    def __init__(self, admin, parent=None):
+    def __init__(self, parent=None):
         super(AdminTableWidget, self).__init__(parent)
         assert object_thread(self)
-        self._admin = admin
-        table_widget = TableWidget(parent=self,
-                                   lines_per_row=admin.lines_per_row)
+        table_widget = TableWidget(parent=self)
         table_widget.setObjectName('table_widget')
-        column_groups = ColumnGroupsWidget(admin.get_table(), table_widget)
-        column_groups.setObjectName('column_groups')
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(table_widget)
-        layout.addWidget(column_groups)
         self.setLayout(layout)
-        if admin.drop_action is not None:
-            table_widget.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
-            table_widget.setDropIndicatorShown(True)
 
     def __getattr__(self, name):
         table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
@@ -351,12 +343,7 @@ class AdminTableWidget(QtWidgets.QWidget):
         table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
         column_groups = self.findChild(QtWidgets.QWidget, 'column_groups')
         if table_widget is not None:
-            model.columnsInserted.connect(column_groups.columns_changed)
-            model.columnsRemoved.connect(column_groups.columns_changed)
-            model.layoutChanged.connect(column_groups.model_reset)
-            model.modelReset.connect(column_groups.model_reset)
             table_widget.setModel(model)
-            column_groups.model_reset()
 
 
 class RowsWidget(QtWidgets.QLabel):
@@ -484,13 +471,14 @@ class TableView(AbstractView):
     header_widget = HeaderWidget
     AdminTableWidget = AdminTableWidget
 
-    def __init__(self,
-                 gui_context,
-                 admin,
-                 parent=None):
+    def __init__(
+        self, gui_context, view_route, admin_name, parent=None
+        ):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
-        self.admin = admin
+        assert isinstance(view_route, tuple)
+        self.view_route = view_route
+        self.admin_name = admin_name
         self.application_gui_context = gui_context
         self.gui_context = gui_context
         widget_layout = QtWidgets.QVBoxLayout()
@@ -522,8 +510,6 @@ class TableView(AbstractView):
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
-        self.gui_context.admin = self.admin
-        self.gui_context.view = self
 
     def close_view(self, accept):
         self.close_clicked_signal.emit()
@@ -554,23 +540,22 @@ class TableView(AbstractView):
             model.set_value(value)
 
     @QtCore.qt_slot(object)
-    def set_admin(self, admin):
+    def set_admin(self):
         """
         Switch to a different subclass, where admin is the admin object of the
         subclass
         """
         assert object_thread(self)
         logger.debug('set_admin called')
-        self.admin = admin
         if self.table:
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             if self.table.model() is not None:
                 self.table.model().deleteLater()
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
-        self.table = self.AdminTableWidget(self.admin, splitter)
+        self.table = self.AdminTableWidget(splitter)
         self.table.setObjectName('AdminTableWidget')
-        new_model = CollectionProxy(admin)
+        new_model = CollectionProxy(self.view_route, self.admin_name)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
@@ -579,8 +564,8 @@ class TableView(AbstractView):
         self.gui_context = self.application_gui_context.copy(
             ListActionGuiContext)
         self.gui_context.view = self
-        self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
+        self.gui_context.view_route = self.view_route
         header = self.findChild(QtWidgets.QWidget, 'header_widget')
         if header is not None:
             header.deleteLater()
@@ -678,4 +663,3 @@ class TableView(AbstractView):
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
-

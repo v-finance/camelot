@@ -770,6 +770,7 @@ class ApplicationActionsCase(
         from camelot.view.workspace import DesktopWorkspace
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext(session=self.session)
+        self.context.admin = self.app_admin
         self.view_route = ViewRegister.register_view_route(self.app_admin)
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.view_route = self.view_route

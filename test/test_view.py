@@ -14,6 +14,7 @@ from camelot.model.party import Person
 
 from camelot.admin.action import GuiContext
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.view_register import ViewRegister
 from camelot.core.constants import camelot_minfloat, camelot_maxfloat
 from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.orm import entities
@@ -435,7 +436,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
 
-        self.movie_model = CollectionProxy(self.movie_admin)
+        self.movie_model = CollectionProxy(self.movie_admin.get_name())
         self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
@@ -791,13 +792,16 @@ class ControlsTest(
     def setUp(self):
         self.thread.post(self.setup_proxy)
         self.process()
+        self.view_route = ViewRegister.register_view_route(self.app_admin.get_entity_admin(Person))
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin = self.app_admin
-        
+        self.gui_context.view_route = self.view_route
+
+    def tearDown(self):
+        ViewRegister.unregister_view(self.view_route)
+
     def test_table_view(self):
         gui_context = GuiContext()
-        widget = TableView( gui_context,
-                            self.app_admin.get_entity_admin(Person) )
+        widget = TableView(gui_context, self.view_route)
         self.grab_widget(widget)
 
     def test_rows_widget(self):
