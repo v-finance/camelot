@@ -348,16 +348,6 @@ be specified using the verbose_name attribute.
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
 
-    def get_settings( self ):
-        """A settings object in which settings related to this admin can be
-        stored.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = self.app_admin.get_settings()
-        settings.beginGroup( self.get_name()[:255] )
-        return settings
-
     def get_memento( self ):
         return self.app_admin.get_memento()
 

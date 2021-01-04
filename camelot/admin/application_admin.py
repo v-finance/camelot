@@ -158,17 +158,6 @@ shortcut confusion and reduce the number of status updates.
                  Section( _('Configuration'), self ),
                  ]
 
-    def get_settings( self ):
-        """A :class:`QtCore.QSettings` object in which Camelot related settings
-        can be stored.  This object is intended for Camelot internal use.  If an
-        application specific settings object is needed, simply construct one.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = QtCore.QSettings()
-        settings.beginGroup( 'Camelot' )
-        return settings
-
     def get_memento( self ):
         """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
         can be used to store changes made to objects.  Overwrite this method to
