@@ -52,6 +52,7 @@ class MainWindowProxy(QtCore.QObject):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtCore.QObject.__init__(self)
+        assert isinstance(gui_context.view_route, tuple)
 
         if window is None:
             window = QtWidgets.QMainWindow()
@@ -63,12 +64,9 @@ class MainWindowProxy(QtCore.QObject):
         transferto(window, window)
         # install event filter to capture close event
         window.installEventFilter(self)
-
-        self.app_admin = gui_context.admin.get_application_admin()
-        
         logger.debug('setting up workspace')
         self.gui_context = gui_context
-        self.workspace = DesktopWorkspace( self.app_admin, window )
+        self.workspace = DesktopWorkspace(gui_context.view_route, window )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')

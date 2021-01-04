@@ -309,7 +309,7 @@ class RenderHint(Enum):
     SEARCH_BUTTON = 'search_button'
     GROUP_BOX = 'group_box'
     COMBO_BOX = 'combo_box'
-
+    LABEL = 'label'
 
 
 class Action( ActionStep ):
@@ -371,8 +371,12 @@ values for these attributes can reimplement the getter methods.
 An action has two important methods that can be reimplemented.  These are 
 :meth:`model_run` for manipulations of the model and :meth:`gui_run` for
 direct manipulations of the user interface without a need to access the model.
+
+To prevent an action object from being garbage collected, it can be registered
+with a view.
+
         """
-    
+
     name = u'action'
     render_hint = RenderHint.PUSH_BUTTON
     verbose_name = None
@@ -426,13 +430,10 @@ direct manipulations of the user interface without a need to access the model.
             of type :class:`GuiContext`
             
         """
-        from ..application_admin import ApplicationAdmin
         # only create a progress dialog if there is none yet, or if the
         # existing dialog was canceled
         LOGGER.debug( 'action gui run started' )
         with ProgressLevel(gui_context, str(self.verbose_name)):
-            if gui_context.admin is None:
-                gui_context.admin = ApplicationAdmin()
             super(Action, self).gui_run(gui_context)
         LOGGER.debug( 'gui run finished' )
         

@@ -34,6 +34,7 @@ import six
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
+from ..view_register import ViewRegister
 from .base import RenderHint
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
@@ -82,9 +83,9 @@ class ApplicationActionGuiContext( GuiContext ):
         the :class:`camelot.view.workspace.DesktopWorkspace` of the 
         application in which views can be opened or adapted.
         
-    .. attribute:: admin
+    .. attribute:: view_route
     
-        the application admin.
+        the route to the reference of the view on the server
     """
     
     model_context = ApplicationActionModelContext
@@ -92,7 +93,7 @@ class ApplicationActionGuiContext( GuiContext ):
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.workspace = None
-        self.admin = None
+        self.view_route = None
     
     def get_progress_dialog(self):
         if self.workspace is not None and not is_deleted(self.workspace):
@@ -114,15 +115,16 @@ class ApplicationActionGuiContext( GuiContext ):
         if self.workspace is not None and not is_deleted(self.workspace):
             return self.workspace.window()
 
-    def create_model_context( self ):
+    def create_model_context(self):
+        assert self.view_route
         context = super( ApplicationActionGuiContext, self ).create_model_context()
-        context.admin = self.admin
+        context.admin = ViewRegister.admin_for(self.view_route + ('admin',))
         return context
         
-    def copy( self, base_class=None ):
+    def copy(self, base_class=None):
         new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
         new_context.workspace = self.workspace
-        new_context.admin = self.admin
+        new_context.view_route = self.view_route
         return new_context
         
 class SelectProfile( Action ):

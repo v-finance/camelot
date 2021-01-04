@@ -31,7 +31,7 @@
 
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
-from .action_widget import ActionAction, ActionPushButton
+from .action_widget import ActionAction, ActionPushButton, ActionLabel
 from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
 from .search import SimpleSearchControl
 
@@ -85,4 +85,6 @@ class AbstractView(QtWidgets.QWidget):
             return SimpleSearchControl(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.PUSH_BUTTON:
             return ActionPushButton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.LABEL:
+            return ActionLabel(action, self.gui_context, parent)
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
