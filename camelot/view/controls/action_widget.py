@@ -222,3 +222,18 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
     @QtCore.qt_slot()
     def action_triggered(self):
         self.action_triggered_by(self.sender())
+
+class ActionLabel(QtWidgets.QLabel, AbstractActionWidget):
+
+    def __init__( self, action, gui_context, parent ):
+        """A :class:`QtWidgets.QLabel` that only displays the state
+        of an action and alows no user interaction"""
+        QtWidgets.QLabel.__init__(self, parent)
+        AbstractActionWidget.init(self, action, gui_context)
+        font = self.font()
+        font.setBold(True)
+        self.setFont(font)
+
+    def set_state(self, state):
+        AbstractActionWidget.set_state(self, state)
+        self.setText(state.verbose_name or '')

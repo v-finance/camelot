@@ -36,6 +36,7 @@ import itertools
 
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
+# from ...admin.view_register import ViewRegister
 from ...core.qt import Qt, QtCore
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
@@ -134,66 +135,6 @@ class UpdateTableView( ActionStep ):
 
         gui_context.view.findChild(Qt)
 
-class OpenQmlTableView(UpdateTableView):
-    """Open a new table view in the workspace.
-    
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
-    :param value: a list of objects or a query
-
-    .. attribute:: title
-        the title of the the new view
-
-    .. attribute:: new_tab
-        open the view in a new tab instead of the current tab
-        
-    """
-
-    def __init__(self, admin, value):
-        super().__init__(admin, value)
-        self.admin_name = admin.get_name()
-        self.new_tab = False
-        self.list_action = admin.get_list_action()
-
-    def gui_run(self, gui_context):
-        view = gui_context.workspace.active_view()
-        quick_view = view.quick_view
-        table = quick_view.findChild(QtCore.QObject, "qml_table")
-        horizontal_header = quick_view.findChild(QtCore.QObject, "qml_horizontal_header")
-        header_model = QtCore.QStringListModel(parent=quick_view)
-        header_model.setStringList(list(fn for fn, _fa in self.columns))
-        new_model = CollectionProxy(self.admin)
-        new_model.setParent(quick_view)
-        new_model.set_value(self.admin.get_proxy(self.value))
-        list(new_model.add_columns((fn for fn, _fa in self.columns)))
-        horizontal_header.setProperty('model', header_model)
-        table.setProperty('model', new_model)
-        item_view = ItemViewProxy(table)
-
-        class QmlListActionGuiContext(ListActionGuiContext):
-
-            def get_progress_dialog(self):
-                return ApplicationActionGuiContext.get_progress_dialog(self)
-
-        list_gui_context = gui_context.copy(QmlListActionGuiContext)
-        list_gui_context.item_view = item_view
-        list_gui_context.admin = self.admin
-        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
-        table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for action in itertools.chain(
-            self.top_toolbar_actions, self.list_actions, self.filters
-            ):
-            icon_name = None
-            if action.icon is not None:
-                icon_name = action.icon._name
-            button = item_view._qml_item.addAction(
-                action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name
-            )
-            if button is not None:
-                qt_action = ActionAction(action, list_gui_context, quick_view)
-                button.clicked.connect(
-                    qt_action.action_triggered, type=Qt.QueuedConnection
-                )
-
 
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
@@ -215,13 +156,12 @@ class OpenTableView( UpdateTableView ):
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
         self.admin_name = admin.get_name()
-        self.subclasses = admin.get_subclass_tree()
         self.new_tab = False
+        # self.view_route = ViewRegister.register_view_route(admin)
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
         table_view = TableView(gui_context, self.admin)
-        table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return table_view
         
@@ -239,6 +179,64 @@ class OpenTableView( UpdateTableView ):
             show_top_level(table_view, None)
         table_view.change_title(self.title)
         table_view.setFocus(Qt.PopupFocusReason)
+
+
+class OpenQmlTableView(OpenTableView):
+    """Open a new table view in the workspace.
+    
+    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param value: a list of objects or a query
+
+    .. attribute:: title
+        the title of the the new view
+
+    .. attribute:: new_tab
+        open the view in a new tab instead of the current tab
+        
+    """
+
+    def __init__(self, admin, value):
+        super().__init__(admin, value)
+        self.list_action = admin.get_list_action()
+
+    def gui_run(self, gui_context):
+        view = gui_context.workspace.active_view()
+        quick_view = view.quick_view
+        views = quick_view.findChild(QtCore.QObject, "qml_views")
+        header_model = QtCore.QStringListModel(parent=quick_view)
+        header_model.setStringList(list(fn for fn, _fa in self.columns))
+        header_model.setParent(quick_view)
+        new_model = CollectionProxy(self.admin)
+        new_model.setParent(quick_view)
+        list(new_model.add_columns((fn for fn, _fa in self.columns)))
+        new_model.set_value(self.admin.get_proxy(self.value))
+        view = views.addView(new_model, header_model)
+        table = view.findChild(QtCore.QObject, "qml_table")
+        item_view = ItemViewProxy(table)
+
+        class QmlListActionGuiContext(ListActionGuiContext):
+
+            def get_progress_dialog(self):
+                return ApplicationActionGuiContext.get_progress_dialog(self)
+
+        list_gui_context = gui_context.copy(QmlListActionGuiContext)
+        list_gui_context.item_view = item_view
+        list_gui_context.admin = self.admin
+        list_gui_context.view = table
+
+        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
+        table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        for action in itertools.chain(
+            self.top_toolbar_actions, self.list_actions, self.filters
+            ):
+            icon_name = None
+            if action.icon is not None:
+                icon_name = action.icon._name
+            qt_action = ActionAction(action, list_gui_context, table)
+            item_view._qml_item.addAction(
+                action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name,
+                qt_action,
+            )
 
 
 class ClearSelection(ActionStep):

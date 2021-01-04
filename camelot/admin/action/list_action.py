@@ -174,6 +174,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         self.item_view = None
         self.view = None
         self.field_attributes = dict()
+        # temporary admin, so be able to do a cleanup context by context
+        self.admin = None
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -185,6 +187,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
+        # temporary admin, so be able to do a cleanup context by context
+        context.admin = self.admin
         context.field_attributes = copy.copy( self.field_attributes )
         current_row, current_column, current_field_name = None, None, None
         proxy = None
@@ -269,6 +273,33 @@ class EditAction( ListContextAction ):
                 state.enabled = False
         return state
 
+class CloseList(Action):
+    """
+    Close the currently open table view
+    """
+
+    render_hint = RenderHint.TOOL_BUTTON
+
+    icon = FontIcon('backspace')
+    tooltip = _('Close')
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        yield action_steps.CloseView()
+
+class ListLabel(Action):
+    """
+    A simple action that displays the name of the table
+    """
+
+    render_hint = RenderHint.LABEL
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        state.verbose_name = str(model_context.admin.get_verbose_name_plural())
+        return state
+
+
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
@@ -288,20 +319,7 @@ class OpenFormView( ListContextAction ):
         state.verbose_name = six.text_type()
         return state
 
-class ChangeAdmin( Action ):
-    """Change the admin of a tableview, this action is used to switch from
-    one subclass to another in a table view.
-    """
-    
-    def __init__(self, admin):
-        super(ChangeAdmin, self).__init__()
-        self.admin = admin
-    
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        yield action_steps.UpdateTableView(self.admin,
-                                           self.admin.get_query())
-    
+
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
     
@@ -537,7 +555,9 @@ class SaveExportMapping( Action ):
         if model_context.collection_count:
             mappings = self.read_mappings()
             options = ExportMappingOptions()
-            yield action_steps.ChangeObject(options)
+            app_admin = model_context.admin.get_application_admin()
+            options_admin = app_admin.get_related_admin(ExportMappingOptions)
+            yield action_steps.ChangeObject(options, options_admin)
             columns = [column_mapping.field for column_mapping in model_context.get_collection() if column_mapping.field]
             mappings[options.name] = columns
             self.write_mappings(mappings)
@@ -979,7 +999,7 @@ class SetFilters(Action, AbstractModelFilter):
            filter upon.
         """
         field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, six.text_type(fa['name'])) for f, fa in six.iteritems(field_attributes)]
+        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('search_strategy') and fa.get('from_string')]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -1065,15 +1085,14 @@ class SetFilters(Action, AbstractModelFilter):
 
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
-        modes = []
+        state.modes = modes = []
         if model_context.proxy.get_filter(self) is not None:
-            modes.append(Mode('change', _('Change filter')))
+            state.modes.append(Mode('change', _('Change filter')))
             state.notification = True
         modes.extend([
             Mode('filter', _('Apply filter')),
             Mode('clear', _('Clear filter')),
         ])
-        state.modes = modes
         return state
 
 

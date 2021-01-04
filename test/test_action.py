@@ -17,6 +17,7 @@ from camelot.admin.action import (
     ApplicationActionGuiContext
 )
 from camelot.admin.action.application import Application
+from camelot.admin.view_register import ViewRegister
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
@@ -49,8 +50,12 @@ class ActionBaseCase(RunningThreadCase):
 
     def setUp(self):
         super().setUp()
+        self.view_route = ViewRegister.register_view_route(ApplicationAdmin())
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin = ApplicationAdmin()
+        self.gui_context.view_route = self.view_route
+
+    def tearDown(self):
+        ViewRegister.unregister_view(self.view_route)
 
     def test_action_step(self):
         step = ActionStep()
@@ -78,7 +83,8 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         from camelot_example.importer import ImportCovers
         self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
-        self.workspace = DesktopWorkspace(self.app_admin, None)
+        self.view_route = ViewRegister.register_view_route(self.app_admin)
+        self.workspace = DesktopWorkspace(self.view_route, None)
         self.gui_context = self.workspace.gui_context
         self.parent = QtWidgets.QWidget()
         enabled = State()
@@ -89,6 +95,9 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         self.states = [ ( 'enabled', enabled),
                         ( 'disabled', disabled),
                         ( 'notification', notification) ]
+
+    def tearDown(self):
+        ViewRegister.unregister_view(self.view_route)
 
     def grab_widget_states( self, widget, suffix ):
         for state_name, state in self.states:
@@ -134,8 +143,12 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
     def setUp(self):
         super(ActionStepsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
-        self.workspace = DesktopWorkspace(self.app_admin, None)
+        self.view_route = ViewRegister.register_view_route(self.app_admin)
+        self.workspace = DesktopWorkspace(self.view_route, None)
         self.gui_context = self.workspace.gui_context
+
+    def tearDown(self):
+        ViewRegister.unregister_view(self.view_route)
 
     def test_change_object( self ):
         from camelot.bin.meta import NewProjectOptions
@@ -658,12 +671,19 @@ class FormActionsCase(
         self.app_admin = ApplicationAdmin()
         self.thread.post(self.setup_proxy)
         self.process()
-        self.setup_item_model(self.app_admin.get_related_admin(Person))
+        person_admin = self.app_admin.get_related_admin(Person)
+        self.setup_item_model(person_admin)
+        self.view_route = ViewRegister.register_view_route(person_admin)
         self.gui_context = form_action.FormActionGuiContext()
         self.gui_context._model = self.item_model
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
         self.gui_context.widget_mapper.setModel(self.item_model)
-        self.gui_context.admin = self.app_admin.get_related_admin( Person )
+        self.gui_context.view_route = self.view_route
+        self.gui_context.admin = person_admin
+
+    def tearDown(self):
+        super().tearDown()
+        ViewRegister.unregister_view(self.view_route)
 
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
@@ -706,11 +726,16 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
     def setUp(self):
         super().setUp()
+        self.app_admin = ApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin = ApplicationAdmin()
+        self.view_route = ViewRegister.register_view_route(self.app_admin)
+
+    def tearDown(self):
+        super().tearDown()
+        ViewRegister.unregister_view(self.view_route)
 
     def test_application(self):
-        app = Application(self.gui_context.admin)
+        app = Application(self.app_admin)
         list(self.gui_run(app, self.gui_context))
 
     def test_custom_application(self):
@@ -723,7 +748,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
 
-        application = CustomApplication(self.gui_context.admin)
+        application = CustomApplication(self.app_admin)
         list(self.gui_run(application, self.gui_context))
 
 class ApplicationActionsCase(
@@ -753,9 +778,14 @@ class ApplicationActionsCase(
         from camelot.view.workspace import DesktopWorkspace
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext(session=self.session)
+        self.context.admin = self.app_admin
+        self.view_route = ViewRegister.register_view_route(self.app_admin)
         self.gui_context = application_action.ApplicationActionGuiContext()
-        self.gui_context.admin = self.app_admin
-        self.gui_context.workspace = DesktopWorkspace( self.app_admin, None )
+        self.gui_context.view_route = self.view_route
+        self.gui_context.workspace = DesktopWorkspace(self.view_route, None)
+
+    def tearDown(self):
+        ViewRegister.unregister_view(self.view_route)
 
     def test_refresh(self):
         refresh_action = application_action.Refresh()
@@ -816,7 +846,7 @@ class ApplicationActionsCase(
 
     def test_change_logging( self ):
         change_logging_action = application_action.ChangeLogging()
-        for step in change_logging_action.model_run( self.context ):
+        for step in change_logging_action.model_run(self.context):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
 
