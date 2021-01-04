@@ -58,6 +58,7 @@ class ViewRegister(object):
         try:
             admin = view_routes[route[2:]]
         except KeyError:
+            LOGGER.info('Requested : {}'.format(cls.verbose_route(route)))
             cls.dump_routes()
             raise UserException(
                 ugettext('View is incomplete'),

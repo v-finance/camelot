@@ -36,7 +36,7 @@ import itertools
 
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
-# from ...admin.view_register import ViewRegister
+from ...admin.view_register import ViewRegister
 from ...core.qt import Qt, QtCore
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
@@ -89,28 +89,28 @@ class UpdateTableView( ActionStep ):
     """
 
     def __init__( self, admin, value ):
-        self.admin = admin
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
-        self.columns = self.admin.get_columns()
+        self.columns = admin.get_columns()
         self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
         self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
         self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
+        self.proxy = admin.get_proxy(value)
     
     def update_table_view(self, table_view):
         from camelot.view.controls.search import SimpleSearchControl
-        table_view.set_admin(self.admin)
+        table_view.set_admin()
         model = table_view.get_model()
         list(model.add_columns((fn for fn, _fa in self.columns)))
         table_view.set_columns(self.columns)
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
-        table_view.set_value(self.admin.get_proxy(self.value))
+        table_view.set_value(self.proxy)
         table_view.set_list_actions(self.list_actions)
         table_view.set_toolbar_actions(
             Qt.LeftToolBarArea, self.left_toolbar_actions
@@ -157,11 +157,11 @@ class OpenTableView( UpdateTableView ):
         super(OpenTableView, self).__init__(admin, value)
         self.admin_name = admin.get_name()
         self.new_tab = False
-        # self.view_route = ViewRegister.register_view_route(admin)
+        self.view_route = ViewRegister.register_view_route(admin)
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, self.admin)
+        table_view = TableView(gui_context, self.view_route, self.admin_name)
         self.update_table_view(table_view)
         return table_view
         

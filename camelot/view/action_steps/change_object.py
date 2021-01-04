@@ -30,6 +30,7 @@
 import six
 from six import moves
 
+from ...admin.view_register import ViewRegister
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
 
@@ -61,6 +62,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   obj,
+                  view_route,
                   admin,
                   form_display,
                   columns,
@@ -79,7 +81,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin)
+        model = CollectionProxy(view_route, admin.get_name())
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -233,13 +235,13 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                     variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
                 ))
 
-class ChangeObject( ActionStep ):
+
+class ChangeObject(ActionStep):
     """
     Pop up a form for the user to change an object
 
     :param obj: the object to change
-    :param admin: an instance of an admin class to use to edit the
-        object, None if the default is to be taken
+    :param admin: an instance of an admin class to use to edit the object
 
     .. attribute:: accept
 
@@ -251,11 +253,16 @@ class ChangeObject( ActionStep ):
 
     """
 
-    def __init__( self, obj, admin=None ):
+    def __init__(self, obj, admin):
+        assert admin is not None
         self.obj = obj
         self.admin = admin
         self.accept = _('OK')
         self.reject = _('Cancel')
+        self.form_display = self.admin.get_form_display()
+        self.columns = self.admin.get_fields()
+        self.form_actions = self.admin.get_form_actions(None)
+        self.view_route = ViewRegister.register_view_route(admin)
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -264,11 +271,12 @@ class ChangeObject( ActionStep ):
         """
         return self.obj
 
-    def render( self, gui_context ):
+    def render(self, gui_context):
         """create the dialog. this method is used to unit test
         the action step."""
         super(ChangeObject, self).gui_run(gui_context)
         dialog = ChangeObjectDialog(self.obj,
+                                    self.view_route,
                                     self.admin,
                                     self.form_display,
                                     self.columns,
@@ -286,17 +294,7 @@ class ChangeObject( ActionStep ):
                 raise CancelRequest()
             return self.obj
 
-    def model_run(self, model_context):
-        cls = self.obj.__class__
-        if self.admin is None:
-            # the model_context admin might be deep-readonly, which is not
-            # what we want in the case of a ChangeObject, therefor revert
-            app_admin = model_context.admin.get_application_admin()
-            self.admin = app_admin.get_related_admin(cls)
-        self.form_display = self.admin.get_form_display()
-        self.columns = self.admin.get_fields()
-        self.form_actions = self.admin.get_form_actions(None)
-        
+
 class ChangeObjects( ActionStep ):
     """
     Pop up a list for the user to change objects
