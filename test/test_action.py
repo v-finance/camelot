@@ -671,15 +671,18 @@ class FormActionsCase(
         self.app_admin = ApplicationAdmin()
         self.thread.post(self.setup_proxy)
         self.process()
-        self.setup_item_model(self.app_admin.get_related_admin(Person))
-        self.view_route = ViewRegister.register_view_route(self.app_admin.get_related_admin(Person))
+        person_admin = self.app_admin.get_related_admin(Person)
+        self.setup_item_model(person_admin)
+        self.view_route = ViewRegister.register_view_route(person_admin)
         self.gui_context = form_action.FormActionGuiContext()
         self.gui_context._model = self.item_model
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
         self.gui_context.widget_mapper.setModel(self.item_model)
         self.gui_context.view_route = self.view_route
+        self.gui_context.admin = person_admin
 
     def tearDown(self):
+        super().tearDown()
         ViewRegister.unregister_view(self.view_route)
 
     def test_gui_context( self ):
@@ -725,9 +728,14 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         super().setUp()
         self.app_admin = ApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
+        self.view_route = ViewRegister.register_view_route(self.app_admin)
+
+    def tearDown(self):
+        super().tearDown()
+        ViewRegister.unregister_view(self.view_route)
 
     def test_application(self):
-        app = Application(self.view_route)
+        app = Application(self.app_admin)
         list(self.gui_run(app, self.gui_context))
 
     def test_custom_application(self):
@@ -740,7 +748,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
 
-        application = CustomApplication(self.gui_context.admin)
+        application = CustomApplication(self.app_admin)
         list(self.gui_run(application, self.gui_context))
 
 class ApplicationActionsCase(
@@ -770,6 +778,7 @@ class ApplicationActionsCase(
         from camelot.view.workspace import DesktopWorkspace
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext(session=self.session)
+        self.context.admin = self.app_admin
         self.view_route = ViewRegister.register_view_route(self.app_admin)
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.view_route = self.view_route
@@ -837,7 +846,7 @@ class ApplicationActionsCase(
 
     def test_change_logging( self ):
         change_logging_action = application_action.ChangeLogging()
-        for step in change_logging_action.model_run( self.context ):
+        for step in change_logging_action.model_run(self.context):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
 

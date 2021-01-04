@@ -174,6 +174,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         self.item_view = None
         self.view = None
         self.field_attributes = dict()
+        # temporary admin, so be able to do a cleanup context by context
+        self.admin = None
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -185,6 +187,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
+        # temporary admin, so be able to do a cleanup context by context
+        context.admin = self.admin
         context.field_attributes = copy.copy( self.field_attributes )
         current_row, current_column, current_field_name = None, None, None
         proxy = None
@@ -551,7 +555,9 @@ class SaveExportMapping( Action ):
         if model_context.collection_count:
             mappings = self.read_mappings()
             options = ExportMappingOptions()
-            yield action_steps.ChangeObject(options)
+            app_admin = model_context.admin.get_application_admin()
+            options_admin = app_admin.get_related_admin(ExportMappingOptions)
+            yield action_steps.ChangeObject(options, options_admin)
             columns = [column_mapping.field for column_mapping in model_context.get_collection() if column_mapping.field]
             mappings[options.name] = columns
             self.write_mappings(mappings)

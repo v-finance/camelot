@@ -130,10 +130,12 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         
     model_context = FormActionModelContext
     
-    def __init__( self ):
+    def __init__(self):
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
         self.view = None
+        # temporary admin, so be able to do a cleanup context by context
+        self.admin = None
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -143,8 +145,10 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
             return self.view.window()
         return super(FormActionGuiContext, self).get_window()
 
-    def create_model_context( self ):
+    def create_model_context(self):
         context = super( FormActionGuiContext, self ).create_model_context()
+        # temporary admin, so be able to do a cleanup context by context
+        context.admin = self.admin
         context.proxy = self.widget_mapper.model().get_value()
         current_index = self.widget_mapper.currentIndex()
         if current_index >= 0:
@@ -152,7 +156,7 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
             context.selection_count = 1
         return context
         
-    def copy( self, base_class = None ):
+    def copy(self, base_class = None):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
         new_context.view = self.view

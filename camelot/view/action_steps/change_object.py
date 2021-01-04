@@ -251,7 +251,8 @@ class ChangeObject( ActionStep ):
 
     """
 
-    def __init__( self, obj, admin=None ):
+    def __init__(self, obj, admin):
+        assert admin is not None
         self.obj = obj
         self.admin = admin
         self.accept = _('OK')
