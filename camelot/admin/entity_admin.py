@@ -649,48 +649,43 @@ and used as a custom action.
         args = []
         # join conditions : list of join entities
         joins = []
-
-        for t in text.split(' '):
-            subexp = []
-            for search_field in self._get_search_fields(t):
-                if isinstance(search_field, str):
-                    column_name = search_field
-                    path = column_name.split('.')
-                    target = self.entity
-                    related_admin = self
-                    for path_segment in path:
-                        # use the field attributes for the introspection, as these
-                        # have detected hybrid properties
-                        fa = related_admin.get_descriptor_field_attributes(path_segment)
-                        instrumented_attribute = getattr(target, path_segment)
-                        if fa.get('target', False):
-                            joins.append(instrumented_attribute)
-                            target = fa['target']
-                            related_admin = related_admin.get_related_admin(target)
-                        else:
-                            # Append a search clause for the column using a set search strategy, or the basic strategy by default.
-                            fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                            search_strategy = fa['search_strategy']
-                            if search_strategy is not None:
-                                arg = search_strategy.get_clause(search_strategy.column or instrumented_attribute, t, fa)
-                                if arg is not None:
-                                    arg = sql.and_(instrumented_attribute != None, arg)
-                                    subexp.append(arg)
-                elif isinstance(search_field, list_filter.SearchFieldStrategy):
-                    instrumented_attribute = search_field.column
-                    field_attributes = self.get_related_admin(instrumented_attribute.class_).get_field_attributes(instrumented_attribute.key)
-                    arg = search_field.get_clause(instrumented_attribute, t, field_attributes)
-                    if arg is not None:
-                        arg = sql.and_(instrumented_attribute != None, arg)
-                        subexp.append(arg)
-                    
-            args.append(subexp)
-
+        
+        for search_field in self._get_search_fields(text):
+            if isinstance(search_field, str):
+                column_name = search_field
+                path = column_name.split('.')
+                target = self.entity
+                related_admin = self
+                for path_segment in path:
+                    # use the field attributes for the introspection, as these
+                    # have detected hybrid properties
+                    fa = related_admin.get_descriptor_field_attributes(path_segment)
+                    instrumented_attribute = getattr(target, path_segment)
+                    if fa.get('target', False):
+                        joins.append(instrumented_attribute)
+                        target = fa['target']
+                        related_admin = related_admin.get_related_admin(target)
+                    else:
+                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
+                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
+                        search_strategy = fa['search_strategy']
+                        if search_strategy is not None:
+                            arg = search_strategy.get_clause(search_strategy.column or instrumented_attribute, text, fa)
+                            if arg is not None:
+                                arg = sql.and_(instrumented_attribute != None, arg)
+                                args.append(arg)
+            elif isinstance(search_field, list_filter.SearchFieldStrategy):
+                instrumented_attribute = search_field.column
+                field_attributes = self.get_related_admin(instrumented_attribute.class_).get_field_attributes(instrumented_attribute.key)
+                arg = search_field.get_clause(instrumented_attribute, text, field_attributes)
+                if arg is not None:
+                    arg = sql.and_(instrumented_attribute != None, arg)
+                    args.append(arg)
+        
         for join in joins:
             query = query.outerjoin(join)
-
-        subqueries = (sql.or_(*arg) for arg in args)
-        query = query.filter(sql.and_(*subqueries))
+        
+        query = query.filter(sql.or_(*args))
     
         return query
 
