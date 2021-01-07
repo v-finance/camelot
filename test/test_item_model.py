@@ -3,7 +3,6 @@ import unittest
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.action.list_filter import Filter
-from camelot.admin.view_register import ViewRegister
 from camelot.core.qt import variant_to_py, QtCore, Qt, py_to_variant, delete
 from camelot.model.party import Person
 from camelot.view.item_model.cache import ValueCache
@@ -176,7 +175,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.collection = [A(0), A(1), A(2)]
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
-        self.admin_route = ViewRegister.register_admin_route(self.admin)
+        self.admin_route = self.admin.get_admin_route()
         self.item_model = CollectionProxy(self.admin_route, self.admin.get_name())
         self.item_model.set_value(self.admin.get_proxy(self.collection))
         self.columns = self.admin.list_display
@@ -184,10 +183,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.item_model.timeout_slot()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
-
-    def tearDown(self):
-        super().tearDown()
-        ViewRegister.unregister_view(self.admin_route)
 
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed
@@ -583,7 +578,7 @@ class QueryQStandardItemModelCase(
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
-        self.admin_route = ViewRegister.register_admin_route(self.person_admin)
+        self.admin_route = self.person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, self.person_admin.get_name())
         self.process()
         self.query_counter = 0
@@ -591,7 +586,6 @@ class QueryQStandardItemModelCase(
 
     def tearDown(self):
         event.remove(Engine, 'after_cursor_execute', self.increase_query_counter)
-        ViewRegister.unregister_view(self.admin_route)
         #self.tear_down_sample_model()
 
     def increase_query_counter(self, conn, cursor, statement, parameters, context, executemany):
