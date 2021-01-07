@@ -32,6 +32,7 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from ....admin.admin_route import AdminRoute
 from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
@@ -60,7 +61,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
     """
 
     def __init__(self,
-                 admin=None,
+                 admin_route=None,
+                 admin_name=None,
                  parent=None,
                  create_inline=False,
                  direction='onetomany',
@@ -79,7 +81,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         #
         from camelot.view.controls.tableview import AdminTableWidget
         # parent set by layout manager
-        table = AdminTableWidget(admin, self)
+        table = AdminTableWidget(self)
         table.setObjectName('table')
         layout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
@@ -88,10 +90,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = CollectionProxy(admin)
+        model = CollectionProxy(admin_route, admin_name)
         model.setParent(self)
         table.setModel(model)
-        self.admin = admin
+        self.admin_route = admin_route
         self.direction = direction
         self.create_inline = create_inline
         layout.addWidget(table)
@@ -99,7 +101,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self._new_message = None
         self.gui_context = ListActionGuiContext()
         self.gui_context.view = self
-        self.gui_context.admin = self.admin
+        self.gui_context.admin_route = self.admin_route
         self.gui_context.item_view = table
         self.set_right_toolbar_actions(toolbar_actions)
         self.set_columns(columns)
@@ -190,6 +192,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        if self.admin.list_action:
-            self.admin.list_action.gui_run(self.gui_context)
+        admin = AdminRoute.admin_for(self.admin_route)
+        if admin.list_action:
+            admin.list_action.gui_run(self.gui_context)
 

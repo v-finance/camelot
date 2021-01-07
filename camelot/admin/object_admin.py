@@ -692,6 +692,8 @@ be specified using the verbose_name attribute.
                         field in fields)
                     column_width = sum(related_column_widths, 0)
             field_attributes['admin'] = related_admin
+            field_attributes['admin_route'] = related_admin.get_admin_route()
+            field_attributes['admin_name'] = related_admin.get_name()
         #
         # If no column_width is specified, try to derive one
         #

@@ -38,6 +38,7 @@ from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
+from ...admin.admin_route import AdminRoute
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
@@ -525,7 +526,8 @@ class TableView(AbstractView):
         #
         if self.table:
             self.table.close_editor()
-        self.admin.list_action.gui_run(self.gui_context)
+        admin = AdminRoute.admin_for(self.admin_route)
+        admin.list_action.gui_run(self.gui_context)
 
     def get_admin(self):
         return self.admin
