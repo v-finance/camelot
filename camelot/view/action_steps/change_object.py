@@ -31,8 +31,10 @@ import six
 from six import moves
 
 from ...admin.view_register import ViewRegister
+from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
+from ..controls.action_widget import ActionPushButton
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -128,15 +130,21 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         model.set_value(admin.get_proxy([obj]))
         list(model.add_columns((fn for fn, _fa in columns)))
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.PUSH_BUTTON:
+            return ActionPushButton(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
-            actions_widget = ActionsBox( parent = self,
-                                         gui_context = self.gui_context )
+            actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions( actions )
+            for action in actions:
+                action_widget = self.render_action(action, actions_widget)
+                actions_widget.layout().addWidget(action_widget)
             side_panel_layout.addWidget( actions_widget )
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
