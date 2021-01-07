@@ -435,8 +435,8 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.entities = [e for e in entities]
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
-
-        self.movie_model = CollectionProxy(self.movie_admin.get_name())
+        self.admin_route = ViewRegister.register_admin_route(self.movie_admin)
+        self.movie_model = CollectionProxy(self.admin_route, self.movie_admin.get_name())
         self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
@@ -454,6 +454,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.gui_context = GuiContext()
 
     def tearDown(self):
+        ViewRegister.unregister_view(self.admin_route)
         #
         # The global list of entities should remain clean for subsequent tests
         #
@@ -792,17 +793,17 @@ class ControlsTest(
     def setUp(self):
         self.thread.post(self.setup_proxy)
         self.process()
-        self.view_route = ViewRegister.register_view_route(self.app_admin.get_entity_admin(Person))
+        self.admin_route = ViewRegister.register_admin_route(self.app_admin.get_entity_admin(Person))
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.view_route = self.view_route
+        self.gui_context.admin_route = self.admin_route
 
     def tearDown(self):
         super().tearDown()
-        ViewRegister.unregister_view(self.gui_context.view_route)
+        ViewRegister.unregister_view(self.gui_context.admin_route)
 
     def test_table_view(self):
         gui_context = GuiContext()
-        widget = TableView(gui_context, self.view_route)
+        widget = TableView(gui_context, self.admin_route)
         self.grab_widget(widget)
 
     def test_rows_widget(self):
@@ -985,7 +986,7 @@ class ControlsTest(
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        workspace = DesktopWorkspace(self.gui_context.view_route, None)
+        workspace = DesktopWorkspace(self.gui_context.admin_route, None)
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):

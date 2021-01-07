@@ -30,7 +30,6 @@
 import six
 from six import moves
 
-from ...admin.view_register import ViewRegister
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
@@ -64,7 +63,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   obj,
-                  view_route,
+                  admin_route,
                   admin,
                   form_display,
                   columns,
@@ -83,7 +82,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(view_route, admin.get_name())
+        model = CollectionProxy(admin_route, admin.get_name())
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -270,7 +269,7 @@ class ChangeObject(ActionStep):
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
-        self.view_route = ViewRegister.register_view_route(admin)
+        self.admin_route = admin.get_admin_route()
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -284,7 +283,7 @@ class ChangeObject(ActionStep):
         the action step."""
         super(ChangeObject, self).gui_run(gui_context)
         dialog = ChangeObjectDialog(self.obj,
-                                    self.view_route,
+                                    self.admin_route,
                                     self.admin,
                                     self.form_display,
                                     self.columns,

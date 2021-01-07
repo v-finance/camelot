@@ -46,7 +46,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
 
     In essence this is a wrapper around QTabWidget with initial setup.
 
-    :param view_route: the route to the desktop workspace view
+    :param admin_route: the route to the desktop workspace view
 
     :param parent: a :class:`QtWidgets.QWidget` object or :class:`None`
 
@@ -54,11 +54,11 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
 
     view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
 
-    def __init__(self, view_route, parent):
+    def __init__(self, admin_route, parent):
         super().__init__(parent)
-        assert isinstance(view_route, tuple)
+        assert isinstance(admin_route, tuple)
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.view_route = view_route
+        self.gui_context.admin_route = admin_route
         self.gui_context.workspace = self
 
         self.setObjectName('workspace_tab_widget')

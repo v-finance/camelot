@@ -36,7 +36,6 @@ import itertools
 
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
-from ...admin.view_register import ViewRegister
 from ...core.qt import Qt, QtCore
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
@@ -157,11 +156,11 @@ class OpenTableView( UpdateTableView ):
         super(OpenTableView, self).__init__(admin, value)
         self.admin_name = admin.get_name()
         self.new_tab = False
-        self.view_route = ViewRegister.register_view_route(admin)
+        self.admin_route = admin.get_admin_route()
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, self.view_route, self.admin_name)
+        table_view = TableView(gui_context, self.admin_route, self.admin_name)
         self.update_table_view(table_view)
         return table_view
         

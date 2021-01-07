@@ -174,8 +174,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         self.item_view = None
         self.view = None
         self.field_attributes = dict()
-        # temporary admin, so be able to do a cleanup context by context
-        self.admin = None
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -187,8 +185,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
-        # temporary admin, so be able to do a cleanup context by context
-        context.admin = self.admin
         context.field_attributes = copy.copy( self.field_attributes )
         current_row, current_column, current_field_name = None, None, None
         proxy = None
@@ -231,8 +227,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context.item_view = self.item_view
         new_context.view = self.view
         new_context.field_attributes = self.field_attributes
-        # temporary admin, so be able to do a cleanup context by context
-        new_context.admin = self.admin
         return new_context
 
 class ListContextAction( Action ):
@@ -1136,7 +1130,7 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        admin = yield action_steps.SelectSubclass(model_context.admin)
+        admin = model_context.admin
         create_inline = model_context.field_attributes.get('create_inline',
                                                            False)
         new_object = admin.entity()

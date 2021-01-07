@@ -50,12 +50,12 @@ class ActionBaseCase(RunningThreadCase):
 
     def setUp(self):
         super().setUp()
-        self.view_route = ViewRegister.register_view_route(ApplicationAdmin())
+        self.admin_route = ViewRegister.register_admin_route(ApplicationAdmin())
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.view_route = self.view_route
+        self.gui_context.admin_route = self.admin_route
 
     def tearDown(self):
-        ViewRegister.unregister_view(self.view_route)
+        ViewRegister.unregister_view(self.admin_route)
 
     def test_action_step(self):
         step = ActionStep()
@@ -83,8 +83,8 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         from camelot_example.importer import ImportCovers
         self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
-        self.view_route = ViewRegister.register_view_route(self.app_admin)
-        self.workspace = DesktopWorkspace(self.view_route, None)
+        self.admin_route = ViewRegister.register_admin_route(self.app_admin)
+        self.workspace = DesktopWorkspace(self.admin_route, None)
         self.gui_context = self.workspace.gui_context
         self.parent = QtWidgets.QWidget()
         enabled = State()
@@ -97,7 +97,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
                         ( 'notification', notification) ]
 
     def tearDown(self):
-        ViewRegister.unregister_view(self.view_route)
+        ViewRegister.unregister_view(self.admin_route)
 
     def grab_widget_states( self, widget, suffix ):
         for state_name, state in self.states:
@@ -143,12 +143,12 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
     def setUp(self):
         super(ActionStepsCase, self).setUp()
         self.app_admin = ApplicationAdmin()
-        self.view_route = ViewRegister.register_view_route(self.app_admin)
-        self.workspace = DesktopWorkspace(self.view_route, None)
+        self.admin_route = ViewRegister.register_admin_route(self.app_admin)
+        self.workspace = DesktopWorkspace(self.admin_route, None)
         self.gui_context = self.workspace.gui_context
 
     def tearDown(self):
-        ViewRegister.unregister_view(self.view_route)
+        ViewRegister.unregister_view(self.admin_route)
 
     def test_change_object( self ):
         from camelot.bin.meta import NewProjectOptions
@@ -262,22 +262,25 @@ class ListActionsCase(
         self.admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
-        self.setup_item_model(self.admin)
+        self.admin_route = ViewRegister.register_admin_route(self.admin)
+        self.setup_item_model(self.admin_route, self.admin.get_name())
         self.movie_admin = self.app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin)
-        table_view.set_admin(self.admin)
+        table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin_route, self.admin.get_name())
+        table_view.set_admin()
         table_view.table.setModel(self.item_model)
         # select the first row
         table_view.table.setCurrentIndex(self.item_model.index(0, 0))
         self.gui_context = table_view.gui_context
+        self.gui_context.admin_route = self.admin_route
         self.model_context = self.gui_context.create_model_context()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
     def tearDown( self ):
         Session().expunge_all()
+        ViewRegister.unregister_view(self.admin_route)
 
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
@@ -672,18 +675,18 @@ class FormActionsCase(
         self.thread.post(self.setup_proxy)
         self.process()
         person_admin = self.app_admin.get_related_admin(Person)
-        self.setup_item_model(person_admin)
-        self.view_route = ViewRegister.register_view_route(person_admin)
+        self.admin_route = ViewRegister.register_admin_route(person_admin)
+        self.setup_item_model(self.admin_route, person_admin.get_name())
         self.gui_context = form_action.FormActionGuiContext()
         self.gui_context._model = self.item_model
         self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
         self.gui_context.widget_mapper.setModel(self.item_model)
-        self.gui_context.view_route = self.view_route
+        self.gui_context.admin_route = self.admin_route
         self.gui_context.admin = person_admin
 
     def tearDown(self):
         super().tearDown()
-        ViewRegister.unregister_view(self.view_route)
+        ViewRegister.unregister_view(self.admin_route)
 
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
@@ -728,11 +731,11 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         super().setUp()
         self.app_admin = ApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
-        self.view_route = ViewRegister.register_view_route(self.app_admin)
+        self.admin_route = ViewRegister.register_admin_route(self.app_admin)
 
     def tearDown(self):
         super().tearDown()
-        ViewRegister.unregister_view(self.view_route)
+        ViewRegister.unregister_view(self.admin_route)
 
     def test_application(self):
         app = Application(self.app_admin)
@@ -779,13 +782,13 @@ class ApplicationActionsCase(
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext(session=self.session)
         self.context.admin = self.app_admin
-        self.view_route = ViewRegister.register_view_route(self.app_admin)
+        self.admin_route = ViewRegister.register_admin_route(self.app_admin)
         self.gui_context = application_action.ApplicationActionGuiContext()
-        self.gui_context.view_route = self.view_route
-        self.gui_context.workspace = DesktopWorkspace(self.view_route, None)
+        self.gui_context.admin_route = self.admin_route
+        self.gui_context.workspace = DesktopWorkspace(self.admin_route, None)
 
     def tearDown(self):
-        ViewRegister.unregister_view(self.view_route)
+        ViewRegister.unregister_view(self.admin_route)
 
     def test_refresh(self):
         refresh_action = application_action.Refresh()
