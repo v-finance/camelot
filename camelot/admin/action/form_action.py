@@ -160,6 +160,8 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
         new_context.view = self.view
+        # temporary admin, so be able to do a cleanup context by context
+        new_context.admin = self.admin
         return new_context
 
 class ShowHistory( Action ):

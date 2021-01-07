@@ -231,6 +231,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context.item_view = self.item_view
         new_context.view = self.view
         new_context.field_attributes = self.field_attributes
+        # temporary admin, so be able to do a cleanup context by context
+        new_context.admin = self.admin
         return new_context
 
 class ListContextAction( Action ):
