@@ -195,7 +195,7 @@ class SearchFieldStrategy(object):
     
     @classmethod
     def assert_valid_column(cls, column):
-        assert isinstance(column, orm.attributes.InstrumentedAttribute), 'The given column is not a valid InstrumentedAttribute'
+        assert isinstance(column, orm.attributes.QueryableAttribute), 'The given column is not a valid QueryableAttribute'
         assert issubclass(column.type.python_type, cls.python_type), 'The python_type of the given column does not match the python_type of this search strategy'
     
     @classmethod
