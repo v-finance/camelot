@@ -670,16 +670,15 @@ and used as a custom action.
                         fa = related_admin.get_field_attributes(instrumented_attribute.key)
                         search_strategy = fa['search_strategy']
                         if search_strategy is not None:
-                            arg = search_strategy.get_clause(search_strategy.column or instrumented_attribute, text, fa)
+                            arg = search_strategy.get_clause(search_strategy.attribute or instrumented_attribute, text, fa)
                             if arg is not None:
                                 arg = sql.and_(instrumented_attribute != None, arg)
                                 args.append(arg)
             elif isinstance(search_field, list_filter.SearchFieldStrategy):
-                instrumented_attribute = search_field.column
-                field_attributes = self.get_related_admin(instrumented_attribute.class_).get_field_attributes(instrumented_attribute.key)
-                arg = search_field.get_clause(instrumented_attribute, text, field_attributes)
+                attribute = search_field.attribute
+                field_attributes = self.get_related_admin(attribute.class_).get_field_attributes(attribute.key)
+                arg = search_field.get_clause(attribute, text, field_attributes)
                 if arg is not None:
-                    arg = sql.and_(instrumented_attribute != None, arg)
                     args.append(arg)
         
         for join in joins:

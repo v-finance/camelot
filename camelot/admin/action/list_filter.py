@@ -183,26 +183,30 @@ class ComboBoxFilter(Filter):
 
 class SearchFieldStrategy(object):
     """Abstract class for search field strategies.
-       It offers an interface for defining a search clause for a given column and search text.
+       It offers an interface for defining a column-based search clause for a given queryable attribute and search text.
     """
 
-    column = None
+    attribute = None
     python_type = None
 
-    def __init__(self, column):
-        self.assert_valid_column(column)
-        self.column = column
+    def __init__(self, attribute):
+        self.assert_valid_attribute(attribute)
+        self.attribute = attribute
     
     @classmethod
-    def assert_valid_column(cls, column):
-        assert isinstance(column, orm.attributes.QueryableAttribute), 'The given column is not a valid QueryableAttribute'
-        assert issubclass(column.type.python_type, cls.python_type), 'The python_type of the given column does not match the python_type of this search strategy'
+    def assert_valid_attribute(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+        assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
     @classmethod
-    def get_clause(cls, column, text, field_attributes):
-        """Return a search clause for the given column and search text, if applicable."""
-        cls.assert_valid_column(column)
-        return cls.get_type_clause(column, text, field_attributes)
+    def get_clause(cls, attribute, text, field_attributes):
+        cls.assert_valid_attribute(attribute)
+        return cls.get_type_clause(attribute, text, field_attributes)
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):    
+        """Return this search strategy's search clause for the given queryable attribute and search text, if applicable."""
+        raise NotImplementedError
     
 class NoSearch(SearchFieldStrategy):
     
