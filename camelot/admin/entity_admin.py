@@ -649,10 +649,10 @@ and used as a custom action.
         args = []
         # join conditions : list of join entities
         joins = []
-
-        for t in text.split(' '):
-            subexp = []
-            for column_name in self._get_search_fields(t):
+        
+        for search_field in self._get_search_fields(text):
+            if isinstance(search_field, str):
+                column_name = search_field
                 path = column_name.split('.')
                 target = self.entity
                 related_admin = self
@@ -670,18 +670,21 @@ and used as a custom action.
                         fa = related_admin.get_field_attributes(instrumented_attribute.key)
                         search_strategy = fa['search_strategy']
                         if search_strategy is not None:
-                            arg = search_strategy.get_clause(instrumented_attribute, t, fa)
+                            arg = search_strategy.get_clause(search_strategy.attribute or instrumented_attribute, text, fa)
                             if arg is not None:
                                 arg = sql.and_(instrumented_attribute != None, arg)
-                                subexp.append(arg)
-                        
-            args.append(subexp)
-
+                                args.append(arg)
+            elif isinstance(search_field, list_filter.SearchFieldStrategy):
+                attribute = search_field.attribute
+                field_attributes = self.get_related_admin(attribute.class_).get_field_attributes(attribute.key)
+                arg = search_field.get_clause(attribute, text, field_attributes)
+                if arg is not None:
+                    args.append(arg)
+        
         for join in joins:
             query = query.outerjoin(join)
-
-        subqueries = (sql.or_(*arg) for arg in args)
-        query = query.filter(sql.and_(*subqueries))
+        
+        query = query.filter(sql.or_(*args))
     
         return query
 
