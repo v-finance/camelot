@@ -183,35 +183,41 @@ class ComboBoxFilter(Filter):
 
 class SearchFieldStrategy(object):
     """Abstract class for search field strategies.
-       It offers an interface for defining a search clause for a given column and search text.
+       It offers an interface for defining a column-based search clause for a given queryable attribute and search text.
     """
-        
-    @classmethod
-    def get_clause(cls, column, text, field_attributes):
-        """Return a search clause for the given column and search text, if applicable."""
-        raise NotImplementedError
 
+    attribute = None
+    python_type = None
+
+    def __init__(self, attribute):
+        self.assert_valid_attribute(attribute)
+        self.attribute = attribute
+    
+    @classmethod
+    def assert_valid_attribute(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+        assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
+    
+    @classmethod
+    def get_clause(cls, attribute, text, field_attributes):
+        cls.assert_valid_attribute(attribute)
+        return cls.get_type_clause(attribute, text, field_attributes)
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):    
+        """Return this search strategy's search clause for the given queryable attribute and search text, if applicable."""
+        raise NotImplementedError
+    
 class NoSearch(SearchFieldStrategy):
     
+    def __init__(self):
+        super().__init__(None)
+        
     @classmethod
     def get_clause(cls, column, text, field_attributes):
         return None
-  
-class BasicSearch(SearchFieldStrategy):
-    
-    python_type = None
-    
-    @classmethod
-    def get_clause(cls, c, text, field_attributes):
-        assert isinstance(c, orm.attributes.InstrumentedAttribute)
-        assert issubclass(c.type.python_type, cls.python_type)
-        return cls.get_type_clause(c, text, field_attributes)
-        
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
-        raise NotImplementedError
 
-class StringSearch(BasicSearch):
+class StringSearch(SearchFieldStrategy):
     
     python_type = str
     
@@ -219,7 +225,7 @@ class StringSearch(BasicSearch):
     def get_type_clause(cls, c, text, field_attributes):
         return sql.operators.ilike_op(c, '%'+text+'%')
     
-class DecimalSearch(BasicSearch):
+class DecimalSearch(SearchFieldStrategy):
     
     python_type = (float, decimal.Decimal)
     
@@ -235,7 +241,7 @@ class DecimalSearch(BasicSearch):
         except utils.ParsingError:
             pass       
         
-class TimeDeltaSearch(BasicSearch):
+class TimeDeltaSearch(SearchFieldStrategy):
     
     python_type = datetime.timedelta
     
@@ -247,7 +253,7 @@ class TimeDeltaSearch(BasicSearch):
         except utils.ParsingError:
             pass
         
-class TimeSearch(BasicSearch):
+class TimeSearch(SearchFieldStrategy):
     
     python_type = datetime.time
     
@@ -258,7 +264,7 @@ class TimeSearch(BasicSearch):
         except utils.ParsingError:
             pass
 
-class DateSearch(BasicSearch):
+class DateSearch(SearchFieldStrategy):
     
     python_type = datetime.date
     
@@ -269,7 +275,7 @@ class DateSearch(BasicSearch):
         except utils.ParsingError:
             pass
         
-class IntSearch(BasicSearch):
+class IntSearch(SearchFieldStrategy):
     
     python_type = int
     
@@ -280,7 +286,7 @@ class IntSearch(BasicSearch):
         except utils.ParsingError:
             pass  
 
-class BoolSearch(BasicSearch):
+class BoolSearch(SearchFieldStrategy):
     
     python_type = bool
     
@@ -291,7 +297,7 @@ class BoolSearch(BasicSearch):
         except utils.ParsingError:
             pass
 
-class VirtualAddressSearch(BasicSearch):
+class VirtualAddressSearch(SearchFieldStrategy):
     
     python_type = camelot.types.virtual_address
     
