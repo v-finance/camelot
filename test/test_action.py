@@ -10,7 +10,6 @@ import openpyxl
 import six
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.action import Action, ActionStep, State
 from camelot.admin.action import (
     list_action, application_action, form_action, list_filter,
@@ -36,6 +35,7 @@ from camelot.view.import_utils import (
 from camelot.view.workspace import DesktopWorkspace
 from camelot_example.model import Movie
 
+from . import app_admin
 from . import test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
@@ -49,7 +49,7 @@ class ActionBaseCase(RunningThreadCase):
 
     def setUp(self):
         super().setUp()
-        self.admin_route = ApplicationAdmin().get_admin_route()
+        self.admin_route = app_admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin_route = self.admin_route
 
@@ -77,9 +77,8 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         from camelot_example.importer import ImportCovers
-        self.app_admin = ApplicationAdmin()
         self.action = ImportCovers()
-        self.admin_route = self.app_admin.get_admin_route()
+        self.admin_route = app_admin.get_admin_route()
         self.workspace = DesktopWorkspace(self.admin_route, None)
         self.gui_context = self.workspace.gui_context
         self.parent = QtWidgets.QWidget()
@@ -135,15 +134,14 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
-        self.app_admin = ApplicationAdmin()
-        self.admin_route = self.app_admin.get_admin_route()
+        self.admin_route = app_admin.get_admin_route()
         self.workspace = DesktopWorkspace(self.admin_route, None)
         self.gui_context = self.workspace.gui_context
 
     def test_change_object( self ):
         from camelot.bin.meta import NewProjectOptions
         from camelot.view.action_steps.change_object import ChangeObject
-        admin = self.app_admin.get_related_admin(NewProjectOptions)
+        admin = app_admin.get_related_admin(NewProjectOptions)
         options = NewProjectOptions()
         options.name = 'Videostore'
         options.module = 'videostore'
@@ -248,13 +246,12 @@ class ListActionsCase(
         super(ListActionsCase, self).setUp()
         self.thread.post(self.session.close)
         self.process()
-        self.app_admin = ApplicationAdmin()
-        self.admin = self.app_admin.get_related_admin(Person)
+        self.admin = app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
         self.admin_route = self.admin.get_admin_route()
         self.setup_item_model(self.admin_route, self.admin.get_name())
-        self.movie_admin = self.app_admin.get_related_admin(Movie)
+        self.movie_admin = app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
         table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin_route)
@@ -326,7 +323,7 @@ class ListActionsCase(
     def test_save_restore_export_mapping(self):
         from camelot_example.model import Movie
 
-        admin = self.app_admin.get_related_admin(Movie)
+        admin = app_admin.get_related_admin(Movie)
 
         settings = utils.get_settings(admin.get_admin_route()[-1])
         settings.beginGroup('export_mapping')
@@ -532,10 +529,8 @@ class ListActionsCase(
     def test_filter_list_in_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.party import Person
-        from camelot.admin.application_admin import ApplicationAdmin
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
-        app_admin = ApplicationAdmin()
         person_admin = Person.Admin(app_admin, Person)
         table_view = TableView(gui_context, person_admin.get_admin_route())
         table_view.set_filters([self.group_box_filter,
@@ -662,10 +657,9 @@ class FormActionsCase(
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
-        self.app_admin = ApplicationAdmin()
         self.thread.post(self.setup_proxy)
         self.process()
-        person_admin = self.app_admin.get_related_admin(Person)
+        person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
         self.gui_context = form_action.FormActionGuiContext()
@@ -719,15 +713,14 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
     def setUp(self):
         super().setUp()
-        self.app_admin = ApplicationAdmin()
         self.gui_context = ApplicationActionGuiContext()
-        self.admin_route = self.app_admin.get_admin_route()
+        self.admin_route = app_admin.get_admin_route()
 
     def tearDown(self):
         super().tearDown()
 
     def test_application(self):
-        app = Application(self.app_admin)
+        app = Application(app_admin)
         list(self.gui_run(app, self.gui_context))
 
     def test_custom_application(self):
@@ -740,7 +733,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
 
-        application = CustomApplication(self.app_admin)
+        application = CustomApplication(app_admin)
         list(self.gui_run(application, self.gui_context))
 
 class ApplicationActionsCase(
@@ -766,12 +759,10 @@ class ApplicationActionsCase(
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
-        from camelot.admin.application_admin import ApplicationAdmin
         from camelot.view.workspace import DesktopWorkspace
-        self.app_admin = ApplicationAdmin()
         self.context = MockModelContext(session=self.session)
-        self.context.admin = self.app_admin
-        self.admin_route = self.app_admin.get_admin_route()
+        self.context.admin = app_admin
+        self.admin_route = app_admin.get_admin_route()
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.admin_route = self.admin_route
         self.gui_context.workspace = DesktopWorkspace(self.admin_route, None)
@@ -821,12 +812,12 @@ class ApplicationActionsCase(
         self.assertTrue(file_selected)
 
     def test_open_table_view(self):
-        person_admin = self.app_admin.get_related_admin( Person )
+        person_admin = app_admin.get_related_admin( Person )
         open_table_view_action = application_action.OpenTableView(person_admin)
         list(self.gui_run(open_table_view_action, self.gui_context))
 
     def test_open_new_view( self ):
-        person_admin = self.app_admin.get_related_admin(Person)
+        person_admin = app_admin.get_related_admin(Person)
         open_new_view_action = application_action.OpenNewView(person_admin)
         generator = self.gui_run(open_new_view_action, self.gui_context)
         for step in generator:
