@@ -176,7 +176,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
-        self.item_model = CollectionProxy(self.admin_route, self.admin.get_name())
+        self.item_model = CollectionProxy(self.admin_route)
         self.item_model.set_value(self.admin.get_proxy(self.collection))
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
@@ -551,7 +551,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
     @classmethod
     def setup_item_model(cls, admin_route, admin_name):
-        cls.item_model = CollectionProxy(admin_route, admin_name)
+        cls.item_model = CollectionProxy(admin_route)
         cls.item_model.set_value(cls.proxy)
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
@@ -662,7 +662,7 @@ class QueryQStandardItemModelCase(
                 return query.filter_by(id=values)
 
         start = self.query_counter
-        item_model = CollectionProxy(self.admin_route, self.person_admin.get_name())
+        item_model = CollectionProxy(self.admin_route)
         item_model.set_value(self.proxy)
         item_model.set_filter(SingleItemFilter('id'), self.first_person_id)
         list(item_model.add_columns(self.columns))

@@ -154,13 +154,12 @@ class OpenTableView( UpdateTableView ):
     
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
-        self.admin_name = admin.get_name()
         self.new_tab = False
         self.admin_route = admin.get_admin_route()
 
     def render(self, gui_context):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, self.admin_route, self.admin_name)
+        table_view = TableView(gui_context, self.admin_route)
         self.update_table_view(table_view)
         return table_view
         
@@ -205,7 +204,7 @@ class OpenQmlTableView(OpenTableView):
         header_model = QtCore.QStringListModel(parent=quick_view)
         header_model.setStringList(list(fn for fn, _fa in self.columns))
         header_model.setParent(quick_view)
-        new_model = CollectionProxy(self.admin)
+        new_model = CollectionProxy(self.admin_route)
         new_model.setParent(quick_view)
         list(new_model.add_columns((fn for fn, _fa in self.columns)))
         new_model.set_value(self.admin.get_proxy(self.value))

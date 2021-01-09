@@ -472,13 +472,12 @@ class TableView(AbstractView):
     AdminTableWidget = AdminTableWidget
 
     def __init__(
-        self, gui_context, admin_route, admin_name, parent=None
+        self, gui_context, admin_route, parent=None
         ):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
         assert isinstance(admin_route, tuple)
         self.admin_route = admin_route
-        self.admin_name = admin_name
         self.application_gui_context = gui_context
         self.gui_context = gui_context
         widget_layout = QtWidgets.QVBoxLayout()
@@ -556,7 +555,7 @@ class TableView(AbstractView):
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         self.table = self.AdminTableWidget(splitter)
         self.table.setObjectName('AdminTableWidget')
-        new_model = CollectionProxy(self.admin_route, self.admin_name)
+        new_model = CollectionProxy(self.admin_route)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(

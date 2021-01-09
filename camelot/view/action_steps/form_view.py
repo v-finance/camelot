@@ -117,7 +117,7 @@ class OpenFormView( ActionStep ):
             row = self.row
             proxy = self.admin.get_proxy(self.objects)
 
-        model = CollectionProxy(self.admin_route, self.admin_name)
+        model = CollectionProxy(self.admin_route)
         list(model.add_columns((fn for fn, fa in self._columns)))
         model.set_value(proxy)
 

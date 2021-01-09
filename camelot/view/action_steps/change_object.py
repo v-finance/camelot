@@ -82,7 +82,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin_route, admin.get_name())
+        model = CollectionProxy(admin_route)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -182,7 +182,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   objects,
-                  admin,
+                  admin_route,
                   columns,
                   toolbar_actions,
                   invalid_rows,
@@ -191,7 +191,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
-            admin = admin,
+            admin_route = admin_route,
             parent = self,
             create_inline = True,
             columns=columns,
@@ -339,6 +339,7 @@ class ChangeObjects( ActionStep ):
     def __init__(self, objects, admin, validate=True):
         self.objects = objects
         self.admin = admin
+        self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
@@ -367,7 +368,7 @@ class ChangeObjects( ActionStep ):
         """create the dialog. this method is used to unit test
         the action step."""
         dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
-                                     self.admin,
+                                     self.admin_route,
                                      self.columns,
                                      self.toolbar_actions,
                                      self.invalid_rows)

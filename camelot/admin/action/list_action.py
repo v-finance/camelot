@@ -635,18 +635,21 @@ class ExportSpreadsheet( ListContextAction ):
     
     def model_run( self, model_context ):
         from decimal import Decimal
-        from camelot.view.import_utils import ( ColumnMapping,
-                                                ColumnSelectionAdmin )
-        from camelot.view.utils import ( local_date_format, 
-                                         local_datetime_format,
-                                         local_time_format )
+        from camelot.view.import_utils import (
+            ColumnMapping, ColumnSelectionAdmin
+        )
+        from camelot.view.utils import (
+            get_settings, local_date_format, local_datetime_format,
+            local_time_format
+        )
         from camelot.view import action_steps
         #
         # Select the columns that need to be exported
         # 
         yield action_steps.UpdateProgress(text=_('Prepare export'))
         admin = model_context.admin
-        settings = admin.get_settings()
+        # Todo : settings should not be accessed from the model
+        settings = get_settings(admin.get_name())
         settings.beginGroup('export_spreadsheet')
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in

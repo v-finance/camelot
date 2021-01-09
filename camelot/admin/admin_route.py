@@ -55,6 +55,8 @@ class AdminRoute(object):
 
         """
         next_admin = cls._admin_counter.__next__()
-        admin_route = ('admin', admin.get_name(), str(next_admin))
+        # put name of the admin in the last part of the route, so it can
+        # be used as a reference to store settings
+        admin_route = ('admin', str(next_admin), admin.get_name())
         cls._admin_routes[admin_route] = admin
         return admin_route

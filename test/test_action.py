@@ -257,7 +257,7 @@ class ListActionsCase(
         self.movie_admin = self.app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin_route, self.admin.get_name())
+        table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin_route)
         table_view.set_admin()
         table_view.table.setModel(self.item_model)
         # select the first row
@@ -326,7 +326,9 @@ class ListActionsCase(
     def test_save_restore_export_mapping(self):
         from camelot_example.model import Movie
 
-        settings = self.app_admin.get_settings()
+        admin = self.app_admin.get_related_admin(Movie)
+
+        settings = utils.get_settings(admin.get_admin_route()[-1])
         settings.beginGroup('export_mapping')
         # make sure there are no previous settings
         settings.remove('')
@@ -335,7 +337,7 @@ class ListActionsCase(
         restore_export_mapping = list_action.RestoreExportMapping(settings)
 
         model_context = MockModelContext()
-        admin = self.app_admin.get_related_admin(Movie)
+        
         field_choices = [('field_{0}'.format(i), 'Field {0}'.format(i)) for i in range(10)]
         model_context.admin = import_utils.ColumnSelectionAdmin(
             admin,
@@ -535,7 +537,7 @@ class ListActionsCase(
         gui_context = GuiContext()
         app_admin = ApplicationAdmin()
         person_admin = Person.Admin(app_admin, Person)
-        table_view = TableView(gui_context, person_admin.get_admin_route(), person_admin.get_name())
+        table_view = TableView(gui_context, person_admin.get_admin_route())
         table_view.set_filters([self.group_box_filter,
                                 self.combo_box_filter])
 

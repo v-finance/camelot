@@ -62,7 +62,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def __init__(self,
                  admin_route=None,
-                 admin_name=None,
                  parent=None,
                  create_inline=False,
                  direction='onetomany',
@@ -90,7 +89,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = CollectionProxy(admin_route, admin_name)
+        model = CollectionProxy(admin_route)
         model.setParent(self)
         table.setModel(model)
         self.admin_route = admin_route

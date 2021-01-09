@@ -435,7 +435,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
         self.admin_route = self.movie_admin.get_admin_route()
-        self.movie_model = CollectionProxy(self.admin_route, self.movie_admin.get_name())
+        self.movie_model = CollectionProxy(self.admin_route)
         self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
@@ -801,14 +801,14 @@ class ControlsTest(
 
     def test_table_view(self):
         gui_context = GuiContext()
-        widget = TableView(gui_context, self.admin_route, self.admin.get_name())
+        widget = TableView(gui_context, self.admin_route)
         self.grab_widget(widget)
 
     def test_rows_widget(self):
         from camelot.view.controls.tableview import RowsWidget
         from camelot.model.party import City
         city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin.get_admin_route(), city_admin.get_name())
+        table = TableView(self.gui_context, city_admin.get_admin_route())
         table.set_admin()
         RowsWidget(table.gui_context)
 
@@ -819,7 +819,7 @@ class ControlsTest(
             list_display = ['first_name', 'suffix']
 
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route(), admin.get_name())
+        widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
         model.set_value(self.proxy)
@@ -847,7 +847,7 @@ class ControlsTest(
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route(), admin.get_name())
+        widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
         model.set_value(self.proxy)
@@ -877,7 +877,7 @@ class ControlsTest(
             #end column group
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route(), admin.get_name())
+        widget = TableView(self.gui_context, admin.get_admin_route())
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
@@ -946,7 +946,7 @@ class ControlsTest(
         from camelot.model.party import City
         from camelot.view.controls.tableview import HeaderWidget
         city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin.get_admin_route(), city_admin.get_name())
+        table = TableView(self.gui_context, city_admin.get_admin_route())
         table.set_admin()
         header = HeaderWidget(gui_context=table.gui_context, parent=None)
         self.grab_widget(header)
@@ -1043,7 +1043,7 @@ class SnippetsTest(RunningThreadCase,
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
         person_columns = list(person_admin.get_columns())
         editor = One2ManyEditor(
-            admin=person_admin,
+            admin_route=person_admin.get_admin_route(),
             columns=person_columns,
         )
         editor.set_value(self.proxy)

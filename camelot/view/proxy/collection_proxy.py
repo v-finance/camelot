@@ -717,18 +717,21 @@ class CollectionProxy(QtGui.QStandardItemModel):
 
     max_row_count = 10000000 # display maxium 10M rows
 
-    def __init__(self, admin_route, model_name, max_number_of_rows=10):
+    def __init__(self, admin_route, max_number_of_rows=10):
         """
         :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
-        assert object_thread( self )
+        assert object_thread(self)
+        assert isinstance(max_number_of_rows, int)
+        assert isinstance(admin_route, tuple)
+        assert len(admin_route)
         from camelot.view.model_thread import get_model_thread
-
-        self.logger = logger.getChild('{0}.{1}'.format(id(self), model_name))
-        self.logger.debug('initialize proxy for %s' % (model_name))
+        admin_name = admin_route[-1]
+        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
+        self.logger.debug('initialize proxy for %s' % (admin_name))
         self.admin_route = admin_route
-        self.settings = get_settings(model_name)
+        self.settings = get_settings(admin_name)
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
