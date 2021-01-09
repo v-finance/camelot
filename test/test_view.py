@@ -791,7 +791,8 @@ class ControlsTest(
     def setUp(self):
         self.thread.post(self.setup_proxy)
         self.process()
-        self.admin_route = self.app_admin.get_entity_admin(Person).get_admin_route()
+        self.admin = self.app_admin.get_entity_admin(Person)
+        self.admin_route = admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin_route = self.admin_route
 
@@ -800,18 +801,17 @@ class ControlsTest(
 
     def test_table_view(self):
         gui_context = GuiContext()
-        widget = TableView(gui_context, self.admin_route)
+        widget = TableView(gui_context, self.admin_route, self.admin.get_name())
         self.grab_widget(widget)
 
     def test_rows_widget(self):
         from camelot.view.controls.tableview import RowsWidget
         from camelot.model.party import City
         city_admin = self.app_admin.get_entity_admin(City)
-        
-        table = TableView(self.gui_context, city_admin)
-        table.set_admin(city_admin)
+        table = TableView(self.gui_context, city_admin.get_admin_route(), city_admin.get_name())
+        table.set_admin()
         RowsWidget(table.gui_context)
-        
+
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
 
@@ -819,8 +819,8 @@ class ControlsTest(
             list_display = ['first_name', 'suffix']
 
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin)
-        widget.set_admin(admin)
+        widget = TableView(self.gui_context, admin.get_admin_route(), admin.get_name())
+        widget.set_admin()
         model = widget.get_model()
         model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
@@ -847,8 +847,8 @@ class ControlsTest(
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin)
-        widget.set_admin(admin)
+        widget = TableView(self.gui_context, admin.get_admin_route(), admin.get_name())
+        widget.set_admin()
         model = widget.get_model()
         model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
@@ -877,8 +877,7 @@ class ControlsTest(
             #end column group
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context,
-                            admin )
+        widget = TableView(self.gui_context, admin.get_admin_route(), admin.get_name())
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
@@ -895,7 +894,6 @@ class ControlsTest(
 
     def test_reduced_main_window(self):
         from camelot_example.application_admin import MiniApplicationAdmin
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
         app_admin = MiniApplicationAdmin()
         proxy = MainWindowProxy(self.gui_context)
         proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
@@ -906,7 +904,6 @@ class ControlsTest(
         """Make sure we can still create multiple QMainWindows"""
         from camelot.view.action_steps.application import MainWindow
         from camelot_example.application_admin import MiniApplicationAdmin
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
 
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -949,8 +946,8 @@ class ControlsTest(
         from camelot.model.party import City
         from camelot.view.controls.tableview import HeaderWidget
         city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin)
-        table.set_admin(city_admin)
+        table = TableView(self.gui_context, city_admin.get_admin_route(), city_admin.get_name())
+        table.set_admin()
         header = HeaderWidget(gui_context=table.gui_context, parent=None)
         self.grab_widget(header)
 

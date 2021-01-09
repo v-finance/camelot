@@ -372,7 +372,7 @@ class ListActionsCase(
             ['first_name', 'last_name'],
             ['Unknown',    'Unknown'],
         ]
-        fields = [field for field, _fa in self.gui_context.admin.get_columns()]
+        fields = [field for field, _fa in self.admin.get_columns()]
         mapping = ColumnMapping(0, rows)
         self.assertNotEqual(mapping.field, 'first_name' )
         
@@ -380,7 +380,7 @@ class ListActionsCase(
         model_context = MockModelContext()
         model_context.obj = mapping
         model_context.admin = ColumnMappingAdmin(
-            self.gui_context.admin,
+            self.admin,
             field_choices=[(f,f) for f in fields]
         )
         list(match_names.model_run(model_context))
@@ -535,7 +535,7 @@ class ListActionsCase(
         gui_context = GuiContext()
         app_admin = ApplicationAdmin()
         person_admin = Person.Admin(app_admin, Person)
-        table_view = TableView( gui_context, person_admin )
+        table_view = TableView(gui_context, person_admin.get_admin_route(), person_admin.get_name())
         table_view.set_filters([self.group_box_filter,
                                 self.combo_box_filter])
 
