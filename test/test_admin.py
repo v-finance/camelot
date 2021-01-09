@@ -5,13 +5,18 @@ Tests for the Admin classes
 
 import unittest
 
-from camelot.core.orm import (Entity, OneToMany, ManyToMany, ManyToOne,
-                              OneToOne)
+from camelot.core.orm import (
+    OneToMany, ManyToMany, ManyToOne, OneToOne
+)
+
 from camelot.core.qt import Qt
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.model.party import Person
+from camelot.model.i18n import Translation
 from camelot.view.controls import delegates
 
 from sqlalchemy import schema, types, sql
@@ -50,23 +55,30 @@ class ObjectAdminCase(unittest.TestCase):
         self.app_admin = ApplicationAdmin()
 
     def test_not_editable_admin_class_decorator( self ):
-        from camelot.model.i18n import Translation
-        from camelot.admin.not_editable_admin import not_editable_admin
-
         OriginalAdmin = Translation.Admin
-        original_admin = OriginalAdmin( self.app_admin, Translation )
-        self.assertTrue( len( original_admin.get_list_actions() ) )
-        self.assertTrue( original_admin.get_field_attributes( 'value' )['editable'] )
+        original_admin = OriginalAdmin(self.app_admin, Translation)
+        self.assertTrue(len(original_admin.get_list_actions()))
+        self.assertTrue(original_admin.get_field_attributes('value')['editable'])
+        original_related_admin = original_admin.get_related_admin(Person)
 
         #
         # enable the actions
         #
-        NewAdmin = not_editable_admin( Translation.Admin, 
-                                       actions = True )
-        new_admin = NewAdmin( self.app_admin, Translation )
-        self.assertTrue( len( new_admin.get_list_actions() ) )
-        self.assertFalse( new_admin.get_field_attributes( 'value' )['editable'] )
-        self.assertFalse( new_admin.get_field_attributes( 'source' )['editable'] )
+        NewAdmin = not_editable_admin(Translation.Admin, actions = True)
+        new_admin = NewAdmin(self.app_admin, Translation)
+        self.assertTrue(len( new_admin.get_list_actions()))
+        self.assertFalse(new_admin.get_field_attributes('value')['editable'])
+        self.assertFalse(new_admin.get_field_attributes('source')['editable'])
+        new_related_admin = new_admin.get_related_admin(Person)
+        self.assertNotEqual(original_related_admin, new_related_admin)
+
+        #
+        # make sure the routes are different
+        #
+        self.assertNotEqual(new_admin.get_admin_route(), original_admin.get_admin_route())
+        self.assertEqual(ObjectAdmin.admin_for(new_admin.get_admin_route()), new_admin)
+        self.assertEqual(ObjectAdmin.admin_for(original_admin.get_admin_route()), original_admin)
+        self.assertNotEqual(new_related_admin.get_admin_route(), original_related_admin.get_admin_route())
 
         #
         # disable the actions
