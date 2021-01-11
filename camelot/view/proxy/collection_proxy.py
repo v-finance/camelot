@@ -54,6 +54,7 @@ from six import moves
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.list_action import ListActionModelContext
+from ...admin.admin_route import AdminRoute
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
@@ -63,6 +64,7 @@ from ...core.item_model import (
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
+from ..utils import get_settings
 from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import object_thread, post
 
@@ -715,25 +717,28 @@ class CollectionProxy(QtGui.QStandardItemModel):
 
     max_row_count = 10000000 # display maxium 10M rows
 
-    def __init__(self, admin, max_number_of_rows=10):
+    def __init__(self, admin_route, max_number_of_rows=10):
         """
-        :param admin: the admin interface for the items in the collection
+        :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
-        assert object_thread( self )
+        assert object_thread(self)
+        assert isinstance(max_number_of_rows, int)
+        assert isinstance(admin_route, tuple)
+        assert len(admin_route)
         from camelot.view.model_thread import get_model_thread
-
-        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin.entity.__name__))
-        self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
-        self.admin = admin
-        self._list_action = admin.list_action
-        self.settings = self.admin.get_settings()
+        admin_name = admin_route[-1]
+        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
+        self.logger.debug('initialize proxy for %s' % (admin_name))
+        self.admin_route = admin_route
+        self.settings = get_settings(admin_name)
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
-        self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
-        self.vertical_header_size =  QtCore.QSize( 16 + 10,
-                                                   self._vertical_header_height )
+        self._vertical_header_height = vertical_header_font_height + 10
+        self.vertical_header_size =  QtCore.QSize(
+            16 + 10, self._vertical_header_height
+        )
         self._max_number_of_rows = max_number_of_rows
         self._model_context = None
         self._model_thread = get_model_thread()
@@ -949,10 +954,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.logger.debug('set_value called')
         assert isinstance(value, AbstractModelProxy)
         model_context = RowModelContext()
-        model_context.admin = self.admin
+        model_context.admin = AdminRoute.admin_for(self.admin_route)
         model_context.proxy = value
         # todo : remove the concept of a validator
-        model_context.validator = self.admin.get_validator()
+        model_context.validator = model_context.admin.get_validator()
         self._model_context = model_context
         #self._filters = dict()
         self._reset()
@@ -990,7 +995,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         date
         """
         assert object_thread(self)
-        if sender != self:
+        if (sender != self) and (self._model_context is not None):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
@@ -1001,7 +1006,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if sender != self:
+        if (sender != self) and (self._model_context is not None):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
@@ -1012,7 +1017,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if sender != self:
+        if (sender != self) and (self._model_context is not None):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )

@@ -291,3 +291,15 @@ def resize_widget_to_screen( widget_or_window, fraction = 0.75 ):
         available_geometry.width() * fraction, 
         available_geometry.height() * fraction
     )
+
+def get_settings(group):
+    """A :class:`QtCore.QSettings` object in which Camelot related settings
+    can be stored.  This object is intended for Camelot internal use.  If an
+    application specific settings object is needed, simply construct one.
+
+    :return: a :class:`QtCore.QSettings` object
+    """
+    settings = QtCore.QSettings()
+    settings.beginGroup('Camelot')
+    settings.beginGroup(group[:255])
+    return settings

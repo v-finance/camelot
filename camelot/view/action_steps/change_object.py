@@ -63,6 +63,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   obj,
+                  admin_route,
                   admin,
                   form_display,
                   columns,
@@ -81,7 +82,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin)
+        model = CollectionProxy(admin_route)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -181,7 +182,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   objects,
-                  admin,
+                  admin_route,
                   columns,
                   toolbar_actions,
                   invalid_rows,
@@ -190,7 +191,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
-            admin = admin,
+            admin_route = admin_route,
             parent = self,
             create_inline = True,
             columns=columns,
@@ -241,13 +242,13 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                     variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
                 ))
 
-class ChangeObject( ActionStep ):
+
+class ChangeObject(ActionStep):
     """
     Pop up a form for the user to change an object
 
     :param obj: the object to change
-    :param admin: an instance of an admin class to use to edit the
-        object, None if the default is to be taken
+    :param admin: an instance of an admin class to use to edit the object
 
     .. attribute:: accept
 
@@ -265,6 +266,10 @@ class ChangeObject( ActionStep ):
         self.admin = admin
         self.accept = _('OK')
         self.reject = _('Cancel')
+        self.form_display = self.admin.get_form_display()
+        self.columns = self.admin.get_fields()
+        self.form_actions = self.admin.get_form_actions(None)
+        self.admin_route = admin.get_admin_route()
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -273,11 +278,12 @@ class ChangeObject( ActionStep ):
         """
         return self.obj
 
-    def render( self, gui_context ):
+    def render(self, gui_context):
         """create the dialog. this method is used to unit test
         the action step."""
         super(ChangeObject, self).gui_run(gui_context)
         dialog = ChangeObjectDialog(self.obj,
+                                    self.admin_route,
                                     self.admin,
                                     self.form_display,
                                     self.columns,
@@ -295,17 +301,7 @@ class ChangeObject( ActionStep ):
                 raise CancelRequest()
             return self.obj
 
-    def model_run(self, model_context):
-        cls = self.obj.__class__
-        if self.admin is None:
-            # the model_context admin might be deep-readonly, which is not
-            # what we want in the case of a ChangeObject, therefor revert
-            app_admin = model_context.admin.get_application_admin()
-            self.admin = app_admin.get_related_admin(cls)
-        self.form_display = self.admin.get_form_display()
-        self.columns = self.admin.get_fields()
-        self.form_actions = self.admin.get_form_actions(None)
-        
+
 class ChangeObjects( ActionStep ):
     """
     Pop up a list for the user to change objects
@@ -343,6 +339,7 @@ class ChangeObjects( ActionStep ):
     def __init__(self, objects, admin, validate=True):
         self.objects = objects
         self.admin = admin
+        self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
@@ -371,7 +368,7 @@ class ChangeObjects( ActionStep ):
         """create the dialog. this method is used to unit test
         the action step."""
         dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
-                                     self.admin,
+                                     self.admin_route,
                                      self.columns,
                                      self.toolbar_actions,
                                      self.invalid_rows)
