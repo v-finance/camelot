@@ -37,6 +37,7 @@ from ...core.qt import Qt, variant_to_py, is_deleted
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import ObjectRole, CollectionProxy
 
+
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
 
@@ -82,6 +83,7 @@ class OpenFormView( ActionStep ):
         self.title = u' '
         self._columns = admin.get_fields()
         self._form_display = admin.get_form_display()
+        self.admin_route = admin.get_admin_route()
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
@@ -115,7 +117,7 @@ class OpenFormView( ActionStep ):
             row = self.row
             proxy = self.admin.get_proxy(self.objects)
 
-        model = CollectionProxy(self.admin, max_number_of_rows=10)
+        model = CollectionProxy(self.admin_route)
         list(model.add_columns((fn for fn, fa in self._columns)))
         model.set_value(proxy)
 

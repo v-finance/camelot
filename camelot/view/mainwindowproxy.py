@@ -52,7 +52,7 @@ class MainWindowProxy(QtCore.QObject):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtCore.QObject.__init__(self)
-        assert isinstance(gui_context.view_route, tuple)
+        assert isinstance(gui_context.admin_route, tuple)
 
         if window is None:
             window = QtWidgets.QMainWindow()
@@ -66,7 +66,7 @@ class MainWindowProxy(QtCore.QObject):
         window.installEventFilter(self)
         logger.debug('setting up workspace')
         self.gui_context = gui_context
-        self.workspace = DesktopWorkspace(gui_context.view_route, window )
+        self.workspace = DesktopWorkspace(gui_context.admin_route, window )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')

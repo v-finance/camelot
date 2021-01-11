@@ -68,9 +68,8 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
 
     list_action = ConfirmSelection()
 
-    def __init__(self, original_admin, show_subclasses):
+    def __init__(self, original_admin):
         super(SelectAdminDecorator, self).__init__(original_admin)
-        self.show_subclasses = show_subclasses
 
     def get_list_actions(self, *a, **kwa):
         return [CancelSelection(), ConfirmSelection()]
@@ -81,26 +80,17 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
         # this admin will end up in the model context of the next
         # step
         return admin
-    
-    def get_subclass_tree(self):
-        new_subclasses = []
-        if self.show_subclasses == True:
-            subclasses = self._original_admin.get_subclass_tree()
-            for admin, tree in subclasses:
-                new_admin = SelectAdminDecorator(admin, True)
-                new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
-        return new_subclasses
 
 class SelectDialog(QtWidgets.QDialog):
     
-    def __init__(self, gui_context, admin, parent = None):
+    def __init__(self, gui_context, admin_route, verbose_name, parent = None):
         super( SelectDialog, self ).__init__( parent )
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
-        self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
+        self.setWindowTitle( _('Select %s') % verbose_name )
         self.setSizeGripEnabled(True)
-        table = TableView(gui_context, admin, parent=self)
+        table = TableView(gui_context, admin_route, parent=self)
         table.setObjectName('table_view')
         layout.addWidget(table)
         self.setLayout( layout )
@@ -118,20 +108,16 @@ class SelectObjects( OpenTableView ):
     """
 
     def __init__(self, admin, search_text=None, value=None):
-        show_subclasses = False
         if value is None:
             value = admin.get_query()
-            # only able to construct subclass query whern
-            # the default query is used
-            show_subclasses = True
-        select_admin = SelectAdminDecorator(admin, show_subclasses)
+        select_admin = SelectAdminDecorator(admin)
         super(SelectObjects, self).__init__(select_admin, value)
         self.search_text = search_text
+        self.verbose_name_plural = str(admin.get_verbose_name_plural())
 
     def render(self, gui_context):
-        dialog = SelectDialog(gui_context, self.admin)
+        dialog = SelectDialog(gui_context, self.admin_route, self.verbose_name_plural)
         table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
-        table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return dialog
 

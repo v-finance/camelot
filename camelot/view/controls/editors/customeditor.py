@@ -152,6 +152,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         AbstractCustomEditor.__init__(self)
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self
+        self.gui_context.admin_route = None
 
         if CustomEditor._font_width is None:
             font_metrics = QtGui.QFontMetrics(self.font())

@@ -35,11 +35,11 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
+from .admin_route import AdminRoute
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
-from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -77,7 +77,7 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'maximum'])
 
 
-class ObjectAdmin(object):
+class ObjectAdmin(AdminRoute):
     """The ObjectAdmin class describes the interface that will be used
 to interact with objects of a certain class.  The behaviour of this class
 and the resulting interface can be tuned by specifying specific class
@@ -261,12 +261,6 @@ be specified using the verbose_name attribute.
     field_attributes = {}
     form_state = None
     icon = None # Default
-    #
-    # Behavioral attributes
-    # 
-    drop_action = None
-
-    TableView = TableView
 
     def __init__( self, app_admin, entity ):
         """
@@ -281,6 +275,10 @@ be specified using the verbose_name attribute.
         #
         self._field_attributes = dict()
         self._subclasses = None
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
 
     def __str__(self):
         return 'Admin %s' % str(self.entity.__name__)
@@ -347,16 +345,6 @@ be specified using the verbose_name attribute.
     def get_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
-
-    def get_settings( self ):
-        """A settings object in which settings related to this admin can be
-        stored.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = self.app_admin.get_settings()
-        settings.beginGroup( self.get_name()[:255] )
-        return settings
 
     def get_memento( self ):
         return self.app_admin.get_memento()
@@ -704,6 +692,8 @@ be specified using the verbose_name attribute.
                         field in fields)
                     column_width = sum(related_column_widths, 0)
             field_attributes['admin'] = related_admin
+            field_attributes['admin_route'] = related_admin.get_admin_route()
+            field_attributes['admin_name'] = related_admin.get_name()
         #
         # If no column_width is specified, try to derive one
         #

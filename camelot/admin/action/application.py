@@ -31,7 +31,6 @@ import logging
 from ...core.qt import QtCore
 from ...core.utils import ugettext as _
 from ..application_admin import ApplicationAdmin
-from ..view_register import ViewRegister
 from .base import Action
 
 logger = logging.getLogger('camelot.admin.action.application')
@@ -61,12 +60,11 @@ class Application( Action ):
         start the event loop, start the model thread and pass control asap to 
         the model thread"""
         try:
-            view_route = ViewRegister.register_view_route(self.application_admin)
+            admin_route = self.application_admin.get_admin_route()
             self.gui_context = gui_context
             self.set_application_attributes()
-            self.gui_context.view_route = view_route
+            self.gui_context.admin_route = admin_route
             super(Application, self).gui_run(gui_context)
-            #ViewRegister.unregister_view(view_route)
         except Exception as e:
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
