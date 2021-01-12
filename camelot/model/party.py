@@ -147,14 +147,15 @@ class GeographicBoundaryAlternativeName(Entity):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
-        schema.Index('ix_geographic_boundary_alternative_name_main_municipality', 'alternative_name_for_id', sqlalchemy.text('(language IS NULL)'), unique=True,
-                 postgresql_where=sqlalchemy.text("row_type = 'main_municipality' AND language IS NULL"),
-                 sqlite_where=sqlalchemy.text("row_type = 'main_municipality' AND language IS NULL")),
+        schema.Index(
+            'ix_geographic_boundary_alternative_name_main_municipality', 'alternative_name_for_id', language.is_(None).self_group(), unique=True,
+            postgresql_where=sql.and_(row_type == 'main_municipality', language.is_(None)),
+            sqlite_where=sql.and_(row_type == 'main_municipality', language.is_(None))),
         schema.UniqueConstraint(
             alternative_name_for_id, language, row_type,
             name = 'language_unique',
         ),
-        schema.CheckConstraint("row_type = 'translation' AND language IS NOT NULL OR row_type != 'translation'", name='translation_language'),
+        schema.CheckConstraint(sql.or_(sql.and_(row_type == 'translation', language.isnot(None)), row_type != 'translation'), name='translation_language'),
     )
 
     class Admin(EntityAdmin):
