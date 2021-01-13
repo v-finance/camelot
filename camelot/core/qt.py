@@ -309,7 +309,8 @@ else:
         else:
             LOGGER.log(logging.ERROR, 'Received message with unknown log level')
 
-    QtCore.qInstallMessageHandler(qmsghandler)
+    # Qt messages are now remotely logged by the launcher's message handler
+    #QtCore.qInstallMessageHandler(qmsghandler)
 
 __all__ = [
     QtCore.__name__,
