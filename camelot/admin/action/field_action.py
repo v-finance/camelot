@@ -280,7 +280,7 @@ class DetachFile(FieldAction):
 class OpenFile(FieldAction):
     """Open the file shown in the editor"""
 
-    icon = FontIcon('edit') # 'tango/16x16/actions/document-open.png'
+    icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
 
     def model_run(self, model_context):
