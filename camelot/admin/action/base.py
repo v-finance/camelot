@@ -217,7 +217,11 @@ the default mode.
         action = QtWidgets.QAction( parent )
         action.setData( self.name )
         action.setText( six.text_type(self.verbose_name) )
-        action.setIconVisibleInMenu( False )
+        if self.icon is None:
+            action.setIconVisibleInMenu(False)
+        else:
+            action.setIcon(self.icon.getQIcon())
+            action.setIconVisibleInMenu(True)
         return action
         
 class ActionStep( object ):

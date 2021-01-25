@@ -993,20 +993,12 @@ class SetFilters(Action, AbstractModelFilter):
         from camelot.view import action_steps
 
         if model_context.mode_name == '__clear':
-            yield action_steps.SetFilter(self, None)
+            yield action_steps.SetFilter(self, {})
             return
 
+        filter_value = model_context.proxy.get_filter(self) or {}
         filter_field_name = model_context.mode_name
         filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-
-        #elif model_context.mode_name == 'change':
-            ## don't just modify the old filters, but create new filters
-            ## each time
-            #old_filters = model_context.proxy.get_filter(self) or []
-            #for old_filter, new_filter in zip(old_filters, filters):
-                #if old_filter.field_name is not None:
-                    #new_filter.field_name = old_filter.field_name
-                    #new_filter.value = old_filter.value
 
         class FieldFilterAdmin(ObjectAdmin):
             verbose_name = _('Filter')
@@ -1019,7 +1011,7 @@ class SetFilters(Action, AbstractModelFilter):
                     },
             }
 
-        field_filter = FieldFilter()
+        field_filter = FieldFilter(filter_value.get(filter_field_name))
         filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
         change_filter = action_steps.ChangeObject(field_filter, filter_admin)
         yield change_filter
@@ -1033,13 +1025,16 @@ class SetFilters(Action, AbstractModelFilter):
     def get_state(self, model_context):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
-        current_filter = model_context.proxy.get_filter(self)
-        if current_filter is not None:
+        filter_value = model_context.proxy.get_filter(self) or {}
+        if len(filter_value) is not None:
             state.notification = True
         for name, verbose_name in self.get_field_name_choices(model_context):
-            modes.append(Mode(name, verbose_name))
+            if name in filter_value:
+                modes.append(Mode(name, verbose_name, icon=FontIcon('check-circle')))
+            else:
+                modes.append(Mode(name, verbose_name))
         modes.extend([
-            Mode('__clear', _('Clear filter')),
+            Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
         ])
         return state
 
