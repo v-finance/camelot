@@ -300,7 +300,7 @@ class FormView(AbstractView):
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
-                toolbar.addAction(self.render_action(action, toolbar))
+                toolbar.addWidget(self.render_action(action, toolbar))
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
             # @todo : this show is needed on OSX or the form window
