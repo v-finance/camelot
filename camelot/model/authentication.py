@@ -116,7 +116,7 @@ class AuthenticationMechanism( Entity ):
     from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
     last_login = Column( types.DateTime() )
-    representation = orm.deferred(Column(types.Unicode(), nullable=True))
+    representation = orm.deferred(Column(types.Text(), nullable=True))
 
     @classmethod
     def get_or_create( cls, username ):

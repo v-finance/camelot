@@ -318,7 +318,7 @@ class OpenNewView( EntityAction ):
         yield action_steps.OpenFormView([new_object], admin)
         
 
-class ShowAbout( Action ):
+class ShowAbout(Action):
     """Show the about dialog with the content returned by the
     :meth:`ApplicationAdmin.get_about` method
     """
@@ -326,13 +326,16 @@ class ShowAbout( Action ):
     verbose_name = _('&About')
     icon = FontIcon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
     tooltip = _("Show the application's About box")
-    
-    def gui_run( self, gui_context ):
-        abtmsg = gui_context.admin.get_application_admin().get_about()
-        QtWidgets.QMessageBox.about( gui_context.workspace, 
-                                 ugettext('About'), 
-                                 six.text_type( abtmsg ) )
-        
+
+    def model_run(self, model_context):
+        from camelot.view.action_steps import MessageBox
+        about = str(model_context.admin.get_application_admin().get_about())
+        yield MessageBox(
+            text = about,
+            title = ugettext('About'),
+            standard_buttons=QtWidgets.QMessageBox.Ok,
+        )
+
 class Backup( Action ):
     """
 Backup the database to disk

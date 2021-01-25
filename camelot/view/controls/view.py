@@ -31,7 +31,7 @@
 
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
-from .action_widget import ActionAction, ActionPushButton, ActionLabel
+from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
 from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
 from .search import SimpleSearchControl
 
@@ -76,7 +76,7 @@ class AbstractView(QtWidgets.QWidget):
 
     def render_action(self, action, parent):
         if action.render_hint == RenderHint.TOOL_BUTTON:
-            return ActionAction(action, self.gui_context, parent)
+            return ActionToolbutton(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.COMBO_BOX:
             return ComboBoxFilterWidget(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.GROUP_BOX:
