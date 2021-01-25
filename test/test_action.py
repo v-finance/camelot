@@ -493,11 +493,15 @@ class ListActionsCase(
         list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
 
     def test_set_filters(self):
-        action = list_action.SetFilters()
-        steps = self.gui_run(action, self.gui_context)
-        for step in steps:
-            if isinstance(step, action_steps.ChangeField):
-                steps.send(('first_name', 'test'))
+        set_filters = list_action.SetFilters()
+        state = self.get_state(set_filters, self.gui_context)
+        self.assertTrue(len(state.modes))
+        mode_names = set(m.name for m in state.modes)
+        self.assertIn('first_name', mode_names)
+        #steps = self.gui_run(set_filters, self.gui_context)
+        #for step in steps:
+            #if isinstance(step, action_steps.ChangeField):
+                #steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
