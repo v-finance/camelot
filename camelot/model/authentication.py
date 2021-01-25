@@ -31,22 +31,21 @@
 """
 import base64
 import datetime
+import getpass
 import threading
 
-import six
-
-from sqlalchemy import types
-
+from sqlalchemy import types, orm
 from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy import orm
 
 import camelot.types
+
+from ..admin.action import list_filter
+from ..admin.entity_admin import EntityAdmin
 from ..core.qt import QtCore, QtGui
-from camelot.core.orm import Entity, Session, ManyToMany
-from camelot.core.utils import ugettext_lazy as _
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.view import forms
-from camelot.view.controls import delegates
+from ..core.orm import Entity, Session, ManyToMany
+from ..core.utils import ugettext_lazy as _
+from ..view import forms
+from ..view.controls import delegates
 
 END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
 
@@ -67,11 +66,7 @@ def get_current_authentication( _obj = None ):
     if not hasattr( _current_authentication_, 'mechanism' ) \
         or not _current_authentication_.mechanism \
         or not orm.object_session( _current_authentication_.mechanism ):
-            import getpass
-            if six.PY3:
-                user = getpass.getuser()
-            else:
-                user = six.text_type( getpass.getuser(), encoding='utf-8', errors='ignore' )
+            user = getpass.getuser()
             _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( user )
     return _current_authentication_.mechanism
 
@@ -112,16 +107,16 @@ class AuthenticationMechanism( Entity ):
     
     __tablename__ = 'authentication_mechanism'
     
-    authentication_type = Column( camelot.types.Enumeration(authentication_types),
-                                  nullable = False, 
-                                  index = True , 
-                                  default = authentication_types[0][1] )
+    authentication_type = Column(
+        camelot.types.Enumeration(authentication_types),
+        nullable = False, index = True , default = authentication_types[0][1]
+    )
     username = Column( types.Unicode( 40 ), nullable = False, index = True, unique = True )
     password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
     from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
     last_login = Column( types.DateTime() )
-    representation = Column( types.Text(), nullable=True )
+    representation = orm.deferred(Column(types.Unicode(), nullable=True))
 
     @classmethod
     def get_or_create( cls, username ):
@@ -152,7 +147,7 @@ class AuthenticationMechanism( Entity ):
         qbyte_array = QtCore.QByteArray()
         qbuffer = QtCore.QBuffer( qbyte_array )
         image.save( qbuffer, 'PNG' )
-        self.representation=base64.b64encode(qbyte_array.data())
+        self.representation=qbyte_array.toBase64().data().decode()
         
     def has_role( self, role_name ):
         """
@@ -171,7 +166,23 @@ class AuthenticationMechanism( Entity ):
     
     class Admin( EntityAdmin ):
         verbose_name = _('Authentication mechanism')
-        list_display = ['authentication_type', 'username', 'from_date', 'thru_date', 'last_login']
+        verbose_name_plural = _('Authentication mechanism')
+        list_display = [
+            'authentication_type', 'username', 'from_date', 'thru_date',
+            'last_login'
+        ]
+        form_display = forms.HBoxForm(
+            [list_display, ['representation']]
+        )
+        field_attributes = {
+            'representation': {
+                'delegate': delegates.DbImageDelegate,
+                'name': ' ',
+                'max_size': 100000,
+                'preview_width': 100,
+                'preview_height': 200,
+                'search_strategy': list_filter.NoSearch
+                }}
 
 class AuthenticationGroup( Entity ):
     """A group of users (defined by their :class:`AuthenticationMechanism`).

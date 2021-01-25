@@ -12,6 +12,8 @@ class DbImageEditor(CustomEditor):
     :param max_size: Size of allowed images in bytes, defaults to 50Kb
     """
 
+    image_filter = "Images (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm);; All files (*.*)"
+
     def __init__(self,
                  parent,
                  field_name='db_image',
@@ -151,9 +153,8 @@ class DbImageEditor(CustomEditor):
     
     @QtCore.qt_slot()
     def open(self):
-        image_filter = "Images (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm);; All files (*.*)"
         options = QtWidgets.QFileDialog.Options()
-        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "",image_filter, options=options)
+        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter, options=options)
         if file_name:
             statinfo = os.stat(file_name)
             image_size = statinfo.st_size         
