@@ -34,6 +34,7 @@ the `ListActionGuiContext`.
 
 import itertools
 
+from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
@@ -207,7 +208,7 @@ class OpenQmlTableView(OpenTableView):
         new_model = CollectionProxy(self.admin_route)
         new_model.setParent(quick_view)
         list(new_model.add_columns((fn for fn, _fa in self.columns)))
-        new_model.set_value(self.admin.get_proxy(self.value))
+        new_model.set_value(self.proxy)
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
@@ -219,22 +220,25 @@ class OpenQmlTableView(OpenTableView):
 
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
-        list_gui_context.admin = self.admin
+        list_gui_context.admin_route = self.admin_route
         list_gui_context.view = table
 
         qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for action in itertools.chain(
+        for i, action in enumerate(itertools.chain(
             self.top_toolbar_actions, self.list_actions, self.filters
-            ):
+            )):
             icon_name = None
             if action.icon is not None:
                 icon_name = action.icon._name
             qt_action = ActionAction(action, list_gui_context, table)
-            item_view._qml_item.addAction(
+            rendered_action = item_view._qml_item.addAction(
                 action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name,
                 qt_action,
             )
+            rendered_action.setObjectName('action_{}'.format(i))
+            list_gui_context.action_routes[action] = rendered_action.objectName()
+        UpdateActions().gui_run(list_gui_context)
 
 
 class ClearSelection(ActionStep):

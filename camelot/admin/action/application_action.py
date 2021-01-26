@@ -142,7 +142,18 @@ class ApplicationActionGuiContext( GuiContext ):
         new_context.admin_route = self.admin_route
         new_context.action_routes = dict(self.action_routes)
         return new_context
-        
+
+
+class UpdateActions(Action):
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        actions_state = dict()
+        for action in model_context.actions:
+            actions_state[action] = action.get_state(model_context)
+        yield action_steps.UpdateActionsState(actions_state)
+
+
 class SelectProfile( Action ):
     """Select the application profile to use
     
