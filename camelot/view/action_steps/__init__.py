@@ -29,7 +29,7 @@
 
 from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu,
+    MainMenu, UpdateActionsState,
 )
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -91,6 +91,7 @@ __all__ = [
     ToLastForm.__name__,
     ToNextForm.__name__,
     ToPreviousForm.__name__,
+    UpdateActionsState.__name__,
     UpdateEditor.__name__,
     UpdateObjects.__name__,
     UpdateProgress.__name__,
