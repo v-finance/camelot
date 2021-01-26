@@ -108,12 +108,16 @@ class AbstractActionWidget( object ):
         if state.modes:
             # self is not always a QWidget, so QMenu is created without
             # parent
-            menu = QtWidgets.QMenu()
+            menu = self.menu()
+            if menu is None:
+                menu = QtWidgets.QMenu(parent=self)
+                # setMenu does not transfer ownership
+                self.setMenu(menu)
+            menu.clear()
             for mode in state.modes:
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)
                 menu.addAction(mode_action)
-            self.setMenu( menu )
 
     # not named triggered to avoid confusion with standard Qt slot
     def action_triggered_by(self, sender):

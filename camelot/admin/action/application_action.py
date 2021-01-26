@@ -58,6 +58,10 @@ class ApplicationActionModelContext( ModelContext ):
    
         the application admin.
 
+    .. attribute:: actions
+
+        the actions in the same context
+
     .. attribute:: session
 
         the active session
@@ -66,6 +70,7 @@ class ApplicationActionModelContext( ModelContext ):
     def __init__( self ):
         super( ApplicationActionModelContext, self ).__init__()
         self.admin = None
+        self.actions = []
 
     # Cannot set session in constructor because constructor is called
     # inside the GUI thread
@@ -86,6 +91,12 @@ class ApplicationActionGuiContext( GuiContext ):
     .. attribute:: admin_route
     
         the route to the reference of the view on the server
+
+    .. attribute:: action_routes
+
+        a list with routes to actions in the current context, mapping the
+        route to the action to the route to the rendered action displaying the
+        action state.
     """
     
     model_context = ApplicationActionModelContext
@@ -94,6 +105,7 @@ class ApplicationActionGuiContext( GuiContext ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.workspace = None
         self.admin_route = None
+        self.action_routes = {}
     
     def get_progress_dialog(self):
         if self.workspace is not None and not is_deleted(self.workspace):
@@ -120,12 +132,15 @@ class ApplicationActionGuiContext( GuiContext ):
         # to keep the FieldAction working
         context = super( ApplicationActionGuiContext, self ).create_model_context()
         context.admin = AdminRoute.admin_for(self.admin_route) if self.admin_route is not None else None
+        # todo : action routes should be translated to actions here
+        context.actions = list(self.action_routes.keys())
         return context
         
     def copy(self, base_class=None):
         new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
         new_context.workspace = self.workspace
         new_context.admin_route = self.admin_route
+        new_context.action_routes = dict(self.action_routes)
         return new_context
         
 class SelectProfile( Action ):

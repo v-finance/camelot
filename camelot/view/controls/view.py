@@ -29,6 +29,8 @@
 
 """Functionality common to TableViews and FormViews"""
 
+import itertools
+
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
@@ -45,6 +47,8 @@ class AbstractView(QtWidgets.QWidget):
 
     header_widget = None
     """
+
+    _rendered_action_counter = itertools.count()
 
     title_format = ''
     header_widget = None
@@ -74,17 +78,30 @@ class AbstractView(QtWidgets.QWidget):
         self.icon_changed_signal.emit(new_icon)
 
 
+    @classmethod
+    def _register_rendered_action(cls, qobject):
+        next_rendered_action = cls._rendered_action_counter.__next__()
+        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
+        qobject.setObjectName(rendered_action_name)
+        return rendered_action_name
+
     def render_action(self, action, parent):
         if action.render_hint == RenderHint.TOOL_BUTTON:
-            return ActionToolbutton(action, self.gui_context, parent)
+            qobject = ActionToolbutton(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.COMBO_BOX:
-            return ComboBoxFilterWidget(action, self.gui_context, parent)
+            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.GROUP_BOX:
-            return GroupBoxFilterWidget(action, self.gui_context, parent)
+            qobject = GroupBoxFilterWidget(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.SEARCH_BUTTON:
-            return SimpleSearchControl(action, self.gui_context, parent)
+            qobject = SimpleSearchControl(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.PUSH_BUTTON:
-            return ActionPushButton(action, self.gui_context, parent)
+            qobject = ActionPushButton(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.LABEL:
-            return ActionLabel(action, self.gui_context, parent)
-        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+            qobject = ActionLabel(action, self.gui_context, parent)
+        else:
+            raise Exception('Unhandled render hint {} for {}'.format(
+                action.render_hint, type(action)
+            ))
+        rendered_action_name = self._register_rendered_action(qobject)
+        self.gui_context.action_routes[action] = rendered_action_name
+        return qobject
