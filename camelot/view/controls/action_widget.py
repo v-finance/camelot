@@ -99,18 +99,19 @@ class AbstractActionWidget( object ):
         gui_context.mode_name = mode
         self.action.gui_run( gui_context )
 
-    def set_menu( self, state ):
+    def set_menu(self, state, parent):
         """This method creates a menu for an object with as its menu items
         the different modes in which an action can be triggered.
 
         :param state: a `camelot.admin.action.State` object
+        :param parent: a parent for the menu
         """
         if state.modes:
             # self is not always a QWidget, so QMenu is created without
             # parent
             menu = self.menu()
             if menu is None:
-                menu = QtWidgets.QMenu(parent=self)
+                menu = QtWidgets.QMenu(parent=parent)
                 # setMenu does not transfer ownership
                 self.setMenu(menu)
             menu.clear()
@@ -161,7 +162,8 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
             self.setToolTip( '' )
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
-        self.set_menu( state )
+        # todo : determine the parent for the menu
+        self.set_menu(state, None)
 
 class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
@@ -192,7 +194,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
             self.setToolTip( six.text_type( state.tooltip ) )
         else:
             self.setToolTip( '' )            
-        self.set_menu( state )
+        self.set_menu(state, self)
 
     @QtCore.qt_slot()
     def action_triggered(self):
@@ -219,7 +221,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( six.text_type( state.tooltip ) )
         else:
             self.setToolTip( '' )
-        self.set_menu( state )
+        self.set_menu(state, self)
         if state.modes:
             self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
