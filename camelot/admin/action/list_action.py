@@ -976,7 +976,7 @@ class SetFilters(Action, AbstractModelFilter):
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Find')
     tooltip = _('Filter the data')
-    icon = FontIcon('search')
+    icon = FontIcon('filter')
 
     def get_field_name_choices(self, model_context):
         """
@@ -984,7 +984,7 @@ class SetFilters(Action, AbstractModelFilter):
            filter upon.
         """
         field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('search_strategy') and fa.get('from_string')]
+        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators')]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -993,39 +993,46 @@ class SetFilters(Action, AbstractModelFilter):
         from camelot.view import action_steps
 
         if model_context.mode_name == '__clear':
-            yield action_steps.SetFilter(self, {})
-            return
-
-        filter_value = model_context.proxy.get_filter(self) or {}
-        filter_field_name = model_context.mode_name
-        filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-
-        class FieldFilterAdmin(ObjectAdmin):
-            verbose_name = _('Filter')
-            list_display = ['value']
-            field_attributes = {
-                'value': {
-                    'name': filter_field_attributes['name'],
-                    'editable': True,
-                    'delegate': filter_field_attributes['delegate'],
-                    },
+            new_filter_value = {}
+        elif model_context.mode_name is None:
+            new_filter_value = {}
+        else:
+            filter_value = model_context.proxy.get_filter(self) or {}
+            filter_field_name = model_context.mode_name
+            filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
+            filter_value_attributes = {
+                'name': filter_field_attributes['name'],
+                'editable': True,
+                'delegate': filter_field_attributes['delegate'],
             }
+            # in case the original choices are non dynamic list, they
+            # can be reused
+            if isinstance(filter_field_attributes.get('choices'), list):
+                filter_value_attributes['choices'] = filter_field_attributes['choices']
+    
+            class FieldFilterAdmin(ObjectAdmin):
+                verbose_name = _('Filter')
+                list_display = ['value']
+                field_attributes = {
+                    'value': filter_value_attributes
+                }
+    
+            field_filter = FieldFilter(filter_value.get(filter_field_name))
+            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
+            change_filter = action_steps.ChangeObject(field_filter, filter_admin)
+            yield change_filter
+            new_filter_value = {filter_field_name: field_filter.value}
 
-        field_filter = FieldFilter(filter_value.get(filter_field_name))
-        filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
-        change_filter = action_steps.ChangeObject(field_filter, filter_admin)
-        yield change_filter
-        yield action_steps.SetFilter(
-            self, {filter_field_name: field_filter.value}
-        )
+        yield action_steps.SetFilter(self, new_filter_value)
+        new_state = self._get_state(model_context, new_filter_value)
+        yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
         return query.filter_by(**values)
 
-    def get_state(self, model_context):
+    def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
-        filter_value = model_context.proxy.get_filter(self) or {}
         if len(filter_value) is not None:
             state.notification = True
         for name, verbose_name in self.get_field_name_choices(model_context):
@@ -1037,6 +1044,10 @@ class SetFilters(Action, AbstractModelFilter):
             Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
         ])
         return state
+
+    def get_state(self, model_context):
+        filter_value = model_context.proxy.get_filter(self) or {}
+        return self._get_state(model_context, filter_value)
 
 
 class AddExistingObject( EditAction ):

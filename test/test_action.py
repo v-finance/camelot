@@ -498,6 +498,8 @@ class ListActionsCase(
         self.assertTrue(len(state.modes))
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
+        self.assertNotIn('note', mode_names)
+        set_filters.gui_run(self.gui_context)
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
