@@ -178,6 +178,7 @@ class FontIconEngine(QtGui.QIconEngine):
 class FontIcon:
 
     _name_to_code = None
+    _color = QtGui.QColor('#009999')
 
     def __init__(self, name, pixmap_size=32):
         """
@@ -189,31 +190,30 @@ class FontIcon:
         if FontIcon._name_to_code is None:
             FontIcon._load_name_to_code()
 
+        if self._name not in FontIcon._name_to_code:
+            raise Exception("Unknown font awesome icon: {}".format(self._name))
+
     @staticmethod
     def _load_name_to_code():
         content = read('awesome/name_to_code.json')
         FontIcon._name_to_code = json.loads(content)
 
     def getQIcon(self):
-        if self._name not in FontIcon._name_to_code:
-            raise Exception("Unknown font awesome icon: {}".format(self._name))
-
+        # this method should not raise an exception, as it is used in slots
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
         engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
-        engine.color = QtGui.QColor('#009999')
+        engine.color = self._color
 
         icon = QtGui.QIcon(engine)
         return icon
 
     def getQPixmap(self):
-        if self._name not in FontIcon._name_to_code:
-            raise Exception("Unknown font awesome icon: {}".format(self._name))
-
+        # this method should not raise an exception, as it is used in slots
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
         engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
-        engine.color = QtGui.QColor('#009999')
+        engine.color = self._color
 
         return engine.pixmap(QtCore.QSize(self._pixmap_size, self._pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
