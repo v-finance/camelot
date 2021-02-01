@@ -60,6 +60,12 @@ def object_thread( self ):
     """
     return self.thread() == QtCore.QThread.currentThread()
 
+def gui_thread():
+    """function to verify if a call is made in the GUI thread of the application
+    """
+    app = QtCore.QCoreApplication.instance()
+    return object_thread(app)
+
 class AbstractModelThread(QtCore.QThread):
     """Abstract implementation of a model thread class
     Thread in which the model runs, all requests to the model should be
@@ -119,7 +125,7 @@ class AbstractModelThread(QtCore.QThread):
         exception
         :param args: arguments with which the request function will be called        
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def busy(self):
         """Return True or False indicating wether either the model or the gui

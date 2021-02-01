@@ -29,9 +29,9 @@
 
 import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
-
-from camelot.core.utils import create_constant_function
+from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
+                         py_to_variant, variant_to_py)
+from ....core.item_model import ProxyDict, FieldAttributesRole
 from camelot.view.proxy import ValueLoading
 
 
@@ -116,6 +116,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
+    horizontal_align = Qt.AlignLeft | Qt.AlignVCenter
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
@@ -129,6 +130,31 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
+
+    @classmethod
+    def get_standard_item(cls, locale, value, field_attributes_values):
+        """
+        This method is used by the proxy to convert the value of a field
+        to the data for the standard item model.  The result of this call can be
+        used by the methods of the delegate.
+
+        :param locale: the `QLocale` to be used to display locale dependent values
+        :param value: the value of the field on the object
+        :param field_attributes_values: the values of the field attributes on the
+           object
+        
+        :return: a `QStandardItem` object
+        """
+        item = QtGui.QStandardItem()
+        item.setData(py_to_variant(value), Qt.EditRole)
+        item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
+        item.setData(py_to_variant(ProxyDict(field_attributes_values)),
+                     FieldAttributesRole)
+        item.setData(py_to_variant(field_attributes_values.get('tooltip')),
+                     Qt.ToolTipRole)
+        item.setData(py_to_variant(field_attributes_values.get('background_color')),
+                     Qt.BackgroundRole)
+        return item
 
     def createEditor(self, parent, option, index):
         """
@@ -161,10 +187,10 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
 
     def setEditorData(self, editor, index):
-        if not index.model():
+        if index.model() is None:
             return
         value = variant_to_py(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()
+        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ToolTipRole
         # but i wonder if we should make the detour by Qt.ToolTipRole or just
@@ -181,24 +207,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_value(value)
 
     def setModelData(self, editor, model, index):
-        if isinstance(model, QtGui.QStandardItemModel):
-            val = py_to_variant(editor.get_value())
-        else:
-            val = create_constant_function(editor.get_value())
-        model.setData(index, val)
-
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.model().data(index, Qt.DisplayRole))
-
-        if value in (None, ValueLoading):
-            value_str = ''
-        else:
-            value_str = six.text_type( value )
-
-        self.paint_text( painter, option, index, value_str )
-        painter.restore()
+        model.setData(index, py_to_variant(editor.get_value()))
 
     def paint_text(
         self,
@@ -208,7 +217,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         text,
         margin_left=0,
         margin_right=0,
-        horizontal_align=Qt.AlignLeft,
+        horizontal_align=None,
         vertical_align=Qt.AlignVCenter
     ):
         """Paint unicode text into the given rect defined by option, and fill the rect with
@@ -222,16 +231,14 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         if rect.height() > 2 * self._height:
             vertical_align = Qt.AlignTop
 
-        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
-        tooltip = None
+        field_attributes = variant_to_py(index.data(FieldAttributesRole))
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
             background_color = field_attributes.get( 'background_color', None )
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
-            tooltip = field_attributes.get( 'tooltip', None )
 
-        if( option.state & QtGui.QStyle.State_Selected ):
+        if( option.state & QtWidgets.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = option.palette.highlightedText().color()
         else:
@@ -239,9 +246,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
             painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.Base) )
             fontColor = option.palette.color(color_group, QtGui.QPalette.Text)
         
-        # The tooltip has to be drawn after the fillRect()'s of above.
-        if tooltip:
-            painter.drawPixmap(rect.x(), rect.y(), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
 
         if prefix:
             text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )
@@ -253,9 +257,5 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                          rect.y() + 2,
                          rect.width() - 4 - (margin_left + margin_right),
                          rect.height() - 4, # not -10, because the row might not be high enough for this
-                         vertical_align | horizontal_align,
+                         vertical_align | (horizontal_align or self.horizontal_align),
                          text)
-
-
-
-

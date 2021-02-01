@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,10 +31,10 @@ import os.path
 
 import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt
+from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -42,18 +42,18 @@ from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 class LocalFileEditor( CustomEditor ):
     """Widget for browsing local files and directories"""
 
-    browse_icon =  Icon( 'tango/16x16/places/folder-saved-search.png' )
+    browse_icon =  FontIcon('columns') # 'tango/16x16/places/folder-saved-search.png'
 
-    def __init__(self, 
-                 parent = None, 
-                 field_name = 'local_file', 
-                 directory = False, 
+    def __init__(self,
+                 parent = None,
+                 field_name = 'local_file',
+                 directory = False,
                  save_as = False,
                  file_filter = 'All files (*)',
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._directory = directory
         self._save_as = save_as
@@ -77,7 +77,7 @@ class LocalFileEditor( CustomEditor ):
         self.filename = DecoratedLineEdit(self)
         self.filename.editingFinished.connect( self.filename_editing_finished )
         self.setFocusProxy( self.filename )
-        
+
         layout.addWidget( self.filename )
         layout.addWidget( browse_button )
         self.setLayout( layout )
@@ -91,16 +91,16 @@ class LocalFileEditor( CustomEditor ):
     def browse_button_clicked(self):
         current_directory = os.path.dirname( self.get_value() )
         if self._directory:
-            value = QtGui.QFileDialog.getExistingDirectory( self,
-                                                            directory = current_directory )
+            value = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                               directory = current_directory)
         elif self._save_as:
-            value = QtGui.QFileDialog.getSaveFileName( self,
-                                                       filter = self._file_filter,
-                                                       directory = current_directory )
+            value = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                          filter = self._file_filter,
+                                                          directory = current_directory)
         else:
-            value = QtGui.QFileDialog.getOpenFileName( self,
-                                                       filter = self._file_filter,
-                                                       directory = current_directory )
+            value, _ = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                          directory = current_directory,
+                                                          filter = self._file_filter)
         if value!='':
             value = os.path.abspath( six.text_type( value ) )
             self.filename.setText( value )
@@ -118,7 +118,7 @@ class LocalFileEditor( CustomEditor ):
 
     def get_value(self):
         return CustomEditor.get_value(self) or six.text_type( self.filename.text() )
-    
+
     value = QtCore.qt_property( str, get_value, set_value )
 
     def set_field_attributes( self, **kwargs):

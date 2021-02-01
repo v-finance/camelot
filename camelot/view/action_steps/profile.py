@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,7 +32,7 @@ import pkgutil
 
 import six
 
-from ...core.qt import QtCore, QtGui, QtWidgets, QtNetwork, Qt
+from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -65,7 +65,7 @@ allow all languages
         self.profiles = dict((profile.name,profile) for profile in profiles)
 
         self.setWindowTitle(_('Profile Wizard'))
-        self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
+        self.set_banner_logo_pixmap(art.FontIcon('cog').getQPixmap()) # 'tango/22x22/categories/preferences-system.png'
         self.set_banner_title(_('Create New/Edit Profile'))
         self.set_banner_subtitle(_('Please enter the database settings'))
         self.banner_widget().setStyleSheet('background-color: white;')
@@ -112,7 +112,7 @@ allow all languages
             'is not writable.'))
         self.not_writable_media_path_label.setStyleSheet('color: red')
 
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
 
         layout.addWidget(self.profile_label, 0, 0, Qt.AlignRight)
         layout.addWidget(self.dialect_label, 1, 0, Qt.AlignRight)
@@ -346,7 +346,7 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = six.text_type(QtGui.QFileDialog.getExistingDirectory(self, caption))
+        selected = six.text_type(QtWidgets.QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return

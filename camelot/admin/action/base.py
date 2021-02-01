@@ -27,9 +27,10 @@
 #
 #  ============================================================================
 
+from enum import Enum
 import logging
 
-from ...core.qt import QtWidgets
+from ...core.qt import QtWidgets, QtGui, Qt
 
 import six
 
@@ -56,10 +57,6 @@ references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
 
-.. attribute:: progress_dialog
-
-    an instance of :class:`QtWidgets.QProgressDialog` or :keyword:`None`
-    
 .. attribute:: mode_name
 
     the name of the mode in which the action was triggered
@@ -73,8 +70,24 @@ strictly to the :class:`ModelContext`
     model_context = ModelContext
     
     def __init__( self ):
-        self.progress_dialog = None
         self.mode_name = None
+
+    def get_progress_dialog(self):
+        """
+        :return: an instance of :class:`QtWidgets.QProgressDialog`
+                 or :keyword:`None`
+        """
+        from camelot.view.controls.progress_dialog import ProgressDialog
+        window = self.get_window()
+        if window is not None:
+            progress_dialog = window.findChild(
+                QtWidgets.QProgressDialog, 'application_progress',
+                Qt.FindDirectChildrenOnly
+            )
+            if progress_dialog is None:
+                progress_dialog = ProgressDialog(parent=window)
+                progress_dialog.setObjectName('application_progress')
+            return progress_dialog
 
     def get_window(self):
         """
@@ -107,10 +120,9 @@ strictly to the :class:`ModelContext`
             if the new context should be of the same type as the copied context.
         """
         new_context = (base_class or self.__class__)()
-        new_context.progress_dialog = self.progress_dialog
         new_context.mode_name = self.mode_name
         return new_context
-                    
+
 class State( object ):
     """A state represents the appearance and behavior of the widget that
 triggers the action.  When the objects in the model change, the 
@@ -205,7 +217,11 @@ the default mode.
         action = QtWidgets.QAction( parent )
         action.setData( self.name )
         action.setText( six.text_type(self.verbose_name) )
-        action.setIconVisibleInMenu( False )
+        if self.icon is None:
+            action.setIconVisibleInMenu(False)
+        else:
+            action.setIcon(self.icon.getQIcon())
+            action.setIconVisibleInMenu(True)
         return action
         
 class ActionStep( object ):
@@ -267,6 +283,39 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         yield
 
+class ProgressLevel(object):
+
+    def __init__(self, gui_context, verbose_name):
+        self.verbose_name = verbose_name
+        self.gui_context = gui_context
+        self.progress_dialog = None
+
+    def __enter__(self):
+        self.progress_dialog = self.gui_context.get_progress_dialog()
+        if self.progress_dialog is not None:
+            self.progress_dialog.push_level(self.verbose_name)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.progress_dialog is not None:
+            self.progress_dialog.pop_level()
+        self.progress_dialog = None
+        return False
+
+
+class RenderHint(Enum):
+    """
+    How an action wants to be rendered in the ui
+    """
+
+    PUSH_BUTTON = 'push_button'
+    TOOL_BUTTON = 'tool_button'
+    SEARCH_BUTTON = 'search_button'
+    GROUP_BOX = 'group_box'
+    COMBO_BOX = 'combo_box'
+    LABEL = 'label'
+
+
 class Action( ActionStep ):
     """An action has a set of attributes that define its appearance in the
 GUI.  
@@ -275,6 +324,11 @@ GUI.
 
     The internal name of the action, this can be used to store preferences
     concerning the action in the settings
+
+.. attribute:: render_hint
+
+    a :class:`RenderHint` instance indicating the preffered way to render
+    this action in the user interface
 
 These attributes are used at the default values for the creation of a
 :class:`camelot.admin.action.base.State` object that defines the appearance
@@ -295,7 +349,7 @@ method.
 .. attribute:: tooltip
 
     The tooltip as displayed to the user, this should be of type 
-    :class:`camelot.core.utils.ugettext_lazy`
+    :class:`camelot.core.utils.ugettext_lazy` or :class:`QtGui.QKeySequence`
 
 .. attribute:: modes
 
@@ -321,9 +375,14 @@ values for these attributes can reimplement the getter methods.
 An action has two important methods that can be reimplemented.  These are 
 :meth:`model_run` for manipulations of the model and :meth:`gui_run` for
 direct manipulations of the user interface without a need to access the model.
+
+To prevent an action object from being garbage collected, it can be registered
+with a view.
+
         """
-    
+
     name = u'action'
+    render_hint = RenderHint.PUSH_BUTTON
     verbose_name = None
     icon = None
     tooltip = None
@@ -343,27 +402,30 @@ direct manipulations of the user interface without a need to access the model.
         :attr:`shortcut` attribute
         """
         return self.shortcut
-        
-    def render( self, gui_context, parent ):
-        """Create a widget to trigger the action.  Depending on the type of
-        gui_context and parent, a different widget type might be returned.
-        
-        :param gui_context: the context available in the *GUI thread*, a
-            subclass of :class:`camelot.action.GuiContext`
-        :param parent: the parent :class:`QtWidgets.QWidget`
-        :return: a :class:`QtWidgets.QWidget` which when triggered
-            will execute the :meth:`gui_run` method.
+
+    def get_tooltip( self ):
         """
-        from camelot.view.controls.action_widget import ( ActionLabel, 
-                                                          ActionPushButton,
-                                                          ActionAction )
-        from camelot.view.workspace import DesktopBackground
-        if isinstance( parent, DesktopBackground ):
-            return ActionLabel( self, gui_context, parent )
-        if isinstance( parent, (QtWidgets.QToolBar, QtWidgets.QMenu) ):
-            return ActionAction( self, gui_context, parent )
-        return ActionPushButton( self, gui_context, parent )
-        
+        :return: a `str` with the tooltip to display, by default this is
+            a combination of the :attr:`tooltip` and the :attr:`shortcut`
+            attribute
+        """
+        tooltip = None
+
+        if self.tooltip is not None:
+            tooltip = six.text_type(self.tooltip)
+
+        if isinstance(self.shortcut, QtGui.QKeySequence):
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+        elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
+            for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                break
+        elif self.shortcut is not None:
+            tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)
+
+        return tooltip
+
+
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it
         executes the :meth:`model_run` in the Model thread.
@@ -372,23 +434,11 @@ direct manipulations of the user interface without a need to access the model.
             of type :class:`GuiContext`
             
         """
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        progress_dialog = None
         # only create a progress dialog if there is none yet, or if the
         # existing dialog was canceled
         LOGGER.debug( 'action gui run started' )
-        if gui_context.progress_dialog and gui_context.progress_dialog.wasCanceled():
-            gui_context.progress_dialog = None
-        if gui_context.progress_dialog == None:
-            LOGGER.debug( 'create new progress dialog' )
-            progress_dialog = ProgressDialog( six.text_type( self.verbose_name ) )
-            gui_context.progress_dialog = progress_dialog
-            #progress_dialog.show()
-        super(Action, self).gui_run( gui_context )
-        # only close the progress dialog if it was created here
-        if progress_dialog != None:
-            progress_dialog.close()
-            gui_context.progress_dialog = None
+        with ProgressLevel(gui_context, str(self.verbose_name)):
+            super(Action, self).gui_run(gui_context)
         LOGGER.debug( 'gui run finished' )
         
     def get_state( self, model_context ):
@@ -402,7 +452,7 @@ direct manipulations of the user interface without a need to access the model.
         state = State()
         state.verbose_name = self.verbose_name
         state.icon = self.icon
-        state.tooltip = self.tooltip
+        state.tooltip = self.get_tooltip()
         state.modes = self.modes
         return state
 

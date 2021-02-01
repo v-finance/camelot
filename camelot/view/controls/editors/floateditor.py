@@ -31,11 +31,8 @@ import six
 
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
-from .customeditor import (CustomEditor, set_background_color_palette,
-                           draw_tooltip_visualization)
-from ...art import Icon
-from ...utils import locale
-from ....core import constants
+from .customeditor import CustomEditor, set_background_color_palette
+from ...art import FontIcon
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -65,16 +62,21 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             if self._option and self._option.version != 5:
                 key_event.ignore()
                 return
-        decimal_point = QtCore.QLocale.system().decimalPoint()
+        decimal_point = QtCore.QLocale().decimalPoint()
         # Make sure that the Period key on the numpad is *always* 
         # represented by the systems locale decimal separator to 
         # facilitate user input.
-        if key_event.key() == Qt.Key_Period and decimal_point.unicode() != Qt.Key_Period:
+        decimal_point_in_unicode = ord(decimal_point)
+        decimal_point_string = decimal_point
+
+        if key_event.key() == Qt.Key_Period and decimal_point_in_unicode != Qt.Key_Period:
             # Dynamically build a 'new' event that holds this locales decimal separator
-            new_key_event = QtGui.QKeyEvent( key_event.type(),
-                                             decimal_point.unicode(),
-                                             key_event.modifiers(),
-                                             QtCore.QString(decimal_point) )
+            new_key_event = QtGui.QKeyEvent(
+                key_event.type(),
+                decimal_point_in_unicode,
+                key_event.modifiers(),
+                decimal_point_string
+            )
             key_event.accept() # Block 'old' event
             QtWidgets.QApplication.sendEvent(self, new_key_event)
         # Propagate all other events to the super class
@@ -84,11 +86,8 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     def textFromValue(self, value):
         if value==self.minimum():
             return ''
-        text = six.text_type( locale().toString( float(value),
-                                                 'f', 
-                                                 self.decimals() ) )
-        return text
-    
+        return super(CustomDoubleSpinBox, self).textFromValue(value)
+
     def stripped(self, qinput):
         """Strip a string from its prefix, suffix and spaces
         
@@ -128,11 +127,6 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         if len(self.stripped(text))==0:
             return self.minimum()
         return super(CustomDoubleSpinBox, self).valueFromText(text)
-        
-    def paintEvent(self, event):
-        super(CustomDoubleSpinBox, self).paintEvent(event)
-        if self.toolTip():
-            draw_tooltip_visualization(self)
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator button.  
@@ -140,20 +134,19 @@ class FloatEditor(CustomEditor):
     attribute.
     """
 
-    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent,
-                       minimum = constants.camelot_minfloat,
-                       maximum = constants.camelot_maxfloat,
                        calculator = True,
                        decimal = False, 
                        option = None,
                        field_name = 'float',
+                       actions = [],
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
         action = QtWidgets.QAction(self)
@@ -162,8 +155,6 @@ class FloatEditor(CustomEditor):
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
         
-
-        spinBox.setRange(minimum-1, maximum)
         spinBox.setDecimals(2)
         spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
@@ -190,20 +181,31 @@ class FloatEditor(CustomEditor):
         layout.setSpacing(0)
         layout.addWidget(spinBox)
         layout.addWidget(self.calculatorButton)
+        self.add_actions(actions, layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 
     def set_field_attributes(self, **kwargs):
         super(FloatEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
+        editable = kwargs.get('editable', False)
+        self.calculatorButton.setVisible(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        focus_policy = kwargs.get('focus_policy')
+        if focus_policy is not None:
+            spinBox.setFocusPolicy(focus_policy)
         spinBox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
         spinBox.setPrefix(six.text_type(kwargs.get('prefix', '')))
         spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
+        spinBox.setReadOnly(not editable)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
         precision = kwargs.get('precision', 2)
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
+        minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
+        if None not in (minimum, maximum):
+            spinBox.setRange(minimum-1, maximum)
+        self.update_actions()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -212,6 +214,7 @@ class FloatEditor(CustomEditor):
             spinBox.setValue(spinBox.minimum())
         else:
             spinBox.setValue(float(value))
+        self.update_actions()
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
@@ -227,16 +230,6 @@ class FloatEditor(CustomEditor):
             import decimal
             return decimal.Decimal('%.*f' % (spinBox.decimals(), value))
         return value
-
-    def set_enabled(self, editable=True):
-        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setReadOnly(not editable)
-        spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable and self._calculator)
-        if editable:
-            spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
-        else:
-            spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
@@ -268,5 +261,6 @@ class FloatEditor(CustomEditor):
         set_background_color_palette(spinBox.lineEdit(), background_color)
         set_background_color_palette(spinBox, background_color)
 
+    value = property(fget=get_value,fset=set_value)
 
 

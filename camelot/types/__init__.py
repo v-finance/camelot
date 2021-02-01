@@ -36,7 +36,6 @@ Those fields are stored in the :mod:`camelot.types` module.
 """
 import collections
 import logging
-import string
 
 logger = logging.getLogger('camelot.types')
 
@@ -45,7 +44,7 @@ import six
 from sqlalchemy import types
 
 from camelot.core.orm import options
-from camelot.core.files.storage import StoredFile, StoredImage, Storage
+from camelot.core.files.storage import StoredFile, Storage
 
 """
 The `__repr__` method of the types is implemented to be able to use Alembic.
@@ -130,106 +129,6 @@ class VirtualAddress(types.TypeDecorator):
     def __repr__(self):
         return 'VirtualAddress()'
 
-class _RegexpTranslator(object):
-    
-    def __getitem__(self, ch):
-        if chr(ch) in '<>!':
-            return None
-        return ch
-
-if six.PY3:
-    _translator = _RegexpTranslator()
-else:
-    _translator = string.maketrans('', '')
-
-class Code(types.TypeDecorator):
-    """SQLAlchemy column type to store codes.  Where a code is a list of strings
-    on which a regular expression can be enforced.
-  
-    This column type accepts and returns a list of strings and stores them as a
-    string joined with points.
-  
-    eg: ``['08', 'AB']`` is stored as ``08.AB``
-    
-    .. image:: /_static/editors/CodeEditor_editable.png
-    
-    :param parts: a list of input masks specifying the mask for each part,
-        eg ``['99', 'AA']``. For valid input masks, see the documentation of
-        :class:`QtWidgets.QLineEdit`.
-        
-    :param separator: a string that will be used to separate the different parts
-        in the GUI and in the database
-        
-    :param length: the size of the underlying string field in the database, if no
-        length is specified, it will be calculated  from the parts
-    """
-    
-    impl = types.Unicode
-       
-    @property
-    def python_type(self):
-        return tuple
-    
-    def __init__(self, parts=['AB'], separator=u'.', length = None, **kwargs):
-        self.parts = parts
-        self.separator = separator
-        max_length = sum(len(part.translate(_translator)) for part in parts) + len(parts)*len(self.separator)
-        types.TypeDecorator.__init__( self, length = length or max_length, **kwargs )
-        
-    def bind_processor(self, dialect):
-  
-        impl_processor = self.impl.bind_processor(dialect)
-        if not impl_processor:
-            impl_processor = lambda x:x
-          
-        def processor(value):
-            if value is not None:
-                value = self.separator.join(value)
-            return impl_processor(value)
-          
-        return processor
-    
-    def result_processor(self, dialect, coltype=None):
-      
-        impl_processor = self.impl.result_processor(dialect, coltype)
-        if not impl_processor:
-            impl_processor = lambda x:x
-      
-        def processor(value):
-    
-            if value:
-                return value.split(self.separator)
-            return ['' for _p in self.parts]
-            
-        return processor
-
-    def __repr__(self):
-        return 'Code()'
-
-class IPAddress(Code):
-    
-    def __init__(self, **kwargs):
-        super(IPAddress, self).__init__(parts=['900','900','900','900'])
-
-    def __repr__(self):
-        return 'IPAddress()'
-
-class Rating(types.TypeDecorator):
-    """The rating field is an integer field that is visualized as a number of stars that
-  can be selected::
-  
-    class Movie( Entity ):
-      title = Column( Unicode(60), nullable = False )
-      rating = Column( camelot.types.Rating() )
-      
-  .. image:: /_static/editors/StarEditor_editable.png
-"""
-    
-    impl = types.Integer
-       
-    @property
-    def python_type(self):
-        return self.impl.python_type
     
 class RichText(types.TypeDecorator):
     """RichText fields are unlimited text fields which contain html. The html will be
@@ -269,71 +168,6 @@ used too much memory, so now it's implemented using QT.
 
     def __repr__(self):
         return 'Language()'
-
-color = collections.namedtuple('color',
-                               ('red', 'green', 'blue', 'alpha'))
-
-class Color(types.TypeDecorator):
-    """The Color field returns and accepts tuples of the form (r,g,b,a) where
-r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
-string of the form AARRGGBB into the database, where AA is the transparency, 
-RR is red, GG is green BB is blue::
-  
-    class MovieType( Entity ):
-        color = Column( camelot.types.Color() )
-
-.. image:: /_static/editors/ColorEditor_editable.png  
-  
-The colors are stored in the database as strings.
-  
-Use::
-    
-    QColor(*color) 
-    
-to convert a color tuple to a QColor.
-    """
-    
-    impl = types.Unicode
-    
-    def __init__(self):
-        types.TypeDecorator.__init__(self, length=8)
-        
-    def bind_processor(self, dialect):
-  
-        impl_processor = self.impl.bind_processor(dialect)
-        if not impl_processor:
-            impl_processor = lambda x:x
-          
-        def processor(value):
-            if value is not None:
-                assert len(value) == 4
-                for i in range(4):
-                    assert value[i] >= 0
-                    assert value[i] <= 255
-                return '%02X%02X%02X%02X'%(value[3], value[0], value[1], value[2])
-            return impl_processor(value)
-          
-        return processor
-      
-    def result_processor(self, dialect, coltype=None):
-      
-        impl_processor = self.impl.result_processor(dialect, coltype)
-        if not impl_processor:
-            impl_processor = lambda x:x
-            
-        def processor(value):
-    
-            if value:
-                return color(int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
-              
-        return processor
-    
-    @property
-    def python_type(self):
-        return color
-
-    def __repr__(self):
-        return 'Color()'
 
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
@@ -489,23 +323,3 @@ class File(types.TypeDecorator):
 
     def __repr__(self):
         return 'File()'
-
-class Image(File):
-    """Sqlalchemy column type to store images
-    
-  This column type accepts and returns a StoredImage, and stores them in the directory
-  specified by settings.CAMELOT_MEDIA_ROOT.  The name of the file is stored as a string in
-  the database.
-  
-  The Image field type provides the same functionallity as the File field type, but
-  the files stored should be images.
-  
-  .. image:: /_static/editors/ImageEditor_editable.png
-    """
-  
-    stored_file_implementation = StoredImage
-
-    def __repr__(self):
-        return 'Image()'
-
-

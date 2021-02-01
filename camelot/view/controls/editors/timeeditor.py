@@ -31,7 +31,7 @@ import datetime
 import six
 
 from ....core.qt import QtWidgets
-from .customeditor import AbstractCustomEditor, set_background_color_palette, draw_tooltip_visualization
+from .customeditor import AbstractCustomEditor, set_background_color_palette
 from camelot.core import constants
 
 class TimeEditor(QtWidgets.QTimeEdit, AbstractCustomEditor):
@@ -69,11 +69,6 @@ class TimeEditor(QtWidgets.QTimeEdit, AbstractCustomEditor):
     def set_enabled(self, editable=True):
         self.setEnabled(editable)
 
-    def paintEvent(self, event):
-        super(TimeEditor, self).paintEvent( event )
-        if self.toolTip():
-            draw_tooltip_visualization(self)
-        
     def set_background_color( self, background_color ):
         set_background_color_palette( self.lineEdit(), background_color )
 

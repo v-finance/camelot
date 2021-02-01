@@ -30,10 +30,9 @@ import datetime
 
 import six
 
-from ....core.qt import variant_to_py, Qt, QtCore
+from ....core.qt import variant_to_py, Qt, QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
 @six.add_metaclass(DocumentationMetaclass)
@@ -64,7 +63,7 @@ class TimeDelegate(CustomDelegate):
         t = datetime.time(hour=value.hour(),
                           minute=value.minute(),
                           second=value.second())
-        model.setData(index, create_constant_function(t))
+        model.setData(index, py_to_variant(t))
 
 
 

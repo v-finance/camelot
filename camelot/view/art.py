@@ -30,10 +30,11 @@
 """Manages icons and artworks"""
 
 import os
+import json
 import logging
 logger = logging.getLogger('camelot.view.art')
 
-from ..core.qt import QtGui
+from ..core.qt import QtCore, QtGui, QtWidgets
 
 def file_(name):
     from camelot.core.resources import resource_filename
@@ -64,7 +65,7 @@ class Pixmap(object):
         else:
             self._module_name = module.__name__
 
-    def __unicode__(self):
+    def __str__(self):
         return self._path
 
     def __repr__(self):
@@ -105,7 +106,8 @@ class Icon(Pixmap):
     def getQIcon(self):
         """QPixmaps can only be used in the gui thread"""
         return QtGui.QIcon(self.getQPixmap())
-    
+
+
 class IconFromImage(object):
     """:class:`QtGui.QImage` based icon
     
@@ -117,6 +119,104 @@ class IconFromImage(object):
         
     def getQIcon(self):
         return QtGui.QIcon(QtGui.QPixmap.fromImage(self.image))
+
+
+class FontIconEngine(QtGui.QIconEngine):
+
+    def __init__(self):
+        super().__init__()
+        self.font_family = 'Font Awesome 5 Free'
+        self.code = 'X'
+        self.color = QtGui.QColor()
+
+    def paint(self, painter, rect, mode, state):
+        """
+        :param painter: a :class:`QtGui.QPainter` object
+        :param rect: a :class:`QtCore.QRect` object
+        :param mode: a :class:`QtGui.QIcon.Mode` object
+        :param state: a :class:`QtGui.QIcon.State` object
+        """
+        font = QtGui.QFont(self.font_family)
+        font.setStyleStrategy(QtGui.QFont.NoFontMerging)
+        drawSize = QtCore.qRound(rect.height() * 0.8)
+        font.setPixelSize(drawSize)
+
+        penColor = QtGui.QColor()
+        if not self.color.isValid():
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Normal, QtGui.QPalette.ButtonText)
+        else:
+            penColor = self.color
+
+        if mode == QtGui.QIcon.Disabled:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText)
+
+        if mode == QtGui.QIcon.Selected:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Active, QtGui.QPalette.ButtonText)
+
+        painter.save()
+        painter.setPen(QtGui.QPen(penColor))
+        painter.setFont(font)
+        painter.drawText(rect, QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, self.code)
+        painter.restore()
+
+    def pixmap(self, size, mode, state):
+        """
+        :param size: a :class:`QtCore.QSize` object
+        :param mode: a :class:`QtGui.QIcon.Mode` object
+        :param state: a :class:`QtGui.QIcon.State` object
+        """
+        pix = QtGui.QPixmap(size)
+        pix.fill(QtCore.Qt.transparent)
+
+        painter = QtGui.QPainter(pix)
+        self.paint(painter, QtCore.QRect(QtCore.QPoint(0, 0), size), mode, state)
+        painter.end()
+
+        return pix
+
+
+class FontIcon:
+
+    _name_to_code = None
+    _color = QtGui.QColor('#009999')
+
+    def __init__(self, name, pixmap_size=32):
+        """
+        The pixmap size is only used when calling getQPixmap().
+        """
+        self._name = name
+        self._pixmap_size = pixmap_size
+
+        if FontIcon._name_to_code is None:
+            FontIcon._load_name_to_code()
+
+        if self._name not in FontIcon._name_to_code:
+            raise Exception("Unknown font awesome icon: {}".format(self._name))
+
+    @staticmethod
+    def _load_name_to_code():
+        content = read('awesome/name_to_code.json')
+        FontIcon._name_to_code = json.loads(content)
+
+    def getQIcon(self):
+        # this method should not raise an exception, as it is used in slots
+        engine = FontIconEngine()
+        engine.font_family = 'Font Awesome 5 Free'
+        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
+        engine.color = self._color
+
+        icon = QtGui.QIcon(engine)
+        return icon
+
+    def getQPixmap(self):
+        # this method should not raise an exception, as it is used in slots
+        engine = FontIconEngine()
+        engine.font_family = 'Font Awesome 5 Free'
+        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
+        engine.color = self._color
+
+        return engine.pixmap(QtCore.QSize(self._pixmap_size, self._pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
 
 class ColorScheme(object):
     """The default color scheme for camelot, based on the Tango icon set

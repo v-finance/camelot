@@ -29,53 +29,47 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt, QtCore
+from ....core.item_model import PreviewRole
+from ....core.qt import py_to_variant, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
-from camelot.view.proxy import ValueLoading
 
 @six.add_metaclass(DocumentationMetaclass)
 class FloatDelegate(CustomDelegate):
     """Custom delegate for float values"""
 
     editor = editors.FloatEditor
+    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
 
     def __init__( self,
-                 minimum=constants.camelot_minfloat,
-                 maximum=constants.camelot_maxfloat,
                  parent=None,
-                 unicode_format=None,
                  **kwargs ):
         super(FloatDelegate, self).__init__(parent=parent,
-                                            minimum=minimum, maximum=maximum,
                                             **kwargs )
-        self.minimum = minimum
-        self.maximum = maximum
-        self.unicode_format = unicode_format
-        self._locale = QtCore.QLocale()
 
-    def paint( self, painter, option, index ):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
-
-        if field_attributes == ValueLoading:
-            precision = 2
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
+        fa_values.update({
+            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
+            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+        })
+        item = super(FloatDelegate, cls).get_standard_item(locale, value, fa_values)
+        precision = fa_values.get('precision', 2)
+        if value is not None:
+            value_str = six.text_type(
+                locale.toString(float(value), 'f', precision)
+            )
+            if fa_values.get('suffix') is not None:
+                value_str = value_str + ' ' + fa_values.get('suffix')
+            if fa_values.get('prefix') is not None:
+                value_str = fa_values.get('prefix') + ' ' + value_str
+            item.setData(py_to_variant(value_str), PreviewRole)
         else:
-            precision = field_attributes.get('precision', 2)
-            
-        if value in (None, ValueLoading):
-            value_str = ''
-        elif self.unicode_format:
-            value_str = self.unicode_format(value)
-        else:
-            value_str = six.text_type( self._locale.toString( float(value), 
-                                                        'f', 
-                                                        precision ) )
+            item.setData(py_to_variant(six.text_type()), PreviewRole)
+        return item
 
-        self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
-        painter.restore()
+
 
 

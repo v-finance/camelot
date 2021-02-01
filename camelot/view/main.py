@@ -32,9 +32,6 @@
 import functools
 import sys
 
-from camelot.art import resources # Required for tooltip visualization
-resources.__name__ # Dodge PyFlakes' attack
-
 from ..core.qt import QtCore, QtWidgets
 from ..admin.action.application import Application
 from ..admin.action.application_action import ApplicationActionGuiContext

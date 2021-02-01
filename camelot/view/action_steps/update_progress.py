@@ -27,15 +27,19 @@
 #
 #  ============================================================================
 
-import six
+import json
 
+from camelot.core.qt import QtCore, QtWidgets
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
+from camelot.core.serializable import Serializable
 
-_detail_format = u'Update Progress {0:03d}/{1:03d} {2._text} {2._detail}'
+import io
 
-@six.python_2_unicode_compatible
-class UpdateProgress( ActionStep ):
+_detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
+
+
+class UpdateProgress(ActionStep, Serializable):
     """
 Inform the user about the progress the application is making
 while executing an action.  This ActionStep is not blocking.  So it can
@@ -60,56 +64,78 @@ updated.
     useful when there are a lot of details displayed.
 """
     
-    def __init__( self,
-                  value=None, 
-                  maximum=None, 
-                  text=None, 
-                  detail=None, 
-                  clear_details=False,
-                  title=None,
-                  blocking=False,
-                  enlarge=False):
+    def __init__(self, value=None, maximum=None, text=None, detail=None, 
+                 clear_details=False, title=None, blocking=False, enlarge=False
+                 ):
         super(UpdateProgress, self).__init__()
-        self._value = value
-        self._maximum = maximum
-        self._text = text
-        self._detail = detail
-        self._clear_details = clear_details
-        self._title = title
+        self.value = value
+        self.maximum = maximum
+        self.text = str(text) if (text is not None) else None
+        self.detail = str(detail) if (detail is not None) else None
+        self.clear_details = clear_details
+        self.title = str(title) if (title is not None) else None
         self.blocking = blocking
         self.enlarge = enlarge
-        
-    def __str__( self ):
-        return _detail_format.format(self._value or 0, self._maximum or 0, self)
-    
-    def gui_run( self, gui_context ):
+
+    def __str__(self):
+        return _detail_format.format(self.value or 0, self.maximum or 0, self)
+
+    def write_object(self, stream):
+        stream.write(json.dumps({
+            'blocking': self.blocking,
+            'value': self.value,
+            'maximum': self.maximum,
+            'text': self.text,
+            'detail': self.detail,
+            'clear_details': self.clear_details,
+            'title': self.title,
+            'enlarge': self.enlarge,
+            'cancelable': self.cancelable
+        }).encode())
+
+    def gui_run(self, gui_context):
         """This method will update the progress dialog, if such dialog exists
         within the GuiContext
         
         :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
         """
-        progress_dialog = gui_context.progress_dialog
+        progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
-            if self._maximum is not None:
-                progress_dialog.setMaximum( self._maximum )
-            if self._value is not None:
-                progress_dialog.setValue( self._value )
-            progress_dialog.set_cancel_hidden(not self.cancelable)
-            if self._text is not None:
-                progress_dialog.setLabelText( six.text_type(self._text) )
-            if self._clear_details is True:
-                progress_dialog.clear_details()
-            if self._detail is not None:
-                progress_dialog.add_detail( self._detail )
-            if self._title is not None:
-                progress_dialog.title = self._title
-            if self.enlarge:
-                progress_dialog.enlarge()
-            if self.blocking:
-                progress_dialog.set_ok_hidden( False )
-                progress_dialog.exec_()
-                progress_dialog.set_ok_hidden( True )
-            if progress_dialog.wasCanceled():
-                progress_dialog.reset()
-                raise CancelRequest()
-
+            if isinstance(progress_dialog, QtWidgets.QProgressDialog):
+                # QProgressDialog
+                if self.maximum is not None:
+                    progress_dialog.setMaximum(self.maximum)
+                if self.value is not None:
+                    progress_dialog.setValue(self.value)
+                progress_dialog.set_cancel_hidden(not self.cancelable)
+                if self.text is not None:
+                    progress_dialog.setLabelText(self.text)
+                if self.clear_details is True:
+                    progress_dialog.clear_details()
+                if self.detail is not None:
+                    progress_dialog.add_detail(self.detail)
+                if self.title is not None:
+                    progress_dialog.title = self.title
+                if self.enlarge:
+                    progress_dialog.enlarge()
+                if self.blocking:
+                    progress_dialog.set_ok_hidden(False)
+                    progress_dialog.set_cancel_hidden(True)
+                    progress_dialog.exec_()
+                    progress_dialog.set_ok_hidden(True)
+                    progress_dialog.set_cancel_hidden(False)
+                if progress_dialog.wasCanceled():
+                    progress_dialog.reset()
+                    raise CancelRequest()
+            else:
+                # C++ QmlProgressDialog
+                stream = io.BytesIO()
+                self.write_object(stream)
+                obj = QtCore.QByteArray(stream.getvalue())
+                result_json = progress_dialog.render([], obj)
+                # process returned json
+                result = json.loads(result_json.data())
+                if result.get('was_canceled', False):
+                    # reset progress dialog
+                    progress_dialog.render([], QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
+                    raise CancelRequest()

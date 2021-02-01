@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -33,46 +33,53 @@ import logging
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
+from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
+                        variant_to_py)
 
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.view.model_thread import post
+from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view import register
 from .delegates.delegatemanager import DelegateManager
 
-class FormEditors( object ):
-    """A class that holds the editors used on a form
-    """
-    
+class FormEditors(QtCore.QObject):
+
     option = None
     bold_font = None
-    
-    def __init__( self, columns, widget_mapper, admin ):
-        if self.option == None:
-            self.option = QtGui.QStyleOptionViewItem()
+
+    def __init__(self, parent, columns, admin):
+        """
+        A class that holds the editors used on a form
+
+        :parent: should be a QObject which has a widget mapper as its child
+
+        """
+        QtCore.QObject.__init__(self, parent)
+        assert isinstance(parent, QtCore.QObject)
+        assert parent.findChild(QtWidgets.QDataWidgetMapper)
+        if self.option is None:
+            self.option = QtWidgets.QStyleOptionViewItem()
             # set version to 5 to indicate the widget will appear on a
             # a form view and not on a table view
             self.option.version = 5
-            
+
         self._admin = admin
-        self._widget_mapper = widget_mapper
         self._field_attributes = dict()
         self._index = dict()
         for i, (field_name, field_attributes ) in enumerate( columns):
             self._field_attributes[field_name] = field_attributes
             self._index[field_name] = i
-        
+
     def create_editor( self, field_name, parent ):
         """
         :return: a :class:`QtWidgets.QWidget` or `None` if field_name is unknown
         """
         index = self._index[field_name]
-        model = self._widget_mapper.model()
-        delegate = self._widget_mapper.itemDelegate()
-        model_index = model.createIndex(self._widget_mapper.currentIndex(),
+        widget_mapper = self.parent().findChild(QtWidgets.QDataWidgetMapper)
+        model = widget_mapper.model()
+        delegate = widget_mapper.itemDelegate()
+        model_index = model.createIndex(widget_mapper.currentIndex(),
                                         index, 0)
         widget_editor = delegate.createEditor(
             parent,
@@ -83,9 +90,9 @@ class FormEditors( object ):
         stretch = self._field_attributes[field_name].get('stretch', 1)
         widget_editor.setProperty('stretch', py_to_variant(stretch))
         delegate.setEditorData( widget_editor, model_index )
-        self._widget_mapper.addMapping( widget_editor, index )
+        widget_mapper.addMapping( widget_editor, index )
         return widget_editor
-    
+
     def create_label( self, field_name, editor, parent ):
         from camelot.view.controls.field_label import FieldLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
@@ -104,7 +111,7 @@ class FormEditors( object ):
                 widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
             editor.set_label(widget_label)
         return widget_label
-    
+
 class FormWidget(QtWidgets.QWidget):
     """A form widget comes inside a form view"""
 
@@ -112,7 +119,6 @@ class FormWidget(QtWidgets.QWidget):
 
     def __init__(self, admin, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self._admin = admin
         widget_mapper = QtWidgets.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
@@ -121,8 +127,6 @@ class FormWidget(QtWidgets.QWidget):
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
         self._index = 0
-        self._form = None
-        self._columns = None
         self.setLayout(widget_layout)
         self.set_model(model)
         self.create_widgets(widget_mapper, columns, form_display, admin)
@@ -130,15 +134,15 @@ class FormWidget(QtWidgets.QWidget):
     def set_model(self, model):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if model is not None:
-            model.dataChanged.connect(self._data_changed)
+            model.headerDataChanged.connect(self._header_data_changed)
             model.layoutChanged.connect(self._layout_changed)
-            model.modelReset.connect(self._model_reset)
+            model.modelReset.connect(self._layout_changed)
             model.rowsInserted.connect(self._layout_changed)
             model.rowsRemoved.connect(self._layout_changed)
+            model.setParent(self)
             if widget_mapper is not None:
-                widget_mapper.setModel( model )
-                register.register( model, widget_mapper )
-                
+                widget_mapper.setModel(model)
+
     def get_model(self):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if widget_mapper is not None:
@@ -149,19 +153,21 @@ class FormWidget(QtWidgets.QWidget):
         if widget_mapper:
             widget_mapper.clearMapping()
 
-    @QtCore.qt_slot()
-    def _model_reset(self):
-        self._layout_changed()
-            
-    @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex  )
-    def _data_changed(self, index_from, index_to):
-        #@TODO: only revert if this form is in the changed range
-        self._layout_changed()
+    # @QtCore.qt_slot(int, int, int)
+    def _header_data_changed(self, orientation, first, last):
+        if orientation == Qt.Vertical:
+            widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
+            if widget_mapper is not None:
+                current_index = widget_mapper.currentIndex()
+                if (current_index >= first) and (current_index <= last):
+                    self.changed_signal.emit(current_index)
 
-    @QtCore.qt_slot()
-    def _layout_changed(self):
+    
+    @QtCore.qt_slot() # for model reset
+    @QtCore.qt_slot(QtCore.QModelIndex, int, int) # for rows inserted/removed
+    def _layout_changed(self, index=None, start=None, end=None):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
+        if widget_mapper is not None:
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
                 widget_mapper.setCurrentIndex(self._index)
@@ -171,7 +177,7 @@ class FormWidget(QtWidgets.QWidget):
     @QtCore.qt_slot(int)
     def current_index_changed( self, index ):
         self.changed_signal.emit( index )
-        
+
     def set_index(self, index):
         self._index = index
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
@@ -191,18 +197,20 @@ class FormWidget(QtWidgets.QWidget):
     def create_widgets(self, widget_mapper, columns, form_display, admin):
         """Create value and label widgets"""
         LOGGER.debug( 'begin creating widgets' )
-        widgets = FormEditors( columns, widget_mapper, admin )
+        widgets = FormEditors(self, columns, admin)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, form_display.render( widgets, self, True) )
-        # give focus to the first editor in the form that can receive focus
-        for i in range(10):
-            first_widget = widget_mapper.mappedWidgetAt(i)
-            if first_widget is None:
-                break
-            if first_widget.focusPolicy() != Qt.NoFocus:
-                first_widget.setFocus(Qt.PopupFocusReason)
-                break
+        ## give focus to the first editor in the form that can receive focus
+        # this results in weird behavior on Mac, where the editor get focus
+        # from the OS and then immediately gets input
+        #for i in range(10):
+            #first_widget = widget_mapper.mappedWidgetAt(i)
+            #if first_widget is None:
+                #break
+            #if first_widget.focusPolicy() != Qt.NoFocus:
+                #first_widget.setFocus(Qt.PopupFocusReason)
+                #break
         LOGGER.debug( 'done' )
 
 class FormView(AbstractView):
@@ -225,7 +233,7 @@ class FormView(AbstractView):
         form_and_actions_layout = QtWidgets.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
         layout.addLayout( form_and_actions_layout )
-            
+
         self.model = model
         self.admin = admin
         self.title_prefix = title
@@ -242,7 +250,7 @@ class FormView(AbstractView):
         self.gui_context.workspace = self
         self.gui_context.admin = admin
         self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper, 
+        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
         self.setLayout( layout )
         self.change_title(title)
@@ -256,46 +264,43 @@ class FormView(AbstractView):
     def refresh(self):
         """Refresh the data in the current view"""
         self.model.refresh()
-    
-    def _get_title( self, index ):
-        obj = self.model._get_object( index )
-        verbose_identifier = ''
-        if obj is not None:
-            verbose_identifier = self.admin.get_verbose_identifier(obj)
-        return u'%s %s' % (
-            self.title_prefix,
-            verbose_identifier
-        )
-            
+
     @QtCore.qt_slot( int )
     def update_title(self, current_index ):
-        post( self._get_title, self.change_title, args=(current_index,) )
+        verbose_identifier = variant_to_py(self.model.headerData(
+            current_index, Qt.Vertical, VerboseIdentifierRole
+        ))
+        if verbose_identifier is not None:
+            self.change_title(u'%s %s'%(self.title_prefix,verbose_identifier))
+        else:
+            self.change_title(u'')
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
         form = self.findChild(QtWidgets.QWidget, 'form' )
-        layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
+        layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox( parent = self, 
-                                         gui_context = self.gui_context )
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions( actions )
-            side_panel_layout.addWidget( actions_widget )
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
+            side_panel_layout.addWidget(actions_widget)
             side_panel_layout.addStretch()
-            layout.addLayout( side_panel_layout )
-            
+            layout.addLayout(side_panel_layout)
+
     @QtCore.qt_slot(list)
     def set_toolbar_actions(self, actions):
-        layout = self.findChild( QtGui.QLayout, 'layout' )
+        layout = self.findChild( QtWidgets.QLayout, 'layout' )
         if layout and actions:
             toolbar = QtWidgets.QToolBar()
+            toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
-                qaction = action.render( self.gui_context, toolbar )
-                qaction.triggered.connect( self.action_triggered )
-                toolbar.addAction( qaction )
+                toolbar.addWidget(self.render_action(action, toolbar))
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
             # @todo : this show is needed on OSX or the form window
@@ -304,18 +309,15 @@ class FormView(AbstractView):
             # flicker
             self.show()
 
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        action_action = self.sender()
-        action_action.action.gui_run( self.gui_context )
-
     @QtCore.qt_slot()
     def validate_close( self ):
         self.admin.form_close_action.gui_run( self.gui_context )
-        
+
     def close_view( self, accept ):
         self.accept_close_event = accept
-        if (accept == True) and not is_deleted(self):
+        if is_deleted(self):
+            return
+        if (accept == True):
             # clear mapping to prevent data being written again to the model,
             # when the underlying object would be reverted
             form = self.findChild( QtWidgets.QWidget, 'form' )

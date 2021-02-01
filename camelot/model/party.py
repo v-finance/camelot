@@ -34,9 +34,10 @@ These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
 
+import copy
 import datetime
-
 import six
+import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode
@@ -49,25 +50,138 @@ from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
-from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
 from .authentication import end_of_times
 
+@six.python_2_unicode_compatible
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
-    using_options( tablename = 'geographic_boundary' )
+    __tablename__ = 'geographic_boundary'
+    
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
-    
-    row_type = schema.Column( Unicode(40), nullable = False )
-    __mapper_args__ = { 'polymorphic_on' : row_type }
 
+    row_type = schema.Column( Unicode(40), nullable = False, index=True)
+    
+    def translation(self, language='nl_BE'):
+       translation = self.translations.filter(GeographicBoundaryTranslation.language==language).one_or_none()
+       if translation is not None:
+           return translation.name
+       return self.name
+    
+    @property
+    def name_NL(self):
+        return self.translation(language='nl_BE')
+    
+    @property
+    def name_FR(self):
+        return self.translation(language='fr_BE')
+    
+    __mapper_args__ = { 'polymorphic_on' : row_type }
+    
+    __table_args__ = (
+        schema.Index(
+            'ix_geographic_boundary_name', name,
+            postgresql_ops={"name": "gin_trgm_ops"},
+            postgresql_using='gin'
+        ),
+    )
+    
     @ColumnProperty
     def full_name( self ):
         return self.code + ' ' + self.name
 
-    def __unicode__( self ):
+    def __str__(self):
         return u'%s %s' % ( self.code, self.name )
+    
+    class Admin(EntityAdmin):
+        
+        verbose_name = _('Geographic Boundary')
+        verbose_name_plural = _('Geographic Boundaries')
+        
+        # Exclude basic column search, as this is replaced by a
+        # customized similarity search with alternative names in search query decoration.
+        basic_search = False
+        
+        list_display = ['row_type', 'name', 'code']
+        form_display = Form(
+            [GroupBoxForm(_('General'), ['name', 'code'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL'], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR'], columns=2),
+             'alternative_names'],
+            columns=2)
+        
+        form_state = 'right'
+        field_attributes = {
+            'row_type': {
+                'name': _('Type'),
+                'editable': False,
+            },
+            'name_NL': {'name': _('Name')},
+            'name_FR': {'name': _('Name')},
+        }
+    
+class GeographicBoundaryAlternativeName(Entity):
+    
+    __tablename__ = 'geographic_boundary_alternative_name'
+    
+    name = schema.Column(Unicode(100), nullable=False)
+    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable=True, index=True)
+    language = schema.Column(sqlalchemy.types.Unicode(6), nullable=True)
+    
+    alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
+                                            schema.ForeignKey(GeographicBoundary.id, ondelete='cascade', onupdate='cascade'),
+                                            nullable = False,
+                                            index = True)
+    alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan'))
+    
+    __mapper_args__ = {
+        'polymorphic_on' : row_type,
+        'polymorphic_identity': None,
+    }
+    
+    __table_args__ = (
+        schema.Index(
+            'ix_geographic_boundary_alternative_name', name,
+            postgresql_ops={"name": "gin_trgm_ops"},
+            postgresql_using='gin'
+        ),
+        schema.Index(
+            'ix_geographic_boundary_alternative_name_main_municipality', 'alternative_name_for_id', language.is_(None).self_group(), unique=True,
+            postgresql_where=sql.and_(row_type == 'main_municipality', language.is_(None)),
+            sqlite_where=sql.and_(row_type == 'main_municipality', language.is_(None))),
+        schema.UniqueConstraint(
+            alternative_name_for_id, language, row_type,
+            name = 'language_unique',
+        ),
+        schema.CheckConstraint(sql.or_(sql.and_(row_type == 'translation', language.isnot(None)), row_type != 'translation'), name='translation_language'),
+    )
+
+    class Admin(EntityAdmin):
+        verbose_name = _('Alternative name')
+        verbose_name_plural = _('Alternative names')
+        list_display = ['name', 'row_type', 'language']
+        form_state = 'right'
+        field_attributes = {
+            'row_type': {
+                'name': _('Type'),
+                'editable': False,
+                'choices': [('translation', _('Translation')),
+                            ('main_municipality', _('Main municipality'))]
+            }
+        }
+
+class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
+    
+    __mapper_args__ = {'polymorphic_identity': 'translation'}
+    
+GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic')
+
+class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
+    
+    __mapper_args__ = {'polymorphic_identity': 'main_municipality'}
+
 
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
@@ -75,7 +189,8 @@ class Country( GeographicBoundary ):
     using_options( tablename = 'geographic_boundary_country' )
     geographicboundary_id = Field( camelot.types.PrimaryKey(), 
                                    ForeignKey('geographic_boundary.id'), 
-                                   primary_key = True )
+                                   primary_key = True,
+                                   autoincrement = False )
 
     __mapper_args__ = {'polymorphic_identity': 'country'}
 
@@ -87,24 +202,57 @@ class Country( GeographicBoundary ):
             orm.object_session( country ).flush()
         return country
 
-    class Admin( EntityAdmin ):
-        form_size = ( 700, 150 )
+    class Admin(GeographicBoundary.Admin):
         verbose_name = _('Country')
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
+@six.python_2_unicode_compatible
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     using_options( tablename = 'geographic_boundary_city' )
     country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    geographicboundary_id = Field( camelot.types.PrimaryKey(), 
-                                   ForeignKey('geographic_boundary.id'), 
-                                   primary_key = True )
-
+    geographicboundary_id = Field( camelot.types.PrimaryKey(),
+                                   ForeignKey('geographic_boundary.id'),
+                                   primary_key = True,
+                                   autoincrement = False )
+    main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
+    
     __mapper_args__ = {'polymorphic_identity': 'city'}
     
-    def __unicode__( self ):
+    def main_municipality_name(self, language=None):
+        main_municipality = self.main_municipality_alternative_names\
+           .order_by(GeographicBoundaryMainMunicipality.language==language,
+                     GeographicBoundaryMainMunicipality.language==None).first()
+        if main_municipality is not None:
+            return main_municipality.name
+    
+    def administrative_translation(self, language):
+        translated_name = self.translation(language)
+        main_municipality = self.main_municipality_name(language)
+        main_municipality_suffix = ''
+        if main_municipality is not None:
+            main_municipality_suffix = ' ({})'.format(main_municipality)
+        return translated_name + main_municipality_suffix        
+    
+    @property
+    def main_municipality(self):
+        return self.main_municipality_name(None)
+    
+    @property
+    def administrative_name(self):
+       return self.administrative_translation(language=None)
+
+    @property
+    def administrative_name_NL(self):
+        return self.administrative_translation(language='nl_BE')
+    
+    @property    
+    def administrative_name_FR(self):
+        return self.administrative_translation(language='fr_BE')
+    
+    def __str__(self):
         if None not in (self.code, self.name, self.country):
             return u'{0.code} {0.name} [{1.code}]'.format( self, self.country )
         return u''
@@ -117,27 +265,37 @@ class City( GeographicBoundary ):
             orm.object_session( city ).flush()
         return city
 
-    class Admin( EntityAdmin ):
+    class Admin(GeographicBoundary.Admin):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        form_size = ( 700, 150 )
-        list_display = ['code', 'name', 'country']
-
+        list_display = ['code', 'name', 'administrative_name', 'country']
+        form_display = Form(
+            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
+             'alternative_names'],
+            columns=2)
+        field_attributes = {k:copy.copy(v) for k,v in six.iteritems(GeographicBoundary.Admin.field_attributes)}
+        field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
+        field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
+        
+@six.python_2_unicode_compatible
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
-    city = ManyToOne( City, 
-                      required = True, 
-                      ondelete = 'cascade', 
+    city = ManyToOne( City,
+                      required = True,
+                      ondelete = 'cascade',
                       onupdate = 'cascade',
                       lazy = 'subquery' )
-                         
+
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
-    
+
     name = ColumnProperty( name, deferred = True )
 
     @classmethod
@@ -148,7 +306,7 @@ class Address( Entity ):
             orm.object_session( address ).flush()
         return address
 
-    def __unicode__( self ):
+    def __str__(self):
         return u'%s, %s' % ( self.street1 or '', self.city or '' )
 
     class Admin( EntityAdmin ):
@@ -199,11 +357,11 @@ class WithAddresses(object):
         return self._get_address_field( u'street1' )
     
     @street1.setter
-    def street1_setter( self, value ):
+    def street1( self, value ):
         return self._set_address_field( u'street1', value )
 
     @street1.expression
-    def street1_expression(cls):
+    def street1(cls):
         return sql.select([Address.street1],
                           whereclause=cls.first_address_filter(),
                           limit=1).as_scalar()
@@ -211,9 +369,15 @@ class WithAddresses(object):
     @hybrid.hybrid_property
     def street2( self ):
         return self._get_address_field( u'street2' )
-    
+
+    @street2.expression
+    def street2_expression(cls):
+        return sql.select([Address.street2],
+                          whereclause=cls.first_address_filter(),
+                          limit=1).as_scalar()
+
     @street2.setter
-    def street2_setter( self, value ):
+    def street2( self, value ):
         return self._set_address_field( u'street2', value )
 
     @hybrid.hybrid_property
@@ -221,11 +385,11 @@ class WithAddresses(object):
         return self._get_address_field( u'city' )
     
     @city.setter
-    def city_setter( self, value ):
+    def city( self, value ):
         return self._set_address_field( u'city', value )
 
     @city.expression
-    def city_expression(cls):
+    def city(cls):
 
         GB = orm.aliased(GeographicBoundary)
 
@@ -328,11 +492,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'email' )
     
     @email.setter
-    def email_setter( self, value ):
+    def email( self, value ):
         return self._set_contact_mechanism( u'email', value )
     
     @email.expression
-    def email_expression( self ):
+    def email( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
@@ -340,11 +504,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'phone' )
     
     @phone.setter
-    def phone_setter( self, value ):
+    def phone( self, value ):
         return self._set_contact_mechanism( u'phone', value )
     
     @phone.expression
-    def phone_expression( self ):
+    def phone( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
@@ -352,11 +516,11 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'fax' )
 
     @fax.setter
-    def fax_setter( self, value ):
+    def fax( self, value ):
         return self._set_contact_mechanism( u'fax', value )
 
     @fax.expression
-    def fax_expression( self ):
+    def fax( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
     @hybrid.hybrid_property
@@ -364,40 +528,28 @@ class Party(Entity, WithAddresses):
         return self._get_contact_mechanism( u'mobile' )
 
     @mobile.setter
-    def mobile_setter( self, value ):
+    def mobile( self, value ):
         return self._set_contact_mechanism( u'mobile', value )
 
     @mobile.expression
-    def mobile_expression( self ):
+    def mobile( self ):
         return orm.aliased( ContactMechanism ).mechanism
 
-    def full_name( self ):
 
-        aliased_organisation = sql.alias( Organization.table )
-        aliased_person = sql.alias( Person.table )
-        
-        return sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
-                                                   whereclause = and_( aliased_person.c.party_id == self.id ),
-                                                   ).limit( 1 ).as_scalar(),
-                                       sql.select( [aliased_organisation.c.name],
-                                                   whereclause = and_( aliased_organisation.c.party_id == self.id ), 
-                                                   ).limit( 1 ).as_scalar() )
-    
-    full_name = ColumnProperty( full_name, deferred=True )
-
+@six.python_2_unicode_compatible
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
     using_options( tablename = 'organization' )
-    party_id = Field( camelot.types.PrimaryKey(), 
-                      ForeignKey('party.id'), 
+    party_id = Field( camelot.types.PrimaryKey(),
+                      ForeignKey('party.id'),
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.Image( upload_to = 'organization-logo' ))
+    logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
     tax_id = schema.Column( Unicode( 20 ) )
 
-    def __unicode__( self ):
+    def __str__(self):
         return self.name or ''
 
     @property
@@ -410,12 +562,13 @@ class Organization( Party ):
                 return _('An organization with the same name already exists')
 
 # begin short person definition
+@six.python_2_unicode_compatible
 class Person( Party ):
     """Person represents natural persons
     """
     using_options( tablename = 'person' )
     party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'), 
+                      ForeignKey('party.id'),
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'person'}
     first_name = schema.Column( Unicode( 40 ), nullable = False )
@@ -430,7 +583,7 @@ class Person( Party ):
     social_security_number = schema.Column( Unicode( 12 ) )
     passport_number = schema.Column( Unicode( 20 ) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.Image( upload_to = 'person-pictures' ))
+    picture = schema.Column( camelot.types.File( upload_to = 'person-pictures' ))
     comment = schema.Column( camelot.types.RichText() )
 
     @property
@@ -445,7 +598,7 @@ class Person( Party ):
         # it needs to be fetched from the db first
         return ' '.join([name for name in [self.first_name, self.last_name] if name])
 
-    def __unicode__( self ):
+    def __str__(self):
         return self.name or ''
 
 #class PartyRelationship( Entity ):
@@ -637,33 +790,37 @@ class Addressable(object):
         return self._get_address_field( u'street1' )
     
     @street1.setter
-    def street1_setter( self, value ):
+    def street1( self, value ):
         return self._set_address_field( u'street1', value )
     
     @street1.expression
-    def street1_expression( self ):
+    def street1( self ):
         return Address.street1
 
     @hybrid.hybrid_property
     def street2( self ):
         return self._get_address_field( u'street2' )
-    
-    @street2.expression
-    def street2_expression( self ):
-        return Address.street2    
-    
+
     @street2.setter
-    def street2_setter( self, value ):
-        return self._set_address_field( u'street2', value )    
-    
+    def street2( self, value ):
+        return self._set_address_field( u'street2', value )
+
+    @street2.expression
+    def street2( self ):
+        return Address.street2
+
     @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
     
     @city.setter
-    def city_setter( self, value ):
+    def city( self, value ):
         return self._set_address_field( u'city', value )
-    
+
+    @city.expression
+    def city_expression( self ):
+        return Address.city_geographicboundary_id
+
     class Admin(object):
         field_attributes = dict(
             street1 = dict( editable = True,
@@ -687,46 +844,44 @@ class Addressable(object):
                           name = _('Phone'),
                           from_string = lambda s:('phone', s),
                           delegate = delegates.VirtualAddressDelegate ),
-            mobile = dict( editable = True, 
+            mobile = dict( editable = True,
                            minimal_column_width = 20,
                            address_type = 'mobile',
                            name = _('Mobile'),
                            from_string = lambda s:('mobile', s),
                            delegate = delegates.VirtualAddressDelegate ),
-            fax = dict( editable = True, 
+            fax = dict( editable = True,
                         minimal_column_width = 20,
                         address_type = 'fax',
                         name = _('Fax'),
                         from_string = lambda s:('fax', s),
                         delegate = delegates.VirtualAddressDelegate ), )
-        
-    
+
+
+@six.python_2_unicode_compatible
 class PartyAddress( Entity, Addressable ):
     using_options( tablename = 'party_address' )
-    party = ManyToOne( Party, 
-                       required = True, 
-                       ondelete = 'cascade', 
-                       onupdate = 'cascade',
-                       lazy = 'subquery',
-                       backref = orm.backref('addresses', lazy = True, 
-                                             cascade='all, delete, delete-orphan'))
-    address = ManyToOne( Address, 
-                         required = True, 
+    party_id = schema.Column(
+        camelot.types.PrimaryKey(),
+        ForeignKey('party.id', ondelete='cascade', onupdate='cascade'),
+        nullable=False,
+    )
+    party = orm.relationship(
+        Party, backref = orm.backref('addresses', lazy=True,
+                                     cascade='all, delete, delete-orphan'),
+        lazy='subquery',
+    )
+    address = ManyToOne( Address,
+                         required = True,
                          backref = 'party_addresses',
-                         ondelete = 'cascade', 
+                         ondelete = 'cascade',
                          onupdate = 'cascade',
                          lazy = 'subquery' )
     from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, nullable=False, index = True )
     comment = schema.Column( Unicode( 256 ) )
 
-    def party_name( self ):
-        return sql.select( [sql.func.coalesce(Party.full_name, '')],
-                           whereclause = (Party.id==self.party_id))
-    
-    party_name = ColumnProperty( party_name, deferred = True )
-
-    def __unicode__( self ):
+    def __str__(self):
         return '%s : %s' % ( six.text_type( self.party ), six.text_type( self.address ) )
 
     class Admin( EntityAdmin ):
@@ -773,13 +928,14 @@ class PartyAddressRoleType( Entity ):
         verbose_name = _('Address role type')
         list_display = ['code', 'description']
 
+@six.python_2_unicode_compatible
 class ContactMechanism( Entity ):
     using_options( tablename = 'contact_mechanism' )
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
     party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
     party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
 
-    def __unicode__( self ):
+    def __str__(self):
         if self.mechanism:
             return u'%s : %s' % ( self.mechanism[0], self.mechanism[1] )
 
@@ -797,11 +953,12 @@ class ContactMechanism( Entity ):
                 if party:
                     yield party
 
+@six.python_2_unicode_compatible
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
     party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                       backref = orm.backref('contact_mechanisms', lazy = 'select', 
+                       backref = orm.backref('contact_mechanisms', lazy = 'select',
                                              cascade='all, delete, delete-orphan' )
                        )
     contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
@@ -812,18 +969,18 @@ class PartyContactMechanism( Entity ):
     @hybrid.hybrid_property
     def mechanism( self ):
         if self.contact_mechanism != None:
-            return self.contact_mechanism.mechanism    
-       
+            return self.contact_mechanism.mechanism
+
     @mechanism.setter
-    def mechanism_setter( self, value ):
+    def mechanism( self, value ):
         if value != None:
             if self.contact_mechanism:
                 self.contact_mechanism.mechanism = value
             else:
                 self.contact_mechanism = ContactMechanism( mechanism = value )
-                
-    @mechanism.expression 
-    def mechanism_expression( self ):
+
+    @mechanism.expression
+    def mechanism( self ):
         return sql.select(
             [ContactMechanism.mechanism],
             whereclause=ContactMechanism.id==self.contact_mechanism_id).as_scalar()
@@ -831,28 +988,29 @@ class PartyContactMechanism( Entity ):
     def party_name( self ):
         return sql.select( [Party.full_name],
                            whereclause = (Party.id==self.party_id))
-    
+
     party_name = ColumnProperty( party_name, deferred = True )
 
-    def __unicode__( self ):
+    def __str__(self):
         return six.text_type( self.contact_mechanism )
 
     Admin = PartyContactMechanismAdmin
 
 # begin category definition
+@six.python_2_unicode_compatible
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = schema.Column( Unicode(40), index=True, nullable = False )
-    color = schema.Column( camelot.types.Color() )
+    color = schema.Column(Unicode(8))
 # end category definition
     parties = ManyToMany( 'Party', lazy = True, backref='categories',
-                          tablename='party_category_party', 
+                          tablename='party_category_party',
                           remote_colname='party_id',
                           local_colname='party_category_id')
-                            
+
     def get_contact_mechanisms(self, virtual_address_type):
         """Function to be used to do messaging
-        
+
         :param virtual_address_type: a virtual address type, such as 'phone' or 'email'
         :return: a generator that yields strings of contact mechanisms, egg 'info@example.com'
         """
@@ -863,8 +1021,8 @@ class PartyCategory( Entity ):
                     virtual_address = contact_mechanism.mechanism
                     if virtual_address and virtual_address[0] == virtual_address_type:
                         yield virtual_address[1]
-                
-    def __unicode__(self):
+
+    def __str__(self):
         return self.name or ''
     
     class Admin( EntityAdmin ):
@@ -896,7 +1054,13 @@ class PartyAdmin( EntityAdmin ):
             yield party_contact_mechanism
         for party_address in party.addresses:
             yield party_address
-        
+
+    def get_query(self, session=None):
+        query = super(PartyAdmin, self).get_query(session)
+        query = query.options( orm.selectinload('contact_mechanisms') )
+        query = query.options( orm.selectinload('addresses').joinedload('address') )
+        return query
+
     #def flush(self, party):
         #from sqlalchemy.orm.session import Session
         #session = Session.object_session( party )
@@ -917,6 +1081,7 @@ Party.Admin = PartyAdmin
 class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
+    list_search = ['name', 'tax_id']
     list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
     form_display = TabForm( [( _('Basic'), Form( [ WidgetOnlyForm('note'), 'name', 'email', 
                                                    'phone', 
@@ -928,17 +1093,13 @@ class OrganizationAdmin( Party.Admin ):
                             ( _('Branding'), Form( ['logo'] ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
-    
-    def get_query( self ):
-        query = super( OrganizationAdmin, self ).get_query()
-        query = query.options( orm.joinedload('contact_mechanisms') )
-        return query
 
 Organization.Admin = OrganizationAdmin
 
 class PersonAdmin( Party.Admin ):
     verbose_name = _( 'Person' )
     verbose_name_plural = _( 'Persons' )
+    list_search = ['first_name', 'last_name']
     list_display = ['first_name', 'last_name', 'email', 'phone']
     form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
                                                               'first_name', 
@@ -957,12 +1118,24 @@ class PersonAdmin( Party.Admin ):
                             ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                     'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                             ] )
-
-    def get_query( self ):
-        query = super( PersonAdmin, self ).get_query()
-        query = query.options( orm.joinedload('contact_mechanisms') )
-        return query
     
 Person.Admin = PersonAdmin
 
+aliased_organisation = sql.alias( Organization.table )
+aliased_person = sql.alias( Person.table )
 
+Party.full_name = orm.column_property(
+    sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
+                                           whereclause = and_( aliased_person.c.party_id == Party.id ),
+                                           ).limit( 1 ).as_scalar(),
+                               sql.select( [aliased_organisation.c.name],
+                                           whereclause = and_( aliased_organisation.c.party_id == Party.id ), 
+                                           ).limit( 1 ).as_scalar() ),
+    deferred=True
+)
+
+PartyAddress.party_name = orm.column_property(
+    sql.select( [sql.func.coalesce(Party.full_name, '')],
+                whereclause = (Party.id==PartyAddress.party_id)),
+    deferred = True 
+)

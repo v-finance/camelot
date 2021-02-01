@@ -43,29 +43,24 @@ ValueLoading until set_value is called with another argument.
 
 """
 
-from .booleditor import BoolEditor, TextBoolEditor
-from .charteditor import ChartEditor
+from .booleditor import BoolEditor
 from .choiceseditor import ChoicesEditor
-from .codeeditor import CodeEditor
 from .coloreditor import ColorEditor
 from .customeditor import CustomEditor
 from .dateeditor import DateEditor
 from .datetimeeditor import DateTimeEditor
 from .fileeditor import FileEditor
 from .floateditor import FloatEditor
-from .imageeditor import ImageEditor
+from .dbimageeditor import DbImageEditor
 from .integereditor import IntegerEditor
 from .languageeditor import LanguageEditor
 from .localfileeditor import LocalFileEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
-from .onetomanychoiceseditor import OneToManyChoicesEditor
 from .richtexteditor import RichTextEditor
-from .stareditor import StarEditor
 from .textlineeditor import TextLineEditor
 from .timeeditor import TimeEditor
 from .virtualaddresseditor import VirtualAddressEditor
-from .smileyeditor import SmileyEditor
 from .textediteditor import TextEditEditor
 from .wideeditor import WideEditor
 from .noteeditor import NoteEditor
@@ -74,16 +69,14 @@ from .monthseditor import MonthsEditor
 
 __all__ = [
     BoolEditor.__name__,
-    ChartEditor.__name__,
     ChoicesEditor.__name__,
-    CodeEditor.__name__,
     ColorEditor.__name__,
     CustomEditor.__name__,
     DateEditor.__name__,
     DateTimeEditor.__name__,
     FileEditor.__name__,
     FloatEditor.__name__,
-    ImageEditor.__name__,
+    DbImageEditor.__name__,
     IntegerEditor.__name__,
     LabelEditor.__name__,
     LanguageEditor.__name__,
@@ -92,14 +85,10 @@ __all__ = [
     MonthsEditor.__name__,
     NoteEditor.__name__,
     One2ManyEditor.__name__,
-    OneToManyChoicesEditor.__name__,
     RichTextEditor.__name__,
-    StarEditor.__name__,
     TextLineEditor.__name__,
     TimeEditor.__name__,
     VirtualAddressEditor.__name__,
-    SmileyEditor.__name__,
-    TextBoolEditor.__name__,
     TextEditEditor.__name__,
     WideEditor.__name__,
 ]

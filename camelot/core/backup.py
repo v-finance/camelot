@@ -29,9 +29,10 @@
 import logging
 
 import six
-from sqlalchemy import types, sql
+from camelot.types import PrimaryKey
+from sqlalchemy import types, sql, PrimaryKeyConstraint
 
-from .qt import QtGui
+from .qt import QtCore
 
 from camelot.core.utils import ugettext as _
 from camelot.core.sql import metadata as default_metadata
@@ -87,7 +88,11 @@ class BackupMechanism(object):
         By default, this will return a Storage that puts the backup files
         in the DataLocation as specified by the QDesktopServices
         """
-        apps_folder = six.text_type(QtGui.QDesktopServices.storageLocation(QtGui.QDesktopServices.DataLocation))
+        apps_folder = six.text_type(
+            QtCore.QStandardPaths.writableLocation(
+                QtCore.QStandardPaths.DataLocation
+            )
+        )
         
         from camelot.core.files.storage import Storage
         return Storage(upload_to='backups', root=apps_folder)
@@ -166,7 +171,8 @@ class BackupMechanism(object):
                 to_table = from_table.tometadata(to_meta_data)
                 to_table.schema = None
                 to_table.constraints = set()
-                to_table.primary_key = []
+                to_table.indexes = set()
+                to_table.primary_key = PrimaryKeyConstraint()
                 to_table.foreign_keys = set()
                 from_and_to_tables.append((from_table, to_table))
         to_meta_data.create_all(to_connection)
@@ -188,6 +194,7 @@ class BackupMechanism(object):
             logger.info(u'check backfup file in to storage with name %s'%self.filename)
             self.storage.checkin( temp_file_name, self.filename )
             os.remove( temp_file_name )
+        yield (number_of_tables + 1, number_of_tables + 1, self.filename)
         yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))
     
     def restore(self, to_engine):
@@ -270,7 +277,10 @@ class BackupMechanism(object):
             to_connection.execute(to_table.insert(), table_data)
             if to_dialect == 'postgresql':
                 for column in to_table.columns:
-                    if isinstance(column.type, types.Integer) and column.autoincrement==True and column.primary_key==True:
+                    # Support both sqlalchemy's as Camelot's primary key type.
+                    if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
+                       column.autoincrement=='auto' and column.primary_key==True and \
+                       len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                         column_name = column.name
                         table_name = to_table.name
                         seq_name = table_name + "_" + column_name + "_seq"

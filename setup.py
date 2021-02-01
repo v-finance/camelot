@@ -26,7 +26,7 @@ setup(
     include_package_data = True,
     package_data = {
         # If any package contains *.txt files, include them:
-        '':['*.txt', '*.rst', '*.html', '*.js', '*.png', '*.doc', '*.GPL'],
+        '':['*.txt', '*.rst', '*.html', '*.js', '*.png', '*.doc', '*.GPL', '*.json'],
         'doc':['*.rst', '*.html', '*.png'],
     },
     options = {

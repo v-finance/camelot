@@ -30,9 +30,13 @@
 import inspect
 import itertools
 import logging
+import six
+
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-from camelot.admin.action import list_filter
+from ..core.item_model import QueryModelProxy
+
+from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.memento import memento_change
@@ -41,11 +45,10 @@ from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
 from camelot.core.qt import Qt
 
-import six
-
-from sqlalchemy import orm, schema, sql
+from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
+from sqlalchemy.orm.exc import UnmappedClassError
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -109,6 +112,7 @@ and used as a custom action.
     copy_deep = {}
     copy_exclude = []
     validator = EntityValidator
+    basic_search = True
 
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
@@ -170,15 +174,33 @@ and used as a custom action.
             break
         return sql_attributes
 
-    def get_query(self):
-        """:return: an sqlalchemy query for all the objects that should be
+    def get_query(self, session=None):
+        """
+        Overwrite this method to configure eager loading strategies
+        to be used in a specific admin.
+
+        :param session: the session to be used to create a query.
+           Uses the default session if None is given.
+           Not passing the session is considered deprecated behavior.
+
+        :return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
         change the default query, which selects all rows in the database.
         """
-        return Session().query( self.entity )
+        session = session or Session()
+        return session.query(self.entity)
+
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        if isinstance(objects, orm.Query):
+            return QueryModelProxy(objects)
+        return super(EntityAdmin, self).get_proxy(objects)
 
     def get_verbose_identifier(self, obj):
-        if obj:
+        if obj is not None:
             primary_key = self.mapper.primary_key_from_instance(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
@@ -188,6 +210,12 @@ and used as a custom action.
                         primary_key_representation,
                         six.text_type(obj)
                     )
+                elif six.PY3 and hasattr(obj, '__str__'):
+                    return u'%s %s : %s' % (
+                        self.get_verbose_name() or '',
+                        primary_key_representation,
+                        obj.__str__()
+                    )                
                 else:
                     return u'%s %s' % (
                         self.get_verbose_name() or '',
@@ -202,13 +230,30 @@ and used as a custom action.
         search_identifiers[Qt.EditRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
-        return search_identifiers                
+        return search_identifiers
+
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions(toolbar_area)
+        if toolbar_area == Qt.TopToolBarArea:
+            return toolbar_actions + [
+                list_filter.SearchFilter(self),
+                list_action.SetFilters(),
+                application_action.Refresh(),
+            ]
+        return toolbar_actions
 
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
         """
-        from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.view.controls import delegates
         attributes = super(EntityAdmin, self).get_descriptor_field_attributes(field_name)
         #
@@ -236,15 +281,27 @@ and used as a custom action.
                     # the 'appropriate' way to get it from the class.  Getting it
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
+                    # class attribute of hybrid properties is changed from
+                     # expression to comparator from sqla v1.2 onwards.
+                    if sqlalchemy_version.startswith('1.2') or sqlalchemy_version.startswith('1.3'):
+                        if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
+                            class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
-                        if isinstance(class_attribute, sql.Select):
-                            for k, v in six.iteritems(self.get_sql_field_attributes(class_attribute.columns)):
-                                # the defaults or the nullable status of the column
-                                # does not need to be the default or the nullable
-                                # of the hybrid property
-                                if k in ['default', 'nullable']:
-                                    continue
-                                attributes[k] = v
+                        columns = []
+                        if isinstance(class_attribute, sql.elements.Label):
+                            columns = [class_attribute]
+                        elif isinstance(class_attribute, sql.Select):
+                            columns = class_attribute.columns
+                        for k, v in six.iteritems(self.get_sql_field_attributes(columns)):
+                            # the defaults or the nullable status of the column
+                            # does not need to be the default or the nullable
+                            # of the hybrid property
+                            # changed 4/7/2017 DJK; editable added to avoid setting fields editable
+                            # when they should not be editable
+                            # Note that a primary key can be set editable by this change!!
+                            if k in ['default', 'nullable', 'editable']:
+                                continue
+                            attributes[k] = v
                 break
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
@@ -281,11 +338,6 @@ and used as a custom action.
                     attributes.update( direction = 'manytomany' )
                 else:
                     raise Exception('RelationshipProperty has unknown direction')
-
-                if property.direction in (orm.interfaces.ONETOMANY,
-                                          orm.interfaces.MANYTOMANY):
-                    if property.lazy == 'dynamic':
-                        attributes.update(proxy=QueryTableProxy)
 
                 if property.uselist == True:
                     attributes.update(
@@ -341,6 +393,21 @@ and used as a custom action.
                     attributes['editable'] = False
             yield attributes
 
+    def get_completions(self, obj, field_name, prefix):
+        """
+        Overwrites `ObjectAdmin.get_completions` and searches for autocompletion
+        along relationships.
+        """
+        all_attributes = self.get_field_attributes(field_name)
+        admin = all_attributes.get('admin')
+        session = orm.object_session(obj)
+        if (admin is not None) and (session is not None):
+            search_filter = list_filter.SearchFilter(admin)
+            query = admin.get_query(session)
+            query = search_filter.decorate_query(query, prefix)
+            return [e for e in query.limit(20).all()]
+        return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
+
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
@@ -374,8 +441,6 @@ and used as a custom action.
         :return: a dictionary with the changed attributes and their old
            value
         """
-        from sqlalchemy import orm
-        from sqlalchemy.orm.exc import UnmappedClassError
         state = orm.attributes.instance_state( obj )
         dict_ = state.dict
         modifications = dict()
@@ -383,7 +448,7 @@ and used as a custom action.
             if not hasattr( attr.impl, 'get_history' ):
                 continue
             (added, unchanged, deleted) = \
-                attr.impl.get_history( state, dict_ )
+                attr.impl.get_history(state, dict_, passive=orm.base.PASSIVE_NO_FETCH)
             if added or deleted:
                 old_value = None
                 if deleted:
@@ -512,9 +577,8 @@ and used as a custom action.
 
     def is_persistent(self, obj):
         """:return: True if the object has a persisted state, False otherwise"""
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( obj )
-        if session:
+        session = orm.object_session(obj)
+        if session is not None:
             if obj in session.new:
                 return False
             if obj in session.deleted:
@@ -522,6 +586,12 @@ and used as a custom action.
             return True
         return False
 
+    def is_dirty(self, obj):
+        session = orm.object_session(obj)
+        if session is not None:
+            return (obj in session.dirty)
+        return True
+            
     def is_deleted(self, obj):
         """
         :return: True if the object has been deleted from the persistent
@@ -530,16 +600,6 @@ and used as a custom action.
         if state != None and state.deleted:
             return True
         return False
-
-    def get_expanded_search_filters(self):
-        """
-        :return: a list of tuples of type [(field_name, field_attributes)]
-        """
-        if self.expanded_list_search == None:
-            field_list = self.get_table().get_fields()
-        else:
-            field_list = self.expanded_list_search
-        return [list_filter.EditorFilter(field_name) for field_name in field_list]
 
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
@@ -553,7 +613,7 @@ and used as a custom action.
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
 
-    def get_search_fields(self, substring):
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the fields in the `list_search` attribute as well as the 
@@ -570,10 +630,63 @@ and used as a custom action.
         if self._search_fields is None:
             self._search_fields = list(self.list_search)
             # list to avoid p3k fixes
-            for field_name, col_property in list(self.mapper.column_attrs.items()):
-                if isinstance(col_property.expression, schema.Column):
-                    self._search_fields.append(field_name)
+            # Only include basic search columns if it is set as such (True by default).
+            if self.basic_search:
+                for field_name, col_property in list(self.mapper.column_attrs.items()):
+                    if isinstance(col_property.expression, schema.Column):
+                        self._search_fields.append(field_name)
         return self._search_fields
+
+    def decorate_search_query(self, query, text):
+        """
+        Decorate the given sqlalchemy query for the objects that should be displayed in the table or selection view,
+        with the needed clauses for filtering based on the given search text.
+        By default all 'simple' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
+        Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
+        """
+        assert len(text)
+        # arguments for the where clause
+        args = []
+        # join conditions : list of join entities
+        joins = []
+        
+        for search_field in self._get_search_fields(text):
+            if isinstance(search_field, str):
+                column_name = search_field
+                path = column_name.split('.')
+                target = self.entity
+                related_admin = self
+                for path_segment in path:
+                    # use the field attributes for the introspection, as these
+                    # have detected hybrid properties
+                    fa = related_admin.get_descriptor_field_attributes(path_segment)
+                    instrumented_attribute = getattr(target, path_segment)
+                    if fa.get('target', False):
+                        joins.append(instrumented_attribute)
+                        target = fa['target']
+                        related_admin = related_admin.get_related_admin(target)
+                    else:
+                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
+                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
+                        search_strategy = fa['search_strategy']
+                        if search_strategy is not None:
+                            arg = search_strategy.get_clause(search_strategy.attribute or instrumented_attribute, text, fa)
+                            if arg is not None:
+                                arg = sql.and_(instrumented_attribute != None, arg)
+                                args.append(arg)
+            elif isinstance(search_field, list_filter.SearchFieldStrategy):
+                attribute = search_field.attribute
+                field_attributes = self.get_related_admin(attribute.class_).get_field_attributes(attribute.key)
+                arg = search_field.get_clause(attribute, text, field_attributes)
+                if arg is not None:
+                    args.append(arg)
+        
+        for join in joins:
+            query = query.outerjoin(join)
+        
+        query = query.filter(sql.or_(*args))
+    
+        return query
 
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new

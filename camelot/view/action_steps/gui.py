@@ -31,15 +31,14 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from ...core.qt import QtCore, QtWidgets
+from ...core.qt import QtCore, QtWidgets, is_deleted
 
 import six
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
-from camelot.view.controls.inheritance import SubclassDialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
 class UpdateEditor(ActionStep):
@@ -58,38 +57,12 @@ class UpdateEditor(ActionStep):
         self.propagate = propagate
 
     def gui_run(self, gui_context):
+        if is_deleted(gui_context.editor):
+            return
         setattr(gui_context.editor, self.attribute, self.value)
         if self.propagate:
             gui_context.editor.editingFinished.emit()
 
-class SelectSubclass(ActionStep):
-    """Allow the user to select a subclass out of a class hierarchy.  If the
-    hierarch has only one class, this step returns immediately.
-
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
-
-    yielding this step will return the admin for the subclass selected by the
-    user.
-    """
-
-    def __init__(self, admin):
-        self.admin = admin
-        self.subclass_tree = admin.get_subclass_tree()
-
-    def render(self):
-        subclass_dialog = SubclassDialog(admin=self.admin,
-                                         subclass_tree=self.subclass_tree)
-        subclass_dialog.setWindowTitle(ugettext('Select'))
-        return subclass_dialog
-
-    def gui_run(self, gui_context):
-        if not len(self.subclass_tree):
-            return self.admin
-        dialog = self.render()
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
-            raise CancelRequest()
-        return dialog.selected_subclass
 
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries
@@ -140,7 +113,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         if combobox != None:
             return combobox.set_value(value)
 
-class SelectItem( ActionStep ):
+class SelectItem(ActionStep):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
 
@@ -174,35 +147,34 @@ class SelectItem( ActionStep ):
             raise CancelRequest()
         return dialog.get_value()
 
-class ShowChart( ActionStep ):
-    """Show a full screen chart.
+class SelectSubclass(SelectItem):
+    """Allow the user to select a subclass out of a class hierarchy.  If the
+    hierarch has only one class, this step returns immediately.
 
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` or
-        :class:`camelot.container.chartcontainer.AxesContainer`
+    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
+
+    yielding this step will return the admin for the subclass selected by the
+    user.
     """
 
-    def __init__( self, chart ):
-        self.chart = chart
+    def __init__(self, admin):
+        self.admin = admin
+        items = []
+        self._append_subclass_tree_to_items(items, admin.get_subclass_tree())
+        super().__init__(items)
 
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.editors import ChartEditor
-        ChartEditor.show_fullscreen_chart( self.chart,
-                                           gui_context.workspace )
+    def _append_subclass_tree_to_items(self, items, subclass_tree):
+        for admin, tree in subclass_tree:
+            if len(tree):
+                self._append_subclass_tree_to_items(items, tree)
+            else:
+                items.append((admin, admin.get_verbose_name_plural()))
 
+    def gui_run(self, gui_context):
+        if not len(self.items):
+            return self.admin
+        return super().gui_run(gui_context)
 
-class ShowPixmap( ActionStep ):
-    """Show a full screen pixmap
-
-    :param pixmap: a :class:`camelot.view.art.Pixmap` object
-    """
-
-    def __init__( self, pixmap ):
-        self.pixmap = pixmap
-
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.liteboxview import LiteBoxView
-        litebox = LiteBoxView( parent = gui_context.workspace )
-        litebox.show_fullscreen_pixmap( self.pixmap.getQPixmap() )
 
 class CloseView( ActionStep ):
     """

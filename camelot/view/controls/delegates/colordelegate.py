@@ -29,43 +29,10 @@
 
 import six
 
-from ....core.qt import variant_to_py, QtCore, QtGui, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 @six.add_metaclass(DocumentationMetaclass)
 class ColorDelegate(CustomDelegate):
-    
+
     editor = editors.ColorEditor
-    
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        field_attributes = variant_to_py( index.model().data( index, Qt.UserRole ) )
-        color = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        editable = True
-        background_color = None
-        if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            background_color = field_attributes.get( 'background_color', None )
-        if ( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect( option.rect, option.palette.highlight() )
-        elif not editable:
-            painter.fillRect( option.rect, background_color or option.palette.window() )
-        else:
-            painter.fillRect( option.rect, background_color or option.palette.base() )
-        if color not in ( None, ValueLoading ):
-            qcolor = QtGui.QColor()
-            qcolor.setRgb( *color )
-            rect = QtCore.QRect( option.rect.left() + 1,
-                                 option.rect.top() + 1,
-                                 option.rect.width() - 2,
-                                 option.rect.height() - 2 )
-            painter.fillRect( rect, qcolor )            
-        painter.restore()
-
-
-
-
-

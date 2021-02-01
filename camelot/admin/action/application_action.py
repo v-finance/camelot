@@ -32,14 +32,16 @@ import time
 
 import six
 
-from ...core.conf import settings
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtWebKit
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
+from ...core.sql import metadata
+from ..admin_route import AdminRoute
+from .base import RenderHint
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 """ModelContext, GuiContext and Actions that run in the context of an 
 application.
@@ -56,6 +58,10 @@ class ApplicationActionModelContext( ModelContext ):
    
         the application admin.
 
+    .. attribute:: actions
+
+        the actions in the same context
+
     .. attribute:: session
 
         the active session
@@ -64,6 +70,7 @@ class ApplicationActionModelContext( ModelContext ):
     def __init__( self ):
         super( ApplicationActionModelContext, self ).__init__()
         self.admin = None
+        self.actions = []
 
     # Cannot set session in constructor because constructor is called
     # inside the GUI thread
@@ -81,9 +88,15 @@ class ApplicationActionGuiContext( GuiContext ):
         the :class:`camelot.view.workspace.DesktopWorkspace` of the 
         application in which views can be opened or adapted.
         
-    .. attribute:: admin
+    .. attribute:: admin_route
     
-        the application admin.
+        the route to the reference of the view on the server
+
+    .. attribute:: action_routes
+
+        a list with routes to actions in the current context, mapping the
+        route to the action to the route to the rendered action displaying the
+        action state.
     """
     
     model_context = ApplicationActionModelContext
@@ -91,23 +104,56 @@ class ApplicationActionGuiContext( GuiContext ):
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.workspace = None
-        self.admin = None
+        self.admin_route = None
+        self.action_routes = {}
     
+    def get_progress_dialog(self):
+        if self.workspace is not None and not is_deleted(self.workspace):
+            view = self.workspace.active_view()
+            if view is not None:
+                if view.objectName() == 'dashboard':
+                    quick_view = view.quick_view
+                    if not is_deleted(quick_view):
+                        # try to return the C++ QML progress dialog
+                        qml_progress_dialog = quick_view.findChild(QtCore.QObject, 'qml_progress_dialog')
+                        if qml_progress_dialog is not None:
+                            return qml_progress_dialog
+
+
+        # return the regular progress dialog
+        return super( ApplicationActionGuiContext, self ).get_progress_dialog()
+
     def get_window(self):
-        if self.workspace is not None:
+        if self.workspace is not None and not is_deleted(self.workspace):
             return self.workspace.window()
 
-    def create_model_context( self ):
+    def create_model_context(self):
+        # the possibility of having no admin class is an aberation, needed
+        # to keep the FieldAction working
         context = super( ApplicationActionGuiContext, self ).create_model_context()
-        context.admin = self.admin
+        context.admin = AdminRoute.admin_for(self.admin_route) if self.admin_route is not None else None
+        # todo : action routes should be translated to actions here
+        context.actions = list(self.action_routes.keys())
         return context
         
-    def copy( self, base_class=None ):
-        new_context = super( ApplicationActionGuiContext, self ).copy( base_class )
+    def copy(self, base_class=None):
+        new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
         new_context.workspace = self.workspace
-        new_context.admin = self.admin
+        new_context.admin_route = self.admin_route
+        new_context.action_routes = dict(self.action_routes)
         return new_context
-        
+
+
+class UpdateActions(Action):
+
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        actions_state = dict()
+        for action in model_context.actions:
+            actions_state[action] = action.get_state(model_context)
+        yield action_steps.UpdateActionsState(actions_state)
+
+
 class SelectProfile( Action ):
     """Select the application profile to use
     
@@ -119,9 +165,9 @@ class SelectProfile( Action ):
     selected profile.
     """
     
-    new_icon = Icon('tango/16x16/actions/document-new.png')
-    save_icon = Icon('tango/16x16/actions/document-save.png')
-    load_icon = Icon('tango/16x16/actions/document-open.png')
+    new_icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    save_icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
+    load_icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
     file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store, edit_dialog_class=None):
@@ -260,8 +306,11 @@ class OpenTableView( EntityAction ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
-        step = action_steps.OpenTableView(self._entity_admin,
-                                          self._entity_admin.get_query())
+        # swith comments here to turn on proof-of-concept qml table view
+        #step = action_steps.OpenQmlTableView(
+        step = action_steps.OpenTableView(
+            self._entity_admin, self._entity_admin.get_query()
+        )
         step.new_tab = (model_context.mode_name == 'new_tab')
         yield step
 
@@ -276,7 +325,7 @@ class OpenNewView( EntityAction ):
 
     verbose_name = _('New')
     shortcut = QtGui.QKeySequence.New
-    icon = Icon('tango/16x16/actions/document-new.png')
+    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
             
     def get_state( self, model_context ):
@@ -293,37 +342,26 @@ class OpenNewView( EntityAction ):
         admin.add(new_object)
         admin.set_defaults(new_object)
         yield action_steps.OpenFormView([new_object], admin)
+        
 
-class ShowHelp( Action ):
-    """Open the help"""
-    
-    shortcut = QtGui.QKeySequence.HelpContents
-    icon = Icon('tango/16x16/apps/help-browser.png')
-    tooltip = _('Help content')
-    verbose_name = _('Help')
-    
-    def gui_run( self, gui_context ):
-        self.view = QtWebKit.QWebView( None )
-        self.view.load( gui_context.admin.get_application_admin().get_help_url() )
-        self.view.setWindowTitle( ugettext('Help Browser') )
-        self.view.setWindowIcon( self.icon.getQIcon() )
-        self.view.show()
-     
-class ShowAbout( Action ):
+class ShowAbout(Action):
     """Show the about dialog with the content returned by the
     :meth:`ApplicationAdmin.get_about` method
     """
     
     verbose_name = _('&About')
-    icon = Icon('tango/16x16/mimetypes/application-certificate.png')
+    icon = FontIcon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
     tooltip = _("Show the application's About box")
-    
-    def gui_run( self, gui_context ):
-        abtmsg = gui_context.admin.get_application_admin().get_about()
-        QtWidgets.QMessageBox.about( gui_context.workspace, 
-                                 ugettext('About'), 
-                                 six.text_type( abtmsg ) )
-        
+
+    def model_run(self, model_context):
+        from camelot.view.action_steps import MessageBox
+        about = str(model_context.admin.get_application_admin().get_about())
+        yield MessageBox(
+            text = about,
+            title = ugettext('About'),
+            standard_buttons=QtWidgets.QMessageBox.Ok,
+        )
+
 class Backup( Action ):
     """
 Backup the database to disk
@@ -336,15 +374,15 @@ Backup the database to disk
     
     verbose_name = _('&Backup')
     tooltip = _('Backup the database')
-    icon = Icon('tango/16x16/actions/document-save.png')
+    icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
     backup_mechanism = BackupMechanism
 
     def model_run( self, model_context ):
-        from camelot.view.action_steps import UpdateProgress, SelectBackup
-        label, storage = yield SelectBackup( self.backup_mechanism )
-        yield UpdateProgress( text = _('Backup in progress') )
-        backup_mechanism = self.backup_mechanism(label, storage)
-        backup_iterator = backup_mechanism.backup(settings.ENGINE())
+        from camelot.view.action_steps import SaveFile, UpdateProgress
+        destination = yield SaveFile()
+        yield UpdateProgress(text = _('Backup in progress'))
+        backup_mechanism = self.backup_mechanism(destination)
+        backup_iterator = backup_mechanism.backup(metadata.bind)
         for completed, total, description in backup_iterator:
             yield UpdateProgress(completed,
                                  total,
@@ -353,21 +391,21 @@ Backup the database to disk
 class Refresh( Action ):
     """Reload all objects from the database and update all views in the
     application."""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
+    tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
-    icon = Icon('tango/16x16/actions/view-refresh.png')
+    icon = FontIcon('sync') # 'tango/16x16/actions/view-refresh.png'
     
     def model_run( self, model_context ):
         import sqlalchemy.exc as sa_exc
         from camelot.core.orm import Session
         from camelot.view import action_steps
-        from camelot.view.remote_signals import get_signal_handler
         LOGGER.debug('session refresh requested')
         progress_db_message = ugettext('Reload data from database')
         progress_view_message = ugettext('Update screens')
         session = Session()
-        signal_handler = get_signal_handler()
         refreshed_objects = []
         expunged_objects = []
         #
@@ -392,10 +430,8 @@ class Refresh( Action ):
                                                    session_items, 
                                                    progress_db_message )
         yield action_steps.UpdateProgress( text = progress_view_message )
-        for obj in refreshed_objects:
-            signal_handler.sendEntityUpdate( self, obj )
-        for obj in expunged_objects:
-            signal_handler.sendEntityDelete( self, obj )
+        yield action_steps.UpdateObjects(refreshed_objects)
+        yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
 
 class Restore(Refresh):
@@ -410,22 +446,23 @@ Restore the database to disk
     
     verbose_name = _('&Restore')
     tooltip = _('Restore the database from a backup')
-    icon = Icon('tango/16x16/devices/drive-harddisk.png')
+    icon = FontIcon('hdd') # 'tango/16x16/devices/drive-harddisk.png'
     backup_mechanism = BackupMechanism
     shortcut = None
             
     def model_run( self, model_context ):
-        from camelot.view.action_steps import UpdateProgress, SelectRestore
-        label, storage = yield SelectRestore( self.backup_mechanism )
+        from camelot.view.action_steps import UpdateProgress, SelectFile
+        backups = yield SelectFile()
         yield UpdateProgress( text = _('Restore in progress') )
-        backup_mechanism = self.backup_mechanism(label, storage)
-        restore_iterator = backup_mechanism.restore(settings.ENGINE())
-        for completed, total, description in restore_iterator:
-            yield UpdateProgress(completed,
-                                 total,
-                                 text = description)
-        for step in super(Restore, self).model_run(model_context):
-            yield step
+        for backup in backups:
+            backup_mechanism = self.backup_mechanism(backup)
+            restore_iterator = backup_mechanism.restore(metadata.bind)
+            for completed, total, description in restore_iterator:
+                yield UpdateProgress(completed,
+                                     total,
+                                     text = description)
+            for step in super(Restore, self).model_run(model_context):
+                yield step
 
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
@@ -435,39 +472,56 @@ class Profiler( Action ):
     verbose_name = _('Profiler start/stop')
     
     def __init__(self):
-        self.profile = None
-    
+        self.model_profile = None
+        self.gui_profile = None
+
+    def gui_run(self, gui_context):
+        import cProfile
+        if self.gui_profile is None:
+            self.gui_profile = cProfile.Profile()
+            self.gui_profile.enable()
+        else:
+            self.gui_profile.disable()
+        super(Profiler, self).gui_run(gui_context)
+
     def model_run(self, model_context):
         from ...view import action_steps
         from six import StringIO
         import cProfile
         import pstats
-        if self.profile is None:
+        if self.model_profile is None:
             yield action_steps.MessageBox('Start profiler')
-            self.profile = cProfile.Profile()
-            self.profile.enable()
+            self.model_profile = cProfile.Profile()
+            self.model_profile.enable()
         else:
             yield action_steps.UpdateProgress(text='Creating statistics')
-            self.profile.disable()
-            stream = StringIO()
-            stats = pstats.Stats(self.profile, stream=stream)
-            self.profile = None
-            stats.sort_stats('cumulative')
-            yield action_steps.UpdateProgress(text='Create report')
-            stats.print_stats()
-            stream.seek(0)
-            yield action_steps.OpenStream(stream)
-            filename = action_steps.OpenFile.create_temporary_file('.prof')
-            stats.dump_stats(filename)
-            yield action_steps.MessageBox(
-                'Profile stored in {0}'.format(filename))
+            self.model_profile.disable()
+            profiles = [('model', self.model_profile), ('gui', self.gui_profile)]
+            self.model_profile = None
+            self.gui_profile = None
+            for label, profile in profiles:
+                stream = StringIO()
+                stats = pstats.Stats(profile, stream=stream)
+                stats.sort_stats('cumulative')
+                yield action_steps.UpdateProgress(
+                    text='Create {0} report'.format(label)
+                )
+                stats.print_stats()
+                stream.seek(0)
+                yield action_steps.OpenString(stream.getvalue().encode('utf-8'))
+                filename = action_steps.OpenFile.create_temporary_file(
+                    '{0}.prof'.format(label)
+                )
+                stats.dump_stats(filename)
+                yield action_steps.MessageBox(
+                    'Profile stored in {0}'.format(filename))
             
 class Exit( Action ):
     """Exit the application"""
     
     verbose_name = _('E&xit')
     shortcut = QtGui.QKeySequence.Quit
-    icon = Icon('tango/16x16/actions/system-shutdown.png')
+    icon = FontIcon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
     
     def gui_run( self, gui_context ):
@@ -488,7 +542,7 @@ class ChangeLogging( Action ):
     """Allow the user to change the logging configuration"""
     
     verbose_name = _('Change logging')
-    icon = Icon('tango/16x16/emblems/emblem-photos.png')
+    icon = FontIcon('wrench') # 'tango/16x16/emblems/emblem-photos.png'
     tooltip = _('Change the logging configuration of the application')
 
     @classmethod
@@ -559,8 +613,9 @@ class ChangeLogging( Action ):
                                      }
                 
         options = Options()
-        yield action_steps.ChangeObject( options )
-        logging.getLogger().setLevel( options.level )
+        options_admin = model_context.admin.get_related_admin(Options)
+        yield action_steps.ChangeObject(options, options_admin)
+        logging.getLogger().setLevel(options.level)
         if options.queries == True:
             event.listen(Engine, 'before_cursor_execute',
                          self.before_cursor_execute)
@@ -577,86 +632,7 @@ class ChangeLogging( Action ):
                          self.connection_checkout)
             event.listen(Pool, 'checkin',
                          self.connection_checkin)
-            
-class DumpState( Action ):
-    """Dump the state of the application to the output, this method is
-    triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
-    
-    verbose_name = _('Dump state')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D )
-    
-    def model_run( self, model_context ):
-        import collections
-        import gc
-        from camelot.core.orm import Session
-        from camelot.view import action_steps
-        from camelot.view.register import dump_register
-        from camelot.view.proxy.collection_proxy import CollectionProxy
 
-        dump_logger = LOGGER.getChild('dump_state')
-        session = Session()
-        type_counter = collections.defaultdict(int)
-
-        yield action_steps.UpdateProgress( text = _('Dumping session state') )
-        gc.collect()
-        
-        dump_logger.warn( '======= begin register dump =============' )
-        dump_register( dump_logger )
-        dump_logger.warn( '======= end register dump ===============' )
-
-        for o in session:
-            type_counter[type(o).__name__] += 1
-        dump_logger.warn( '======= begin session dump ==============' )
-        for k,v in six.iteritems(type_counter):
-            dump_logger.warn( '%s : %s'%(k,v) )
-        dump_logger.warn( '======= end session dump ==============' )
-
-        yield action_steps.UpdateProgress( text = _('Dumping item model state') )
-        dump_logger.warn( '======= begin item model dump =========' )
-        for o in gc.get_objects():
-            if isinstance(o, CollectionProxy):
-                dump_logger.warn( '%s is used by :'%(six.text_type( o )) )
-                for r in gc.get_referrers(o):
-                    dump_logger.warn( ' ' + type(r).__name__ )
-                    for rr in gc.get_referrers(r):
-                        dump_logger.warn( '  ' + type(rr).__name__ )
-        dump_logger.warn( '======= end item model dump ===========' )
-
-class RuntimeInfo( Action ):
-    """Pops up a messagebox showing the version of certain
-    libraries used.  This is for debugging purposes., this action is
-    triggered by pressing :kbd:`Ctrl-Alt-I` in the GUI"""
-    
-    verbose_name = _('Show runtime info')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_I )
-    
-    def model_run( self, model_context ):
-        from camelot.view import action_steps
-        import sys
-        import sqlalchemy
-        import chardet
-        import jinja2
-        import xlrd
-        import xlwt
-                
-        html = """<em>Python:</em> <b>%s</b><br>
-                  <em>Qt:</em> <b>%s</b><br>
-                  <em>PyQt:</em> <b>%s</b><br>
-                  <em>SQLAlchemy:</em> <b>%s</b><br>
-                  <em>Chardet:</em> <b>%s</b><br>
-                  <em>Jinja:</em> <b>%s</b><br>
-                  <em>xlrd:</em> <b>%s</b><br>
-                  <em>xlwt:</em> <b>%s</b><br><br>
-                  <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
-                                              float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
-                                              QtCore.PYQT_VERSION_STR,
-                                              sqlalchemy.__version__,
-                                              chardet.__version__,
-                                              jinja2.__version__,
-                                              xlrd.__VERSION__,
-                                              xlwt.__VERSION__,
-                                              six.text_type(sys.path))        
-        yield action_steps.PrintHtml( html )
         
 class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test
@@ -673,49 +649,6 @@ class SegmentationFault( Action ):
         if ok == QtWidgets.QMessageBox.Yes:
             import faulthandler
             faulthandler._read_null()        
-        
-class Authentication( Action ):
-    """This action provides information of the currently active authentication
-    mechanism, in other words, it displays the active user and his permissions.
-    
-    Add this action to a toolbar if you want to show the authentication
-    information to the user.
-    """
-    
-    icon = Icon('tango/16x16/emotes/face-smile.png')
-    image_size = 32
-    
-    def render( self, gui_context, parent ):
-        from camelot.view.controls.action_widget import AuthenticationWidget
-        return AuthenticationWidget(self, gui_context, parent)
-    
-    def get_state(self, model_context):
-        from camelot.model.authentication import get_current_authentication
-        from camelot.view import art
-        state = super(Authentication, self).get_state(model_context)
-        authentication = get_current_authentication()
-        state.verbose_name = authentication.username
-        state.tooltip = ', '.join([g.name for g in authentication.groups])
-        representation = authentication.get_representation()
-        if representation is not None:
-            state.icon = art.IconFromImage(representation)
-        return state
-    
-    def model_run(self, model_context):
-        from camelot.model.authentication import get_current_authentication
-        from camelot.view import action_steps
-        from camelot.view.controls.editors.imageeditor import ImageEditor
-        select_file = action_steps.SelectFile(file_name_filter=ImageEditor.filter)
-        filenames = yield select_file
-        for filename in filenames:
-            yield action_steps.UpdateProgress(text=ugettext('Scale image'))
-            image = QtGui.QImage(filename)
-            image = image.scaled(self.image_size,
-                                 self.image_size,
-                                 Qt.KeepAspectRatio)
-            authentication = get_current_authentication()
-            authentication.set_representation(image)
-            yield action_steps.FlushSession(model_context.session)
 
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction

@@ -47,9 +47,26 @@ Or use introspection of the SQLAlchemy session to update the GUI :
 """
 
 from camelot.admin.action.base import ActionStep
-from camelot.view.remote_signals import get_signal_handler
+from ..crud_signals import CrudSignalHandler
 
-class FlushSession( ActionStep ):
+class AbstractCrudSignal(ActionStep):
+
+    def __init__(self):
+        self.objects_deleted = tuple()
+        self.objects_updated = tuple()
+        self.objects_created = tuple()
+
+    def gui_run(self, gui_context):
+        super(AbstractCrudSignal, self).gui_run(gui_context)
+        crud_signal_handler = CrudSignalHandler()
+        if len(self.objects_deleted):
+            crud_signal_handler.send_objects_deleted(self, self.objects_deleted)
+        if len(self.objects_updated):
+            crud_signal_handler.send_objects_updated(self, self.objects_updated)
+        if len(self.objects_created):
+            crud_signal_handler.send_objects_created(self, self.objects_created)
+
+class FlushSession(AbstractCrudSignal):
     """Flushes the session and informs the GUI about the
     changes.
     
@@ -59,15 +76,15 @@ class FlushSession( ActionStep ):
         This will make the flushing faster, but the GUI might become
         inconsistent.
     """
-        
-    def __init__( self, session, update_depending_objects = True ):
+
+    def __init__(self, session, update_depending_objects = True):
+        super(FlushSession, self).__init__()
         #
         # @todo : deleting of objects should be moved from the collection_proxy
         #         to here, once deleting rows is reimplemented as an action
         #
         # @todo : handle the creation of new objects
         #
-        signal_handler = get_signal_handler()
         # list of objects that need to receive an update signal
         dirty_objects = set( session.dirty )
         
@@ -75,67 +92,59 @@ class FlushSession( ActionStep ):
         #    obj_admin = admin.get_related_admin( type( dirty_object ) )
         #    if obj_admin:
         #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )
-        
-        for obj_to_delete in session.deleted:
-        #    obj_admin = admin.get_related_admin( type( obj_to_delete ) )
-        #    if obj_admin:
-        #        dirty_objects.update( obj_admin.get_depending_objects( obj_to_delete ) )
-            signal_handler.sendEntityDelete( self, obj_to_delete )
+        self.objects_deleted = tuple(session.deleted)
         #
         # Only now is the full list of dirty objects available, so the deleted
         # can be removed from them
         #
         for obj_to_delete in session.deleted:
             try:
-                dirty_objects.remove( obj_to_delete )
+                dirty_objects.remove(obj_to_delete)
             except KeyError:
                 pass
         
         session.flush()
-        for obj in dirty_objects:
-            signal_handler.sendEntityUpdate( self, obj )
-    
-    def gui_run( self, gui_context ):
-        pass
-    
-class UpdateObject( ActionStep ):
-    """Inform the GUI that obj has changed.
+        self.objects_updated = tuple(dirty_objects)
 
-    :param obj: the object that has changed
+
+class UpdateObjects(AbstractCrudSignal):
+    """Inform the GUI that objects have changed.
+
+    :param objects: the objects that have changed
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityUpdate( self, self.obj )
-    
-    def get_object(self):
-        return self.obj
 
-class DeleteObject( UpdateObject ):
-    """Inform the GUI that obj is going to be deleted.
+    def __init__(self, objects):
+        super(UpdateObjects, self).__init__()
+        self.objects_updated = tuple(objects)
 
-    :param obj: the object that is going to be deleted
+    def get_objects(self):
+        return self.objects_updated
+
+class DeleteObjects(AbstractCrudSignal):
+    """Inform the GUI that objects are going to be deleted.
+
+    :param objects: the objects that are going to be deleted
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityDelete( self, self.obj )
-    
-class CreateObject( UpdateObject ):
-    """Inform the GUI that obj was created.
 
-    :param obj: the object that was created
+    def __init__( self, objects ):
+        super(DeleteObjects, self).__init__()
+        self.objects_deleted = tuple(objects)
+
+    def get_objects(self):
+        return self.objects_deleted
+
+class CreateObjects(AbstractCrudSignal):
+    """Inform the GUI that objects were created.
+
+    :param objects: the objects that were created
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityCreate( self, self.obj )
+
+    def __init__( self, objects ):
+        super(CreateObjects, self).__init__()
+        self.objects_created = tuple(objects)
+
+    def get_objects(self):
+        return self.objects_created
 
 
 

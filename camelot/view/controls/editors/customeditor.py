@@ -27,10 +27,12 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py
+from ....admin.action.base import RenderHint
+from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
+
 from ...model_thread import post
 from ..action_widget import ActionToolbutton
 
@@ -64,16 +66,6 @@ def set_background_color_palette(widget, background_color):
         widget.setPalette(QtWidgets.QApplication.palette())
 
 
-def draw_tooltip_visualization(widget):
-    """
-    Draws a small visual indication in the top-left corner of a widget.
-    :param widget: a QWidget
-    """
-    painter = QtGui.QPainter(widget)
-    painter.drawPixmap(QtCore.QPoint(0, 0),
-                       QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
-
-
 class AbstractCustomEditor(object):
     """
     Helper class to be used to build custom editors.
@@ -91,7 +83,7 @@ class AbstractCustomEditor(object):
       on those widgets.
 
     * Editor should set their size policy, for most editor this means their
-      vertical size policy should be  `QtGui.QSizePolicy.Fixed`
+      vertical size policy should be  `QtWidgets.QSizePolicy.Fixed`
     """
 
     def __init__(self):
@@ -128,19 +120,16 @@ class AbstractCustomEditor(object):
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
 
-    """
-    Get the 'standard' height for a cell
-    """
-    def get_height(self):
-        return max(QtWidgets.QLineEdit().sizeHint().height(),
-                   QtGui.QDateEdit().sizeHint().height(),
-                   QtGui.QDateTimeEdit().sizeHint().height(),
-                   QtGui.QSpinBox().sizeHint().height(),
-                   QtGui.QDateEdit().sizeHint().height(),
-                   QtWidgets.QComboBox().sizeHint().height())
-
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
+
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            button = ActionToolbutton(action, self.gui_context, parent)
+            button.setAutoRaise(True)
+            button.setFocusPolicy(Qt.ClickFocus)
+            return button
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
 
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
@@ -153,6 +142,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
+    completionPrefixChanged = QtCore.qt_signal(str)
 
     _font_height = None
     _font_width = None
@@ -162,6 +152,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         AbstractCustomEditor.__init__(self)
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self
+        self.gui_context.admin_route = None
 
         if CustomEditor._font_width is None:
             font_metrics = QtGui.QFontMetrics(self.font())
@@ -173,20 +164,24 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         else:
             self.size_hint_width = column_width * CustomEditor._font_width
 
-    def paintEvent(self, event):
-        super(CustomEditor, self).paintEvent(event)
-        if self.toolTip():
-            draw_tooltip_visualization(self)
+    def get_height(self):
+        """
+        Get the 'standard' height for a cell
+        """
+        return self.contentsRect().height()
 
     def add_actions(self, actions, layout):
         for action in actions:
-            action_widget = action.render(self.gui_context, self)
+            action_widget = self.render_action(action, self)
             action_widget.setFixedHeight(self.get_height())
             layout.addWidget(action_widget)
 
     def update_actions(self):
-        model_context = self.gui_context.create_model_context()
+        model_context = None
         for action_action in self.findChildren(ActionToolbutton):
+            # only create the model context, when there is an action
+            if model_context is None:
+                model_context = self.gui_context.create_model_context()
             post(action_action.action.get_state, action_action.set_state,
                  args=(model_context,))
 

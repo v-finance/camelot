@@ -27,68 +27,73 @@
 #
 #  ============================================================================
 
-from .application import ActionView, MainWindow, InstallTranslator, Exit, RemoveTranslators
-from .backup import SelectBackup, SelectRestore
+from .application import (
+    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
+    MainMenu, UpdateActionsState,
+)
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
-from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
-                   ShowChart, ShowPixmap, SelectSubclass, UpdateEditor,)
-from .item_view import Sort, OpenTableView, UpdateTableView
+from .gui import (
+    CloseView, MessageBox, Refresh, SelectItem, SelectSubclass, UpdateEditor
+)
+from .item_view import (
+    Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
+    RefreshItemView, OpenQmlTableView
+)
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
-from .orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from .print_preview import ( PrintChart, PrintHtml, PrintPreview,
-                             PrintJinjaTemplate, UpdatePrintPreview )
+from .orm import (CreateObjects, DeleteObjects, FlushSession, UpdateObjects)
+from .print_preview import ( PrintHtml, PrintPreview, PrintJinjaTemplate)
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
 
 __all__ = [
-    ActionView.__name__,
     ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
+    ClearSelection.__name__,
     CloseView.__name__,
-    CreateObject.__name__,
-    DeleteObject.__name__,
+    CreateObjects.__name__,
+    DeleteObjects.__name__,
     EditTextDocument.__name__,
     Exit.__name__,
     FlushSession.__name__,
     InstallTranslator.__name__,
+    MainMenu,
     MainWindow.__name__,
     MessageBox.__name__,
+    NavigationPanel.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
     OpenTableView.__name__,
-    PrintChart.__name__,
+    OpenQmlTableView.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
+    RefreshItemView.__name__,
     RemoveTranslators.__name__,
     SaveFile.__name__,
-    SelectBackup.__name__,
     SelectDirectory.__name__,
     SelectFile.__name__,
     SelectItem.__name__,
     SelectObjects.__name__,
-    SelectRestore.__name__,
     SelectSubclass.__name__,
-    ShowChart.__name__,
-    ShowPixmap.__name__,
+    SetFilter.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
     ToNextForm.__name__,
     ToPreviousForm.__name__,
+    UpdateActionsState.__name__,
     UpdateEditor.__name__,
-    UpdateObject.__name__,
-    UpdatePrintPreview.__name__,
+    UpdateObjects.__name__,
     UpdateProgress.__name__,
     UpdateTableView.__name__,
     WordJinjaTemplate.__name__,

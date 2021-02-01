@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,23 +27,19 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import Pixmap
 from camelot.view.model_thread import get_model_thread
 
-working_pixmap = Pixmap( 'tango/32x32/animations/process-working.png' )
+working_pixmap = Pixmap( 'process-working.png' )
 
-class BusyWidget( QtWidgets.QLabel ):
+class BusyWidget(QtWidgets.QLabel):
     """A widget indicating the application is performing some background task.
     The widget acts as an overlay of its parent widget and displays animating
     orbs"""
 
     def __init__(self, parent = None):
         super( BusyWidget, self ).__init__( parent )
-        palette = QtGui.QPalette( self.palette() )
-        palette.setColor( palette.Background, Qt.transparent )
-        self.setPalette( palette )
-        self.setAttribute( Qt.WA_TransparentForMouseEvents )
         pixmap = working_pixmap.getQPixmap()
         rows = 4
         self.cols = 8
@@ -52,7 +48,7 @@ class BusyWidget( QtWidgets.QLabel ):
         self.orbs = rows * self.cols
         self.highlighted_orb = 0
         self.timer = None
-        self.setSizePolicy( QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding )
         mt = get_model_thread()
         mt.thread_busy_signal.connect( self.set_busy )
         # the model thread might already be busy before we connected to it
@@ -64,40 +60,35 @@ class BusyWidget( QtWidgets.QLabel ):
         :arg busy_state: True or False
         """
         #
-        # the set_busy method might get called multiple times with 
+        # the set_busy method might get called multiple times with
         # busy_state=True before calls with busy_state=False,
         # so a check on self.timer is needed to prevent multiple timers
         # from being started
         #
-        if busy_state and self.timer==None:
+        if busy_state and self.timer is None:
             self.timer = self.startTimer( 200 )
         else:
             if self.timer:
                 self.killTimer(self.timer)
                 self.timer = None
             self.highlighted_orb = 0
-        self.update()
-    
-    def paintEvent(self, event):
-        """custom paint, painting the orbs"""
-        painter = QtGui.QPainter()
-        painter.begin( self )
-        pixmap = working_pixmap.getQPixmap()
-        row, col = divmod( self.highlighted_orb, self.cols )
-        painter.drawPixmap( self.width() - self.frame_width, 
-                            self.height() - self.frame_height, 
-                            pixmap, 
-                            self.frame_width * col, 
-                            self.frame_height * row, 
-                            self.frame_width, 
-                            self.frame_height )
-        painter.end()
+        self.update_pixmap()
 
     def timerEvent(self, event):
         """custom timer event, updating the animation"""
-        self.update()
+        self.update_pixmap()
         self.highlighted_orb += 1
-        if self.highlighted_orb > self.orbs:
-            self.highlighted_orb = 0
+        if self.highlighted_orb >= self.orbs:
+            self.highlighted_orb = 1
+    
+    def update_pixmap(self):
+        pixmap = working_pixmap.getQPixmap()
+        row, col = divmod(self.highlighted_orb, self.cols)
+        self.setPixmap(pixmap.copy(
+            self.frame_width * col,
+            self.frame_height * row,
+            self.frame_width,self.frame_height
+        ))
+
 
 

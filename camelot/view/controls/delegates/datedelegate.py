@@ -29,11 +29,11 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt, QtCore
+from ....core.item_model import PreviewRole
+from ....core.qt import Qt, QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
-from camelot.view.proxy import ValueLoading
 from camelot.view.utils import local_date_format
 
 @six.add_metaclass(DocumentationMetaclass)
@@ -41,24 +41,21 @@ class DateDelegate(CustomDelegate):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor
+    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
     
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
         self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
-    
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            value_str = QtCore.QDate(value).toString(self.date_format)
-            
-        self.paint_text(painter, option, index, value_str, horizontal_align=Qt.AlignRight )
-        painter.restore()
 
-
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(DateDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            value_str = six.text_type(locale.toString(value, QtCore.QLocale.ShortFormat))
+            item.setData(py_to_variant(value_str), PreviewRole)
+        else:
+            item.setData(py_to_variant(six.text_type()), PreviewRole)
+        return item
 
 

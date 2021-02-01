@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,19 +34,15 @@ import six
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from camelot.admin.action.list_action import ListActionGuiContext, ChangeAdmin
+from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
-from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
-from camelot.view.controls.user_translatable_label import UserTranslatableLabel
-from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
-from camelot.view import register
+from ...admin.admin_route import AdminRoute
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
+from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
-from .inheritance import SubclassTree
-from .search import SimpleSearchControl
 
 logger = logging.getLogger('camelot.view.controls.tableview')
 
@@ -131,9 +127,12 @@ class TableWidget(QtWidgets.QTableView):
         self.setEditTriggers(QtWidgets.QAbstractItemView.SelectedClicked |
                              QtWidgets.QAbstractItemView.DoubleClicked |
                              QtWidgets.QAbstractItemView.CurrentChanged)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding)
-        self.horizontalHeader().setClickable(True)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
+        try:
+            self.horizontalHeader().setClickable(True)
+        except AttributeError:
+            self.horizontalHeader().setSectionsClickable(True)
         self._header_font_required = QtWidgets.QApplication.font()
         self._header_font_required.setBold(True)
         line_height = QtGui.QFontMetrics(QtWidgets.QApplication.font()
@@ -147,6 +146,21 @@ class TableWidget(QtWidgets.QTableView):
             self.horizontal_section_clicked)
         self.horizontalHeader().sectionResized.connect(
             self._save_section_width)
+        self.verticalScrollBar().sliderPressed.connect(self._slider_pressed)
+        self.horizontalScrollBar().sliderPressed.connect(self._slider_pressed)
+
+    @QtCore.qt_slot()
+    def selectAll(self):
+        """
+        Reimplement `QtWidgets.QAbstractItemView.selectAll` to add the
+        option of selecting nothing.
+        """
+        selection_model = self.selectionModel()
+        if selection_model is not None:
+            if selection_model.hasSelection():
+                selection_model.clear()
+            else:
+                super(TableWidget, self).selectAll()
 
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
@@ -169,6 +183,15 @@ class TableWidget(QtWidgets.QTableView):
                                            Qt.SizeHintRole)
         self._columns_changed = dict()
         super(TableWidget, self).timerEvent(event)
+
+    @QtCore.qt_slot()
+    def _slider_pressed(self):
+        """
+        Close the editor when scrolling starts, to prevent the table from
+        jumping back to the open editor, or to prevent the open editor from
+        being out of sight.
+        """
+        self.close_editor()
 
     @QtCore.qt_slot(int, int, int)
     def _save_section_width(self, logical_index, _old_size, new_width):
@@ -224,7 +247,7 @@ class TableWidget(QtWidgets.QTableView):
         # Editor, closed. it should be safe to change the model
         #
         QtWidgets.QTableView.setModel(self, model)
-        register.register(model, self)
+        model.setParent(self)
         # assign selection model to local variable to keep it alive during
         # method call, or PySide segfaults
         selection_model = self.selectionModel()
@@ -300,24 +323,16 @@ class AdminTableWidget(QtWidgets.QWidget):
     of the table as specified in the admin class
     """
 
-    def __init__(self, admin, parent=None):
+    def __init__(self, parent=None):
         super(AdminTableWidget, self).__init__(parent)
         assert object_thread(self)
-        self._admin = admin
-        table_widget = TableWidget(parent=self,
-                                   lines_per_row=admin.lines_per_row)
+        table_widget = TableWidget(parent=self)
         table_widget.setObjectName('table_widget')
-        column_groups = ColumnGroupsWidget(admin.get_table(), table_widget)
-        column_groups.setObjectName('column_groups')
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(table_widget)
-        layout.addWidget(column_groups)
         self.setLayout(layout)
-        if admin.drop_action is not None:
-            table_widget.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
-            table_widget.setDropIndicatorShown(True)
 
     def __getattr__(self, name):
         table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
@@ -327,14 +342,8 @@ class AdminTableWidget(QtWidgets.QWidget):
     def setModel(self, model):
         assert object_thread(self)
         table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
-        column_groups = self.findChild(QtWidgets.QWidget, 'column_groups')
         if table_widget is not None:
-            model.columnsInserted.connect(column_groups.columns_changed)
-            model.columnsRemoved.connect(column_groups.columns_changed)
-            model.layoutChanged.connect(column_groups.model_reset)
-            model.modelReset.connect(column_groups.model_reset)
             table_widget.setModel(model)
-            column_groups.model_reset()
 
 
 class RowsWidget(QtWidgets.QLabel):
@@ -400,10 +409,7 @@ class HeaderWidget(QtWidgets.QWidget):
     the number of rows in the table
     """
 
-    search_widget = SimpleSearchControl
     rows_widget = RowsWidget
-
-    filters_changed_signal = QtCore.qt_signal()
 
     def __init__(self, gui_context, parent):
         QtWidgets.QWidget.__init__(self, parent)
@@ -411,71 +417,22 @@ class HeaderWidget(QtWidgets.QWidget):
         self.gui_context = gui_context
         layout = QtWidgets.QVBoxLayout()
         widget_layout = QtWidgets.QHBoxLayout()
-        search = self.search_widget(self)
-        self.setFocusProxy(search)
-        search.expand_search_options_signal.connect(
-            self.expand_search_options)
-        title = UserTranslatableLabel(
-            self.gui_context.admin.get_verbose_name_plural(), self)
-        title.setFont(self._title_font)
-        widget_layout.addWidget(title)
-        widget_layout.addWidget(search)
+        actions_toolbar = QtWidgets.QToolBar()
+        actions_toolbar.setObjectName('actions_toolbar')
+        actions_toolbar.setIconSize(QtCore.QSize(16, 16))
+        widget_layout.addWidget(actions_toolbar)
         number_of_rows = self.rows_widget(gui_context, parent=self)
         number_of_rows.setObjectName('number_of_rows')
         widget_layout.addWidget(number_of_rows)
         layout.addLayout(widget_layout, 0)
-        self._expanded_filters_created = False
-        self._expanded_search = QtWidgets.QWidget()
-        self._expanded_search.hide()
-        layout.addWidget(self._expanded_search, 1)
         self.setLayout(layout)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
-        self.search = search
-
-    @hybrid_property
-    def _title_font(cls):
-        font = QtWidgets.QApplication.font()
-        font.setBold(True)
-        return font
-
-    def _fill_expanded_search_options(self, filters):
-        """
-        Given the columns in the table view, present the user with more options
-        to filter rows in the table
-        :param columns: a list of tuples with field names and attributes
-        """
-        assert object_thread(self)
-        from camelot.view.flowlayout import FlowLayout
-        layout = FlowLayout()
-        layout.setSpacing(2)
-        layout.setContentsMargins(0, 0, 0, 0)
-        for filter_ in filters:
-            widget = filter_.render(self.gui_context, self)
-            layout.addWidget(widget)
-        self._expanded_search.setLayout(layout)
-        self._expanded_filters_created = True
-
-    def _filter_changed(self):
-        assert object_thread(self)
-        self.filters_changed_signal.emit()
-
-    @QtCore.qt_slot()
-    def expand_search_options(self):
-        assert object_thread(self)
-        if self._expanded_search.isHidden():
-            if not self._expanded_filters_created:
-                post(self.gui_context.admin.get_expanded_search_filters,
-                     self._fill_expanded_search_options)
-            self._expanded_search.show()
-        else:
-            self._expanded_search.hide()
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
 
 
 class TableView(AbstractView):
     """
     :param gui_context: a :class:`camelot.admin.action.application_action.ApplicationActionGuiContext` object.
     :param admin: an :class:`camelot.admin.entity_admin.EntityAdmin` object
-    :param search_text: a predefined search text to put in the search widget
     :param proxy: a class implementing :class:`QtCore.QAbstractTableModel` that
       will be used as a model for the table view.
     :param parent: a :class:`QtWidgets.QWidget` object
@@ -514,30 +471,26 @@ class TableView(AbstractView):
     header_widget = HeaderWidget
     AdminTableWidget = AdminTableWidget
 
-    def __init__(self,
-                 gui_context,
-                 admin,
-                 search_text=None,
-                 proxy=QueryTableProxy,
-                 parent=None):
+    def __init__(
+        self, gui_context, admin_route, parent=None
+        ):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
-        self.admin = admin
-        self.search_text = search_text
+        assert isinstance(admin_route, tuple)
+        self.admin_route = admin_route
         self.application_gui_context = gui_context
         self.gui_context = gui_context
-        self.proxy = proxy
         widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setSpacing(0)
         widget_layout.setContentsMargins(0, 0, 0, 0)
-        splitter = QtGui.QSplitter(self)
+        splitter = QtWidgets.QSplitter(self)
         splitter.setObjectName('splitter')
         widget_layout.addWidget(splitter)
         table_widget = QtWidgets.QWidget(self)
         # make sure the table itself takes expands to fill the available
         # width of the view
-        size_policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-                                        QtGui.QSizePolicy.Expanding)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                            QtWidgets.QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(1)
         table_widget.setSizePolicy(size_policy)
         filters_widget = QtWidgets.QWidget(self)
@@ -552,42 +505,13 @@ class TableView(AbstractView):
         table_widget.setLayout(self.table_layout)
         filters_widget.setLayout(self.filters_layout)
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
-        class_tree = SubclassTree(self.admin)
-        class_tree.setObjectName('class_tree')
-        class_tree.subclass_clicked_signal.connect(self.change_admin)
-        splitter.addWidget(class_tree)
         splitter.addWidget(table_widget)
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
-        self.search_filter = lambda q: q
-        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
-                                   self)
-        shortcut.activated.connect(self.activate_search)
 
-        self.gui_context.admin = self.admin
-        self.gui_context.view = self
-
-    @QtCore.qt_slot()
-    def activate_search(self):
-        assert object_thread(self)
-        header = self.findChild(self.header_widget)
-        header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
-
-    @QtCore.qt_slot(object)
-    def set_subclass_tree(self, subclasses):
-        assert object_thread(self)
-        class_tree = self.findChild(QtWidgets.QWidget, 'class_tree')
-        if len(subclasses) > 0:
-            class_tree.show()
-            class_tree.set_subclasses(subclasses)
-        else:
-            class_tree.hide()
-
-    @QtCore.qt_slot(object)
-    def change_admin(self, new_admin):
-        action = ChangeAdmin(new_admin)
-        action.gui_run(self.gui_context)
+    def close_view(self, accept):
+        self.close_clicked_signal.emit()
 
     @QtCore.qt_slot(int)
     def sectionClicked(self, section):
@@ -601,7 +525,8 @@ class TableView(AbstractView):
         #
         if self.table:
             self.table.close_editor()
-        self.admin.list_action.gui_run(self.gui_context)
+        admin = AdminRoute.admin_for(self.admin_route)
+        admin.list_action.gui_run(self.gui_context)
 
     def get_admin(self):
         return self.admin
@@ -613,26 +538,24 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.set_value(value)
-            self.rebuild_query()
 
     @QtCore.qt_slot(object)
-    def set_admin(self, admin):
+    def set_admin(self):
         """
         Switch to a different subclass, where admin is the admin object of the
         subclass
         """
         assert object_thread(self)
         logger.debug('set_admin called')
-        self.admin = admin
         if self.table:
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             if self.table.model() is not None:
                 self.table.model().deleteLater()
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
-        self.table = self.AdminTableWidget(self.admin, splitter)
+        self.table = self.AdminTableWidget(splitter)
         self.table.setObjectName('AdminTableWidget')
-        new_model = self.proxy(admin)
+        new_model = CollectionProxy(self.admin_route)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
@@ -641,24 +564,15 @@ class TableView(AbstractView):
         self.gui_context = self.application_gui_context.copy(
             ListActionGuiContext)
         self.gui_context.view = self
-        self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
+        self.gui_context.admin_route = self.admin_route
         header = self.findChild(QtWidgets.QWidget, 'header_widget')
         if header is not None:
             header.deleteLater()
-        # when a new header is set, the old one can no longer cancel its
-        # search
-        self.search_filter = lambda q: q
         header = self.header_widget(self.gui_context, self)
         header.setObjectName('header_widget')
         self.widget_layout.insertWidget(0, header)
-        header.search.search_signal.connect(self.startSearch)
-        header.search.cancel_signal.connect(self.cancelSearch)
-        header.search.on_arrow_down_signal.connect(self.focusTable)
         self.setFocusProxy(header)
-        if self.search_text:
-            header.search.search(self.search_text)
-            self.search_text = None
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
@@ -671,18 +585,6 @@ class TableView(AbstractView):
         logger.debug('tableview closed')
         event.accept()
 
-    @QtCore.qt_slot(object)
-    def _set_query(self, query):
-        assert object_thread(self)
-        if isinstance(self.table.model(), QueryTableProxy):
-            # apply the filters on the query, to activate the default filter
-            filters_widget = self.findChild(ActionsBox, 'filters')
-            if filters_widget is not None:
-                for filter_widget in filters_widget.get_action_widgets():
-                    filter_widget.run_action()
-            self.table.model().set_value(query)
-        self.table.clearSelection()
-
     @QtCore.qt_slot()
     def refresh(self):
         """Refresh the whole view"""
@@ -690,43 +592,6 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.refresh()
-
-    @QtCore.qt_slot()
-    def rebuild_query(self):
-        """resets the table model query"""
-
-        # table can be None during view initialization
-        if self.table is None:
-            return
-
-        if not isinstance(self.table.model(), QueryTableProxy):
-            return
-
-        def rebuild_query():
-            query = self.admin.get_query()
-            if self.search_filter:
-                query = self.search_filter(query)
-            return query
-
-        post(rebuild_query, self._set_query)
-
-    @QtCore.qt_slot(str)
-    def startSearch(self, text):
-        """rebuilds query based on filtering text"""
-        assert object_thread(self)
-        from camelot.view.search import create_entity_search_query_decorator
-        logger.debug('search %s' % text)
-        self.search_filter = create_entity_search_query_decorator(
-            self.admin, six.text_type(text))
-        self.rebuild_query()
-
-    @QtCore.qt_slot()
-    def cancelSearch(self):
-        """resets search filtering to default"""
-        assert object_thread(self)
-        logger.debug('cancel search')
-        self.search_filter = lambda q: q
-        self.rebuild_query()
 
     def set_columns(self, columns):
         delegate = DelegateManager(columns, parent=self)
@@ -744,11 +609,12 @@ class TableView(AbstractView):
             if widget is not None:
                 widget.deleteLater()
         if filters:
-            filters_widget = ActionsBox(gui_context=self.gui_context,
-                                        parent=self)
+            filters_widget = ActionsBox(parent=self)
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget(filters_widget)
-            filters_widget.set_actions(filters)
+            for action in filters:
+                action_widget = self.render_action(action, filters_widget)
+                filters_widget.layout().addWidget(action_widget)
         self.filters_layout.addStretch(1)
 
     def set_list_actions(self, actions):
@@ -756,11 +622,40 @@ class TableView(AbstractView):
         assert object_thread(self)
         actions_widget = self.findChild(ActionsBox, 'actions')
         if actions:
-            actions_widget = ActionsBox(parent=self,
-                                        gui_context=self.gui_context)
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions(actions)
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
             self.filters_layout.addWidget(actions_widget)
+
+    @QtCore.qt_slot( object, object )
+    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
+        """Set the toolbar for a specific area
+        :param toolbar_area: the area on which to put the toolbar, from
+            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
+        :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
+            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
+            method.
+        """
+        if toolbar_actions != None:
+            toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
+            assert toolbar
+            for action in toolbar_actions:
+                rendered = self.render_action(action, toolbar)
+                # both QWidgets and QActions can be put in a toolbar
+                if isinstance(rendered, QtWidgets.QWidget):
+                    toolbar.addWidget(rendered)
+                elif isinstance(rendered, QtWidgets.QAction):
+                    toolbar.addAction( rendered )
+
+    @QtCore.qt_slot(bool)
+    def action_triggered(self, _checked = False):
+        """Execute an action that was triggered somewhere in the main window,
+        such as the toolbar or the main menu"""
+        action_action = self.sender()
+        action_action.action.gui_run(self.gui_context)
 
     @QtCore.qt_slot()
     def focusTable(self):
@@ -768,4 +663,3 @@ class TableView(AbstractView):
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
-

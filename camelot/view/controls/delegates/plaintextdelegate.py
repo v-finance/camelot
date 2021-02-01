@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,14 +32,13 @@ logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
 import six
 
-from ....core.qt import variant_to_py, Qt
+from ....core.item_model import PreviewRole
+from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
-
-from camelot.core.utils import ugettext
+from camelot.core.qt import QtWidgets
 
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 DEFAULT_COLUMN_WIDTH = 20
 
@@ -49,29 +48,25 @@ class PlainTextDelegate(CustomDelegate):
 
     editor = editors.TextLineEditor
 
-    def __init__( self, 
-                  parent = None, 
+    def __init__( self,
+                  parent = None,
                   length = DEFAULT_COLUMN_WIDTH,
-                  translate_content=False, 
+                  translate_content=False,
                   **kw ):
         CustomDelegate.__init__( self, parent, length = length, **kw )
         self._translate_content = translate_content
         char_width = self._font_metrics.averageCharWidth()
         self._width = char_width * min( DEFAULT_COLUMN_WIDTH, length or DEFAULT_COLUMN_WIDTH )
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            if self._translate_content:
-                value_str = ugettext( six.text_type(value) )
-            else:
-                value_str = six.text_type(value)
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        completer = fa_values.get('completer')
+        if completer is not None:
+            completer.moveToThread(QtWidgets.QApplication.instance().thread())
+        item = super(PlainTextDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+        return item
 
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
 
 

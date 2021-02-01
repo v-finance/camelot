@@ -46,8 +46,10 @@ import six
 
 LOGGER = logging.getLogger('camelot.core.qt')
 
-qt_api = os.environ.get('CAMELOT_QT_API', None)
-if qt_api is not None:
+# an empty environment variable might result in an empty string,
+# so treat a non existent environment variable as an empty string
+qt_api = os.environ.get('CAMELOT_QT_API', '')
+if qt_api != '':
     LOGGER.warn('CAMELOT_QT_API environment variable set to {}'.format(qt_api))
 
 class DelayedModule(object):
@@ -68,6 +70,12 @@ class DelayedModule(object):
             self.module = getattr(binding_module, self.__name__)
         return getattr(self.module, attr)
 
+class DelayedQtWebEngineWidgets(DelayedModule):
+
+    @property
+    def QWebView(self):
+        return self.QWebEngineView
+
 QtCore = DelayedModule('QtCore')
 QtGui = DelayedModule('QtGui')
 QtWebKit = DelayedModule('QtWebKit')
@@ -79,30 +87,25 @@ QtModel = DelayedModule('QtGui')
 QtWidgets = DelayedModule('QtGui')
 QtPrintSupport = DelayedModule('QtGui')
 
-if qt_api in (None, 'PyQt4', 'PyQt5'):
+if qt_api in ('', 'PyQt4'):
     try:
-        qt_api = qt_api or 'PyQt4'
+        qt_api = 'PyQt4'
+        # as of pyqt 5.11, qt should be imported before sip
+        from PyQt4 import QtCore
         import sip
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
         QtCore.qt_property = QtCore.pyqtProperty
         # the api version is only available after importing QtCore
-        if qt_api == 'PyQt4':
-            variant_api = sip.getapi('QVariant')
-            string_api = sip.getapi('QString')
-        else:
-            variant_api = 2
-            string_api = 2
-            QtModel = DelayedModule('QtCore')
-            QtWidgets = DelayedModule('QtWidgets')
-            QtPrintSupport = DelayedModule('QtPrintSupport')
-            QtQml = DelayedModule('QtQml')
-            QtQuick = DelayedModule('QtQuick')
+        variant_api = sip.getapi('QVariant')
+        string_api = sip.getapi('QString')
         is_deleted = sip.isdeleted
+        delete = sip.delete
     except ImportError:
-        qt_api = None
+        LOGGER.warn('Could not load PyQt4')
+        qt_api = ''
 
-elif qt_api in (None, 'PySide'):
+if qt_api in ('', 'PySide'):
     try:
         qt_api = 'PySide'
         QtCore.qt_slot = QtCore.Slot
@@ -111,12 +114,39 @@ elif qt_api in (None, 'PySide'):
         variant_api = 2
         string_api = 2
         is_deleted = lambda _qobj:False
-
+        delete = lambda _qobj:True
     except ImportError:
-        qt_api = None
+        LOGGER.warn('Could not load PySide')
+        qt_api = ''
 
-if qt_api is None:
-    raise Exception('PyQt4 nor PySide could be imported')
+if qt_api in ('', 'PyQt5'):
+    try:
+        qt_api = 'PyQt5'
+        # as of pyqt 5.11, qt should be imported before sip
+        from PyQt5 import QtCore
+        import sip
+        QtCore.qt_slot = QtCore.pyqtSlot
+        QtCore.qt_signal = QtCore.pyqtSignal
+        QtCore.qt_property = QtCore.pyqtProperty
+        variant_api = 2
+        string_api = 2
+        QtModel = DelayedModule('QtCore')
+        QtWidgets = DelayedModule('QtWidgets')
+        QtPrintSupport = DelayedModule('QtPrintSupport')
+        QtQml = DelayedModule('QtQml')
+        QtQuick = DelayedModule('QtQuick')
+        #QtWebKit = DelayedQtWebEngineWidgets('QtWebEngineWidgets')
+        QtWebKit = DelayedModule('QtWebKitWidgets')
+        QtQuickWidgets = DelayedModule('QtQuickWidgets')
+        is_deleted = sip.isdeleted
+        delete = sip.delete
+        transferto = sip.transferto
+    except ImportError:
+        LOGGER.warn('Could not load PyQt5')
+        qt_api = ''
+
+if qt_api=='':
+    raise Exception('PyQt4, PySide nor PyQt5 could be imported')
 else:
     LOGGER.info('Using {} Qt bindings'.format(qt_api))
 
@@ -128,7 +158,7 @@ assert string_api
 def _py_to_variant_1( obj=None ):
     """Convert a Python object to a :class:`QtCore.QVariant` object
     """
-    if obj==None:
+    if obj is None:
         return QtCore.QVariant()
     return QtCore.QVariant(obj)
 
@@ -217,11 +247,13 @@ def _q_string_2(arg=None):
 
 if string_api==2:
     q_string = _q_string_2
+    q_string_type = str
     q_string_size = len
     q_string_startswith = str.startswith
     q_string_endswith = str.endswith
 elif string_api==1:
     q_string = QtCore.QString
+    q_string_type = QtCore.QString
     q_string_size = QtCore.QString.size
     q_string_startswith = QtCore.QString.startsWith
     q_string_endswith = QtCore.QString.endsWith
@@ -236,24 +268,32 @@ if qt_api in ('PyQt4', 'PySide'):
     #
     _encoding=QtCore.QCoreApplication.UnicodeUTF8
 
-    def qtranslate(string_to_translate):
+    def qtranslate(string_to_translate, n=-1):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
-        return six.text_type(QtCore.QCoreApplication.translate('', 
-                                                               string_to_translate.encode('utf-8'), 
-                                                               encoding=_encoding))
+        return six.text_type(QtCore.QCoreApplication.translate(
+            '',
+            string_to_translate.encode('utf-8'),
+            '',
+            _encoding,
+            n
+        ))
 
 else:
 
-    def qtranslate(string_to_translate):
+    def qtranslate(string_to_translate, n=-1):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
-        return six.text_type(QtCore.QCoreApplication.translate('', 
-                                                               string_to_translate.encode('utf-8'),))
+        return six.text_type(QtCore.QCoreApplication.translate(
+            '',
+            string_to_translate.encode('utf-8'),
+            '',
+            n,
+        ))
 
     def qmsghandler(msg_type, msg_log_context, msg_string):
         """ Logging handler to redirect messages from Qt to Python """
@@ -269,7 +309,8 @@ else:
         else:
             LOGGER.log(logging.ERROR, 'Received message with unknown log level')
 
-    QtCore.qInstallMessageHandler(qmsghandler)
+    # Qt messages are now remotely logged by the launcher's message handler
+    #QtCore.qInstallMessageHandler(qmsghandler)
 
 __all__ = [
     QtCore.__name__,

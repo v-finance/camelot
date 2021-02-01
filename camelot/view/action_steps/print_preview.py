@@ -27,71 +27,23 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtPrintSupport, QtWidgets
+from ...core.qt import QtCore, QtGui, QtPrintSupport
 
-from camelot.admin.action import ( ActionStep,
-                                   DocumentActionGuiContext )
-from camelot.admin.action.document_action import EditDocument
+from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
 
-class PrintPreviewDialog( QtPrintSupport.QPrintPreviewDialog ):
-    """A custom :class:`QtPrintSupport.QPrintPreviewDialog` that allows additional 
-    actions on the toolbar.
-    
-    :param printer: a :class:`QtPrintSupport.QPrinter`
-    :param gui_context: the :class:`camelot.admin.action.base.GuiContext` to 
-        pass to the actions    
-    :param actions: a list of :class:`camelot.admin.action.base.Action` objects
-    :param parent: a :class:`QtWidgets.QWidget`
-    :param flags: a :class:`Qt.WindowFlags`
-    """
-    
-    def __init__( self, printer, gui_context, 
-                  actions = [], parent = None, flags = 0 ):
-        super( PrintPreviewDialog, self ).__init__( printer, parent, flags )
-        toolbar = self.findChild( QtWidgets.QToolBar )
-        self.gui_context = gui_context
-        self.gui_context.view = self
-        # keep reference to printer alive as long as the dialog exists
-        self.printer = printer
-        for action in actions:
-            qaction = action.render(self.gui_context, toolbar)
-            # it seems that the action is garbage collected when
-            # the parent remains the toolbar of the dialog, so
-            # change the parent to the dialog itself
-            qaction.setParent(self)
-            qaction.triggered.connect(self.action_triggered)
-            toolbar.addAction(qaction)
-
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        action_action = self.sender()
-        action_action.action.gui_run( self.gui_context ) 
-
-
-class UpdatePrintPreview(ActionStep):
-    """
-    Force the print preview dialog to update itself.
-
-    To be used inside a document action
-    """
-
-    def gui_run(self, gui_context):
-        preview_widget = gui_context.view.findChild(QtGui.QPrintPreviewWidget)
-        preview_widget.updatePreview()
 
 class PrintPreview( ActionStep ):
     """
     Display a print preview dialog box.
     
-    :param document: an instance of :class:`QtGui.QTextDocument` or 
-        :class:`QtWebKit.QWebView` that has a :meth:`print_` method.  The
-        thread affinity of this object will be changed to be able to use it
-        in the GUI.
-        
+    :param document: an instance of :class:`QtGui.QTextDocument`
+        that has a :meth:`print_` method.  The thread affinity of this object
+        will be changed to be able to use it in the GUI.
+
     the print preview can be customised using these attributes :
     
     .. attribute:: margin_left
@@ -147,7 +99,6 @@ class PrintPreview( ActionStep ):
         self.margin_unit = QtPrintSupport.QPrinter.Millimeter
         self.page_size = None
         self.page_orientation = None
-        self.actions = [EditDocument()]
 
     def get_printer(self):
         if self.printer is not None:
@@ -171,14 +122,12 @@ class PrintPreview( ActionStep ):
     def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
         the action step."""
-        gui_context = gui_context.copy( DocumentActionGuiContext )
-        gui_context.document = self.document
         printer = self.get_printer()
         self.config_printer(printer)
-        dialog = PrintPreviewDialog(printer,
-                                    gui_context,
-                                    actions = self.actions,
-                                    flags = QtCore.Qt.Window)
+        dialog = QtPrintSupport.QPrintPreviewDialog(
+            printer, flags = QtCore.Qt.Window
+        )
+        dialog.printer = printer
         dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
@@ -200,48 +149,7 @@ class PrintPreview( ActionStep ):
         self.paint_on_printer(printer)
         return filename
 
-class ChartDocument( QtCore.QObject ):
-    """Helper class to print matplotlib charts
 
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
-        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
-
-    """
-    
-    def __init__( self, chart ):
-        from camelot.container.chartcontainer import structure_to_figure_container
-        super( ChartDocument, self ).__init__()
-        self.chart = structure_to_figure_container( chart )
-        
-    def print_( self, printer ):
-        from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        rect = printer.pageRect( QtPrintSupport.QPrinter.Inch )
-        dpi = printer.resolution()
-        fig = Figure( facecolor='#ffffff')
-        fig.set_size_inches( ( rect.width(), rect.height() ) )
-        fig.set_dpi( dpi )
-        self.chart.plot_on_figure( fig )
-        canvas = FigureCanvas( fig )
-        canvas.render( printer )   
-        
-class PrintChart( PrintPreview ):
-    """
-    Display a print preview dialog box for a matplotlib chart.
-    
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
-        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
-        
-    Example use of this action step :
-        
-    .. literalinclude:: ../../../test/test_action.py
-       :start-after: begin chart print
-       :end-before: end chart print
-    """
-
-    def __init__( self, chart ):
-        super( PrintChart, self ).__init__( ChartDocument( chart ) )
-    
 class PrintHtml( PrintPreview ):
     """
     Display a print preview dialog box for an html string.

@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,7 +31,9 @@ import logging
 
 import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py
+from ....core.qt import (
+    QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
+)
 from camelot.view.proxy import ValueLoading
 from ...art import Icon, ColorScheme
 from .customeditor import CustomEditor
@@ -52,7 +54,7 @@ class ChoicesEditor(CustomEditor):
                   actions = [],
                   **kwargs ):
         super(ChoicesEditor, self).__init__(parent)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -161,6 +163,10 @@ class ChoicesEditor(CustomEditor):
         for i in range(combobox.count(), 0, -1):
             combobox.removeItem(i-1)
         model = combobox.model()
+        # the model of the combobox is owned by C++, so it might be
+        # deleted before the combobox is deleted
+        if is_deleted(model):
+            return
         self.append_choices(model, choices)
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
@@ -185,7 +191,7 @@ class ChoicesEditor(CustomEditor):
     def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed
         is the one that matches the value in the list set with set_choices
-        
+
         :param display_role: this is the name used to display the value in case
             the value is not in the list of choices.  If this is `None`, the string
             representation of the value is used.

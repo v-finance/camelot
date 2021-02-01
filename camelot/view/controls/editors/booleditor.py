@@ -27,10 +27,9 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets
+from ....core.qt import QtCore, Qt, QtWidgets
 from .customeditor import AbstractCustomEditor
 from camelot.core import constants
-from camelot.core.utils import ugettext
 
 class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
@@ -87,45 +86,5 @@ class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     def sizeHint(self):
         size = QtWidgets.QComboBox().sizeHint()
         return size
-
-class TextBoolEditor(QtWidgets.QLabel, AbstractCustomEditor):
-    """
-    :Parameter:
-        color_yes: string
-            text-color of the True representation
-        color_no: string
-            text-color of the False representation
-    """
-    editingFinished = QtCore.qt_signal()
-    
-    def __init__(self,
-                 parent=None,
-                 yes="Yes",
-                 no="No",
-                 color_yes=None,
-                 color_no=None,
-                 **kwargs):
-        QtWidgets.QLabel.__init__(self, parent)
-        AbstractCustomEditor.__init__(self)
-        self.setEnabled(False)
-        self.yes = ugettext(yes)
-        self.no = ugettext(no)
-        self.color_yes = color_yes
-        self.color_no = color_no
-
-    def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
-        if value:
-            self.setText(self.yes)
-            if self.color_yes:
-                selfpalette = self.palette()
-                selfpalette.setColor(QtGui.QPalette.WindowText, self.color_yes)
-                self.setPalette(selfpalette)
-        else:
-            self.setText(self.no)
-            if self.color_no:
-                selfpalette = self.palette()
-                selfpalette.setColor(QtGui.QPalette.WindowText, self.color_no)
-                self.setPalette(selfpalette)
 
 

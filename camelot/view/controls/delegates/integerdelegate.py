@@ -29,10 +29,10 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt, QtCore
+from ....core.qt import py_to_variant, Qt
+from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 if six.PY3:
     long_int = int
@@ -44,31 +44,20 @@ class IntegerDelegate(CustomDelegate):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
-  
-    def __init__(self,
-                 parent=None,
-                 unicode_format = None,
-                 **kwargs):
-  
-        CustomDelegate.__init__(self, parent=parent, **kwargs)
-        self.unicode_format = unicode_format
-        self.locale = QtCore.QLocale()
-        
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
-          
-        if value in (None, ValueLoading):
-            value_str = ''
-        else:
-            value_str = self.locale.toString( long_int(value) )
+    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
 
-        if self.unicode_format is not None:
-            value_str = self.unicode_format(value)
-        
-        self.paint_text(painter, option, index, value_str,
-                        horizontal_align=Qt.AlignRight)
-        painter.restore()
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(IntegerDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            value_str = locale.toString(long_int(value))
+            if fa_values.get('suffix') is not None:
+                value_str = value_str + ' ' + six.text_type(fa_values.get('suffix'))
+            if fa_values.get('prefix') is not None:
+                value_str = six.text_type(fa_values.get('prefix')) + ' ' + value_str
+            item.setData(py_to_variant(value_str), PreviewRole)
+        return item
+
+
 
 

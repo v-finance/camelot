@@ -51,10 +51,12 @@ class Options(object):
         form_size = (100, 100)
         # Since there is no introspection, the delegate should
         # be specified explicitely, and set to editable
-        field_attributes = {'only_selected':{'delegate':delegates.BoolDelegate,
-                                             'editable':True},
+        field_attributes = {'only_selected':{'delegate': delegates.BoolDelegate,
+                                             'nullabel': False,
+                                             'editable': True},
                             'change':{'delegate':delegates.IntegerDelegate,
-                                      'editable':True},
+                                      'nullable': False,
+                                      'editable': True},
                             }
 
 # begin change rating action definition

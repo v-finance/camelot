@@ -27,13 +27,13 @@
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtWidgets
+from ...core.qt import QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.tableview import TableView
 
@@ -52,7 +52,7 @@ class SetSelectedObjects(ActionStep):
 class ConfirmSelection(Action):
 
     verbose_name = _('OK')
-    icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
+    icon = FontIcon('check') # 'tango/16x16/emblems/emblem-symbolic-link.png'
 
     def model_run(self, model_context):
         yield SetSelectedObjects(list(model_context.get_selection()))
@@ -68,9 +68,8 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
 
     list_action = ConfirmSelection()
 
-    def __init__(self, original_admin, show_subclasses):
+    def __init__(self, original_admin):
         super(SelectAdminDecorator, self).__init__(original_admin)
-        self.show_subclasses = show_subclasses
 
     def get_list_actions(self, *a, **kwa):
         return [CancelSelection(), ConfirmSelection()]
@@ -81,32 +80,21 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
         # this admin will end up in the model context of the next
         # step
         return admin
-    
-    def get_subclass_tree(self):
-        new_subclasses = []
-        if self.show_subclasses == True:
-            subclasses = self._original_admin.get_subclass_tree()
-            for admin, tree in subclasses:
-                new_admin = SelectAdminDecorator(admin, True)
-                new_subclasses.append([new_admin, new_admin.get_subclass_tree()])
-        return new_subclasses
 
 class SelectDialog(QtWidgets.QDialog):
     
-    def __init__(self, gui_context, admin, search_text, proxy, parent = None):
+    def __init__(self, gui_context, admin_route, verbose_name, parent = None):
         super( SelectDialog, self ).__init__( parent )
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
-        self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
+        self.setWindowTitle( _('Select %s') % verbose_name )
         self.setSizeGripEnabled(True)
-        table = TableView(gui_context, admin, search_text=search_text,
-                          proxy=proxy, parent=self)
+        table = TableView(gui_context, admin_route, parent=self)
         table.setObjectName('table_view')
         layout.addWidget(table)
         self.setLayout( layout )
         self.objects = []
-        self.setWindowState(Qt.WindowMaximized)
 
 class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step
@@ -120,26 +108,25 @@ class SelectObjects( OpenTableView ):
     """
 
     def __init__(self, admin, search_text=None, value=None):
-        show_subclasses = False
         if value is None:
             value = admin.get_query()
-            # only able to construct subclass query whern
-            # the default query is used
-            show_subclasses = True
-        select_admin = SelectAdminDecorator(admin, show_subclasses)
+        select_admin = SelectAdminDecorator(admin)
         super(SelectObjects, self).__init__(select_admin, value)
         self.search_text = search_text
+        self.verbose_name_plural = str(admin.get_verbose_name_plural())
 
     def render(self, gui_context):
-        dialog = SelectDialog(gui_context, self.admin, self.search_text, self.proxy)
+        dialog = SelectDialog(gui_context, self.admin_route, self.verbose_name_plural)
         table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
-        table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)
         return dialog
 
     def gui_run( self, gui_context ):
         dialog = self.render(gui_context)
         with hide_progress_dialog(gui_context):
+            # strange things happen on windows 7 and later with maximizing
+            # this dialog, maximizing it here appears to work
+            dialog.showMaximized()
             if dialog.exec_() == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return dialog.objects

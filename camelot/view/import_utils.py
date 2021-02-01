@@ -30,7 +30,9 @@
 """Utility classes to import files into Camelot"""
 
 import csv
+import datetime
 import logging
+import os.path
 import string
 
 import six
@@ -128,7 +130,7 @@ class ShowNext(Action):
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
             mapping.set_preview_row(mapping.get_preview_row()+1)
-            yield action_steps.UpdateObject(mapping)
+        yield action_steps.UpdateObjects(model_context.get_collection())
 
 class ShowPrevious(Action):
     
@@ -137,7 +139,7 @@ class ShowPrevious(Action):
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
             mapping.set_preview_row(mapping.get_preview_row()-1)
-            yield action_steps.UpdateObject(mapping)
+        yield action_steps.UpdateObjects(model_context.get_collection())
 
 class MatchNames(Action):
     """Use the data in the current row to determine field names"""
@@ -157,7 +159,7 @@ class MatchNames(Action):
                 mapping.field = field
             else:
                 mapping.field = None
-            yield action_steps.UpdateObject(mapping)
+        yield action_steps.UpdateObjects(model_context.get_collection())
 
 class ColumnMappingAdmin(ObjectAdmin):
     """Admin class that allows the user to manipulate the column mappings
@@ -254,85 +256,64 @@ class XlsReader( six.Iterator ):
     """
     
     def __init__( self, filename ):
-        import xlrd
-        try:
-            workbook = xlrd.open_workbook(filename, formatting_info=True)
-        except NotImplementedError:
-            # xlsx does not yet support formatting info
-            workbook = xlrd.open_workbook(filename)
-        self.xf_list = workbook.xf_list
-        self.datemode = workbook.datemode
-        self.format_map = workbook.format_map
-        self.sheets = workbook.sheets()
-        self.sheet = self.sheets[0]
-        self.current_row = 0
+        SUPPORTED_FORMATS = ('.xlsx', '.xlsm', '.xltx', '.xltm')
+        extension = os.path.splitext(filename)[1]
+        if extension not in SUPPORTED_FORMATS:
+            raise UserException(
+                u'{0} is not a supported file format'.format(extension),
+                detail = u'supported formats are ' + u', '.join(SUPPORTED_FORMATS)
+            )
+        import openpyxl
+        # use these options to keep memory usage under control
+        workbook = openpyxl.load_workbook(
+            filename, data_only=True, keep_vba=False, read_only=True
+        )
+        self.sheets = workbook.worksheets
+        self.sheet = workbook.active
         self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
-        
-    def get_format_string( self, xf_index ):
-        """:return: the string that specifies the format of a cell"""
-        # xlsx has no formatting info, as such the xf_index is None
-        if xf_index == None:
-            return '0.00'
-        try:
-            xf = self.xf_list[ xf_index ]
-        except IndexError:
-            return '0.00'
-        if xf._format_flag == 0:
-            return self.get_format_string( xf.parent_style_index )
-        f = self.format_map[ xf.format_key ]
-        return f.format_str
-        
-    def __next__( self ):
-        import xlrd
-        if self.current_row < self.sheet.nrows:
-            vector = []    
-            for column in range( self.sheet.ncols ):
-                cell = self.sheet.cell( self.current_row, column )
-                ctype = cell.ctype
-                value = ''
-                if ctype in( xlrd.XL_CELL_EMPTY, 
-                             xlrd.XL_CELL_ERROR,
-                             xlrd.XL_CELL_BLANK ):
-                    pass
-                elif ctype == xlrd.XL_CELL_TEXT:
-                    value = six.text_type( cell.value )
-                elif ctype == xlrd.XL_CELL_NUMBER:
-                    format_string = self.get_format_string( cell.xf_index )
-                    # try to display the number with the same precision as
-                    # it was displayed in excel
-                    precision = max( 0, format_string.count('0') - 1 )
-                    # see the arguments format documentation of QString
-                    # format can be eiter 'f' or 'e', where 'e' is scientific
-                    # so maybe the format string should be parsed further to
-                    # see if it specifies scientific notation.  scientific
-                    # notation is not used because it loses precision when 
-                    # converting to a string
-                    value = six.text_type( self.locale.toString( cell.value, 
-                                                           format = 'f',
-                                                           precision = precision ) )
-                elif ctype == xlrd.XL_CELL_DATE:
-                    # this only handles dates, no datetime or time
-                    date_tuple = xlrd.xldate_as_tuple( cell.value, 
-                                                       self.datemode )
-                    dt = QtCore.QDate( *date_tuple[:3] )
-                    value = six.text_type( dt.toString( self.date_format ) )
-                elif ctype == xlrd.XL_CELL_BOOLEAN:
-                    value = 'false'
-                    if cell.value == 1:
-                        value = 'true'
-                else:
-                    logger.error( 'unknown ctype %s when importing excel'%ctype )
-                vector.append( value )
-            self.current_row += 1
-            return vector
-        else:
-            raise StopIteration()
 
     def __iter__( self ):
-        return self
-    
-class RowDataAdmin(object):
+        for row in self.sheet.iter_rows():
+            vector = []
+            for cell in row:
+                value = cell.value
+                if value is None:
+                    value = u''
+                if value is True:
+                    value = u'true'
+                elif value is False:
+                    value = u'false'
+                elif isinstance(value, six.integer_types):
+                    # QLocale.toString doesn't seems to work with long ints
+                    value = six.text_type(value)
+                elif isinstance(value, float):
+                    format_string = cell.number_format
+                    ## try to display the number with the same precision as
+                    ## it was displayed in excel
+                    precision = max( 0, format_string.count('0') - 1 )
+                    ## see the arguments format documentation of QString
+                    ## format can be eiter 'f' or 'e', where 'e' is scientific
+                    ## so maybe the format string should be parsed further to
+                    ## see if it specifies scientific notation.  scientific
+                    ## notation is not used because it loses precision when 
+                    ## converting to a string
+                    value = six.text_type(self.locale.toString(
+                        value, format = 'f', precision = precision
+                    ))
+                elif isinstance(value, datetime.datetime):
+                    dt = QtCore.QDate(value.year, value.month, value.day)
+                    value = six.text_type(dt.toString(self.date_format))
+                elif isinstance(value, six.binary_type):
+                    value = value.decode('utf-8')
+                elif isinstance(value, six.text_type):
+                    pass
+                else:
+                    logger.error('unknown type {0} when importing excel'.format(type(value)))
+                vector.append( value )
+            yield vector
+
+class RowDataAdmin(ObjectAdmin):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported.
@@ -350,6 +331,7 @@ class RowDataAdmin(object):
     list_actions = [DeleteSelection()]
     
     def __init__(self, admin, column_mappings):
+        super(RowDataAdmin, self).__init__(admin, RowData)
         self.admin = admin
         self._new_field_attributes = {}
         self._columns = []
@@ -364,15 +346,23 @@ class RowDataAdmin(object):
     def get_columns(self):
         return self._columns
 
+    def get_verbose_name(self):
+        return self.admin.get_verbose_name()
+
+    def get_verbose_name_plural(self):
+        return self.admin.get_verbose_name_plural()
+
     def get_verbose_identifier(self, obj):
         return six.text_type()
 
-    def __getattr__(self, attr):
-        return getattr(self.admin, attr)
-
     def get_fields(self):
         return self.get_columns()
-    
+
+    def get_settings(self):
+        settings = self.admin.get_settings()
+        settings.beginGroup('import')
+        return settings
+
     def get_table(self):
         return Table( [fn for fn, _fa in self.get_columns()] )
 
@@ -382,7 +372,7 @@ class RowDataAdmin(object):
         """
         return self._new_field_attributes
 
-    def get_validator(self, model):
+    def get_validator(self, model=None):
         """Creates a validator that validates the data to be imported, the
         validator will check if the background of the cell is pink, and if it
         is it will mark that object as invalid.
@@ -405,16 +395,8 @@ class RowDataAdmin(object):
 
         return NewObjectValidator(self, model)
 
-    def flush(self, obj):
-        """When flush is called, don't do anything, since we'll only save the
-        object when importing them for real"""
-        pass
-
-    def is_persistent(self, obj):
-        return True
-
-    def delete(self, obj):
-        pass
+    def get_related_admin(self, cls):
+        return self.admin.get_related_admin(cls)
 
     def get_related_toolbar_actions(self, toolbar_area, direction):
         if toolbar_area==Qt.RightToolBarArea:

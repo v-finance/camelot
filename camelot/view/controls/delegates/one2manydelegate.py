@@ -29,7 +29,8 @@
 
 import six
 
-from ....core.qt import variant_to_py, Qt
+from ....core.item_model import FieldAttributesRole
+from ....core.qt import variant_to_py, Qt, py_to_variant
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -48,6 +49,14 @@ class One2ManyDelegate(CustomDelegate):
         logger.debug( 'create one2manycolumn delegate' )
         self.kwargs = kwargs
 
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(One2ManyDelegate, cls).get_standard_item(locale, value, fa_values)
+        if value is not None:
+            admin = fa_values['admin']
+            item.setData(py_to_variant(admin.get_proxy(value)), Qt.EditRole)
+        return item
+
     def createEditor( self, parent, option, index ):
         logger.debug( 'create a one2many editor' )
         editor = editors.One2ManyEditor( parent = parent, **self.kwargs )
@@ -59,11 +68,8 @@ class One2ManyDelegate(CustomDelegate):
         logger.debug( 'set one2many editor data' )
         model = variant_to_py( index.data( Qt.EditRole ) )
         editor.set_value( model )
-        field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()
+        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         editor.set_field_attributes(**field_attributes)
 
     def setModelData( self, editor, model, index ):
         pass
-
-
-

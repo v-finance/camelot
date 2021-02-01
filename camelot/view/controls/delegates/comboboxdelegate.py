@@ -34,28 +34,37 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import six
 
-from ....core.qt import Qt, variant_to_py
+from ....core.item_model import PreviewRole, FieldAttributesRole
+from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
 @six.add_metaclass(DocumentationMetaclass)
 class ComboBoxDelegate(CustomDelegate):
     
     editor = editors.ChoicesEditor
 
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(ComboBoxDelegate, cls).get_standard_item(locale, value, fa_values)
+        choices = fa_values.get('choices', [])
+        for key, verbose in choices:
+            if key == value:
+                item.setData(py_to_variant(six.text_type(verbose)), PreviewRole)
+                break
+        else:
+            if value is None:
+                item.setData(py_to_variant(six.text_type()), PreviewRole)
+            else:
+                # the model has a value that is not in the list of choices,
+                # still try to display it
+                item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+        return item
+
     def setEditorData(self, editor, index):
         value = variant_to_py(index.data(Qt.EditRole))
-        field_attributes = variant_to_py(index.data(Qt.UserRole))
+        field_attributes = variant_to_py(index.data(FieldAttributesRole))
         editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.data(Qt.DisplayRole))
-        if value in (None, ValueLoading):
-            value = ''
-        self.paint_text(painter, option, index, six.text_type(value) )
-        painter.restore()
 
 

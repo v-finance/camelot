@@ -29,10 +29,9 @@
 
 import six
 
-from ....core.qt import QtCore, QtGui, QtWidgets
+from ....core.qt import QtCore, QtWidgets
 
-from .customeditor import (CustomEditor, draw_tooltip_visualization,
-                           set_background_color_palette)
+from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
 
 
@@ -47,8 +46,8 @@ class TextLineEditor(CustomEditor):
                  column_width=None,
                  **kwargs):
         CustomEditor.__init__(self, parent, column_width=column_width)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred,
-                           QtGui.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                           QtWidgets.QSizePolicy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -103,19 +102,17 @@ class TextLineEditor(CustomEditor):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         validator = kwargs.get('validator')
+        completer = kwargs.get('completer')
         if text_input is not None:
             editable = kwargs.get('editable', False)
             value = text_input.text()
-            text_input.setEnabled(editable)
+            text_input.setReadOnly(not editable)
             text_input.setText(value)
             text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
             set_background_color_palette(text_input,
                                          kwargs.get('background_color'))
+            if completer:
+                text_input.setCompleter(completer)
             text_input.setValidator(validator)
 
-    def paintEvent(self, event):
-        super(TextLineEditor, self).paintEvent(event)
-
-        if self.toolTip():
-            draw_tooltip_visualization(self)
 

@@ -48,7 +48,6 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.view import action_steps
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm, Stretch
-from camelot.view.controls import delegates
 from camelot.view.art import ColorScheme
 
 from camelot_example.change_rating import ChangeRatingAction
@@ -89,11 +88,12 @@ class BurnToDisk( Action ):
         """Turn the burn to disk button on, only if the title of the
         movie is entered"""
         state = super( BurnToDisk, self ).get_state( model_context )
-        obj = model_context.get_object()
-        if obj and obj.title:
-            state.enabled = True
-        else:
-            state.enabled = False
+        for obj in model_context.get_selection():
+            if obj.title:
+                state.enabled = True
+            else:
+                state.enabled = False
+                break
         return state
     
 # begin short movie definition
@@ -105,7 +105,7 @@ class Movie( Entity ):
     short_description = Column( sqlalchemy.types.Unicode(512) )
     releasedate = Column( sqlalchemy.types.Date )
     genre = Column( sqlalchemy.types.Unicode(15) )
-    rating = Column( camelot.types.Rating() )
+    rating = Column( sqlalchemy.types.Integer() )
     #
     # All relation types are covered with their own editor
     #
@@ -122,7 +122,7 @@ class Movie( Entity ):
     # image on disk and keeps the reference to it in the database.
     #
 # begin image definition
-    cover = Column( camelot.types.Image( upload_to = 'covers' ) )
+    cover = Column( camelot.types.File( upload_to = 'covers' ) )
 # end image definition
     #
     # Or File, which stores a file in the upload_to directory and stores a
@@ -130,19 +130,6 @@ class Movie( Entity ):
     #
     script = Column( camelot.types.File( upload_to = 'script' ) )
     description = Column( camelot.types.RichText )
-    #
-    # Normal python properties can be used as well, but then the
-    # delegate needs be specified in the Admin.field_attributes
-    #
-    @property
-    def visitors_chart(self):
-        #
-        # Container classes are used to transport chunks of data between
-        # the model the gui, in this case a chart
-        #
-        from camelot.container.chartcontainer import BarContainer
-        return BarContainer( range(len(self.visitor_reports)),
-                             [vr.visitors for vr in self.visitor_reports] )
 
 # begin column_property
 
@@ -192,7 +179,6 @@ class Movie( Entity ):
             'genre',
             'description',], columns = 2)),
           ('Cast', WidgetOnlyForm('cast')),
-          ('Visitors', WidgetOnlyForm('visitors_chart')),
           ('Tags', WidgetOnlyForm('tags'))
         ])
 
@@ -209,7 +195,6 @@ class Movie( Entity ):
         field_attributes = dict(cast=dict(create_inline=True),
                                 genre=dict(choices=genre_choices, editable=lambda o:bool(o.title and len(o.title))),
                                 releasedate=dict(background_color=lambda o:ColorScheme.orange_1 if o.releasedate and o.releasedate < datetime.date(1920,1,1) else None),
-                                visitors_chart=dict(delegate=delegates.ChartDelegate),
                                 rating=dict(tooltip='''<table>
                                                           <tr><td>1 star</td><td>Not that good</td></tr>
                                                           <tr><td>2 stars</td><td>Almost good</td></tr>
@@ -217,7 +202,6 @@ class Movie( Entity ):
                                                           <tr><td>4 stars</td><td>Very good</td></tr>
                                                           <tr><td>5 stars</td><td>Awesome !</td></tr>
                                                        </table>'''),
-                                smiley=dict(delegate=delegates.SmileyDelegate),
                                 script=dict(remove_original=True))
 
     def __unicode__(self):

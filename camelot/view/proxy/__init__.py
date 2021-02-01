@@ -41,4 +41,8 @@ class ValueLoading(object):
     proxy"""
     pass
 
+# Refactor plan
+# - remove 'get_title' from the formview, and handle the title changes in the
+#   actions or the action steps
+
 

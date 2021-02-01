@@ -31,7 +31,7 @@ import six
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 import camelot.types
 
@@ -68,8 +68,8 @@ class VirtualAddressEditor(CustomEditor):
         not yet taken into account.
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
         self.layout = QtWidgets.QHBoxLayout()
@@ -85,7 +85,7 @@ class VirtualAddressEditor(CustomEditor):
             self.combo.setCurrentIndex(idx)
         self.layout.addWidget(self.editor)
         self.setFocusProxy(self.editor)
-        nullIcon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
+        nullIcon = FontIcon('envelope-open').getQIcon() # 'tango/16x16/apps/internet-mail.png'
         self.label = QtWidgets.QToolButton()
         self.label.setIcon(nullIcon)
         self.label.setAutoRaise(True)
@@ -113,11 +113,11 @@ class VirtualAddressEditor(CustomEditor):
             self.editor.setText(value[1])
             idx = camelot.types.VirtualAddress.virtual_address_types.index(self._address_type or value[0])
             self.combo.setCurrentIndex(idx)
-            icon = Icon('tango/16x16/devices/printer.png').getQIcon()
+            icon = FontIcon('print').getQIcon() # 'tango/16x16/devices/printer.png'
             if six.text_type(self.combo.currentText()) == 'fax':
-                icon = Icon('tango/16x16/devices/printer.png').getQIcon()
+                icon = FontIcon('fax').getQIcon() # 'tango/16x16/devices/printer.png'
             if six.text_type(self.combo.currentText()) == 'email':
-                icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
+                icon = FontIcon('envelope-open').getQIcon() # 'tango/16x16/apps/internet-mail.png'
                 self.label.setIcon(icon)
                 self.label.show()
             else:

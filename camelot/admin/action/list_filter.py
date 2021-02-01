@@ -31,14 +31,16 @@
 Actions to filter table views
 """
 
-import copy
+import camelot.types
+import datetime
+import decimal
 
-import six
-
-from sqlalchemy import sql
+from camelot.view import utils
+from sqlalchemy import orm, sql
 
 from ...core.utils import ugettext
-from .base import Action, Mode
+from ...core.item_model.proxy import AbstractModelFilter
+from .base import Action, Mode, RenderHint
 
 class FilterMode(Mode):
 
@@ -166,107 +168,172 @@ class Filter(Action):
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
 
+    render_hint = RenderHint.GROUP_BOX
+
     def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
         super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
         self.exclusive = exclusive
-
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import GroupBoxFilterWidget
-        return GroupBoxFilterWidget(self, gui_context, parent)
 
 
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
 
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import ComboBoxFilterWidget
-        return ComboBoxFilterWidget(self, gui_context, parent)
-    
-class EditorFilter(Filter):
-    """Filter that presents the user with an editor, allowing the user to enter
-    a value on which to filter, and at the same time to show 'All' or 'None'
-    
-    :param field_name: the name fo the field on the class on which to filter
-    :param default_operator: a default operator to be used, on of the attributes
-        of the python module :mod:`operator`, such as `operator.eq`
-    :param default_value_1: a default value for the first editor (in case the
-        default operator in unary or binary
-    :param default_value_2: a default value for the second editor (in case the
-        default operator is binary)
+    render_hint = RenderHint.COMBO_BOX
+
+
+class SearchFieldStrategy(object):
+    """Abstract class for search field strategies.
+       It offers an interface for defining a column-based search clause for a given queryable attribute and search text.
     """
 
-    def __init__( self, 
-                  field_name, 
-                  verbose_name = None,
-                  default_operator = None,
-                  default_value_1 = None,
-                  default_value_2 = None ):
-        super(EditorFilter, self).__init__(field_name, verbose_name=verbose_name)
-        self._field_name = field_name
-        self._verbose_name = verbose_name
-        self._default_operator = default_operator
-        self._default_value_1 = default_value_1
-        self._default_value_2 = default_value_2
-        self.column = None
+    attribute = None
+    python_type = None
 
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import OperatorFilterWidget
-        return OperatorFilterWidget(self, gui_context, self._default_value_1,
-                                    self._default_value_2, parent)
+    def __init__(self, attribute):
+        self.assert_valid_attribute(attribute)
+        self.attribute = attribute
+    
+    @classmethod
+    def assert_valid_attribute(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+        assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
+    
+    @classmethod
+    def get_clause(cls, attribute, text, field_attributes):
+        cls.assert_valid_attribute(attribute)
+        return cls.get_type_clause(attribute, text, field_attributes)
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):    
+        """Return this search strategy's search clause for the given queryable attribute and search text, if applicable."""
+        raise NotImplementedError
+    
+class NoSearch(SearchFieldStrategy):
+    
+    def __init__(self):
+        super().__init__(None)
+        
+    @classmethod
+    def get_clause(cls, column, text, field_attributes):
+        return None
 
-    def get_arity(self, operator):
-        """:return: the current operator and its arity"""
+class StringSearch(SearchFieldStrategy):
+    
+    python_type = str
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        return sql.operators.ilike_op(c, '%'+text+'%')
+    
+class DecimalSearch(SearchFieldStrategy):
+    
+    python_type = (float, decimal.Decimal)
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
         try:
-            func_code = six.get_function_code(operator)
-        except AttributeError:
-            arity = 1 # probably a builtin function, assume arity == 1
-        else:
-            arity = func_code.co_argcount - 1
-        return arity
+            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
+            precision = c.type.precision
+            if isinstance(precision, (tuple)):
+                precision = precision[1]
+            delta = 0.1**( precision or 0 )
+            return sql.and_(c>=float_value-delta, c<=float_value+delta)
+        except utils.ParsingError:
+            pass       
+        
+class TimeDeltaSearch(SearchFieldStrategy):
+    
+    python_type = datetime.timedelta
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            days = field_attributes.get('from_string', utils.int_from_string)(text)
+            return (c==datetime.timedelta(days=days))
+        except utils.ParsingError:
+            pass
+        
+class TimeSearch(SearchFieldStrategy):
+    
+    python_type = datetime.time
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.time_from_string)(text))
+        except utils.ParsingError:
+            pass
 
-    def decorate_query(self, query, values):
-        from camelot.view.field_attributes import order_operators
-        operator, value_1, value_2 = values
-        if operator is None:
-            return query.filter(self.column==None)
-        elif operator == All:
-            return query
-        arity = self.get_arity(operator)
-        values = [value_1, value_2][:arity]
-        none_values = sum( v == None for v in values )
-        if (operator in order_operators) and none_values > 0:
-            return query
-        return query.filter(operator(self.column, *values))
+class DateSearch(SearchFieldStrategy):
+    
+    python_type = datetime.date
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.date_from_string)(text))
+        except utils.ParsingError:
+            pass
+        
+class IntSearch(SearchFieldStrategy):
+    
+    python_type = int
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.int_from_string)(text))
+        except utils.ParsingError:
+            pass  
+
+class BoolSearch(SearchFieldStrategy):
+    
+    python_type = bool
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        try:
+            return (c==field_attributes.get('from_string', utils.bool_from_string)(text))
+        except utils.ParsingError:
+            pass
+
+class VirtualAddressSearch(SearchFieldStrategy):
+    
+    python_type = camelot.types.virtual_address
+    
+    @classmethod
+    def get_type_clause(cls, c, text, field_attributes):
+        return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
+    
+class SearchFilter(Action, AbstractModelFilter):
+
+    render_hint = RenderHint.SEARCH_BUTTON
+
+    #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
+                               #self)
+    
+    def __init__(self, admin):
+        Action.__init__(self)
+        # dirty : action requires admin as argument
+        self.admin = admin
 
     def get_state(self, model_context):
-        from ...view.utils import operator_names
         state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        field_attributes = admin.get_field_attributes(self._field_name)
-        field_attributes = copy.copy( field_attributes )
-        field_attributes['editable'] = True
-        state.field_attributes = field_attributes
-        state.verbose_name = self.verbose_name or field_attributes['name']
-
-        entity = admin.entity
-        self.column = getattr(entity, self._field_name)
-
-        all_mode = FilterMode(All, ugettext('All'),
-                              checked=(self.default==All))
-        modes = [all_mode,
-                 FilterMode(None, ugettext('None')),
-                 ]
-        
-        operators = field_attributes.get('operators', [])
-        for operator in operators:
-            mode = FilterMode(operator,
-                              six.text_type(operator_names[operator]),
-                              checked=(operator==self._default_operator),
-                              )
-            modes.append(mode)
-
-        state.modes = modes
         return state
 
+    def decorate_query(self, query, text):
+        if (text is None) or (len(text.strip())==0):
+            return query
+        return self.admin.decorate_search_query(query, text)
 
+    def gui_run(self, gui_context):
+        # overload the action gui run to avoid a progress dialog
+        # popping up while searching
+        super(SearchFilter, self).gui_run(gui_context)
 
+    def model_run(self, model_context):
+        from camelot.view import action_steps
+        value = model_context.mode_name
+        if (value is not None) and len(value) == 0:
+            value = None
+        yield action_steps.SetFilter(self, value)

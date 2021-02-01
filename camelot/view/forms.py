@@ -119,7 +119,7 @@ and takes these parameters :
     def add_field( self, new_field ):
         self.append( new_field )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return 'Form(%s)' % ( u','.join( six.text_type( c ) for c in self ) )
 
     def render( self, widgets, parent = None, toplevel = False):
@@ -374,7 +374,7 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
         super( TabForm, self ).__init__( sum( ( tab_form.get_fields()
                                       for tab_label, tab_form in self.tabs ), [] ) )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return 'TabForm { %s\n        }' % ( u'\n  '.join( '%s : %s' % ( label, six.text_type( form ) ) for label, form in self.tabs ) )
 
     def add_tab_at_index( self, tab_label, tab_form, index ):
@@ -452,7 +452,7 @@ class HBoxForm( Form ):
         super( HBoxForm, self ).__init__( sum( ( column_form.get_fields()
                                       for column_form in self.columns ), [] ), scrollbars=scrollbars )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [six.text_type( form ) for form in self.columns] ) )
 
     def replace_field( self, original_field, new_field ):
@@ -509,7 +509,7 @@ class VBoxForm( Form ):
             for field in form._get_fields_from_form():
                 yield field
 
-    def __unicode__( self ):
+    def __str__( self ):
         return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [six.text_type( form ) for form in self.rows] ) )
 
     def render( self, widgets, parent = None, toplevel = False ):

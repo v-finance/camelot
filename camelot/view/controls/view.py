@@ -29,9 +29,13 @@
 
 """Functionality common to TableViews and FormViews"""
 
-import six
+import itertools
 
+from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
+from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
+from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
+from .search import SimpleSearchControl
 
 class AbstractView(QtWidgets.QWidget):
     """A string used to format the title of the view ::
@@ -44,11 +48,18 @@ class AbstractView(QtWidgets.QWidget):
     header_widget = None
     """
 
+    _rendered_action_counter = itertools.count()
+
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.qt_signal(six.text_type)
+    title_changed_signal = QtCore.qt_signal(str)
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
+    close_clicked_signal = QtCore.qt_signal()
+
+    @QtCore.qt_slot()
+    def validate_close(self):
+        return True
 
     @QtCore.qt_slot()
     def refresh(self):
@@ -60,9 +71,37 @@ class AbstractView(QtWidgets.QWidget):
         """Will emit the title_changed_signal"""
         #import sip
         #if not sip.isdeleted(self):
-        self.title_changed_signal.emit( six.text_type(new_title) )
+        self.title_changed_signal.emit(str(new_title))
         
     @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
 
+
+    @classmethod
+    def _register_rendered_action(cls, qobject):
+        next_rendered_action = cls._rendered_action_counter.__next__()
+        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
+        qobject.setObjectName(rendered_action_name)
+        return rendered_action_name
+
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            qobject = ActionToolbutton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.COMBO_BOX:
+            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.GROUP_BOX:
+            qobject = GroupBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.SEARCH_BUTTON:
+            qobject = SimpleSearchControl(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.PUSH_BUTTON:
+            qobject = ActionPushButton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.LABEL:
+            qobject = ActionLabel(action, self.gui_context, parent)
+        else:
+            raise Exception('Unhandled render hint {} for {}'.format(
+                action.render_hint, type(action)
+            ))
+        rendered_action_name = self._register_rendered_action(qobject)
+        self.gui_context.action_routes[action] = rendered_action_name
+        return qobject

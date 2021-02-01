@@ -33,8 +33,10 @@ context of the `Qt` model-view-delegate framework.
 """
 
 from ...admin.action.base import ActionStep
-from ...core.qt import Qt
+from ...core.qt import Qt, variant_to_py, is_deleted
 from ..workspace import show_top_level
+from ..proxy.collection_proxy import ObjectRole, CollectionProxy
+
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
@@ -61,18 +63,27 @@ class OpenFormView( ActionStep ):
         A list of `camelot.admin.action.base.Action` objects to be displayed
         at the top toolbar of the form, this defaults to the ones returned by the
         admin
+
+    .. attribute:: top_level
+
+       Display the form view top-level, or as a tab in the workspace,
+       defaults to `True`.
+
     """
 
     def __init__( self, objects, admin ):
+        self.admin_name = admin.get_name()
         self.objects = objects
         self.admin = admin
         self.row = 0
         self.actions = admin.get_form_actions(None)
+        self.top_level = True
         get_form_toolbar_actions = admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
         self.title = u' '
         self._columns = admin.get_fields()
         self._form_display = admin.get_form_display()
+        self.admin_route = admin.get_admin_route()
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
@@ -82,43 +93,33 @@ class OpenFormView( ActionStep ):
         return self.objects
 
     def render(self, gui_context):
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.controls.formview import FormView
-
         if self.objects is None:
             related_model = gui_context.item_view.model()
-            #
-            # depending on the type of related model, create a new model
-            #
-            row = gui_context.item_view.currentIndex().row()
-            if isinstance( related_model, QueryTableProxy ):
-                # here the query and the cache are passed to the proxy
-                # constructor to prevent an additional query when a
-                # form is opened to look for an object that was in the list
-                model = QueryTableProxy(
-                    gui_context.admin,
-                    query = related_model.get_query(),
-                    max_number_of_rows = 1,
-                    cache_collection_proxy = related_model,
-                )
-            else:
-                # no cache or sorting information is transferred
-                model = CollectionProxy(
-                    gui_context.admin,
-                    max_number_of_rows = 1,
-                )
-                # get the unsorted row
-                row = related_model.map_to_source( row )
-                model.set_value(related_model.get_value())
+            proxy = related_model.get_value().copy()
+            # Always create a new proxy
+            # relating two views on the same model to each other and
+            # making sure the correct row is shown in the form involves too many
+            # edge cases.
+            # this is the row the user clicked on
+            related_row = gui_context.item_view.currentIndex().row()
+            # this is the object visible in that row at the time of the click
+            obj = related_model.headerData(related_row, Qt.Vertical, ObjectRole)
+            # the value for the ObjectRole might be None if the update of the
+            # model is still pending, in that case no form can be opened yet
+            if variant_to_py(obj) is None:
+                return None
+            # this is the row in the new proxy for the same object, this migth
+            # be the same row as the related row if there were no gui changes
+            # pending
+            row = proxy.index(variant_to_py(obj))
         else:
             row = self.row
-            model = CollectionProxy(
-                self.admin,
-                max_number_of_rows=10
-            )
-            model.set_value(self.objects)
-        model.set_columns(self._columns)
+            proxy = self.admin.get_proxy(self.objects)
+
+        model = CollectionProxy(self.admin_route)
+        list(model.add_columns((fn for fn, fa in self._columns)))
+        model.set_value(proxy)
 
         form = FormView(title=self.title, admin=self.admin, model=model,
                         columns=self._columns, form_display=self._form_display,
@@ -130,37 +131,60 @@ class OpenFormView( ActionStep ):
     def gui_run( self, gui_context ):
         window = gui_context.get_window()
         formview = self.render(gui_context)
-        show_top_level(formview, window, self.admin.form_state)
+        if formview is not None:
+            if self.top_level == True:
+                formview.setObjectName('form.{}.{}'.format(
+                    self.admin_name, id(formview)
+                ))
+                show_top_level(formview, window, self.admin.form_state)
+            else:
+                gui_context.workspace.set_view(formview)
 
-class ToFirstForm( ActionStep ):
+class ChangeFormIndex(ActionStep):
+
+    def gui_run( self, gui_context ):
+        # a pending request might change the number of rows, and therefor
+        # the new index
+        # submit all pending requests to the model thread
+        if is_deleted(gui_context.widget_mapper):
+            return
+        gui_context.widget_mapper.model().timeout_slot()
+        # wait until they are handled
+        super(ChangeFormIndex, self).gui_run(gui_context)
+
+class ToFirstForm(ChangeFormIndex):
     """
     Show the first object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToFirstForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toFirst()
 
-class ToNextForm( ActionStep ):
+class ToNextForm(ChangeFormIndex):
     """
     Show the next object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToNextForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toNext()
         
-class ToLastForm( ActionStep ):
+class ToLastForm(ChangeFormIndex):
     """
     Show the last object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToLastForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toLast()
         
-class ToPreviousForm( ActionStep ):
+class ToPreviousForm(ChangeFormIndex):
     """
     Show the previous object in the collection in the current form
     """
 
     def gui_run( self, gui_context ):
+        super(ToPreviousForm, self).gui_run(gui_context)
         gui_context.widget_mapper.toPrevious()
 

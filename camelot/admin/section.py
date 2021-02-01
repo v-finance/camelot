@@ -53,11 +53,14 @@ in the definition of the Application admin:
         return self.verbose_name
 
     def get_icon(self):
-        from camelot.view.art import Icon
-        return self.icon or Icon('tango/32x32/apps/system-users.png')
+        from camelot.view.art import FontIcon
+        return self.icon or FontIcon('users') # 'tango/32x32/apps/system-users.png'
 
     def get_items(self):
         return self.items
+
+    def get_modes(self):
+        return []
 
 class SectionItem(object):
     """An item inside a section, the user can click on and trigger an action."""

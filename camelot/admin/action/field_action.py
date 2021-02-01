@@ -35,10 +35,10 @@ various actions that are beyond the icons shown in the editors of a form.
 import inspect
 import os
 
-from ...core.qt import Qt, QtWidgets
+from ...core.qt import QtWidgets
 from ...core.utils import ugettext_lazy as _
-from ...view.art import Icon
-from .base import Action
+from ...view.art import FontIcon
+from .base import Action, RenderHint
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
@@ -112,12 +112,8 @@ class FieldAction(Action):
     """Action class that renders itself as a toolbutton, small enough to
     fit in an editor"""
 
-    def render( self, gui_context, parent ):
-        from ...view.controls.action_widget import ActionToolbutton
-        button = ActionToolbutton(self, gui_context, parent)
-        button.setAutoRaise(True)
-        button.setFocusPolicy(Qt.ClickFocus)
-        return button
+    render_hint = RenderHint.TOOL_BUTTON
+
 
 class ShowFieldAttributes(Action):
     
@@ -147,16 +143,17 @@ class SelectObject(FieldAction):
     """Allows the user to select an object, and set the selected object as
     the new value of the editor"""
 
-    icon = Icon('tango/16x16/actions/system-search.png')
+    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
     tooltip = _('select existing')
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        admin = model_context.field_attributes['admin']
-        selected_objects = yield action_steps.SelectObjects(admin)
-        for selected_object in selected_objects:
-            yield action_steps.UpdateEditor('selected_object', selected_object)
-            break
+        admin = model_context.field_attributes.get('admin')
+        if admin is not None:
+            selected_objects = yield action_steps.SelectObjects(admin)
+            for selected_object in selected_objects:
+                yield action_steps.UpdateEditor('selected_object', selected_object)
+                break
 
     def get_state(self, model_context):
         state = super(SelectObject, self).get_state(model_context)
@@ -168,7 +165,7 @@ class NewObject(SelectObject):
     """Open a form for the creation of a new object, and set this
     object as the new value of the editor"""
 
-    icon = Icon('tango/16x16/actions/document-new.png')
+    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('create new')
 
     def model_run(self, model_context):
@@ -185,7 +182,7 @@ class NewObject(SelectObject):
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 
-    icon = Icon('tango/16x16/places/folder.png')
+    icon = FontIcon('folder-open') # 'tango/16x16/places/folder.png'
     tooltip = _('open')
 
     def model_run(self, model_context):
@@ -205,7 +202,7 @@ class OpenObject(SelectObject):
 class ClearObject(OpenObject):
     """Set the new value of the editor to `None`"""
 
-    icon = Icon('tango/16x16/actions/edit-clear.png')
+    icon = FontIcon('eraser') # 'tango/16x16/actions/edit-clear.png'
     tooltip = _('clear')
 
     def model_run(self, model_context):
@@ -220,7 +217,7 @@ class ClearObject(OpenObject):
 class UploadFile(FieldAction):
     """Upload a new file into the storage of the field"""
 
-    icon = Icon('tango/16x16/actions/list-add.png')
+    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
     tooltip = _('Attach file')
     file_name_filter = 'All files (*)'
 
@@ -229,6 +226,9 @@ class UploadFile(FieldAction):
         filenames = yield action_steps.SelectFile(self.file_name_filter)
         storage = model_context.field_attributes['storage']
         for file_name in filenames:
+            # the storage cannot checkin empty file names
+            if not file_name:
+                continue
             remove = False
             if model_context.field_attributes.get('remove_original'):
                 reply = yield action_steps.MessageBox(
@@ -256,7 +256,7 @@ class DetachFile(FieldAction):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
-    icon = Icon('tango/16x16/actions/edit-delete.png')
+    icon = FontIcon('trash') # 'tango/16x16/actions/edit-delete.png'
     tooltip = _('Detach file')
     message_title = _('Detach this file ?')
     message_text = _('If you continue, you will no longer be able to open this file.')
@@ -280,7 +280,7 @@ class DetachFile(FieldAction):
 class OpenFile(FieldAction):
     """Open the file shown in the editor"""
 
-    icon = Icon('tango/16x16/actions/document-open.png')
+    icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
 
     def model_run(self, model_context):
@@ -300,7 +300,7 @@ class OpenFile(FieldAction):
 class SaveFile(OpenFile):
     """Copy the file shown in the editor to another location"""
 
-    icon = Icon('tango/16x16/actions/document-save-as.png')
+    icon = FontIcon('save') # 'tango/16x16/actions/document-save-as.png'
     tooltip = _('Save as')
 
     def model_run(self, model_context):

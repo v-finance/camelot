@@ -66,6 +66,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration, PrimaryKey
 from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
+from camelot.core.item_model.proxy import AbstractModelFilter
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view import action_steps
@@ -85,7 +86,7 @@ class TypeMixin(object):
     code = schema.Column(types.Unicode(10), index=True, nullable=False)
     description = schema.Column(types.Unicode( 40 ), index = True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.code or u''
 
 class StatusTypeMixin(TypeMixin):
@@ -121,7 +122,7 @@ class StatusHistory( object ):
                               default=end_of_times)
 
 
-    def __unicode__( self ):
+    def __str__( self ):
         return six.text_type(self.classified_by or u'')
 
     def sort_key(self):
@@ -149,12 +150,18 @@ class StatusHistory( object ):
 class StatusHistoryAdmin( EntityAdmin ):
     list_display = ['status_from_date', 'status_thru_date', 'classified_by']
     field_attributes = {'from_date': {'name': _('From date')},
-                        'thru_date': {'name': _('Thru date')}
+                        'thru_date': {'name': _('Thru date')},
+                        'status_from_date': {'editable': False},
+                        'status_thru_date': {'editable': False},
+                        'classified_by': {'editable': False},
                         }
 
     def get_depending_objects(self, obj):
         if obj.status_for is not None:
             yield obj.status_for
+    
+    def get_related_toolbar_actions(self, toolbar_area, direction):
+        return []
 
 class Status( EntityBuilder ):
     """EntityBuilder that adds a related status table(s) to an `Entity`.
@@ -251,8 +258,10 @@ class Status( EntityBuilder ):
 
     def create_tables(self):
         self.status_history.__table__.schema = self.entity.__table__.schema
+        self.status_history.__table__.info = self.entity.__table__.info.copy()
         if self.status_type is not None:
             self.status_type.__table__.schema = self.entity.__table__.schema
+            self.status_type.__table__.info = self.entity.__table__.info.copy()
 
     def create_non_pk_cols( self ):
         table = orm.class_mapper( self.entity ).local_table
@@ -316,11 +325,12 @@ class StatusMixin( object ):
         :param status_class: the class or columns of the class that have a status
         :return: a select statement that looks for the current status of the status_class
         """
-        return sql.select( [status_history.classified_by],
-                           whereclause = sql.and_( status_history.status_for_id == status_class.id,
-                                                   status_history.status_from_date <= sql.functions.current_date(),
-                                                   status_history.status_thru_date >= sql.functions.current_date() ),
-                           from_obj = [status_history.table] ).order_by(status_history.status_from_date.desc(), status_history.id.desc()).limit(1)
+        SH = orm.aliased(status_history)
+        return sql.select( [SH.classified_by],
+                           whereclause = sql.and_( SH.status_for_id == status_class.id,
+                                                   SH.status_from_date <= sql.functions.current_date(),
+                                                   SH.status_thru_date >= sql.functions.current_date() ),
+                           ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
 
     @hybrid.hybrid_property
     def current_status( self ):
@@ -329,12 +339,13 @@ class StatusMixin( object ):
             return status_history.classified_by
 
     @current_status.expression
-    def current_status_expression( cls ):
+    def current_status( cls ):
         return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
 
     def change_status(self, new_status, 
                       status_from_date=None,
-                      status_thru_date=end_of_times()):
+                      status_thru_date=end_of_times(),
+                      session=None):
         """
         Change the status of this object.  This method does not start a
         transaction, but it is advised to run this method in a transaction.
@@ -342,18 +353,19 @@ class StatusMixin( object ):
         if not status_from_date:
             status_from_date = datetime.date.today()
         history_type = self._status_history
-        session = orm.object_session( self )
+        session = session or orm.object_session( self )
         old_status_query = session.query(history_type)
         old_status_query = old_status_query.filter(
             sql.and_(history_type.status_for==self,
                      history_type.status_from_date <= status_from_date,
                      history_type.status_thru_date >= status_from_date)
         )
-        new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
-        new_status_thru_date = status_from_date - datetime.timedelta(days=1)
-        for old_status in old_status_query.yield_per(10):
-            old_status.thru_date = new_thru_date
-            old_status.status_thru_date = new_status_thru_date
+        if self.id is not None:
+            new_thru_date = datetime.date.today() - datetime.timedelta(days=1)
+            new_status_thru_date = status_from_date - datetime.timedelta(days=1)
+            for old_status in old_status_query.yield_per(10):
+                old_status.thru_date = new_thru_date
+                old_status.status_thru_date = new_status_thru_date
         new_status = history_type(status_for = self,
                                   classified_by = new_status,
                                   status_from_date = status_from_date,
@@ -415,7 +427,7 @@ class ChangeStatus( Action ):
                 if number_of_statuses != history_count:
                     if obj not in model_context.session.new:
                         model_context.session.expire(obj)
-                    yield action_steps.UpdateObject(obj)
+                    yield action_steps.UpdateObjects([obj])
                     raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
@@ -425,10 +437,10 @@ class ChangeStatus( Action ):
                     obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObject(obj)
+                    yield action_steps.UpdateObjects([obj])
             yield action_steps.FlushSession(model_context.session)
 
-class StatusFilter(list_filter.GroupBoxFilter):
+class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     """
     Filter to be used in a table view to enable filtering on the status
     of an object.  This filter will display all available statuses, and as
@@ -448,6 +460,25 @@ class StatusFilter(list_filter.GroupBoxFilter):
         query = query.filter(sql.or_(*where_clauses))
         return query
 
+    def filter(self, it, value):
+        """
+        Allow the status filter to work on list of objects instead of
+        queries.
+        """
+        if list_filter.All in value:
+            for obj in it:
+                yield obj
+        elif len(value) > 0:
+            today = datetime.date.today()
+            for obj in it:
+                for history in getattr(obj, self.attribute):
+                    if history.status_from_date <= today <= history.status_thru_date:
+                        if history.classified_by in value:
+                            yield obj
+
+    def get_entity_id(self, model_context):
+        return model_context.admin.entity.id
+
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
         admin = model_context.admin
@@ -466,7 +497,7 @@ class StatusFilter(list_filter.GroupBoxFilter):
         modes = []
         current_date = sql.functions.current_date()
         self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                             history_type.status_for_id == admin.entity.id,
+                                             history_type.status_for_id == self.get_entity_id(model_context),
                                              history_type.status_thru_date >= current_date)
                       )
         self.column = getattr(history_type, 'classified_by')

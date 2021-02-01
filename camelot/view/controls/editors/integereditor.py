@@ -32,7 +32,7 @@ from math import floor
 import six
 
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
@@ -43,20 +43,21 @@ class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator
     """
 
-    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent = None,
                        minimum = camelot_minint,
                        maximum = camelot_maxint,
                        calculator = True,
-                       option = None, 
+                       option = None,
+                       decimal = False,
                        field_name = 'integer',
                        **kwargs):
         
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
+                            QtWidgets.QSizePolicy.Fixed )
         action = QtWidgets.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
@@ -91,6 +92,7 @@ class IntegerEditor(CustomEditor):
         self.setFocusProxy(spin_box)
         self.setLayout(layout)
         self.option = option
+        self.decimal = decimal
 
     def set_field_attributes(self, **kwargs):
         super(IntegerEditor, self).set_field_attributes(**kwargs)
@@ -122,6 +124,9 @@ class IntegerEditor(CustomEditor):
             value = int(spin_box.value())
             if value==int(spin_box.minimum()):
                 return None
+            elif self.decimal:
+                import decimal
+                return decimal.Decimal(value)
             return value
 
     def set_enabled(self, editable=True):
@@ -134,11 +139,11 @@ class IntegerEditor(CustomEditor):
             # If so, the calculatorButton and the spinBox's controls should be hidden.
             if self.option and self.option.version != 5:
                 self.calculatorButton.hide()
-                spin_box.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+                spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
             else:
                 self.calculatorButton.setVisible(editable and self._calculator)
                 if not editable:
-                    spin_box.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+                    spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator

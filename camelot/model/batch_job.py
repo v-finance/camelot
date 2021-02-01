@@ -67,6 +67,7 @@ batch_job_statusses = [ (-2, 'planned'),
                         (2,  'errors'),
                         (3,  'canceled') ]
 
+@six.python_2_unicode_compatible
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
@@ -76,8 +77,8 @@ class BatchJobType( Entity ):
     name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
     parent = ManyToOne( 'BatchJobType' )
     
-    def __unicode__(self):
-        return self.name
+    def __str__(self):
+        return self.name or ''
     
     @classmethod
     def get_or_create( cls, name ):
@@ -107,8 +108,12 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
     type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
     status  = type_and_status.Status( batch_job_statusses )
-    message = orm.column_property(schema.Column(camelot.types.RichText())
-                                  , deferred=True)
+    message = orm.deferred(schema.Column(camelot.types.RichText()))
+
+    def __str__(self):
+        if self.type is not None:
+            return str(self.type)
+        return ''
 
     @classmethod
     def create( cls, batch_job_type = None, status = 'running' ):
@@ -223,7 +228,11 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')
         list_display = ['host', 'type', 'current_status']
-        list_filter = ['current_status', list_filter.ComboBoxFilter('host')]
+        list_filter = [
+            type_and_status.StatusFilter('status'),
+            list_filter.ComboBoxFilter('host')
+        ]
+        form_state = 'right'
         form_display = forms.TabForm( [ ( _('Job'), list_display + ['message'] ),
                                         ( _('History'), ['status'] ) ] )
         form_actions = [ type_and_status.ChangeStatus( 'canceled',

@@ -33,10 +33,13 @@ import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
+from .admin_route import AdminRoute
+from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.controls.tableview import TableView
+from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -68,10 +71,13 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'precision',
                                                 'directory',
                                                 'visible',
-                                                'validator'])
+                                                'validator',
+                                                'completer',
+                                                'minimum',
+                                                'maximum'])
 
 
-class ObjectAdmin(object):
+class ObjectAdmin(AdminRoute):
     """The ObjectAdmin class describes the interface that will be used
 to interact with objects of a certain class.  The behaviour of this class
 and the resulting interface can be tuned by specifying specific class
@@ -255,12 +261,6 @@ be specified using the verbose_name attribute.
     field_attributes = {}
     form_state = None
     icon = None # Default
-    #
-    # Behavioral attributes
-    # 
-    drop_action = None
-
-    TableView = TableView
 
     def __init__( self, app_admin, entity ):
         """
@@ -275,12 +275,16 @@ be specified using the verbose_name attribute.
         #
         self._field_attributes = dict()
         self._subclasses = None
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
 
     def __str__(self):
         return 'Admin %s' % str(self.entity.__name__)
 
     def __repr__(self):
-        return 'ObjectAdmin(%s)' % str(self.entity.__name__)
+        return '{0.__name__}({1.__name__})'.format(type(self), self.entity)
 
     def get_name(self):
         """ The name of the group in settings in which user dependent settings 
@@ -320,6 +324,13 @@ be specified using the verbose_name attribute.
         """
         return six.text_type(obj)
 
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        return ListModelProxy(objects)
+
     def get_search_identifiers(self, obj):
         """Create a dict of identifiers to be used in search boxes.
         The keys are Qt roles."""
@@ -334,16 +345,6 @@ be specified using the verbose_name attribute.
     def get_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
-
-    def get_settings( self ):
-        """A settings object in which settings related to this admin can be
-        stored.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = self.app_admin.get_settings()
-        settings.beginGroup( self.get_name()[:255] )
-        return settings
 
     def get_memento( self ):
         return self.app_admin.get_memento()
@@ -373,6 +374,18 @@ be specified using the verbose_name attribute.
         """        
         app_admin = self.get_application_admin()
         return app_admin.get_form_toolbar_actions( toolbar_area )
+
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_list_toolbar_actions(toolbar_area)
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
@@ -516,14 +529,35 @@ be specified using the verbose_name attribute.
                     # as it might be the max of a column
                     continue
                 if six.callable(value):
-                    return_value = None
                     try:
                         return_value = value(obj)
                     except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
-                    finally:
-                        dynamic_field_attributes[name] = return_value
+                        # dont inject dummy field attributes, as the delegate logic
+                        # might assume the attributes having a specific type
+                        continue
+                    dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
+
+    def get_completions(self, obj, field_name, prefix):
+        """
+        Generate autocompletion possibilities for a specific field.
+        Autocompletion differs from dynamic field attributes such as choices :
+
+        - The possible autocompletion values are not needed to display
+          the content of a field.
+        - The autocompletion process depends on a text entered by the user
+          to guide the process.
+
+        :param obj: the instance of the object on which to do autocompletion.
+        :param field_name: the field of the object on which to do autocompletion.
+        :param prefix: text entered by the user to guide the autocompletion
+
+        :return: `None` if the field does not support autocompletion, an empty
+            list if there are no possible values for the requested prefix,
+            otherwise a list of possible values for the field.
+        """
+        return None
 
     def get_descriptor_field_attributes(self, field_name):
         """
@@ -590,11 +624,13 @@ be specified using the verbose_name attribute.
                 background_color=None,
                 editable=False,
                 nullable=True,
+                focus_policy=Qt.StrongFocus,
                 widget='str',
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
-                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
+                search_strategy=list_filter.NoSearch,
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
@@ -605,6 +641,14 @@ be specified using the verbose_name attribute.
             self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
+            #
+            # If there is an `admin` field attribute, instantiate it
+            #            
+            admin = forced_attributes.get('admin')
+            target = attributes.get('target', None)
+            if target is not None and admin is not None:
+                attributes['admin'] = admin(self, target)
+        
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
                 attributes['delegate'] = delegates.ComboBoxDelegate
@@ -619,34 +663,37 @@ be specified using the verbose_name attribute.
         derived from the given attributes.
         """
         column_width = field_attributes.get('column_width', None)
-        #
-        # If there is an `admin` field attribute, instantiate it
-        #
+        
         target = field_attributes.get('target', None)
         if target is not None:
-            admin = field_attributes.get('admin', None)
-            direction = field_attributes.get('direction', '')
-            if admin is not None:
-                related_admin = admin(self, target)
-            #
-            # In case of a 'target' field attribute, add an appropriate
-            # 'admin' attribute
-            #
-            else:
-                related_admin = self.get_related_admin(target)
+            # If there is a `target` field attribute, verify the `admin` attribute has been instantiated
+            related_admin = field_attributes.get('admin', self.get_related_admin(target))
+            assert isinstance(related_admin, ObjectAdmin) or isinstance(related_admin, ReadOnlyAdminDecorator)
             #
             # for an xtomany field, calculate the sum of the column widths, as
             # an estimate for the width of the table widget
             #
-            if column_width is None and direction.endswith('many') and related_admin:
-                table = related_admin.get_table()
-                fields = table.get_fields(column_group=0)
-                related_field_attributes = related_admin.get_field_attributes
-                related_column_widths = (
-                    related_field_attributes(field).get('column_width', 0) for 
-                    field in fields)
-                column_width = sum(related_column_widths, 0)
+            # if no direction specified, assume onetomany to have the aditional
+            # field attributes available in case a OneToMany editor needs to
+            # constructed
+            #
+            direction = field_attributes.get('direction', 'onetomany')
+            if direction.endswith('many') and related_admin:
+                field_attributes['columns'] = related_admin.get_columns()
+                field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
+                    Qt.RightToolBarArea, direction
+                )
+                if column_width is None:
+                    table = related_admin.get_table()
+                    fields = table.get_fields(column_group=0)
+                    related_field_attributes = related_admin.get_field_attributes
+                    related_column_widths = (
+                        related_field_attributes(field).get('column_width', 0) for 
+                        field in fields)
+                    column_width = sum(related_column_widths, 0)
             field_attributes['admin'] = related_admin
+            field_attributes['admin_route'] = related_admin.get_admin_route()
+            field_attributes['admin_name'] = related_admin.get_name()
         #
         # If no column_width is specified, try to derive one
         #
@@ -662,7 +709,7 @@ be specified using the verbose_name attribute.
             )
         field_attributes['column_width'] = column_width
 
-    def get_search_fields(self, substring):
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the `list_search` attribute.
@@ -759,9 +806,7 @@ be specified using the verbose_name attribute.
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
             return structure_to_form(self.form_display)
-        if self.list_display:
-            return Form( self.get_table().get_fields() )
-        return Form([])
+        return Form( self.get_table().get_fields() )
 
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls
@@ -774,18 +819,26 @@ be specified using the verbose_name attribute.
         """
         setattr(obj, field_name, value)
 
-    def set_defaults(self, object_instance, include_nullable_fields=True):
+    def set_defaults(self, obj):
         """Set the defaults of an object
-        :param include_nullable_fields: also set defaults for nullable fields, 
-        depending on the context, this should be set to False to allow the user 
-        to set the field to None
+    
+        :return: `True` if a default value was set, `False` otherwise
         """
-        from sqlalchemy.schema import ColumnDefault
+        iterations = 0
+        while self._set_defaults(obj) == True:
+            iterations += 1
+            if iterations > 10:
+                raise Exception('More than 10 iterations while setting defaults')
+        return iterations > 0
+
+    def _set_defaults(self, object_instance):
+        from sqlalchemy.schema import ColumnDefault, Sequence
         from sqlalchemy import orm
 
         if self.is_deleted( object_instance ):
             return False
 
+        default_set = False
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
         for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
@@ -811,6 +864,10 @@ be specified using the verbose_name attribute.
                     session = orm.object_session(object_instance)
                     bind = session.get_bind(mapper=self.mapper)
                     default_value = bind.execute(default)
+            elif isinstance(default, Sequence):
+                # Skip if the column default is a sequence, as setting it will cause an SQLA exception.
+                # The column should remain unset and will be set by the compilation to the next_val of the sequence automatically. 
+                continue
             elif six.callable(default):
                 import inspect
                 args, _varargs, _kwargs, _defs = \
@@ -821,26 +878,32 @@ be specified using the verbose_name attribute.
                     default_value = default()
             else:
                 default_value = default
-            logger.debug(
-                'set default for %s to %s' % (
-                    field,
-                    six.text_type(default_value)
-                )
-            )
-            try:
-                setattr(object_instance, field, default_value)
-            except AttributeError as exc:
-                logger.error(
-                    'Programming Error : could not set'
-                    ' attribute %s to %s on %s' % (
+            if default_value is not None:
+                logger.debug(
+                    u'set default for %s to %s'%(
                         field,
-                        default_value,
-                        object_instance.__class__.__name__
-                        ),
-                    exc_info=exc
+                        six.text_type(default_value)
+                    )
                 )
+                try:
+                    setattr(object_instance, field, default_value)
+                    default_set = True
+                except AttributeError as exc:
+                    logger.error(
+                        u'Programming Error : could not set'
+                        u' attribute %s to %s on %s' % (
+                            field,
+                            default_value,
+                            object_instance.__class__.__name__
+                            ),
+                        exc_info=exc
+                    )
         for compounding_object in self.get_compounding_objects( object_instance ):
-            self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
+            compound_admin = self.get_related_admin( type( compounding_object ) )
+            compound_default_set = compound_admin.set_defaults(compounding_object)
+            default_set = default_set or compound_default_set
+
+        return default_set
 
     def primary_key( self, obj ):
         """Get the primary key of an object
@@ -888,6 +951,10 @@ be specified using the verbose_name attribute.
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False
+
+    def is_dirty(self, _obj):
+        """:return: True if the object might have been modified"""
+        return True
 
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
