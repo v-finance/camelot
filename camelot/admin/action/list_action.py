@@ -1087,6 +1087,10 @@ class AddNewObject( EditAction ):
     verbose_name = _('New')
     
     def get_admin(self, model_context):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
         return model_context.admin
     
     def create_object(self, model_context, session=None):
