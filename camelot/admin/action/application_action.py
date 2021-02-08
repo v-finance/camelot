@@ -341,7 +341,7 @@ class OpenNewView( EntityAction ):
         # Give the default fields their value
         admin.add(new_object)
         admin.set_defaults(new_object)
-        yield action_steps.OpenFormView([new_object], admin)
+        yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
         
 
 class ShowAbout(Action):

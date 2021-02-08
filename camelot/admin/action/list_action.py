@@ -307,7 +307,7 @@ class OpenFormView( ListContextAction ):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
+        yield action_steps.OpenFormView(model_context.get_object(), model_context.proxy, admin=model_context.admin)
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
@@ -1121,7 +1121,7 @@ class AddNewObject( EditAction ):
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView([new_object], admin)
+            yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
 
 class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""

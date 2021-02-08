@@ -177,7 +177,7 @@ class NewObject(SelectObject):
         admin.add(obj)
         admin.set_defaults(obj)
         yield action_steps.UpdateEditor('new_value', obj)
-        yield action_steps.OpenFormView([obj], admin)
+        yield action_steps.OpenFormView(obj, model_context.proxy, admin)
 
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
@@ -191,7 +191,7 @@ class OpenObject(SelectObject):
         if obj is not None:
             admin = model_context.field_attributes['admin']
             admin = admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView([obj], admin)
+            yield action_steps.OpenFormView(obj, model_context.proxy, admin)
 
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)
