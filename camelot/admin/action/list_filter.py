@@ -222,10 +222,18 @@ class NoSearch(SearchFieldStrategy):
 class StringSearch(SearchFieldStrategy):
     
     python_type = str
+    
+    # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
+    allow_digits = True
+    
+    def __init__(self, attribute, allow_digits=True):
+        super().__init__(attribute)
+        self.allow_digits = allow_digits
         
     @classmethod
     def get_type_clause(cls, search_strategy, c, text, field_attributes):
-        return sql.operators.ilike_op(c, '%'+text+'%')
+        if not text.isdigit() or search_strategy.allow_digits:
+            return sql.operators.ilike_op(c, '%'+text+'%')
     
 class DecimalSearch(SearchFieldStrategy):
     
