@@ -33,11 +33,11 @@ context of the `Qt` model-view-delegate framework.
 """
 
 from ...admin.action.base import ActionStep
-from ...core.qt import Qt, variant_to_py, is_deleted
+from ...core.qt import Qt, is_deleted
 
 from ...core.item_model import AbstractModelProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import ObjectRole, CollectionProxy
+from ..proxy.collection_proxy import CollectionProxy
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
