@@ -509,17 +509,20 @@ class FormTest(unittest.TestCase, GrabMixinCase):
 
     def test_nested_form(self):
         person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
         person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
@@ -1028,14 +1031,14 @@ class SnippetsTest(RunningThreadCase,
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView([coordinate], admin)
+        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
         form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView([coordinate], admin)
+        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
         form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
