@@ -199,13 +199,15 @@ class SearchFieldStrategy(object):
         assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
     @classmethod
-    def get_clause(cls, attribute, text, field_attributes):
+    def get_clause(cls, search_strategy, text, field_attributes, attribute=None):
+        assert search_strategy == cls or isinstance(search_strategy, cls), 'The given search strategy should be a class object or instance of this search field strategy'
+        attribute = search_strategy.attribute or attribute
         cls.assert_valid_attribute(attribute)
-        return cls.get_type_clause(attribute, text, field_attributes)
+        return cls.get_type_clause(search_strategy, attribute, text, field_attributes)
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):    
-        """Return this search strategy's search clause for the given queryable attribute and search text, if applicable."""
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+        """Return the given search strategy's search clause for the given queryable attribute, search text and field_attributes, if applicable."""
         raise NotImplementedError
     
 class NoSearch(SearchFieldStrategy):
@@ -214,23 +216,31 @@ class NoSearch(SearchFieldStrategy):
         super().__init__(None)
         
     @classmethod
-    def get_clause(cls, column, text, field_attributes):
+    def get_clause(cls, search_strategy, column, text, field_attributes):
         return None
 
 class StringSearch(SearchFieldStrategy):
     
     python_type = str
     
+    # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
+    allow_digits = True
+    
+    def __init__(self, attribute, allow_digits=True):
+        super().__init__(attribute)
+        self.allow_digits = allow_digits
+        
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
-        return sql.operators.ilike_op(c, '%'+text+'%')
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+        if not text.isdigit() or search_strategy.allow_digits:
+            return sql.operators.ilike_op(c, '%'+text+'%')
     
 class DecimalSearch(SearchFieldStrategy):
     
     python_type = (float, decimal.Decimal)
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         try:
             float_value = field_attributes.get('from_string', utils.float_from_string)(text)
             precision = c.type.precision
@@ -246,7 +256,7 @@ class TimeDeltaSearch(SearchFieldStrategy):
     python_type = datetime.timedelta
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         try:
             days = field_attributes.get('from_string', utils.int_from_string)(text)
             return (c==datetime.timedelta(days=days))
@@ -258,7 +268,7 @@ class TimeSearch(SearchFieldStrategy):
     python_type = datetime.time
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         try:
             return (c==field_attributes.get('from_string', utils.time_from_string)(text))
         except utils.ParsingError:
@@ -269,7 +279,7 @@ class DateSearch(SearchFieldStrategy):
     python_type = datetime.date
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         try:
             return (c==field_attributes.get('from_string', utils.date_from_string)(text))
         except utils.ParsingError:
@@ -280,7 +290,7 @@ class IntSearch(SearchFieldStrategy):
     python_type = int
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         try:
             return (c==field_attributes.get('from_string', utils.int_from_string)(text))
         except utils.ParsingError:
@@ -291,7 +301,7 @@ class BoolSearch(SearchFieldStrategy):
     python_type = bool
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         try:
             return (c==field_attributes.get('from_string', utils.bool_from_string)(text))
         except utils.ParsingError:
@@ -302,7 +312,7 @@ class VirtualAddressSearch(SearchFieldStrategy):
     python_type = camelot.types.virtual_address
     
     @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(cls, search_strategy, c, text, field_attributes):
         return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
     
 class SearchFilter(Action, AbstractModelFilter):
