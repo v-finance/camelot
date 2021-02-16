@@ -204,13 +204,14 @@ class FieldSearch(AbstractSearchStrategy):
         assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
     def get_clause(self, text, admin, session):
-        field_attributes = admin.get_field_attributes(attribute.key)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
         search_clause = self.get_type_clause(text, field_attributes)
-        # TODO: check if the none check can be determined from the attribute.
-        where_conditions = [self.attribute != None]
-        if self.where is not None:
-            where_conditions.append(self.where)
-        return sql.and_(*where_conditions, search_clause)
+        if search_clause is not None:
+            # TODO: check if the none check can be determined from the attribute.
+            where_conditions = [self.attribute != None]
+            if self.where is not None:
+                where_conditions.append(self.where)
+            return sql.and_(*where_conditions, search_clause)
     
     def get_type_clause(self, text, field_attributes):
         """Return the given search strategy's search clause for the given search text and field_attributes, if applicable."""
@@ -222,7 +223,7 @@ class NoSearch(SearchFieldStrategy):
     def assert_valid_attribute(cls, attribute):
         pass
     
-    def get_clause(self, text, field_attributes):
+    def get_clause(self, text, admin, session):
         return None
 
 class StringSearch(SearchFieldStrategy):
