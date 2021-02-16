@@ -647,11 +647,11 @@ and used as a custom action.
         assert len(text)
         # arguments for the where clause
         args = []
-        # join conditions : list of join entities
-        joins = []
         
         for search_field in self._get_search_fields(text):
             if isinstance(search_field, str):
+                # join conditions : list of join entities
+                joins = []
                 column_name = search_field
                 path = column_name.split('.')
                 target = self.entity
@@ -671,8 +671,10 @@ and used as a custom action.
                         search_strategy = fa['search_strategy']
                         if search_strategy is not None:
                             assert issubclass(search_strategy, list_filter.FieldSearch)
-                            search_strategy = search_strategy(instrumented_attribute)
-                            arg = search_strategy.get_clause(text, related_admin, query.session)
+                            field_search = search_strategy(instrumented_attribute)
+                            if joins:
+                                field_search = list_filter.RelatedSearch(field_search, joins=joins)
+                            arg = field_search.get_clause(text, related_admin, query.session)
                             if arg is not None:
                                 arg = sql.and_(instrumented_attribute != None, arg)
                                 args.append(arg)
@@ -680,9 +682,6 @@ and used as a custom action.
                 arg = search_field.get_clause(text, self, query.session)
                 if arg is not None:
                     args.append(arg)
-        
-        for join in joins:
-            query = query.outerjoin(join)
         
         query = query.filter(sql.or_(*args))
     
