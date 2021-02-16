@@ -198,25 +198,20 @@ class SearchFieldStrategy(object):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
         assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
-    @classmethod
-    def get_clause(cls, search_strategy, text, field_attributes, attribute=None):
-        assert search_strategy == cls or isinstance(search_strategy, cls), 'The given search strategy should be a class object or instance of this search field strategy'
-        attribute = search_strategy.attribute or attribute
-        cls.assert_valid_attribute(attribute)
-        return cls.get_type_clause(search_strategy, attribute, text, field_attributes)
+    def get_clause(self, text, field_attributes):
+        return self.get_type_clause(text, field_attributes)
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         """Return the given search strategy's search clause for the given queryable attribute, search text and field_attributes, if applicable."""
         raise NotImplementedError
     
 class NoSearch(SearchFieldStrategy):
     
-    def __init__(self):
-        super().__init__(None)
-        
     @classmethod
-    def get_clause(cls, search_strategy, column, text, field_attributes):
+    def assert_valid_attribute(cls, attribute):
+        pass
+    
+    def get_clause(self, text, field_attributes):
         return None
 
 class StringSearch(SearchFieldStrategy):
@@ -230,24 +225,22 @@ class StringSearch(SearchFieldStrategy):
         super().__init__(attribute)
         self.allow_digits = allow_digits
         
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
-        if not text.isdigit() or search_strategy.allow_digits:
-            return sql.operators.ilike_op(c, '%'+text+'%')
+    def get_type_clause(self, text, field_attributes):
+        if not text.isdigit() or self.allow_digits:
+            return sql.operators.ilike_op(self.attribute, '%'+text+'%')
     
 class DecimalSearch(SearchFieldStrategy):
     
     python_type = (float, decimal.Decimal)
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
             float_value = field_attributes.get('from_string', utils.float_from_string)(text)
-            precision = c.type.precision
+            precision = self.attribute.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
-            return sql.and_(c>=float_value-delta, c<=float_value+delta)
+            return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
         except utils.ParsingError:
             pass       
         
@@ -255,11 +248,10 @@ class TimeDeltaSearch(SearchFieldStrategy):
     
     python_type = datetime.timedelta
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
             days = field_attributes.get('from_string', utils.int_from_string)(text)
-            return (c==datetime.timedelta(days=days))
+            return (self.attribute==datetime.timedelta(days=days))
         except utils.ParsingError:
             pass
         
@@ -267,10 +259,9 @@ class TimeSearch(SearchFieldStrategy):
     
     python_type = datetime.time
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.time_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
         except utils.ParsingError:
             pass
 
@@ -278,10 +269,9 @@ class DateSearch(SearchFieldStrategy):
     
     python_type = datetime.date
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.date_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
         except utils.ParsingError:
             pass
         
@@ -289,10 +279,9 @@ class IntSearch(SearchFieldStrategy):
     
     python_type = int
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.int_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
         except utils.ParsingError:
             pass  
 
@@ -300,10 +289,9 @@ class BoolSearch(SearchFieldStrategy):
     
     python_type = bool
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.bool_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.bool_from_string)(text))
         except utils.ParsingError:
             pass
 
@@ -311,9 +299,8 @@ class VirtualAddressSearch(SearchFieldStrategy):
     
     python_type = camelot.types.virtual_address
     
-    @classmethod
-    def get_type_clause(cls, search_strategy, c, text, field_attributes):
-        return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
+    def get_type_clause(self, text, field_attributes):
+        return self.attribute.like(camelot.types.virtual_address('%', '%'+text+'%'))
     
 class SearchFilter(Action, AbstractModelFilter):
 
