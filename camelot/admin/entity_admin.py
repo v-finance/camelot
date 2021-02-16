@@ -676,8 +676,8 @@ and used as a custom action.
                                 field_search = list_filter.RelatedSearch(field_search, joins=joins)
                             arg = field_search.get_clause(text, related_admin, query.session)
                             if arg is not None:
-                                arg = sql.and_(instrumented_attribute != None, arg)
                                 args.append(arg)
+                                
             elif isinstance(search_field, list_filter.AbstractSearchStrategy):
                 arg = search_field.get_clause(text, self, query.session)
                 if arg is not None:
