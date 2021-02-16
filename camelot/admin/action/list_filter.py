@@ -240,12 +240,14 @@ class RelatedSearch(AbstractSearchStrategy):
         for field_search in self.field_searches:
             related_admin = admin.get_related_admin(field_search.attribute.class_)
             field_search_clause = field_search.get_clause(text, related_admin, session)
-            field_search_clauses.append(field_search_clause)
-        related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
-        
-        related_search_query = related_search_query.subquery()
-        search_clause = admin.entity.id.in_(related_search_query)
-        return search_clause
+            if field_search_clause is not None:
+                field_search_clauses.append(field_search_clause)
+                
+        if field_search_clauses:
+            related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
+            related_search_query = related_search_query.subquery()
+            search_clause = admin.entity.id.in_(related_search_query)
+            return search_clause
 
 class NoSearch(FieldSearch):
     
