@@ -180,6 +180,13 @@ class ComboBoxFilter(Filter):
 
     render_hint = RenderHint.COMBO_BOX
 
+class AbstractSearchStrategy(object):
+    
+    def __init__(self, where=None):
+        self.where = where
+    
+    def get_clause(self, text, admin, session):
+        raise NotImplementedError
 
 class SearchFieldStrategy(object):
     """Abstract class for search field strategies.
