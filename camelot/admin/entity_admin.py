@@ -670,16 +670,14 @@ and used as a custom action.
                         fa = related_admin.get_field_attributes(instrumented_attribute.key)
                         search_strategy = fa['search_strategy']
                         if search_strategy is not None:
-                            assert issubclass(search_strategy, list_filter.SearchFieldStrategy)
+                            assert issubclass(search_strategy, list_filter.FieldSearch)
                             search_strategy = search_strategy(instrumented_attribute)
-                            arg = search_strategy.get_clause(text, fa)
+                            arg = search_strategy.get_clause(text, related_admin, query.session)
                             if arg is not None:
                                 arg = sql.and_(instrumented_attribute != None, arg)
                                 args.append(arg)
-            elif isinstance(search_field, list_filter.SearchFieldStrategy):
-                attribute = search_field.attribute
-                field_attributes = self.get_related_admin(attribute.class_).get_field_attributes(attribute.key)
-                arg = search_field.get_clause(text, field_attributes)
+            elif isinstance(search_field, list_filter.AbstractSearchStrategy):
+                arg = search_field.get_clause(text, self, query.session)
                 if arg is not None:
                     args.append(arg)
         
