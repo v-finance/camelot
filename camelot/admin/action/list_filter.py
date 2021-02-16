@@ -217,7 +217,7 @@ class FieldSearch(AbstractSearchStrategy):
         """Return the given search strategy's search clause for the given search text and field_attributes, if applicable."""
         raise NotImplementedError
     
-class NoSearch(SearchFieldStrategy):
+class NoSearch(FieldSearch):
     
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -226,7 +226,7 @@ class NoSearch(SearchFieldStrategy):
     def get_clause(self, text, admin, session):
         return None
 
-class StringSearch(SearchFieldStrategy):
+class StringSearch(FieldSearch):
     
     python_type = str
     
@@ -241,7 +241,7 @@ class StringSearch(SearchFieldStrategy):
         if not text.isdigit() or self.allow_digits:
             return sql.operators.ilike_op(self.attribute, '%'+text+'%')
     
-class DecimalSearch(SearchFieldStrategy):
+class DecimalSearch(FieldSearch):
     
     python_type = (float, decimal.Decimal)
     
@@ -256,7 +256,7 @@ class DecimalSearch(SearchFieldStrategy):
         except utils.ParsingError:
             pass       
         
-class TimeDeltaSearch(SearchFieldStrategy):
+class TimeDeltaSearch(FieldSearch):
     
     python_type = datetime.timedelta
     
@@ -267,7 +267,7 @@ class TimeDeltaSearch(SearchFieldStrategy):
         except utils.ParsingError:
             pass
         
-class TimeSearch(SearchFieldStrategy):
+class TimeSearch(FieldSearch):
     
     python_type = datetime.time
     
@@ -277,7 +277,7 @@ class TimeSearch(SearchFieldStrategy):
         except utils.ParsingError:
             pass
 
-class DateSearch(SearchFieldStrategy):
+class DateSearch(FieldSearch):
     
     python_type = datetime.date
     
@@ -287,7 +287,7 @@ class DateSearch(SearchFieldStrategy):
         except utils.ParsingError:
             pass
         
-class IntSearch(SearchFieldStrategy):
+class IntSearch(FieldSearch):
     
     python_type = int
     
@@ -297,7 +297,7 @@ class IntSearch(SearchFieldStrategy):
         except utils.ParsingError:
             pass  
 
-class BoolSearch(SearchFieldStrategy):
+class BoolSearch(FieldSearch):
     
     python_type = bool
     
@@ -307,7 +307,7 @@ class BoolSearch(SearchFieldStrategy):
         except utils.ParsingError:
             pass
 
-class VirtualAddressSearch(SearchFieldStrategy):
+class VirtualAddressSearch(FieldSearch):
     
     python_type = camelot.types.virtual_address
     
