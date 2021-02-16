@@ -216,7 +216,37 @@ class FieldSearch(AbstractSearchStrategy):
     def get_type_clause(self, text, field_attributes):
         """Return the given search strategy's search clause for the given search text and field_attributes, if applicable."""
         raise NotImplementedError
-    
+
+class RelatedSearch(AbstractSearchStrategy):
+
+    def __init__(self, *field_searches, joins, where=None):
+        super().__init__(where)     
+        assert isinstance(joins, list) and len(joins) > 0   
+        for field_search in field_searches:
+            assert isinstance(field_search, FieldSearch)
+        self.field_searches = field_searches
+        self.joins = joins
+
+    def get_clause(self, text, admin, session):
+        related_search_query = session.query(admin.entity.id)
+
+        for join in self.joins:
+            related_search_query = related_search_query.join(join)
+
+        if self.where is not None:
+            related_search_query.filter(self.where)
+
+        field_search_clauses = []
+        for field_search in self.field_searches:
+            related_admin = admin.get_related_admin(field_search.attribute.class_)
+            field_search_clause = field_search.get_clause(text, related_admin, session)
+            field_search_clauses.append(field_search_clause)
+        related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
+        
+        related_search_query = related_search_query.subquery()
+        search_clause = admin.entity.id.in_(related_search_query)
+        return search_clause
+
 class NoSearch(FieldSearch):
     
     @classmethod
