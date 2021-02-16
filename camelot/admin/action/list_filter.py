@@ -207,7 +207,6 @@ class FieldSearch(AbstractSearchStrategy):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         search_clause = self.get_type_clause(text, field_attributes)
         if search_clause is not None:
-            # TODO: check if the none check can be determined from the attribute.
             where_conditions = [self.attribute != None]
             if self.where is not None:
                 where_conditions.append(self.where)
