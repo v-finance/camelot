@@ -188,15 +188,13 @@ class AbstractSearchStrategy(object):
     def get_clause(self, text, admin, session):
         raise NotImplementedError
 
-class SearchFieldStrategy(object):
-    """Abstract class for search field strategies.
-       It offers an interface for defining a column-based search clause for a given queryable attribute and search text.
-    """
-
+class FieldSearch(AbstractSearchStrategy):
+    
     attribute = None
     python_type = None
 
-    def __init__(self, attribute):
+    def __init__(self, attribute, where=None):
+        super().__init__(where)
         self.assert_valid_attribute(attribute)
         self.attribute = attribute
     
@@ -205,11 +203,17 @@ class SearchFieldStrategy(object):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
         assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
-    def get_clause(self, text, field_attributes):
-        return self.get_type_clause(text, field_attributes)
+    def get_clause(self, text, admin, session):
+        field_attributes = admin.get_field_attributes(attribute.key)
+        search_clause = self.get_type_clause(text, field_attributes)
+        # TODO: check if the none check can be determined from the attribute.
+        where_conditions = [self.attribute != None]
+        if self.where is not None:
+            where_conditions.append(self.where)
+        return sql.and_(*where_conditions, search_clause)
     
     def get_type_clause(self, text, field_attributes):
-        """Return the given search strategy's search clause for the given queryable attribute, search text and field_attributes, if applicable."""
+        """Return the given search strategy's search clause for the given search text and field_attributes, if applicable."""
         raise NotImplementedError
     
 class NoSearch(SearchFieldStrategy):
