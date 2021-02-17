@@ -641,7 +641,7 @@ and used as a custom action.
         """
         Decorate the given sqlalchemy query for the objects that should be displayed in the table or selection view,
         with the needed clauses for filtering based on the given search text.
-        By default all 'simple' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
+        By default all 'basic' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
         Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
         """
         assert len(text)
@@ -649,8 +649,11 @@ and used as a custom action.
         args = []
         
         for search_field in self._get_search_fields(text):
+            # Deprecated old style of defining search fields as a string with dot notation for related fields.
+            # This style will be phased out gradually by the use of search field strategies entirely.
+            # Untill then, they are turned in to field searches or related searches here.
             if isinstance(search_field, str):
-                # join conditions : list of join entities
+                # list of join entities
                 joins = []
                 column_name = search_field
                 path = column_name.split('.')
@@ -670,8 +673,11 @@ and used as a custom action.
                         fa = related_admin.get_field_attributes(instrumented_attribute.key)
                         search_strategy = fa['search_strategy']
                         if search_strategy is not None:
+                            # If the search strategy is set, initialize it with the instrumented attribute.
                             assert issubclass(search_strategy, list_filter.FieldSearch)
                             field_search = search_strategy(instrumented_attribute)
+                            # In case the attribute is of a related entity,
+                            # create a related search using the field search and the encountered joins.
                             if joins:
                                 field_search = list_filter.RelatedSearch(field_search, joins=joins)
                             arg = field_search.get_clause(text, related_admin, query.session)
