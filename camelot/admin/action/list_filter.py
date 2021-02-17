@@ -181,19 +181,37 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
 
 class AbstractSearchStrategy(object):
+    """
+    Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
+    """
     
     def __init__(self, where=None):
+        """
+        :param where: an optional additional condition that should be met for the search clause to apply.
+        """
         self.where = where
     
     def get_clause(self, text, admin, session):
+        """
+        Return a search clause for the given search text.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        """
         raise NotImplementedError
 
 class FieldSearch(AbstractSearchStrategy):
+    """
+    Abstract interface for defining a column-based search clause on a queryable attribute of an entity, as part of that entity admin's search query.
+    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    """
     
     attribute = None
     python_type = None
 
     def __init__(self, attribute, where=None):
+        """
+        :param attribute: a queryable attribute for on which this field search should be applied on.
+        """        
         super().__init__(where)
         self.assert_valid_attribute(attribute)
         self.attribute = attribute
@@ -204,6 +222,10 @@ class FieldSearch(AbstractSearchStrategy):
         assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
     def get_clause(self, text, admin, session):
+        """
+        Return a search clause consisting of this field search's type clause,
+        expanded with condition on the attribute being set (None check) and the optionally set where condition.
+        """
         field_attributes = admin.get_field_attributes(self.attribute.key)
         search_clause = self.get_type_clause(text, field_attributes)
         if search_clause is not None:
@@ -213,13 +235,25 @@ class FieldSearch(AbstractSearchStrategy):
             return sql.and_(*where_conditions, search_clause)
     
     def get_type_clause(self, text, field_attributes):
-        """Return the given search strategy's search clause for the given search text and field_attributes, if applicable."""
+        """
+        Return a column-based expression search clause on this search strategy's attribute for the given search text.
+        :param field_attributes: The field attributes for this search strategy's attribute on the entity admin
+                                 that will use the resulting search clause as part of its search query.
+        """
         raise NotImplementedError
 
 class RelatedSearch(AbstractSearchStrategy):
+    """
+    Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
+    """
 
     def __init__(self, *field_searches, joins, where=None):
-        super().__init__(where)     
+        """
+        :param field_searches: field search strategies for the search fields on which this related search should apply.
+        :param joins: join definition between the entity on which the search query this related search is part of takes place,
+                      and the related entity of the given field searches.
+        """
+        super().__init__(where)
         assert isinstance(joins, list) and len(joins) > 0   
         for field_search in field_searches:
             assert isinstance(field_search, FieldSearch)
@@ -227,6 +261,12 @@ class RelatedSearch(AbstractSearchStrategy):
         self.joins = joins
 
     def get_clause(self, text, admin, session):
+        """
+        Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
+        The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
+        where the search clauses of each.
+        The subquery is composed based on this related search strategy's joins and where condition,
+        """        
         related_search_query = session.query(admin.entity.id)
 
         for join in self.joins:
