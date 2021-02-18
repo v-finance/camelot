@@ -257,8 +257,11 @@ class CloseForm( Action ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObjects((obj,))
                 else:
+                    depending_objects = list(admin.get_depending_objects(obj))
+                    model_context.proxy.remove(obj)
                     yield action_steps.DeleteObjects((obj,))
-                    admin.expunge( obj )
+                    admin.expunge(obj)
+                    yield action_steps.UpdateObjects(depending_objects)
                 # only close the form after the object has been discarded or
                 # deleted, to avoid yielding action steps after the widget mapper
                 # has been garbage collected
