@@ -307,7 +307,7 @@ class OpenFormView( ListContextAction ):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        yield action_steps.OpenFormView(objects=None, admin=model_context.admin)
+        yield action_steps.OpenFormView(model_context.get_object(), model_context.proxy, admin=model_context.admin)
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
@@ -1085,18 +1085,31 @@ class AddNewObject( EditAction ):
     icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')
-
-    def model_run( self, model_context ):
-        from camelot.view import action_steps
-        admin = model_context.admin
-        create_inline = model_context.field_attributes.get('create_inline',
-                                                           False)
-        new_object = admin.entity()
+    
+    def get_admin(self, model_context):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.admin
+    
+    def create_object(self, model_context, session=None):
+        """Create a new entity instance from the given model_context's admin and add it to given session,
+        or the default session, if it is not yet attached to a session"."""
+        admin = self.get_admin(model_context)
+        new_object = admin.entity(_session=session)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
         model_context.proxy.append(new_object)
         # Give the default fields their value
         admin.set_defaults(new_object)
+        return new_object
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        admin = self.get_admin(model_context)
+        create_inline = model_context.field_attributes.get('create_inline', False)
+        new_object = self.create_object(model_context)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((new_object,))
@@ -1108,7 +1121,7 @@ class AddNewObject( EditAction ):
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView([new_object], admin)
+            yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
 
 class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""

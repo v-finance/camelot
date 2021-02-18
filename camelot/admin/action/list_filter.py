@@ -180,16 +180,39 @@ class ComboBoxFilter(Filter):
 
     render_hint = RenderHint.COMBO_BOX
 
-
-class SearchFieldStrategy(object):
-    """Abstract class for search field strategies.
-       It offers an interface for defining a column-based search clause for a given queryable attribute and search text.
+class AbstractSearchStrategy(object):
     """
+    Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
+    """
+    
+    def __init__(self, where=None):
+        """
+        :param where: an optional additional condition that should be met for the search clause to apply.
+        """
+        self.where = where
+    
+    def get_clause(self, text, admin, session):
+        """
+        Return a search clause for the given search text.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        """
+        raise NotImplementedError
 
+class FieldSearch(AbstractSearchStrategy):
+    """
+    Abstract interface for defining a column-based search clause on a queryable attribute of an entity, as part of that entity admin's search query.
+    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    """
+    
     attribute = None
     python_type = None
 
-    def __init__(self, attribute):
+    def __init__(self, attribute, where=None):
+        """
+        :param attribute: a queryable attribute for on which this field search should be applied on.
+        """        
+        super().__init__(where)
         self.assert_valid_attribute(attribute)
         self.attribute = attribute
     
@@ -198,112 +221,169 @@ class SearchFieldStrategy(object):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
         assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
-    @classmethod
-    def get_clause(cls, attribute, text, field_attributes):
-        cls.assert_valid_attribute(attribute)
-        return cls.get_type_clause(attribute, text, field_attributes)
+    def get_clause(self, text, admin, session):
+        """
+        Return a search clause consisting of this field search's type clause,
+        expanded with condition on the attribute being set (None check) and the optionally set where condition.
+        """
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        search_clause = self.get_type_clause(text, field_attributes)
+        if search_clause is not None:
+            where_conditions = [self.attribute != None]
+            if self.where is not None:
+                where_conditions.append(self.where)
+            return sql.and_(*where_conditions, search_clause)
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):    
-        """Return this search strategy's search clause for the given queryable attribute and search text, if applicable."""
+    def get_type_clause(self, text, field_attributes):
+        """
+        Return a column-based expression search clause on this search strategy's attribute for the given search text.
+        :param field_attributes: The field attributes for this search strategy's attribute on the entity admin
+                                 that will use the resulting search clause as part of its search query.
+        """
         raise NotImplementedError
+
+class RelatedSearch(AbstractSearchStrategy):
+    """
+    Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
+    """
+
+    def __init__(self, *field_searches, joins, where=None):
+        """
+        :param field_searches: field search strategies for the search fields on which this related search should apply.
+        :param joins: join definition between the entity on which the search query this related search is part of takes place,
+                      and the related entity of the given field searches.
+        """
+        super().__init__(where)
+        assert isinstance(joins, list) and len(joins) > 0   
+        for field_search in field_searches:
+            assert isinstance(field_search, FieldSearch)
+        self.field_searches = field_searches
+        self.joins = joins
+
+    def get_clause(self, text, admin, session):
+        """
+        Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
+        The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
+        where the search clauses of each.
+        The subquery is composed based on this related search strategy's joins and where condition,
+        """        
+        related_search_query = session.query(admin.entity.id)
+
+        for join in self.joins:
+            related_search_query = related_search_query.join(join)
+
+        if self.where is not None:
+            related_search_query.filter(self.where)
+
+        field_search_clauses = []
+        for field_search in self.field_searches:
+            related_admin = admin.get_related_admin(field_search.attribute.class_)
+            field_search_clause = field_search.get_clause(text, related_admin, session)
+            if field_search_clause is not None:
+                field_search_clauses.append(field_search_clause)
+                
+        if field_search_clauses:
+            related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
+            related_search_query = related_search_query.subquery()
+            search_clause = admin.entity.id.in_(related_search_query)
+            return search_clause
+
+class NoSearch(FieldSearch):
     
-class NoSearch(SearchFieldStrategy):
-    
-    def __init__(self):
-        super().__init__(None)
-        
     @classmethod
-    def get_clause(cls, column, text, field_attributes):
+    def assert_valid_attribute(cls, attribute):
+        pass
+    
+    def get_clause(self, text, admin, session):
         return None
 
-class StringSearch(SearchFieldStrategy):
+class StringSearch(FieldSearch):
     
     python_type = str
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
-        return sql.operators.ilike_op(c, '%'+text+'%')
+    # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
+    allow_digits = True
     
-class DecimalSearch(SearchFieldStrategy):
+    def __init__(self, attribute, allow_digits=True):
+        super().__init__(attribute)
+        self.allow_digits = allow_digits
+        
+    def get_type_clause(self, text, field_attributes):
+        if not text.isdigit() or self.allow_digits:
+            return sql.operators.ilike_op(self.attribute, '%'+text+'%')
+    
+class DecimalSearch(FieldSearch):
     
     python_type = (float, decimal.Decimal)
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
             float_value = field_attributes.get('from_string', utils.float_from_string)(text)
-            precision = c.type.precision
+            precision = self.attribute.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
-            return sql.and_(c>=float_value-delta, c<=float_value+delta)
+            return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
         except utils.ParsingError:
             pass       
         
-class TimeDeltaSearch(SearchFieldStrategy):
+class TimeDeltaSearch(FieldSearch):
     
     python_type = datetime.timedelta
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
             days = field_attributes.get('from_string', utils.int_from_string)(text)
-            return (c==datetime.timedelta(days=days))
+            return (self.attribute==datetime.timedelta(days=days))
         except utils.ParsingError:
             pass
         
-class TimeSearch(SearchFieldStrategy):
+class TimeSearch(FieldSearch):
     
     python_type = datetime.time
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.time_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
         except utils.ParsingError:
             pass
 
-class DateSearch(SearchFieldStrategy):
+class DateSearch(FieldSearch):
     
     python_type = datetime.date
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.date_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
         except utils.ParsingError:
             pass
         
-class IntSearch(SearchFieldStrategy):
+class IntSearch(FieldSearch):
     
     python_type = int
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.int_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
         except utils.ParsingError:
             pass  
 
-class BoolSearch(SearchFieldStrategy):
+class BoolSearch(FieldSearch):
     
     python_type = bool
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
+    def get_type_clause(self, text, field_attributes):
         try:
-            return (c==field_attributes.get('from_string', utils.bool_from_string)(text))
+            return (self.attribute==field_attributes.get('from_string', utils.bool_from_string)(text))
         except utils.ParsingError:
             pass
 
-class VirtualAddressSearch(SearchFieldStrategy):
+class VirtualAddressSearch(FieldSearch):
     
     python_type = camelot.types.virtual_address
     
-    @classmethod
-    def get_type_clause(cls, c, text, field_attributes):
-        return c.like(camelot.types.virtual_address('%', '%'+text+'%'))
+    def get_type_clause(self, text, field_attributes):
+        return self.attribute.like(camelot.types.virtual_address('%', '%'+text+'%'))
     
 class SearchFilter(Action, AbstractModelFilter):
 

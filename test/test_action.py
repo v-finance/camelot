@@ -537,6 +537,7 @@ class ListActionsCase(
         from camelot.model.party import Person
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
+        gui_context.action_routes = {}
         person_admin = Person.Admin(app_admin, Person)
         table_view = TableView(gui_context, person_admin.get_admin_route())
         table_view.set_filters([self.group_box_filter,

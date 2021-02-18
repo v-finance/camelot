@@ -33,18 +33,17 @@ context of the `Qt` model-view-delegate framework.
 """
 
 from ...admin.action.base import ActionStep
-from ...core.qt import Qt, variant_to_py, is_deleted
-from ..workspace import show_top_level
-from ..proxy.collection_proxy import ObjectRole, CollectionProxy
+from ...core.qt import Qt, is_deleted
 
+from ...core.item_model import AbstractModelProxy
+from ..workspace import show_top_level
+from ..proxy.collection_proxy import CollectionProxy
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
 
-    :param objects: the list of objects to display in the form view, if objects
-        is set to `None`, the model of the item view of the gui context is
-        reused
-        
+    :param object: the object to display in the form view.
+    :param proxy: a model proxy that represents the underlying collection where the given object is part of.
     :param admin: the admin class to use to display the form
 
     .. attribute:: row
@@ -71,11 +70,11 @@ class OpenFormView( ActionStep ):
 
     """
 
-    def __init__( self, objects, admin ):
+    def __init__( self, obj, proxy, admin ):
+        assert obj is not None
+        assert isinstance(proxy, AbstractModelProxy)
         self.admin_name = admin.get_name()
-        self.objects = objects
         self.admin = admin
-        self.row = 0
         self.actions = admin.get_form_actions(None)
         self.top_level = True
         get_form_toolbar_actions = admin.get_form_toolbar_actions
@@ -84,7 +83,11 @@ class OpenFormView( ActionStep ):
         self._columns = admin.get_fields()
         self._form_display = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
-
+        
+        self.objects = [obj]
+        self.row = proxy.index(obj)
+        self.proxy = proxy
+        
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
 
@@ -94,36 +97,14 @@ class OpenFormView( ActionStep ):
 
     def render(self, gui_context):
         from camelot.view.controls.formview import FormView
-        if self.objects is None:
-            related_model = gui_context.item_view.model()
-            proxy = related_model.get_value().copy()
-            # Always create a new proxy
-            # relating two views on the same model to each other and
-            # making sure the correct row is shown in the form involves too many
-            # edge cases.
-            # this is the row the user clicked on
-            related_row = gui_context.item_view.currentIndex().row()
-            # this is the object visible in that row at the time of the click
-            obj = related_model.headerData(related_row, Qt.Vertical, ObjectRole)
-            # the value for the ObjectRole might be None if the update of the
-            # model is still pending, in that case no form can be opened yet
-            if variant_to_py(obj) is None:
-                return None
-            # this is the row in the new proxy for the same object, this migth
-            # be the same row as the related row if there were no gui changes
-            # pending
-            row = proxy.index(variant_to_py(obj))
-        else:
-            row = self.row
-            proxy = self.admin.get_proxy(self.objects)
-
+            
         model = CollectionProxy(self.admin_route)
         list(model.add_columns((fn for fn, fa in self._columns)))
-        model.set_value(proxy)
+        model.set_value(self.proxy)
 
         form = FormView(title=self.title, admin=self.admin, model=model,
                         columns=self._columns, form_display=self._form_display,
-                        index=row)
+                        index=self.row)
         form.set_actions(self.actions)
         form.set_toolbar_actions(self.top_toolbar_actions)
         return form
