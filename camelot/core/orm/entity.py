@@ -35,17 +35,20 @@ These classes can be reused if a custom base class is needed.
 """
 
 import bisect
-
+import logging
 import six
 
-from sqlalchemy import orm, schema, sql
+from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
+from ..exception import UserException
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
+
+LOGGER = logging.getLogger('camelot.core.orm.entity')
 
 class EntityDescriptor(object):
     """
@@ -235,6 +238,7 @@ class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
     metaclass processes the Property and ClassMutator objects.
     """
+    
 
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
@@ -268,9 +272,49 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 dict_.setdefault('__mapper_args__', dict())
-
-        return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
-
+            
+            # Initialize the types that are allowed registering classes for as None if not set.
+            for base in bases:
+                if hasattr(base, '__types__'):
+                    break
+            else:
+                dict_.setdefault('__types__', None)
+                # Dict that stores class-type registrations. 
+            
+            types = dict_.get('__types__')
+            if types is not None:
+                assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
+                dict_.setdefault('_cls_for_type', dict())
+                    
+        _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+        cls.register_class(cls, _class, dict_)
+        return _class
+        
+    def register_class(cls, _class, dict_):
+        _type = dict_.get('__for_type__')
+        if _type is not None:
+            assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
+            assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
+            if _type in _class.__types__:
+                assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
+                _class._cls_for_type[_type] = _class
+    
+    def get_cls_by_type(cls, _type):
+        """
+        Get the class corresponding to the given type dynamically.
+        :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
+        :return:       the class for the given type, which inherits from the class the allowed types are registered on or None if none registered.
+                       Examples:
+                       | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
+        :raises :      an AttributeException when the given argument is not a valid type
+        """
+        if cls.__types__ is not None:
+            if _type in cls.__types__.__members__:
+                return cls._cls_for_type.get(_type)
+            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+            raise UserException("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+        return cls
+    
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
