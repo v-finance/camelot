@@ -35,17 +35,20 @@ These classes can be reused if a custom base class is needed.
 """
 
 import bisect
-
+import logging
 import six
 
-from sqlalchemy import orm, schema, sql
+from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
+from ..exception import UserException
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
+
+LOGGER = logging.getLogger('camelot.core.orm.entity')
 
 class EntityDescriptor(object):
     """
@@ -232,10 +235,43 @@ class EntityDescriptor(object):
         return order        
 
 class EntityMeta( DeclarativeMeta ):
-    """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
-    metaclass processes the Property and ClassMutator objects.
     """
-
+    Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
+    This metaclass processes the Property and ClassMutator objects.
+    
+    Facade class registration
+    -------------------------
+    This metaclass also provides type-based entity classes with a means to register facade classes for specific types on one of its base classes,
+    to allow type-specific facade and related Admin behaviour,
+    To use this behaviour, the base Entity class for which specific facade classes are needed should implement the '__types__' property.
+    This property should define the types (an instance of sqlalchemy.util.OrderedProperties) that are allowed for registering classes for.
+    To register a class for a specific type, the class in question should implement the '__for_type__' property, which should define a specific type,
+    of the base Entity class' '__types__'.
+    
+    :example: | class SomeClass(Entity):
+              |     __tablename__ = 'some_tablename'
+              |     __types__ = some_class_types
+              |     ...
+              |
+              | class SomeFacadeClass(SomeClass)
+              |     __for_type__ = some_class_types.certain_type.name
+              |     ...
+    
+    This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
+    This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
+    
+    :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
+              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == SomeClass
+    
+    Notes on metaclasses
+    --------------------
+    Metaclasses are not part of objects' class hierarchy whereas base classes are.
+    So when a method is called on an object it will not look on the metaclass for this method, however the metaclass may have created it during the class' or object's creation.
+    They are generally used for use cases outside of the default rules of object-oriented programming.
+    In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
+    which is an OOP anti-pattern as classes should not know about their subclasses.
+    """
+    
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -268,9 +304,52 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 dict_.setdefault('__mapper_args__', dict())
-
-        return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
-
+            
+            # Initialize the types that are allowed registering classes for as None if not set.
+            for base in bases:
+                if hasattr(base, '__types__'):
+                    break
+            else:
+                dict_.setdefault('__types__', None)
+                # Dict that stores class-type registrations. 
+            
+            types = dict_.get('__types__')
+            if types is not None:
+                assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
+                dict_.setdefault('_cls_for_type', dict())
+                    
+        _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+        cls.register_class(cls, _class, dict_)
+        return _class
+        
+    def register_class(cls, _class, dict_):
+        _type = dict_.get('__for_type__')
+        if _type is not None:
+            assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
+            assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
+            if _type in _class.__types__:
+                assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
+                _class._cls_for_type[_type] = _class
+    
+    def get_cls_by_type(cls, _type):
+        """
+        Retrieve the corresponding class for the given type.
+        This will either be a specific class that is registered on this class or its base, or the class itself if not the case.
+        
+        :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
+                       If this class or its base have types registration enabled, this should be a member of the set __types__.
+        :return:       the class for the given type, which inherits from the class where the allowed types are registered on or the class itself if not.
+                       Examples:
+                       | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
+        :raises :      an AttributeException when the given argument is not a valid type
+        """
+        if cls.__types__ is not None:
+            if _type in cls.__types__.__members__:
+                return cls._cls_for_type.get(_type)
+            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+            raise UserException("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+        return cls
+    
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
