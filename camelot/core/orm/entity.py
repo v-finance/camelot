@@ -235,11 +235,43 @@ class EntityDescriptor(object):
         return order        
 
 class EntityMeta( DeclarativeMeta ):
-    """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
-    metaclass processes the Property and ClassMutator objects.
+    """
+    Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
+    This metaclass processes the Property and ClassMutator objects.
+    
+    Facade class registration
+    -------------------------
+    This metaclass also provides type-based entity classes with a means to register facade classes for specific types on one of its base classes,
+    to allow type-specific facade and related Admin behaviour,
+    To use this behaviour, the base Entity class for which specific facade classes are needed should implement the '__types__' property.
+    This property should define the types (an instance of sqlalchemy.util.OrderedProperties) that are allowed for registering classes for.
+    To register a class for a specific type, the class in question should implement the '__for_type__' property, which should define a specific type,
+    of the base Entity class' '__types__'.
+    
+    :example: | class SomeClass(Entity):
+              |     __tablename__ = 'some_tablename'
+              |     __types__ = some_class_types
+              |     ...
+              |
+              | class SomeFacadeClass(SomeClass)
+              |     __for_type__ = some_class_types.certain_type.name
+              |     ...
+    
+    This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
+    This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
+    
+    :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
+              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == SomeClass
+    
+    Notes on metaclasses
+    --------------------
+    Metaclasses are not part of objects' class hierarchy whereas base classes are.
+    So when a method is called on an object it will not look on the metaclass for this method, however the metaclass may have created it during the class' or object's creation.
+    They are generally used for use cases outside of the default rules of object-oriented programming.
+    In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
+    which is an OOP anti-pattern as classes should not know about their subclasses.
     """
     
-
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -301,9 +333,12 @@ class EntityMeta( DeclarativeMeta ):
     
     def get_cls_by_type(cls, _type):
         """
-        Get the class corresponding to the given type dynamically.
+        Retrieve the corresponding class for the given type.
+        This will either be a specific class that is registered on this class or its base, or the class itself if not the case.
+        
         :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
-        :return:       the class for the given type, which inherits from the class the allowed types are registered on or None if none registered.
+                       If this class or its base have types registration enabled, this should be a member of the set __types__.
+        :return:       the class for the given type, which inherits from the class where the allowed types are registered on or the class itself if not.
                        Examples:
                        | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
         :raises :      an AttributeException when the given argument is not a valid type
