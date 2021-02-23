@@ -680,7 +680,7 @@ and used as a custom action.
                             # create a related search using the field search and the encountered joins.
                             if joins:
                                 field_search = list_filter.RelatedSearch(field_search, joins=joins)
-                            arg = field_search.get_clause(text, related_admin, query.session)
+                            arg = field_search.get_clause(text, self, query.session)
                             if arg is not None:
                                 args.append(arg)
                                 
