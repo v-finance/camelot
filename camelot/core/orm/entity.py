@@ -305,14 +305,18 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
             
-            # Initialize the types that are allowed registering classes for as None if not set.
             for base in bases:
                 if hasattr(base, '__types__'):
                     break
             else:
                 dict_.setdefault('__types__', None)
-                # Dict that stores class-type registrations. 
             
+            for base in bases:
+                if hasattr(base, '__for_type__'):
+                    break
+            else:
+                dict_.setdefault('__for_type__', None)
+                    
             types = dict_.get('__types__')
             if types is not None:
                 assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
@@ -333,8 +337,7 @@ class EntityMeta( DeclarativeMeta ):
     
     def get_cls_by_type(cls, _type):
         """
-        Retrieve the corresponding class for the given type.
-        This will either be a specific class that is registered on this class or its base, or the class itself if not the case.
+        Retrieve the corresponding class for the given type if one is registered on this class or its base.
         
         :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
                        If this class or its base have types registration enabled, this should be a member of the set __types__.
@@ -348,7 +351,6 @@ class EntityMeta( DeclarativeMeta ):
                 return cls._cls_for_type.get(_type)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise UserException("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
-        return cls
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
