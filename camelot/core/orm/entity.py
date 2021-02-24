@@ -305,14 +305,18 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
             
-            # Initialize the types that are allowed registering classes for as None if not set.
             for base in bases:
                 if hasattr(base, '__types__'):
                     break
             else:
                 dict_.setdefault('__types__', None)
-                # Dict that stores class-type registrations. 
             
+            for base in bases:
+                if hasattr(base, '__for_type__'):
+                    break
+            else:
+                dict_.setdefault('__for_type__', None)
+                    
             types = dict_.get('__types__')
             if types is not None:
                 assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
