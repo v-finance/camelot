@@ -240,12 +240,13 @@ class EntityMeta( DeclarativeMeta ):
     
     Facade class registration
     -------------------------
-    This metaclass also provides type-based entity classes with a means to register facade classes for specific types on one of its base classes,
-    to allow type-specific facade and related Admin behaviour,
+    This metaclass also provides type-based entity classes with a means to register facade classes for specific types (or a default one for multiple types)
+    on one of its base classes, to allow type-specific facade and related Admin behaviour.
     To use this behaviour, the base Entity class for which specific facade classes are needed should implement the '__types__' property.
     This property should define the types (an instance of sqlalchemy.util.OrderedProperties) that are allowed for registering classes for.
-    To register a class for a specific type, the class in question should implement the '__facade_args__' property, which should define a specific type,
-    of the base Entity class' '__types__'.
+    To register a class, it should implement the '__facade_args__' property, a dictionary with the arguments needed for the facade registration.
+    In order to register a class for a specific type, the 'type' argument key should define a specific type of the base Entity class' '__types__'.
+    To registed a class as the default class for types that do not have a specific class registered, the 'default' argument should be provided and set to True.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
@@ -257,12 +258,18 @@ class EntityMeta( DeclarativeMeta ):
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
+              |
+              | class DefaultFacadeClass(SomeClass)
+              |     __facade_args__ = {
+              |         'default': True
+              |     }
+              |     ...
     
     This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
     This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
     
     :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
-              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == SomeClass
+              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
     
     Notes on metaclasses
     --------------------
