@@ -345,17 +345,19 @@ class EntityMeta( DeclarativeMeta ):
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type if one is registered on this class or its base.
+        This can be the class that is specifically registered for the given type, or a possible registered default class otherwise.
         
         :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
                        If this class or its base have types registration enabled, this should be a member of the set __types__.
         :return:       the class for the given type, which inherits from the class where the allowed types are registered on or the class itself if not.
                        Examples:
                        | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
+                       | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
         :raises :      an AttributeException when the given argument is not a valid type
         """
         if cls.__types__ is not None:
             if _type in cls.__types__.__members__:
-                return cls._cls_for_type.get(_type)
+                return cls._cls_for_type.get(_type) or cls._cls_for_type.get(None)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
