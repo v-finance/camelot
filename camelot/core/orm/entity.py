@@ -305,17 +305,17 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__mapper_args__', dict())
             
             for base in bases:
+                if hasattr(base, '__facade_args__'):
+                    break
+            else:
+                dict_.setdefault('__facade_args__', dict())
+            
+            for base in bases:
                 if hasattr(base, '__types__'):
                     break
             else:
                 dict_.setdefault('__types__', None)
             
-            for base in bases:
-                if hasattr(base, '__for_type__'):
-                    break
-            else:
-                dict_.setdefault('__for_type__', None)
-                    
             types = dict_.get('__types__')
             if types is not None:
                 assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
@@ -326,14 +326,16 @@ class EntityMeta( DeclarativeMeta ):
         return _class
         
     def register_class(cls, _class, dict_):
-        _type = dict_.get('__for_type__')
-        if _type is not None:
-            assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
-            assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-            if _type in _class.__types__:
-                assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
-                _class._cls_for_type[_type] = _class
-    
+        facade_args = dict_.get('__facade_args__')
+        if facade_args is not None:
+            _type = facade_args.get('type')
+            if _type is not None:
+                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
+                if _type in _class.__types__:
+                    assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
+                    _class._cls_for_type[_type] = _class
+        
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type if one is registered on this class or its base.
