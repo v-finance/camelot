@@ -43,7 +43,6 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
-from ..exception import UserException
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
@@ -350,7 +349,7 @@ class EntityMeta( DeclarativeMeta ):
             if _type in cls.__types__.__members__:
                 return cls._cls_for_type.get(_type)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
-            raise UserException("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+            raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
