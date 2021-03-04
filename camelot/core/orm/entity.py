@@ -337,7 +337,11 @@ class EntityMeta( DeclarativeMeta ):
                 if _type in _class.__types__:
                     assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
                     _class._cls_for_type[_type] = _class
-        
+            if facade_args.get('default') == True:
+                assert _type is None, 'Can not register this class for a specific type and as the default class'
+                assert None not in _class._cls_for_type, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class._cls_for_type[None])
+                _class._cls_for_type[None] = _class
+                
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type if one is registered on this class or its base.
