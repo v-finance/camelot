@@ -325,10 +325,16 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__types__', None)
             
+            for base in bases:
+                if hasattr(base, '_cls_for_type'):
+                    break
+            else:
+                dict_.setdefault('_cls_for_type', dict())
+            
             types = dict_.get('__types__')
             if types is not None:
                 assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
-                dict_.setdefault('_cls_for_type', dict())
+                dict_['_cls_for_type'] = dict()
                     
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         cls.register_class(cls, _class, dict_)
