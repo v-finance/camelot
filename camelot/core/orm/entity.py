@@ -272,7 +272,7 @@ class EntityMeta( DeclarativeMeta ):
               |         'default': True
               |     }
               |     ...
-    
+    ^
     This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
     This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
     
@@ -334,10 +334,10 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__types__', None)
             
             for base in bases:
-                if hasattr(base, '_cls_for_type'):
+                if hasattr(base, '__cls_for_type__'):
                     break
             else:
-                dict_.setdefault('_cls_for_type', dict())
+                dict_.setdefault('__cls_for_type__', dict())
         
             facade_args = dict_.get('__facade_args__')
             if facade_args is not None:
@@ -347,7 +347,7 @@ class EntityMeta( DeclarativeMeta ):
                     assert isinstance(discriminator.type, Enumeration)
                     assert isinstance(discriminator.type.enum, util.OrderedProperties)
                     dict_['__types__'] = discriminator.type.enum
-                    dict_['_cls_for_type'] = dict()
+                    dict_['__cls_for_type__'] = dict()
             
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         cls.register_class(cls, _class, dict_)
@@ -361,13 +361,13 @@ class EntityMeta( DeclarativeMeta ):
                 assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
                 if _type in _class.__types__:
-                    assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
-                    _class._cls_for_type[_type] = _class
+                    assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                    _class.__cls_for_type__[_type] = _class
             if facade_args.get('default') == True:
                 assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
-                assert None not in _class._cls_for_type, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class._cls_for_type[None])
-                _class._cls_for_type[None] = _class
+                assert None not in _class.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class.__cls_for_type__[None])
+                _class.__cls_for_type__[None] = _class
                 
     def get_cls_by_type(cls, _type):
         """
@@ -385,9 +385,9 @@ class EntityMeta( DeclarativeMeta ):
         """
         if cls.__types__ is not None:
             if _type is None:
-                return cls._cls_for_type.get(None)
+                return cls.__cls_for_type__.get(None)
             elif _type in cls.__types__.__members__:
-                return cls._cls_for_type.get(_type) or cls._cls_for_type.get(None)
+                return cls.__cls_for_type__.get(_type) or cls.__cls_for_type__.get(None)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
