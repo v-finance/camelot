@@ -243,15 +243,22 @@ class EntityMeta( DeclarativeMeta ):
     -------------------------
     This metaclass also provides type-based entity classes with a means to register facade classes for specific types (or a default one for multiple types)
     on one of its base classes, to allow type-specific facade and related Admin behaviour.
-    To use this behaviour, the base Entity class for which specific facade classes are needed should implement the '__types__' property.
-    This property should define the types (an instance of sqlalchemy.util.OrderedProperties) that are allowed for registering classes for.
-    To register a class, it should implement the '__facade_args__' property, a dictionary with the arguments needed for the facade registration.
-    In order to register a class for a specific type, the 'type' argument key should define a specific type of the base Entity class' '__types__'.
-    To registed a class as the default class for types that do not have a specific class registered, the 'default' argument should be provided and set to True.
+    To use this behaviour, the '__facade_args' property is used on both the base Entity class for which specific facade classes are needed,
+    as on the specific facade classes.
+    This property is a dictionary that contains all the necessary facade arguments.
+    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
+    In order to register a facade class for a specific type, the 'type' argument should be defined as a specific type of the base Entity class' '__types__'.
+    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
-              |     __types__ = some_class_types
+              |     ...
+              |     described_by = Column(IntEnum(some_class_types), ...)
+              |     ...
+              |     __facade_args__ = {
+              |         'discriminator': described_by
+              |     }
               |     ...
               |
               | class SomeFacadeClass(SomeClass)
