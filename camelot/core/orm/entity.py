@@ -391,6 +391,12 @@ class EntityMeta( DeclarativeMeta ):
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
+    def get_cls_discriminator(cls):
+        for cls_ in (cls,) + cls.__bases__:
+            if 'discriminator' in cls_.__facade_args__:
+                discriminator_column = cls_.__facade_args__['discriminator']
+                return getattr(cls, discriminator_column.key)
+    
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
