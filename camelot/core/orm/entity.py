@@ -43,6 +43,7 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
+from ...types import Enumeration
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
@@ -330,16 +331,21 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 dict_.setdefault('_cls_for_type', dict())
+        
+            facade_args = dict_.get('__facade_args__')
+            if facade_args is not None:
+                discriminator = facade_args.get('discriminator')
+                if discriminator is not None:                
+                    assert isinstance(discriminator, sql.schema.Column)
+                    assert isinstance(discriminator.type, Enumeration)
+                    assert isinstance(discriminator.type.enum, util.OrderedProperties)
+                    dict_['__types__'] = discriminator.type.enum
+                    dict_['_cls_for_type'] = dict()
             
-            types = dict_.get('__types__')
-            if types is not None:
-                assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
-                dict_['_cls_for_type'] = dict()
-                    
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         cls.register_class(cls, _class, dict_)
         return _class
-        
+    
     def register_class(cls, _class, dict_):
         facade_args = dict_.get('__facade_args__')
         if facade_args is not None:
