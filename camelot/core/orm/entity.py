@@ -360,6 +360,7 @@ class EntityMeta( DeclarativeMeta ):
         """
         Retrieve the corresponding class for the given type if one is registered on this class or its base.
         This can be the class that is specifically registered for the given type, or a possible registered default class otherwise.
+        Providing no type will also return the default registered class if present.
         
         :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
                        If this class or its base have types registration enabled, this should be a member of the set __types__.
@@ -370,7 +371,9 @@ class EntityMeta( DeclarativeMeta ):
         :raises :      an AttributeException when the given argument is not a valid type
         """
         if cls.__types__ is not None:
-            if _type in cls.__types__.__members__:
+            if _type is None:
+                return cls._cls_for_type.get(None)
+            elif _type in cls.__types__.__members__:
                 return cls._cls_for_type.get(_type) or cls._cls_for_type.get(None)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
