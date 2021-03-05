@@ -343,9 +343,9 @@ class EntityMeta( DeclarativeMeta ):
             if facade_args is not None:
                 discriminator = facade_args.get('discriminator')
                 if discriminator is not None:                
-                    assert isinstance(discriminator, sql.schema.Column)
-                    assert isinstance(discriminator.type, Enumeration)
-                    assert isinstance(discriminator.type.enum, util.OrderedProperties)
+                    assert isinstance(discriminator, sql.schema.Column), 'Discriminator must be a sql.schema.Column'
+                    assert isinstance(discriminator.type, Enumeration), 'Discriminator column must be of type Enumeration'
+                    assert isinstance(discriminator.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
                     dict_['__types__'] = discriminator.type.enum
                     dict_['__cls_for_type__'] = dict()
             
