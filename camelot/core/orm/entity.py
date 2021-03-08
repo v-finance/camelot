@@ -393,7 +393,7 @@ class EntityMeta( DeclarativeMeta ):
     
     def get_cls_discriminator(cls):
         for cls_ in (cls,) + cls.__bases__:
-            if 'discriminator' in cls_.__facade_args__:
+            if hasattr(cls_, '__facade_args__') and 'discriminator' in cls_.__facade_args__:
                 discriminator_column = cls_.__facade_args__['discriminator']
                 return getattr(cls, discriminator_column.key)
     
