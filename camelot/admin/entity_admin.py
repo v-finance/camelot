@@ -118,6 +118,7 @@ and used as a custom action.
     # with a pending owning instance.
     # This should be used with extreme care though, as the default list actions only support a persistent owning instance
     # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
+    # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
     allow_relation_with_pending_owner = False
     
     def __init__(self, app_admin, entity):
@@ -401,6 +402,7 @@ and used as a custom action.
                     # with a pending owning instance.
                     # This should be used with extreme care though, as this behaviour is not generally supported by list actions,
                     # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
+                    # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
                     if not admin.allow_relation_with_pending_owner:
                         attributes['editable'] = False
             yield attributes
