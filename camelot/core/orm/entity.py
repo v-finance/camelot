@@ -43,6 +43,7 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
+from ...types import Enumeration
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
@@ -240,27 +241,43 @@ class EntityMeta( DeclarativeMeta ):
     
     Facade class registration
     -------------------------
-    This metaclass also provides type-based entity classes with a means to register facade classes for specific types on one of its base classes,
-    to allow type-specific facade and related Admin behaviour,
-    To use this behaviour, the base Entity class for which specific facade classes are needed should implement the '__types__' property.
-    This property should define the types (an instance of sqlalchemy.util.OrderedProperties) that are allowed for registering classes for.
-    To register a class for a specific type, the class in question should implement the '__for_type__' property, which should define a specific type,
-    of the base Entity class' '__types__'.
+    This metaclass also provides type-based entity classes with a means to register facade classes for specific types (or a default one for multiple types)
+    on one of its base classes, to allow type-specific facade and related Admin behaviour.
+    To use this behaviour, the '__facade_args' property is used on both the base Entity class for which specific facade classes are needed,
+    as on the specific facade classes.
+    This property is a dictionary that contains all the necessary facade arguments.
+    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
+    In order to register a facade class for a specific type, the 'type' argument should be defined as a specific type of the base Entity class' '__types__'.
+    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
-              |     __types__ = some_class_types
+              |     ...
+              |     described_by = Column(IntEnum(some_class_types), ...)
+              |     ...
+              |     __facade_args__ = {
+              |         'discriminator': described_by
+              |     }
               |     ...
               |
               | class SomeFacadeClass(SomeClass)
-              |     __for_type__ = some_class_types.certain_type.name
+              |     __facade_args__ = {
+              |         'type': some_class_types.certain_type.name
+              |     }
               |     ...
-    
+              |
+              | class DefaultFacadeClass(SomeClass)
+              |     __facade_args__ = {
+              |         'default': True
+              |     }
+              |     ...
+    ^
     This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
     This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
     
     :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
-              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == SomeClass
+              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
     
     Notes on metaclasses
     --------------------
@@ -305,51 +322,82 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__mapper_args__', dict())
             
             for base in bases:
+                if hasattr(base, '__facade_args__'):
+                    break
+            else:
+                dict_.setdefault('__facade_args__', dict())
+            
+            for base in bases:
                 if hasattr(base, '__types__'):
                     break
             else:
                 dict_.setdefault('__types__', None)
             
             for base in bases:
-                if hasattr(base, '__for_type__'):
+                if hasattr(base, '__cls_for_type__'):
                     break
             else:
-                dict_.setdefault('__for_type__', None)
-                    
-            types = dict_.get('__types__')
-            if types is not None:
-                assert isinstance(types, util.OrderedProperties), 'The set type should be an instance of sqlalchemy.util.OrderedProperties.'
-                dict_.setdefault('_cls_for_type', dict())
-                    
+                dict_.setdefault('__cls_for_type__', dict())
+        
+            facade_args = dict_.get('__facade_args__')
+            if facade_args is not None:
+                discriminator = facade_args.get('discriminator')
+                if discriminator is not None:                
+                    assert isinstance(discriminator, sql.schema.Column), 'Discriminator must be a sql.schema.Column'
+                    assert isinstance(discriminator.type, Enumeration), 'Discriminator column must be of type Enumeration'
+                    assert isinstance(discriminator.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
+                    dict_['__types__'] = discriminator.type.enum
+                    dict_['__cls_for_type__'] = dict()
+            
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         cls.register_class(cls, _class, dict_)
         return _class
-        
-    def register_class(cls, _class, dict_):
-        _type = dict_.get('__for_type__')
-        if _type is not None:
-            assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
-            assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-            if _type in _class.__types__:
-                assert _type not in _class._cls_for_type, 'Already a class defined for type {0}'.format(_type)
-                _class._cls_for_type[_type] = _class
     
+    def register_class(cls, _class, dict_):
+        facade_args = dict_.get('__facade_args__')
+        if facade_args is not None:
+            _type = facade_args.get('type')
+            if _type is not None:
+                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
+                if _type in _class.__types__:
+                    assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                    _class.__cls_for_type__[_type] = _class
+            if facade_args.get('default') == True:
+                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type is None, 'Can not register this class for a specific type and as the default class'
+                assert None not in _class.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class.__cls_for_type__[None])
+                _class.__cls_for_type__[None] = _class
+                
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type if one is registered on this class or its base.
+        This can be the class that is specifically registered for the given type, or a possible registered default class otherwise.
+        Providing no type will also return the default registered class if present.
         
         :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
                        If this class or its base have types registration enabled, this should be a member of the set __types__.
         :return:       the class for the given type, which inherits from the class where the allowed types are registered on or the class itself if not.
                        Examples:
                        | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
+                       | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
         :raises :      an AttributeException when the given argument is not a valid type
         """
         if cls.__types__ is not None:
-            if _type in cls.__types__.__members__:
-                return cls._cls_for_type.get(_type)
+            if _type is None or _type in cls.__types__.__members__:
+                return cls.__cls_for_type__.get(_type) or cls.__cls_for_type__.get(None)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+    
+    def _get_facade_arg(cls, key):
+        for cls_ in (cls,) + cls.__mro__:
+            if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
+                return cls_.__facade_args__[key]
+    
+    def get_cls_discriminator(cls):
+        discriminator = cls._get_facade_arg('discriminator')
+        if discriminator is not None:
+            return getattr(cls, discriminator.key)
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
