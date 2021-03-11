@@ -113,7 +113,14 @@ and used as a custom action.
     copy_exclude = []
     validator = EntityValidator
     basic_search = True
-
+    
+    # Temporary hack to allow admins of target entities in one2many/many2many relations to register themselves as editable
+    # with a pending owning instance.
+    # This should be used with extreme care though, as the default list actions only support a persistent owning instance
+    # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
+    # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
+    allow_relation_with_pending_owner = False
+    
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
         from sqlalchemy.orm.exc import UnmappedClassError
@@ -390,7 +397,14 @@ and used as a custom action.
             if not persistent:
                 all_attributes = self.get_field_attributes( field_name )
                 if all_attributes.get('direction', False) in directions:
-                    attributes['editable'] = False
+                    admin = all_attributes.get('admin')
+                    # Temporary hack to allow admins of target entities in one2many/many2many relations to be editable
+                    # with a pending owning instance.
+                    # This should be used with extreme care though, as this behaviour is not generally supported by list actions,
+                    # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
+                    # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
+                    if not admin.allow_relation_with_pending_owner:
+                        attributes['editable'] = False
             yield attributes
 
     def get_completions(self, obj, field_name, prefix):
