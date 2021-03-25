@@ -32,7 +32,7 @@ import six
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import CustomEditor, set_background_color_palette
-from ...art import Icon
+from ...art import FontIcon
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -134,7 +134,7 @@ class FloatEditor(CustomEditor):
     attribute.
     """
 
-    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent,
                        calculator = True,

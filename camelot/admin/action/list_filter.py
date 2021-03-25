@@ -31,17 +31,16 @@
 Actions to filter table views
 """
 
-import copy
+import camelot.types
 import datetime
 import decimal
 
-import six
-
-from sqlalchemy import sql
+from camelot.view import utils
+from sqlalchemy import orm, sql
 
 from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
-from .base import Action, Mode
+from .base import Action, Mode, RenderHint
 
 class FilterMode(Mode):
 
@@ -169,223 +168,247 @@ class Filter(Action):
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
 
+    render_hint = RenderHint.GROUP_BOX
+
     def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
         super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
         self.exclusive = exclusive
-
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import GroupBoxFilterWidget
-        return GroupBoxFilterWidget(self, gui_context, parent)
 
 
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
 
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import ComboBoxFilterWidget
-        return ComboBoxFilterWidget(self, gui_context, parent)
+    render_hint = RenderHint.COMBO_BOX
+
+class AbstractSearchStrategy(object):
+    """
+    Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
+    """
     
-class EditorFilter(Filter):
-    """Filter that presents the user with an editor, allowing the user to enter
-    a value on which to filter, and at the same time to show 'All' or 'None'
+    def __init__(self, where=None):
+        """
+        :param where: an optional additional condition that should be met for the search clause to apply.
+        """
+        self.where = where
     
-    :param field_name: the name fo the field on the class on which to filter
-    :param default_operator: a default operator to be used, on of the attributes
-        of the python module :mod:`operator`, such as `operator.eq`
-    :param default_value_1: a default value for the first editor (in case the
-        default operator in unary or binary
-    :param default_value_2: a default value for the second editor (in case the
-        default operator is binary)
+    def get_clause(self, text, admin, session):
+        """
+        Return a search clause for the given search text.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        """
+        raise NotImplementedError
+
+class FieldSearch(AbstractSearchStrategy):
+    """
+    Abstract interface for defining a column-based search clause on a queryable attribute of an entity, as part of that entity admin's search query.
+    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    """
+    
+    attribute = None
+    python_type = None
+
+    def __init__(self, attribute, where=None):
+        """
+        :param attribute: a queryable attribute for on which this field search should be applied on.
+        """        
+        super().__init__(where)
+        self.assert_valid_attribute(attribute)
+        self.attribute = attribute
+    
+    @classmethod
+    def assert_valid_attribute(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+        assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
+    
+    def get_clause(self, text, admin, session):
+        """
+        Return a search clause consisting of this field search's type clause,
+        expanded with condition on the attribute being set (None check) and the optionally set where condition.
+        """
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        search_clause = self.get_type_clause(text, field_attributes)
+        if search_clause is not None:
+            where_conditions = [self.attribute != None]
+            if self.where is not None:
+                where_conditions.append(self.where)
+            return sql.and_(*where_conditions, search_clause)
+    
+    def get_type_clause(self, text, field_attributes):
+        """
+        Return a column-based expression search clause on this search strategy's attribute for the given search text.
+        :param field_attributes: The field attributes for this search strategy's attribute on the entity admin
+                                 that will use the resulting search clause as part of its search query.
+        """
+        raise NotImplementedError
+
+class RelatedSearch(AbstractSearchStrategy):
+    """
+    Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
     """
 
-    def __init__( self, 
-                  field_name, 
-                  verbose_name = None,
-                  default_operator = None,
-                  default_value_1 = None,
-                  default_value_2 = None ):
-        super(EditorFilter, self).__init__(field_name, verbose_name=verbose_name)
-        self._field_name = field_name
-        self._verbose_name = verbose_name
-        self._default_operator = default_operator
-        self._default_value_1 = default_value_1
-        self._default_value_2 = default_value_2
-        self.column = None
+    def __init__(self, *field_searches, joins, where=None):
+        """
+        :param field_searches: field search strategies for the search fields on which this related search should apply.
+        :param joins: join definition between the entity on which the search query this related search is part of takes place,
+                      and the related entity of the given field searches.
+        """
+        super().__init__(where)
+        assert isinstance(joins, list) and len(joins) > 0   
+        for field_search in field_searches:
+            assert isinstance(field_search, FieldSearch)
+        self.field_searches = field_searches
+        self.joins = joins
 
-    def render(self, gui_context, parent):
-        from ...view.controls.filter_widget import OperatorFilterWidget
-        return OperatorFilterWidget(self, gui_context, self._default_value_1,
-                                    self._default_value_2, parent)
+    def get_clause(self, text, admin, session):
+        """
+        Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
+        The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
+        where the search clauses of each.
+        The subquery is composed based on this related search strategy's joins and where condition,
+        """        
+        related_search_query = session.query(admin.entity.id)
 
-    def get_arity(self, operator):
-        """:return: the current operator and its arity"""
-        try:
-            func_code = six.get_function_code(operator)
-        except AttributeError:
-            arity = 1 # probably a builtin function, assume arity == 1
-        else:
-            arity = func_code.co_argcount - 1
-        return arity
+        for join in self.joins:
+            related_search_query = related_search_query.join(join)
 
-    def decorate_query(self, query, values):
-        from camelot.view.field_attributes import order_operators
-        operator, value_1, value_2 = values
-        if operator is None:
-            return query.filter(self.column==None)
-        elif operator == All:
-            return query
-        arity = self.get_arity(operator)
-        values = [value_1, value_2][:arity]
-        none_values = sum( v == None for v in values )
-        if (operator in order_operators) and none_values > 0:
-            return query
-        return query.filter(operator(self.column, *values))
+        if self.where is not None:
+            related_search_query.filter(self.where)
 
-    def get_state(self, model_context):
-        from ...view.utils import operator_names
-        state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        field_attributes = admin.get_field_attributes(self._field_name)
-        field_attributes = copy.copy( field_attributes )
-        field_attributes['editable'] = True
-        state.field_attributes = field_attributes
-        state.verbose_name = self.verbose_name or field_attributes['name']
+        field_search_clauses = []
+        for field_search in self.field_searches:
+            related_admin = admin.get_related_admin(field_search.attribute.class_)
+            field_search_clause = field_search.get_clause(text, related_admin, session)
+            if field_search_clause is not None:
+                field_search_clauses.append(field_search_clause)
+                
+        if field_search_clauses:
+            related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
+            related_search_query = related_search_query.subquery()
+            search_clause = admin.entity.id.in_(related_search_query)
+            return search_clause
 
-        entity = admin.entity
-        self.column = getattr(entity, self._field_name)
+class NoSearch(FieldSearch):
+    
+    @classmethod
+    def assert_valid_attribute(cls, attribute):
+        pass
+    
+    def get_clause(self, text, admin, session):
+        return None
 
-        all_mode = FilterMode(All, ugettext('All'),
-                              checked=(self.default==All))
-        modes = [all_mode,
-                 FilterMode(None, ugettext('None')),
-                 ]
+class StringSearch(FieldSearch):
+    
+    python_type = str
+    
+    # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
+    allow_digits = True
+    
+    def __init__(self, attribute, allow_digits=True):
+        super().__init__(attribute)
+        self.allow_digits = allow_digits
         
-        operators = field_attributes.get('operators', [])
-        for operator in operators:
-            mode = FilterMode(operator,
-                              six.text_type(operator_names[operator]),
-                              checked=(operator==self._default_operator),
-                              )
-            modes.append(mode)
+    def get_type_clause(self, text, field_attributes):
+        if not text.isdigit() or self.allow_digits:
+            return sql.operators.ilike_op(self.attribute, '%'+text+'%')
+    
+class DecimalSearch(FieldSearch):
+    
+    python_type = (float, decimal.Decimal)
+    
+    def get_type_clause(self, text, field_attributes):
+        try:
+            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
+            precision = self.attribute.type.precision
+            if isinstance(precision, (tuple)):
+                precision = precision[1]
+            delta = 0.1**( precision or 0 )
+            return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
+        except utils.ParsingError:
+            pass       
+        
+class TimeDeltaSearch(FieldSearch):
+    
+    python_type = datetime.timedelta
+    
+    def get_type_clause(self, text, field_attributes):
+        try:
+            days = field_attributes.get('from_string', utils.int_from_string)(text)
+            return (self.attribute==datetime.timedelta(days=days))
+        except utils.ParsingError:
+            pass
+        
+class TimeSearch(FieldSearch):
+    
+    python_type = datetime.time
+    
+    def get_type_clause(self, text, field_attributes):
+        try:
+            return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
+        except utils.ParsingError:
+            pass
 
-        state.modes = modes
-        return state
+class DateSearch(FieldSearch):
+    
+    python_type = datetime.date
+    
+    def get_type_clause(self, text, field_attributes):
+        try:
+            return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
+        except utils.ParsingError:
+            pass
+        
+class IntSearch(FieldSearch):
+    
+    python_type = int
+    
+    def get_type_clause(self, text, field_attributes):
+        try:
+            return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
+        except utils.ParsingError:
+            pass  
 
+class BoolSearch(FieldSearch):
+    
+    python_type = bool
+    
+    def get_type_clause(self, text, field_attributes):
+        try:
+            return (self.attribute==field_attributes.get('from_string', utils.bool_from_string)(text))
+        except utils.ParsingError:
+            pass
 
+class VirtualAddressSearch(FieldSearch):
+    
+    python_type = camelot.types.virtual_address
+    
+    def get_type_clause(self, text, field_attributes):
+        return self.attribute.like(camelot.types.virtual_address('%', '%'+text+'%'))
+    
 class SearchFilter(Action, AbstractModelFilter):
+
+    render_hint = RenderHint.SEARCH_BUTTON
 
     #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                #self)
-
+    
     def __init__(self, admin):
         Action.__init__(self)
         # dirty : action requires admin as argument
         self.admin = admin
-
-    def render(self, gui_context, parent):
-        from camelot.view.controls.search import SimpleSearchControl
-        return SimpleSearchControl(self, gui_context, parent)
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
         return state
 
     def decorate_query(self, query, text):
-        import camelot.types
-        from camelot.view import utils
-    
-        if (text is not None) and len(text.strip()):
-            # arguments for the where clause
-            args = []
-            # join conditions : list of join entities
-            joins = []
-    
-            def append_column( c, text, args ):
-                """add column c to the where clause using a clause that
-                is relevant for that type of column"""
-                arg = None
-                try:
-                    python_type = c.type.python_type
-                except NotImplementedError:
-                    return
-                # @todo : this should use the from_string field attribute, without
-                #         looking at the sql code
-                if issubclass(c.type.__class__, camelot.types.File):
-                    pass
-                elif issubclass(c.type.__class__, camelot.types.Enumeration):
-                    pass
-                elif issubclass(python_type, camelot.types.virtual_address):
-                    arg = c.like(camelot.types.virtual_address('%', '%'+text+'%'))
-                elif issubclass(python_type, bool):
-                    try:
-                        arg = (c==utils.bool_from_string(text))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, int):
-                    try:
-                        arg = (c==utils.int_from_string(text))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, datetime.date):
-                    try:
-                        arg = (c==utils.date_from_string(text))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, datetime.timedelta):
-                    try:
-                        days = utils.int_from_string(text)
-                        arg = (c==datetime.timedelta(days=days))
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, (float, decimal.Decimal)):
-                    try:
-                        float_value = utils.float_from_string(text)
-                        precision = c.type.precision
-                        if isinstance(precision, (tuple)):
-                            precision = precision[1]
-                        delta = 0.1**( precision or 0 )
-                        arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
-                    except ( Exception, utils.ParsingError ):
-                        pass
-                elif issubclass(python_type, six.string_types):
-                    arg = sql.operators.ilike_op(c, '%'+text+'%')
-    
-                if arg is not None:
-                    arg = sql.and_(c != None, arg)
-                    args.append(arg)
-
-            for t in text.split(' '):
-                subexp = []
-                for column_name in self.admin.get_search_fields(t):
-                    path = column_name.split('.')
-                    target = self.admin.entity
-                    related_admin = self.admin
-                    for path_segment in path:
-                        # use the field attributes for the introspection, as these
-                        # have detected hybrid properties
-                        fa = related_admin.get_descriptor_field_attributes(path_segment)
-                        instrumented_attribute = getattr(target, path_segment)
-                        if fa.get('target', False):
-                            joins.append(instrumented_attribute)
-                            target = fa['target']
-                            related_admin = related_admin.get_related_admin(target)
-                        else:
-                            append_column(instrumented_attribute, t, subexp)
-
-                args.append(subexp)
-
-            for join in joins:
-                query = query.outerjoin(join)
-
-            subqueries = (sql.or_(*arg) for arg in args)
-            query = query.filter(sql.and_(*subqueries))
-
-        return query
+        if (text is None) or (len(text.strip())==0):
+            return query
+        return self.admin.decorate_search_query(query, text)
 
     def gui_run(self, gui_context):
         # overload the action gui run to avoid a progress dialog
         # popping up while searching
-        gui_context.progress_dialog = False
         super(SearchFilter, self).gui_run(gui_context)
 
     def model_run(self, model_context):

@@ -32,7 +32,7 @@ import six
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 class CustomTextEdit(QtWidgets.QTextEdit):
     """
@@ -134,7 +134,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         toolbar.setContentsMargins(0, 0, 0, 0)
 
         bold_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/format-text-bold.png').getQIcon()
+        icon = FontIcon('bold').getQIcon() # 'tango/16x16/actions/format-text-bold.png'
         bold_button.setIcon(icon)
         bold_button.setMaximumSize(QtCore.QSize(20, 20))
         bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
@@ -142,7 +142,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         bold_button.clicked.connect(self.set_bold)
 
         italic_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/format-text-italic.png').getQIcon()
+        icon = FontIcon('italic').getQIcon()  #'tango/16x16/actions/format-text-italic.png'
         italic_button.setIcon(icon)
         italic_button.setMaximumSize(QtCore.QSize(20, 20))
         italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
@@ -150,7 +150,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         italic_button.clicked.connect(self.set_italic)
 
         underline_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/format-text-underline.png').getQIcon()
+        icon = FontIcon('underline').getQIcon() # 'tango/16x16/actions/format-text-underline.png'
         underline_button.setIcon(icon)
         underline_button.setMaximumSize(QtCore.QSize(20, 20))
         underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
@@ -158,56 +158,56 @@ class RichTextEditor(CustomEditor, WideEditor):
         underline_button.clicked.connect(self.set_underline)
 
         copy_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/edit-copy.png').getQIcon()
+        icon = FontIcon('copy').getQIcon() # 'tango/16x16/actions/edit-copy.png'
         copy_button.setIcon(icon)
         copy_button.setMaximumSize(QtCore.QSize(20, 20))
         copy_button.setToolTip('Copy')
         copy_button.clicked.connect(self.textedit.copy)
 
         cut_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/edit-cut.png').getQIcon()
+        icon = FontIcon('cut').getQIcon() # 'tango/16x16/actions/edit-cut.png'
         cut_button.setIcon(icon)
         cut_button.setMaximumSize(QtCore.QSize(20, 20))
         cut_button.setToolTip('Cut')
         cut_button.clicked.connect(self.textedit.cut)
 
         paste_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/edit-paste.png').getQIcon()
+        icon = FontIcon('paste').getQIcon() # 'tango/16x16/actions/edit-paste.png'
         paste_button.setIcon(icon)
         paste_button.setMaximumSize(QtCore.QSize(20, 20))
         paste_button.setToolTip('Paste')
         paste_button.clicked.connect(self.textedit.paste)
 
         alignleft_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/format-justify-left.png').getQIcon()
+        icon = FontIcon('align-left').getQIcon() # 'tango/16x16/actions/format-justify-left.png'
         alignleft_button.setIcon(icon)
         alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
         alignleft_button.setToolTip('Align left')
         alignleft_button.clicked.connect(self.set_alignleft)
 
         aligncenter_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/format-justify-center.png').getQIcon()
+        icon = FontIcon('align-center').getQIcon() # 'tango/16x16/actions/format-justify-center.png'
         aligncenter_button.setIcon(icon)
         aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
         aligncenter_button.setToolTip('Align Center')
         aligncenter_button.clicked.connect(self.set_aligncenter)
 
         alignright_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/format-justify-right.png').getQIcon()
+        icon = FontIcon('align-right').getQIcon() # 'tango/16x16/actions/format-justify-right.png'
         alignright_button.setIcon(icon)
         alignright_button.setMaximumSize(QtCore.QSize(20, 20))
         alignright_button.setToolTip('Align Right')
         alignright_button.clicked.connect(self.set_alignright)
 
         zoomin_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
+        icon = FontIcon('search-plus').getQIcon() # 'tango/16x16/actions/list-add.png'
         zoomin_button.setIcon(icon)
         zoomin_button.setMaximumSize(QtCore.QSize(20, 20))
         zoomin_button.setToolTip('Zoom in')
         zoomin_button.clicked.connect(self.zoomin)
 
         zoomout_button = QtWidgets.QToolButton(self)
-        icon = Icon('tango/16x16/actions/list-remove.png').getQIcon()
+        icon = FontIcon('search-minus').getQIcon() # 'tango/16x16/actions/list-remove.png'
         zoomout_button.setIcon(icon)
         zoomout_button.setMaximumSize(QtCore.QSize(20, 20))
         zoomout_button.setToolTip('Zoom out')

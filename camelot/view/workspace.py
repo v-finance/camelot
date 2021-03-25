@@ -35,59 +35,36 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
-from ..core.qt import QtCore, QtGui, QtWidgets
+from ..core.qt import QtCore, QtGui, QtWidgets, transferto
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.view.model_thread import object_thread
 
 
-class DesktopTabbar(QtWidgets.QTabBar):
-
-    def tabSizeHint(self, index):
-        originalSizeHint = super(DesktopTabbar, self).tabSizeHint(index)
-        minimumWidth = max(160, originalSizeHint.width())
-        return QtCore.QSize(minimumWidth, originalSizeHint.height())
-
-class DesktopWorkspace(QtWidgets.QWidget):
+class DesktopWorkspace(QtWidgets.QTabWidget):
     """
     A tab based workspace that can be used by views to display themselves.
 
-    In essence this is a wrapper around QTabWidget to do some initial setup
-    and provide it with a background widget.
-    This was originallly implemented using the QMdiArea, but the QMdiArea has
-    too many drawbacks, like not being able to add close buttons to the tabs
-    in a decent way.
+    In essence this is a wrapper around QTabWidget with initial setup.
 
-    .. attribute:: background
+    :param admin_route: the route to the desktop workspace view
 
-    The widget class to be used as the view for the uncloseable 'Start' tab.
-
-    :param app_admin: the application admin object for this application
     :param parent: a :class:`QtWidgets.QWidget` object or :class:`None`
 
     """
 
     view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
 
-    def __init__(self, app_admin, parent):
-        super(DesktopWorkspace, self).__init__(parent)
+    def __init__(self, admin_route, parent):
+        super().__init__(parent)
+        assert isinstance(admin_route, tuple)
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin = app_admin
+        self.gui_context.admin_route = admin_route
         self.gui_context.workspace = self
 
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        # Setup the tab widget
-        self._tab_widget = QtWidgets.QTabWidget( self )
-        tab_bar = DesktopTabbar(self._tab_widget)
-        self._tab_widget.setTabBar(tab_bar)
-        self._tab_widget.setDocumentMode(True)
-        self._tab_widget.setTabsClosable(True)
-        self._tab_widget.tabCloseRequested.connect(self._tab_close_request)
-        self._tab_widget.currentChanged.connect(self._tab_changed)
-        layout.addWidget(self._tab_widget)
-        self.setLayout(layout)
+        self.setObjectName('workspace_tab_widget')
+        self.setTabPosition(QtWidgets.QTabWidget.East)
+        self.setDocumentMode(True)
+        self.currentChanged.connect(self._tab_changed)
 
     @QtCore.qt_slot(int)
     def _tab_close_request(self, index):
@@ -97,13 +74,13 @@ class DesktopWorkspace(QtWidgets.QWidget):
         Note that only at-runtime added tabs are being closed, implying
         the immortality of the 'Start' tab.
         """
-        view = self._tab_widget.widget(index)
+        view = self.widget(index)
         if view is not None:
             view.validate_close()
             # it's not enough to simply remove the tab, because this
             # would keep the underlying view widget alive
             view.deleteLater()
-            self._tab_widget.removeTab(index)
+            self.removeTab(index)
 
     @QtCore.qt_slot(int)
     def _tab_changed(self, _index):
@@ -116,8 +93,8 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         :return: The currently active view or None in case of the 'Start' tab.
         """
-        i = self._tab_widget.currentIndex()
-        return self._tab_widget.widget(i)
+        i = self.currentIndex()
+        return self.widget(i)
 
     @QtCore.qt_slot(six.text_type)
     def change_title(self, new_title):
@@ -126,8 +103,8 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         sender = self.sender()
         if sender is not None:
-            index = self._tab_widget.indexOf(sender)
-            self._tab_widget.setTabText(index, new_title)
+            index = self.indexOf(sender)
+            self.setTabText(index, new_title)
 
     @QtCore.qt_slot(QtGui.QIcon)
     def change_icon(self, new_icon):
@@ -136,26 +113,37 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         sender = self.sender()
         if sender is not None:
-            index = self._tab_widget.indexOf(sender)
-            self._tab_widget.setTabIcon(index, new_icon)
+            index = self.indexOf(sender)
+            self.setTabIcon(index, new_icon)
+
+    @QtCore.qt_slot()
+    def close_view(self):
+        """
+        Slot to be called when a view requests to be closed.
+        """
+        sender = self.sender()
+        if sender is not None:
+            index = self.indexOf(sender)
+            self._tab_close_request(index)
 
     def set_view(self, view, icon = None, title = '...'):
         """
         Remove the currently active view and replace it with a new view.
         """
-        index = self._tab_widget.currentIndex()
-        current_view = self._tab_widget.widget(index)
+        index = self.currentIndex()
+        current_view = self.widget(index)
         if (current_view is None) or (current_view.close() == False):
             self.add_view(view, icon, title)
         else:
             self._tab_close_request(index)
             view.title_changed_signal.connect(self.change_title)
             view.icon_changed_signal.connect(self.change_icon)
+            view.close_clicked_signal.connect(self.close_view)
             if icon:
-                index = self._tab_widget.insertTab(index, view, icon, title)
+                index = self.insertTab(index, view, icon, title)
             else:
-                index = self._tab_widget.insertTab(index, view, title)
-            self._tab_widget.setCurrentIndex(index)
+                index = self.insertTab(index, view, title)
+            self.setCurrentIndex(index)
 
     def add_view(self, view, icon = None, title = '...'):
         """
@@ -164,16 +152,17 @@ class DesktopWorkspace(QtWidgets.QWidget):
         assert object_thread(self)
         view.title_changed_signal.connect(self.change_title)
         view.icon_changed_signal.connect(self.change_icon)
+        view.close_clicked_signal.connect(self.close_view)
         if icon:
-            index = self._tab_widget.addTab(view, icon, title)
+            index = self.addTab(view, icon, title)
         else:
-            index = self._tab_widget.addTab(view, title)
-        self._tab_widget.setCurrentIndex(index)
+            index = self.addTab(view, title)
+        self.setCurrentIndex(index)
 
     def refresh(self):
         """Refresh all views on the desktop"""
-        for i in range( self._tab_widget.count() ):
-            self._tab_widget.widget(i).refresh()
+        for i in range( self.count() ):
+            self.widget(i).refresh()
 
     def close_all_views(self):
         """
@@ -182,10 +171,10 @@ class DesktopWorkspace(QtWidgets.QWidget):
         # NOTE: will call removeTab until tab widget is cleared
         # but removeTab does not really delete the page objects
         #self._tab_widget.clear()
-        max_index = self._tab_widget.count()
+        max_index = self.count()
 
         while max_index > 0:
-            self._tab_widget.tabCloseRequested.emit(max_index)
+            self.tabCloseRequested.emit(max_index)
             max_index -= 1
 
 top_level_windows = []
@@ -239,26 +228,31 @@ def show_top_level(view, parent, state=None):
         window will be placed.
     :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
-    from camelot.view.register import register
     #
-    # Register the view with reference to itself.  This will keep
-    # the Python object alive as long as the Qt object is not
-    # destroyed.  Hence Python will not trigger the deletion of the
-    # view as long as the window is not closed
+    # assert the view has an objectname, so it can be retrieved later
+    # by this object name, since a top level view might have no references
+    # from other objects.
     #
-    register( view, view )
+    assert len(view.objectName())
     #
-    # asset the parent is None to avoid the window being destructed
+    # assert the parent is None to avoid the window being destructed
     # once the parent gets destructed, do not set the parent itself here,
     # nor the window flags, as this might cause windows to hide themselves
     # again after being shown in Qt5
     #
     assert view.parent() is None
     #
+    # Register the view with reference to itself.  This will keep
+    # the Python object alive as long as the Qt object is not
+    # destroyed.  Hence Python will not trigger the deletion of the
+    # view as long as the window is not closed
+    #
+    transferto(view, view)
+    #
     # Make the window title blank to prevent the something
     # like main.py or pythonw being displayed
     #
-    view.setWindowTitle( u' ' )
+    view.setWindowTitle(' ')
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)

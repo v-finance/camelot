@@ -35,6 +35,7 @@ from camelot.view import forms
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
+from camelot.view.controls.progress_dialog import ProgressDialog
 
 from .import app_admin
 
@@ -433,8 +434,8 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.entities = [e for e in entities]
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
-
-        self.movie_model = CollectionProxy(self.movie_admin)
+        self.admin_route = self.movie_admin.get_admin_route()
+        self.movie_model = CollectionProxy(self.admin_route)
         self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
@@ -508,17 +509,20 @@ class FormTest(unittest.TestCase, GrabMixinCase):
 
     def test_nested_form(self):
         person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
         person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
@@ -790,24 +794,27 @@ class ControlsTest(
     def setUp(self):
         self.thread.post(self.setup_proxy)
         self.process()
+        self.admin = self.app_admin.get_entity_admin(Person)
+        self.admin_route = admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin = self.app_admin
-        
+        self.gui_context.admin_route = self.admin_route
+
+    def tearDown(self):
+        super().tearDown()
+
     def test_table_view(self):
         gui_context = GuiContext()
-        widget = TableView( gui_context,
-                            self.app_admin.get_entity_admin(Person) )
+        widget = TableView(gui_context, self.admin_route)
         self.grab_widget(widget)
 
     def test_rows_widget(self):
         from camelot.view.controls.tableview import RowsWidget
         from camelot.model.party import City
         city_admin = self.app_admin.get_entity_admin(City)
-        
-        table = TableView(self.gui_context, city_admin)
-        table.set_admin(city_admin)
+        table = TableView(self.gui_context, city_admin.get_admin_route())
+        table.set_admin()
         RowsWidget(table.gui_context)
-        
+
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
 
@@ -815,8 +822,8 @@ class ControlsTest(
             list_display = ['first_name', 'suffix']
 
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin)
-        widget.set_admin(admin)
+        widget = TableView(self.gui_context, admin.get_admin_route())
+        widget.set_admin()
         model = widget.get_model()
         model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
@@ -843,8 +850,8 @@ class ControlsTest(
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin)
-        widget.set_admin(admin)
+        widget = TableView(self.gui_context, admin.get_admin_route())
+        widget.set_admin()
         model = widget.get_model()
         model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
@@ -873,8 +880,7 @@ class ControlsTest(
             #end column group
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context,
-                            admin )
+        widget = TableView(self.gui_context, admin.get_admin_route())
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
@@ -891,11 +897,8 @@ class ControlsTest(
 
     def test_reduced_main_window(self):
         from camelot_example.application_admin import MiniApplicationAdmin
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
         app_admin = MiniApplicationAdmin()
-        gui_context = ApplicationActionGuiContext()
-        gui_context.admin = app_admin
-        proxy = MainWindowProxy( gui_context )
+        proxy = MainWindowProxy(self.gui_context)
         proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
         proxy.parent().show()
         self.grab_widget( proxy.parent() )
@@ -904,7 +907,6 @@ class ControlsTest(
         """Make sure we can still create multiple QMainWindows"""
         from camelot.view.action_steps.application import MainWindow
         from camelot_example.application_admin import MiniApplicationAdmin
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
 
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -918,18 +920,14 @@ class ControlsTest(
             return result
 
         app_admin1 = MiniApplicationAdmin()
-        gui_context1 = ApplicationActionGuiContext()
-        gui_context1.admin = app_admin1
         action_step1 = MainWindow(app_admin1)
-        main_window1 = action_step1.render(gui_context1)
+        main_window1 = action_step1.render(self.gui_context)
 
         num_main_windows1 = count_main_windows()
 
         app_admin2 = MiniApplicationAdmin()
-        gui_context2 = ApplicationActionGuiContext()
-        gui_context2.admin = app_admin2
         action_step2 = MainWindow(app_admin2)
-        main_window2 = action_step2.render(gui_context2)
+        main_window2 = action_step2.render(self.gui_context)
 
         num_main_windows2 = count_main_windows()
 
@@ -951,10 +949,9 @@ class ControlsTest(
         from camelot.model.party import City
         from camelot.view.controls.tableview import HeaderWidget
         city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin)
-        table.set_admin(city_admin)
+        table = TableView(self.gui_context, city_admin.get_admin_route())
+        table.set_admin()
         header = HeaderWidget(gui_context=table.gui_context, parent=None)
-        header.switch_expanded_search([])
         self.grab_widget(header)
 
     def test_column_groups_widget(self):
@@ -986,12 +983,12 @@ class ControlsTest(
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        workspace = DesktopWorkspace(self.app_admin, None)
+        workspace = DesktopWorkspace(self.gui_context.admin_route, None)
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        dialog = ProgressDialog( 'Import cover images' )
+        dialog = ProgressDialog(None)
+        dialog.title = 'Import cover images'
         self.grab_widget(dialog)
         dialog.add_detail('toy_story.png imported')
         dialog.add_detail('matrix.png imported')
@@ -1034,14 +1031,14 @@ class SnippetsTest(RunningThreadCase,
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView([coordinate], admin)
+        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
         form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView([coordinate], admin)
+        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
         form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
@@ -1049,7 +1046,7 @@ class SnippetsTest(RunningThreadCase,
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
         person_columns = list(person_admin.get_columns())
         editor = One2ManyEditor(
-            admin=person_admin,
+            admin_route=person_admin.get_admin_route(),
             columns=person_columns,
         )
         editor.set_value(self.proxy)

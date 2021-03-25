@@ -140,6 +140,7 @@ if qt_api in ('', 'PyQt5'):
         QtQuickWidgets = DelayedModule('QtQuickWidgets')
         is_deleted = sip.isdeleted
         delete = sip.delete
+        transferto = sip.transferto
     except ImportError:
         LOGGER.warn('Could not load PyQt5')
         qt_api = ''
@@ -308,7 +309,8 @@ else:
         else:
             LOGGER.log(logging.ERROR, 'Received message with unknown log level')
 
-    QtCore.qInstallMessageHandler(qmsghandler)
+    # Qt messages are now remotely logged by the launcher's message handler
+    #QtCore.qInstallMessageHandler(qmsghandler)
 
 __all__ = [
     QtCore.__name__,

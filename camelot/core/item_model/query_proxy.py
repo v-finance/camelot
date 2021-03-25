@@ -141,6 +141,8 @@ class QueryModelProxy(ListModelProxy):
         query = self.get_query().offset(query_offset)
         if query_limit is not None:
             query = query.limit(query_limit)
+        else:
+            LOGGER.warn('Query executed without limit because it can not be used safely in combination with left outer joins:\n{}'.format(str(query)))
         free_index = offset
         indexed_object_count = 0
         for obj in query.all():

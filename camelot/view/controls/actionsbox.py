@@ -37,29 +37,18 @@ from ...core.qt import QtWidgets
 class ActionsBox( QtWidgets.QWidget ):
     """A box containing actions to be applied to a view
 
-    :param gui_context: a :class:`camelot.admin.action.base.GuiContext` object
     :param parent: a :class:`QtWidgets.QWidget` object
-    
+
     """
 
-    def __init__( self, gui_context, parent ):
+    def __init__(self, parent):
         LOGGER.debug( 'create actions box' )
         super( ActionsBox, self ).__init__( parent )
-        self.gui_context = gui_context
+        layout = QtWidgets.QVBoxLayout()
+        layout.setSpacing(2)
+        self.setLayout(layout)
 
     def get_action_widgets(self):
         layout = self.layout()
         for i in range(0, layout.count()):
             yield layout.itemAt(i).widget()
-
-    def set_actions( self, actions ):
-        LOGGER.debug( 'setting actions' )
-        layout = QtWidgets.QVBoxLayout()
-        layout.setSpacing( 2 )
-        for action in actions:
-            action_widget = action.render( self.gui_context, self )
-            layout.addWidget( action_widget )
-        self.setLayout( layout )
-
-
-

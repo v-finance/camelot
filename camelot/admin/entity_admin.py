@@ -30,6 +30,8 @@
 import inspect
 import itertools
 import logging
+import six
+
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from ..core.item_model import QueryModelProxy
@@ -42,8 +44,6 @@ from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
 from camelot.core.qt import Qt
-
-import six
 
 from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
 from sqlalchemy.ext import hybrid
@@ -112,7 +112,15 @@ and used as a custom action.
     copy_deep = {}
     copy_exclude = []
     validator = EntityValidator
-
+    basic_search = True
+    
+    # Temporary hack to allow admins of target entities in one2many/many2many relations to register themselves as editable
+    # with a pending owning instance.
+    # This should be used with extreme care though, as the default list actions only support a persistent owning instance
+    # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
+    # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
+    allow_relation_with_pending_owner = False
+    
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
         from sqlalchemy.orm.exc import UnmappedClassError
@@ -244,8 +252,8 @@ and used as a custom action.
         if toolbar_area == Qt.TopToolBarArea:
             return toolbar_actions + [
                 list_filter.SearchFilter(self),
-                list_action.SetExpandedSearch(),
-                application_action.Refresh()
+                list_action.SetFilters(),
+                application_action.Refresh(),
             ]
         return toolbar_actions
 
@@ -389,7 +397,14 @@ and used as a custom action.
             if not persistent:
                 all_attributes = self.get_field_attributes( field_name )
                 if all_attributes.get('direction', False) in directions:
-                    attributes['editable'] = False
+                    admin = all_attributes.get('admin')
+                    # Temporary hack to allow admins of target entities in one2many/many2many relations to be editable
+                    # with a pending owning instance.
+                    # This should be used with extreme care though, as this behaviour is not generally supported by list actions,
+                    # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
+                    # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
+                    if not admin.allow_relation_with_pending_owner:
+                        attributes['editable'] = False
             yield attributes
 
     def get_completions(self, obj, field_name, prefix):
@@ -600,16 +615,6 @@ and used as a custom action.
             return True
         return False
 
-    def get_expanded_search_filters(self):
-        """
-        :return: a list of tuples of type [(field_name, field_attributes)]
-        """
-        if self.expanded_list_search == None:
-            field_list = self.get_table().get_fields()
-        else:
-            field_list = self.expanded_list_search
-        return [list_filter.EditorFilter(field_name) for field_name in field_list]
-
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
         or through the field_attributes, this method returns all the fields
@@ -622,7 +627,7 @@ and used as a custom action.
                 fields[field_name] = self.get_field_attributes( field_name )
         return fields
 
-    def get_search_fields(self, substring):
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the fields in the `list_search` attribute as well as the 
@@ -639,10 +644,68 @@ and used as a custom action.
         if self._search_fields is None:
             self._search_fields = list(self.list_search)
             # list to avoid p3k fixes
-            for field_name, col_property in list(self.mapper.column_attrs.items()):
-                if isinstance(col_property.expression, schema.Column):
-                    self._search_fields.append(field_name)
+            # Only include basic search columns if it is set as such (True by default).
+            if self.basic_search:
+                for field_name, col_property in list(self.mapper.column_attrs.items()):
+                    if isinstance(col_property.expression, schema.Column):
+                        self._search_fields.append(field_name)
         return self._search_fields
+
+    def decorate_search_query(self, query, text):
+        """
+        Decorate the given sqlalchemy query for the objects that should be displayed in the table or selection view,
+        with the needed clauses for filtering based on the given search text.
+        By default all 'basic' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
+        Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
+        """
+        assert len(text)
+        # arguments for the where clause
+        args = []
+        
+        for search_field in self._get_search_fields(text):
+            # Deprecated old style of defining search fields as a string with dot notation for related fields.
+            # This style will be phased out gradually by the use of search field strategies entirely.
+            # Untill then, they are turned in to field searches or related searches here.
+            if isinstance(search_field, str):
+                # list of join entities
+                joins = []
+                column_name = search_field
+                path = column_name.split('.')
+                target = self.entity
+                related_admin = self
+                for path_segment in path:
+                    # use the field attributes for the introspection, as these
+                    # have detected hybrid properties
+                    fa = related_admin.get_descriptor_field_attributes(path_segment)
+                    instrumented_attribute = getattr(target, path_segment)
+                    if fa.get('target', False):
+                        joins.append(instrumented_attribute)
+                        target = fa['target']
+                        related_admin = related_admin.get_related_admin(target)
+                    else:
+                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
+                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
+                        search_strategy = fa['search_strategy']
+                        if search_strategy is not None:
+                            # If the search strategy is set, initialize it with the instrumented attribute.
+                            assert issubclass(search_strategy, list_filter.FieldSearch)
+                            field_search = search_strategy(instrumented_attribute)
+                            # In case the attribute is of a related entity,
+                            # create a related search using the field search and the encountered joins.
+                            if joins:
+                                field_search = list_filter.RelatedSearch(field_search, joins=joins)
+                            arg = field_search.get_clause(text, self, query.session)
+                            if arg is not None:
+                                args.append(arg)
+                                
+            elif isinstance(search_field, list_filter.AbstractSearchStrategy):
+                arg = search_field.get_clause(text, self, query.session)
+                if arg is not None:
+                    args.append(arg)
+        
+        query = query.filter(sql.or_(*args))
+    
+        return query
 
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new

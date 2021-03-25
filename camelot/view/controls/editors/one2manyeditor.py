@@ -31,10 +31,13 @@ import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
-from camelot.view import register
+from camelot.view.proxy.collection_proxy import CollectionProxy
+from ....admin.admin_route import AdminRoute
+from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
-from ..action_widget import ActionAction
+from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
+from ..filter_widget import ComboBoxFilterWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
@@ -49,25 +52,24 @@ class One2ManyEditor(CustomEditor, WideEditor):
     :param create_inline: if False, then a new entity will be created within a
     new window, if True, it will be created inline
 
-    :param proxy: the proxy class to use to present the data in the list or
-        the query to the table view
-
     :param column_width: the width of the editor in number of characters
+
+    :param rows: minimum number of rows visible
 
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
 
     def __init__(self,
-                 admin=None,
+                 admin_route=None,
                  parent=None,
                  create_inline=False,
                  direction='onetomany',
                  field_name='onetomany',
                  column_width=None,
-                 proxy=None,
                  columns=[],
                  toolbar_actions=[],
+                 rows=5,
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
@@ -77,21 +79,20 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # Setup table
         #
         from camelot.view.controls.tableview import AdminTableWidget
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         # parent set by layout manager
-        table = AdminTableWidget(admin, self)
+        table = AdminTableWidget(self)
         table.setObjectName('table')
         layout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                            QtWidgets.QSizePolicy.Expanding)
-        self.setMinimumHeight((self._font_height + 5) * 5)
+        self.setMinimumHeight((self._font_height + 5) * rows)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = (proxy or CollectionProxy)(admin)
+        model = CollectionProxy(admin_route)
+        model.setParent(self)
         table.setModel(model)
-        register.register(model, table)
-        self.admin = admin
+        self.admin_route = admin_route
         self.direction = direction
         self.create_inline = create_inline
         layout.addWidget(table)
@@ -99,32 +100,38 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self._new_message = None
         self.gui_context = ListActionGuiContext()
         self.gui_context.view = self
-        self.gui_context.admin = self.admin
+        self.gui_context.admin_route = self.admin_route
         self.gui_context.item_view = table
         self.set_right_toolbar_actions(toolbar_actions)
         self.set_columns(columns)
+
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            # Use tool button, because this one sets the popup mode
+            # to instant if there are modes in the state
+            return ActionToolbutton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.PUSH_BUTTON:
+            return ActionPushButton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.COMBO_BOX:
+            return ComboBoxFilterWidget(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, toolbar_actions):
         if toolbar_actions is not None:
             toolbar = QtWidgets.QToolBar(self)
+            toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
             for action in toolbar_actions:
-                qaction = action.render(self.gui_context, toolbar)
+                qaction = self.render_action(action, toolbar)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
-                    qaction.triggered.connect(self.action_triggered)
                     toolbar.addAction(qaction)
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
             self.update_action_status()
-
-    @QtCore.qt_slot(bool)
-    def action_triggered(self, _checked=False):
-        action_action = self.sender()
-        action_action.action.gui_run(self.gui_context)
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
@@ -135,11 +142,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
         toolbar = self.findChild(QtWidgets.QToolBar)
         if toolbar:
             model_context = self.gui_context.create_model_context()
-            for qaction in toolbar.actions():
-                if isinstance(qaction, ActionAction):
+            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton) + toolbar.findChildren(ActionPushButton):
+                if isinstance(qaction, (ActionAction, ActionToolbutton, ActionPushButton)):
                     post(qaction.action.get_state,
                          qaction.set_state,
-                         args=(model_context, ))
+                         args=(model_context,))
 
     def get_model(self):
         """
@@ -184,6 +191,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        if self.admin.list_action:
-            self.admin.list_action.gui_run(self.gui_context)
+        admin = AdminRoute.admin_for(self.admin_route)
+        if admin.list_action:
+            admin.list_action.gui_run(self.gui_context)
 

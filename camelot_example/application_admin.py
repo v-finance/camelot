@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.section import Section
 from camelot.core.utils import ugettext_lazy as _
@@ -54,7 +54,7 @@ class MyApplicationAdmin(ApplicationAdmin):
 # begin section with action
                 Section( _('Movies'),
                          self,
-                         Icon('tango/22x22/mimetypes/x-office-presentation.png'),
+                         FontIcon('film'),
                          items = [ Movie, 
                                    Tag, 
                                    VisitorReport, 
@@ -63,13 +63,13 @@ class MyApplicationAdmin(ApplicationAdmin):
 # end section with action
                 Section( _('Relation'),
                          self,
-                         Icon('tango/22x22/apps/system-users.png'),
+                         FontIcon('users'),
                          items = [ Person, 
                                    Organization,
                                    PartyCategory ]),
                 Section( _('Configuration'),
                          self,
-                         Icon('tango/22x22/categories/preferences-system.png'),
+                         FontIcon('cog'),
                          items = [ Memento, 
                                    Translation,
                                    BatchJobType,
@@ -85,7 +85,7 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot_example.model import Movie
         
         new_movie_action = OpenNewView( self.get_related_admin(Movie) )
-        new_movie_action.icon = Icon('tango/22x22/mimetypes/x-office-presentation.png')
+        new_movie_action.icon = FontIcon('film')
 
         return [new_movie_action, OpenNewView(self.get_related_admin(Party))]
 # end actions
@@ -106,9 +106,9 @@ class MiniApplicationAdmin( MyApplicationAdmin ):
         from model import Movie
         
         movies_action = application_action.OpenTableView( self.get_related_admin( Movie ) )
-        movies_action.icon = Icon('tango/22x22/mimetypes/x-office-presentation.png')
+        movies_action.icon = FontIcon('film')
         persons_action = application_action.OpenTableView( self.get_related_admin( Person ) )
-        persons_action.icon = Icon('tango/22x22/apps/system-users.png')
+        persons_action.icon = FontIcon('users')
         
         if toolbar_area == Qt.LeftToolBarArea:
             return [ movies_action,
