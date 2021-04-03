@@ -30,6 +30,7 @@
 import six
 from six import moves
 
+from ...admin.admin_route import AdminRoute
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
@@ -184,7 +185,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   objects,
                   admin_route,
                   columns,
-                  toolbar_actions,
+                  action_routes,
                   invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.Window ):
@@ -195,7 +196,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             parent = self,
             create_inline = True,
             columns=columns,
-            actions=toolbar_actions,
+            action_routes=action_routes,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -346,9 +347,12 @@ class ChangeObjects( ActionStep ):
         self.icon = FontIcon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.invalid_rows = set()
         self.columns = admin.get_columns()
-        self.toolbar_actions = admin.get_related_toolbar_actions(
-            Qt.RightToolBarArea, 'onetomany'
-        )
+        self.action_routes = [
+            AdminRoute._register_list_action_route(self.admin_route, action)
+            for action in admin.get_related_toolbar_actions(
+                Qt.RightToolBarArea, 'onetomany'
+            )
+        ]
         if validate==True:
             validator = self.admin.get_validator()
             for row, obj in enumerate(objects):
@@ -370,7 +374,7 @@ class ChangeObjects( ActionStep ):
         dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
                                      self.admin_route,
                                      self.columns,
-                                     self.toolbar_actions,
+                                     self.action_routes,
                                      self.invalid_rows)
         dialog.setWindowTitle( six.text_type( self.window_title ) )
         dialog.set_banner_title( six.text_type( self.title ) )
@@ -411,7 +415,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
         self.value = None
         self.static_field_attributes = admin.get_static_field_attributes
         self.banner_widget().setStyleSheet('background-color: white;')
-        editor = ChoicesEditor(parent=self, actions=[])
+        editor = ChoicesEditor(parent=self, action_routes=[])
         editor.setObjectName( 'field_choice' )
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget( editor )

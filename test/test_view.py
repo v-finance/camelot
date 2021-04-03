@@ -86,7 +86,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # a form view and not on a table view, so it should not
         # set its background
         self.option.version = 5
-        self.editable_kwargs = dict(editable=True, actions=[])
+        self.editable_kwargs = dict(editable=True, action_routes=[])
 
     def assert_valid_editor( self, editor, value ):
         """Test the basic functions of an editor that are needed to integrate
@@ -536,8 +536,8 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         super(DelegateCase, self).setUp()
-        self.editable_kwargs = dict(editable=True, actions=[])
-        self.non_editable_kwargs = dict(editable=False, actions=[])
+        self.editable_kwargs = dict(editable=True, action_routes=[])
+        self.non_editable_kwargs = dict(editable=False, action_routes=[])
         self.option = QtWidgets.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view, so it should not
@@ -1051,7 +1051,7 @@ class SnippetsTest(RunningThreadCase,
         editor = One2ManyEditor(
             admin_route=person_admin.get_admin_route(),
             columns=person_columns,
-            actions=[],
+            action_routes=[],
         )
         editor.set_value(self.proxy)
         self.process()

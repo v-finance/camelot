@@ -127,7 +127,7 @@ class Many2OneEditor(CustomEditor):
         # Setup layout
         layout.addWidget(self.search_input)
         self.setLayout(layout)
-        self.add_actions(kwargs['actions'], layout)
+        self.add_actions(kwargs['action_routes'], layout)
         CrudSignalHandler().connect_signals(self)
 
     @QtCore.qt_slot()

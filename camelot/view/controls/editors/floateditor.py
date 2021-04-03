@@ -180,7 +180,7 @@ class FloatEditor(CustomEditor):
         layout.setSpacing(0)
         layout.addWidget(spinBox)
         layout.addWidget(self.calculatorButton)
-        self.add_actions(kwargs['actions'], layout)
+        self.add_actions(kwargs['action_routes'], layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 

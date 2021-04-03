@@ -61,7 +61,7 @@ class TextLineEditor(CustomEditor):
         self.setFocusProxy(text_input)
         self.setObjectName(field_name)
         self._value = None
-        self.add_actions(kwargs['actions'], layout)
+        self.add_actions(kwargs['action_routes'], layout)
         self.setLayout(layout)
 
     @QtCore.qt_slot()

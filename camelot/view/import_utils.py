@@ -126,6 +126,7 @@ class ColumnMapping( object ):
 class ShowNext(Action):
     
     verbose_name = _('Show next')
+    name = 'show_next'
     
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
@@ -135,6 +136,7 @@ class ShowNext(Action):
 class ShowPrevious(Action):
     
     verbose_name = _('Show previous')
+    name = 'show_previous'
     
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
@@ -145,6 +147,7 @@ class MatchNames(Action):
     """Use the data in the current row to determine field names"""
     
     verbose_name = _('Match names')
+    name = 'match_names'
     
     def model_run(self, model_context):
         field_choices = model_context.admin.field_choices

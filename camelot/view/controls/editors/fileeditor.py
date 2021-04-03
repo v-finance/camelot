@@ -56,7 +56,7 @@ class FileEditor(CustomEditor):
         self.file_name = None
         self.remove_original = remove_original
         self.setup_widget()
-        self.add_actions(kwargs['actions'], self.layout())
+        self.add_actions(kwargs['action_routes'], self.layout())
 
     def setup_widget(self):
         """Called inside init, overwrite this method for custom

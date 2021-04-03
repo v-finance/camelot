@@ -67,7 +67,7 @@ class ChoicesEditor(CustomEditor):
         # make sure None is in the list of choices
         self.set_choices([(None, '')])
         self.setLayout(layout)
-        self.add_actions(kwargs['actions'], layout)
+        self.add_actions(kwargs['action_routes'], layout)
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):
