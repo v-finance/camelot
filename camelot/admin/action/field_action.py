@@ -32,7 +32,6 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
-import inspect
 import os
 
 from ...core.qt import QtWidgets
@@ -42,7 +41,6 @@ from .base import Action, RenderHint
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
-import six
 
 class FieldActionModelContext( ApplicationActionModelContext ):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
@@ -114,30 +112,6 @@ class FieldAction(Action):
 
     render_hint = RenderHint.TOOL_BUTTON
 
-
-class ShowFieldAttributes(Action):
-    
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        from camelot.admin.object_admin import ObjectAdmin
-
-        class Attribute(object):
-            """Helper class representing a field attribute's name and its value"""
-            def __init__(self, name, value):
-                self.name = six.text_type(name)
-                if inspect.isclass(value):
-                    self.value = value.__name__
-                else:
-                    self.value = six.text_type(value)
-                        
-            class Admin(ObjectAdmin):
-                list_display = ['name', 'value']
-                field_attributes = {'name':{'minimal_column_width':25},
-                                    'value':{'minimal_column_width':25}}
-        
-        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes)]
-        yield action_steps.ChangeObjects(attributes, 
-                                         model_context.admin.get_related_admin(Attribute))
 
 class SelectObject(FieldAction):
     """Allows the user to select an object, and set the selected object as

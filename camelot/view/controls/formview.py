@@ -101,9 +101,7 @@ class FormEditors(QtCore.QObject):
         widget_label = None
         if not hide_title:
             widget_label = FieldLabel(
-                field_name,
                 field_attributes['name'],
-                self._admin,
                 parent,
             )
             widget_label.setObjectName('%s_label'%field_name)
