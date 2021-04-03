@@ -68,7 +68,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  field_name='onetomany',
                  column_width=None,
                  columns=[],
-                 toolbar_actions=[],
                  rows=5,
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
@@ -102,7 +101,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.view = self
         self.gui_context.admin_route = self.admin_route
         self.gui_context.item_view = table
-        self.set_right_toolbar_actions(toolbar_actions)
+        self.set_right_toolbar_actions(kw['actions'])
         self.set_columns(columns)
 
     def render_action(self, action, parent):

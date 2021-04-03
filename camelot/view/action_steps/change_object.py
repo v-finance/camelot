@@ -195,7 +195,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             parent = self,
             create_inline = True,
             columns=columns,
-            toolbar_actions=toolbar_actions,
+            actions=toolbar_actions,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -411,7 +411,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
         self.value = None
         self.static_field_attributes = admin.get_static_field_attributes
         self.banner_widget().setStyleSheet('background-color: white;')
-        editor = ChoicesEditor( parent=self )
+        editor = ChoicesEditor(parent=self, actions=[])
         editor.setObjectName( 'field_choice' )
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget( editor )

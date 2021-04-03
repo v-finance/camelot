@@ -179,6 +179,7 @@ class ObjectAdminCase(unittest.TestCase):
 
         fa = admin.get_field_attributes('y')
         self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['actions'], [])
         fa = admin.get_field_attributes('z')
         self.assertEqual(fa['editable'], False)
 
@@ -339,15 +340,18 @@ class EntityAdminCase(TestMetaData):
 
         b_fa = a_admin.get_field_attributes('b')
         self.assertEqual( b_fa['delegate'], delegates.Many2OneDelegate )
+        self.assertTrue(len(b_fa['actions']))
 
         c_fa = a_admin.get_field_attributes('c')
         self.assertEqual( c_fa['delegate'], delegates.Many2OneDelegate )
 
         d_fa = a_admin.get_field_attributes('d')
         self.assertEqual( d_fa['delegate'], delegates.One2ManyDelegate )
+        self.assertTrue(len(d_fa['actions']))
 
         e_fa = a_admin.get_field_attributes('e')
         self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate )
+        self.assertTrue(len(e_fa['actions']))
 
         b_admin = self.app_admin.get_related_admin( B )
         a_fa = b_admin.get_field_attributes('a')

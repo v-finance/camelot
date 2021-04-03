@@ -42,7 +42,7 @@ import datetime
 import operator
 
 from .controls import delegates
-from camelot.admin.action import list_filter
+from ..admin.action import list_filter, field_action
 from camelot.core import constants
 from camelot.view.utils import (
     bool_from_string,
@@ -223,6 +223,12 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
         'remove_original': False,
         'search_strategy': list_filter.NoSearch,
+        'actions': [
+            field_action.DetachFile(),
+            field_action.OpenFile(),
+            field_action.UploadFile(),
+            field_action.SaveFile()
+        ],
     },
 }
 

@@ -141,7 +141,6 @@ class FloatEditor(CustomEditor):
                        decimal = False, 
                        option = None,
                        field_name = 'float',
-                       actions = [],
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
@@ -181,7 +180,7 @@ class FloatEditor(CustomEditor):
         layout.setSpacing(0)
         layout.addWidget(spinBox)
         layout.addWidget(self.calculatorButton)
-        self.add_actions(actions, layout)
+        self.add_actions(kwargs['actions'], layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 

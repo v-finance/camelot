@@ -51,7 +51,6 @@ class ChoicesEditor(CustomEditor):
                   parent = None,
                   nullable = True,
                   field_name = 'choices',
-                  actions = [],
                   **kwargs ):
         super(ChoicesEditor, self).__init__(parent)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
@@ -68,7 +67,7 @@ class ChoicesEditor(CustomEditor):
         # make sure None is in the list of choices
         self.set_choices([(None, '')])
         self.setLayout(layout)
-        self.add_actions(actions, layout)
+        self.add_actions(kwargs['actions'], layout)
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):

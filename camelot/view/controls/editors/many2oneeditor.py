@@ -29,7 +29,6 @@
 
 from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
 
-from ....admin.action import field_action
 from ...crud_signals import CrudSignalHandler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
@@ -39,7 +38,7 @@ from .customeditor import CustomEditor, set_background_color_palette
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
-class Many2OneEditor( CustomEditor ):
+class Many2OneEditor(CustomEditor):
     """Widget for editing many 2 one relations"""
 
     arrow_down_key_pressed = QtCore.qt_signal()
@@ -68,10 +67,6 @@ class Many2OneEditor( CustomEditor ):
                  parent=None,
                  editable=True,
                  field_name='manytoone',
-                 actions = [field_action.ClearObject(),
-                            field_action.SelectObject(),
-                            field_action.NewObject(),
-                            field_action.OpenObject()],
                  **kwargs):
         """
         :param entity_admin : The Admin interface for the object on the one
@@ -132,7 +127,7 @@ class Many2OneEditor( CustomEditor ):
         # Setup layout
         layout.addWidget(self.search_input)
         self.setLayout(layout)
-        self.add_actions(actions, layout)
+        self.add_actions(kwargs['actions'], layout)
         CrudSignalHandler().connect_signals(self)
 
     @QtCore.qt_slot()

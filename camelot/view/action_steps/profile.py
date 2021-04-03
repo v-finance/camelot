@@ -134,23 +134,23 @@ allow all languages
         # 32767 is Qt max length for string
         # should be more than enough for folders
         # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
-        self.dialect_editor = ChoicesEditor(parent=self)
+        self.dialect_editor = ChoicesEditor(parent=self, actions=[])
         self.dialect_editor.set_value(None)
-        self.host_editor = TextLineEditor(self, length=32767)
+        self.host_editor = TextLineEditor(self, length=32767, actions=[])
         self.host_editor.set_value('')
-        self.port_editor = TextLineEditor(self)
+        self.port_editor = TextLineEditor(self, actions=[])
         self.port_editor.setFixedWidth(60)
         self.port_editor.set_value('')
-        self.database_name_editor = TextLineEditor(self, length=32767)
+        self.database_name_editor = TextLineEditor(self, length=32767, actions=[])
         self.database_name_editor.set_value('')
-        self.username_editor = TextLineEditor(self)
+        self.username_editor = TextLineEditor(self, actions=[])
         self.username_editor.set_value('')
         self.password_editor = TextLineEditor(
             echo_mode=QtWidgets.QLineEdit.Password,
-            parent=self
+            parent=self, actions=[]
         )
         self.password_editor.set_value('')
-        self.media_location_editor = TextLineEditor(self, length=32767)
+        self.media_location_editor = TextLineEditor(self, length=32767, actions=[])
         self.media_location_editor.set_value('')
         self.language_editor = LanguageEditor(languages=self.languages,
                                               parent=self)
@@ -166,15 +166,15 @@ allow all languages
         else:
             self.language_editor.set_value( system_language )
 
-        self.proxy_host_editor = TextLineEditor(self, length=32767)
+        self.proxy_host_editor = TextLineEditor(self, length=32767, actions=[])
         self.proxy_host_editor.set_value('')
-        self.proxy_port_editor = TextLineEditor(self)
+        self.proxy_port_editor = TextLineEditor(self, actions=[])
         self.proxy_port_editor.setFixedWidth(60)
         self.proxy_port_editor.set_value('')
-        self.proxy_username_editor = TextLineEditor(self)
+        self.proxy_username_editor = TextLineEditor(self, actions=[])
         self.proxy_username_editor.set_value('')
         self.proxy_password_editor = TextLineEditor(
-            echo_mode=QtWidgets.QLineEdit.Password,
+            echo_mode=QtWidgets.QLineEdit.Password, actions=[],
             parent=self
         )
         self.proxy_password_editor.set_value('')

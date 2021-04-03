@@ -87,7 +87,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         self.autoaccept = autoaccept
         self.set_default_buttons()
         layout = QtWidgets.QVBoxLayout()
-        combobox = editors.ChoicesEditor()
+        combobox = editors.ChoicesEditor(actions=[])
         combobox.setObjectName( 'combobox' )
         combobox.editingFinished.connect( self._combobox_activated )
         layout.addWidget( combobox )
