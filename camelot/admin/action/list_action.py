@@ -247,6 +247,8 @@ class RowNumberAction( Action ):
     the user.
     """
 
+    name = 'row_number'
+
     def get_state( self, model_context ):
         state = super(RowNumberAction, self).get_state(model_context)
         state.verbose_name = six.text_type(model_context.current_row + 1)
@@ -277,6 +279,7 @@ class CloseList(Action):
 
     icon = FontIcon('backspace')
     tooltip = _('Close')
+    name = 'close'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -288,6 +291,7 @@ class ListLabel(Action):
     """
 
     render_hint = RenderHint.LABEL
+    name = 'label'
 
     def get_state(self, model_context):
         state = super().get_state(model_context)
@@ -304,6 +308,7 @@ class OpenFormView( ListContextAction ):
     # verbose name is set to None to avoid displaying it in the vertical
     # header of the table view
     verbose_name = None
+    name = 'open'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -324,6 +329,7 @@ class DuplicateSelection( EditAction ):
     #icon = FontIcon('clone') # 'tango/16x16/actions/edit-copy.png'
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
+    name = 'duplicate_selection'
     
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -411,6 +417,8 @@ class AbstractToPrevious(object):
 class ToPreviousRow( AbstractToPrevious, ListContextAction ):
     """Move to the previous row in a table"""
 
+    name = 'to_previous'
+
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         selection = item_view.selectedIndexes()
@@ -441,6 +449,8 @@ class AbstractToFirst(object):
 class ToFirstRow( AbstractToFirst, ToPreviousRow ):
     """Move to the first row in a table"""
 
+    name = 'to_first'
+
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
 
@@ -454,7 +464,9 @@ class AbstractToNext(object):
     
 class ToNextRow( AbstractToNext, ListContextAction ):
     """Move to the next row in a table"""
-    
+
+    name = 'to_next'
+
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         selection = item_view.selectedIndexes()
@@ -486,6 +498,8 @@ class AbstractToLast(object):
 class ToLastRow( AbstractToLast, ToNextRow ):
     """Move to the last row in a table"""
 
+    name = 'to_last'
+
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         item_view.selectRow( item_view.model().rowCount() - 1 )
@@ -497,6 +511,7 @@ class SaveExportMapping( Action ):
 
     verbose_name = _('Save')
     tooltip = _('Save the order of the columns for future use')
+    name = 'save_mapping'
 
     def __init__(self, settings):
         self.settings = settings
@@ -564,6 +579,7 @@ class RestoreExportMapping( SaveExportMapping ):
 
     verbose_name = _('Restore')
     tooltip = _('Restore the previously stored order of the columns')
+    name = 'restore_mapping'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -591,6 +607,7 @@ class RemoveExportMapping( SaveExportMapping ):
 
     verbose_name = _('Remove')
     tooltip = _('Remove the previously stored order of the columns')
+    name = 'remove_mapping'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -609,6 +626,7 @@ class ClearMapping(Action):
     """
 
     verbose_name = _('Clear')
+    name = 'clear_mapping'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -628,6 +646,7 @@ class ExportSpreadsheet( ListContextAction ):
     icon = FontIcon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
+    name = 'export'
 
     max_width = 40
     font_name = 'Calibri'
@@ -791,6 +810,7 @@ class PrintPreview( ListContextAction ):
     icon = FontIcon('print') # 'tango/16x16/actions/document-print-preview.png'
     tooltip = _('Print Preview')
     verbose_name = _('Print Preview')
+    name = 'print'
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -816,6 +836,7 @@ class SelectAll( ListContextAction ):
     verbose_name = _('Select &All')
     shortcut = QtGui.QKeySequence.SelectAll
     tooltip = _('Select all rows in the table')
+    name = 'select_all'
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectAll()
@@ -827,6 +848,7 @@ class ImportFromFile( EditAction ):
     verbose_name = _('Import from file')
     icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
     tooltip = _('Import from file')
+    name = 'import'
 
     def model_run( self, model_context ):
         import os.path
@@ -925,6 +947,7 @@ class ReplaceFieldContents( EditAction ):
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.Replace
+    name = 'replace'
 
     def gui_run( self, gui_context ):
         #
@@ -977,6 +1000,7 @@ class SetFilters(Action, AbstractModelFilter):
     verbose_name = _('Find')
     tooltip = _('Filter the data')
     icon = FontIcon('filter')
+    name = 'filter'
 
     def get_field_name_choices(self, model_context):
         """
@@ -1057,6 +1081,7 @@ class AddExistingObject( EditAction ):
     tooltip = _('Add')
     verbose_name = _('Add')
     icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
+    name = 'add_object'
     
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
@@ -1085,6 +1110,7 @@ class AddNewObject( EditAction ):
     icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')
+    name = 'new_object'
     
     def get_admin(self, model_context):
         """
@@ -1130,6 +1156,7 @@ class RemoveSelection(DeleteSelection):
     tooltip = _('Remove')
     verbose_name = _('Remove')
     icon = FontIcon('minus') # 'tango/16x16/actions/list-remove.png'
+    name = 'remove_selection'
             
     def handle_object( self, model_context, obj ):
         model_context.proxy.remove( obj )
@@ -1143,6 +1170,7 @@ class ActionGroup(EditAction):
     tooltip = _('More')
     icon = FontIcon('cog') # 'tango/16x16/emblems/emblem-system.png'
     actions = (ImportFromFile(), ReplaceFieldContents())
+    name = 'import_replace'
     
     def get_state(self, model_context):
         state = super(ActionGroup, self).get_state(model_context)

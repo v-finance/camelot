@@ -717,6 +717,16 @@ be specified using the verbose_name attribute.
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+        #
+        # Convert field actions to action routes
+        #
+        field_attributes['action_routes'] = [
+            AdminRoute._register_field_action_route(
+                self.get_admin_route(),
+                field_name,
+                action,
+            ) for action in field_attributes['actions']
+        ]
 
     def _get_search_fields(self, substring):
         """

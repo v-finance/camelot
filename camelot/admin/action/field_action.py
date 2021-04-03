@@ -145,6 +145,7 @@ class SelectObject(FieldAction):
 
     icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
     tooltip = _('select existing')
+    name = 'select_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -167,6 +168,7 @@ class NewObject(SelectObject):
 
     icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('create new')
+    name = 'new_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -184,6 +186,7 @@ class OpenObject(SelectObject):
 
     icon = FontIcon('folder-open') # 'tango/16x16/places/folder.png'
     tooltip = _('open')
+    name = 'open_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -204,6 +207,7 @@ class ClearObject(OpenObject):
 
     icon = FontIcon('eraser') # 'tango/16x16/actions/edit-clear.png'
     tooltip = _('clear')
+    name = 'clear_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -220,6 +224,7 @@ class UploadFile(FieldAction):
     icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
     tooltip = _('Attach file')
     file_name_filter = 'All files (*)'
+    name = 'attach_file'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -260,6 +265,7 @@ class DetachFile(FieldAction):
     tooltip = _('Detach file')
     message_title = _('Detach this file ?')
     message_text = _('If you continue, you will no longer be able to open this file.')
+    name = 'detach_file'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -282,6 +288,7 @@ class OpenFile(FieldAction):
 
     icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
+    name = 'open_file'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -302,6 +309,7 @@ class SaveFile(OpenFile):
 
     icon = FontIcon('save') # 'tango/16x16/actions/document-save-as.png'
     tooltip = _('Save as')
+    name = 'file_save_as'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
