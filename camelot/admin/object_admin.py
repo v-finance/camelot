@@ -682,9 +682,10 @@ be specified using the verbose_name attribute.
             direction = field_attributes.get('direction', 'onetomany')
             if direction.endswith('many') and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
-                field_attributes['actions'] = related_admin.get_related_toolbar_actions(
-                    Qt.RightToolBarArea, direction
-                )
+                if field_attributes.get('actions') is None:
+                    field_attributes['actions'] = related_admin.get_related_toolbar_actions(
+                        Qt.RightToolBarArea, direction
+                    )
                 if column_width is None:
                     table = related_admin.get_table()
                     fields = table.get_fields(column_group=0)
@@ -693,7 +694,7 @@ be specified using the verbose_name attribute.
                         related_field_attributes(field).get('column_width', 0) for 
                         field in fields)
                     column_width = sum(related_column_widths, 0)
-            elif direction.startswith('many'):
+            elif direction.startswith('many') and (field_attributes.get('actions') is None):
                 field_attributes['actions'] = [
                     field_action.ClearObject(),
                     field_action.SelectObject(),
