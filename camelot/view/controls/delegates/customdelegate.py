@@ -149,7 +149,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         """
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(value), Qt.EditRole)
-        item.setData(field_attributes_values['action_routes'], ActionRoutesRole)
+        item.setData(field_attributes_values.get('action_routes'), ActionRoutesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(field_attributes_values)),
                      FieldAttributesRole)

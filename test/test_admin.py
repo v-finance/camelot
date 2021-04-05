@@ -179,7 +179,7 @@ class ObjectAdminCase(unittest.TestCase):
 
         fa = admin.get_field_attributes('y')
         self.assertEqual(fa['editable'], True)
-        self.assertEqual(fa['actions'], [])
+        self.assertEqual(fa['action_routes'], [])
         fa = admin.get_field_attributes('z')
         self.assertEqual(fa['editable'], False)
 

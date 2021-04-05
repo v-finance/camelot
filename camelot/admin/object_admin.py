@@ -632,7 +632,7 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
                 search_strategy=list_filter.NoSearch,
-                actions=[],
+                action_route=[],
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
@@ -726,7 +726,7 @@ be specified using the verbose_name attribute.
                 self.get_admin_route(),
                 field_name,
                 action,
-            ) for action in field_attributes['actions']
+            ) for action in field_attributes.get('actions', [])
         ]
 
     def _get_search_fields(self, substring):
