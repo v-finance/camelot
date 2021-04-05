@@ -632,7 +632,7 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
                 search_strategy=list_filter.NoSearch,
-                action_route=[],
+                action_routes=[],
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
