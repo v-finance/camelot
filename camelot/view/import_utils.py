@@ -174,6 +174,7 @@ class ColumnMappingAdmin(ObjectAdmin):
     
     verbose_name = _('Select field')
     verbose_name_plural = _('Select fields')
+    toolbar_actions = [ShowNext(), ShowPrevious(), MatchNames()]
 
     list_action = None
     list_display = ['column_name', 'field', 'value']
@@ -192,7 +193,7 @@ class ColumnMappingAdmin(ObjectAdmin):
         return fa
     
     def get_related_toolbar_actions(self, toolbar_area, direction):
-        return [ShowNext(), ShowPrevious(), MatchNames()]
+        return self.toolbar_actions
 
 class ColumnSelectionAdmin(ColumnMappingAdmin):
     """Admin to edit a `ColumnMapping` class without data preview

@@ -117,6 +117,17 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
+    onetomany_actions = [
+        list_action.AddNewObject(),
+        list_action.DeleteSelection(),
+        list_action.DuplicateSelection(),
+        list_action.ExportSpreadsheet(),
+    ]
+    manytomany_actions = [
+        list_action.AddExistingObject(),
+        list_action.RemoveSelection(),
+        list_action.ExportSpreadsheet(),
+    ]
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -239,14 +250,9 @@ shortcut confusion and reduce the number of status updates.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
-            return [ list_action.AddNewObject(),
-                     list_action.DeleteSelection(),
-                     list_action.DuplicateSelection(),
-                     list_action.ExportSpreadsheet(), ]
+            return self.onetomany_actions
         if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
-            return [ list_action.AddExistingObject(),
-                     list_action.RemoveSelection(),
-                     list_action.ExportSpreadsheet(), ]
+            return self.manytomany_actions
 
     def get_form_actions( self ):
         """Specify the action buttons that should appear on each form in the
