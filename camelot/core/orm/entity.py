@@ -340,11 +340,14 @@ class EntityMeta( DeclarativeMeta ):
             facade_args = dict_.get('__facade_args__')
             if facade_args is not None:
                 discriminator = facade_args.get('discriminator')
-                if discriminator is not None:                
-                    assert isinstance(discriminator, sql.schema.Column), 'Discriminator must be a sql.schema.Column'
-                    assert isinstance(discriminator.type, Enumeration), 'Discriminator column must be of type Enumeration'
-                    assert isinstance(discriminator.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
-                    dict_['__types__'] = discriminator.type.enum
+                if discriminator is not None:
+                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
+                    discriminator_col = discriminator
+                    if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
+                        discriminator_col = discriminator.prop.columns[0]
+                    assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
+                    assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
+                    dict_['__types__'] = discriminator_col.type.enum
                     dict_['__cls_for_type__'] = dict()
             
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
@@ -395,7 +398,9 @@ class EntityMeta( DeclarativeMeta ):
     def get_cls_discriminator(cls):
         discriminator = cls._get_facade_arg('discriminator')
         if discriminator is not None:
-            return getattr(cls, discriminator.key)
+            if isinstance(discriminator, sql.schema.Column):
+                return getattr(cls, discriminator.key)
+            return discriminator
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
