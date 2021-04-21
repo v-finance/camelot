@@ -34,7 +34,7 @@ import logging
 import six
 
 from .qt import QtCore, qtranslate
-from .orm import Session
+from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -77,17 +77,17 @@ def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
 
-def load_translations():
+def load_translations(connectable):
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
     language = str(QtCore.QLocale().name())
     from camelot.model.i18n import Translation
-    session = Session()
-    query = session.query(Translation).filter(Translation.language==language,
+    query = sql.select([Translation.source, Translation.value],
+                       whereclause = sql.and_(Translation.language==language,
                                               Translation.value!=None,
-                                              Translation.value!=u'')
-    for translation in query.all():
-        _translations_[translation.source] = translation.value
+                                              Translation.value!=u''))
+    for source, value in connectable.execute(query):
+        _translations_[source] = value
 
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
