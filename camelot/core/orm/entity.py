@@ -403,8 +403,13 @@ class EntityMeta( DeclarativeMeta ):
         :raises :      an AttributeException when the given argument is not a valid type
         """
         if cls.__types__ is not None:
-            if _type is None or _type in cls.__types__.__members__:
-                return cls.__cls_for_type__.get(_type) or cls.__cls_for_type__.get(None)
+            groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
+            types = cls.__types__
+            if _type is None or _type in types.__members__ or _type in groups:
+                group = types[_type].grouped_by.name if groups and _type in types.__members__ else _type
+                return cls.__cls_for_type__.get(_type) or \
+                       cls.__cls_for_type__.get(group) or \
+                       cls.__cls_for_type__.get(None)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
