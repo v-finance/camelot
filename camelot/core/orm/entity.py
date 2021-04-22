@@ -332,6 +332,12 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__types__', None)
             
             for base in bases:
+                if hasattr(base, '__type_groups__'):
+                    break
+            else:
+                dict_.setdefault('__type_groups__', None)
+            
+            for base in bases:
                 if hasattr(base, '__cls_for_type__'):
                     break
             else:
@@ -348,6 +354,8 @@ class EntityMeta( DeclarativeMeta ):
                     assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
                     assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
                     dict_['__types__'] = discriminator_col.type.enum
+                    if hasattr(discriminator_col.type.enum, 'get_groups'):
+                        dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
             
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
@@ -358,12 +366,9 @@ class EntityMeta( DeclarativeMeta ):
         facade_args = dict_.get('__facade_args__')
         if facade_args is not None:
             _type = facade_args.get('type')
-            if _type is not None:
-                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
-                assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-                if _type in _class.__types__:
-                    assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
-                    _class.__cls_for_type__[_type] = _class
+            if _type in _class.__types__:
+                assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                _class.__cls_for_type__[_type] = _class
             if facade_args.get('default') == True:
                 assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
