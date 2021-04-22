@@ -366,14 +366,25 @@ class EntityMeta( DeclarativeMeta ):
         facade_args = dict_.get('__facade_args__')
         if facade_args is not None:
             _type = facade_args.get('type')
-            if _type in _class.__types__:
+            if _type is not None:
+                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
                 assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
                 _class.__cls_for_type__[_type] = _class
-            if facade_args.get('default') == True:
+            _default = facade_args.get('default')
+            if _default == True:
                 assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
                 assert None not in _class.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class.__cls_for_type__[None])
                 _class.__cls_for_type__[None] = _class
+            _group = facade_args.get('group')
+            if _group is not None:
+                assert _class.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
+                assert _type is None, 'Can not register this class for both a specific type and for a specific group'
+                assert _default is None, 'Can not register this class as both the default class and for a specific group'
+                assert _group in _class.__type_groups__.__members__, 'The group this class registers for is not a member of the type groups that are allowed.'
+                assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
+                _class.__cls_for_type__[_group] = _class
                 
     def get_cls_by_type(cls, _type):
         """
