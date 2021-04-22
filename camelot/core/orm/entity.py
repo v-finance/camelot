@@ -390,12 +390,12 @@ class EntityMeta( DeclarativeMeta ):
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
                 assert None not in _class.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class.__cls_for_type__[None])
                 _class.__cls_for_type__[None] = _class
-            _group = facade_args.get('group')
+            _group = facade_args.get('type_group')
             if _group is not None:
                 assert _class.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
-                assert _type is None, 'Can not register this class for both a specific type and for a specific group'
-                assert _default is None, 'Can not register this class as both the default class and for a specific group'
-                assert _group in _class.__type_groups__.__members__, 'The group this class registers for is not a member of the type groups that are allowed.'
+                assert _type is None, 'Can not register this class for both a specific type and for a specific type group'
+                assert _default is None, 'Can not register this class as both the default class and for a specific type group'
+                assert _group in _class.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
                 assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
                 _class.__cls_for_type__[_group] = _class
                 
