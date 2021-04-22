@@ -424,7 +424,10 @@ class EntityMeta( DeclarativeMeta ):
             groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
             types = cls.__types__
             if _type is None or _type in types.__members__ or _type in groups:
-                group = types[_type].grouped_by.name if groups and _type in types.__members__ else _type
+                group = _type
+                if groups and _type in types.__members__ and types[_type].grouped_by is not None:
+                    group = types[_type].grouped_by.name
+                
                 return cls.__cls_for_type__.get(_type) or \
                        cls.__cls_for_type__.get(group) or \
                        cls.__cls_for_type__.get(None)
