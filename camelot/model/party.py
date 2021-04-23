@@ -818,7 +818,7 @@ class Addressable(object):
         return self._set_address_field( u'city', value )
 
     @city.expression
-    def city_expression( self ):
+    def city( self ):
         return Address.city_geographicboundary_id
 
     class Admin(object):
