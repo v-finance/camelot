@@ -34,7 +34,7 @@ logger = logging.getLogger('camelot.admin.entity_admin')
 
 from ..core.item_model import QueryModelProxy
 
-from camelot.admin.action import list_filter
+from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.memento import memento_change
@@ -222,6 +222,24 @@ and used as a custom action.
 
         return search_identifiers                
 
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions(toolbar_area)
+        if toolbar_area == Qt.TopToolBarArea:
+            return toolbar_actions + [
+                list_filter.SearchFilter(self),
+                list_action.SetExpandedSearch(),
+                application_action.Refresh()
+            ]
+        return toolbar_actions
+
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
@@ -254,8 +272,8 @@ and used as a custom action.
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
                     # class attribute of hybrid properties is changed from
-                    # expression to comparator in sqla 1.2
-                    if sqlalchemy_version.startswith('1.2'):
+                     # expression to comparator from sqla v1.2 onwards.
+                    if sqlalchemy_version.startswith('1.2') or sqlalchemy_version.startswith('1.3'):
                         if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
                             class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:

@@ -93,14 +93,14 @@ class SelectAdminDecorator(ReadOnlyAdminDecorator):
 
 class SelectDialog(QtWidgets.QDialog):
     
-    def __init__(self, gui_context, admin, search_text, parent = None):
+    def __init__(self, gui_context, admin, parent = None):
         super( SelectDialog, self ).__init__( parent )
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
         self.setWindowTitle( _('Select %s') % admin.get_verbose_name() )
         self.setSizeGripEnabled(True)
-        table = TableView(gui_context, admin, search_text=search_text, parent=self)
+        table = TableView(gui_context, admin, parent=self)
         table.setObjectName('table_view')
         layout.addWidget(table)
         self.setLayout( layout )
@@ -129,7 +129,7 @@ class SelectObjects( OpenTableView ):
         self.search_text = search_text
 
     def render(self, gui_context):
-        dialog = SelectDialog(gui_context, self.admin, self.search_text)
+        dialog = SelectDialog(gui_context, self.admin)
         table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
         table_view.set_subclass_tree(self.subclasses)
         self.update_table_view(table_view)

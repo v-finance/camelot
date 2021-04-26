@@ -98,9 +98,9 @@ class LocalFileEditor( CustomEditor ):
                                                           filter = self._file_filter,
                                                           directory = current_directory)
         else:
-            value = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                          filter = self._file_filter,
-                                                          directory = current_directory)
+            value, _ = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                          directory = current_directory,
+                                                          filter = self._file_filter)
         if value!='':
             value = os.path.abspath( six.text_type( value ) )
             self.filename.setText( value )

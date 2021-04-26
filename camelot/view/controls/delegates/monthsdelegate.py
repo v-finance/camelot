@@ -67,9 +67,9 @@ class MonthsDelegate(CustomDelegate):
         elif value not in (None, ValueLoading):
             years, months = divmod( value, 12 )
             if years:
-                value_str = qtranslate('%i years', n=years)%(years) + u' '
+                value_str = qtranslate('%n years', n=years) + u' '
             if months:
-                value_str = value_str + qtranslate('%i months', n=months)%(months)
+                value_str = value_str + qtranslate('%n months', n=months)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

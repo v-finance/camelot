@@ -31,7 +31,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from ...core.qt import QtCore, QtWidgets
+from ...core.qt import QtCore, QtWidgets, is_deleted
 
 import six
 
@@ -58,6 +58,8 @@ class UpdateEditor(ActionStep):
         self.propagate = propagate
 
     def gui_run(self, gui_context):
+        if is_deleted(gui_context.editor):
+            return
         setattr(gui_context.editor, self.attribute, self.value)
         if self.propagate:
             gui_context.editor.editingFinished.emit()
@@ -174,20 +176,6 @@ class SelectItem( ActionStep ):
             raise CancelRequest()
         return dialog.get_value()
 
-
-class ShowPixmap( ActionStep ):
-    """Show a full screen pixmap
-
-    :param pixmap: a :class:`camelot.view.art.Pixmap` object
-    """
-
-    def __init__( self, pixmap ):
-        self.pixmap = pixmap
-
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.liteboxview import LiteBoxView
-        litebox = LiteBoxView( parent = gui_context.workspace )
-        litebox.show_fullscreen_pixmap( self.pixmap.getQPixmap() )
 
 class CloseView( ActionStep ):
     """

@@ -51,6 +51,10 @@ class AbstractView(QtWidgets.QWidget):
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
 
     @QtCore.qt_slot()
+    def validate_close(self):
+        return True
+
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the data in the current view"""
         pass

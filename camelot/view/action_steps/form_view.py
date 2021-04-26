@@ -62,6 +62,12 @@ class OpenFormView( ActionStep ):
         A list of `camelot.admin.action.base.Action` objects to be displayed
         at the top toolbar of the form, this defaults to the ones returned by the
         admin
+
+    .. attribute:: top_level
+
+       Display the form view top-level, or as a tab in the workspace,
+       defaults to `True`.
+
     """
 
     def __init__( self, objects, admin ):
@@ -69,6 +75,7 @@ class OpenFormView( ActionStep ):
         self.admin = admin
         self.row = 0
         self.actions = admin.get_form_actions(None)
+        self.top_level = True
         get_form_toolbar_actions = admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
         self.title = u' '
@@ -122,7 +129,10 @@ class OpenFormView( ActionStep ):
         window = gui_context.get_window()
         formview = self.render(gui_context)
         if formview is not None:
-            show_top_level(formview, window, self.admin.form_state)
+            if self.top_level == True:
+                show_top_level(formview, window, self.admin.form_state)
+            else:
+                gui_context.workspace.set_view(formview)
 
 class ChangeFormIndex(ActionStep):
 

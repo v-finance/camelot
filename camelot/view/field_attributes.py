@@ -161,17 +161,6 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
     },
 
-    camelot.types.Image: lambda f: {
-        'python_type': str,
-        'editable': True,
-        'nullable': True,
-        'delegate': delegates.ImageDelegate,
-        'storage': f.storage,
-        'preview_width': 100,
-        'preview_height': 100,
-        'operators' : _text_operators,
-    },
-
     camelot.types.VirtualAddress: lambda f: {
         'python_type': str,
         'editable': True,
@@ -189,15 +178,6 @@ _sqlalchemy_to_python_type_ = {
         'from_string': string_from_string,
         'operators' : [],
         'to_string': richtext_to_string,
-    },
-
-    camelot.types.Color: lambda f: {
-        'delegate': delegates.ColorDelegate,
-        'python_type': str,
-        'editable': True,
-        'nullable': True,
-        'widget': 'color',
-        'operators' : _text_operators,
     },
 
     camelot.types.Enumeration: lambda f: {

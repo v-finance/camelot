@@ -46,8 +46,6 @@ Or use introspection of the SQLAlchemy session to update the GUI :
    
 """
 
-import warnings
-
 from camelot.admin.action.base import ActionStep
 from ..crud_signals import CrudSignalHandler
 

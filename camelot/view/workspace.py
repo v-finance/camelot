@@ -35,43 +35,16 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
-from ..core.qt import QtCore, QtGui, QtWidgets, Qt
+from ..core.qt import QtCore, QtGui, QtWidgets
 from camelot.admin.action import ApplicationActionGuiContext
-from camelot.core.utils import ugettext as _
 from camelot.view.model_thread import object_thread
-from .controls.view import AbstractView
-
-class DesktopBackground(AbstractView):
-    """
-    A custom background widget for the desktop. This widget is contained
-    by the first tab ('Start' tab) of the desktop workspace.
-    """
-
-    def __init__(self, gui_context):
-        super(DesktopBackground, self).__init__()
-        self.gui_context = gui_context
-        # Set a white background color
-        palette = self.palette()
-        self.setAutoFillBackground(True)
-        palette.setBrush(QtGui.QPalette.Window, Qt.white)
-        self.setPalette(palette)
-
-    def refresh(self):
-        pass
 
 
 class DesktopTabbar(QtWidgets.QTabBar):
 
-    change_view_mode_signal = QtCore.qt_signal()
-
-    def mouseDoubleClickEvent(self, event):
-        self.change_view_mode_signal.emit()
-        event.accept()
-
     def tabSizeHint(self, index):
         originalSizeHint = super(DesktopTabbar, self).tabSizeHint(index)
         minimumWidth = max(160, originalSizeHint.width())
-
         return QtCore.QSize(minimumWidth, originalSizeHint.height())
 
 class DesktopWorkspace(QtWidgets.QWidget):
@@ -90,15 +63,12 @@ class DesktopWorkspace(QtWidgets.QWidget):
     """
 
     view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
-    change_view_mode_signal = QtCore.qt_signal()
-    last_view_closed_signal = QtCore.qt_signal()
 
     def __init__(self, app_admin, parent):
         super(DesktopWorkspace, self).__init__(parent)
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = app_admin
         self.gui_context.workspace = self
-        self._app_admin = app_admin
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -107,8 +77,6 @@ class DesktopWorkspace(QtWidgets.QWidget):
         # Setup the tab widget
         self._tab_widget = QtWidgets.QTabWidget( self )
         tab_bar = DesktopTabbar(self._tab_widget)
-        tab_bar.setToolTip(_('Double click to (un)maximize'))
-        tab_bar.change_view_mode_signal.connect(self._change_view_mode)
         self._tab_widget.setTabBar(tab_bar)
         self._tab_widget.setDocumentMode(True)
         self._tab_widget.setTabsClosable(True)
@@ -116,10 +84,6 @@ class DesktopWorkspace(QtWidgets.QWidget):
         self._tab_widget.currentChanged.connect(self._tab_changed)
         layout.addWidget(self._tab_widget)
         self.setLayout(layout)
-
-    @QtCore.qt_slot()
-    def _change_view_mode(self):
-        self.change_view_mode_signal.emit()
 
     @QtCore.qt_slot(int)
     def _tab_close_request(self, index):
@@ -131,6 +95,7 @@ class DesktopWorkspace(QtWidgets.QWidget):
         """
         view = self._tab_widget.widget(index)
         if view is not None:
+            view.validate_close()
             # it's not enough to simply remove the tab, because this
             # would keep the underlying view widget alive
             view.deleteLater()

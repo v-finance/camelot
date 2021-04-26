@@ -1275,15 +1275,15 @@ msgstr "Traduction"
 msgid "Forever"
 msgstr "Toujours"
 
-#: camelot/view/controls/delegates/monthsdelegate.py:65
-#, python-format
-msgid "%i years "
-msgstr "%i années"
+msgid "%n month"
+msgid_plural "%n months"
+msgstr[0] "%n mois"
+msgstr[1] "%n mois"
 
-#: camelot/view/controls/delegates/monthsdelegate.py:67
-#, python-format
-msgid "%i months"
-msgstr "%i mois"
+msgid "%n year"
+msgid_plural "%n years"
+msgstr[0] "%n an"
+msgstr[1] "%n années"
 
 #: camelot/view/controls/editors/charteditor.py:94
 msgid "Copy to clipboard"

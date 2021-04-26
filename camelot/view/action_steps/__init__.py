@@ -27,16 +27,20 @@
 #
 #  ============================================================================
 
-from .application import ActionView, MainWindow, InstallTranslator, Exit, RemoveTranslators
+from .application import (
+    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
+    MainMenu,
+)
 from .backup import SelectBackup, SelectRestore
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
-from .gui import ( CloseView, MessageBox, Refresh, SelectItem,
-                   ShowPixmap, SelectSubclass, UpdateEditor,)
+from .gui import (
+    CloseView, MessageBox, Refresh, SelectItem, SelectSubclass, UpdateEditor
+)
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView,
+    RefreshItemView, SwitchExpandedSearch,
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -49,7 +53,6 @@ from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
 
 __all__ = [
-    ActionView.__name__,
     ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
@@ -61,8 +64,10 @@ __all__ = [
     Exit.__name__,
     FlushSession.__name__,
     InstallTranslator.__name__,
+    MainMenu,
     MainWindow.__name__,
     MessageBox.__name__,
+    NavigationPanel.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
     OpenJinjaTemplate.__name__,
@@ -84,8 +89,8 @@ __all__ = [
     SelectRestore.__name__,
     SelectSubclass.__name__,
     SetFilter.__name__,
-    ShowPixmap.__name__,
     Sort.__name__,
+    SwitchExpandedSearch.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
     ToNextForm.__name__,

@@ -33,7 +33,7 @@ import time
 import six
 
 from ...core.conf import settings
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, QtWebKit
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -293,23 +293,7 @@ class OpenNewView( EntityAction ):
         admin.add(new_object)
         admin.set_defaults(new_object)
         yield action_steps.OpenFormView([new_object], admin)
-
-class ShowHelp( Action ):
-    """Open the help"""
-    
-    shortcut = QtGui.QKeySequence.HelpContents
-    icon = Icon('tango/16x16/apps/help-browser.png')
-    tooltip = _('Help content')
-    verbose_name = _('Help')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.register import register
-        view = QtWebKit.QWebView(None)
-        view.load(gui_context.admin.get_application_admin().get_help_url())
-        view.setWindowTitle(ugettext('Help Browser'))
-        view.setWindowIcon(self.icon.getQIcon())
-        view.show()
-        register(view, view)
+        
 
 class ShowAbout( Action ):
     """Show the about dialog with the content returned by the
@@ -357,6 +341,7 @@ class Refresh( Action ):
     application."""
     
     verbose_name = _('Refresh')
+    tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
     icon = Icon('tango/16x16/actions/view-refresh.png')
     
@@ -469,7 +454,7 @@ class Profiler( Action ):
                 )
                 stats.print_stats()
                 stream.seek(0)
-                yield action_steps.OpenStream(stream)
+                yield action_steps.OpenString(stream.getvalue().encode('utf-8'))
                 filename = action_steps.OpenFile.create_temporary_file(
                     '{0}.prof'.format(label)
                 )
@@ -592,80 +577,7 @@ class ChangeLogging( Action ):
                          self.connection_checkout)
             event.listen(Pool, 'checkin',
                          self.connection_checkin)
-            
-class DumpState( Action ):
-    """Dump the state of the application to the output, this method is
-    triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
-    
-    verbose_name = _('Dump state')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D )
-    
-    def model_run( self, model_context ):
-        import collections
-        import gc
-        from camelot.core.orm import Session
-        from camelot.view import action_steps
-        from camelot.view.register import dump_register
-        from camelot.view.proxy.collection_proxy import CollectionProxy
 
-        dump_logger = LOGGER.getChild('dump_state')
-        session = Session()
-        type_counter = collections.defaultdict(int)
-
-        yield action_steps.UpdateProgress( text = _('Dumping session state') )
-        gc.collect()
-        
-        dump_logger.warn( '======= begin register dump =============' )
-        dump_register( dump_logger )
-        dump_logger.warn( '======= end register dump ===============' )
-
-        for o in session:
-            type_counter[type(o).__name__] += 1
-        dump_logger.warn( '======= begin session dump ==============' )
-        for k,v in six.iteritems(type_counter):
-            dump_logger.warn( '%s : %s'%(k,v) )
-        dump_logger.warn( '======= end session dump ==============' )
-
-        yield action_steps.UpdateProgress( text = _('Dumping item model state') )
-        dump_logger.warn( '======= begin item model dump =========' )
-        for o in gc.get_objects():
-            if isinstance(o, CollectionProxy):
-                dump_logger.warn( '%s is used by :'%(six.text_type( o )) )
-                for r in gc.get_referrers(o):
-                    dump_logger.warn( ' ' + type(r).__name__ )
-                    for rr in gc.get_referrers(r):
-                        dump_logger.warn( '  ' + type(rr).__name__ )
-        dump_logger.warn( '======= end item model dump ===========' )
-
-class RuntimeInfo( Action ):
-    """Pops up a messagebox showing the version of certain
-    libraries used.  This is for debugging purposes., this action is
-    triggered by pressing :kbd:`Ctrl-Alt-I` in the GUI"""
-    
-    verbose_name = _('Show runtime info')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_I )
-    
-    def model_run( self, model_context ):
-        from camelot.view import action_steps
-        import sys
-        import sqlalchemy
-        import chardet
-        import jinja2
-                
-        html = """<em>Python:</em> <b>%s</b><br>
-                  <em>Qt:</em> <b>%s</b><br>
-                  <em>PyQt:</em> <b>%s</b><br>
-                  <em>SQLAlchemy:</em> <b>%s</b><br>
-                  <em>Chardet:</em> <b>%s</b><br>
-                  <em>Jinja:</em> <b>%s</b><br>
-                  <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
-                                              float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
-                                              QtCore.PYQT_VERSION_STR,
-                                              sqlalchemy.__version__,
-                                              chardet.__version__,
-                                              jinja2.__version__,
-                                              six.text_type(sys.path))        
-        yield action_steps.PrintHtml( html )
         
 class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test
@@ -683,49 +595,6 @@ class SegmentationFault( Action ):
             import faulthandler
             faulthandler._read_null()        
         
-class Authentication( Action ):
-    """This action provides information of the currently active authentication
-    mechanism, in other words, it displays the active user and his permissions.
-    
-    Add this action to a toolbar if you want to show the authentication
-    information to the user.
-    """
-    
-    icon = Icon('tango/16x16/emotes/face-smile.png')
-    image_size = 32
-    
-    def render( self, gui_context, parent ):
-        from camelot.view.controls.action_widget import AuthenticationWidget
-        return AuthenticationWidget(self, gui_context, parent)
-    
-    def get_state(self, model_context):
-        from camelot.model.authentication import get_current_authentication
-        from camelot.view import art
-        state = super(Authentication, self).get_state(model_context)
-        authentication = get_current_authentication()
-        state.verbose_name = authentication.username
-        state.tooltip = ', '.join([g.name for g in authentication.groups])
-        representation = authentication.get_representation()
-        if representation is not None:
-            state.icon = art.IconFromImage(representation)
-        return state
-    
-    def model_run(self, model_context):
-        from camelot.model.authentication import get_current_authentication
-        from camelot.view import action_steps
-        from camelot.view.controls.editors.imageeditor import ImageEditor
-        select_file = action_steps.SelectFile(file_name_filter=ImageEditor.filter)
-        filenames = yield select_file
-        for filename in filenames:
-            yield action_steps.UpdateProgress(text=ugettext('Scale image'))
-            image = QtGui.QImage(filename)
-            image = image.scaled(self.image_size,
-                                 self.image_size,
-                                 Qt.KeepAspectRatio)
-            authentication = get_current_authentication()
-            authentication.set_representation(image)
-            yield action_steps.FlushSession(model_context.session)
-
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 

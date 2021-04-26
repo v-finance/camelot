@@ -403,7 +403,7 @@ class Organization( Party ):
                       primary_key = True )
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.Image( upload_to = 'organization-logo' ))
+    logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
     tax_id = schema.Column( Unicode( 20 ) )
 
     def __str__(self):
@@ -440,7 +440,7 @@ class Person( Party ):
     social_security_number = schema.Column( Unicode( 12 ) )
     passport_number = schema.Column( Unicode( 20 ) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.Image( upload_to = 'person-pictures' ))
+    picture = schema.Column( camelot.types.File( upload_to = 'person-pictures' ))
     comment = schema.Column( camelot.types.RichText() )
 
     @property
@@ -657,15 +657,15 @@ class Addressable(object):
     @hybrid.hybrid_property
     def street2( self ):
         return self._get_address_field( u'street2' )
-    
-    @street2.expression
-    def street2_expression( self ):
-        return Address.street2    
-    
+
     @street2.setter
-    def street2_setter( self, value ):
-        return self._set_address_field( u'street2', value )    
-    
+    def street2( self, value ):
+        return self._set_address_field( u'street2', value )
+
+    @street2.expression
+    def street2( self ):
+        return Address.street2
+
     @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
@@ -858,7 +858,7 @@ class PartyContactMechanism( Entity ):
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = schema.Column( Unicode(40), index=True, nullable = False )
-    color = schema.Column( camelot.types.Color() )
+    color = schema.Column(Unicode(8))
 # end category definition
     parties = ManyToMany( 'Party', lazy = True, backref='categories',
                           tablename='party_category_party',
@@ -914,9 +914,8 @@ class PartyAdmin( EntityAdmin ):
 
     def get_query( self ):
         query = super( PartyAdmin, self ).get_query()
-        #query = query.options( orm.subqueryload('contact_mechanisms') )
-        #query = query.options( orm.subqueryload('addresses') )
-        #query = query.options( orm.subqueryload('addresses.address') )
+        query = query.options( orm.selectinload('contact_mechanisms') )
+        query = query.options( orm.selectinload('addresses').joinedload('address') )
         return query
 
     #def flush(self, party):

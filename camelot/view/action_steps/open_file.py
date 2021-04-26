@@ -49,7 +49,7 @@ class OpenFile( ActionStep ):
     def __init__( self, path ):
         self.path = path
 
-    def __unicode__( self ):
+    def __str__( self ):
         return u'Open file {}'.format( self.path )
     
     def get_path( self ):
@@ -96,7 +96,7 @@ class OpenStream( OpenFile ):
         import os
         import tempfile
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        output_stream = os.fdopen( file_descriptor, 'w' )
+        output_stream = os.fdopen( file_descriptor, 'wb' )
         output_stream.write( stream.read() )
         output_stream.close()
         super( OpenStream, self ).__init__( file_name )

@@ -55,7 +55,7 @@ from six import moves
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.list_action import ListActionModelContext
-from ...core.qt import (Qt, QtCore, QtGui, QtWidgets,
+from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
@@ -211,6 +211,8 @@ class UpdateMixin(object):
 
     def update_item_model(self, item_model):
         root_item = item_model.invisibleRootItem()
+        if is_deleted(root_item):
+            return
         logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
         row_range = (item_model.rowCount(), -1)
         column_range = (item_model.columnCount(), -1)

@@ -64,7 +64,7 @@ class Pixmap(object):
         else:
             self._module_name = module.__name__
 
-    def __unicode__(self):
+    def __str__(self):
         return self._path
 
     def __repr__(self):

@@ -89,7 +89,12 @@ class Memento( Entity ):
         if previous:
             return [PreviousAttribute(k,v) for k,v in six.iteritems(previous)]
         return []
-    
+
+    def __str__(self):
+        if self.model is not None:
+            return self.model
+        return ''
+
     class Admin( EntityAdmin ):
         verbose_name = _( 'History' )
         verbose_name_plural = _( 'History' )

@@ -47,7 +47,7 @@ def hide_progress_dialog( gui_context ):
     the context is entered, and restore the original state at exit"""
     progress_dialog = gui_context.progress_dialog
     original_state, original_minimum_duration = None, None
-    if isinstance( progress_dialog, QtWidgets.QWidget ):
+    if isinstance(progress_dialog, QtWidgets.QWidget):
         original_state = progress_dialog.isHidden()
         original_minimum_duration = progress_dialog.minimumDuration()
     try:
@@ -180,7 +180,7 @@ class ActionRunner( QtCore.QEventLoop ):
         user pressed the cancel button of the progress dialog in the
         gui_context.
         """
-        if gui_context.progress_dialog:
+        if isinstance(gui_context.progress_dialog, QtWidgets.QProgressDialog):
             if gui_context.progress_dialog.wasCanceled():
                 LOGGER.debug( 'progress dialog was canceled, raise request' )
                 raise CancelRequest()
