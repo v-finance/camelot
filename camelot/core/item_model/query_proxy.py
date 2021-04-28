@@ -100,6 +100,15 @@ class QueryModelProxy(ListModelProxy):
             self._length = None
             return
         self._objects.append(obj)
+    
+    def swap(self, obj, new_obj):
+        assert not isinstance(obj, assert_value_objects)
+        assert not isinstance(new_obj, assert_value_objects)
+        i = self.index(obj)
+        if obj in self._objects:
+            self._objects[i] = new_obj
+        self._indexed_objects.pop(obj)
+        self._indexed_objects.update({i: new_obj, new_obj: i})        
 
     def index(self, obj):
         assert not isinstance(obj, assert_value_objects)
