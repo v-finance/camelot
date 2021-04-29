@@ -118,6 +118,15 @@ class ListModelProxy(AbstractModelProxy, dict):
             self._objects.append(obj)
             self._length = None
 
+    def swap(self, obj, new_obj):
+        assert not isinstance(obj, assert_value_objects)
+        assert not isinstance(new_obj, assert_value_objects)
+        assert obj in self._objects
+        i = self.index(obj)
+        self._objects[i] = new_obj
+        self._indexed_objects.pop(obj)
+        self._indexed_objects.update({i: new_obj, new_obj: i})
+
     def remove(self, obj):
         assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
