@@ -1109,10 +1109,10 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        admin = self.get_admin(model_context)
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context)
         subsystem_object = admin.get_subsystem_object(new_object)
+        admin = self.get_admin(model_context)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((subsystem_object,))
