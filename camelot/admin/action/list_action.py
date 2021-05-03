@@ -1104,12 +1104,13 @@ class AddNewObject( EditAction ):
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
+        yield
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = self.get_admin(model_context)
         create_inline = model_context.field_attributes.get('create_inline', False)
-        new_object = self.create_object(model_context)
+        new_object = yield from self.create_object(model_context)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((new_object,))
