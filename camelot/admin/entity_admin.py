@@ -660,53 +660,50 @@ and used as a custom action.
         """
         assert len(text)
         # arguments for the where clause
-        conditions = []
+        args = []
         
-        for search_part in text.split(' '):
-            args = []
-            for search_field in self._get_search_fields(search_part):
-                # Deprecated old style of defining search fields as a string with dot notation for related fields.
-                # This style will be phased out gradually by the use of search field strategies entirely.
-                # Untill then, they are turned in to field searches or related searches here.
-                if isinstance(search_field, str):
-                    # list of join entities
-                    joins = []
-                    column_name = search_field
-                    path = column_name.split('.')
-                    target = self.entity
-                    related_admin = self
-                    for path_segment in path:
-                        # use the field attributes for the introspection, as these
-                        # have detected hybrid properties
-                        fa = related_admin.get_descriptor_field_attributes(path_segment)
-                        instrumented_attribute = getattr(target, path_segment)
-                        if fa.get('target', False):
-                            joins.append(instrumented_attribute)
-                            target = fa['target']
-                            related_admin = related_admin.get_related_admin(target)
-                        else:
-                            # Append a search clause for the column using a set search strategy, or the basic strategy by default.
-                            fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                            search_strategy = fa['search_strategy']
-                            if search_strategy is not None:
-                                # If the search strategy is set, initialize it with the instrumented attribute.
-                                assert issubclass(search_strategy, list_filter.FieldSearch)
-                                field_search = search_strategy(instrumented_attribute)
-                                # In case the attribute is of a related entity,
-                                # create a related search using the field search and the encountered joins.
-                                if joins:
-                                    field_search = list_filter.RelatedSearch(field_search, joins=joins)
-                                arg = field_search.get_clause(search_part, self, query.session)
-                                if arg is not None:
-                                    args.append(arg)
-                                    
-                elif isinstance(search_field, list_filter.AbstractSearchStrategy):
-                    arg = search_field.get_clause(search_part, self, query.session)
-                    if arg is not None:
-                        args.append(arg)
-            conditions.append(sql.or_(*args))
+        for search_field in self._get_search_fields(text):
+            # Deprecated old style of defining search fields as a string with dot notation for related fields.
+            # This style will be phased out gradually by the use of search field strategies entirely.
+            # Untill then, they are turned in to field searches or related searches here.
+            if isinstance(search_field, str):
+                # list of join entities
+                joins = []
+                column_name = search_field
+                path = column_name.split('.')
+                target = self.entity
+                related_admin = self
+                for path_segment in path:
+                    # use the field attributes for the introspection, as these
+                    # have detected hybrid properties
+                    fa = related_admin.get_descriptor_field_attributes(path_segment)
+                    instrumented_attribute = getattr(target, path_segment)
+                    if fa.get('target', False):
+                        joins.append(instrumented_attribute)
+                        target = fa['target']
+                        related_admin = related_admin.get_related_admin(target)
+                    else:
+                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
+                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
+                        search_strategy = fa['search_strategy']
+                        if search_strategy is not None:
+                            # If the search strategy is set, initialize it with the instrumented attribute.
+                            assert issubclass(search_strategy, list_filter.FieldSearch)
+                            field_search = search_strategy(instrumented_attribute)
+                            # In case the attribute is of a related entity,
+                            # create a related search using the field search and the encountered joins.
+                            if joins:
+                                field_search = list_filter.RelatedSearch(field_search, joins=joins)
+                            arg = field_search.get_clause(text, self, query.session)
+                            if arg is not None:
+                                args.append(arg)
+                                
+            elif isinstance(search_field, list_filter.AbstractSearchStrategy):
+                arg = search_field.get_clause(text, self, query.session)
+                if arg is not None:
+                    args.append(arg)
             
-        query = query.filter(sql.and_(*conditions))
+        query = query.filter(sql.or_(*args))
     
         return query
 
