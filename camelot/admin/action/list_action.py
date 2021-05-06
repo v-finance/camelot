@@ -1093,10 +1093,11 @@ class AddNewObject( EditAction ):
         """
         return model_context.admin
     
-    def create_object(self, model_context, session=None):
-        """Create a new entity instance from the given model_context's admin and add it to given session,
-        or the default session, if it is not yet attached to a session"."""
-        admin = self.get_admin(model_context)
+    def create_object(self, model_context, admin, session=None):
+        """
+        Create a new entity instance based on the given model_context as an instance of the given admin's entity.
+        This is done in the given session, or the default session if it is not yet attached to a session.
+        """
         new_object = admin.entity(_session=session)
         subsystem_object = admin.get_subsystem_object(new_object)
         admin.add(new_object)
@@ -1110,9 +1111,9 @@ class AddNewObject( EditAction ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         create_inline = model_context.field_attributes.get('create_inline', False)
-        new_object = yield from self.create_object(model_context)
-        subsystem_object = admin.get_subsystem_object(new_object)
         admin = self.get_admin(model_context)
+        new_object = yield from self.create_object(model_context, admin)
+        subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((subsystem_object,))
