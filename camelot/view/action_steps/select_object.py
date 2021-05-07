@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtWidgets
+from ...core.qt import Qt, QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -110,10 +110,15 @@ class SelectObjects( OpenTableView ):
     def __init__(self, admin, search_text=None, value=None):
         if value is None:
             value = admin.get_query()
-        select_admin = SelectAdminDecorator(admin)
-        super(SelectObjects, self).__init__(select_admin, value)
+        super(SelectObjects, self).__init__(admin, value)
         self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
+        self.list_actions = [CancelSelection(), ConfirmSelection()]
+        self.left_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.LeftToolBarArea)
+        self.right_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.RightToolBarArea)
+        self.top_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.TopToolBarArea)
+        self.bottom_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.BottomToolBarArea)
+        self.list_action = ConfirmSelection()
 
     def render(self, gui_context):
         dialog = SelectDialog(gui_context, self.admin_route, self.verbose_name_plural)
