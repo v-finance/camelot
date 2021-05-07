@@ -30,7 +30,6 @@
 from ...core.qt import Qt, QtWidgets
 
 from camelot.admin.action import ActionStep, Action
-from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon

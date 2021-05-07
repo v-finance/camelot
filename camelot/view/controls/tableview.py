@@ -38,7 +38,6 @@ from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
-from ...admin.admin_route import AdminRoute
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
