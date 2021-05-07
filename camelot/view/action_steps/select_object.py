@@ -64,23 +64,6 @@ class CancelSelection(Action):
     def gui_run(self, gui_context):
         gui_context.view.parent().reject()
 
-class SelectAdminDecorator(ReadOnlyAdminDecorator):
-
-    list_action = ConfirmSelection()
-
-    def __init__(self, original_admin):
-        super(SelectAdminDecorator, self).__init__(original_admin)
-
-    def get_list_actions(self, *a, **kwa):
-        return [CancelSelection(), ConfirmSelection()]
-    
-    
-    def get_related_admin(self, cls):
-        admin = self._original_admin.get_related_admin(cls)
-        # this admin will end up in the model context of the next
-        # step
-        return admin
-
 class SelectDialog(QtWidgets.QDialog):
     
     def __init__(self, gui_context, admin_route, verbose_name, parent = None):
