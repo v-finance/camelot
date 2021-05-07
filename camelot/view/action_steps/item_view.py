@@ -99,6 +99,7 @@ class UpdateTableView( ActionStep ):
         self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
         self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
+        self.list_action = admin.get_list_action()
         self.proxy = admin.get_proxy(value)
     
     def update_table_view(self, table_view):
@@ -112,6 +113,7 @@ class UpdateTableView( ActionStep ):
         table_view.set_filters(self.filters)
         table_view.set_value(self.proxy)
         table_view.set_list_actions(self.list_actions)
+        table_view.list_action = self.list_action
         table_view.set_toolbar_actions(
             Qt.LeftToolBarArea, self.left_toolbar_actions
         )
