@@ -27,10 +27,9 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtWidgets
+from ...core.qt import Qt, QtWidgets
 
 from camelot.admin.action import ActionStep, Action
-from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
@@ -64,23 +63,6 @@ class CancelSelection(Action):
     def gui_run(self, gui_context):
         gui_context.view.parent().reject()
 
-class SelectAdminDecorator(ReadOnlyAdminDecorator):
-
-    list_action = ConfirmSelection()
-
-    def __init__(self, original_admin):
-        super(SelectAdminDecorator, self).__init__(original_admin)
-
-    def get_list_actions(self, *a, **kwa):
-        return [CancelSelection(), ConfirmSelection()]
-    
-    
-    def get_related_admin(self, cls):
-        admin = self._original_admin.get_related_admin(cls)
-        # this admin will end up in the model context of the next
-        # step
-        return admin
-
 class SelectDialog(QtWidgets.QDialog):
     
     def __init__(self, gui_context, admin_route, verbose_name, parent = None):
@@ -110,10 +92,15 @@ class SelectObjects( OpenTableView ):
     def __init__(self, admin, search_text=None, value=None):
         if value is None:
             value = admin.get_query()
-        select_admin = SelectAdminDecorator(admin)
-        super(SelectObjects, self).__init__(select_admin, value)
+        super(SelectObjects, self).__init__(admin, value)
         self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
+        self.list_actions = [CancelSelection(), ConfirmSelection()]
+        self.left_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.LeftToolBarArea)
+        self.right_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.RightToolBarArea)
+        self.top_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.TopToolBarArea)
+        self.bottom_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.BottomToolBarArea)
+        self.list_action = ConfirmSelection()
 
     def render(self, gui_context):
         dialog = SelectDialog(gui_context, self.admin_route, self.verbose_name_plural)
