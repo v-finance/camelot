@@ -472,7 +472,7 @@ class TableView(AbstractView):
     AdminTableWidget = AdminTableWidget
 
     def __init__(
-        self, gui_context, admin_route, parent=None
+        self, gui_context, admin_route, parent=None, list_action=None
         ):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
@@ -509,6 +509,7 @@ class TableView(AbstractView):
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
+        self.list_action = list_action
 
     def close_view(self, accept):
         self.close_clicked_signal.emit()
@@ -525,8 +526,8 @@ class TableView(AbstractView):
         #
         if self.table:
             self.table.close_editor()
-        admin = AdminRoute.admin_for(self.admin_route)
-        admin.list_action.gui_run(self.gui_context)
+        if self.list_action is not None:
+            self.list_action.gui_run(self.gui_context)
 
     def get_admin(self):
         return self.admin
