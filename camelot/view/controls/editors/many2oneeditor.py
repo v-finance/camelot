@@ -165,7 +165,8 @@ class Many2OneEditor( CustomEditor ):
         self.completionPrefixChanged.emit(str(text))
 
     def display_search_completions(self, prefix, completions):
-        self.search_input.setText(prefix)
+        # this might interrupt with the user typing
+        # self.search_input.setText(prefix)
         self.completer.model().setCompletions(completions)
         self.completer.setCompletionPrefix(prefix)
         self.completer.complete()

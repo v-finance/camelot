@@ -86,16 +86,19 @@ class Many2OneDelegate(CustomDelegate):
         return editor
 
     def setEditorData(self, editor, index):
-        super(Many2OneDelegate, self).setEditorData(editor, index)
         if index.model() is None:
             return
-        verbose_name = variant_to_py(index.model().data(index, PreviewRole))
+        # either an update signal is received because there are search
+        # completions, or because the value of the editor needs to change
         prefix = variant_to_py(index.model().data(index, CompletionPrefixRole))
         completions = variant_to_py(index.model().data(index, CompletionsRole))
-        editor.set_verbose_name(verbose_name)
-        editor.index = index
         if (prefix is not None) and (completions is not None):
             editor.display_search_completions(prefix, completions)
+            return
+        super(Many2OneDelegate, self).setEditorData(editor, index)
+        verbose_name = variant_to_py(index.model().data(index, PreviewRole))
+        editor.set_verbose_name(verbose_name)
+        editor.index = index
 
     @QtCore.qt_slot(str)
     def completion_prefix_changed(self, prefix):
