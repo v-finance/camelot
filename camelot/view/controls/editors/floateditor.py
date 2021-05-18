@@ -205,6 +205,8 @@ class FloatEditor(CustomEditor):
         minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
         if None not in (minimum, maximum):
             spinBox.setRange(minimum-1, maximum)
+        group_separator = kwargs.get('group_separator', False)
+        spinBox.setGroupSeparatorShown(group_separator)
         self.update_actions()
 
     def set_value(self, value):
