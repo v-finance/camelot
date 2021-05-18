@@ -37,12 +37,12 @@ import camelot.types
 
 # older versions of PyQt dont allow passing the regesp in the constructor
 # of the validator
-email_validator = QtGui.QRegExpValidator()
-email_validator.setRegExp(QtCore.QRegExp(r'^\S+\@\S+\.\S+$'))
-phone_validator = QtGui.QRegExpValidator()
-phone_validator.setRegExp(QtCore.QRegExp(r'^\+?[0-9\s]+$'))
-any_character_validator =  QtGui.QRegExpValidator()
-any_character_validator.setRegExp(QtCore.QRegExp(r'^.+$'))
+email_validator = QtGui.QRegularExpressionValidator()
+email_validator.setRegularExpression(QtCore.QRegularExpression(r'^\S+\@\S+\.\S+$'))
+phone_validator = QtGui.QRegularExpressionValidator()
+phone_validator.setRegularExpression(QtCore.QRegularExpression(r'^\+?[0-9\s]+$'))
+any_character_validator =  QtGui.QRegularExpressionValidator()
+any_character_validator.setRegularExpression(QtCore.QRegularExpression(r'^.+$'))
 
 validators = {
     'email': email_validator,
