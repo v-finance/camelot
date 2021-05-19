@@ -88,7 +88,7 @@ class ExceptionDialog(QtWidgets.QMessageBox):
         """
 
         (title, text, icon, resolution, detail) = exception_info
-        super( ExceptionDialog, self ).__init__(QtWidgets.QMessageBox.Warning,
+        super( ExceptionDialog, self ).__init__(QtWidgets.QMessageBox.Icon.Warning,
                                                 six.text_type(title), 
                                                 six.text_type(text))
         self.setInformativeText(six.text_type(resolution or ''))

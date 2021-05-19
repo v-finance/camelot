@@ -209,7 +209,7 @@ class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.Close
+    shortcut = QtGui.QKeySequence.StandardKey.Close
     icon = FontIcon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
@@ -248,11 +248,11 @@ class CloseForm( Action ):
             # if the object is not valid, request the user what to do
             #
             message = action_steps.MessageBox( '\n'.join( messages ),
-                                               QtWidgets.QMessageBox.Warning,
+                                               QtWidgets.QMessageBox.Icon.Warning,
                                                _('Invalid form'),
-                                               QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Discard )
+                                               QtWidgets.QMessageBox.StandardButtons.Ok | QtWidgets.QMessageBox.StandardButtons.Discard )
             reply = yield message
-            if reply == QtWidgets.QMessageBox.Discard:
+            if reply == QtWidgets.QMessageBox.StandardButtons.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObjects((obj,))

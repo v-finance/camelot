@@ -58,13 +58,13 @@ class SimpleSearchControl(DecoratedLineEdit, AbstractActionWidget):
         self.returnPressed.connect(self.start_search)
         self.textEdited.connect(self._start_search_timer)
         shortcut = QtWidgets.QShortcut(
-            QtGui.QKeySequence(QtGui.QKeySequence.Find), self
+            QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find), self
         )
         shortcut.activated.connect(self.activate_search)
 
     @QtCore.qt_slot()
     def activate_search(self):
-        self.setFocus(QtCore.Qt.ShortcutFocusReason)
+        self.setFocus(QtCore.Qt.FocusReason.ShortcutFocusReason)
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)

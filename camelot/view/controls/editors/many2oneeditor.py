@@ -78,8 +78,8 @@ class Many2OneEditor( CustomEditor ):
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
         self.new_value = None
@@ -121,9 +121,9 @@ class Many2OneEditor( CustomEditor ):
         self.completer = QtWidgets.QCompleter()
         completions_model = self.CompletionsModel(self.completer)
         self.completer.setModel(completions_model)
-        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtWidgets.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.CompletionMode.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
@@ -172,11 +172,11 @@ class Many2OneEditor( CustomEditor ):
         self.completer.complete()
 
     def completionActivated(self, index):
-        obj = index.data(Qt.EditRole)
+        obj = index.data(Qt.ItemDataRole.EditRole)
         self.set_object(variant_to_py(obj))
 
     def completion_highlighted(self, index ):
-        obj = index.data(Qt.EditRole)
+        obj = index.data(Qt.ItemDataRole.EditRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
     @QtCore.qt_slot(object, tuple)
@@ -211,7 +211,7 @@ class Many2OneEditor( CustomEditor ):
             elif self.completer.model().rowCount()==1:
                 # There is only one possible option
                 index = self.completer.model().index(0,0)
-                entity_getter = variant_to_py(index.data(Qt.EditRole))
+                entity_getter = variant_to_py(index.data(Qt.ItemDataRole.EditRole))
                 self.set_object(entity_getter)
         self.search_input.setText(self._entity_representation or u'')
 

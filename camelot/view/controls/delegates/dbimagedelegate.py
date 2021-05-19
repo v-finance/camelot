@@ -20,6 +20,6 @@ class DbImageDelegate(CustomDelegate):
             image = QtGui.QImage()
             byte_array = QtCore.QByteArray.fromBase64( value.encode() )
             image.loadFromData( byte_array )
-            thumbnail = image.scaled(100,100, Qt.KeepAspectRatio)
+            thumbnail = image.scaled(100,100, Qt.AspectRatioMode.KeepAspectRatio)
             item.setData(py_to_variant(thumbnail), PreviewRole)
         return item  

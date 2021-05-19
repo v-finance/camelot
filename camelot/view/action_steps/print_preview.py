@@ -125,7 +125,7 @@ class PrintPreview( ActionStep ):
         printer = self.get_printer()
         self.config_printer(printer)
         dialog = QtPrintSupport.QPrintPreviewDialog(
-            printer, flags = QtCore.Qt.Window
+            printer, flags = QtCore.Qt.WindowFlags.Window
         )
         dialog.printer = printer
         dialog.paintRequested.connect( self.paint_on_printer )

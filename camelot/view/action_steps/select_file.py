@@ -161,13 +161,13 @@ class SelectDirectory(ActionStep):
     .. attribute:: options
     
         options to pass to :meth:`QtWidgets.QFileDialog.getExistingDirectory`,
-        defaults to :const:`QtWidgets.QFileDialog.ShowDirsOnly`
+        defaults to :const:`QtWidgets.QFileDialog.Options.ShowDirsOnly`
 
     """
     
     def __init__(self):
         self.caption = _('Select directory')
-        self.options = QtWidgets.QFileDialog.ShowDirsOnly
+        self.options = QtWidgets.QFileDialog.Options.ShowDirsOnly
         self.directory = None
         
     def gui_run(self, gui_context):

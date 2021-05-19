@@ -37,12 +37,12 @@ import camelot.types
 
 # older versions of PyQt dont allow passing the regesp in the constructor
 # of the validator
-email_validator = QtGui.QRegExpValidator()
-email_validator.setRegExp(QtCore.QRegExp(r'^\S+\@\S+\.\S+$'))
-phone_validator = QtGui.QRegExpValidator()
-phone_validator.setRegExp(QtCore.QRegExp(r'^\+?[0-9\s]+$'))
-any_character_validator =  QtGui.QRegExpValidator()
-any_character_validator.setRegExp(QtCore.QRegExp(r'^.+$'))
+email_validator = QtGui.QRegularExpressionValidator()
+email_validator.setRegularExpression(QtCore.QRegularExpression(r'^\S+\@\S+\.\S+$'))
+phone_validator = QtGui.QRegularExpressionValidator()
+phone_validator.setRegularExpression(QtCore.QRegularExpression(r'^\+?[0-9\s]+$'))
+any_character_validator =  QtGui.QRegularExpressionValidator()
+any_character_validator.setRegularExpression(QtCore.QRegularExpression(r'^.+$'))
 
 validators = {
     'email': email_validator,
@@ -68,8 +68,8 @@ class VirtualAddressEditor(CustomEditor):
         not yet taken into account.
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
         self.layout = QtWidgets.QHBoxLayout()
@@ -90,8 +90,8 @@ class VirtualAddressEditor(CustomEditor):
         self.label.setIcon(nullIcon)
         self.label.setAutoRaise(True)
         self.label.setEnabled(False)
-        self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        self.label.setFocusPolicy(Qt.ClickFocus)
+        self.label.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.label.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.label.clicked.connect( self.mail_click )
         self.label.hide()
         self.layout.addWidget(self.label)
@@ -123,7 +123,7 @@ class VirtualAddressEditor(CustomEditor):
             else:
                 self.label.hide()
                 self.label.setIcon(icon)
-                self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
+                self.label.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             self.update_validator()
 
     def get_value(self):

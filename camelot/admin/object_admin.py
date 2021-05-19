@@ -336,9 +336,9 @@ be specified using the verbose_name attribute.
         The keys are Qt roles."""
         search_identifiers = {} 
 
-        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
-        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+        search_identifiers[Qt.ItemDataRole.EditRole] = obj
+        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
 
@@ -624,7 +624,7 @@ be specified using the verbose_name attribute.
                 background_color=None,
                 editable=False,
                 nullable=True,
-                focus_policy=Qt.StrongFocus,
+                focus_policy=Qt.FocusPolicy.StrongFocus,
                 widget='str',
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
@@ -681,7 +681,7 @@ be specified using the verbose_name attribute.
             if direction.endswith('many') and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
                 field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
-                    Qt.RightToolBarArea, direction
+                    Qt.ToolBarAreas.RightToolBarArea, direction
                 )
                 if column_width is None:
                     table = related_admin.get_table()

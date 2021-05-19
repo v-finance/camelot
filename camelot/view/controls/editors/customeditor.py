@@ -49,17 +49,17 @@ def set_background_color_palette(widget, background_color):
     #
     if background_color not in (None, ValueLoading):
         palette = QtGui.QPalette(widget.palette())
-        for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive,
-                  QtGui.QPalette.Disabled]:
+        for x in [QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorGroup.Inactive,
+                  QtGui.QPalette.ColorGroup.Disabled]:
             #
             # backgroundRole : role that is used to render the background, If
-            #                  role is QPalette.NoRole, then the widget
+            #                  role is QPalette.ColorRole.NoRole, then the widget
             #                  inherits its parent's background role
             # Window : general background color
             # Base : background color for text entry widgets
             #
-            for y in [widget.backgroundRole(), QtGui.QPalette.Window,
-                      QtGui.QPalette.Base]:
+            for y in [widget.backgroundRole(), QtGui.QPalette.ColorRole.Window,
+                      QtGui.QPalette.ColorRole.Base]:
                 palette.setColor(x, y, background_color)
         widget.setPalette(palette)
     else:
@@ -79,11 +79,11 @@ class AbstractCustomEditor(object):
       the user single clicks in the table view.
 
     * When an editor has widgets that should not get selected when the user
-      tabs through the editor, setFocusPolicy(Qt.ClickFocus) should be called
+      tabs through the editor, setFocusPolicy(Qt.FocusPolicy.ClickFocus) should be called
       on those widgets.
 
     * Editor should set their size policy, for most editor this means their
-      vertical size policy should be  `QtWidgets.QSizePolicy.Fixed`
+      vertical size policy should be  `QtWidgets.QSizePolicy.Policy.Fixed`
     """
 
     def __init__(self):
@@ -127,7 +127,7 @@ class AbstractCustomEditor(object):
         if action.render_hint == RenderHint.TOOL_BUTTON:
             button = ActionToolbutton(action, self.gui_context, parent)
             button.setAutoRaise(True)
-            button.setFocusPolicy(Qt.ClickFocus)
+            button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
             return button
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 

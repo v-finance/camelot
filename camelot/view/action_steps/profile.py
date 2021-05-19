@@ -114,19 +114,19 @@ allow all languages
 
         layout = QtWidgets.QGridLayout()
 
-        layout.addWidget(self.profile_label, 0, 0, Qt.AlignRight)
-        layout.addWidget(self.dialect_label, 1, 0, Qt.AlignRight)
-        layout.addWidget(self.host_label, 2, 0, Qt.AlignRight)
-        layout.addWidget(self.port_label, 2, 3, Qt.AlignRight)
-        layout.addWidget(self.database_name_label, 3, 0, Qt.AlignRight)
-        layout.addWidget(self.username_label, 4, 0, Qt.AlignRight)
-        layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
-        layout.addWidget(self.media_location_label, 7, 0, Qt.AlignRight)
-        layout.addWidget(self.language_label, 8, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_host_label,  10, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_port_label,  10, 3, Qt.AlignRight)
-        layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
+        layout.addWidget(self.profile_label, 0, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.dialect_label, 1, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.host_label, 2, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.port_label, 2, 3, Qt.Alignment.AlignRight)
+        layout.addWidget(self.database_name_label, 3, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.username_label, 4, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.password_label, 5, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.media_location_label, 7, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.language_label, 8, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.proxy_host_label,  10, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.proxy_port_label,  10, 3, Qt.Alignment.AlignRight)
+        layout.addWidget(self.proxy_username_label, 11, 0, Qt.Alignment.AlignRight)
+        layout.addWidget(self.proxy_password_label, 12, 0, Qt.Alignment.AlignRight)
 
         self.profile_editor = QtWidgets.QComboBox(self)
         self.profile_editor.setEditable(True)
@@ -146,7 +146,7 @@ allow all languages
         self.username_editor = TextLineEditor(self)
         self.username_editor.set_value('')
         self.password_editor = TextLineEditor(
-            echo_mode=QtWidgets.QLineEdit.Password,
+            echo_mode=QtWidgets.QLineEdit.EchoMode.Password,
             parent=self
         )
         self.password_editor.set_value('')
@@ -174,7 +174,7 @@ allow all languages
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_username_editor.set_value('')
         self.proxy_password_editor = TextLineEditor(
-            echo_mode=QtWidgets.QLineEdit.Password,
+            echo_mode=QtWidgets.QLineEdit.EchoMode.Password,
             parent=self
         )
         self.proxy_password_editor.set_value('')
@@ -227,7 +227,7 @@ allow all languages
         self.ok_button = QtWidgets.QPushButton(_('OK'))
 
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection(QtWidgets.QBoxLayout.RightToLeft)
+        layout.setDirection(QtWidgets.QBoxLayout.Direction.RightToLeft)
 
         layout.addWidget(self.cancel_button)
         layout.addWidget(self.ok_button)
@@ -393,7 +393,7 @@ class EditProfiles(ActionStep):
     def gui_run(self, gui_context):
         dialog = self.render(gui_context)
         result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_profile_info()
 

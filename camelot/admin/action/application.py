@@ -69,7 +69,7 @@ class Application( Action ):
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
             dialog = exception.ExceptionDialog(exc_info)
-            dialog.exec_()
+            dialog.exec()
             QtCore.QCoreApplication.exit(-1)
 
     def set_application_attributes(self):

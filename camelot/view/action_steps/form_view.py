@@ -78,7 +78,7 @@ class OpenFormView( ActionStep ):
         self.actions = admin.get_form_actions(None)
         self.top_level = True
         get_form_toolbar_actions = admin.get_form_toolbar_actions
-        self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
+        self.top_toolbar_actions = get_form_toolbar_actions(Qt.ToolBarAreas.TopToolBarArea)
         self.title = u' '
         self._columns = admin.get_fields()
         self._form_display = admin.get_form_display()

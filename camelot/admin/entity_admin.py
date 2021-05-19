@@ -233,9 +233,9 @@ and used as a custom action.
     def get_search_identifiers(self, obj):
         search_identifiers = {}
 
-        search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
-        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (six.text_type(obj))
+        search_identifiers[Qt.ItemDataRole.EditRole] = obj
+        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
 
@@ -249,7 +249,7 @@ and used as a custom action.
             None if no toolbar should be created.
         """
         toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions(toolbar_area)
-        if toolbar_area == Qt.TopToolBarArea:
+        if toolbar_area == Qt.ToolBarAreas.TopToolBarArea:
             return toolbar_actions + [
                 list_filter.SearchFilter(self),
                 list_action.SetFilters(),

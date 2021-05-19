@@ -325,11 +325,11 @@ class CreateNewProject( Action ):
                     if command == 'wininst_cloud':
                         yield action_steps.MessageBox( 'Use Inno Setup to process the file<br/>' \
                                                        '<b>%s</b><br/> to build the installer executable'% os.path.join( project_path, filename ),
-                                                       standard_buttons = QtWidgets.QMessageBox.Ok )
+                                                       standard_buttons = QtWidgets.QMessageBox.StandardButtons.Ok )
 
         yield action_steps.MessageBox( 'All files for the new project<br/>' \
                                        'were created in <b>%s</b>'%project_path,
-                                       standard_buttons = QtWidgets.QMessageBox.Ok )
+                                       standard_buttons = QtWidgets.QMessageBox.StandardButtons.Ok )
         yield action_steps.OpenFile( project_path )
         
     def start_project( self, options ):

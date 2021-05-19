@@ -88,7 +88,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
         self.setPalette(palette)
         
     def keyPressEvent(self, e):
-        if e.key() == QtCore.Qt.Key_Down:
+        if e.key() == QtCore.Qt.Key.Key_Down:
             self.arrow_down_key_pressed.emit()
         
         QtWidgets.QLineEdit.keyPressEvent(self, e)

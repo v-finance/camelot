@@ -52,7 +52,7 @@ class VirtualAddressDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        virtual_address = variant_to_py(index.model().data(index, Qt.EditRole))
+        virtual_address = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
   
         if virtual_address and virtual_address!=ValueLoading:
             if virtual_address[0]:
