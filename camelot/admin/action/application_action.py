@@ -395,7 +395,7 @@ class Refresh( Action ):
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
-    shortcut = QtGui.QKeySequence( Qt.Key.Key_F9 )
+    shortcut = QtGui.QKeySequence( Qt.Key.Key_F9.value )
     icon = FontIcon('sync') # 'tango/16x16/actions/view-refresh.png'
     
     def model_run( self, model_context ):
@@ -640,7 +640,7 @@ class SegmentationFault( Action ):
         :kbd:`Ctrl-Alt-0` in the GUI"""
     
     verbose_name = _('Segmentation Fault')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifiers.CTRL+QtCore.Qt.Modifiers.ALT+QtCore.Qt.Key.Key_0 )
+    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifiers.CTRL.value + QtCore.Qt.Modifiers.ALT.value + QtCore.Qt.Key.Key_0.value )
     
     def model_run( self, model_context ):
         from camelot.view import action_steps
