@@ -753,8 +753,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         timer.setObjectName('timer')
         timer.timeout.connect(self.timeout_slot)
 
-        self.__time = QtCore.QTime()
-        self.__time.start()
+        self.__time = QtCore.QDateTime.currentDateTime()
 
         self._filters = dict()
         self._columns = []
@@ -846,7 +845,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
             timer.stop()
             # only slow down if the timout actually caused requests and
             # requests are arriving at the speed of the interval
-            if len(self.__crud_requests) and (self.__time.restart() < (timer.interval() + initial_delay)):
+            current = QtCore.QDateTime.currentDateTime()
+            elapsed = self.__time.msecsTo(current)
+            self.__time = current
+            if len(self.__crud_requests) and (elapsed < (timer.interval() + initial_delay)):
                 # convert interval to int in case a long is returned
                 timer.setInterval(min(maximum_delay, int(timer.interval()) * 2))
             while len(self.__crud_requests):
@@ -860,7 +862,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """
         timer = self.findChild(QtCore.QTimer, 'timer')
         if (timer is not None) and (not timer.isActive()):
-            if self.__time.elapsed() > (timer.interval() + (2*initial_delay)):
+            elapsed = self.__time.msecsTo(QtCore.QDateTime.currentDateTime())
+            if elapsed > (timer.interval() + (2*initial_delay)):
                 # reset the interval after enough time has passed
                 timer.setInterval(initial_delay)
             timer.start()
