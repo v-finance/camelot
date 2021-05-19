@@ -48,7 +48,7 @@ class BusyWidget(QtWidgets.QLabel):
         self.orbs = rows * self.cols
         self.highlighted_orb = 0
         self.timer = None
-        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding )
         mt = get_model_thread()
         mt.thread_busy_signal.connect( self.set_busy )
         # the model thread might already be busy before we connected to it

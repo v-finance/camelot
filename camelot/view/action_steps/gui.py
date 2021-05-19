@@ -143,7 +143,7 @@ class SelectItem(ActionStep):
     def gui_run(self, gui_context):
         dialog = self.render()
         result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
 
@@ -216,11 +216,11 @@ class MessageBox( ActionStep ):
 
     """
 
-    default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+    default_buttons = QtWidgets.QMessageBox.StandardButtons.Ok | QtWidgets.QMessageBox.StandardButtons.Cancel
 
     def __init__( self,
                   text,
-                  icon = QtWidgets.QMessageBox.Information,
+                  icon = QtWidgets.QMessageBox.Icon.Information,
                   title = _('Message'),
                   standard_buttons = default_buttons ):
         self.icon = icon
@@ -244,7 +244,7 @@ class MessageBox( ActionStep ):
     def gui_run( self, gui_context ):
         message_box = self.render()
         result = message_box.exec_()
-        if result == QtWidgets.QMessageBox.Cancel:
+        if result == QtWidgets.QMessageBox.StandardButtons.Cancel:
             raise CancelRequest()
         return result
 

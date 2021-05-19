@@ -62,7 +62,7 @@ class FieldLabel(QtWidgets.QLabel):
             FieldLabel.font = QtWidgets.QApplication.font()
             FieldLabel.bold_font = QtWidgets.QApplication.font()
             FieldLabel.bold_font.setBold(True)
-            FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextSingleLine, 'A' ).width()
+            FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextFlag.TextSingleLine, 'A' ).width()
         show_field_attributes_action = QtWidgets.QAction(_('View attributes'), self)
         show_field_attributes_action.triggered.connect( self.show_field_attributes )
         self.addAction(show_field_attributes_action)

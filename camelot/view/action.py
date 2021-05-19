@@ -81,7 +81,7 @@ class ActionFactory(object):
             text=_('Copy'),
             slot=slot,
             parent=parent,
-            shortcut=QtGui.QKeySequence.Copy,
+            shortcut=QtGui.QKeySequence.StandardKey.Copy,
             actionicon=FontIcon('copy'), # 'tango/16x16/actions/edit-copy.png'
             tip=_('Duplicate')
         )
@@ -94,7 +94,7 @@ class ActionFactory(object):
             text=_('Paste'),
             slot=slot,
             parent=parent,
-            shortcut=QtGui.QKeySequence.Paste,
+            shortcut=QtGui.QKeySequence.StandardKey.Paste,
             actionicon=FontIcon('paste'), # 'tango/16x16/actions/edit-paste.png'
             tip=_('Paste content from clipboard')
         )

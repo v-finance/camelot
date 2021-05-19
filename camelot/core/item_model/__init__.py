@@ -42,14 +42,14 @@ from .query_proxy import QueryModelProxy
 #
 # Custom Roles
 #
-ObjectRole = Qt.UserRole + 1
-PreviewRole = Qt.UserRole + 2
-VerboseIdentifierRole = Qt.UserRole + 3
-ValidRole = Qt.UserRole + 4
-ValidMessageRole = Qt.UserRole + 5
-FieldAttributesRole = Qt.UserRole + 6
-CompletionPrefixRole = Qt.UserRole + 7
-CompletionsRole = Qt.UserRole + 8
+ObjectRole = Qt.ItemDataRole.UserRole + 1
+PreviewRole = Qt.ItemDataRole.UserRole + 2
+VerboseIdentifierRole = Qt.ItemDataRole.UserRole + 3
+ValidRole = Qt.ItemDataRole.UserRole + 4
+ValidMessageRole = Qt.ItemDataRole.UserRole + 5
+FieldAttributesRole = Qt.ItemDataRole.UserRole + 6
+CompletionPrefixRole = Qt.ItemDataRole.UserRole + 7
+CompletionsRole = Qt.ItemDataRole.UserRole + 8
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent

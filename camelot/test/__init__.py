@@ -88,8 +88,8 @@ class GrabMixinCase(object):
         inner_pixmap = QtWidgets.QWidget.grab(widget)
         # add a border to the image
         border = 4
-        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
-        outer_image.fill(Qt.gray)
+        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format.Format_RGB888)
+        outer_image.fill(Qt.GlobalColor.gray)
         painter = QtGui.QPainter()
         painter.begin(outer_image)
         painter.drawPixmap(QtCore.QRectF(border, border, inner_pixmap.width(), inner_pixmap.height()), 

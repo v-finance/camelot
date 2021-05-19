@@ -82,9 +82,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # parent set by layout manager
         table = AdminTableWidget(self)
         table.setObjectName('table')
-        layout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
+        layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                           QtWidgets.QSizePolicy.Policy.Expanding)
         self.setMinimumHeight((self._font_height + 5) * rows)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
@@ -121,7 +121,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if toolbar_actions is not None:
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
-            toolbar.setOrientation(Qt.Vertical)
+            toolbar.setOrientation(Qt.Orientations.Vertical)
             for action in toolbar_actions:
                 qaction = self.render_action(action, toolbar)
                 if isinstance(qaction, QtWidgets.QWidget):
@@ -170,7 +170,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
                     txtwidth = variant_to_py(
-                        model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
+                        model.headerData(i, Qt.Orientations.Horizontal, Qt.ItemDataRole.SizeHintRole)
                     ).width()
                     table.setColumnWidth(i, txtwidth)
 

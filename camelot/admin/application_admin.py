@@ -238,12 +238,12 @@ shortcut confusion and reduce the number of status updates.
             'manytomany'
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
-        if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
+        if toolbar_area == Qt.ToolBarAreas.RightToolBarArea and direction == 'onetomany':
             return [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),
                      list_action.ExportSpreadsheet(), ]
-        if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
+        if toolbar_area == Qt.ToolBarAreas.RightToolBarArea and direction == 'manytomany':
             return [ list_action.AddExistingObject(),
                      list_action.RemoveSelection(),
                      list_action.ExportSpreadsheet(), ]
@@ -268,7 +268,7 @@ shortcut confusion and reduce the number of status updates.
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
+        if toolbar_area == Qt.ToolBarAreas.TopToolBarArea:
             if sys.platform.startswith('darwin'):
                 #
                 # NOTE We remove the CloseForm from the toolbar action list
@@ -289,7 +289,7 @@ shortcut confusion and reduce the number of status updates.
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
+        if toolbar_area == Qt.ToolBarAreas.TopToolBarArea:
             return [
                 list_action.CloseList(), list_action.ListLabel()
                 ] + self.edit_actions + self.change_row_actions + self.export_actions
@@ -485,7 +485,7 @@ shortcut confusion and reduce the number of status updates.
         locale_name = QtCore.QLocale().name()
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
-                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
+                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.LibraryPath.TranslationsPath ) ):
             translators.append(qt_translator)
         logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
         camelot_translator = self._load_translator_from_file(

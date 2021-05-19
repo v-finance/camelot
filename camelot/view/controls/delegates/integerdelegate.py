@@ -44,7 +44,7 @@ class IntegerDelegate(CustomDelegate):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    horizontal_align = Qt.Alignment.AlignRight | Qt.Alignment.AlignVCenter
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):

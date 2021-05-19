@@ -81,7 +81,7 @@ class OpenFile( ActionStep ):
         if not self.path.startswith(r'\\'):
             url = QtCore.QUrl.fromLocalFile( self.path )
         else:
-            url = QtCore.QUrl( self.path, QtCore.QUrl.TolerantMode )
+            url = QtCore.QUrl( self.path, QtCore.QUrl.ParsingMode.TolerantMode )
         return QtGui.QDesktopServices.openUrl( url )
     
 class OpenStream( OpenFile ):

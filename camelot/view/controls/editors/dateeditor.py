@@ -54,8 +54,8 @@ class DateEditor(CustomEditor):
                        validator = DateValidator(),
                        **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
@@ -83,9 +83,9 @@ class DateEditor(CustomEditor):
         self.special_date.setAutoRaise(True)
         self.special_date.setToolTip(ugettext('Calendar and special dates'))
         self.special_date.setMenu(special_date_menu)
-        self.special_date.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+        self.special_date.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
-        self.special_date.setFocusPolicy(Qt.ClickFocus)
+        self.special_date.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         # end of sensitive part
 
         if nullable:
@@ -97,7 +97,7 @@ class DateEditor(CustomEditor):
 
         self.hlayout.setContentsMargins(0, 0, 0, 0)
         self.hlayout.setSpacing(0)
-        self.hlayout.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        self.hlayout.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
         
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.hlayout)

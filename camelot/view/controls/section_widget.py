@@ -49,10 +49,10 @@ class PaneSection(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         section_tree = ModelTree(parent=self)
         # i hate the sunken frame style
-        section_tree.setFrameShape(QtWidgets.QFrame.NoFrame)
-        section_tree.setFrameShadow(QtWidgets.QFrame.Plain)
+        section_tree.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        section_tree.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
         section_tree.contextmenu = QtWidgets.QMenu(self)
-        section_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        section_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         section_tree.customContextMenuRequested.connect(self.create_context_menu)
         section_tree.setObjectName( 'SectionTree' )
         section_tree.itemClicked.connect( self._item_clicked )
@@ -140,7 +140,7 @@ class NavigationPane(QtWidgets.QDockWidget):
         self.gui_context = gui_context
         tb = QtWidgets.QToolBox()
         tb.setMinimumWidth(220)
-        tb.setFrameShape(QtWidgets.QFrame.NoFrame)
+        tb.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
         tb.setObjectName('toolbox')
@@ -149,7 +149,7 @@ class NavigationPane(QtWidgets.QDockWidget):
         # hack for removing the dock title bar
         self.setTitleBarWidget(QtWidgets.QWidget())
         self.setWidget(tb)
-        self.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        self.setFeatures(QtWidgets.QDockWidget.DockWidgetFeatures.NoDockWidgetFeatures)
 
     def wheelEvent(self, wheel_event):
         steps = -1 * wheel_event.angleDelta().y() / (8 * 15)

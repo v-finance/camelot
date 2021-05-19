@@ -62,7 +62,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         self.gui_context.workspace = self
 
         self.setObjectName('workspace_tab_widget')
-        self.setTabPosition(QtWidgets.QTabWidget.East)
+        self.setTabPosition(QtWidgets.QTabWidget.TabPosition.East)
         self.setDocumentMode(True)
         self.currentChanged.connect(self._tab_changed)
 
@@ -201,9 +201,9 @@ def apply_form_state(view, parent, state):
         decoration_width = parent_frame.width() - parent_geometry.width()
         decoration_height = parent_frame.height() - parent_geometry.height()
     if state == constants.MAXIMIZED:
-        view.setWindowState(QtCore.Qt.WindowMaximized)
+        view.setWindowState(QtCore.Qt.WindowStates.WindowMaximized)
     elif state == constants.MINIMIZED:
-        view.setWindowState(QtCore.Qt.WindowMinimized)
+        view.setWindowState(QtCore.Qt.WindowStates.WindowMinimized)
     elif state == constants.RIGHT:
         geometry.setLeft(geometry.center().x())
         view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
@@ -255,7 +255,7 @@ def show_top_level(view, parent, state=None):
     view.setWindowTitle(' ')
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
-    view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    view.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
     # parent might be a QWidget or a QWindow
     # the modality should be set before showing the window
     if isinstance(parent, QtWidgets.QWidget):

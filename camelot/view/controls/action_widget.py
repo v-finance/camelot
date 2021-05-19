@@ -62,7 +62,7 @@ class AbstractActionWidget( object ):
                 # might not be up to date at the time the currentRowChanged
                 # signal is emitted
                 selection_model.currentRowChanged.connect(
-                    self.current_row_changed, type=Qt.QueuedConnection
+                    self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
                 )
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
@@ -77,7 +77,7 @@ class AbstractActionWidget( object ):
               args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientations.Horizontal:
             return
         if isinstance(self.gui_context, FormActionGuiContext):
             # the model might emit a dataChanged signal, while the widget mapper
@@ -223,7 +223,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu(state, self)
         if state.modes:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
     @QtCore.qt_slot()
     def action_triggered(self):

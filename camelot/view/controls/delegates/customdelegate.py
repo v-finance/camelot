@@ -103,8 +103,8 @@ def DocumentationMetaclass(name, bases, dct):
 
     return type(name, bases, dct)
 
-color_groups = {True: QtGui.QPalette.Inactive,
-                False: QtGui.QPalette.Disabled}
+color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
+                False: QtGui.QPalette.ColorGroup.Disabled}
 
 class CustomDelegate(QtWidgets.QItemDelegate):
     """Base class for implementing custom delegates.
@@ -116,7 +116,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
-    horizontal_align = Qt.AlignLeft | Qt.AlignVCenter
+    horizontal_align = Qt.Alignment.AlignLeft | Qt.Alignment.AlignVCenter
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
@@ -146,14 +146,14 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         :return: a `QStandardItem` object
         """
         item = QtGui.QStandardItem()
-        item.setData(py_to_variant(value), Qt.EditRole)
-        item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
+        item.setData(py_to_variant(value), Qt.ItemDataRole.EditRole)
+        item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(field_attributes_values)),
                      FieldAttributesRole)
         item.setData(py_to_variant(field_attributes_values.get('tooltip')),
-                     Qt.ToolTipRole)
+                     Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(field_attributes_values.get('background_color')),
-                     Qt.BackgroundRole)
+                     Qt.ItemDataRole.BackgroundRole)
         return item
 
     def createEditor(self, parent, option, index):
@@ -184,16 +184,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not
         #   getting closed always
-        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
+        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
 
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
-        # Qt model's data for Qt.ToolTipRole
-        # but i wonder if we should make the detour by Qt.ToolTipRole or just
+        # Qt model's data for Qt.ItemDataRole.ToolTipRole
+        # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
@@ -218,7 +218,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         margin_left=0,
         margin_right=0,
         horizontal_align=None,
-        vertical_align=Qt.AlignVCenter
+        vertical_align=Qt.Alignment.AlignVCenter
     ):
         """Paint unicode text into the given rect defined by option, and fill the rect with
         the background color
@@ -229,7 +229,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # prevent text being centered if the height of the cell increases beyond multiple
         # lines of text
         if rect.height() > 2 * self._height:
-            vertical_align = Qt.AlignTop
+            vertical_align = Qt.Alignment.AlignTop
 
         field_attributes = variant_to_py(index.data(FieldAttributesRole))
         if field_attributes != ValueLoading:
@@ -238,13 +238,13 @@ class CustomDelegate(QtWidgets.QItemDelegate):
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
 
-        if( option.state & QtWidgets.QStyle.State_Selected ):
+        if( option.state & QtWidgets.QStyle.State.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = option.palette.highlightedText().color()
         else:
             color_group = color_groups[editable]
-            painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.Base) )
-            fontColor = option.palette.color(color_group, QtGui.QPalette.Text)
+            painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.ColorRole.Base) )
+            fontColor = option.palette.color(color_group, QtGui.QPalette.ColorRole.Text)
         
 
         if prefix:

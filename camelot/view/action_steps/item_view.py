@@ -46,7 +46,7 @@ from ..proxy.collection_proxy import CollectionProxy
 
 class Sort( ActionStep ):
     
-    def __init__( self, column, order = Qt.AscendingOrder ):
+    def __init__( self, column, order = Qt.SortOrder.AscendingOrder ):
         """Sort the items in the item view ( list, table or tree )
         
         :param column: the index of the column on which to sort
@@ -95,10 +95,10 @@ class UpdateTableView( ActionStep ):
         self.filters = admin.get_filters()
         self.list_actions = admin.get_list_actions()
         self.columns = admin.get_columns()
-        self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
-        self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
-        self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
-        self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
+        self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.LeftToolBarArea)
+        self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.RightToolBarArea)
+        self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.TopToolBarArea)
+        self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.BottomToolBarArea)
         self.proxy = admin.get_proxy(value)
     
     def update_table_view(self, table_view):
@@ -113,16 +113,16 @@ class UpdateTableView( ActionStep ):
         table_view.set_value(self.proxy)
         table_view.set_list_actions(self.list_actions)
         table_view.set_toolbar_actions(
-            Qt.LeftToolBarArea, self.left_toolbar_actions
+            Qt.ToolBarAreas.LeftToolBarArea, self.left_toolbar_actions
         )
         table_view.set_toolbar_actions(
-            Qt.RightToolBarArea, self.right_toolbar_actions
+            Qt.ToolBarAreas.RightToolBarArea, self.right_toolbar_actions
         )
         table_view.set_toolbar_actions(
-            Qt.TopToolBarArea, self.top_toolbar_actions
+            Qt.ToolBarAreas.TopToolBarArea, self.top_toolbar_actions
         )
         table_view.set_toolbar_actions(
-            Qt.BottomToolBarArea, self.bottom_toolbar_actions
+            Qt.ToolBarAreas.BottomToolBarArea, self.bottom_toolbar_actions
         )
         if self.search_text is not None:
             search_control = table_view.findChild(SimpleSearchControl)
@@ -177,7 +177,7 @@ class OpenTableView( UpdateTableView ):
             ))
             show_top_level(table_view, None)
         table_view.change_title(self.title)
-        table_view.setFocus(Qt.PopupFocusReason)
+        table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
 class OpenQmlTableView(OpenTableView):
@@ -224,7 +224,7 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context.view = table
 
         qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
-        table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
         for i, action in enumerate(itertools.chain(
             self.top_toolbar_actions, self.list_actions, self.filters
             )):
@@ -262,4 +262,4 @@ class RefreshItemView(ActionStep):
                 # new row to appear, and so the proxy needs to be reindexed
                 # this sorting of reset is not implemented, therefor, we simply
                 # sort on the first column to force reindexing
-                model.sort(0, Qt.AscendingOrder)
+                model.sort(0, Qt.SortOrder.AscendingOrder)

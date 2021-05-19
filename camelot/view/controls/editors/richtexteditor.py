@@ -79,8 +79,8 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding,
-                            QtWidgets.QSizePolicy.Expanding )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding,
+                            QtWidgets.QSizePolicy.Policy.Expanding )
 
         self.textedit = CustomTextEdit(self)
 
@@ -97,7 +97,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.setLayout(self.layout)
 
         # Format
-        self.textedit.setFontWeight(QtGui.QFont.Normal)
+        self.textedit.setFontWeight(QtGui.QFont.Weight.Normal)
         self.textedit.setFontItalic(False)
         self.textedit.setFontUnderline(False)
 
@@ -130,7 +130,7 @@ class RichTextEditor(CustomEditor, WideEditor):
     def initToolbar(self):
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setObjectName( 'toolbar' )
-        toolbar.setOrientation(Qt.Horizontal)
+        toolbar.setOrientation(Qt.Orientations.Horizontal)
         toolbar.setContentsMargins(0, 0, 0, 0)
 
         bold_button = QtWidgets.QToolButton(self)
@@ -245,9 +245,9 @@ class RichTextEditor(CustomEditor, WideEditor):
     def set_bold(self):
         font = self.textedit.currentFont()
         if not font.bold():
-            self.textedit.setFontWeight(QtGui.QFont.Bold)
+            self.textedit.setFontWeight(QtGui.QFont.Weight.Bold)
         else:
-            self.textedit.setFontWeight(QtGui.QFont.Normal)
+            self.textedit.setFontWeight(QtGui.QFont.Weight.Normal)
 
     def set_italic(self, bool):
         font = self.textedit.currentFont()
@@ -264,13 +264,13 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.zoomOut()
 
     def set_alignleft(self, bool):
-        self.textedit.setAlignment(Qt.AlignLeft)
+        self.textedit.setAlignment(Qt.Alignment.AlignLeft)
 
     def set_aligncenter(self, bool):
-        self.textedit.setAlignment(Qt.AlignCenter)
+        self.textedit.setAlignment(Qt.Alignment.AlignCenter)
 
     def set_alignright(self, bool):
-        self.textedit.setAlignment(Qt.AlignRight)
+        self.textedit.setAlignment(Qt.Alignment.AlignRight)
 
     def set_color(self):
         color = QtWidgets.QColorDialog.getColor(self.textedit.textColor())

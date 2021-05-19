@@ -48,7 +48,7 @@ class TimeDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
+        value = variant_to_py( index.model().data( index, Qt.ItemDataRole.EditRole ) )
         
         value_str = u''
         if value not in (None, ValueLoading):

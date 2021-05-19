@@ -63,7 +63,7 @@ class ColumnGroupsWidget(QtWidgets.QTabBar):
         from camelot.admin.table import ColumnGroup
         super(ColumnGroupsWidget, self).__init__(parent)
         assert object_thread(self)
-        self.setShape(QtWidgets.QTabBar.RoundedSouth)
+        self.setShape(QtWidgets.QTabBar.Shape.RoundedSouth)
         self.groups = dict()
         self.table_widget = table_widget
         column_index = 0
@@ -123,12 +123,12 @@ class TableWidget(QtWidgets.QTableView):
         logger.debug('create TableWidget')
         assert object_thread(self)
         self._columns_changed = dict()
-        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.setEditTriggers(QtWidgets.QAbstractItemView.SelectedClicked |
-                             QtWidgets.QAbstractItemView.DoubleClicked |
-                             QtWidgets.QAbstractItemView.CurrentChanged)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.EditTriggers.SelectedClicked |
+                             QtWidgets.QAbstractItemView.EditTriggers.DoubleClicked |
+                             QtWidgets.QAbstractItemView.EditTriggers.CurrentChanged)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                           QtWidgets.QSizePolicy.Policy.Expanding)
         try:
             self.horizontalHeader().setClickable(True)
         except AttributeError:
@@ -140,8 +140,8 @@ class TableWidget(QtWidgets.QTableView):
         self._minimal_row_height = line_height * lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize(self._minimal_row_height)
         self.setHorizontalScrollMode(
-            QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+            QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect(
             self.horizontal_section_clicked)
         self.horizontalHeader().sectionResized.connect(
@@ -171,16 +171,16 @@ class TableWidget(QtWidgets.QTableView):
                 # result in setting the width to 0
                 continue
             old_size = variant_to_py(self.model().headerData(logical_index,
-                                                             Qt.Horizontal,
-                                                             Qt.SizeHintRole))
+                                                             Qt.Orientations.Horizontal,
+                                                             Qt.ItemDataRole.SizeHintRole))
             # when the size is different from the one from the model, the
             # user changed it
             if (old_size is not None) and (old_size.width() != new_width):
                 new_size = QtCore.QSize(new_width, old_size.height())
                 self.model().setHeaderData(logical_index,
-                                           Qt.Horizontal,
+                                           Qt.Orientations.Horizontal,
                                            new_size,
-                                           Qt.SizeHintRole)
+                                           Qt.ItemDataRole.SizeHintRole)
         self._columns_changed = dict()
         super(TableWidget, self).timerEvent(event)
 
@@ -211,7 +211,7 @@ class TableWidget(QtWidgets.QTableView):
         """Update the sorting of the model and the header"""
         assert object_thread(self)
         header = self.horizontalHeader()
-        order = Qt.AscendingOrder
+        order = Qt.SortOrder.AscendingOrder
         if not header.isSortIndicatorShown():
             header.setSortIndicatorShown(True)
         elif header.sortIndicatorSection() == logical_index:
@@ -264,8 +264,8 @@ class TableWidget(QtWidgets.QTableView):
         model = self.model()
         for i in range(model.columnCount()):
             size_hint = variant_to_py(model.headerData(i,
-                                                       Qt.Horizontal,
-                                                       Qt.SizeHintRole))
+                                                       Qt.Orientations.Horizontal,
+                                                       Qt.ItemDataRole.SizeHintRole))
             if size_hint is not None:
                 self.setColumnWidth(i, size_hint.width())
         # dont save these changes, since they are the defaults
@@ -280,11 +280,11 @@ class TableWidget(QtWidgets.QTableView):
         # row width to the size hint of the editor
         if editor is not None:
             column_size_hint = variant_to_py(header_data(current.column(),
-                                                         Qt.Horizontal,
-                                                         Qt.SizeHintRole))
+                                                         Qt.Orientations.Horizontal,
+                                                         Qt.ItemDataRole.SizeHintRole))
             row_size_hint = variant_to_py(header_data(current.row(),
-                                                      Qt.Vertical,
-                                                      Qt.SizeHintRole))
+                                                      Qt.Orientations.Vertical,
+                                                      Qt.ItemDataRole.SizeHintRole))
             editor_size_hint = editor.sizeHint()
             self.setRowHeight(current.row(), max(row_size_hint.height(),
                                                  editor_size_hint.height()))
@@ -294,14 +294,14 @@ class TableWidget(QtWidgets.QTableView):
         if current.row() != previous.row():
             if previous.row() >= 0:
                 row_size_hint = variant_to_py(header_data(previous.row(),
-                                                          Qt.Vertical,
-                                                          Qt.SizeHintRole))
+                                                          Qt.Orientations.Vertical,
+                                                          Qt.ItemDataRole.SizeHintRole))
                 self.setRowHeight(previous.row(), row_size_hint.height())
         if current.column() != previous.column():
             if previous.column() >= 0:
                 column_size_hint = variant_to_py(header_data(previous.column(),
-                                                             Qt.Horizontal,
-                                                             Qt.SizeHintRole))
+                                                             Qt.Orientations.Horizontal,
+                                                             Qt.ItemDataRole.SizeHintRole))
                 self.setColumnWidth(previous.column(),
                                     column_size_hint.width())
         # whenever we change the size, sectionsResized is called, but these
@@ -310,8 +310,8 @@ class TableWidget(QtWidgets.QTableView):
 
     def keyPressEvent(self, e):
         assert object_thread(self)
-        if self.hasFocus() and e.key() in (QtCore.Qt.Key_Enter,
-                                           QtCore.Qt.Key_Return):
+        if self.hasFocus() and e.key() in (QtCore.Qt.Key.Key_Enter,
+                                           QtCore.Qt.Key.Key_Return):
             self.keyboard_selection_signal.emit()
         else:
             super(TableWidget, self).keyPressEvent(e)
@@ -426,7 +426,7 @@ class HeaderWidget(QtWidgets.QWidget):
         widget_layout.addWidget(number_of_rows)
         layout.addLayout(widget_layout, 0)
         self.setLayout(layout)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
 
 
 class TableView(AbstractView):
@@ -489,8 +489,8 @@ class TableView(AbstractView):
         table_widget = QtWidgets.QWidget(self)
         # make sure the table itself takes expands to fill the available
         # width of the view
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                            QtWidgets.QSizePolicy.Expanding)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                            QtWidgets.QSizePolicy.Policy.Expanding)
         size_policy.setHorizontalStretch(1)
         table_widget.setSizePolicy(size_policy)
         filters_widget = QtWidgets.QWidget(self)
@@ -634,7 +634,7 @@ class TableView(AbstractView):
     def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
         """Set the toolbar for a specific area
         :param toolbar_area: the area on which to put the toolbar, from
-            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
+            :class:`Qt.ToolBarAreas.LeftToolBarArea` through :class:`Qt.ToolBarAreas.BottomToolBarArea`
         :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
             as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
             method.

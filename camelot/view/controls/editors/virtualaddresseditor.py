@@ -68,8 +68,8 @@ class VirtualAddressEditor(CustomEditor):
         not yet taken into account.
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self._address_type = address_type
         self.layout = QtWidgets.QHBoxLayout()
@@ -90,8 +90,8 @@ class VirtualAddressEditor(CustomEditor):
         self.label.setIcon(nullIcon)
         self.label.setAutoRaise(True)
         self.label.setEnabled(False)
-        self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        self.label.setFocusPolicy(Qt.ClickFocus)
+        self.label.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.label.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.label.clicked.connect( self.mail_click )
         self.label.hide()
         self.layout.addWidget(self.label)
@@ -123,7 +123,7 @@ class VirtualAddressEditor(CustomEditor):
             else:
                 self.label.hide()
                 self.label.setIcon(icon)
-                self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
+                self.label.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             self.update_validator()
 
     def get_value(self):

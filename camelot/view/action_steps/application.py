@@ -126,7 +126,7 @@ class NavigationPanel(ActionStep):
     def gui_run( self, gui_context ):
         navigation_panel = self.render(gui_context)
         gui_context.workspace.parent().addDockWidget(
-            Qt.LeftDockWidgetArea, navigation_panel
+            Qt.DockWidgetAreas.LeftDockWidgetArea, navigation_panel
         )
 
 class MainMenu(ActionStep):

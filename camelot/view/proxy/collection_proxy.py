@@ -96,11 +96,11 @@ invalid_data = py_to_variant()
 #        the same as the default field attributes in the object admin
 invalid_field_attributes_data = py_to_variant(ProxyDict(
     editable=False,
-    focus_policy=Qt.NoFocus,
+    focus_policy=Qt.FocusPolicy.NoFocus,
 ))
 invalid_item = QtGui.QStandardItem()
-invalid_item.setFlags(Qt.NoItemFlags)
-invalid_item.setData(invalid_data, Qt.EditRole)
+invalid_item.setFlags(Qt.ItemFlags.NoItemFlags)
+invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
@@ -206,9 +206,9 @@ class UpdateMixin(object):
             header_item.setData(py_to_variant(valid), ValidRole)
             header_item.setData(py_to_variant(message), ValidMessageRole)
             if action_state is not None:
-                header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
-                header_item.setData(py_to_variant(six.text_type(action_state.verbose_name)), Qt.DisplayRole)
-                header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
+                header_item.setData(py_to_variant(action_state.tooltip), Qt.ItemDataRole.ToolTipRole)
+                header_item.setData(py_to_variant(six.text_type(action_state.verbose_name)), Qt.ItemDataRole.DisplayRole)
+                header_item.setData(py_to_variant(action_state.icon), Qt.ItemDataRole.DecorationRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
@@ -564,7 +564,7 @@ class Sort(RowCount):
 
     def model_run(self, model_context):
         field_name = model_context.static_field_attributes[self.column]['field_name']
-        model_context.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
+        model_context.proxy.sort(field_name, self.order!=Qt.SortOrder.AscendingOrder)
         super(Sort, self).model_run(model_context)
         return self
 
@@ -661,13 +661,13 @@ class SetColumns(object):
             #
             # Set the header data
             #
-            set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
+            set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
+            set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
             set_header_data(py_to_variant({'editable': fa.get('editable', True)}), FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
-                set_header_data(item_model._header_font_required, Qt.FontRole)
+                set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
             else:
-                set_header_data(item_model._header_font, Qt.FontRole)
+                set_header_data(item_model._header_font, Qt.ItemDataRole.FontRole)
 
             settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
             if settings_width > 0:
@@ -675,7 +675,7 @@ class SetColumns(object):
             else:
                 width = fa['column_width'] * char_width
             header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
+                                 Qt.ItemDataRole.SizeHintRole )
             item_model.setHorizontalHeaderItem( i, header_item )
         item_model.settings.endGroup()
         item_model.settings.endGroup()
@@ -942,7 +942,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # easier to replace the source model all at once
         self.setRowCount(0)
         root_item = self.invisibleRootItem()
-        root_item.setFlags(Qt.NoItemFlags)
+        root_item.setFlags(Qt.ItemFlags.NoItemFlags)
         root_item.setEnabled(row_count is not None)
         self.setRowCount(min(row_count or 0, self.max_row_count))
         self.logger.debug('_reset end')
@@ -1049,8 +1049,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
-        if orientation == Qt.Horizontal:
-            if role == Qt.SizeHintRole:
+        if orientation == Qt.Orientations.Horizontal:
+            if role == Qt.ItemDataRole.SizeHintRole:
                 width = value.width()
                 self._append_request(SetHeaderData(section, width))
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
@@ -1060,8 +1060,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         information out of them
         """
         assert object_thread( self )
-        if (orientation == Qt.Vertical) and (section >= 0):
-            if role == Qt.SizeHintRole:
+        if (orientation == Qt.Orientations.Vertical) and (section >= 0):
+            if role == Qt.ItemDataRole.SizeHintRole:
                 #
                 # sizehint role is requested, for every row, so we have to
                 # return a fixed value
@@ -1073,7 +1073,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
                     self._rows_under_request.add(section)
                     self._start_timer()
                 return invalid_data
-            if role == Qt.DecorationRole:
+            if role == Qt.ItemDataRole.DecorationRole:
                 icon = variant_to_py(item.data(role))
                 if icon is not None:
                     return py_to_variant(icon.getQPixmap())
@@ -1088,7 +1088,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         assert object_thread( self )
         self._append_request(Sort(column, order))
 
-    def data(self, index, role = Qt.DisplayRole):
+    def data(self, index, role = Qt.ItemDataRole.DisplayRole):
         """:return: the data at index for the specified role
         This function will return ValueLoading when the data has not
         yet been fetched from the underlying model.  It will then send
@@ -1110,7 +1110,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         col = index.column()
         child_item = root_item.child(row, col)
         # the standard implementation uses EditRole as DisplayRole
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             role = PreviewRole
 
         if child_item is None:
@@ -1128,7 +1128,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             return invalid_item.data(role)
 
         if role == ObjectRole:
-            return self.headerData(row, Qt.Vertical, role)
+            return self.headerData(row, Qt.Orientations.Vertical, role)
 
         return child_item.data(role)
 
@@ -1142,10 +1142,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         child_item = root_item.child(index.row(), index.column())
         if child_item is None:
-            return Qt.NoItemFlags
+            return Qt.ItemFlags.NoItemFlags
         return child_item.flags()
 
-    def setData( self, index, value, role = Qt.EditRole ):
+    def setData( self, index, value, role = Qt.ItemDataRole.EditRole ):
         """Value should be a function taking no arguments that returns the data to
         be set
 
@@ -1158,15 +1158,15 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if (not index.isValid()) or (index.model()!=self):
             self.logger.debug('set data index is invalid')
             return False
-        if role == Qt.EditRole:
+        if role == Qt.ItemDataRole.EditRole:
             column = index.column()
             # if the field is not editable, don't waste any time and get out of here
-            field_attributes = variant_to_py(self.headerData(column, Qt.Horizontal, FieldAttributesRole))
+            field_attributes = variant_to_py(self.headerData(column, Qt.Orientations.Horizontal, FieldAttributesRole))
             if field_attributes.get('editable', True) != True:
                 self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
                 return False
             row = index.row()
-            obj = variant_to_py(self.headerData(row, Qt.Vertical, ObjectRole))
+            obj = variant_to_py(self.headerData(row, Qt.Orientations.Vertical, ObjectRole))
             if obj is None:
                 logger.debug('set data called on row without object')
                 return False

@@ -399,7 +399,7 @@ class RowDataAdmin(ObjectAdmin):
         return self.admin.get_related_admin(cls)
 
     def get_related_toolbar_actions(self, toolbar_area, direction):
-        if toolbar_area==Qt.RightToolBarArea:
+        if toolbar_area==Qt.ToolBarAreas.RightToolBarArea:
             return self.list_actions
 
     def get_field_attributes(self, field_name):

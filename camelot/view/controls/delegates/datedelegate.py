@@ -41,7 +41,7 @@ class DateDelegate(CustomDelegate):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    horizontal_align = Qt.Alignment.AlignRight | Qt.Alignment.AlignVCenter
     
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
@@ -52,7 +52,7 @@ class DateDelegate(CustomDelegate):
     def get_standard_item(cls, locale, value, fa_values):
         item = super(DateDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
-            value_str = six.text_type(locale.toString(value, QtCore.QLocale.ShortFormat))
+            value_str = six.text_type(locale.toString(value, QtCore.QLocale.FormatType.ShortFormat))
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
             item.setData(py_to_variant(six.text_type()), PreviewRole)

@@ -50,7 +50,7 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
         self.index_by_language = dict()
         languages = [QtCore.QLocale(lang).language() for lang in languages]
         if not self.language_choices:
-            for i in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
+            for i in range(QtCore.QLocale.Language.C, QtCore.QLocale.Language.Chewa + 1):
                 if languages and (i not in languages):
                     continue
                 language = QtCore.QLocale.Language(i)

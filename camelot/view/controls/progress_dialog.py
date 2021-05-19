@@ -83,7 +83,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         layout.addWidget( label )
         layout.addWidget( progress_bar )
         button_layout = QtWidgets.QHBoxLayout()
-        button_layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
+        button_layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
         button_layout.addWidget( copy_button )
@@ -172,7 +172,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             index = model.index(model.rowCount()-1, 0)
             model.setData(index,
                           py_to_variant(text),
-                          Qt.DisplayRole)
+                          Qt.ItemDataRole.DisplayRole)
             details.scrollTo(index, QtWidgets.QListView.PositionAtBottom)
 
     def clear_details( self ):

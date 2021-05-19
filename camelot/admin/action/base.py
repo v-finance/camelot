@@ -82,7 +82,7 @@ strictly to the :class:`ModelContext`
         if window is not None:
             progress_dialog = window.findChild(
                 QtWidgets.QProgressDialog, 'application_progress',
-                Qt.FindDirectChildrenOnly
+                Qt.FindChildOptions.FindDirectChildrenOnly
             )
             if progress_dialog is None:
                 progress_dialog = ProgressDialog(parent=window)
@@ -415,10 +415,10 @@ with a view.
             tooltip = six.text_type(self.tooltip)
 
         if isinstance(self.shortcut, QtGui.QKeySequence):
-            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
         elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
             for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
-                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
                 break
         elif self.shortcut is not None:
             tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)

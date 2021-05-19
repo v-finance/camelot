@@ -108,7 +108,7 @@ class FormEditors(QtCore.QObject):
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):
-                widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+                widget_label.setAlignment(Qt.Alignment.AlignVCenter | Qt.Alignment.AlignRight)
             editor.set_label(widget_label)
         return widget_label
 
@@ -155,7 +155,7 @@ class FormWidget(QtWidgets.QWidget):
 
     # @QtCore.qt_slot(int, int, int)
     def _header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientations.Vertical:
             widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
             if widget_mapper is not None:
                 current_index = widget_mapper.currentIndex()
@@ -208,8 +208,8 @@ class FormWidget(QtWidgets.QWidget):
             #first_widget = widget_mapper.mappedWidgetAt(i)
             #if first_widget is None:
                 #break
-            #if first_widget.focusPolicy() != Qt.NoFocus:
-                #first_widget.setFocus(Qt.PopupFocusReason)
+            #if first_widget.focusPolicy() != Qt.FocusPolicy.NoFocus:
+                #first_widget.setFocus(Qt.FocusReason.PopupFocusReason)
                 #break
         LOGGER.debug( 'done' )
 
@@ -268,7 +268,7 @@ class FormView(AbstractView):
     @QtCore.qt_slot( int )
     def update_title(self, current_index ):
         verbose_identifier = variant_to_py(self.model.headerData(
-            current_index, Qt.Vertical, VerboseIdentifierRole
+            current_index, Qt.Orientations.Vertical, VerboseIdentifierRole
         ))
         if verbose_identifier is not None:
             self.change_title(u'%s %s'%(self.title_prefix,verbose_identifier))
@@ -302,7 +302,7 @@ class FormView(AbstractView):
             for action in actions:
                 toolbar.addWidget(self.render_action(action, toolbar))
             toolbar.addWidget( BusyWidget() )
-            layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
+            layout.insertWidget( 0, toolbar, 0, Qt.Alignment.AlignTop )
             # @todo : this show is needed on OSX or the form window
             # is hidden after the toolbar is added, maybe this can
             # be solved using windowflags, since this causes some
