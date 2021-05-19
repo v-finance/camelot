@@ -145,8 +145,34 @@ if qt_api in ('', 'PyQt5'):
         LOGGER.warn('Could not load PyQt5')
         qt_api = ''
 
+if qt_api in ('', 'PyQt6'):
+    try:
+        qt_api = 'PyQt6'
+        # as of pyqt 5.11, qt should be imported before sip
+        from PyQt6 import QtCore
+        from PyQt6 import sip
+        QtCore.qt_slot = QtCore.pyqtSlot
+        QtCore.qt_signal = QtCore.pyqtSignal
+        QtCore.qt_property = QtCore.pyqtProperty
+        variant_api = 2
+        string_api = 2
+        QtModel = DelayedModule('QtCore')
+        QtWidgets = DelayedModule('QtWidgets')
+        QtPrintSupport = DelayedModule('QtPrintSupport')
+        QtQml = DelayedModule('QtQml')
+        QtQuick = DelayedModule('QtQuick')
+        #QtWebKit = DelayedQtWebEngineWidgets('QtWebEngineWidgets')
+        QtWebKit = DelayedModule('QtWebKitWidgets')
+        QtQuickWidgets = DelayedModule('QtQuickWidgets')
+        is_deleted = sip.isdeleted
+        delete = sip.delete
+        transferto = sip.transferto
+    except ImportError:
+        LOGGER.warn('Could not load PyQt6')
+        qt_api = ''
+
 if qt_api=='':
-    raise Exception('PyQt4, PySide nor PyQt5 could be imported')
+    raise Exception('PyQt4, PyQt5, PyQt6 nor PySide could be imported')
 else:
     LOGGER.info('Using {} Qt bindings'.format(qt_api))
 
