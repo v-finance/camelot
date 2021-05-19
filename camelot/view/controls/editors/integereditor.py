@@ -59,7 +59,7 @@ class IntegerEditor(CustomEditor):
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )
         action = QGui.QAction(self)
-        action.setShortcut( QtGui.QKeySequence( Qt.Key.Key_F4 ) )
+        action.setShortcut( QtGui.QKeySequence( Qt.Key.Key_F4.value ) )
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
         spin_box = CustomDoubleSpinBox(option, parent)
