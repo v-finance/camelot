@@ -94,14 +94,14 @@ class ActionRunner( QtCore.QEventLoop ):
         self._return_code = return_code
         return super( ActionRunner, self ).exit( return_code )
     
-    def exec_( self, flags = QtCore.QEventLoop.ProcessEventFlags.AllEvents ):
-        """Reimplementation of exec_ to prevent the event loop being started
-        when exit has been called prior to calling exec_.
+    def exec( self, flags = QtCore.QEventLoop.ProcessEventFlags.AllEvents ):
+        """Reimplementation of exec to prevent the event loop being started
+        when exit has been called prior to calling exec.
         
         This can be the case when running in single threaded mode.
         """
         if self._return_code == None:
-            return super( ActionRunner, self ).exec_( flags )
+            return super( ActionRunner, self ).exec( flags )
         return self._return_code
         
     def _initiate_generator( self ):
@@ -157,7 +157,7 @@ class ActionRunner( QtCore.QEventLoop ):
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
         dialog = ExceptionDialog( exception_info )
-        dialog.exec_()
+        dialog.exec()
         self.exit()
         
     @QtCore.qt_slot( object )

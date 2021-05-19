@@ -175,7 +175,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         # Some tasks might have been posted before the signals were connected
         # to the task handler, so once force the handling of tasks
         self._task_handler.handle_task()
-        self.exec_()
+        self.exec()
         self.logger.debug('model thread stopped')
 
     @QtCore.qt_slot( bool )

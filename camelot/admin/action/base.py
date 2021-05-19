@@ -270,7 +270,7 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         from camelot.view.action_runner import ActionRunner
         runner = ActionRunner( self.model_run, gui_context )
-        runner.exec_()
+        runner.exec()
         
     def model_run( self, model_context = None ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`

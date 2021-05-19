@@ -142,7 +142,7 @@ class SelectItem(ActionStep):
 
     def gui_run(self, gui_context):
         dialog = self.render()
-        result = dialog.exec_()
+        result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
@@ -243,7 +243,7 @@ class MessageBox( ActionStep ):
 
     def gui_run( self, gui_context ):
         message_box = self.render()
-        result = message_box.exec_()
+        result = message_box.exec()
         if result == QtWidgets.QMessageBox.StandardButtons.Cancel:
             raise CancelRequest()
         return result
