@@ -58,7 +58,7 @@ class IntegerEditor(CustomEditor):
         self.setObjectName( field_name )
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )
-        action = QtWidgets.QAction(self)
+        action = QGui.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key.Key_F4 ) )
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         

@@ -128,15 +128,15 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance(sender, (QtWidgets.QAction, QtQuick.QQuickItem)):
+        if isinstance(sender, (QtGui.QAction, QtQuick.QQuickItem)):
             mode = str(variant_to_py(sender.data()))
         self.run_action( mode )
 
 
-class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
+class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
-        QtWidgets.QAction.__init__( self, parent )
+        QtGui.QAction.__init__( self, parent )
         AbstractActionWidget.init( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
@@ -178,7 +178,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         AbstractActionWidget.init( self, action, gui_context )
         self.clicked.connect(self.action_triggered)
 
-    @QtCore.qt_slot(Qt.Orientation, int, int)
+    @QtCore.qt_slot(Qt.Orientations, int, int)
     def header_data_changed(self, orientation, first, last):
         AbstractActionWidget.header_data_changed(self, orientation, first, last)
 

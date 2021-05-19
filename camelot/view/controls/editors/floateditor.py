@@ -149,7 +149,7 @@ class FloatEditor(CustomEditor):
                             QtWidgets.QSizePolicy.Policy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
-        action = QtWidgets.QAction(self)
+        action = QGui.QAction(self)
         action.setShortcut( QtGui.QKeySequence( Qt.Key.Key_F4 ) )
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         spinBox = CustomDoubleSpinBox(option, parent)
