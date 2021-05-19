@@ -75,7 +75,7 @@ class ModelTree(QtWidgets.QTreeWidget):
         self.setColumnWidth(0, 160)
         self.setColumnWidth(1, 18)
         self.setHorizontalScrollBarPolicy( Qt.ScrollBarPolicy.ScrollBarAlwaysOff )
-        self.setSelectionBehavior( self.SelectRows )
+        self.setSelectionBehavior( self.SelectionBehavior.SelectRows )
         
         self.clear_model_items()
         self.clear_section_items()
