@@ -83,7 +83,7 @@ class GrabMixinCase(object):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        QtWidgets.QApplication.flush()
+        QtWidgets.QApplication.sendPostedEvents()
         widget.repaint()
         inner_pixmap = QtWidgets.QWidget.grab(widget)
         # add a border to the image
