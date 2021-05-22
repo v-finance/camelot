@@ -103,6 +103,8 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         self.banner_text_layout().insertWidget(0, title_widget)
 
     def set_banner_subtitle(self, subtitle):
+        # setting the subtitle without setting the title crashes the dialog,
+        # probably because index 1 is invalid
         subtitle_widget = QtWidgets.QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
 
