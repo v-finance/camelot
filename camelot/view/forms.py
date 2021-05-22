@@ -431,7 +431,7 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = DelayedTabWidget( widgets, self.tabs, parent )
-        widget.setTabPosition( getattr(QtWidgets.QTabWidget, self.position) )                
+        widget.setTabPosition( getattr(QtWidgets.QTabWidget.TabPosition, self.position) )
         return widget
 
 class HBoxForm( Form ):

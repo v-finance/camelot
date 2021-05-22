@@ -29,7 +29,7 @@
 
 import six
 
-from ...core.qt import QtCore, QtWidgets, QtGui
+from ...core.qt import QtCore, QtGui
 from camelot.core.utils import ugettext as _
 from .decorated_line_edit import DecoratedLineEdit
 from .action_widget import AbstractActionWidget

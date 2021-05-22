@@ -647,7 +647,7 @@ class TableView(AbstractView):
                 # both QWidgets and QActions can be put in a toolbar
                 if isinstance(rendered, QtWidgets.QWidget):
                     toolbar.addWidget(rendered)
-                elif isinstance(rendered, QGui.QAction):
+                elif isinstance(rendered, QtGui.QAction):
                     toolbar.addAction( rendered )
 
     @QtCore.qt_slot(bool)

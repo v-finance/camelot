@@ -208,13 +208,13 @@ the default mode.
         self.icon = icon
         
     def render( self, parent ):
-        """Create a :class:`QGui.QAction` that can be used to enable widget
+        """Create a :class:`QtGui.QAction` that can be used to enable widget
         to trigger the action in a specific mode.  The data attribute of the
         action will contain the name of the mode.
         
-        :return: a :class:`QGui.QAction` class to use this mode
+        :return: a :class:`QtGui.QAction` class to use this mode
         """
-        action = QGui.QAction( parent )
+        action = QtGui.QAction( parent )
         action.setData( self.name )
         action.setText( six.text_type(self.verbose_name) )
         if self.icon is None:

@@ -63,7 +63,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
             editor or a string that should fit in the editor
         """
         if isinstance( width, six.string_types ):
-            self.setMinimumWidth( self._font_metrics.width( width ) )
+            self.setMinimumWidth( self._font_metrics.horizontalAdvance( width ) )
         else:
             self.setMinimumWidth( self._font_metrics.averageCharWidth() )
 

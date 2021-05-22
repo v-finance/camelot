@@ -93,11 +93,10 @@ class DateEditor(CustomEditor):
 
         self.hlayout = QtWidgets.QHBoxLayout()
         self.hlayout.addWidget(line_edit)
-        self.hlayout.addWidget(self.special_date)
+        self.hlayout.addWidget(self.special_date, Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
 
         self.hlayout.setContentsMargins(0, 0, 0, 0)
         self.hlayout.setSpacing(0)
-        self.hlayout.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
         
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.hlayout)
