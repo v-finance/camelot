@@ -560,7 +560,7 @@ class TableView(AbstractView):
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
             self.on_keyboard_selection_signal)
-        self.table_layout.insertWidget(1, self.table)
+        self.table_layout.insertWidget(self.table_layout.count(), self.table)
         self.gui_context = self.application_gui_context.copy(
             ListActionGuiContext)
         self.gui_context.view = self
