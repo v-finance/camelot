@@ -68,11 +68,11 @@ class PrintPreview( ActionStep ):
 
     .. attribute:: page_size
     
-        the page size, by default :class:`QtPrintSupport.QPrinter.A4` is used
+        the page size, by default :class:`QtGui.QPageSize(QtGui.QPageSize.PageSizeId.A4)` is used
     
     .. attribute:: page_orientation
     
-        the page orientation, by default :class:`QtPrintSupport.QPrinter.Portrait`
+        the page orientation, by default :class:`QtPrintSupport.QPrinter.Orientation.Portrait`
         is used.
         
     .. attribute:: document
@@ -96,7 +96,7 @@ class PrintPreview( ActionStep ):
         self.margin_top = None
         self.margin_right = None
         self.margin_bottom = None
-        self.margin_unit = QtPrintSupport.QPrinter.Millimeter
+        self.margin_unit = QtPrintSupport.QPrinter.Unit.Millimeter
         self.page_size = None
         self.page_orientation = None
 
@@ -105,7 +105,7 @@ class PrintPreview( ActionStep ):
             return self.printer
         printer = QtPrintSupport.QPrinter()
         if not printer.isValid():
-            printer.setOutputFormat( QtPrintSupport.QPrinter.PdfFormat )
+            printer.setOutputFormat( QtPrintSupport.QPrinter.OutputFormat.PdfFormat )
         return printer
 
     def config_printer(self, printer):
@@ -141,7 +141,7 @@ class PrintPreview( ActionStep ):
         
     def get_pdf(self, filename=None):
         printer = QtPrintSupport.QPrinter()
-        printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
+        printer.setOutputFormat(QtPrintSupport.QPrinter.OutputFormat.PdfFormat)
         self.config_printer(printer)
         if filename is None:
             filename = OpenFile.create_temporary_file('.pdf')
