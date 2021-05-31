@@ -43,7 +43,7 @@ class TimeDelegate(CustomDelegate):
     def __init__(self, parent=None, editable=True, **kwargs):
         CustomDelegate.__init__(self, parent, editable)
         locale = QtCore.QLocale()
-        self.time_format = locale.timeFormat(locale.ShortFormat)
+        self.time_format = locale.timeFormat(locale.FormatType.ShortFormat)
         
     def paint(self, painter, option, index):
         painter.save()

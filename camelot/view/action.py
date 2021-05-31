@@ -60,7 +60,7 @@ class ActionFactory(object):
         if widgetaction:
             action = QtWidgets.QWidgetAction(parent)
         else:
-            action = QGui.QAction(parent)
+            action = QtGui.QAction(parent)
         action.setText(text)
         if actionicon:
             action.setIcon(actionicon.getQIcon())

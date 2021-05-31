@@ -87,7 +87,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         """
         The active tab has changed, emit the view_activated signal.
         """
-        self.view_activated_signal.emit(self.active_view())
+        #self.view_activated_signal.emit(self.active_view())
 
     def active_view(self):
         """
@@ -184,13 +184,9 @@ def apply_form_state(view, parent, state):
     # position the new window in the center of the same screen
     # as the parent.
     # That parent might be a QWidget or a QWindow
-    if isinstance(parent, QtWidgets.QWidget):
-        screen = QtWidgets.QApplication.desktop().screenNumber(parent)
-    else:
-        screen = 0
-    geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
     decoration_width, decoration_height = 0, 0
     if parent is not None:
+        screen = parent.screen()
         # here we use the incorrect assumption that we can use the size of
         # the decorations of the parent window to know the size of the
         # decorations of the new window
@@ -200,6 +196,10 @@ def apply_form_state(view, parent, state):
         parent_frame = parent.frameGeometry()
         decoration_width = parent_frame.width() - parent_geometry.width()
         decoration_height = parent_frame.height() - parent_geometry.height()
+    else:
+        screen = QtCore.QCoreApplication.instance().primaryScreen()
+
+    geometry = screen.availableGeometry()
     if state == constants.MAXIMIZED:
         view.setWindowState(QtCore.Qt.WindowStates.WindowMaximized)
     elif state == constants.MINIMIZED:

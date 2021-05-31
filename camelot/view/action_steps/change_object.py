@@ -296,7 +296,7 @@ class ChangeObject(ActionStep):
         dialog = self.render(gui_context)
         apply_form_state(dialog, None, self.admin.form_state)
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
+            result = dialog.exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return self.obj

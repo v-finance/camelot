@@ -389,7 +389,7 @@ class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
 
-    #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find),
+    #shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find),
                                #self)
     
     def __init__(self, admin):
