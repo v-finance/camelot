@@ -379,8 +379,8 @@ class ChangeObjects( ActionStep ):
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
-        desktop = QtWidgets.QApplication.desktop()
-        available_geometry = desktop.availableGeometry( dialog )
+        screen = dialog.screen()
+        available_geometry = screen.availableGeometry()
         dialog.resize( available_geometry.width() * 0.75,
                        available_geometry.height() * 0.75 )
         return dialog

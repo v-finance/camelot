@@ -186,8 +186,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def enlarge(self):
         """ Increase the size of the dialog window """
-        desktop = QtWidgets.QApplication.desktop()
-        geo = desktop.availableGeometry(self)
+        screen = self.screen()
+        geo = screen.availableGeometry()
         self.resize(geo.width() * 0.75, geo.height() * 0.75)
         frame = self.frameGeometry()
         frame.moveCenter(geo.center())
