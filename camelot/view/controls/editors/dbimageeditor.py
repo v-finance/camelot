@@ -128,7 +128,7 @@ class DbImageEditor(CustomEditor):
             image = QtGui.QImage( mime_data.imageData())
             ba = QtCore.QByteArray()
             buffer = QtCore.QBuffer(ba)
-            buffer.open(QtCore.QIODevice.WriteOnly)
+            buffer.open(QtCore.QIODevice.OpenMode.WriteOnly)
             image.save(buffer, 'PNG')
             image_data = ba.toBase64().data().decode()
             self.set_value(image_data)
@@ -167,7 +167,7 @@ class DbImageEditor(CustomEditor):
                 if not image.isNull():
                     ba = QtCore.QByteArray()
                     buffer = QtCore.QBuffer(ba)
-                    buffer.open(QtCore.QIODevice.WriteOnly)
+                    buffer.open(QtCore.QIODevice.OpenMode.WriteOnly)
                     image.save(buffer, 'PNG')
                     image_data = ba.toBase64().data().decode()
                     self.set_value(image_data)
