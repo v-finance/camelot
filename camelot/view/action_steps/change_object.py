@@ -388,7 +388,7 @@ class ChangeObjects( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
+            result = dialog.exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return self.objects
@@ -531,7 +531,7 @@ class ChangeField( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
+            result = dialog.exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return (dialog.field, dialog.value)

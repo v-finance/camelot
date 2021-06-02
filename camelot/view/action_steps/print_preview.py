@@ -137,7 +137,7 @@ class PrintPreview( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render( gui_context )
         with hide_progress_dialog( gui_context ):
-            dialog.exec_()
+            dialog.exec()
         
     def get_pdf(self, filename=None):
         printer = QtPrintSupport.QPrinter()

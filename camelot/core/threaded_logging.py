@@ -77,7 +77,7 @@ class ThreadedTimer( QtCore.QThread ):
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect( self._handler.timeout )
         self._timer.start(self._interval)
-        self.exec_()
+        self.exec()
 
 class ThreadedHandler(logging.Handler):
     """A threaded Logging handler that does the logging itself in a different 
