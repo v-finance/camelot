@@ -298,7 +298,7 @@ allow all languages
     def update_network_status(self, reply):
         if reply.isFinished():
             error = reply.error()
-            if error == QtNetwork.QNetworkReply.NoError:
+            if error == QtNetwork.QNetworkReply.NetworkError.NoError:
                 self.network_status_label.setText(_('Internet available.'))
                 self.network_status_label.setStyleSheet('color: green')
                 return
@@ -392,7 +392,7 @@ class EditProfiles(ActionStep):
 
     def gui_run(self, gui_context):
         dialog = self.render(gui_context)
-        result = dialog.exec_()
+        result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_profile_info()
