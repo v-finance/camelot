@@ -86,8 +86,7 @@ class SelectFile( ActionStep ):
                                     caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
-            if qt_api in ['PyQt5', 'PyQt6']:
-                selected = selected[0]
+            selected = selected[0]
             # selected is an empty string if cancel is pressed
             if selected:
                 if self.single:
@@ -143,8 +142,7 @@ class SaveFile( ActionStep ):
                                     caption=six.text_type(self.caption),
                                     directory=directory,
                                     filter=self.file_name_filter)
-            if qt_api in ['PyQt5', 'PyQt6']:
-                selected = selected[0]
+            selected = selected[0]
             if selected:
                 settings.setValue('datasource', py_to_variant(selected))
                 return six.text_type(selected)
