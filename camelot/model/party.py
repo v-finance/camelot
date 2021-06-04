@@ -294,7 +294,17 @@ class Address( Entity ):
     
     # Way for user to overrule the zipcode on the address level (e.g. when its not known or incomplete on the city).
     _zipcode = schema.Column(Unicode(10))
+    
+    @hybrid.hybrid_property
+    def city_name( self ):
+        if self.city is not None:
+            return self.city.name
 
+    @city_name.expression
+    def city_name(cls):
+        return sql.select([GeographicBoundary.name],
+                          whereclause=GeographicBoundary.id == self.city_geographicboundary_id).as_scalar()
+    
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
