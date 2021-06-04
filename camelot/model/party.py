@@ -305,6 +305,21 @@ class Address( Entity ):
         return sql.select([GeographicBoundary.name],
                           whereclause=GeographicBoundary.id == self.city_geographicboundary_id).as_scalar()
     
+    @hybrid.hybrid_property
+    def zipcode( self ):
+        if self.city is not None:
+            return self._zipcode or self.city.code
+        return self._zipcode
+
+    @zipcode.setter
+    def zipcode(self, value):
+        self._zipcode = value
+    
+    @zipcode.expression
+    def zipcode(cls):
+        return sql.select([sql.func.coalesce(cls._zipcode, GeographicBoundary.code)],
+                          whereclause=GeographicBoundary.id == self.city_geographicboundary_id).as_scalar()
+    
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
