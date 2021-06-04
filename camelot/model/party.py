@@ -291,6 +291,9 @@ class Address( Entity ):
                       ondelete = 'cascade',
                       onupdate = 'cascade',
                       lazy = 'subquery' )
+    
+    # Way for user to overrule the zipcode on the address level (e.g. when its not known or incomplete on the city).
+    _zipcode = schema.Column(Unicode(10))
 
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
