@@ -296,16 +296,6 @@ class Address( Entity ):
     _zipcode = schema.Column(Unicode(10))
     
     @hybrid.hybrid_property
-    def city_name( self ):
-        if self.city is not None:
-            return self.city.name
-
-    @city_name.expression
-    def city_name(cls):
-        return sql.select([GeographicBoundary.name],
-                          whereclause=GeographicBoundary.id == self.city_geographicboundary_id).as_scalar()
-    
-    @hybrid.hybrid_property
     def zipcode( self ):
         if self.city is not None:
             return self._zipcode or self.city.code
@@ -321,26 +311,28 @@ class Address( Entity ):
                           whereclause=GeographicBoundary.id == self.city_geographicboundary_id).as_scalar()
     
     def name( self ):
-        return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
+        return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zipcode, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
 
     name = ColumnProperty( name, deferred = True )
 
     @classmethod
-    def get_or_create( cls, street1, street2, city ):
-        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
+    def get_or_create( cls, street1, street2, city, zipcode):
+        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city, zipcode = zipcode ).first()
         if not address:
-            address = cls( street1 = street1, street2 = street2, city = city )
+            address = cls( street1 = street1, street2 = street2, city = city, zipcode = zipcode )
             orm.object_session( address ).flush()
         return address
 
     def __str__(self):
-        return u'%s, %s' % ( self.street1 or '', self.city or '' )
+        city_name = self.city.name if self.city is not None else ''
+        return u'%s, %s %s' % ( self.street1 or '', self.zipcode or '', city_name or '' )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
+        form_display = ['street1', 'street2', 'zipcode', 'city']
         form_size = ( 700, 150 )
         field_attributes = {'street1':{'minimal_column_width':30}}
         
