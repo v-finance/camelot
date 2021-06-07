@@ -126,6 +126,7 @@ class ColumnMapping( object ):
 class ShowNext(Action):
     
     verbose_name = _('Show next')
+    name = 'show_next'
     
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
@@ -135,6 +136,7 @@ class ShowNext(Action):
 class ShowPrevious(Action):
     
     verbose_name = _('Show previous')
+    name = 'show_previous'
     
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
@@ -145,6 +147,7 @@ class MatchNames(Action):
     """Use the data in the current row to determine field names"""
     
     verbose_name = _('Match names')
+    name = 'match_names'
     
     def model_run(self, model_context):
         field_choices = model_context.admin.field_choices
@@ -171,6 +174,7 @@ class ColumnMappingAdmin(ObjectAdmin):
     
     verbose_name = _('Select field')
     verbose_name_plural = _('Select fields')
+    toolbar_actions = [ShowNext(), ShowPrevious(), MatchNames()]
 
     list_action = None
     list_display = ['column_name', 'field', 'value']
@@ -189,7 +193,7 @@ class ColumnMappingAdmin(ObjectAdmin):
         return fa
     
     def get_related_toolbar_actions(self, toolbar_area, direction):
-        return [ShowNext(), ShowPrevious(), MatchNames()]
+        return self.toolbar_actions
 
 class ColumnSelectionAdmin(ColumnMappingAdmin):
     """Admin to edit a `ColumnMapping` class without data preview

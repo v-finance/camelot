@@ -86,6 +86,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # a form view and not on a table view, so it should not
         # set its background
         self.option.version = 5
+        self.editable_kwargs = dict(editable=True, action_routes=[])
 
     def assert_valid_editor( self, editor, value ):
         """Test the basic functions of an editor that are needed to integrate
@@ -130,7 +131,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, datetime.date(1980, 12, 31) )
 
     def test_TextLineEditor(self):
-        editor = editors.TextLineEditor(parent=None, length=10)
+        editor = editors.TextLineEditor(parent=None, length=10, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
@@ -138,7 +139,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( ValueLoading )
         self.assertEqual( editor.get_value(), ValueLoading )
-        editor = editors.TextLineEditor(parent=None, length=10)
+        editor = editors.TextLineEditor(parent=None, length=10, **self.editable_kwargs)
         editor.set_field_attributes( editable=False )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
@@ -215,7 +216,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), 'green')
 
     def test_ChoicesEditor(self):
-        editor = editors.ChoicesEditor(parent=None, editable=True)
+        editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
         editor.set_choices( choices1 )
@@ -247,14 +248,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value(4)
         self.assertEqual(number_of_choices-1, len(editor.get_choices()))
         # try strings as keys
-        editor = editors.ChoicesEditor(parent=None, editable=True)
+        editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
         editor.set_choices( [('a',u'A'), ('b',u'B'), ('c',u'C')] )
         editor.set_value( 'c' )
         self.assertEqual( editor.get_value(), 'c' )
         self.assert_valid_editor( editor, 'c' )
 
     def test_FileEditor(self):
-        editor = editors.FileEditor(parent=None, editable=True)
+        editor = editors.FileEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         self.grab_default_states( editor )
@@ -288,7 +289,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         item = delegate.get_standard_item(QtCore.QLocale(), 3, {})
         field_attributes = item.data(FieldAttributesRole)
         
-        editor = editors.FloatEditor(parent=None)
+        editor = editors.FloatEditor(parent=None, **self.editable_kwargs)
         editor.set_field_attributes(prefix='prefix', editable=True, **field_attributes)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
@@ -297,7 +298,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor = editors.FloatEditor(parent=None, option=self.option)
+        editor = editors.FloatEditor(parent=None, option=self.option, **self.editable_kwargs)
         editor.set_field_attributes(suffix=' suffix', editable=True, **field_attributes)
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
@@ -314,7 +315,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         spinbox.keyPressEvent(up)
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor = editors.FloatEditor(parent=None)
+        editor = editors.FloatEditor(parent=None, **self.editable_kwargs)
         editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True, **field_attributes)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
@@ -322,8 +323,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
         self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
-        editor = editors.FloatEditor(parent=None,
-                                          calculator=False)
+        editor = editors.FloatEditor(
+            parent=None, calculator=False, **self.editable_kwargs
+        )
         editor.set_field_attributes( editable=True, **field_attributes )
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
@@ -377,7 +379,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, 'en_US' )
 
     def test_Many2OneEditor(self):
-        editor = editors.Many2OneEditor(parent=None)
+        editor = editors.Many2OneEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, lambda:object )
@@ -534,7 +536,8 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         super(DelegateCase, self).setUp()
-        self.kwargs = dict(editable=True)
+        self.editable_kwargs = dict(editable=True, action_routes=[])
+        self.non_editable_kwargs = dict(editable=False, action_routes=[])
         self.option = QtWidgets.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view, so it should not
@@ -588,16 +591,16 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
                         'PNG')
 
     def test_plaintextdelegate(self):
-        delegate = delegates.PlainTextDelegate(parent=None,
-                                                    length=30,
-                                                    editable=True)
+        delegate = delegates.PlainTextDelegate(
+            parent=None, length=30, **self.editable_kwargs
+        )
         editor = delegate.createEditor(None, self.option, None)
         self.assertEqual(editor.findChild(QtWidgets.QLineEdit).maxLength(), 30)
         self.assertTrue(isinstance(editor, editors.TextLineEditor))
         self.grab_delegate(delegate, 'Plain Text')
-        delegate = delegates.PlainTextDelegate(parent=None,
-                                                    length=20,
-                                                    editable=False)
+        delegate = delegates.PlainTextDelegate(
+            parent=None, length=20, **self.non_editable_kwargs
+        )
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.TextLineEditor))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
@@ -608,42 +611,42 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.assertTrue( small_size < wide_size )
 
     def test_texteditdelegate(self):
-        delegate = delegates.TextEditDelegate(parent=None, **self.kwargs)
+        delegate = delegates.TextEditDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, QtWidgets.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text')
-        delegate = delegates.TextEditDelegate(parent=None, editable=False)
+        delegate = delegates.TextEditDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, QtWidgets.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
     def test_richtextdelegate(self):
-        delegate = delegates.RichTextDelegate(parent=None, **self.kwargs)
+        delegate = delegates.RichTextDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.RichTextEditor))
         self.grab_delegate(delegate, '<b>Rich Text</b>')
-        delegate = delegates.RichTextDelegate(parent=None, editable=False)
+        delegate = delegates.RichTextDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.RichTextEditor))
         self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
 
     def test_booldelegate(self):
-        delegate = delegates.BoolDelegate(parent=None, **self.kwargs)
+        delegate = delegates.BoolDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.BoolEditor))
         self.grab_delegate(delegate, True)
-        delegate = delegates.BoolDelegate(parent=None, editable=False)
+        delegate = delegates.BoolDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.BoolEditor))
         self.grab_delegate(delegate, True, 'disabled')
 
     def test_datedelegate(self):
-        delegate = delegates.DateDelegate(parent=None, **self.kwargs)
+        delegate = delegates.DateDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateEditor))
         today = datetime.date.today()
         self.grab_delegate(delegate, today)
-        delegate = delegates.DateDelegate(parent=None, editable=False)
+        delegate = delegates.DateDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateEditor))
         self.grab_delegate(delegate, today, 'disabled')
@@ -651,26 +654,26 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.assertTrue(variant_to_py(item.data(PreviewRole)))
 
     def test_datetimedelegate(self):
-        delegate = delegates.DateTimeDelegate(parent=None, **self.kwargs)
+        delegate = delegates.DateTimeDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateTimeEditor))
         DateTime = datetime.datetime.now()
         self.grab_delegate(delegate, DateTime)
-        delegate = delegates.DateTimeDelegate(parent=None, editable=False)
+        delegate = delegates.DateTimeDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateTimeEditor))
         self.grab_delegate(delegate, DateTime, 'disabled')
 
     def test_localfileDelegate(self):
-        delegate = delegates.LocalFileDelegate(parent=None)
+        delegate = delegates.LocalFileDelegate(parent=None, **self.editable_kwargs)
         self.grab_delegate(delegate, '/home/lancelot/quests.txt')
-        delegate = delegates.LocalFileDelegate(parent=None, editable=False)
+        delegate = delegates.LocalFileDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, '/home/lancelot/quests.txt', 'disabled')
 
     def test_labeldelegate(self):
-        delegate = delegates.LabelDelegate(parent=None)
+        delegate = delegates.LabelDelegate(parent=None, **self.editable_kwargs)
         self.grab_delegate(delegate, 'dynamic label')
-        delegate = delegates.LabelDelegate(parent=None, editable=False)
+        delegate = delegates.LabelDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, 'dynamic label', 'disabled')
 
     def test_notedelegate(self):
@@ -714,31 +717,31 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, 0, 'disabled')
 
     def test_floatdelegate(self):
-        delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
+        delegate = delegates.FloatDelegate(parent=None, suffix='euro', **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FloatEditor))
         self.grab_delegate(delegate, 3.145)
-        delegate = delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
+        delegate = delegates.FloatDelegate(parent=None, prefix='prefix', **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FloatEditor))
         self.grab_delegate(delegate, 0, 'disabled')
 
     def test_filedelegate(self):
-        delegate = delegates.FileDelegate(parent=None)
+        delegate = delegates.FileDelegate(parent=None, **self.editable_kwargs)
         file = StoredFile(None, 'agreement.pdf')
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FileEditor))
         self.grab_delegate(delegate, file)
-        delegate = delegates.FileDelegate(parent=None, editable=False)
+        delegate = delegates.FileDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, file, 'disabled')
 
     def test_colordelegate(self):
-        delegate = delegates.ColorDelegate(parent=None, **self.kwargs)
+        delegate = delegates.ColorDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
         color = [255, 255, 0]
         self.grab_delegate(delegate, color)
-        delegate = delegates.ColorDelegate(parent=None, editable=False)
+        delegate = delegates.ColorDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
         self.grab_delegate(delegate, color, 'disabled')
@@ -747,7 +750,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         CHOICES = (('1','A'), ('2','B'), ('3','C'))
         delegate = delegates.ComboBoxDelegate(parent=None,
                                                    choices=CHOICES,
-                                                   **self.kwargs)
+                                                   **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ChoicesEditor))
         self.grab_delegate(delegate, 1)
@@ -760,7 +763,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def test_virtualaddressdelegate(self):
         delegate = delegates.VirtualAddressDelegate(parent=None,
-                                                         **self.kwargs)
+                                                         **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.VirtualAddressEditor))
         self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
@@ -768,11 +771,11 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
     def test_monthsdelegate(self):
-        delegate = delegates.MonthsDelegate(parent=None, **self.kwargs)
+        delegate = delegates.MonthsDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.MonthsEditor))
         self.grab_delegate(delegate, 12)
-        delegate = delegates.MonthsDelegate(parent=None, editable=False)
+        delegate = delegates.MonthsDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, 12, 'disabled')
 
 
@@ -1048,6 +1051,7 @@ class SnippetsTest(RunningThreadCase,
         editor = One2ManyEditor(
             admin_route=person_admin.get_admin_route(),
             columns=person_columns,
+            action_routes=[],
         )
         editor.set_value(self.proxy)
         self.process()

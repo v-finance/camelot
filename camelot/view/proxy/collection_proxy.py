@@ -60,7 +60,7 @@ from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
     ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
-    CompletionsRole, CompletionPrefixRole
+    CompletionsRole, CompletionPrefixRole, ActionRoutesRole,
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -105,6 +105,7 @@ invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
+invalid_item.setData([], ActionRoutesRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -816,6 +817,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def buddy(self, index):
         return index
 
+    def roleNames(self):
+        role_names = super().roleNames()
+        role_names[ActionRoutesRole] = b'action_routes'
+        return role_names
     #
     # end or reimplementation
     #

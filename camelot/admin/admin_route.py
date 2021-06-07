@@ -60,3 +60,41 @@ class AdminRoute(object):
         admin_route = ('admin', str(next_admin), admin.get_name())
         cls._admin_routes[admin_route] = admin
         return admin_route
+
+    @classmethod
+    def action_for(cls, route):
+        """
+        Retrieve an action from its route
+
+        :return: an 'Action' object
+        """
+        assert isinstance(route, tuple)
+        try:
+            admin = cls._admin_routes[route]
+        except KeyError:
+            cls.dump_routes()
+            raise UserException(
+                ugettext('Action no longer available'),
+                resolution=ugettext('Restart the application'),
+                detail='/'.join(route),
+            )
+        return admin
+
+    @classmethod
+    def _register_field_action_route(cls, admin_route, field_name, action):
+        assert isinstance(admin_route, tuple)
+        assert isinstance(field_name, str)
+        assert admin_route in cls._admin_routes
+        action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
+        assert action_route not in cls._admin_routes, cls.verbose_route(action_route) + ' registered before'
+        cls._admin_routes[action_route] = action
+        return action_route
+
+    @classmethod
+    def _register_list_action_route(cls, admin_route, action):
+        assert isinstance(admin_route, tuple)
+        assert admin_route in cls._admin_routes
+        action_route = (*admin_route, 'list', 'actions', action.get_name())
+        assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        cls._admin_routes[action_route] = action
+        return action_route

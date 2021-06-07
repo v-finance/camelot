@@ -36,6 +36,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from .admin_route import AdminRoute
+from .action import field_action
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
@@ -631,6 +632,7 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
                 search_strategy=list_filter.NoSearch,
+                action_routes=[],
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
@@ -680,9 +682,10 @@ be specified using the verbose_name attribute.
             direction = field_attributes.get('direction', 'onetomany')
             if direction.endswith('many') and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
-                field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
-                    Qt.RightToolBarArea, direction
-                )
+                if field_attributes.get('actions') is None:
+                    field_attributes['actions'] = related_admin.get_related_toolbar_actions(
+                        Qt.RightToolBarArea, direction
+                    )
                 if column_width is None:
                     table = related_admin.get_table()
                     fields = table.get_fields(column_group=0)
@@ -691,6 +694,13 @@ be specified using the verbose_name attribute.
                         related_field_attributes(field).get('column_width', 0) for 
                         field in fields)
                     column_width = sum(related_column_widths, 0)
+            elif direction.startswith('many') and (field_attributes.get('actions') is None):
+                field_attributes['actions'] = [
+                    field_action.ClearObject(),
+                    field_action.SelectObject(),
+                    field_action.NewObject(),
+                    field_action.OpenObject()
+                ]
             field_attributes['admin'] = related_admin
             field_attributes['admin_route'] = related_admin.get_admin_route()
             field_attributes['admin_name'] = related_admin.get_name()
@@ -708,6 +718,16 @@ be specified using the verbose_name attribute.
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+        #
+        # Convert field actions to action routes
+        #
+        field_attributes['action_routes'] = [
+            AdminRoute._register_field_action_route(
+                self.get_admin_route(),
+                field_name,
+                action,
+            ) for action in field_attributes.get('actions', [])
+        ]
 
     def _get_search_fields(self, substring):
         """

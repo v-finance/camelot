@@ -68,7 +68,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  field_name='onetomany',
                  column_width=None,
                  columns=[],
-                 toolbar_actions=[],
                  rows=5,
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
@@ -102,7 +101,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.view = self
         self.gui_context.admin_route = self.admin_route
         self.gui_context.item_view = table
-        self.set_right_toolbar_actions(toolbar_actions)
+        self.set_right_toolbar_actions(kw['action_routes'])
         self.set_columns(columns)
 
     def render_action(self, action, parent):
@@ -117,12 +116,13 @@ class One2ManyEditor(CustomEditor, WideEditor):
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     @QtCore.qt_slot(object)
-    def set_right_toolbar_actions(self, toolbar_actions):
-        if toolbar_actions is not None:
+    def set_right_toolbar_actions(self, action_routes):
+        if action_routes is not None:
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
-            for action in toolbar_actions:
+            for action_route in action_routes:
+                action = AdminRoute.action_for(action_route)
                 qaction = self.render_action(action, toolbar)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)

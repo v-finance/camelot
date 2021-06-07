@@ -28,6 +28,7 @@
 #  ============================================================================
 
 from ....admin.action.base import RenderHint
+from ....admin.admin_route import AdminRoute
 from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.admin.action import FieldActionGuiContext
@@ -170,8 +171,9 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         """
         return self.contentsRect().height()
 
-    def add_actions(self, actions, layout):
-        for action in actions:
+    def add_actions(self, action_routes, layout):
+        for action_route in action_routes:
+            action = AdminRoute.action_for(action_route)
             action_widget = self.render_action(action, self)
             action_widget.setFixedHeight(self.get_height())
             layout.addWidget(action_widget)

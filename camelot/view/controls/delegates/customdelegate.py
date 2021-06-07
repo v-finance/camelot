@@ -31,7 +31,9 @@ import six
 
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.item_model import ProxyDict, FieldAttributesRole
+from ....core.item_model import (
+    ProxyDict, FieldAttributesRole, ActionRoutesRole
+)
 from camelot.view.proxy import ValueLoading
 
 
@@ -147,6 +149,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         """
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(value), Qt.EditRole)
+        item.setData(field_attributes_values.get('action_routes'), ActionRoutesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(field_attributes_values)),
                      FieldAttributesRole)
