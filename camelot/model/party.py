@@ -303,12 +303,9 @@ class Address( Entity ):
 
     @zipcode.setter
     def zipcode(self, value):
-        self._zipcode = value
-    
-    @zipcode.expression
-    def zipcode(cls):
-        return sql.select([sql.func.coalesce(cls._zipcode, GeographicBoundary.code)],
-                          whereclause=GeographicBoundary.id == cls.city_geographicboundary_id).as_scalar()
+        # Only allow to overrule the address' zipcode if its city's code is unknown.
+        if self.city is not None and self.city.code == '':
+            self._zipcode = value
     
     def name( self ):
         return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zipcode, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -334,7 +331,10 @@ class Address( Entity ):
         list_display = ['street1', 'street2', 'city']
         form_display = ['street1', 'street2', 'zipcode', 'city']
         form_size = ( 700, 150 )
-        field_attributes = {'street1':{'minimal_column_width':30}}
+        field_attributes = {
+            'street1': {'minimal_column_width':30},
+            'zipcode': {'editable': lambda o: o.city is not None and o.city.code == ''}
+        }
         
         def get_depending_objects( self, address ):
             for party_address in address.party_addresses:
@@ -877,7 +877,8 @@ class Addressable(object):
                             minimal_column_width = 50 ),
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
-                         target = City ), 
+                         target = City ),
+            zipcode = dict( editable = lambda o: o.city is not None and o.city.code == ''),
             email = dict( editable = True, 
                           minimal_column_width = 20,
                           name = _('Email'),
@@ -938,7 +939,8 @@ class PartyAddress( Entity, Addressable ):
         form_display = [ 'party', 'street1', 'street2', 'zipcode', 'city', 'comment', 
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
-        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
+        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
+                                zipcode=dict(editable=lambda o: o.city is not None and o.city.code == ''))
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
@@ -959,6 +961,7 @@ class AddressAdmin( PartyAddress.Admin ):
                                         nullable=False,
                                         delegate=delegates.Many2OneDelegate,
                                         target=City),
+                            zipcode = dict(editable=lambda o: o.city is not None and o.city.code == ''),
                             )
         
     def get_depending_objects( self, party_address ):
