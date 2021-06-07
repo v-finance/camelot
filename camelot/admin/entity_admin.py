@@ -721,7 +721,7 @@ and used as a custom action.
                 arg = search_field.get_clause(text, self, query.session)
                 if arg is not None:
                     args.append(arg)
-        
+            
         query = query.filter(sql.or_(*args))
     
         return query
