@@ -308,7 +308,7 @@ class Address( Entity ):
     @zipcode.expression
     def zipcode(cls):
         return sql.select([sql.func.coalesce(cls._zipcode, GeographicBoundary.code)],
-                          whereclause=GeographicBoundary.id == self.city_geographicboundary_id).as_scalar()
+                          whereclause=GeographicBoundary.id == cls.city_geographicboundary_id).as_scalar()
     
     def name( self ):
         return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zipcode, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -399,6 +399,20 @@ class WithAddresses(object):
     @street2.setter
     def street2( self, value ):
         return self._set_address_field( u'street2', value )
+
+    @hybrid.hybrid_property
+    def zipcode( self ):
+        return self._get_address_field( u'zipcode' )
+    
+    @zipcode.setter
+    def zipcode( self, value ):
+        return self._set_address_field( u'zipcode', value )
+
+    @zipcode.expression
+    def zipcode(cls):
+        return sql.select([Address.zipcode],
+                          whereclause=cls.first_address_filter(),
+                          limit=1).as_scalar()    
 
     @hybrid.hybrid_property
     def city( self ):
@@ -830,6 +844,18 @@ class Addressable(object):
         return Address.street2
 
     @hybrid.hybrid_property
+    def zipcode( self ):
+        return self._get_address_field( u'zipcode' )
+
+    @zipcode.setter
+    def zipcode( self, value ):
+        return self._set_address_field( u'zipcode', value )
+
+    @zipcode.expression
+    def zipcode( self ):
+        return Address.zipcode
+
+    @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
     
@@ -908,8 +934,8 @@ class PartyAddress( Entity, Addressable ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_search = ['party_name', 'street1', 'street2',]
-        list_display = ['party_name', 'street1', 'street2', 'city', 'comment']
-        form_display = [ 'party', 'street1', 'street2', 'city', 'comment', 
+        list_display = ['party_name', 'street1', 'street2', 'zipcode', 'city', 'comment']
+        form_display = [ 'party', 'street1', 'street2', 'zipcode', 'city', 'comment', 
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
@@ -921,8 +947,8 @@ class PartyAddress( Entity, Addressable ):
 class AddressAdmin( PartyAddress.Admin ):
     """Admin with only the Address information and not the Party information"""
     verbose_name = _('Address')
-    list_display = ['street1', 'city', 'comment']
-    form_display = ['street1', 'street2', 'city', 'comment', 'from_date', 'thru_date']
+    list_display = ['street1', 'zipcode', 'city', 'comment']
+    form_display = ['street1', 'street2', 'zipcode', 'city', 'comment', 'from_date', 'thru_date']
     field_attributes = dict(street1 = dict(name=_('Street'),
                                            editable=True,
                                            nullable=False),
@@ -1130,6 +1156,7 @@ class PersonAdmin( Party.Admin ):
                                                               'fax',
                                                               'street1',
                                                               'street2',
+                                                              'zipcode'
                                                               'city',] ),
                                                             [WidgetOnlyForm('picture'),
                                                              Stretch()],
