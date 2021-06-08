@@ -292,48 +292,48 @@ class Address( Entity ):
                       onupdate = 'cascade',
                       lazy = 'subquery' )
     
-    # Way for user to overrule the zipcode on the address level (e.g. when its not known or incomplete on the city).
+    # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
     _zip_code = schema.Column(Unicode(10))
     
     @hybrid.hybrid_property
-    def zipcode( self ):
+    def zip_code( self ):
         if self.city is not None:
-            return self._zipcode or self.city.code
-        return self._zipcode
+            return self._zip_code or self.city.code
+        return self._zip_code
 
-    @zipcode.setter
-    def zipcode(self, value):
-        # Only allow to overrule the address' zipcode if its city's code is unknown.
+    @zip_code.setter
+    def zip_code(self, value):
+        # Only allow to overrule the address' zip code if its city's code is unknown.
         if self.city is not None and self.city.code == '':
-            self._zipcode = value
+            self._zip_code = value
     
     def name( self ):
-        return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zipcode, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
+        return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
 
     name = ColumnProperty( name, deferred = True )
 
     @classmethod
-    def get_or_create( cls, street1, street2, city, zipcode):
-        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city, zipcode = zipcode ).first()
+    def get_or_create( cls, street1, street2, city, zip_code):
+        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city, zip_code = zip_code ).first()
         if not address:
-            address = cls( street1 = street1, street2 = street2, city = city, zipcode = zipcode )
+            address = cls( street1 = street1, street2 = street2, city = city, zip_code = zip_code )
             orm.object_session( address ).flush()
         return address
 
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
-        return u'%s, %s %s' % ( self.street1 or '', self.zipcode or '', city_name or '' )
+        return u'%s, %s %s' % ( self.street1 or '', self.zip_code or '', city_name or '' )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
-        form_display = ['street1', 'street2', 'zipcode', 'city']
+        form_display = ['street1', 'street2', 'zip_code', 'city']
         form_size = ( 700, 150 )
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zipcode': {'editable': lambda o: o.city is not None and o.city.code == ''}
+            'zip_code': {'editable': lambda o: o.city is not None and o.city.code == ''}
         }
         
         def get_depending_objects( self, address ):
@@ -401,16 +401,16 @@ class WithAddresses(object):
         return self._set_address_field( u'street2', value )
 
     @hybrid.hybrid_property
-    def zipcode( self ):
-        return self._get_address_field( u'zipcode' )
+    def zip_code( self ):
+        return self._get_address_field( u'zip_code' )
     
-    @zipcode.setter
-    def zipcode( self, value ):
-        return self._set_address_field( u'zipcode', value )
+    @zip_code.setter
+    def zip_code( self, value ):
+        return self._set_address_field( u'zip_code', value )
 
-    @zipcode.expression
-    def zipcode(cls):
-        return sql.select([Address.zipcode],
+    @zip_code.expression
+    def zip_code(cls):
+        return sql.select([Address.zip_code],
                           whereclause=cls.first_address_filter(),
                           limit=1).as_scalar()    
 
@@ -844,16 +844,16 @@ class Addressable(object):
         return Address.street2
 
     @hybrid.hybrid_property
-    def zipcode( self ):
-        return self._get_address_field( u'zipcode' )
+    def zip_code( self ):
+        return self._get_address_field( u'zip_code' )
 
-    @zipcode.setter
-    def zipcode( self, value ):
-        return self._set_address_field( u'zipcode', value )
+    @zip_code.setter
+    def zip_code( self, value ):
+        return self._set_address_field( u'zip_code', value )
 
-    @zipcode.expression
-    def zipcode( self ):
-        return Address.zipcode
+    @zip_code.expression
+    def zip_code( self ):
+        return Address.zip_code
 
     @hybrid.hybrid_property
     def city( self ):
@@ -878,7 +878,7 @@ class Addressable(object):
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
                          target = City ),
-            zipcode = dict( editable = lambda o: o.city is not None and o.city.code == ''),
+            zip_code = dict( editable = lambda o: o.city is not None and o.city.code == ''),
             email = dict( editable = True, 
                           minimal_column_width = 20,
                           name = _('Email'),
@@ -935,12 +935,12 @@ class PartyAddress( Entity, Addressable ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_search = ['party_name', 'street1', 'street2',]
-        list_display = ['party_name', 'street1', 'street2', 'zipcode', 'city', 'comment']
-        form_display = [ 'party', 'street1', 'street2', 'zipcode', 'city', 'comment', 
+        list_display = ['party_name', 'street1', 'street2', 'zip_code', 'city', 'comment']
+        form_display = [ 'party', 'street1', 'street2', 'zip_code', 'city', 'comment', 
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
-                                zipcode=dict(editable=lambda o: o.city is not None and o.city.code == ''))
+                                zip_code=dict(editable=lambda o: o.city is not None and o.city.code == ''))
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
@@ -949,8 +949,8 @@ class PartyAddress( Entity, Addressable ):
 class AddressAdmin( PartyAddress.Admin ):
     """Admin with only the Address information and not the Party information"""
     verbose_name = _('Address')
-    list_display = ['street1', 'zipcode', 'city', 'comment']
-    form_display = ['street1', 'street2', 'zipcode', 'city', 'comment', 'from_date', 'thru_date']
+    list_display = ['street1', 'zip_code', 'city', 'comment']
+    form_display = ['street1', 'street2', 'zip_code', 'city', 'comment', 'from_date', 'thru_date']
     field_attributes = dict(street1 = dict(name=_('Street'),
                                            editable=True,
                                            nullable=False),
@@ -961,7 +961,7 @@ class AddressAdmin( PartyAddress.Admin ):
                                         nullable=False,
                                         delegate=delegates.Many2OneDelegate,
                                         target=City),
-                            zipcode = dict(editable=lambda o: o.city is not None and o.city.code == ''),
+                            zip_code = dict(editable=lambda o: o.city is not None and o.city.code == ''),
                             )
         
     def get_depending_objects( self, party_address ):
@@ -1159,7 +1159,7 @@ class PersonAdmin( Party.Admin ):
                                                               'fax',
                                                               'street1',
                                                               'street2',
-                                                              'zipcode'
+                                                              'zip_code'
                                                               'city',] ),
                                                             [WidgetOnlyForm('picture'),
                                                              Stretch()],
