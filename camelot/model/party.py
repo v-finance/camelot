@@ -293,7 +293,7 @@ class Address( Entity ):
                       lazy = 'subquery' )
     
     # Way for user to overrule the zipcode on the address level (e.g. when its not known or incomplete on the city).
-    _zipcode = schema.Column(Unicode(10))
+    _zip_code = schema.Column(Unicode(10))
     
     @hybrid.hybrid_property
     def zipcode( self ):
