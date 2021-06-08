@@ -257,6 +257,25 @@ and used as a custom action.
             ]
         return toolbar_actions
 
+    def get_select_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned when selecting objects 
+            from a table.
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions(toolbar_area)
+        if toolbar_area == Qt.TopToolBarArea:
+            return toolbar_actions + [
+                list_filter.SearchFilter(self),
+                list_action.SetFilters(),
+                application_action.Refresh(),
+            ]
+        return toolbar_actions
+
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
@@ -702,7 +721,7 @@ and used as a custom action.
                 arg = search_field.get_clause(text, self, query.session)
                 if arg is not None:
                     args.append(arg)
-        
+            
         query = query.filter(sql.or_(*args))
     
         return query

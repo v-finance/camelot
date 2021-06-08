@@ -102,6 +102,10 @@ shortcut confusion and reduce the number of status updates.
     #
     # actions that will be shared between the toolbar and the main menu
     #
+    list_toolbar_actions = [
+        list_action.CloseList(),
+        list_action.ListLabel(),
+    ]
     change_row_actions = [ list_action.ToFirstRow(),
                            list_action.ToLastRow(), ]
     edit_actions = [ list_action.AddNewObject(),
@@ -296,9 +300,26 @@ shortcut confusion and reduce the number of status updates.
             None if no toolbar should be created.
         """
         if toolbar_area == Qt.TopToolBarArea:
+            return self.list_toolbar_actions + \
+                self.edit_actions + \
+                self.change_row_actions + \
+                self.export_actions
+        return []
+
+    def get_select_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned when selecting objects 
+            from a table.
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
             return [
                 list_action.CloseList(), list_action.ListLabel()
-                ] + self.edit_actions + self.change_row_actions + self.export_actions
+                ] + self.change_row_actions
         return []
 
     def get_main_menu( self ):
