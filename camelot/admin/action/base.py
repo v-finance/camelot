@@ -27,10 +27,14 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
 from enum import Enum
 import logging
+import typing
 
 from ...core.qt import QtWidgets, QtGui, Qt
+from ...core.serializable import DataclassSerializable
+from ...core.utils import ugettext_lazy
 
 import six
 
@@ -123,7 +127,63 @@ strictly to the :class:`ModelContext`
         new_context.mode_name = self.mode_name
         return new_context
 
-class State( object ):
+
+@dataclass
+class Mode(DataclassSerializable):
+    """A mode is a way in which an action can be triggered, a print action could
+be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
+the default mode.
+    
+.. attribute:: name
+
+    a string representing the mode to the developer and the authentication
+    system.  this name will be used in the :class:`GuiContext`
+    
+.. attribute:: verbose_name
+
+    The name shown to the user
+    
+.. attribute:: icon
+
+    The icon of the mode
+    """
+
+    name: str
+    verbose_name: typing.Union[str, ugettext_lazy]
+    
+    def __init__( self, name, verbose_name=None, icon=None):
+        """
+        :param name: the name of the mode, as it will be passed to the
+            gui_run and model_run method
+        :param verbose_name: the name shown to the user
+        :param icon: the icon of the mode
+        """
+        self.name = name
+        if verbose_name is None:
+            verbose_name = name.capitalize()
+        self.verbose_name = verbose_name
+        self.icon = icon
+
+    def render( self, parent ):
+        """Create a :class:`QtWidgets.QAction` that can be used to enable widget
+        to trigger the action in a specific mode.  The data attribute of the
+        action will contain the name of the mode.
+        
+        :return: a :class:`QtWidgets.QAction` class to use this mode
+        """
+        action = QtWidgets.QAction( parent )
+        action.setData( self.name )
+        action.setText( six.text_type(self.verbose_name) )
+        if self.icon is None:
+            action.setIconVisibleInMenu(False)
+        else:
+            action.setIcon(self.icon.getQIcon())
+            action.setIconVisibleInMenu(True)
+        return action
+
+
+@dataclass
+class State(DataclassSerializable):
     """A state represents the appearance and behavior of the widget that
 triggers the action.  When the objects in the model change, the 
 :meth:`Action.get_state` method will be called, which should return the
@@ -165,65 +225,15 @@ updated state for the widget.
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
     """
-    
-    def __init__( self ):
-        self.verbose_name = None
-        self.icon = None
-        self.tooltip = None
-        self.enabled = True
-        self.visible = True
-        self.notification = False
-        self.modes = []
 
-class Mode( object ):
-    """A mode is a way in which an action can be triggered, a print action could
-be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
-the default mode.
-    
-.. attribute:: name
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    tooltip: typing.Union[str, ugettext_lazy, None] = None
+    enabled: bool = True
+    visible: bool = True
+    notification: bool = False
+    modes: typing.List[Mode] = list
 
-    a string representing the mode to the developer and the authentication
-    system.  this name will be used in the :class:`GuiContext`
-    
-.. attribute:: verbose_name
 
-    The name shown to the user
-    
-.. attribute:: icon
-
-    The icon of the mode
-    """
-    
-    def __init__( self, name, verbose_name=None, icon=None):
-        """
-        :param name: the name of the mode, as it will be passed to the
-            gui_run and model_run method
-        :param verbose_name: the name shown to the user
-        :param icon: the icon of the mode
-        """
-        self.name = name
-        if verbose_name is None:
-            verbose_name = name.capitalize()
-        self.verbose_name = verbose_name
-        self.icon = icon
-        
-    def render( self, parent ):
-        """Create a :class:`QtWidgets.QAction` that can be used to enable widget
-        to trigger the action in a specific mode.  The data attribute of the
-        action will contain the name of the mode.
-        
-        :return: a :class:`QtWidgets.QAction` class to use this mode
-        """
-        action = QtWidgets.QAction( parent )
-        action.setData( self.name )
-        action.setText( six.text_type(self.verbose_name) )
-        if self.icon is None:
-            action.setIconVisibleInMenu(False)
-        else:
-            action.setIcon(self.icon.getQIcon())
-            action.setIconVisibleInMenu(True)
-        return action
-        
 class ActionStep( object ):
     """A reusable part of an action.  Action step object can be yielded inside
 the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
