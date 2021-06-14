@@ -54,6 +54,7 @@ from six import moves
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.list_action import ListActionModelContext
+from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
@@ -61,6 +62,7 @@ from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
     ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
     CompletionsRole, CompletionPrefixRole, ActionRoutesRole,
+    ActionStatesRole
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -106,6 +108,7 @@ invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
 invalid_item.setData([], ActionRoutesRole)
+invalid_item.setData([], ActionStatesRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -185,7 +188,11 @@ class UpdateMixin(object):
                 field_attributes.update(dynamic_field_attributes[column])
                 delegate = field_attributes['delegate']
                 value = row_data[column]
-                item = delegate.get_standard_item(locale, value, field_attributes)
+                field_action_model_context = FieldActionModelContext()
+                field_action_model_context.field = field_attributes['field_name']
+                field_action_model_context.value = value
+                field_action_model_context.field_attributes = field_attributes
+                item = delegate.get_standard_item(locale, field_action_model_context)
                 items.append((column, item))
             try:
                 verbose_identifier = admin.get_verbose_identifier(obj)
@@ -820,6 +827,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def roleNames(self):
         role_names = super().roleNames()
         role_names[ActionRoutesRole] = b'action_routes'
+        role_names[ActionStatesRole] = b'action_states'
         return role_names
     #
     # end or reimplementation

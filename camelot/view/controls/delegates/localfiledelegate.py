@@ -55,10 +55,10 @@ class LocalFileDelegate(CustomDelegate):
         CustomDelegate.__init__(self, parent, **kw)
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
+    def get_standard_item(cls, locale, model_conext):
         item = super(LocalFileDelegate, cls).get_standard_item(
-            locale, value, fa_values
+            locale, model_context
         )
-        if value is not None:
-            item.setData(py_to_variant(str(value)), PreviewRole)
+        if model_context.value is not None:
+            item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item

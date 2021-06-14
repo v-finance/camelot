@@ -3,6 +3,7 @@ import unittest
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.action.list_filter import Filter
+from camelot.admin.action.field_action import SelectObject, ClearObject
 from camelot.core.qt import variant_to_py, QtCore, Qt, py_to_variant, delete
 from camelot.model.party import Person
 from camelot.view.item_model.cache import ValueCache
@@ -10,7 +11,7 @@ from camelot.view.proxy.collection_proxy import (
     CollectionProxy, invalid_item)
 from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
     VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
-    CompletionsRole, CompletionPrefixRole
+    CompletionsRole, CompletionPrefixRole, ActionStatesRole
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.test import RunningThreadCase, RunningProcessCase
@@ -203,8 +204,10 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         # why would there be a need to get static fa before the timout has passed ?
         #self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole).get('prefix'), None)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), [])
         self._data(1, 2, self.item_model)
         self._data(1, 3, self.item_model)
+        self._data(1, 4, self.item_model)
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.EditRole), 1)
@@ -216,6 +219,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['prefix'], 'pre')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ToolTipRole), 'Hint')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.BackgroundRole), 'red')
+        self.assertEqual(len(self._data(1, 4, self.item_model, role=ActionStatesRole)), 2)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[0]['tooltip'], SelectObject.tooltip)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[1]['tooltip'], ClearObject.tooltip)
         self.assertTrue(isinstance(self._data(1, 2, self.item_model), AbstractModelProxy))
         self.assertEqual(self._data(1, 3, self.item_model), self.collection[1].created)
         

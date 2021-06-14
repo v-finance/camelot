@@ -66,11 +66,11 @@ class Many2OneDelegate(CustomDelegate):
         self._width = self._width * 2
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(Many2OneDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            admin = fa_values['admin']
-            verbose_name = admin.get_verbose_object_name(value)
+    def get_standard_item(cls, locale, model_context):
+        item = super(Many2OneDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            admin = model_context.field_attributes['admin']
+            verbose_name = admin.get_verbose_object_name(model_context.value)
             item.setData(py_to_variant(verbose_name), PreviewRole)
         return item
 

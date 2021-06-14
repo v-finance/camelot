@@ -49,10 +49,10 @@ class DateDelegate(CustomDelegate):
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(DateDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = six.text_type(locale.toString(value, QtCore.QLocale.ShortFormat))
+    def get_standard_item(cls, locale, model_context):
+        item = super(DateDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            value_str = six.text_type(locale.toString(model_context.value, QtCore.QLocale.ShortFormat))
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
             item.setData(py_to_variant(six.text_type()), PreviewRole)

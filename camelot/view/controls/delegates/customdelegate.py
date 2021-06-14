@@ -28,11 +28,12 @@
 #  ============================================================================
 
 import six
+import dataclasses
 
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
 from ....core.item_model import (
-    ProxyDict, FieldAttributesRole, ActionRoutesRole
+    ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
 from camelot.view.proxy import ValueLoading
 
@@ -134,28 +135,32 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         self._width = self._font_metrics.averageCharWidth() * 20
 
     @classmethod
-    def get_standard_item(cls, locale, value, field_attributes_values):
+    def get_standard_item(cls, locale, model_context):
         """
         This method is used by the proxy to convert the value of a field
         to the data for the standard item model.  The result of this call can be
         used by the methods of the delegate.
 
         :param locale: the `QLocale` to be used to display locale dependent values
-        :param value: the value of the field on the object
-        :param field_attributes_values: the values of the field attributes on the
-           object
+        :param model_context: a FieldActionModelContext object
         
         :return: a `QStandardItem` object
         """
+        action_states = []
+        for action in model_context.field_attributes.get('actions', []):
+            state = action.get_state(model_context)
+            action_states.append(dataclasses.asdict(state))
+
         item = QtGui.QStandardItem()
-        item.setData(py_to_variant(value), Qt.EditRole)
-        item.setData(field_attributes_values.get('action_routes'), ActionRoutesRole)
+        item.setData(py_to_variant(model_context.value), Qt.EditRole)
+        item.setData(model_context.field_attributes.get('action_routes'), ActionRoutesRole)
+        item.setData(py_to_variant(action_states), ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
-        item.setData(py_to_variant(ProxyDict(field_attributes_values)),
+        item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
-        item.setData(py_to_variant(field_attributes_values.get('tooltip')),
+        item.setData(py_to_variant(model_context.field_attributes.get('tooltip')),
                      Qt.ToolTipRole)
-        item.setData(py_to_variant(field_attributes_values.get('background_color')),
+        item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.BackgroundRole)
         return item
 
