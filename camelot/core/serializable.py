@@ -1,4 +1,7 @@
+import dataclasses
 import json
+
+from .utils import ugettext_lazy
 
 class Serializable(object):
     """
@@ -17,5 +20,23 @@ class Serializable(object):
         Read the state of the object from a binary stream
         """
         state = json.load(stream)
-        for k, v in state.items():
-            setattr(self, k, v)
+        self.__dict__.update(state)
+
+class DataclassEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, ugettext_lazy):
+            return str(ugettext_lazy)
+        return json.JSONEncoder.default(self, obj)
+
+
+json_encoder = DataclassEncoder()
+
+class DataclassSerializable(Serializable):
+    """
+    Use the dataclass info to serialize the object
+    """
+
+    def write_object(self, stream):
+        for chunk in json_encoder.iterencode(dataclasses.asdict(self)):
+            stream.write(chunk.encode())
