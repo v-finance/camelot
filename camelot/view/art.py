@@ -31,10 +31,14 @@
 
 import os
 import json
-import logging
-logger = logging.getLogger('camelot.view.art')
+import typing
+from dataclasses import dataclass
 
 from ..core.qt import QtCore, QtGui, QtWidgets
+from ..core.serializable import DataclassSerializable
+
+import logging
+logger = logging.getLogger('camelot.view.art')
 
 def file_(name):
     from camelot.core.resources import resource_filename
@@ -175,23 +179,27 @@ class FontIconEngine(QtGui.QIconEngine):
         return pix
 
 
-class FontIcon:
+@dataclass
+class FontIcon(DataclassSerializable):
 
-    _name_to_code = None
-    _color = QtGui.QColor('#009999')
+    _name_to_code: typing.ClassVar[dict] = None
+    _color: typing.ClassVar[QtGui.QColor] = QtGui.QColor('#009999')
+
+    name: str
+    pixmap_size: int
 
     def __init__(self, name, pixmap_size=32):
         """
         The pixmap size is only used when calling getQPixmap().
         """
-        self._name = name
-        self._pixmap_size = pixmap_size
+        self.name = name
+        self.pixmap_size = pixmap_size
 
         if FontIcon._name_to_code is None:
             FontIcon._load_name_to_code()
 
-        if self._name not in FontIcon._name_to_code:
-            raise Exception("Unknown font awesome icon: {}".format(self._name))
+        if self.name not in FontIcon._name_to_code:
+            raise Exception("Unknown font awesome icon: {}".format(self.name))
 
     @staticmethod
     def _load_name_to_code():
@@ -202,7 +210,7 @@ class FontIcon:
         # this method should not raise an exception, as it is used in slots
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
-        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
+        engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
         engine.color = self._color
 
         icon = QtGui.QIcon(engine)
@@ -212,10 +220,10 @@ class FontIcon:
         # this method should not raise an exception, as it is used in slots
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
-        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
+        engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
         engine.color = self._color
 
-        return engine.pixmap(QtCore.QSize(self._pixmap_size, self._pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
 
 class ColorScheme(object):
