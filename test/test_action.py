@@ -9,7 +9,7 @@ import openpyxl
 import six
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.admin.action import Action, ActionStep, State
+from camelot.admin.action import Action, ActionStep, State, Mode
 from camelot.admin.action import (
     list_action, application_action, form_action, list_filter,
     ApplicationActionGuiContext
@@ -76,11 +76,19 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
         class CustomAction( Action ):
             verbose_name = 'Custom Action'
             shortcut = QtGui.QKeySequence.New
+            modes = [
+                Mode('mode_1', _('First mode')),
+                Mode('mode_2', _('Second mode')),
+            ]
 
         action = CustomAction()
         list(self.gui_run(action, self.gui_context))
         state = self.get_state(action, self.gui_context)
         self.assertTrue(state.verbose_name)
+        # serialize the state of an action
+        deserialized_state = self._write_read(state)
+        self.assertEqual(deserialized_state.verbose_name, state.verbose_name)
+        self.assertEqual(len(deserialized_state.modes), len(state.modes))
 
 
 class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
@@ -212,7 +220,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
             20, 100, _('Importing data')
         )
         self.assertTrue( six.text_type( update_progress ) )
-        update_progress = self._write_read_action_step(update_progress)
+        update_progress = self._write_read(update_progress)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run( self.gui_context )
