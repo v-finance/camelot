@@ -1,5 +1,4 @@
 import datetime
-import json
 import io
 import logging
 import os
@@ -10,7 +9,7 @@ import openpyxl
 import six
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.admin.action import Action, ActionStep, State
+from camelot.admin.action import Action, ActionStep, State, Mode
 from camelot.admin.action import (
     list_action, application_action, form_action, list_filter,
     ApplicationActionGuiContext
@@ -44,8 +43,23 @@ test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example',
 
 LOGGER = logging.getLogger(__name__)
 
+class SerializableMixinCase(object):
 
-class ActionBaseCase(RunningThreadCase):
+    def _write_read(self, step):
+        """
+        Serialize and deserialize an object, return the deserialized object
+        """
+        stream = io.BytesIO()
+        step.write_object(stream)
+        stream.seek(0)
+        stream.seek(0)
+        step_type = type(step)
+        deserialized_object = step_type.__new__(step_type)
+        deserialized_object.read_object(stream)
+        return deserialized_object
+
+
+class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
 
     def setUp(self):
         super().setUp()
@@ -62,11 +76,19 @@ class ActionBaseCase(RunningThreadCase):
         class CustomAction( Action ):
             verbose_name = 'Custom Action'
             shortcut = QtGui.QKeySequence.New
+            modes = [
+                Mode('mode_1', _('First mode')),
+                Mode('mode_2', _('Second mode')),
+            ]
 
         action = CustomAction()
         list(self.gui_run(action, self.gui_context))
         state = self.get_state(action, self.gui_context)
         self.assertTrue(state.verbose_name)
+        # serialize the state of an action
+        deserialized_state = self._write_read(state)
+        self.assertEqual(deserialized_state.verbose_name, state.verbose_name)
+        self.assertEqual(len(deserialized_state.modes), len(state.modes))
 
 
 class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
@@ -112,7 +134,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
+class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -198,11 +220,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
             20, 100, _('Importing data')
         )
         self.assertTrue( six.text_type( update_progress ) )
-        stream = io.BytesIO()
-        update_progress.write_object(stream)
-        stream.seek(0)
-        update_progress = action_steps.UpdateProgress.__new__(action_steps.UpdateProgress)
-        update_progress.read_object(stream)
+        update_progress = self._write_read(update_progress)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run( self.gui_context )
