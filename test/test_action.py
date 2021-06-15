@@ -52,7 +52,6 @@ class SerializableMixinCase(object):
         stream = io.BytesIO()
         step.write_object(stream)
         stream.seek(0)
-        stream.seek(0)
         step_type = type(step)
         deserialized_object = step_type.__new__(step_type)
         deserialized_object.read_object(stream)
@@ -234,6 +233,12 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         dialog = step.render()
         dialog.show()
         self.grab_widget(dialog)
+
+    #def test_main_menu(self):
+        #main_menu = action_steps.MainMenu(app_admin.get_main_menu())
+        #main_menu = self._write_read(main_menu)
+        #main_menu.gui_run(self.gui_context)
+
 
 class ListActionsCase(
     RunningThreadCase,
