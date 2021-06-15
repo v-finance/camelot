@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import logging
 import typing
@@ -227,11 +227,12 @@ updated state for the widget.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    icon: typing.Any = None
     tooltip: typing.Union[str, ugettext_lazy, None] = None
     enabled: bool = True
     visible: bool = True
     notification: bool = False
-    modes: typing.List[Mode] = list
+    modes: typing.List[Mode] = field(default_factory=list)
 
 
 class ActionStep( object ):
