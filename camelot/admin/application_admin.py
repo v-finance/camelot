@@ -36,6 +36,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 import six
 
+from .action.base import Action
 from .admin_route import AdminRoute
 from .entity_admin import EntityAdmin
 from .menu import Menu
@@ -324,16 +325,28 @@ shortcut confusion and reduce the number of status updates.
                 ] + self.change_row_actions
         return []
 
-    def add_main_menu(self, verbose_name, icon=None, items=[], after=None):
+    def add_main_menu(self, verbose_name, icon=None, parent_menu=None):
         """
         add a new item to the main menu
 
         :return: a `Menu` object that can be used in subsequent calls to
-            position other items after the new item.
+            add other items as children of this item.
         """
-        menu = Menu(verbose_name, items, icon)
-        self._main_menu.append(menu)
+        menu = Menu(verbose_name, icon)
+        if parent_menu is not None:
+            parent_menu.items.append(menu)
+        else:
+            self._main_menu.append(menu)
         return menu
+
+    def add_main_action(self, action, parent_menu):
+        assert isinstance(action, Action)
+        assert isinstance(parent_menu, Menu)
+        self._register_action_route(self._admin_route, action)
+        parent_menu.items.append(action)
+
+    def add_main_separator(self, parent_menu):
+        parent_menu.items.append(None)
 
     def get_main_menu( self ):
         """

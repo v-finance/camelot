@@ -98,3 +98,12 @@ class AdminRoute(object):
         assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
         cls._admin_routes[action_route] = action
         return action_route
+
+    @classmethod
+    def _register_action_route(cls, admin_route, action):
+        assert isinstance(admin_route, tuple)
+        assert admin_route in cls._admin_routes
+        action_route = (*admin_route, 'actions', action.get_name())
+        assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        cls._admin_routes[action_route] = action
+        return action_route

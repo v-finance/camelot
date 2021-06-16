@@ -37,13 +37,12 @@ contains a list of items the user select.  Such a menu item is either a Menu
 itself, an Action object or None to insert a separator.
     """
         
-    def __init__( self, 
+    def __init__( self,
                   verbose_name,
-                  items,
                   icon=None ):
         self.verbose_name = verbose_name
         self.icon = icon
-        self.items = items
+        self.items = list()
 
     def get_verbose_name( self ):
         return self.verbose_name
