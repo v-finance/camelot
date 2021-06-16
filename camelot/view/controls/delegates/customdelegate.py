@@ -199,23 +199,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #   getting closed always
         #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
 
-    def update_actions_request(self, editor, index):
-        action_states = index.model().data(index, ActionStatesRole)
-        return editor, action_states
-
-    def update_actions_response(self, args):
-        editor, action_states = args
-        if action_states is None:
-            return
-        model_context = None
-        for action_widget in editor.findChildren(ActionToolbutton):
-            # only create the model context, when there is an action
-            if model_context is None:
-                model_context = editor.gui_context.create_model_context()
-            if action_widget.action_route in action_states:
-                state = action_states[action_widget.action_route]
-                action_widget.set_state_v2(state)
-
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
@@ -237,9 +220,17 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_value(value)
 
         # update actions
-        post(self.update_actions_request,
-             self.update_actions_response,
-             args=(editor, index))
+        action_states = index.model().data(index, ActionStatesRole)
+        if action_states is None:
+            return
+        model_context = None
+        for action_widget in editor.findChildren(ActionToolbutton):
+            # only create the model context, when there is an action
+            if model_context is None:
+                model_context = editor.gui_context.create_model_context()
+            if action_widget.action_route in action_states:
+                state = action_states[action_widget.action_route]
+                action_widget.set_state_v2(state)
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
