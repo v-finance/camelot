@@ -55,7 +55,7 @@ class LocalFileDelegate(CustomDelegate):
         CustomDelegate.__init__(self, parent, **kw)
 
     @classmethod
-    def get_standard_item(cls, locale, model_conext):
+    def get_standard_item(cls, locale, model_context):
         item = super(LocalFileDelegate, cls).get_standard_item(
             locale, model_context
         )
