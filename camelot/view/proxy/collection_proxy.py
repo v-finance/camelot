@@ -108,7 +108,7 @@ invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
 invalid_item.setData([], ActionRoutesRole)
-invalid_item.setData([], ActionStatesRole)
+invalid_item.setData({}, ActionStatesRole)
 
 initial_delay = 50
 maximum_delay = 1000

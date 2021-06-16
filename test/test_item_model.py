@@ -11,7 +11,7 @@ from camelot.view.proxy.collection_proxy import (
     CollectionProxy, invalid_item)
 from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
     VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
-    CompletionsRole, CompletionPrefixRole, ActionStatesRole
+    CompletionsRole, CompletionPrefixRole, ActionRoutesRole, ActionStatesRole
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.test import RunningThreadCase, RunningProcessCase
@@ -204,7 +204,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         # why would there be a need to get static fa before the timout has passed ?
         #self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole).get('prefix'), None)
-        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), [])
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), {})
         self._data(1, 2, self.item_model)
         self._data(1, 3, self.item_model)
         self._data(1, 4, self.item_model)
@@ -220,10 +220,11 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ToolTipRole), 'Hint')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.BackgroundRole), 'red')
         self.assertEqual(len(self._data(1, 4, self.item_model, role=ActionStatesRole)), 2)
-        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[0]['tooltip'], SelectObject.tooltip)
-        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[0]['icon']['name'], SelectObject.icon.name)
-        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[1]['tooltip'], ClearObject.tooltip)
-        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[1]['icon']['name'], ClearObject.icon.name)
+        action_routes = self._data(1, 4, self.item_model, role=ActionRoutesRole)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[action_routes[0]]['tooltip'], SelectObject.tooltip)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[action_routes[0]]['icon']['name'], SelectObject.icon.name)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[action_routes[1]]['tooltip'], ClearObject.tooltip)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole)[action_routes[1]]['icon']['name'], ClearObject.icon.name)
         self.assertTrue(isinstance(self._data(1, 2, self.item_model), AbstractModelProxy))
         self.assertEqual(self._data(1, 3, self.item_model), self.collection[1].created)
         
