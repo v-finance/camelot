@@ -35,7 +35,6 @@ from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
-from ...model_thread import post
 from ..action_widget import ActionToolbutton
 from camelot.view.proxy import ValueLoading
 
@@ -223,11 +222,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_states = index.model().data(index, ActionStatesRole)
         if action_states is None:
             return
-        model_context = None
         for action_widget in editor.findChildren(ActionToolbutton):
-            # only create the model context, when there is an action
-            if model_context is None:
-                model_context = editor.gui_context.create_model_context()
             if action_widget.action_route in action_states:
                 state = action_states[action_widget.action_route]
                 action_widget.set_state_v2(state)
