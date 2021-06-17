@@ -144,6 +144,8 @@ class MainMenu(ActionStep, DataclassSerializable):
 
     """
 
+    blocking = False
+
     menu: MenuItem
 
     def __init__(self, menu):
@@ -169,19 +171,14 @@ class MainMenu(ActionStep, DataclassSerializable):
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(self, gui_context, step):
         from ..controls.busy_widget import BusyWidget
         main_window = gui_context.workspace.parent()
         if main_window is None:
             return
         menu_bar = main_window.menuBar()
-        # dirty hack : pretend the step is send over the wire
-        stream = io.BytesIO()
-        self.write_object(stream)
-        stream.seek(0)
-        self.read_object(stream)
-        # end of hack
-        self.render(gui_context, self.menu["items"], menu_bar)
+        self.render(gui_context, step["menu"]["items"], menu_bar)
         menu_bar.setCornerWidget(BusyWidget())
 
 

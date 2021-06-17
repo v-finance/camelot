@@ -243,7 +243,7 @@ class MetaActionStep(type):
     def __new__(cls, clsname, bases, attrs):
         newclass = super().__new__(cls, clsname, bases, attrs)
         if issubclass(newclass, (Serializable,)):
-            cls.action_steps[clsname] = cls
+            cls.action_steps[clsname] = newclass
         return newclass
 
 class ActionStep(metaclass=MetaActionStep):

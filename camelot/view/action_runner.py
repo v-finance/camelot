@@ -29,12 +29,16 @@
 
 import contextlib
 import functools
+import io
+import json
 import logging
 
 import six
 
+from ..core.serializable import DataclassSerializable
 from ..core.qt import QtCore, is_deleted
 from camelot.admin.action import ActionStep
+from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog
 from camelot.view.model_thread import post
@@ -73,6 +77,7 @@ class ActionRunner( QtCore.QEventLoop ):
     """
     
     non_blocking_action_step_signal = QtCore.qt_signal(object)
+    non_blocking_serializable_action_step_signal = QtCore.qt_signal(bytes)
     
     def __init__( self, generator_function, gui_context ):
         """
@@ -87,8 +92,9 @@ class ActionRunner( QtCore.QEventLoop ):
         self._gui_context = gui_context
         self._model_context = gui_context.create_model_context()
         self._non_blocking_cancel_request = False
-        self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
-        post( self._initiate_generator, self.generator, self.exception )
+        self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
+        self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
+        post(self._initiate_generator, self.generator, self.exception)
     
     def exit( self, return_code = 0 ):
         """Reimplementation of exit to store the return code"""
@@ -125,6 +131,16 @@ class ActionRunner( QtCore.QEventLoop ):
                     if result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
+                    # for now, only send data class serializable steps over the wire
+                    elif isinstance(result, (DataclassSerializable,)):
+                        LOGGER.debug( 'non blocking serializable step, use signal slot' )
+                        stream = io.BytesIO()
+                        stream.write(b'["' + type(result).__name__.encode()+b'",')
+                        result.write_object(stream)
+                        stream.write(b']')
+                        self.non_blocking_serializable_action_step_signal.emit(
+                            stream.getvalue()
+                        )
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
                         self.non_blocking_action_step_signal.emit( result )
@@ -153,7 +169,20 @@ class ActionRunner( QtCore.QEventLoop ):
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
-        
+
+    @QtCore.qt_slot(bytes)
+    def non_blocking_serializable_action_step(self, serialized_step):
+        type_and_step = json.loads(serialized_step)
+        assert len(type_and_step)==2
+        step_type, step = type_and_step
+        cls = MetaActionStep.action_steps[step_type]
+        try:
+            self._was_canceled(self._gui_context)
+            cls.gui_run(self._gui_context, step)
+        except CancelRequest:
+            LOGGER.debug( 'non blocking action step requests cancel, set flag' )
+            self._non_blocking_cancel_request = True
+
     @QtCore.qt_slot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
