@@ -31,10 +31,11 @@ from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_
 
 import six
 
-from ...admin.action import State
+from ...admin.action import Mode, State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
+from camelot.view.art import FontIcon
 
 class AbstractActionWidget( object ):
 
@@ -70,6 +71,10 @@ class AbstractActionWidget( object ):
         self.state = state
         self.setEnabled(state.enabled)
         self.setVisible(state.visible)
+
+    def set_state_v2(self, state):
+        self.setEnabled(state['enabled'])
+        self.setVisible(state['visible'])
 
     def current_row_changed( self, index1=None, index2=None ):
         post( self.action.get_state,
@@ -116,6 +121,29 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode in state.modes:
+                mode_action = mode.render(menu)
+                mode_action.triggered.connect(self.action_triggered)
+                menu.addAction(mode_action)
+
+    def set_menu_v2(self, state, parent):
+        """This method creates a menu for an object with as its menu items
+        the different modes in which an action can be triggered.
+
+        :param state: a `camelot.admin.action.State` object
+        :param parent: a parent for the menu
+        """
+        if state['modes']:
+            # self is not always a QWidget, so QMenu is created without
+            # parent
+            menu = self.menu()
+            if menu is None:
+                menu = QtWidgets.QMenu(parent=parent)
+                # setMenu does not transfer ownership
+                self.setMenu(menu)
+            menu.clear()
+            for mode_data in state['modes']:
+                icon = FontIcon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'])
+                mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)
                 menu.addAction(mode_action)
@@ -224,6 +252,24 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         self.set_menu(state, self)
         if state.modes:
             self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
+    def set_state_v2( self, state ):
+        AbstractActionWidget.set_state_v2(self, state)
+        if state['verbose_name'] != None:
+            self.setText( str( state['verbose_name'] ) )
+        if state['icon'] != None:
+            icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size']).getQIcon()
+            self.setIcon(icon)
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            self.setToolTip( str( state['tooltip'] ) )
+        else:
+            self.setToolTip( '' )
+        self.set_menu_v2(state, self)
+        if state['modes']:
+            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
 
     @QtCore.qt_slot()
     def action_triggered(self):

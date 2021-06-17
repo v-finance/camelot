@@ -51,6 +51,7 @@ FieldAttributesRole = Qt.UserRole + 6
 CompletionPrefixRole = Qt.UserRole + 7
 CompletionsRole = Qt.UserRole + 8
 ActionRoutesRole = Qt.UserRole + 9
+ActionStatesRole = Qt.UserRole + 10
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent

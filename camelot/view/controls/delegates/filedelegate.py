@@ -43,10 +43,10 @@ class FileDelegate(CustomDelegate):
     editor = editors.FileEditor
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(FileDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            item.setData(py_to_variant(value.verbose_name), PreviewRole)
+    def get_standard_item(cls, locale, model_context):
+        item = super(FileDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            item.setData(py_to_variant(model_context.value.verbose_name), PreviewRole)
         else:
             item.setData(py_to_variant(six.text_type()), PreviewRole)
         return item

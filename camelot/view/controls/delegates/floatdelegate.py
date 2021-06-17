@@ -49,22 +49,22 @@ class FloatDelegate(CustomDelegate):
                                             **kwargs )
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
-        fa_values.update({
+    def get_standard_item(cls, locale, model_context):
+        minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        model_context.field_attributes.update({
             'minimum': minimum if minimum is not None else constants.camelot_minfloat,
             'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
         })
-        item = super(FloatDelegate, cls).get_standard_item(locale, value, fa_values)
-        precision = fa_values.get('precision', 2)
-        if value is not None:
+        item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
+        precision = model_context.field_attributes.get('precision', 2)
+        if model_context.value is not None:
             value_str = six.text_type(
-                locale.toString(float(value), 'f', precision)
+                locale.toString(float(model_context.value), 'f', precision)
             )
-            if fa_values.get('suffix') is not None:
-                value_str = value_str + ' ' + fa_values.get('suffix')
-            if fa_values.get('prefix') is not None:
-                value_str = fa_values.get('prefix') + ' ' + value_str
+            if model_context.field_attributes.get('suffix') is not None:
+                value_str = value_str + ' ' + model_context.field_attributes.get('suffix')
+            if model_context.field_attributes.get('prefix') is not None:
+                value_str = model_context.field_attributes.get('prefix') + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
             item.setData(py_to_variant(six.text_type()), PreviewRole)

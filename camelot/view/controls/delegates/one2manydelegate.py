@@ -50,11 +50,11 @@ class One2ManyDelegate(CustomDelegate):
         self.kwargs = kwargs
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(One2ManyDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            admin = fa_values['admin']
-            item.setData(py_to_variant(admin.get_proxy(value)), Qt.EditRole)
+    def get_standard_item(cls, locale, model_context):
+        item = super(One2ManyDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            admin = model_context.field_attributes['admin']
+            item.setData(py_to_variant(admin.get_proxy(model_context.value)), Qt.EditRole)
         return item
 
     def createEditor( self, parent, option, index ):

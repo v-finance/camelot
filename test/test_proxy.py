@@ -10,6 +10,7 @@ from camelot.model.party import Person, Party
 
 from camelot.view.controls import delegates
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.action.field_action import SelectObject, ClearObject
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class A(object):
             'w': {'editable': True,
                   'delegate': delegates.Many2OneDelegate,
                   'target': B,
+                  'actions':[SelectObject(), ClearObject()],
                   },
             'x': {'editable': True,
                   'static':'static',

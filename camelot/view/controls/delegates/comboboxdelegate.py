@@ -44,20 +44,20 @@ class ComboBoxDelegate(CustomDelegate):
     editor = editors.ChoicesEditor
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(ComboBoxDelegate, cls).get_standard_item(locale, value, fa_values)
-        choices = fa_values.get('choices', [])
+    def get_standard_item(cls, locale, model_context):
+        item = super(ComboBoxDelegate, cls).get_standard_item(locale, model_context)
+        choices = model_context.field_attributes.get('choices', [])
         for key, verbose in choices:
-            if key == value:
+            if key == model_context.value:
                 item.setData(py_to_variant(six.text_type(verbose)), PreviewRole)
                 break
         else:
-            if value is None:
+            if model_context.value is None:
                 item.setData(py_to_variant(six.text_type()), PreviewRole)
             else:
                 # the model has a value that is not in the list of choices,
                 # still try to display it
-                item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+                item.setData(py_to_variant(six.text_type(model_context.value)), PreviewRole)
         return item
 
     def setEditorData(self, editor, index):
