@@ -36,9 +36,10 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 import six
 
+from .action.base import Action
 from .admin_route import AdminRoute
 from .entity_admin import EntityAdmin
-from .menu import Menu
+from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import Qt, QtCore
@@ -324,16 +325,29 @@ shortcut confusion and reduce the number of status updates.
                 ] + self.change_row_actions
         return []
 
-    def add_main_menu(self, verbose_name, icon=None, items=[], after=None):
+    def add_main_menu(self, verbose_name, icon=None, parent_menu=None):
         """
         add a new item to the main menu
 
-        :return: a `Menu` object that can be used in subsequent calls to
-            position other items after the new item.
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
         """
-        menu = Menu(verbose_name, items, icon)
-        self._main_menu.append(menu)
+        menu = MenuItem(verbose_name, icon)
+        if parent_menu is not None:
+            parent_menu.items.append(menu)
+        else:
+            self._main_menu.append(menu)
         return menu
+
+    def add_main_action(self, action, parent_menu):
+        assert isinstance(action, Action)
+        assert isinstance(parent_menu, MenuItem)
+        self._register_action_route(self._admin_route, action)
+        parent_menu.items.append(MenuItem(action=action))
+
+    def add_main_separator(self, parent_menu):
+        assert isinstance(parent_menu, MenuItem)
+        parent_menu.items.append(MenuItem())
 
     def get_main_menu( self ):
         """
