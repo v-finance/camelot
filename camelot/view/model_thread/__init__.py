@@ -113,7 +113,7 @@ class AbstractModelThread(QtCore.QThread):
 
     def post(self, request, response=None, exception=None, args=()):
         """Post a request to the model thread, request should be a function
-        that takes no arguments. The request function will be called within the
+        that takes args as arguments. The request function will be called within the
         model thread. When the request is finished, on first occasion, the
         response function will be called within the gui thread. The response
         function takes as arguments, the results of the request function.

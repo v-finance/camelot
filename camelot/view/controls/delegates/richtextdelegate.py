@@ -50,10 +50,10 @@ class RichTextDelegate(CustomDelegate):
         self._width = self._width * 3
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(RichTextDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = u' '.join(text_from_richtext(value))[:256]
+    def get_standard_item(cls, locale, model_context):
+        item = super(RichTextDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            value_str = u' '.join(text_from_richtext(model_context.value))[:256]
             item.setData(py_to_variant(six.text_type(value_str)), PreviewRole)
         return item
 

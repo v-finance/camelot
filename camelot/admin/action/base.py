@@ -35,6 +35,7 @@ import typing
 from ...core.qt import QtWidgets, QtGui, Qt
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
+from ...view.art import FontIcon
 
 import six
 
@@ -150,6 +151,7 @@ the default mode.
 
     name: str
     verbose_name: typing.Union[str, ugettext_lazy]
+    icon: FontIcon
     
     def __init__( self, name, verbose_name=None, icon=None):
         """
@@ -227,7 +229,7 @@ updated state for the widget.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
-    icon: typing.Any = None
+    icon: FontIcon = None
     tooltip: typing.Union[str, ugettext_lazy, None] = None
     enabled: bool = True
     visible: bool = True
