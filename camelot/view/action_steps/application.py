@@ -27,10 +27,16 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+import io
 import logging
 
+from ..controls.action_widget import ActionAction
 from ...admin.action.base import ActionStep
+from ...admin.admin_route import AdminRoute
+from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
+from ...core.serializable import DataclassSerializable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -129,25 +135,54 @@ class NavigationPanel(ActionStep):
             Qt.LeftDockWidgetArea, navigation_panel
         )
 
-class MainMenu(ActionStep):
+@dataclass
+class MainMenu(ActionStep, DataclassSerializable):
     """
     Create a main menu for the application window.
     
     :param menu: a list of :class:`camelot.admin.menu.Menu' objects
 
     """
-     
-    def __init__( self, menu ):
+
+    menu: MenuItem
+
+    def __init__(self, menu):
         self.menu = menu
 
-    def gui_run( self, gui_context ):
-        from ..mainwindowproxy import MainWindowProxy
+    @classmethod
+    def render(cls, gui_context, items, parent_menu):
+        """
+        :return: a :class:`QtWidgets.QMenu` object
+        """
+        for item in items:
+            if (item["verbose_name"] is None) and (item["action_route"] is None):
+                parent_menu.addSeparator()
+                continue
+            elif item["verbose_name"] is not None:
+                menu = QtWidgets.QMenu(item["verbose_name"], parent_menu)
+                parent_menu.addMenu(menu)
+                cls.render(gui_context, item["items"], menu)
+            elif item["action_route"] is not None:
+                action = AdminRoute.action_for(tuple(item["action_route"]))
+                qaction = ActionAction(action, gui_context, parent_menu)
+                parent_menu.addAction(qaction)
+            else:
+                raise Exception('Cannot handle menu item {}'.format(item))
+
+    def gui_run(self, gui_context):
+        from ..controls.busy_widget import BusyWidget
         main_window = gui_context.workspace.parent()
         if main_window is None:
             return
-        main_window_proxy = main_window.findChild(MainWindowProxy)
-        if main_window_proxy is not None:
-            main_window_proxy.set_main_menu(self.menu)
+        menu_bar = main_window.menuBar()
+        # dirty hack : pretend the step is send over the wire
+        stream = io.BytesIO()
+        self.write_object(stream)
+        stream.seek(0)
+        self.read_object(stream)
+        # end of hack
+        self.render(gui_context, self.menu["items"], menu_bar)
+        menu_bar.setCornerWidget(BusyWidget())
 
 
 class InstallTranslator(ActionStep):

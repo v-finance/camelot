@@ -152,7 +152,7 @@ shortcut confusion and reduce the number of status updates.
         if domain is not None:
             self.domain = domain
         self._admin_route = super()._register_admin_route(self)
-        self._main_menu = list()
+        self._main_menu = MenuItem()
 
     def get_admin_route(self):
         return self._admin_route
@@ -333,26 +333,24 @@ shortcut confusion and reduce the number of status updates.
             add other items as children of this item.
         """
         menu = MenuItem(verbose_name, icon)
-        if parent_menu is not None:
-            parent_menu.items.append(menu)
-        else:
-            self._main_menu.append(menu)
+        if parent_menu is None:
+            parent_menu = self._main_menu
+        parent_menu.items.append(menu)
         return menu
 
     def add_main_action(self, action, parent_menu):
         assert isinstance(action, Action)
         assert isinstance(parent_menu, MenuItem)
-        self._register_action_route(self._admin_route, action)
-        parent_menu.items.append(MenuItem(action=action))
+        action_route = self._register_action_route(self._admin_route, action)
+        parent_menu.items.append(MenuItem(action_route=action_route))
 
     def add_main_separator(self, parent_menu):
         assert isinstance(parent_menu, MenuItem)
         parent_menu.items.append(MenuItem())
 
-    def get_main_menu( self ):
+    def get_main_menu(self) -> MenuItem:
         """
-        :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
-            there should be no main menu
+        :return: a :class:`camelot.admin.menu.MenuItem` object
         """
         return self._main_menu
 

@@ -30,9 +30,8 @@
 from dataclasses import dataclass
 import typing
 
-from .action import Action
+from .admin_route import Route
 from ..core.serializable import DataclassSerializable
-from ..core.qt import QtWidgets
 from ..core.utils import ugettext_lazy
 from ..view.art import FontIcon
 
@@ -48,34 +47,12 @@ class MenuItem(DataclassSerializable):
 
     verbose_name: typing.Union[str, ugettext_lazy, None]
     icon: typing.Union[FontIcon, None]
-    action: typing.Union[Action, None]
+    action_route: typing.Union[Route, None]
     items: typing.List['MenuItem']
 
-    def __init__(self, verbose_name=None, icon=None, action=None):
-        assert (action is None) or ((verbose_name is None) and (icon is None))
+    def __init__(self, verbose_name=None, icon=None, action_route=None):
+        assert (action_route is None) or ((verbose_name is None) and (icon is None))
         self.verbose_name = verbose_name
         self.icon = icon
-        self.action = action
+        self.action_route = action_route
         self.items = list()
-
-    def render( self, gui_context, parent ):
-        """
-        :return: a :class:`QtWidgets.QMenu` object
-        """
-        from ..view.controls.action_widget import ActionAction
-        menu = QtWidgets.QMenu(str(self.verbose_name), parent)
-        for item in self.items:
-            if (item.verbose_name is None) and (item.action is None):
-                menu.addSeparator()
-                continue
-            elif item.verbose_name is not None:
-                menu.addMenu(item.render(gui_context, menu))
-            elif item.action is not None:
-                action = ActionAction(item.action, gui_context, menu)
-                menu.addAction(action)
-            else:
-                raise Exception('Cannot handle menu item {}'.format(item))
-        return menu
-
-
-

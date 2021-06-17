@@ -26,7 +26,7 @@ class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, ugettext_lazy):
-            return str(ugettext_lazy)
+            return str(obj)
         return json.JSONEncoder.default(self, obj)
 
 
