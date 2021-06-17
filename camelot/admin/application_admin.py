@@ -39,7 +39,7 @@ import six
 from .action.base import Action
 from .admin_route import AdminRoute
 from .entity_admin import EntityAdmin
-from .menu import Menu
+from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import Qt, QtCore
@@ -329,10 +329,10 @@ shortcut confusion and reduce the number of status updates.
         """
         add a new item to the main menu
 
-        :return: a `Menu` object that can be used in subsequent calls to
+        :return: a `MenuItem` object that can be used in subsequent calls to
             add other items as children of this item.
         """
-        menu = Menu(verbose_name, icon)
+        menu = MenuItem(verbose_name, icon)
         if parent_menu is not None:
             parent_menu.items.append(menu)
         else:
@@ -341,12 +341,13 @@ shortcut confusion and reduce the number of status updates.
 
     def add_main_action(self, action, parent_menu):
         assert isinstance(action, Action)
-        assert isinstance(parent_menu, Menu)
+        assert isinstance(parent_menu, MenuItem)
         self._register_action_route(self._admin_route, action)
-        parent_menu.items.append(action)
+        parent_menu.items.append(MenuItem(action=action))
 
     def add_main_separator(self, parent_menu):
-        parent_menu.items.append(None)
+        assert isinstance(parent_menu, MenuItem)
+        parent_menu.items.append(MenuItem())
 
     def get_main_menu( self ):
         """
