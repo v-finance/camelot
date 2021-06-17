@@ -30,7 +30,6 @@
 import contextlib
 import functools
 import io
-import json
 import logging
 
 import six
@@ -77,7 +76,7 @@ class ActionRunner( QtCore.QEventLoop ):
     """
     
     non_blocking_action_step_signal = QtCore.qt_signal(object)
-    non_blocking_serializable_action_step_signal = QtCore.qt_signal(bytes)
+    non_blocking_serializable_action_step_signal = QtCore.qt_signal(str, bytes)
     
     def __init__( self, generator_function, gui_context ):
         """
@@ -114,7 +113,13 @@ class ActionRunner( QtCore.QEventLoop ):
     def _initiate_generator( self ):
         """Create the model context and start the generator"""
         return self._generator_function( self._model_context )
-            
+
+    @staticmethod
+    def _step_to_bytes(step):
+        stream = io.BytesIO()
+        step.write_object(stream)
+        return stream.getvalue()
+
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that
@@ -128,18 +133,17 @@ class ActionRunner( QtCore.QEventLoop ):
             result = generator_method( *args )
             while True:
                 if isinstance(result, ActionStep):
-                    if result.blocking:
+                    if result.blocking and isinstance(result, (DataclassSerializable,)):
+                        LOGGER.debug( 'serializable blocking step, yield it' )
+                        return (type(result).__name__, self._step_to_bytes(result))
+                    elif result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
                     # for now, only send data class serializable steps over the wire
                     elif isinstance(result, (DataclassSerializable,)):
                         LOGGER.debug( 'non blocking serializable step, use signal slot' )
-                        stream = io.BytesIO()
-                        stream.write(b'["' + type(result).__name__.encode()+b'",')
-                        result.write_object(stream)
-                        stream.write(b']')
                         self.non_blocking_serializable_action_step_signal.emit(
-                            stream.getvalue()
+                            type(result).__name__, self._step_to_bytes(result)
                         )
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
@@ -170,15 +174,12 @@ class ActionRunner( QtCore.QEventLoop ):
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
 
-    @QtCore.qt_slot(bytes)
-    def non_blocking_serializable_action_step(self, serialized_step):
-        type_and_step = json.loads(serialized_step)
-        assert len(type_and_step)==2
-        step_type, step = type_and_step
+    @QtCore.qt_slot(str, bytes)
+    def non_blocking_serializable_action_step(self, step_type, serialized_step):
         cls = MetaActionStep.action_steps[step_type]
         try:
             self._was_canceled(self._gui_context)
-            cls.gui_run(self._gui_context, step)
+            cls.gui_run(self._gui_context, serialized_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
@@ -224,10 +225,15 @@ class ActionRunner( QtCore.QEventLoop ):
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        if isinstance( yielded, ActionStep ):
+        if isinstance(yielded, (ActionStep, tuple)):
             try:
-                self._was_canceled( self._gui_context )
-                to_send = yielded.gui_run( self._gui_context )
+                self._was_canceled(self._gui_context)
+                if isinstance(yielded, tuple):
+                    step_type, serialized_step = yielded
+                    cls = MetaActionStep.action_steps[step_type]
+                    to_send = cls.gui_run(self._gui_context, serialized_step)
+                else:
+                    to_send = yielded.gui_run(self._gui_context)
                 self._was_canceled( self._gui_context )
                 post( self._iterate_until_blocking, 
                       self.__next__, 
