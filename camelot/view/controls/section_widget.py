@@ -32,18 +32,19 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.section_widget')
 
-import six
-
+from ...admin.action.base import Mode
+from ...admin.admin_route import AdminRoute
 from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
-from camelot.admin.section import Section, SectionItem
+from ..art import FontIcon
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
 class PaneSection(QtWidgets.QWidget):
 
-    def __init__(self, parent, items, gui_context):
+    def __init__(self, parent, items, action_states, gui_context):
         super(PaneSection, self).__init__(parent)
         self._items = []
+        self.action_states = action_states
         self.gui_context = gui_context
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -76,18 +77,21 @@ class PaneSection(QtWidgets.QWidget):
             if not items: return
     
             for item in items:
-                label = item.get_verbose_name()
-                icon = item.get_icon()
-                model_item = ModelItem( parent, 
-                                        [six.text_type(label)],
-                                        item )
-                if icon:
+                if item["action_route"]:
+                    state = self.action_states[tuple(item["action_route"])]
+                    if state["enabled"] == False:
+                        continue
+                else:
+                    state = item
+                label = state["verbose_name"]
+                model_item = ModelItem(parent, [label], item)
+                if state["icon"] is not None:
+                    icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size'])
                     model_item.set_icon(icon.getQIcon())
-                section_tree.modelitems.append( model_item )
-                if isinstance( item, Section ):
-                    child_items = item.get_items()
-                    self.set_items( child_items, parent = model_item )
-                    self._items.extend( child_items )
+                section_tree.modelitems.append(model_item)
+                if len(item["items"]):
+                    self.set_items(item["items"], parent = model_item)
+                    self._items.extend(item["items"])
                     
             section_tree.resizeColumnToContents( 0 )
 
@@ -97,12 +101,20 @@ class PaneSection(QtWidgets.QWidget):
         section_tree = self.findChild(QtWidgets.QWidget, 'SectionTree')
         if section_tree:
             item = section_tree.itemAt(point)
-            if item:
+            if item is not None:
                 section_tree.contextmenu.clear()
-                for mode in item.section_item.get_modes():
-                    action = mode.render( self )
-                    action.triggered.connect( self._action_triggered )
-                    section_tree.contextmenu.addAction( action )
+                action_route = item.section_item["action_route"]
+                if action_route is not None:
+                    state = self.action_states[tuple(action_route)]
+                    for mode_data in state["modes"]:
+                        if mode_data['icon'] is not None:
+                            icon = FontIcon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'])
+                        else:
+                            icon = None
+                        mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
+                        action = mode.render(self)
+                        action.triggered.connect(self._action_triggered)
+                        section_tree.contextmenu.addAction(action)
                 section_tree.setCurrentItem(item)
                 section_tree.contextmenu.popup(section_tree.mapToGlobal(point))
 
@@ -124,15 +136,18 @@ class PaneSection(QtWidgets.QWidget):
             parent = index.parent()
             if parent.row() >= 0:
                 section = self._items[parent.row()]
-                section_item = section.items[index.row()]
+                section_item = section["items"][index.row()]
             else:
                 section_item = self._items[index.row()]
-            if not isinstance( section_item, SectionItem ):
+
+            action_route = section_item["action_route"]
+            if action_route is None:
                 return
             gui_context = self.gui_context.copy()
             gui_context.mode_name = mode_name
-            section_item.get_action().gui_run( gui_context )
-                        
+            AdminRoute.action_for(tuple(action_route)).gui_run(gui_context)
+
+
 class NavigationPane(QtWidgets.QDockWidget):
 
     def __init__(self, gui_context, parent):
@@ -159,8 +174,9 @@ class NavigationPane(QtWidgets.QDockWidget):
             toolbox.setCurrentIndex( max( 0, min( current_index + steps, toolbox.count() ) ) )
 
     @QtCore.qt_slot(object)
-    def set_sections(self, sections):
+    def set_sections(self, sections, action_states):
         logger.debug('setting navpane sections')
+        action_states = dict((tuple(k),v) for (k,v) in action_states)
         if not sections:
             self.setMaximumWidth(0)
             return
@@ -176,9 +192,10 @@ class NavigationPane(QtWidgets.QDockWidget):
             count -= 1
             
         for section in sections:
+            icon = FontIcon(section['icon']['name'], section['icon']['pixmap_size'])
             # TODO: old navpane used translation here
-            pwdg = PaneSection(toolbox, section['items'], self.gui_context)
-            toolbox.addItem(pwdg, section['icon'], section['verbose_name'])
+            pwdg = PaneSection(toolbox, section['items'], action_states, self.gui_context)
+            toolbox.addItem(pwdg, icon.getQIcon(), section['verbose_name'])
 
         toolbox.setCurrentIndex(0)
         # WARNING: hardcoded width

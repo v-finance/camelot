@@ -297,6 +297,7 @@ class OpenTableView( EntityAction ):
     
     """
 
+    name = 'open_table_view'
     modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
         
     def get_state( self, model_context ):

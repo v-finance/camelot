@@ -30,10 +30,11 @@
 from dataclasses import dataclass
 import json
 import logging
+import typing
 
 from ..controls.action_widget import ActionAction
-from ...admin.action.base import ActionStep
-from ...admin.admin_route import AdminRoute
+from ...admin.action.base import ActionStep, State
+from ...admin.admin_route import AdminRoute, Route
 from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
 from ...core.serializable import DataclassSerializable
@@ -102,7 +103,8 @@ class MainWindow( ActionStep ):
             main_window.statusBar().hide()
         main_window.show()
 
-class NavigationPanel(ActionStep):
+@dataclass
+class NavigationPanel(ActionStep, DataclassSerializable):
     """
     Create a panel to navigate the application
     
@@ -110,15 +112,30 @@ class NavigationPanel(ActionStep):
         objects, with the sections of the navigation panel
 
     """
-     
-    def __init__( self, sections ):
-        self.sections = [{
-            'verbose_name': str(section.get_verbose_name()),
-            'icon': section.get_icon().getQIcon(),
-            'items': section.get_items()
-        } for section in sections]
 
-    def render( self, gui_context ):
+    blocking = False
+    menu: MenuItem
+    action_states: typing.List[typing.Tuple[Route, State]]
+
+    def __init__(self, model_context, menu: MenuItem):
+        self.menu = menu
+        self.action_states = list()
+        self._add_action_states(model_context, menu.items)
+
+    def _add_action_states(self, model_context, items):
+        """
+        Recurse through a menu and get the state for all actions in the menu
+        """
+        for item in items:
+            self._add_action_states(model_context, item.items)
+            action_route = item.action_route
+            if action_route is not None:
+                action = AdminRoute.action_for(action_route)
+                state = action.get_state(model_context)
+                self.action_states.append((action_route, state))
+
+    @classmethod
+    def render(self, gui_context, step):
         """create the navigation panel.
         this method is used to unit test the action step."""
         from ..controls.section_widget import NavigationPane
@@ -126,11 +143,15 @@ class NavigationPanel(ActionStep):
             gui_context,
             gui_context.workspace
         )
-        navigation_panel.set_sections(self.sections)
+        navigation_panel.set_sections(
+            step["menu"]["items"], step["action_states"]
+        )
         return navigation_panel
-    
-    def gui_run( self, gui_context ):
-        navigation_panel = self.render(gui_context)
+
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        navigation_panel = self.render(gui_context, step)
         gui_context.workspace.parent().addDockWidget(
             Qt.LeftDockWidgetArea, navigation_panel
         )
@@ -145,7 +166,6 @@ class MainMenu(ActionStep, DataclassSerializable):
     """
 
     blocking = False
-
     menu: MenuItem
 
     def __init__(self, menu):

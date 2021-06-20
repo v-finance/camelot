@@ -49,10 +49,12 @@ class MenuItem(DataclassSerializable):
     icon: typing.Union[FontIcon, None]
     action_route: typing.Union[Route, None]
     items: typing.List['MenuItem']
+    role: typing.Optional[str]
 
-    def __init__(self, verbose_name=None, icon=None, action_route=None):
-        assert (action_route is None) or ((verbose_name is None) and (icon is None))
+    def __init__(self, verbose_name=None, icon=None, action_route=None, role=None):
+        assert (action_route is None) or ((verbose_name is None) and (icon is None) and (role is None))
         self.verbose_name = verbose_name
         self.icon = icon
         self.action_route = action_route
         self.items = list()
+        self.role = role

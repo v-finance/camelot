@@ -37,6 +37,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 import six
 
 from .action.base import Action
+from .action.application_action import OpenTableView
 from .admin_route import AdminRoute
 from .entity_admin import EntityAdmin
 from .menu import MenuItem
@@ -153,6 +154,7 @@ shortcut confusion and reduce the number of status updates.
             self.domain = domain
         self._admin_route = super()._register_admin_route(self)
         self._main_menu = MenuItem()
+        self._navigation_menu = MenuItem()
 
     def get_admin_route(self):
         return self._admin_route
@@ -169,17 +171,11 @@ shortcut confusion and reduce the number of status updates.
         """
         self.admins[entity] = admin_class
 
-    def get_sections( self ):
-        """A list of :class:`camelot.admin.section.Section` objects,
-        these are the sections to be displayed in the left panel.
-
-        .. image:: /_static/picture2.png
+    def get_navigation_menu(self):
         """
-        from camelot.admin.section import Section
-
-        return [ Section( _('Relations'), self ),
-                 Section( _('Configuration'), self ),
-                 ]
+        :return: a :class:`camelot.admin.menu.MenuItem` object
+        """
+        return self._navigation_menu
 
     def get_memento( self ):
         """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
@@ -325,17 +321,59 @@ shortcut confusion and reduce the number of status updates.
                 ] + self.change_row_actions
         return []
 
-    def add_main_menu(self, verbose_name, icon=None, parent_menu=None):
+    def add_main_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
         """
         add a new item to the main menu
 
         :return: a `MenuItem` object that can be used in subsequent calls to
             add other items as children of this item.
         """
-        menu = MenuItem(verbose_name, icon)
+        menu = MenuItem(verbose_name, icon, role=None)
         if parent_menu is None:
             parent_menu = self._main_menu
         parent_menu.items.append(menu)
+        return menu
+
+    def add_navigation_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
+        """
+        add a new item to the navigation menu
+
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
+        """
+        menu = MenuItem(verbose_name, icon, role=None)
+        if parent_menu is None:
+            parent_menu = self._navigation_menu
+        parent_menu.items.append(menu)
+        return menu
+
+    def add_navigation_entity_table(self, entity, parent_menu, add_before=None):
+        """
+        Add an action to open a table view of an entity to the navigation menu
+        """
+        admin = self.get_related_admin(entity)
+        return self.add_navigation_admin_table(admin, parent_menu, add_before)
+
+    def add_navigation_admin_table(self, admin, parent_menu, add_before=None):
+        """
+        Add an action to open a table view for a specified admin
+        """
+        action = OpenTableView(admin)
+        action_route = self._register_action_route(admin._admin_route, action)
+        menu = MenuItem(action_route=action_route)
+        if add_before is None:
+            parent_menu.items.append(menu)
+        else:
+            parent_menu.items.insert(parent_menu.items.index(add_before), menu)
+        return menu
+
+    def add_navigation_action(self, action, parent_menu, add_before=None):
+        action_route = self._register_action_route(self._admin_route, action)
+        menu = MenuItem(action_route=action_route)
+        if add_before is None:
+            parent_menu.items.append(menu)
+        else:
+            parent_menu.items.insert(parent_menu.items.index(add_before), menu)
         return menu
 
     def add_main_action(self, action, parent_menu):
