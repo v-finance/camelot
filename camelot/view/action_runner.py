@@ -29,7 +29,6 @@
 
 import contextlib
 import functools
-import io
 import logging
 
 import six
@@ -114,12 +113,6 @@ class ActionRunner( QtCore.QEventLoop ):
         """Create the model context and start the generator"""
         return self._generator_function( self._model_context )
 
-    @staticmethod
-    def _step_to_bytes(step):
-        stream = io.BytesIO()
-        step.write_object(stream)
-        return stream.getvalue()
-
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that
@@ -135,7 +128,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 if isinstance(result, ActionStep):
                     if result.blocking and isinstance(result, (DataclassSerializable,)):
                         LOGGER.debug( 'serializable blocking step, yield it' )
-                        return (type(result).__name__, self._step_to_bytes(result))
+                        return (type(result).__name__, result._to_bytes())
                     elif result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
@@ -143,7 +136,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     elif isinstance(result, (DataclassSerializable,)):
                         LOGGER.debug( 'non blocking serializable step, use signal slot' )
                         self.non_blocking_serializable_action_step_signal.emit(
-                            type(result).__name__, self._step_to_bytes(result)
+                            type(result).__name__, result._to_bytes()
                         )
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )

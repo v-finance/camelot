@@ -1,4 +1,5 @@
 import dataclasses
+import io
 import json
 
 from .utils import ugettext_lazy
@@ -22,6 +23,28 @@ class Serializable(object):
         state = json.load(stream)
         self.__dict__.update(state)
 
+    def _to_bytes(self):
+        """
+        Helper method to serialize the object to bytes.
+
+        The purpose of this method is to make unittesting easier, it is not
+        intended for use in production code.
+        """
+        stream = io.BytesIO()
+        self.write_object(stream)
+        return stream.getvalue()
+
+    def _to_dict(self):
+        """
+        Helper method to serialize the object to bytes, and deserialize it to
+        a dict or list.  Notice that the generated dict through serialization
+        will only contain primitive datatypes.
+
+        The purpose of this method is to make unittesting easier, it is not
+        intended for use in production code.
+        """
+        return json.loads(self._to_bytes())
+        
 class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):

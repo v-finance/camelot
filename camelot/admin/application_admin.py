@@ -45,7 +45,6 @@ from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import Qt, QtCore
 from camelot.admin.action import application_action, form_action, list_action
-from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 
 #
