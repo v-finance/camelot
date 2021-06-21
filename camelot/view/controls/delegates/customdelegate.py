@@ -229,7 +229,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                     state = action_states[action_widget.action_route]
                     action_widget.set_state_v2(state)
         if isinstance(editor, One2ManyEditor):
-            toolbar = self.findChild(QtWidgets.QToolBar)
+            toolbar = editor.findChild(QtWidgets.QToolBar)
             if toolbar:
                 action_states = index.model().data(index, ActionStatesRole)
                 if action_states is None:
