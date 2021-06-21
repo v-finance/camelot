@@ -193,6 +193,26 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         # todo : determine the parent for the menu
         self.set_menu(state, None)
 
+    @QtCore.qt_slot( object )
+    def set_state_v2( self, state ):
+        if state['verbose_name'] != None:
+            self.setText( str( state['verbose_name'] ) )
+        else:
+            self.setText( '' )
+        if state['icon'] != None:
+            icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size']).getQIcon()
+            self.setIcon( icon )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            self.setToolTip( str( state['tooltip'] ) )
+        else:
+            self.setToolTip( '' )
+        self.setEnabled( state['enabled'] )
+        self.setVisible( state['visible'] )
+        # todo : determine the parent for the menu
+        self.set_menu_v2(state, None)
+
 class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
@@ -223,6 +243,21 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         else:
             self.setToolTip( '' )            
         self.set_menu(state, self)
+
+    def set_state_v2( self, state ):
+        super( ActionPushButton, self ).set_state_v2( state )
+        if state['verbose_name'] != None:
+            self.setText( str( state['verbose_name'] ) )
+        if state['icon'] != None:
+            icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size']).getQIcon()
+            self.setIcon( icon )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            self.setToolTip( str( state['tooltip'] ) )
+        else:
+            self.setToolTip( '' )
+        self.set_menu_v2(state, self)
 
     @QtCore.qt_slot()
     def action_triggered(self):
@@ -289,3 +324,7 @@ class ActionLabel(QtWidgets.QLabel, AbstractActionWidget):
     def set_state(self, state):
         AbstractActionWidget.set_state(self, state)
         self.setText(state.verbose_name or '')
+
+    def set_state_v2(self, state):
+        AbstractActionWidget.set_state_v2(self, state)
+        self.setText(state.get('verbose_name') or '')

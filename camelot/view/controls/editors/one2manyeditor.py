@@ -30,7 +30,6 @@
 import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import post
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import RenderHint
@@ -131,22 +130,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
-            self.update_action_status()
+            #self.update_action_status()
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
         self.gui_context.field_attributes = kwargs
-        self.update_action_status()
-
-    def update_action_status(self):
-        toolbar = self.findChild(QtWidgets.QToolBar)
-        if toolbar:
-            model_context = self.gui_context.create_model_context()
-            for qaction in toolbar.actions() + toolbar.findChildren(ActionToolbutton) + toolbar.findChildren(ActionPushButton):
-                if isinstance(qaction, (ActionAction, ActionToolbutton, ActionPushButton)):
-                    post(qaction.action.get_state,
-                         qaction.set_state,
-                         args=(model_context,))
 
     def get_model(self):
         """
@@ -184,7 +172,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # one, still need to set it, since the content of the collection
             # might have changed.
             model.set_value(collection)
-            self.update_action_status()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):

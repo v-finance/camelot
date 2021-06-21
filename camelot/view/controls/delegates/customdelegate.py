@@ -37,7 +37,7 @@ from ....core.item_model import (
 )
 from ..action_widget import ActionToolbutton
 from camelot.view.proxy import ValueLoading
-from camelot.view.controls.editors import Many2OneEditor, ChoicesEditor, DbImageEditor, FloatEditor, FileEditor
+from camelot.view.controls.editors import One2ManyEditor, Many2OneEditor, ChoicesEditor, DbImageEditor, FloatEditor, FileEditor
 
 
 def DocumentationMetaclass(name, bases, dct):
@@ -228,6 +228,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 if action_widget.action_route in action_states:
                     state = action_states[action_widget.action_route]
                     action_widget.set_state_v2(state)
+        if isinstance(editor, One2ManyEditor):
+            toolbar = self.findChild(QtWidgets.QToolBar)
+            if toolbar:
+                action_states = index.model().data(index, ActionStatesRole)
+                if action_states is None:
+                    return
+                for action_widget in toolbar.actions() + toolbar.findChildren(ActionToolbutton) + toolbar.findChildren(ActionPushButton):
+                    if isinstance(qaction, (ActionAction, ActionToolbutton, ActionPushButton)):
+                        state = action_states[action_widget.action_route]
+                        action_widget.set_state_v2(state)
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
