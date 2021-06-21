@@ -147,11 +147,12 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         
         :return: a `QStandardItem` object
         """
-        routes = model_context.field_attributes.get('action_routes')
+        routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
             state = action.get_state(model_context)
             states.append(dataclasses.asdict(state))
+        assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         action_states = dict(zip(routes, states))
 
         item = QtGui.QStandardItem()
