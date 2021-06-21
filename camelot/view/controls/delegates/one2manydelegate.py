@@ -29,10 +29,11 @@
 
 import six
 
-from ....core.item_model import FieldAttributesRole
-from ....core.qt import variant_to_py, Qt, py_to_variant
+from ....core.item_model import FieldAttributesRole, ActionStatesRole
+from ....core.qt import variant_to_py, Qt, QtWidgets, py_to_variant
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
+from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
 
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
@@ -70,6 +71,17 @@ class One2ManyDelegate(CustomDelegate):
         editor.set_value( model )
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         editor.set_field_attributes(**field_attributes)
+
+        # update actions
+        toolbar = editor.findChild(QtWidgets.QToolBar)
+        if toolbar:
+            action_states = index.model().data(index, ActionStatesRole)
+            if not action_states:
+                return
+            for action_widget in toolbar.actions() + toolbar.findChildren(ActionToolbutton) + toolbar.findChildren(ActionPushButton):
+                if isinstance(action_widget, (ActionAction, ActionToolbutton, ActionPushButton)):
+                    state = action_states[action_widget.action_route]
+                    action_widget.set_state_v2(state)
 
     def setModelData( self, editor, model, index ):
         pass
