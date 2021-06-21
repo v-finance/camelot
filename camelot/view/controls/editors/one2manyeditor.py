@@ -123,6 +123,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
                 qaction = self.render_action(action, toolbar)
+                qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
