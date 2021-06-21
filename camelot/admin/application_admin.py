@@ -36,8 +36,10 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 import six
 
+from .action.base import Action
 from .admin_route import AdminRoute
 from .entity_admin import EntityAdmin
+from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import Qt, QtCore
@@ -150,6 +152,7 @@ shortcut confusion and reduce the number of status updates.
         if domain is not None:
             self.domain = domain
         self._admin_route = super()._register_admin_route(self)
+        self._main_menu = list()
 
     def get_admin_route(self):
         return self._admin_route
@@ -322,25 +325,36 @@ shortcut confusion and reduce the number of status updates.
                 ] + self.change_row_actions
         return []
 
+    def add_main_menu(self, verbose_name, icon=None, parent_menu=None):
+        """
+        add a new item to the main menu
+
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
+        """
+        menu = MenuItem(verbose_name, icon)
+        if parent_menu is not None:
+            parent_menu.items.append(menu)
+        else:
+            self._main_menu.append(menu)
+        return menu
+
+    def add_main_action(self, action, parent_menu):
+        assert isinstance(action, Action)
+        assert isinstance(parent_menu, MenuItem)
+        self._register_action_route(self._admin_route, action)
+        parent_menu.items.append(MenuItem(action=action))
+
+    def add_main_separator(self, parent_menu):
+        assert isinstance(parent_menu, MenuItem)
+        parent_menu.items.append(MenuItem())
+
     def get_main_menu( self ):
         """
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
             there should be no main menu
         """
-        from camelot.admin.menu import Menu
-
-        return [ Menu( _('&File'),
-                       [ application_action.Backup(),
-                         application_action.Restore(),
-                         None,
-                         application_action.Exit(),
-                         ] ),
-                 Menu( _('View'),
-                       [ application_action.Refresh(),] ),
-                 Menu( _('&Help'),
-                       self.help_actions + [
-                           application_action.ShowAbout() ] )
-                 ]
+        return self._main_menu
 
     def get_name(self):
         """

@@ -164,7 +164,8 @@ class SelectProfile( Action ):
     This action is also useable as an action step, which will return the
     selected profile.
     """
-    
+
+    name = 'select_profile'
     new_icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
     save_icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
     load_icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
@@ -348,7 +349,8 @@ class ShowAbout(Action):
     """Show the about dialog with the content returned by the
     :meth:`ApplicationAdmin.get_about` method
     """
-    
+
+    name = 'about'
     verbose_name = _('&About')
     icon = FontIcon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
     tooltip = _("Show the application's About box")
@@ -371,7 +373,8 @@ Backup the database to disk
     A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
     the application to perform backups an restores.
     """
-    
+
+    name = 'backup'
     verbose_name = _('&Backup')
     tooltip = _('Backup the database')
     icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
@@ -392,6 +395,7 @@ class Refresh( Action ):
     """Reload all objects from the database and update all views in the
     application."""
 
+    name = 'refresh'
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
@@ -443,7 +447,8 @@ Restore the database to disk
     A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
     the application to perform backups an restores.
 """
-    
+
+    name = 'restore'
     verbose_name = _('&Restore')
     tooltip = _('Restore the database from a backup')
     icon = FontIcon('hdd') # 'tango/16x16/devices/drive-harddisk.png'
@@ -468,7 +473,8 @@ class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.
     """
-    
+
+    name = 'profiler'
     verbose_name = _('Profiler start/stop')
     
     def __init__(self):
@@ -518,7 +524,8 @@ class Profiler( Action ):
             
 class Exit( Action ):
     """Exit the application"""
-    
+
+    name = 'exit'
     verbose_name = _('E&xit')
     shortcut = QtGui.QKeySequence.Quit
     icon = FontIcon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
@@ -540,7 +547,8 @@ class Exit( Action ):
 
 class ChangeLogging( Action ):
     """Allow the user to change the logging configuration"""
-    
+
+    name = 'change_logging'
     verbose_name = _('Change logging')
     icon = FontIcon('wrench') # 'tango/16x16/emblems/emblem-photos.png'
     tooltip = _('Change the logging configuration of the application')
@@ -638,7 +646,8 @@ class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test
         the faulthandling functions.  this method is triggered by pressing
         :kbd:`Ctrl-Alt-0` in the GUI"""
-    
+
+    name = 'segfault'
     verbose_name = _('Segmentation Fault')
     shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 )
     
