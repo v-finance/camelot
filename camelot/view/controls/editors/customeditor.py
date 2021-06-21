@@ -34,7 +34,6 @@ from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
 
-#from ...model_thread import post
 from ..action_widget import ActionToolbutton
 
 
@@ -178,17 +177,6 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             action_widget.action_route = action_route
             action_widget.setFixedHeight(self.get_height())
             layout.addWidget(action_widget)
-
-    def update_actions(self):
-        '''
-        model_context = None
-        for action_action in self.findChildren(ActionToolbutton):
-            # only create the model context, when there is an action
-            if model_context is None:
-                model_context = self.gui_context.create_model_context()
-            post(action_action.action.get_state, action_action.set_state,
-                 args=(model_context,))
-        '''
 
     def sizeHint(self):
         size_hint = super(CustomEditor, self).sizeHint()

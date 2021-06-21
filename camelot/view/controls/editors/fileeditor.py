@@ -98,7 +98,6 @@ class FileEditor(CustomEditor):
             self.filename.setText(value.verbose_name)
         else:
             self.filename.setText('')
-        self.update_actions()
         return value
 
     def get_value(self):
