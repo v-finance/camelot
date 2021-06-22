@@ -1,12 +1,14 @@
 import collections
 import itertools
 import logging
+import typing
 
 from ..core.exception import UserException
 from ..core.utils import ugettext
 
 LOGGER = logging.getLogger(__name__)
 
+Route = typing.Tuple[str, ...]
 
 class AdminRoute(object):
     """
@@ -45,7 +47,7 @@ class AdminRoute(object):
         return admin
 
     @classmethod
-    def _register_admin_route(cls, admin):
+    def _register_admin_route(cls, admin) -> Route:
         """
         Register a new admin
 
@@ -81,7 +83,7 @@ class AdminRoute(object):
         return admin
 
     @classmethod
-    def _register_field_action_route(cls, admin_route, field_name, action):
+    def _register_field_action_route(cls, admin_route, field_name, action) -> Route:
         assert isinstance(admin_route, tuple)
         assert isinstance(field_name, str)
         assert admin_route in cls._admin_routes
@@ -91,7 +93,7 @@ class AdminRoute(object):
         return action_route
 
     @classmethod
-    def _register_list_action_route(cls, admin_route, action):
+    def _register_list_action_route(cls, admin_route, action) -> Route:
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'list', 'actions', action.get_name())
@@ -100,7 +102,7 @@ class AdminRoute(object):
         return action_route
 
     @classmethod
-    def _register_action_route(cls, admin_route, action):
+    def _register_action_route(cls, admin_route, action) -> Route:
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'actions', action.get_name())

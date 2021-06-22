@@ -27,19 +27,21 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
 import json
+import typing
 
 from camelot.core.qt import QtCore, QtWidgets
+from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
-from camelot.core.serializable import Serializable
-
-import io
+from ...core.serializable import DataclassSerializable
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
 
-class UpdateProgress(ActionStep, Serializable):
+@dataclass
+class UpdateProgress(ActionStep, DataclassSerializable):
     """
 Inform the user about the progress the application is making
 while executing an action.  This ActionStep is not blocking.  So it can
@@ -63,37 +65,22 @@ updated.
 :param enlarge: increase the size of the window to two thirds of the screen,
     useful when there are a lot of details displayed.
 """
-    
-    def __init__(self, value=None, maximum=None, text=None, detail=None, 
-                 clear_details=False, title=None, blocking=False, enlarge=False
-                 ):
-        super(UpdateProgress, self).__init__()
-        self.value = value
-        self.maximum = maximum
-        self.text = str(text) if (text is not None) else None
-        self.detail = str(detail) if (detail is not None) else None
-        self.clear_details = clear_details
-        self.title = str(title) if (title is not None) else None
-        self.blocking = blocking
-        self.enlarge = enlarge
+
+    value: typing.Optional[int] = None
+    maximum: typing.Optional[int] = None
+    text: typing.Union[str, ugettext_lazy, None] = None
+    detail: typing.Union[str, ugettext_lazy, None] = None
+    clear_details: bool = False
+    title: typing.Union[str, ugettext_lazy, None] = None
+    enlarge: bool = False
+    blocking: bool = False
+    cancelable: bool = True
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
-    def write_object(self, stream):
-        stream.write(json.dumps({
-            'blocking': self.blocking,
-            'value': self.value,
-            'maximum': self.maximum,
-            'text': self.text,
-            'detail': self.detail,
-            'clear_details': self.clear_details,
-            'title': self.title,
-            'enlarge': self.enlarge,
-            'cancelable': self.cancelable
-        }).encode())
-
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         """This method will update the progress dialog, if such dialog exists
         within the GuiContext
         
@@ -102,23 +89,24 @@ updated.
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
             if isinstance(progress_dialog, QtWidgets.QProgressDialog):
+                step = json.loads(serialized_step)
                 # QProgressDialog
-                if self.maximum is not None:
-                    progress_dialog.setMaximum(self.maximum)
-                if self.value is not None:
-                    progress_dialog.setValue(self.value)
-                progress_dialog.set_cancel_hidden(not self.cancelable)
-                if self.text is not None:
-                    progress_dialog.setLabelText(self.text)
-                if self.clear_details is True:
+                if step["maximum"] is not None:
+                    progress_dialog.setMaximum(step["maximum"])
+                if step["value"] is not None:
+                    progress_dialog.setValue(step["value"])
+                progress_dialog.set_cancel_hidden(not step["cancelable"])
+                if step["text"] is not None:
+                    progress_dialog.setLabelText(step["text"])
+                if step["clear_details"] is True:
                     progress_dialog.clear_details()
-                if self.detail is not None:
-                    progress_dialog.add_detail(self.detail)
-                if self.title is not None:
-                    progress_dialog.title = self.title
-                if self.enlarge:
+                if step["detail"] is not None:
+                    progress_dialog.add_detail(step["detail"])
+                if step["title"] is not None:
+                    progress_dialog.title = step["title"]
+                if step["enlarge"]:
                     progress_dialog.enlarge()
-                if self.blocking:
+                if step["blocking"]:
                     progress_dialog.set_ok_hidden(False)
                     progress_dialog.set_cancel_hidden(True)
                     progress_dialog.exec_()
@@ -129,9 +117,7 @@ updated.
                     raise CancelRequest()
             else:
                 # C++ QmlProgressDialog
-                stream = io.BytesIO()
-                self.write_object(stream)
-                obj = QtCore.QByteArray(stream.getvalue())
+                obj = QtCore.QByteArray(serialized_step)
                 result_json = progress_dialog.render([], obj)
                 # process returned json
                 result = json.loads(result_json.data())

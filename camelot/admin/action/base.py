@@ -33,7 +33,7 @@ import logging
 import typing
 
 from ...core.qt import QtWidgets, QtGui, Qt
-from ...core.serializable import DataclassSerializable
+from ...core.serializable import DataclassSerializable, Serializable
 from ...core.utils import ugettext_lazy
 from ...view.art import FontIcon
 
@@ -236,8 +236,17 @@ updated state for the widget.
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
 
+class MetaActionStep(type):
 
-class ActionStep( object ):
+    action_steps = dict()
+
+    def __new__(cls, clsname, bases, attrs):
+        newclass = super().__new__(cls, clsname, bases, attrs)
+        if issubclass(newclass, (Serializable,)):
+            cls.action_steps[clsname] = newclass
+        return newclass
+
+class ActionStep(metaclass=MetaActionStep):
     """A reusable part of an action.  Action step object can be yielded inside
 the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
 be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
