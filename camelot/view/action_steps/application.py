@@ -38,6 +38,8 @@ from ...admin.admin_route import AdminRoute, Route
 from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
 from ...core.serializable import DataclassSerializable
+from ...model.authentication import get_current_authentication
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -118,9 +120,28 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     action_states: typing.List[typing.Tuple[Route, State]]
 
     def __init__(self, model_context, menu: MenuItem):
-        self.menu = menu
+        self.menu = self._filter_items(menu, get_current_authentication())
         self.action_states = list()
-        self._add_action_states(model_context, menu.items)
+        self._add_action_states(model_context, self.menu.items)
+
+    @classmethod
+    def _filter_items(cls, menu: MenuItem, auth) -> MenuItem:
+        """
+        Create a new menu item with only child items with a role hold by
+        the authentication
+        """
+        new_menu = MenuItem(
+            verbose_name=menu.verbose_name,
+            icon=menu.icon,
+            role=menu.role,
+            action_route=menu.action_route,
+        )
+        new_menu.items.extend(
+            cls._filter_items(item, auth) for item in menu.items if (
+                (item.role is None) or auth.has_role(item.role)
+            )
+        )
+        return new_menu
 
     def _add_action_states(self, model_context, items):
         """

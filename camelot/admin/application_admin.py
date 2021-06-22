@@ -327,7 +327,7 @@ shortcut confusion and reduce the number of status updates.
         :return: a `MenuItem` object that can be used in subsequent calls to
             add other items as children of this item.
         """
-        menu = MenuItem(verbose_name, icon, role=None)
+        menu = MenuItem(verbose_name, icon, role=role)
         if parent_menu is None:
             parent_menu = self._main_menu
         parent_menu.items.append(menu)
@@ -340,7 +340,7 @@ shortcut confusion and reduce the number of status updates.
         :return: a `MenuItem` object that can be used in subsequent calls to
             add other items as children of this item.
         """
-        menu = MenuItem(verbose_name, icon, role=None)
+        menu = MenuItem(verbose_name, icon, role=role)
         if parent_menu is None:
             parent_menu = self._navigation_menu
         parent_menu.items.append(menu)
@@ -366,9 +366,9 @@ shortcut confusion and reduce the number of status updates.
             parent_menu.items.insert(parent_menu.items.index(add_before), menu)
         return menu
 
-    def add_navigation_action(self, action, parent_menu, add_before=None):
+    def add_navigation_action(self, action, parent_menu, role=None, add_before=None):
         action_route = self._register_action_route(self._admin_route, action)
-        menu = MenuItem(action_route=action_route)
+        menu = MenuItem(action_route=action_route, role=role)
         if add_before is None:
             parent_menu.items.append(menu)
         else:
