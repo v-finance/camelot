@@ -35,7 +35,7 @@ from ....admin.admin_route import AdminRoute
 from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy
-from ..action_widget import ActionToolbutton, ActionPushButton
+from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
 from ..filter_widget import ComboBoxFilterWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
