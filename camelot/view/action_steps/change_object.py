@@ -38,18 +38,19 @@ from ..controls.action_widget import ActionPushButton
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.icon import Icon
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.art import FontIcon
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.art import FontIcon
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -73,12 +74,12 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   reject,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
-                  icon = FontIcon('cog'), # 'tango/22x22/categories/preferences-system.png'
+                  icon = Icon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
-        self.set_banner_logo_pixmap( icon.getQPixmap() )
+        self.set_banner_logo_pixmap( FontIcon.from_admin_icon(icon).getQPixmap() )
         self.set_banner_title( six.text_type(title) )
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
@@ -332,7 +333,7 @@ class ChangeObjects( ActionStep ):
 
     .. attribute:: icon
 
-        the :class:`camelot.view.art.FontIcon` in the top right corner of
+        the :class:`camelot.admin.icon.Icon` in the top right corner of
         the dialog
 
     """
@@ -344,7 +345,7 @@ class ChangeObjects( ActionStep ):
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
-        self.icon = FontIcon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
+        self.icon = Icon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.invalid_rows = set()
         self.columns = admin.get_columns()
         self.action_routes = [
@@ -379,7 +380,7 @@ class ChangeObjects( ActionStep ):
         dialog.setWindowTitle( six.text_type( self.window_title ) )
         dialog.set_banner_title( six.text_type( self.title ) )
         dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
-        dialog.set_banner_logo_pixmap( self.icon.getQPixmap() )
+        dialog.set_banner_logo_pixmap( FontIcon.from_admin_icon(self.icon).getQPixmap() )
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #

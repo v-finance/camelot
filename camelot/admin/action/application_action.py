@@ -36,12 +36,12 @@ from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
 from ..admin_route import AdminRoute
 from .base import RenderHint
+from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
-from camelot.view.art import FontIcon
 
 """ModelContext, GuiContext and Actions that run in the context of an 
 application.
@@ -166,9 +166,9 @@ class SelectProfile( Action ):
     """
 
     name = 'select_profile'
-    new_icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    save_icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
-    load_icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
+    new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
+    load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store, edit_dialog_class=None):
@@ -326,7 +326,7 @@ class OpenNewView( EntityAction ):
 
     verbose_name = _('New')
     shortcut = QtGui.QKeySequence.New
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
             
     def get_state( self, model_context ):
@@ -352,7 +352,7 @@ class ShowAbout(Action):
 
     name = 'about'
     verbose_name = _('&About')
-    icon = FontIcon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
+    icon = Icon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
     tooltip = _("Show the application's About box")
 
     def model_run(self, model_context):
@@ -377,7 +377,7 @@ Backup the database to disk
     name = 'backup'
     verbose_name = _('&Backup')
     tooltip = _('Backup the database')
-    icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
+    icon = Icon('save') # 'tango/16x16/actions/document-save.png'
     backup_mechanism = BackupMechanism
 
     def model_run( self, model_context ):
@@ -400,7 +400,7 @@ class Refresh( Action ):
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
-    icon = FontIcon('sync') # 'tango/16x16/actions/view-refresh.png'
+    icon = Icon('sync') # 'tango/16x16/actions/view-refresh.png'
     
     def model_run( self, model_context ):
         import sqlalchemy.exc as sa_exc
@@ -451,7 +451,7 @@ Restore the database to disk
     name = 'restore'
     verbose_name = _('&Restore')
     tooltip = _('Restore the database from a backup')
-    icon = FontIcon('hdd') # 'tango/16x16/devices/drive-harddisk.png'
+    icon = Icon('hdd') # 'tango/16x16/devices/drive-harddisk.png'
     backup_mechanism = BackupMechanism
     shortcut = None
             
@@ -528,7 +528,7 @@ class Exit( Action ):
     name = 'exit'
     verbose_name = _('E&xit')
     shortcut = QtGui.QKeySequence.Quit
-    icon = FontIcon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
+    icon = Icon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
     
     def gui_run( self, gui_context ):
@@ -550,7 +550,7 @@ class ChangeLogging( Action ):
 
     name = 'change_logging'
     verbose_name = _('Change logging')
-    icon = FontIcon('wrench') # 'tango/16x16/emblems/emblem-photos.png'
+    icon = Icon('wrench') # 'tango/16x16/emblems/emblem-photos.png'
     tooltip = _('Change the logging configuration of the application')
 
     @classmethod

@@ -27,6 +27,8 @@
 #
 #  ============================================================================
 
+from camelot.admin.icon import Icon
+
 class Section(object):
     """A Section as displayed in the left pane of the application.  Each Section
 contains a list of SectionItems the user can click on.  Sections should be used
@@ -53,8 +55,7 @@ in the definition of the Application admin:
         return self.verbose_name
 
     def get_icon(self):
-        from camelot.view.art import FontIcon
-        return self.icon or FontIcon('users') # 'tango/32x32/apps/system-users.png'
+        return self.icon or Icon('users') # 'tango/32x32/apps/system-users.png'
 
     def get_items(self):
         return self.items

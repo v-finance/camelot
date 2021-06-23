@@ -84,7 +84,7 @@ features = [
  
 templates = [
     ('{{options.module}}/application_admin.py', '''
-from camelot.view.art import FontIcon
+from camelot.admin.icon import Icon
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.section import Section
 from camelot.core.utils import ugettext_lazy as _
@@ -102,11 +102,11 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot.model.i18n import Translation
         return [ Section( _('My classes'),
                           self,
-                          FontIcon('users'),
+                          Icon('users'),
                           items = [] ),
                  Section( _('Configuration'),
                           self,
-                          FontIcon('cog'),
+                          Icon('cog'),
                           items = [Memento, Translation] )
                 ]
     '''),

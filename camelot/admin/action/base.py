@@ -35,6 +35,7 @@ import typing
 from ...core.qt import QtWidgets, QtGui, Qt
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
+from ...admin.icon import Icon
 from ...view.art import FontIcon
 
 import six
@@ -151,7 +152,7 @@ the default mode.
 
     name: str
     verbose_name: typing.Union[str, ugettext_lazy]
-    icon: FontIcon
+    icon: Icon
     
     def __init__( self, name, verbose_name=None, icon=None):
         """
@@ -179,7 +180,7 @@ the default mode.
         if self.icon is None:
             action.setIconVisibleInMenu(False)
         else:
-            action.setIcon(self.icon.getQIcon())
+            action.setIcon(FontIcon.from_admin_icon(self.icon).getQIcon())
             action.setIconVisibleInMenu(True)
         return action
 
@@ -199,7 +200,7 @@ updated state for the widget.
 .. attribute:: icon
 
     The icon that represents the action, of type 
-    :class:`camelot.view.art.Icon`, this defaults to the icon of the action.
+    :class:`camelot.admin.icon.Icon`, this defaults to the icon of the action.
 
 .. attribute:: tooltip
 
@@ -229,7 +230,7 @@ updated state for the widget.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
-    icon: FontIcon = None
+    icon: Icon = None
     tooltip: typing.Union[str, ugettext_lazy, None] = None
     enabled: bool = True
     visible: bool = True
@@ -357,7 +358,7 @@ method.
 .. attribute:: icon
 
     The icon that represents the action, of type 
-    :class:`camelot.view.art.Icon`
+    :class:`camelot.admin.icon.Icon`
 
 .. attribute:: tooltip
 

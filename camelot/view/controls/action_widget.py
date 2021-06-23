@@ -31,6 +31,7 @@ from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_
 
 import six
 
+from ...admin.icon import Icon
 from ...admin.action import Mode, State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
@@ -142,7 +143,7 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                icon = FontIcon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'])
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'])
                 mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)
@@ -181,7 +182,7 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         else:
             self.setText( '' )
         if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
+            self.setIcon( FontIcon.from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
@@ -235,7 +236,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         if state.verbose_name != None:
             self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
+            self.setIcon( FontIcon.from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
@@ -277,7 +278,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         if state.verbose_name != None:
             self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
+            self.setIcon( FontIcon.from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:

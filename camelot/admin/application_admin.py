@@ -368,7 +368,7 @@ shortcut confusion and reduce the number of status updates.
         return self.version
 
     def get_icon(self):
-        """:return: the :class:`camelot.view.art.FontIcon` that should be used for the application"""
+        """:return: the :class:`QtGui.QIcon` that should be used for the application"""
         from camelot.view.art import FontIcon
         return FontIcon('users').getQIcon() # 'tango/32x32/apps/system-users.png'
 
