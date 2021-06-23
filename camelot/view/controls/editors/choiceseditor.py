@@ -202,7 +202,6 @@ class ChoicesEditor(CustomEditor):
             combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
             row = self.row_with_value(combobox.model(), value, display_role)
             combobox.setCurrentIndex(row)
-        self.update_actions()
 
     def get_value(self):
         """Get the current value of the combobox"""

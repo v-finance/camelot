@@ -205,7 +205,6 @@ class FloatEditor(CustomEditor):
         if None not in (minimum, maximum):
             spinBox.setRange(minimum-1, maximum)
         spinBox.setGroupSeparatorShown(True)
-        self.update_actions()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -214,7 +213,6 @@ class FloatEditor(CustomEditor):
             spinBox.setValue(spinBox.minimum())
         else:
             spinBox.setValue(float(value))
-        self.update_actions()
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)

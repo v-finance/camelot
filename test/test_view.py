@@ -14,6 +14,7 @@ from camelot.model.party import Person
 
 from camelot.admin.action import GuiContext
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.core.constants import camelot_minfloat, camelot_maxfloat
 from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.orm import entities
@@ -286,7 +287,10 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
         delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
-        item = delegate.get_standard_item(QtCore.QLocale(), 3, {})
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = 3
+        field_action_model_context.field_attributes = {}
+        item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
         field_attributes = item.data(FieldAttributesRole)
         
         editor = editors.FloatEditor(parent=None, **self.editable_kwargs)
@@ -548,7 +552,10 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
     def grab_delegate(self, delegate, value, suffix='editable', field_attributes={}):
 
         model = QtGui.QStandardItemModel(1, 1)
-        model.setItem(0, 0, delegate.get_standard_item(self.locale, value, field_attributes))
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = value
+        field_action_model_context.field_attributes = field_attributes
+        model.setItem(0, 0, delegate.get_standard_item(self.locale, field_action_model_context))
         index = model.index(0, 0, QtCore.QModelIndex())
 
         option = QtWidgets.QStyleOptionViewItem()
@@ -650,7 +657,10 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateEditor))
         self.grab_delegate(delegate, today, 'disabled')
-        item = delegate.get_standard_item(self.locale, today, {})
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = today
+        field_action_model_context.field_attributes = {}
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
         self.assertTrue(variant_to_py(item.data(PreviewRole)))
 
     def test_datetimedelegate(self):
@@ -758,7 +768,10 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
                                                    choices=CHOICES,
                                                    editable=False)
         self.grab_delegate(delegate, 1, 'disabled')
-        item = delegate.get_standard_item(self.locale, '2', {'choices':CHOICES})
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = '2'
+        field_action_model_context.field_attributes = {'choices':CHOICES}
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
         self.assertEqual(variant_to_py(item.data(PreviewRole)), 'B')
 
     def test_virtualaddressdelegate(self):

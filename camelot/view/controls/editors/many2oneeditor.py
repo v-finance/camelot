@@ -150,7 +150,6 @@ class Many2OneEditor(CustomEditor):
         set_background_color_palette(self.search_input, kwargs.get('background_color'))
         self.search_input.setToolTip(kwargs.get('tooltip') or '')
         self.search_input.setEnabled(kwargs.get('editable', False))
-        self.update_actions()
 
     def on_arrow_down_key_pressed(self):
         self.arrow_down_key_pressed.emit()
@@ -217,7 +216,6 @@ class Many2OneEditor(CustomEditor):
         self.new_value = None
         value = CustomEditor.set_value(self, value)
         self.set_object(value, propagate = False)
-        self.update_actions()
 
     def get_value(self):
         """:return: a function that returns the selected entity or ValueLoading

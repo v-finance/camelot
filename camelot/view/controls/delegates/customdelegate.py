@@ -28,6 +28,7 @@
 #  ============================================================================
 
 import six
+import logging
 import dataclasses
 
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
@@ -38,6 +39,7 @@ from ....core.item_model import (
 from ..action_widget import ActionToolbutton
 from camelot.view.proxy import ValueLoading
 
+LOGGER = logging.getLogger(__name__)
 
 def DocumentationMetaclass(name, bases, dct):
     dct['__doc__'] = (dct.get('__doc__') or '') + """
@@ -147,11 +149,14 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         
         :return: a `QStandardItem` object
         """
-        routes = model_context.field_attributes.get('action_routes')
+        routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
             state = action.get_state(model_context)
             states.append(dataclasses.asdict(state))
+        #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
+        if len(routes) != len(states):
+            LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
         action_states = dict(zip(routes, states))
 
         item = QtGui.QStandardItem()

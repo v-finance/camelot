@@ -109,7 +109,6 @@ class DbImageEditor(CustomEditor):
             self.set_image(thumbnail)
         else:
             self.clear_image()               
-        self.update_actions()       
         return value
     
     def get_value(self):
