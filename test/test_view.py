@@ -889,7 +889,8 @@ class ControlsTest(
 
     def test_section_widget(self):
         action_step = action_steps.NavigationPanel(
-            self.app_admin.get_sections()
+            self.gui_context.create_model_context(),
+            self.app_admin.get_navigation_menu()
         )
         widget = action_step.render(self.gui_context)
         self.grab_widget(widget)
@@ -898,18 +899,10 @@ class ControlsTest(
         proxy = MainWindowProxy( self.gui_context )
         self.grab_widget(proxy.parent())
 
-    def test_reduced_main_window(self):
-        from camelot_example.application_admin import MiniApplicationAdmin
-        app_admin = MiniApplicationAdmin()
-        proxy = MainWindowProxy(self.gui_context)
-        proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
-        proxy.parent().show()
-        self.grab_widget( proxy.parent() )
-
     def test_multiple_main_windows(self):
         """Make sure we can still create multiple QMainWindows"""
         from camelot.view.action_steps.application import MainWindow
-        from camelot_example.application_admin import MiniApplicationAdmin
+        from camelot_example.application_admin import app_admin
 
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -922,14 +915,12 @@ class ControlsTest(
                     result += 1
             return result
 
-        app_admin1 = MiniApplicationAdmin()
-        action_step1 = MainWindow(app_admin1)
+        action_step1 = MainWindow(app_admin)
         main_window1 = action_step1.render(self.gui_context)
 
         num_main_windows1 = count_main_windows()
 
-        app_admin2 = MiniApplicationAdmin()
-        action_step2 = MainWindow(app_admin2)
+        action_step2 = MainWindow(app_admin)
         main_window2 = action_step2.render(self.gui_context)
 
         num_main_windows2 = count_main_windows()
