@@ -28,7 +28,7 @@ class ApplicationAdminCase(unittest.TestCase):
 
     def test_application_admin(self):
         app_admin = ApplicationAdmin()
-        self.assertTrue( app_admin.get_sections() )
+        self.assertTrue( app_admin.get_navigation_menu() )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'manytomany' ) )
         self.assertTrue( app_admin.get_version() )
@@ -44,7 +44,7 @@ class ApplicationAdminCase(unittest.TestCase):
 
     def test_admin_for_exising_database( self ):
         from .snippet.existing_database import app_admin
-        self.assertTrue(app_admin.get_sections())
+        self.assertTrue(app_admin.get_navigation_menu())
 
 class ObjectAdminCase(unittest.TestCase):
     """Test the ObjectAdmin
