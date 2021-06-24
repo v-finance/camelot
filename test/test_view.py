@@ -3,6 +3,7 @@
 import six
 
 import datetime
+import dataclasses
 import logging
 import os
 import sys
@@ -888,11 +889,17 @@ class ControlsTest(
         self.grab_widget( widget )
 
     def test_section_widget(self):
-        action_step = action_steps.NavigationPanel(
-            self.gui_context.create_model_context(),
-            self.app_admin.get_navigation_menu()
+        model_context = self.gui_context.create_model_context()
+        # to avoid the default constructor accessing the db
+        step = action_steps.NavigationPanel.__new__(action_steps.NavigationPanel)
+        step.menu = self.app_admin.get_navigation_menu()
+        step.action_states = list()
+        action_steps.NavigationPanel._add_action_states(
+            model_context, step.menu.items, step.action_states
         )
-        widget = action_step.render(self.gui_context)
+        widget = action_steps.NavigationPanel.render(
+            self.gui_context, dataclasses.asdict(step)
+        )
         self.grab_widget(widget)
 
     def test_main_window(self):

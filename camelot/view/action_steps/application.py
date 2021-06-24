@@ -126,7 +126,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     def __init__(self, model_context, menu: MenuItem):
         self.menu = self._filter_items(menu, get_current_authentication())
         self.action_states = list()
-        self._add_action_states(model_context, self.menu.items)
+        self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
     def _filter_items(cls, menu: MenuItem, auth) -> MenuItem:
@@ -147,17 +147,18 @@ class NavigationPanel(ActionStep, DataclassSerializable):
         )
         return new_menu
 
-    def _add_action_states(self, model_context, items):
+    @classmethod
+    def _add_action_states(self, model_context, items, action_states):
         """
         Recurse through a menu and get the state for all actions in the menu
         """
         for item in items:
-            self._add_action_states(model_context, item.items)
+            self._add_action_states(model_context, item.items, action_states)
             action_route = item.action_route
             if action_route is not None:
                 action = AdminRoute.action_for(action_route)
                 state = action.get_state(model_context)
-                self.action_states.append((action_route, state))
+                action_states.append((action_route, state))
 
     @classmethod
     def render(self, gui_context, step):
