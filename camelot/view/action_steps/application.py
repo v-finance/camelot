@@ -93,7 +93,9 @@ class MainWindow( ActionStep ):
                     window = widget
                     break
 
-        main_window_proxy = MainWindowProxy( gui_context=main_window_context, window=window )
+        main_window_proxy = MainWindowProxy(
+            gui_context=main_window_context, window=window
+        )
 
         gui_context.workspace = main_window_context.workspace
         main_window_proxy.parent().setWindowTitle( self.window_title )
@@ -115,7 +117,9 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     """
 
-    blocking = False
+    # this could be non-blocking, but that causes unittest segmentation
+    # fault issues which are not worth investigating
+    blocking = True
     menu: MenuItem
     action_states: typing.List[typing.Tuple[Route, State]]
 
