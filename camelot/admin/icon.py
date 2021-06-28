@@ -23,10 +23,5 @@ class Icon(DataclassSerializable):
     """
 
     name: str
-    pixmap_size: int
-    color: str
-
-    def __init__(self, name, pixmap_size=32, color='#009999'):
-        self.name = name
-        self.pixmap_size = pixmap_size
-        self.color = color
+    pixmap_size: int = 32
+    color: str = '#009999'
