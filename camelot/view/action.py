@@ -32,7 +32,7 @@ that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 
 from ..core.qt import QtGui, QtWidgets
 from camelot.admin.icon import Icon
-from camelot.view.art import FontIcon
+from camelot.view.art import from_admin_icon, FontIcon
 from camelot.core.utils import ugettext as _
 
 class ActionFactory(object):
@@ -64,7 +64,7 @@ class ActionFactory(object):
             action = QtWidgets.QAction(parent)
         action.setText(text)
         if actionicon:
-            action.setIcon(FontIcon.from_admin_icon(actionicon).getQIcon())
+            action.setIcon(from_admin_icon(actionicon).getQIcon())
         if shortcut:
             action.setShortcut(shortcut)
         if tip:

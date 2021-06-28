@@ -31,7 +31,7 @@ import logging
 
 from ...admin.action.base import ActionStep
 from ...core.qt import QtCore, Qt, QtWidgets
-from ..art import FontIcon
+from ..art import from_admin_icon
 
 LOGGER = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class NavigationPanel(ActionStep):
     def __init__( self, sections ):
         self.sections = [{
             'verbose_name': str(section.get_verbose_name()),
-            'icon': FontIcon.from_admin_icon(section.get_icon()).getQIcon(),
+            'icon': from_admin_icon(section.get_icon()).getQIcon(),
             'items': section.get_items()
         } for section in sections]
 

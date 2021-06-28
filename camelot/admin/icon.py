@@ -10,7 +10,8 @@ class Icon(DataclassSerializable):
 
 .. attribute:: name
 
-    The name of the icon in the awesome font.
+    The name of the icon. This can be a front awesome name or image name ending with ".png".
+    When the name ends with ".png", it is assumed to be an image from the vfinance module.
 
 .. attribute:: pixmap_size
 

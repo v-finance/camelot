@@ -36,7 +36,7 @@ from ...core.qt import QtWidgets, QtGui, Qt
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...admin.icon import Icon
-from ...view.art import FontIcon
+from ...view.art import from_admin_icon
 
 import six
 
@@ -152,7 +152,7 @@ the default mode.
 
     name: str
     verbose_name: typing.Union[str, ugettext_lazy]
-    icon: Icon
+    icon: typing.Union[Icon, None]
     
     def __init__( self, name, verbose_name=None, icon=None):
         """
@@ -180,7 +180,7 @@ the default mode.
         if self.icon is None:
             action.setIconVisibleInMenu(False)
         else:
-            action.setIcon(FontIcon.from_admin_icon(self.icon).getQIcon())
+            action.setIcon(from_admin_icon(self.icon).getQIcon())
             action.setIconVisibleInMenu(True)
         return action
 
@@ -230,7 +230,7 @@ updated state for the widget.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
-    icon: Icon = None
+    icon: typing.Union[Icon, None] = None
     tooltip: typing.Union[str, ugettext_lazy, None] = None
     enabled: bool = True
     visible: bool = True

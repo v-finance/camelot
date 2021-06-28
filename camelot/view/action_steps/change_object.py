@@ -50,7 +50,7 @@ from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from camelot.view.art import FontIcon
+from camelot.view.art import from_admin_icon
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -79,7 +79,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
-        self.set_banner_logo_pixmap( FontIcon.from_admin_icon(icon).getQPixmap() )
+        self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.set_banner_title( six.text_type(title) )
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
@@ -380,7 +380,7 @@ class ChangeObjects( ActionStep ):
         dialog.setWindowTitle( six.text_type( self.window_title ) )
         dialog.set_banner_title( six.text_type( self.title ) )
         dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
-        dialog.set_banner_logo_pixmap( FontIcon.from_admin_icon(self.icon).getQPixmap() )
+        dialog.set_banner_logo_pixmap( from_admin_icon(self.icon).getQPixmap() )
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #

@@ -38,7 +38,7 @@ from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
 from camelot.admin.section import Section, SectionItem
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
-from camelot.view.art import FontIcon
+from camelot.view.art import from_admin_icon
 
 class PaneSection(QtWidgets.QWidget):
 
@@ -83,7 +83,7 @@ class PaneSection(QtWidgets.QWidget):
                                         [six.text_type(label)],
                                         item )
                 if icon:
-                    model_item.set_icon(FontIcon.from_admin_icon(icon).getQIcon())
+                    model_item.set_icon(from_admin_icon(icon).getQIcon())
                 section_tree.modelitems.append( model_item )
                 if isinstance( item, Section ):
                     child_items = item.get_items()

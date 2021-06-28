@@ -36,7 +36,7 @@ from ...admin.action import Mode, State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
-from camelot.view.art import FontIcon
+from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
 
@@ -143,7 +143,7 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'])
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
                 mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)
@@ -182,7 +182,7 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         else:
             self.setText( '' )
         if state.icon != None:
-            self.setIcon( FontIcon.from_admin_icon(state.icon).getQIcon() )
+            self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
@@ -201,8 +201,8 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         else:
             self.setText( '' )
         if state['icon'] != None:
-            icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size']).getQIcon()
-            self.setIcon( icon )
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            self.setIcon( from_admin_icon(icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state['tooltip'] != None:
@@ -236,7 +236,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         if state.verbose_name != None:
             self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
-            self.setIcon( FontIcon.from_admin_icon(state.icon).getQIcon() )
+            self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
@@ -250,8 +250,8 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         if state['verbose_name'] != None:
             self.setText( str( state['verbose_name'] ) )
         if state['icon'] != None:
-            icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size']).getQIcon()
-            self.setIcon( icon )
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            self.setIcon( from_admin_icon(icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state['tooltip'] != None:
@@ -278,7 +278,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         if state.verbose_name != None:
             self.setText( six.text_type( state.verbose_name ) )
         if state.icon != None:
-            self.setIcon( FontIcon.from_admin_icon(state.icon).getQIcon() )
+            self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
@@ -294,8 +294,8 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
         if state['verbose_name'] != None:
             self.setText( str( state['verbose_name'] ) )
         if state['icon'] != None:
-            icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size']).getQIcon()
-            self.setIcon(icon)
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            self.setIcon( from_admin_icon(icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state['tooltip'] != None:

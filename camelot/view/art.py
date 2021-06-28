@@ -195,10 +195,6 @@ class FontIcon:
             raise Exception("Unknown font awesome icon: {}".format(self.name))
 
     @staticmethod
-    def from_admin_icon(admin_icon):
-        return FontIcon(admin_icon.name, admin_icon.pixmap_size, admin_icon.color)
-
-    @staticmethod
     def _load_name_to_code():
         content = read('awesome/name_to_code.json')
         FontIcon._name_to_code = json.loads(content)
@@ -221,6 +217,20 @@ class FontIcon:
         engine.color = QtGui.QColor(self.color)
 
         return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+
+def from_admin_icon(admin_icon):
+    """Convert :class:`camelot.admin.icon.Icon` object to :class:`camelot.view.art.Icon` or
+    :class:`camelot.view.art.FontIcon`.
+
+    If the name of the admin icon ends with .png, a :class:`camelot.view.art.Icon` object
+    will be returned with the module parameter set to vfinance.
+    """
+    if admin_icon.name.lower().endswith('.png'):
+        import vfinance
+        return Icon(admin_icon.name, vfinance)
+    else:
+        return FontIcon(admin_icon.name, admin_icon.pixmap_size, admin_icon.color)
 
 
 class ColorScheme(object):

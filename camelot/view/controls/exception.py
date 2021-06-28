@@ -36,6 +36,7 @@ import six
 
 from camelot.core.utils import ugettext as _
 from camelot.core.exception import UserException
+from camelot.view.art import from_admin_icon
 
 ExceptionInfo = collections.namedtuple( 'exception_info',
                                         ['title', 'text', 'icon', 
@@ -94,6 +95,6 @@ class ExceptionDialog(QtWidgets.QMessageBox):
         self.setInformativeText(six.text_type(resolution or ''))
         self.setDetailedText(six.text_type(detail or ''))
         if icon is not None:
-            self.setIconPixmap(icon.getQPixmap())
+            self.setIconPixmap(from_admin_icon(icon).getQPixmap())
 
 
