@@ -31,9 +31,9 @@ from dataclasses import dataclass
 import typing
 
 from .admin_route import Route
+from .icon import Icon
 from ..core.serializable import DataclassSerializable
 from ..core.utils import ugettext_lazy
-from ..view.art import FontIcon
 
 @dataclass
 class MenuItem(DataclassSerializable):
@@ -46,7 +46,7 @@ class MenuItem(DataclassSerializable):
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None]
-    icon: typing.Union[FontIcon, None]
+    icon: typing.Union[Icon, None]
     action_route: typing.Union[Route, None]
     items: typing.List['MenuItem']
     role: typing.Optional[str]

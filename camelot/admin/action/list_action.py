@@ -41,7 +41,7 @@ from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view.art import FontIcon
+from camelot.admin.icon import Icon
 
 import xlsxwriter
 
@@ -277,7 +277,7 @@ class CloseList(Action):
 
     render_hint = RenderHint.TOOL_BUTTON
 
-    icon = FontIcon('backspace')
+    icon = Icon('backspace')
     tooltip = _('Close')
     name = 'close'
 
@@ -303,7 +303,7 @@ class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
     shortcut = QtGui.QKeySequence.Open
-    icon = FontIcon('folder') # 'tango/16x16/places/folder.png'
+    icon = Icon('folder') # 'tango/16x16/places/folder.png'
     tooltip = _('Open')
     # verbose name is set to None to avoid displaying it in the vertical
     # header of the table view
@@ -325,8 +325,8 @@ class DuplicateSelection( EditAction ):
     
     # no shortcut here, as this is too dangerous if the user
     # presses the shortcut without being aware of the consequences
-    icon = FontIcon('copy') # 'tango/16x16/actions/edit-copy.png'
-    #icon = FontIcon('clone') # 'tango/16x16/actions/edit-copy.png'
+    icon = Icon('copy') # 'tango/16x16/actions/edit-copy.png'
+    #icon = Icon('clone') # 'tango/16x16/actions/edit-copy.png'
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
@@ -353,7 +353,7 @@ class DeleteSelection( EditAction ):
     
     shortcut = QtGui.QKeySequence.Delete
     name = 'delete_selection'
-    icon = FontIcon('trash') # 'tango/16x16/places/user-trash.png'
+    icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
     verbose_name = _('Delete')
     
@@ -410,7 +410,7 @@ class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
-    icon = FontIcon('step-backward') # 'tango/16x16/actions/go-previous.png'
+    icon = Icon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
     verbose_name = _('Previous')
     
@@ -442,7 +442,7 @@ class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToStartOfDocument
-    icon = FontIcon('fast-backward') # 'tango/16x16/actions/go-first.png'
+    icon = Icon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
     verbose_name = _('First')
 
@@ -458,7 +458,7 @@ class AbstractToNext(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToNextPage
-    icon = FontIcon('step-forward') # 'tango/16x16/actions/go-next.png'
+    icon = Icon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
     verbose_name = _('Next')
     
@@ -491,7 +491,7 @@ class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
-    icon = FontIcon('fast-forward') # 'tango/16x16/actions/go-last.png'
+    icon = Icon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
     verbose_name = _('Last')
     
@@ -643,7 +643,7 @@ class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
 
     render_hint = RenderHint.TOOL_BUTTON
-    icon = FontIcon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
+    icon = Icon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
     name = 'export'
@@ -807,7 +807,7 @@ class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
 
     render_hint = RenderHint.TOOL_BUTTON
-    icon = FontIcon('print') # 'tango/16x16/actions/document-print-preview.png'
+    icon = Icon('print') # 'tango/16x16/actions/document-print-preview.png'
     tooltip = _('Print Preview')
     verbose_name = _('Print Preview')
     name = 'print'
@@ -846,7 +846,7 @@ class ImportFromFile( EditAction ):
 
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Import from file')
-    icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
+    icon = Icon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
     tooltip = _('Import from file')
     name = 'import'
 
@@ -943,7 +943,7 @@ class ReplaceFieldContents( EditAction ):
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
-    icon = FontIcon('edit') # 'tango/16x16/actions/edit-find-replace.png'
+    icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.Replace
@@ -999,7 +999,7 @@ class SetFilters(Action, AbstractModelFilter):
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Find')
     tooltip = _('Filter the data')
-    icon = FontIcon('filter')
+    icon = Icon('filter')
     name = 'filter'
 
     def get_field_name_choices(self, model_context):
@@ -1061,11 +1061,11 @@ class SetFilters(Action, AbstractModelFilter):
             state.notification = True
         for name, verbose_name in self.get_field_name_choices(model_context):
             if name in filter_value:
-                modes.append(Mode(name, verbose_name, icon=FontIcon('check-circle')))
+                modes.append(Mode(name, verbose_name, icon=Icon('check-circle')))
             else:
                 modes.append(Mode(name, verbose_name))
         modes.extend([
-            Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
+            Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
         return state
 
@@ -1080,7 +1080,7 @@ class AddExistingObject( EditAction ):
     
     tooltip = _('Add')
     verbose_name = _('Add')
-    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     name = 'add_object'
     
     def model_run( self, model_context ):
@@ -1106,8 +1106,8 @@ class AddNewObject( EditAction ):
     """
 
     shortcut = QtGui.QKeySequence.New
-    #icon = FontIcon('plus-square') # 'tango/16x16/actions/document-new.png'
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    #icon = Icon('plus-square') # 'tango/16x16/actions/document-new.png'
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')
     name = 'new_object'
@@ -1157,7 +1157,7 @@ class RemoveSelection(DeleteSelection):
     shortcut = None
     tooltip = _('Remove')
     verbose_name = _('Remove')
-    icon = FontIcon('minus') # 'tango/16x16/actions/list-remove.png'
+    icon = Icon('minus') # 'tango/16x16/actions/list-remove.png'
     name = 'remove_selection'
             
     def handle_object( self, model_context, obj ):
@@ -1170,7 +1170,7 @@ class ActionGroup(EditAction):
     """Group a number of actions in a pull down"""
 
     tooltip = _('More')
-    icon = FontIcon('cog') # 'tango/16x16/emblems/emblem-system.png'
+    icon = Icon('cog') # 'tango/16x16/emblems/emblem-system.png'
     actions = (ImportFromFile(), ReplaceFieldContents())
     name = 'import_replace'
     

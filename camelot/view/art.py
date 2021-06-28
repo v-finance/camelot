@@ -31,11 +31,8 @@
 
 import os
 import json
-import typing
-from dataclasses import dataclass
 
 from ..core.qt import QtCore, QtGui, QtWidgets
-from ..core.serializable import DataclassSerializable
 
 import logging
 logger = logging.getLogger('camelot.view.art')
@@ -179,21 +176,17 @@ class FontIconEngine(QtGui.QIconEngine):
         return pix
 
 
-@dataclass
-class FontIcon(DataclassSerializable):
+class FontIcon:
 
-    _name_to_code: typing.ClassVar[dict] = None
-    _color: typing.ClassVar[QtGui.QColor] = QtGui.QColor('#009999')
+    _name_to_code = None
 
-    name: str
-    pixmap_size: int
-
-    def __init__(self, name, pixmap_size=32):
+    def __init__(self, name, pixmap_size=32, color='#009999'):
         """
         The pixmap size is only used when calling getQPixmap().
         """
         self.name = name
         self.pixmap_size = pixmap_size
+        self.color = color
 
         if FontIcon._name_to_code is None:
             FontIcon._load_name_to_code()
@@ -211,7 +204,7 @@ class FontIcon(DataclassSerializable):
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
         engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
-        engine.color = self._color
+        engine.color = QtGui.QColor(self.color)
 
         icon = QtGui.QIcon(engine)
         return icon
@@ -221,9 +214,41 @@ class FontIcon(DataclassSerializable):
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
         engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
-        engine.color = self._color
+        engine.color = QtGui.QColor(self.color)
 
         return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+
+class QrcIcon:
+    """Icon loaded from Qt resource file"""
+
+    def __init__(self, path):
+        """
+        :param: path: The Qt resource path.
+        """
+        self.path = path
+        # Check if the resource path is valid
+        #if not QtCore.QFile.exists(self.path):
+        #    raise RuntimeError('Qt resource "{}" not found'.format(self.path))
+
+    def getQIcon(self):
+        return QtGui.QIcon(self.path)
+
+    def getQPixmap(self):
+        return QtGui.QPixmap(self.path)
+
+
+def from_admin_icon(admin_icon):
+    """Convert :class:`camelot.admin.icon.Icon` object to :class:`camelot.view.art.QrcIcon` or
+    :class:`camelot.view.art.FontIcon`.
+
+    If the name of the admin icon starts with ":/", a :class:`camelot.view.art.QrcIcon` object
+    will be returned.
+    """
+    if admin_icon.name.startswith(':/'):
+        return QrcIcon(admin_icon.name)
+    else:
+        return FontIcon(admin_icon.name, admin_icon.pixmap_size, admin_icon.color)
 
 
 class ColorScheme(object):

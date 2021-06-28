@@ -36,7 +36,7 @@ import os
 
 from ...core.qt import QtWidgets
 from ...core.utils import ugettext_lazy as _
-from ...view.art import FontIcon
+from ...admin.icon import Icon
 from .base import Action, RenderHint
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
@@ -117,7 +117,7 @@ class SelectObject(FieldAction):
     """Allows the user to select an object, and set the selected object as
     the new value of the editor"""
 
-    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
+    icon = Icon('search') # 'tango/16x16/actions/system-search.png'
     tooltip = _('select existing')
     name = 'select_object'
 
@@ -140,7 +140,7 @@ class NewObject(SelectObject):
     """Open a form for the creation of a new object, and set this
     object as the new value of the editor"""
 
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('create new')
     name = 'new_object'
 
@@ -158,7 +158,7 @@ class NewObject(SelectObject):
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 
-    icon = FontIcon('folder-open') # 'tango/16x16/places/folder.png'
+    icon = Icon('folder-open') # 'tango/16x16/places/folder.png'
     tooltip = _('open')
     name = 'open_object'
 
@@ -179,7 +179,7 @@ class OpenObject(SelectObject):
 class ClearObject(OpenObject):
     """Set the new value of the editor to `None`"""
 
-    icon = FontIcon('eraser') # 'tango/16x16/actions/edit-clear.png'
+    icon = Icon('eraser') # 'tango/16x16/actions/edit-clear.png'
     tooltip = _('clear')
     name = 'clear_object'
 
@@ -195,7 +195,7 @@ class ClearObject(OpenObject):
 class UploadFile(FieldAction):
     """Upload a new file into the storage of the field"""
 
-    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     tooltip = _('Attach file')
     file_name_filter = 'All files (*)'
     name = 'attach_file'
@@ -235,7 +235,7 @@ class DetachFile(FieldAction):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
-    icon = FontIcon('trash') # 'tango/16x16/actions/edit-delete.png'
+    icon = Icon('trash') # 'tango/16x16/actions/edit-delete.png'
     tooltip = _('Detach file')
     message_title = _('Detach this file ?')
     message_text = _('If you continue, you will no longer be able to open this file.')
@@ -260,7 +260,7 @@ class DetachFile(FieldAction):
 class OpenFile(FieldAction):
     """Open the file shown in the editor"""
 
-    icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
+    icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
     name = 'open_file'
 
@@ -281,7 +281,7 @@ class OpenFile(FieldAction):
 class SaveFile(OpenFile):
     """Copy the file shown in the editor to another location"""
 
-    icon = FontIcon('save') # 'tango/16x16/actions/document-save-as.png'
+    icon = Icon('save') # 'tango/16x16/actions/document-save-as.png'
     tooltip = _('Save as')
     name = 'file_save_as'
 

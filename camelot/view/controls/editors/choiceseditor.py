@@ -35,7 +35,8 @@ from ....core.qt import (
     QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
 )
 from camelot.view.proxy import ValueLoading
-from ...art import Icon, ColorScheme
+from camelot.admin.icon import Icon
+from ...art import from_admin_icon, ColorScheme
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
@@ -83,7 +84,7 @@ class ChoicesEditor(CustomEditor):
         item = QtGui.QStandardItem(data[Qt.DisplayRole])
         for role, value in six.iteritems(data):
             if isinstance(value, Icon):
-                value = value.getQIcon()
+                value = from_admin_icon(value).getQIcon()
             item.setData(py_to_variant(value), role)
         model.appendRow(item)
 

@@ -34,6 +34,7 @@ logger = logging.getLogger('camelot.view.controls.section_widget')
 
 from ...admin.action.base import Mode
 from ...admin.admin_route import AdminRoute
+from ...admin.icon import Icon
 from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
 from ..art import FontIcon
 from camelot.view.controls.modeltree import ModelItem
@@ -86,7 +87,7 @@ class PaneSection(QtWidgets.QWidget):
                 label = state["verbose_name"]
                 model_item = ModelItem(parent, [label], item)
                 if state["icon"] is not None:
-                    icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size'])
+                    icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
                     model_item.set_icon(icon.getQIcon())
                 section_tree.modelitems.append(model_item)
                 if len(item["items"]):
@@ -108,7 +109,7 @@ class PaneSection(QtWidgets.QWidget):
                     state = self.action_states[tuple(action_route)]
                     for mode_data in state["modes"]:
                         if mode_data['icon'] is not None:
-                            icon = FontIcon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'])
+                            icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
                         else:
                             icon = None
                         mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
@@ -192,7 +193,7 @@ class NavigationPane(QtWidgets.QDockWidget):
             count -= 1
             
         for section in sections:
-            icon = FontIcon(section['icon']['name'], section['icon']['pixmap_size'])
+            icon = FontIcon(section['icon']['name'], section['icon']['pixmap_size'], section['icon']['color'])
             # TODO: old navpane used translation here
             pwdg = PaneSection(toolbox, section['items'], action_states, self.gui_context)
             toolbox.addItem(pwdg, icon.getQIcon(), section['verbose_name'])
