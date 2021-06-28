@@ -27,11 +27,19 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+import json
 import logging
+import typing
 
-from ...admin.action.base import ActionStep
+from ..controls.action_widget import ActionAction
+from ...admin.action.base import ActionStep, State
+from ...admin.admin_route import AdminRoute, Route
+from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
-from ..art import from_admin_icon
+from ...core.serializable import DataclassSerializable
+from ...model.authentication import get_current_authentication
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -85,7 +93,9 @@ class MainWindow( ActionStep ):
                     window = widget
                     break
 
-        main_window_proxy = MainWindowProxy( gui_context=main_window_context, window=window )
+        main_window_proxy = MainWindowProxy(
+            gui_context=main_window_context, window=window
+        )
 
         gui_context.workspace = main_window_context.workspace
         main_window_proxy.parent().setWindowTitle( self.window_title )
@@ -97,7 +107,8 @@ class MainWindow( ActionStep ):
             main_window.statusBar().hide()
         main_window.show()
 
-class NavigationPanel(ActionStep):
+@dataclass
+class NavigationPanel(ActionStep, DataclassSerializable):
     """
     Create a panel to navigate the application
     
@@ -105,15 +116,52 @@ class NavigationPanel(ActionStep):
         objects, with the sections of the navigation panel
 
     """
-     
-    def __init__( self, sections ):
-        self.sections = [{
-            'verbose_name': str(section.get_verbose_name()),
-            'icon': from_admin_icon(section.get_icon()).getQIcon(),
-            'items': section.get_items()
-        } for section in sections]
 
-    def render( self, gui_context ):
+    # this could be non-blocking, but that causes unittest segmentation
+    # fault issues which are not worth investigating
+    blocking = True
+    menu: MenuItem
+    action_states: typing.List[typing.Tuple[Route, State]]
+
+    def __init__(self, model_context, menu: MenuItem):
+        self.menu = self._filter_items(menu, get_current_authentication())
+        self.action_states = list()
+        self._add_action_states(model_context, self.menu.items, self.action_states)
+
+    @classmethod
+    def _filter_items(cls, menu: MenuItem, auth) -> MenuItem:
+        """
+        Create a new menu item with only child items with a role hold by
+        the authentication
+        """
+        new_menu = MenuItem(
+            verbose_name=menu.verbose_name,
+            icon=menu.icon,
+            role=menu.role,
+            action_route=menu.action_route,
+        )
+        new_menu.items.extend(
+            cls._filter_items(item, auth) for item in menu.items if (
+                (item.role is None) or auth.has_role(item.role)
+            )
+        )
+        return new_menu
+
+    @classmethod
+    def _add_action_states(self, model_context, items, action_states):
+        """
+        Recurse through a menu and get the state for all actions in the menu
+        """
+        for item in items:
+            self._add_action_states(model_context, item.items, action_states)
+            action_route = item.action_route
+            if action_route is not None:
+                action = AdminRoute.action_for(action_route)
+                state = action.get_state(model_context)
+                action_states.append((action_route, state))
+
+    @classmethod
+    def render(self, gui_context, step):
         """create the navigation panel.
         this method is used to unit test the action step."""
         from ..controls.section_widget import NavigationPane
@@ -121,34 +169,64 @@ class NavigationPanel(ActionStep):
             gui_context,
             gui_context.workspace
         )
-        navigation_panel.set_sections(self.sections)
+        navigation_panel.set_sections(
+            step["menu"]["items"], step["action_states"]
+        )
         return navigation_panel
-    
-    def gui_run( self, gui_context ):
-        navigation_panel = self.render(gui_context)
+
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        navigation_panel = self.render(gui_context, step)
         gui_context.workspace.parent().addDockWidget(
             Qt.LeftDockWidgetArea, navigation_panel
         )
 
-class MainMenu(ActionStep):
+@dataclass
+class MainMenu(ActionStep, DataclassSerializable):
     """
     Create a main menu for the application window.
     
     :param menu: a list of :class:`camelot.admin.menu.Menu' objects
 
     """
-     
-    def __init__( self, menu ):
+
+    blocking = False
+    menu: MenuItem
+
+    def __init__(self, menu):
         self.menu = menu
 
-    def gui_run( self, gui_context ):
-        from ..mainwindowproxy import MainWindowProxy
+    @classmethod
+    def render(cls, gui_context, items, parent_menu):
+        """
+        :return: a :class:`QtWidgets.QMenu` object
+        """
+        for item in items:
+            if (item["verbose_name"] is None) and (item["action_route"] is None):
+                parent_menu.addSeparator()
+                continue
+            elif item["verbose_name"] is not None:
+                menu = QtWidgets.QMenu(item["verbose_name"], parent_menu)
+                parent_menu.addMenu(menu)
+                cls.render(gui_context, item["items"], menu)
+            elif item["action_route"] is not None:
+                action = AdminRoute.action_for(tuple(item["action_route"]))
+                qaction = ActionAction(action, gui_context, parent_menu)
+                parent_menu.addAction(qaction)
+            else:
+                raise Exception('Cannot handle menu item {}'.format(item))
+
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        from ..controls.busy_widget import BusyWidget
         main_window = gui_context.workspace.parent()
         if main_window is None:
             return
-        main_window_proxy = main_window.findChild(MainWindowProxy)
-        if main_window_proxy is not None:
-            main_window_proxy.set_main_menu(self.menu)
+        step = json.loads(serialized_step)
+        menu_bar = main_window.menuBar()
+        self.render(gui_context, step["menu"]["items"], menu_bar)
+        menu_bar.setCornerWidget(BusyWidget())
 
 
 class InstallTranslator(ActionStep):

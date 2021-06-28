@@ -222,11 +222,11 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         update_progress = self._write_read(update_progress)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()
-        update_progress.gui_run( self.gui_context )
+        update_progress.gui_run(self.gui_context, update_progress._to_bytes())
         # now press the cancel button
         progress_dialog.cancel()
         with self.assertRaises( CancelRequest ):
-            update_progress.gui_run( self.gui_context )
+            update_progress.gui_run(self.gui_context, update_progress._to_bytes())
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')

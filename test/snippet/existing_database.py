@@ -37,14 +37,11 @@ class Person( Base ):
 # Setup a camelot application
 #
 from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.section import Section
 from camelot.core.conf import settings
 
 class AppAdmin( ApplicationAdmin ):
-    
-    def get_sections( self ):
-        return [ Section( 'All tables', self, items = [Person] ) ]
-    
+    pass
+
 class Settings(object):
     
     def ENGINE( self ):
@@ -55,6 +52,8 @@ class Settings(object):
     
 settings.append( Settings() )
 app_admin = AppAdmin()
+all_tables = app_admin.add_navigation_menu('All tables')
+app_admin.add_navigation_entity_table(Person, all_tables)
 
 #
 # Start the application 
