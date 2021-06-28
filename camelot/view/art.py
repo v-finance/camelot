@@ -219,16 +219,34 @@ class FontIcon:
         return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
 
+class QrcIcon:
+    """Icon loaded from Qt resource file"""
+
+    def __init__(self, path):
+        """
+        :param: path: The Qt resource path.
+        """
+        self.path = path
+        # Check if the resource path is valid
+        if not QtCore.QFile.exists(self.path):
+            raise RuntimeError('Qt resource "{}" not found'.format(self.path))
+
+    def getQIcon(self):
+        return QtGui.QIcon(self.path)
+
+    def getQPixmap(self):
+        return QtGui.QPixmap(self.path)
+
+
 def from_admin_icon(admin_icon):
-    """Convert :class:`camelot.admin.icon.Icon` object to :class:`camelot.view.art.Icon` or
+    """Convert :class:`camelot.admin.icon.Icon` object to :class:`camelot.view.art.QrcIcon` or
     :class:`camelot.view.art.FontIcon`.
 
-    If the name of the admin icon ends with .png, a :class:`camelot.view.art.Icon` object
-    will be returned with the module parameter set to vfinance.
+    If the name of the admin icon starts with ":/", a :class:`camelot.view.art.QrcIcon` object
+    will be returned.
     """
-    if admin_icon.name.lower().endswith('.png'):
-        import vfinance
-        return Icon(admin_icon.name, vfinance)
+    if admin_icon.name.startswith(':/'):
+        return QrcIcon(admin_icon.name)
     else:
         return FontIcon(admin_icon.name, admin_icon.pixmap_size, admin_icon.color)
 

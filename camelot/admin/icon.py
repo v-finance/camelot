@@ -10,8 +10,8 @@ class Icon(DataclassSerializable):
 
 .. attribute:: name
 
-    The name of the icon. This can be a front awesome name or image name ending with ".png".
-    When the name ends with ".png", it is assumed to be an image from the vfinance module.
+    The name of the icon. This can be a front awesome name or Qt resource path pointing to an image.
+    When the name starts with ":/", it is assumed to be a Qt resource path.
 
 .. attribute:: pixmap_size
 

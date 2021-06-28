@@ -39,7 +39,6 @@ from ...core.qt import variant_to_py, QtCore, QtWidgets, Qt
 from ..art import FontIcon
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
-from camelot.view.art import from_admin_icon
 
 class PaneSection(QtWidgets.QWidget):
 
