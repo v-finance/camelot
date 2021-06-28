@@ -228,8 +228,8 @@ class QrcIcon:
         """
         self.path = path
         # Check if the resource path is valid
-        if not QtCore.QFile.exists(self.path):
-            raise RuntimeError('Qt resource "{}" not found'.format(self.path))
+        #if not QtCore.QFile.exists(self.path):
+        #    raise RuntimeError('Qt resource "{}" not found'.format(self.path))
 
     def getQIcon(self):
         return QtGui.QIcon(self.path)
