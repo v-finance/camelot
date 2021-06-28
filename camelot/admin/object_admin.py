@@ -35,6 +35,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
+from ..core.orm.entity import EntityMeta
 from .admin_route import AdminRoute
 from .action import field_action
 from camelot.admin.action import list_filter
@@ -358,6 +359,12 @@ be specified using the verbose_name attribute.
             states to make the appearance of actions dynamic on a form)
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
+        # Check __facade_args__ for 'show_actions'
+        if isinstance(self.entity, EntityMeta):
+            facade_arg_show_actions = self.entity._get_facade_arg('show_actions')
+            if facade_arg_show_actions is not None and not facade_arg_show_actions:
+                return []
+
         app_admin = self.get_application_admin()
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
@@ -415,6 +422,12 @@ be specified using the verbose_name attribute.
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
 
     def get_list_actions(self):
+        # Check __facade_args__ for 'show_actions'
+        if isinstance(self.entity, EntityMeta):
+            facade_arg_show_actions = self.entity._get_facade_arg('show_actions')
+            if facade_arg_show_actions is not None and not facade_arg_show_actions:
+                return []
+
         return self.list_actions
 
     def get_list_action(self):
@@ -485,6 +498,12 @@ be specified using the verbose_name attribute.
         related_admin = self.app_admin.get_related_admin(cls)
         if not related_admin:
             logger.warn('no related admin found for %s' % (cls.__name__))
+        # Check for 'deep_editable' in __facade_args__, default is True
+        if isinstance(self.entity, EntityMeta):
+            facade_arg_deep_editable = self.entity._get_facade_arg('deep_editable')
+            if facade_arg_deep_editable is None or facade_arg_deep_editable:
+                facade_arg_editable_fields = self.entity._get_facade_arg('editable_fields')
+                return ReadOnlyAdminDecorator(related_admin, facade_arg_editable_fields or [])
         return related_admin
 
     def get_static_field_attributes(self, field_names):
@@ -623,7 +642,7 @@ be specified using the verbose_name attribute.
         #         attributes
         #
         try:
-            return self._field_attributes[field_name]
+            attributes = self._field_attributes[field_name]
         except KeyError:
             from camelot.view.controls import delegates
             #
@@ -671,7 +690,16 @@ be specified using the verbose_name attribute.
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict.get(x, '')
             self._expand_field_attributes(attributes, field_name)
-            return attributes
+
+        # Check for 'editable' & 'editable_fields' in __facade_args__, default is True
+        if isinstance(self.entity, EntityMeta):
+            facade_arg_editable = self.entity._get_facade_arg('editable')
+            if facade_arg_editable is not None and not facade_arg_editable:
+                facade_arg_editable_fields = self.entity._get_facade_arg('editable_fields')
+                if facade_arg_editable_fields is None or field_name not in facade_arg_editable_fields:
+                    attributes['editable'] = False
+
+        return attributes
 
     def _expand_field_attributes(self, field_attributes, field_name):
         """Given a set field attributes, expand the set with attributes
