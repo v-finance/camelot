@@ -616,3 +616,51 @@ class EntityBase( object ):
         """
         return Session().query( cls ).get(*args, **kwargs)
 
+
+class EntityFacadeMeta(type):
+    
+    # new is called to create a new EntityFacade class
+    def __new__( cls, classname, bases, dict_ ):
+        #
+        # don't modify the EntityFacade class itself
+        #
+        if classname != 'EntityFacade':
+            
+            for base in bases:
+                if hasattr(base, '__facade_args__'):
+                    break
+            else:
+                dict_.setdefault('__facade_args__', dict())
+            
+            subsystem_cls = None
+            for base in bases:
+                if hasattr(base, '__facade_args__'):
+                    subsystem_cls = base.__facade_args__.get('subsystem_cls', subsystem_cls)
+            assert isinstance(subsystem_cls, EntityMeta) is not None, 'EntityFacade must be coupled with an Entity subsystem class'
+            dict_['__subsystem_cls__'] = subsystem_cls
+        
+        _facade_class = super( EntityFacadeMeta, cls ).__new__( cls, classname, bases, dict_ )
+        cls.register_class(cls, _facade_class, dict_)
+        return _facade_class
+    
+    def register_class(cls, _facade_class, dict_):
+        facade_args = dict_.get('__facade_args__')
+        if facade_args is not None:
+            subsystem_cls = dict_.get('__subsystem_cls__')
+            _type = facade_args.get('type')
+            if _type is not None:
+                assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type in subsystem_cls.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
+                if _type in subsystem_cls.__types__:
+                    assert _type not in subsystem_cls.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                    subsystem_cls.__cls_for_type__[_type] = _facade_class
+            if facade_args.get('default') == True:
+                assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type is None, 'Can not register this class for a specific type and as the default class'
+                assert None not in subsystem_cls.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(subsystem_cls.__types__, subsystem_cls.__cls_for_type__[None])
+                subsystem_cls.__cls_for_type__[None] = _facade_class
+    
+    def _get_facade_arg(cls, key):
+        for cls_ in (cls,) + cls.__mro__:
+            if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
+                return cls_.__facade_args__[key]
