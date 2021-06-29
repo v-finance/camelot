@@ -46,7 +46,6 @@ from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.core.orm import Entity, ManyToOne
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
@@ -82,6 +81,10 @@ class Memento( Entity ):
                                   nullable = False,
                                   index = True )    
     previous_attributes = orm.deferred( schema.Column( PickleType() ) )
+
+    __facade_args__ = {
+        'editable': False
+    }
     
     @property
     def previous( self ):
@@ -106,7 +109,3 @@ class Memento( Entity ):
                                         'delegate':delegates.One2ManyDelegate,
                                         'python_type':list}
                             }
-        
-    Admin = not_editable_admin( Admin )
-
-

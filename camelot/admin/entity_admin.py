@@ -383,6 +383,12 @@ and used as a custom action.
             # the default stuff
             #
             pass
+        # Check __facade_args__ for 'editable' & 'editable_fields'
+        facade_arg_editable = self.entity._get_facade_arg('editable')
+        if facade_arg_editable is not None and not facade_arg_editable:
+             facade_arg_editable_fields = self.entity._get_facade_arg('editable_fields')
+             if facade_arg_editable_fields is None or field_name not in facade_arg_editable_fields:
+                 attributes['editable'] = False
         return attributes
 
     def _expand_field_attributes(self, field_attributes, field_name):
