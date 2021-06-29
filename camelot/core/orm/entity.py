@@ -670,7 +670,7 @@ class EntityFacade(object, metaclass=EntityFacadeMeta):
     
     def __init__(self, subsystem_object=None):
         assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
-        self._subsystem_object = subsystem_object
+        object.__setattr__(self, '_subsystem_object', subsystem_object)
     
     @property
     def subsystem_object(self):
@@ -678,3 +678,8 @@ class EntityFacade(object, metaclass=EntityFacadeMeta):
     
     def __getattr__(self, name):
         return getattr(self.subsystem_object, name)
+    
+    def __setattr__(self, name, value):
+        if not hasattr(type(self), name):
+            object.__setattr__(self.subsystem_object, name, value)
+        super().__setattr__(name, value)
