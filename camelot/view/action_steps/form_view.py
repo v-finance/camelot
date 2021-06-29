@@ -36,6 +36,7 @@ from ...admin.action.base import ActionStep
 from ...core.qt import Qt, is_deleted
 
 from ...core.item_model import AbstractModelProxy
+from ...core.orm.entity import EntityFacade
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
 
@@ -85,7 +86,10 @@ class OpenFormView( ActionStep ):
         self.admin_route = admin.get_admin_route()
         
         self.objects = [obj]
-        self.row = proxy.index(obj)
+        if isinstance(obj, EntityFacade):
+            self.row = proxy.index(obj.subsystem_object)
+        else:
+            self.row = proxy.index(obj)
         self.proxy = proxy
         
     def get_objects( self ):
