@@ -35,6 +35,7 @@ import logging
 import six
 
 from ...core.item_model.proxy import AbstractModelFilter
+from ...core.orm.entity import EntityFacade
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
@@ -1110,15 +1111,18 @@ class AddNewObject( EditAction ):
         admin = self.get_admin(model_context)
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = self.create_object(model_context)
+        subsystem_object = new_object
+        if isinstance(new_object, EntityFacade):
+            subsystem_object = new_object.subsystem_object
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
-        yield action_steps.CreateObjects((new_object,))
-        if not len(admin.get_validator().validate_object(new_object)):
+        yield action_steps.CreateObjects((subsystem_object,))
+        if not len(admin.get_validator().validate_object(subsystem_object)):
             yield action_steps.FlushSession(model_context.session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
-            tuple(admin.get_depending_objects(new_object))
+            tuple(admin.get_depending_objects(subsystem_object))
         )
         if create_inline is False:
             yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
