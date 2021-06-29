@@ -664,3 +664,16 @@ class EntityFacadeMeta(type):
         for cls_ in (cls,) + cls.__mro__:
             if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
                 return cls_.__facade_args__[key]
+            
+class EntityFacade(EntityFacadeMeta):
+    
+    def __init__(self, subsystem_object=None):
+        assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
+        self._subsystem_object = subsystem_object
+    
+    @property
+    def subsystem_object(self):
+        return self._subsystem_object
+    
+    def __getattr__(self, name):
+        return getattr(self.subsystem_object, name)
