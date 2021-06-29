@@ -632,11 +632,12 @@ class EntityFacadeMeta(type):
             else:
                 dict_.setdefault('__facade_args__', dict())
             
-            subsystem_cls = None
-            for base in bases:
-                if hasattr(base, '__facade_args__'):
-                    subsystem_cls = base.__facade_args__.get('subsystem_cls', subsystem_cls)
-            assert isinstance(subsystem_cls, EntityMeta) is not None, 'EntityFacade must be coupled with an Entity subsystem class'
+            subsystem_cls = dict_.get('__facade_args__', {}).get('subsystem_cls')
+            if subsystem_cls is None:
+                for base in bases:
+                    if hasattr(base, '__facade_args__'):
+                        subsystem_cls = base.__facade_args__.get('subsystem_cls', subsystem_cls)
+            assert isinstance(subsystem_cls, EntityMeta), 'EntityFacade must be coupled with an Entity subsystem class'
             dict_['__subsystem_cls__'] = subsystem_cls
         
         _facade_class = super( EntityFacadeMeta, cls ).__new__( cls, classname, bases, dict_ )
@@ -665,7 +666,7 @@ class EntityFacadeMeta(type):
             if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
                 return cls_.__facade_args__[key]
             
-class EntityFacade(EntityFacadeMeta):
+class EntityFacade(object, metaclass=EntityFacadeMeta):
     
     def __init__(self, subsystem_object=None):
         assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
