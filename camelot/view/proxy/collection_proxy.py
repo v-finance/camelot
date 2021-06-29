@@ -53,6 +53,7 @@ from six import moves
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
@@ -108,8 +109,8 @@ invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
-invalid_item.setData([], ActionRoutesRole)
-invalid_item.setData({}, ActionStatesRole)
+invalid_item.setData('[]', ActionRoutesRole)
+invalid_item.setData('[]', ActionStatesRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -1114,10 +1115,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # here
         #
         if (not index.isValid()) or (index.model()!=self):
-            if role == FieldAttributesRole:
-                return invalid_field_attributes_data
-            else:
-                return invalid_data
+            return invalid_item.data(role)
 
         root_item = self.invisibleRootItem()
         row = index.row()
