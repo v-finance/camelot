@@ -28,11 +28,13 @@
 #  ============================================================================
 
 import six
+import json
 import logging
 import dataclasses
 
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
+from ....core.serializable import json_encoder
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
@@ -157,12 +159,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
-        action_states = dict(zip(routes, states))
 
+        # eventually, the whole item will need to be serialized, while this
+        # is not yet the case, serialize some roles to make the usable outside
+        # python.
+        serialized_action_routes = json_encoder.encode(routes)
+        serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(model_context.value), Qt.EditRole)
-        item.setData(model_context.field_attributes.get('action_routes'), ActionRoutesRole)
-        item.setData(py_to_variant(action_states), ActionStatesRole)
+        item.setData(serialized_action_routes, ActionRoutesRole)
+        item.setData(serialized_action_states, ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
@@ -223,13 +229,22 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_value(value)
 
         # update actions
-        action_states = index.model().data(index, ActionStatesRole)
-        if action_states is None:
+        action_states = json.loads(index.model().data(index, ActionStatesRole))
+        action_routes = json.loads(index.model().data(index, ActionRoutesRole))
+        if len(action_routes) == 0:
             return
         for action_widget in editor.findChildren(ActionToolbutton):
-            if action_widget.action_route in action_states:
-                state = action_states[action_widget.action_route]
-                action_widget.set_state_v2(state)
+            try:
+                action_index = action_routes.index(list(action_widget.action_route))
+            except ValueError:
+                LOGGER.error('action route not found {}, available routes'.format(
+                    action_widget.action_route
+                ))
+                for route in action_routes:
+                    LOGGER.error(route)
+                continue
+            state = action_states[action_index]
+            action_widget.set_state_v2(state)
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
