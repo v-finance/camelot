@@ -65,7 +65,9 @@ class FacadeAdmin(ObjectAdmin):
         return self.entity_admin.get_search_identifiers(obj.subsystem_object)
 
     def get_depending_objects(self, obj):
-        return self.entity_admin.get_depending_objects(obj.subsystem_object)
+        # Yield underlying subsystem object, so that data updates on the facade instance will be propagated to the subsystem instance in the underlying collection as well.
+        yield obj.subsystem_object
+        yield from self.entity_admin.get_depending_objects(obj.subsystem_object)
 
     def get_compounding_objects(self, obj):
         return self.entity_admin.get_compounding_objects(obj.subsystem_object)
