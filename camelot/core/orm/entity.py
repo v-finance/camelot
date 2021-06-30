@@ -443,6 +443,16 @@ class EntityMeta( DeclarativeMeta ):
             if isinstance(discriminator, sql.schema.Column):
                 return getattr(cls, discriminator.key)
             return discriminator
+
+    def is_editable(cls):
+        """Return True if this Entity is editable.
+
+        An entity is consdered editable if there is no __facade_args__ { 'editable': False }
+        """
+        editable = cls._get_facade_arg('editable')
+        if editable is None:
+            return True
+        return editable
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it

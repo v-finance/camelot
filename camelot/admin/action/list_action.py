@@ -330,10 +330,20 @@ class DuplicateSelection( EditAction ):
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
-    
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        admin = model_context.admin
+        if admin and not admin.entity.is_editable():
+            state.visible = True
+            state.enabled = True
+        return state
+
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         new_objects = list()
         updated_objects = set()
         for i, obj in enumerate(model_context.get_selection()):
@@ -356,6 +366,14 @@ class DeleteSelection( EditAction ):
     icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
     verbose_name = _('Delete')
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        admin = model_context.admin
+        if admin and not admin.entity.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
     
     def gui_run( self, gui_context ):
         #
@@ -372,9 +390,11 @@ class DeleteSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         if model_context.selection_count <= 0:
             return
-        admin = model_context.admin
         objects_to_remove = list( model_context.get_selection() )
         #
         # it might be impossible to determine the depending objects once
@@ -1118,6 +1138,14 @@ class AddNewObject( EditAction ):
         By default, the given model_context's admin is used.
         """
         return model_context.admin
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        admin = self.get_admin(model_context)
+        if admin and not admin.entity.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
     
     def create_object(self, model_context, admin, session=None):
         """
@@ -1135,8 +1163,10 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        create_inline = model_context.field_attributes.get('create_inline', False)
         admin = self.get_admin(model_context)
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
+        create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
