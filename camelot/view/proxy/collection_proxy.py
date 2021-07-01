@@ -62,6 +62,7 @@ from ...core.item_model import (
     ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
     CompletionsRole, CompletionPrefixRole
 )
+from ...core.orm.entity import EntityFacade
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
@@ -430,6 +431,7 @@ class SetData(Update):
         admin = model_context.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
             object_slice = list(model_context.proxy[row:row+1])
+            subsystem_obj = obj.subsystem_object if isinstance(obj, EntityFacade) else obj
             if not len(object_slice):
                 logger.error('Cannot set data : no object in row {0}'.format(row))
                 continue
@@ -504,11 +506,11 @@ class SetData(Update):
                         #@todo: when flushing fails ??
                         logger.error( 'Programming Error, could not flush object', exc_info = e )
                     if was_persistent is False:
-                        created_objects.add(obj)
+                        created_objects.add(subsystem_obj)
                 # update the cache
                 columns = tuple(moves.xrange(len(model_context.static_field_attributes)))
                 self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-                updated_objects.add(obj)
+                updated_objects.add(subsystem_obj)
                 updated_objects.update(set(admin.get_depending_objects(obj)))
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
