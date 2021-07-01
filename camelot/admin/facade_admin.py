@@ -57,7 +57,12 @@ class FacadeAdmin(ObjectAdmin):
 
     def set_field_value(self, obj, field_name, value):
         self.entity_admin.set_field_value(obj.subsystem_object, field_name, value)
-
+        
+    def set_defaults(self, obj):
+        # Block defaults from being set on underlying subsystem properties directly as this circumvents facade property behaviour.
+        # Facade recalculation would not be triggered that way and may result in an inconsistent state.
+        return False
+    
     def _set_defaults(self, object_instance):
         return self.entity_admin._set_defaults(object_instance.subsystem_object)
 
