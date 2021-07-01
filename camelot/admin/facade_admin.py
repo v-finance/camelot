@@ -7,10 +7,12 @@ logger = logging.getLogger('camelot.view.object_admin')
 from ..core.orm.entity import EntityFacade
 from .object_admin import ObjectAdmin
 
-import six
-
-
 class FacadeAdmin(ObjectAdmin):
+    """
+    The FacadeAdmin class describes the interface that will be used to interact with facade objects.
+    As facade object provide a regular object layer on top of an entity, this admin is a decorated combination of an ObjectAdmin and an EntityAdmin,
+    whereby it keeps a reference of the entity admin of the facade's subsystem to delegate behaviour to.
+    """    
     
     def __init__(self, app_admin, entity):
         assert issubclass(entity, EntityFacade), '{} is not an EntityFacade class'.format(entity)
@@ -23,30 +25,10 @@ class FacadeAdmin(ObjectAdmin):
             return self.entity.__subsystem_cls__.__types__.get_verbose_name(type_)
         return super().get_verbose_name()
 
-    def get_verbose_name_plural(self):
-        return six.text_type(
-            self.verbose_name_plural
-            or (self.get_verbose_name() + u's')
-        )
-
-    def get_icon(self):
-        return self.icon
-
-    def get_verbose_identifier(self, obj):
-        """Create an identifier for an object that is interpretable
-        for the user, eg : the primary key of an object.  This verbose identifier can
-        be used to generate a title for a form view of an object.
-        """
-        return u'%s: %s' % (self.get_verbose_name(),
-                            self.get_verbose_object_name(obj))
-
-    def get_verbose_object_name(self, obj):
-        """
-        Textual representation of the current object.
-        """
-        return six.text_type(obj)
-
     def get_descriptor_field_attributes(self, field_name):
+        """
+        Expand the set of default introspected field attributes with those that are possibly registered on subsystem's entity admin.
+        """
         attributes = super(FacadeAdmin, self).get_descriptor_field_attributes(field_name)
         for cls in self.entity.__mro__ + self.entity.__subsystem_cls__.__mro__:
             descriptor = cls.__dict__.get(field_name, None)
@@ -89,6 +71,7 @@ class FacadeAdmin(ObjectAdmin):
         self.entity_admin.delete(entity_instance.subsystem_object)
 
     def flush(self, entity_instance):
+        # TODO
         #session = orm.object_session(entity_instance.subsystem_object)
         #if not isinstance(session, InputSession):
         self.entity_admin.flush(entity_instance.subsystem_object)
