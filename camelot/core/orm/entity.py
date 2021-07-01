@@ -241,15 +241,11 @@ class EntityMeta( DeclarativeMeta ):
     
     Facade class registration
     -------------------------
-    This metaclass also provides type-based entity classes with a means to register facade classes for specific types (or a default one for multiple types)
-    on one of its base classes, to allow type-specific facade and related Admin behaviour.
-    To use this behaviour, the '__facade_args' property is used on both the base Entity class for which specific facade classes are needed,
-    as on the specific facade classes.
-    This property is a dictionary that contains all the necessary facade arguments.
-    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
+    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
+    To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
     This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
-    In order to register a facade class for a specific type, the 'type' argument should be defined as a specific type of the base Entity class' '__types__'.
-    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
+    In order to register a facade class: see documentation on EntityFacadeMeta.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
@@ -272,7 +268,7 @@ class EntityMeta( DeclarativeMeta ):
               |         'default': True
               |     }
               |     ...
-    ^
+    
     This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
     This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
     
@@ -618,6 +614,56 @@ class EntityBase( object ):
 
 
 class EntityFacadeMeta(type):
+    
+    """
+    Metaclass that provides entity facade classes with a means to register themselves on a subsystem entity class.
+    
+    Facade class registration
+    -------------------------
+    This metaclass provides type-based entity facade classes with a means to register facade classes for specific types (or a default one for multiple types)
+    on an entity base classes, to allow type-specific facade and related Admin behaviour.
+    To use this behaviour, the '__facade_args__' property is used on both the base Entity class for which specific facade classes are needed, as on the facade classes.
+    This metaclass thereby works together with the EntityMeta.
+    This __facade_args__ property is a dictionary that contains all the necessary facade arguments.
+    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
+    To register a facade class, the subsystem_cls argument should be defined to link the facade to a subsystem entity class, which should have the discriminator defined.
+    In order to register a facade class for a specific type, the 'type' argument should also be defined as a specific type of the subsystem entity class' '__types__'.
+    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
+    
+    :example: | class SomeClass(Entity):
+              |     __tablename__ = 'some_tablename'
+              |     ...
+              |     described_by = Column(IntEnum(some_class_types), ...)
+              |     ...
+              |     __facade_args__ = {
+              |         'discriminator': described_by
+              |     }
+              |     ...
+              |
+              | class SomeFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'subsystem': SomeClass,
+              |         'type': some_class_types.certain_type.name
+              |     }
+              |     ...
+              |
+              | class DefaultFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'subsystem': SomeClass,
+              |         'default': True
+              |     }
+              |     ...
+    
+   
+    Notes on metaclasses
+    --------------------
+    Metaclasses are not part of objects' class hierarchy whereas base classes are.
+    So when a method is called on an object it will not look on the metaclass for this method, however the metaclass may have created it during the class' or object's creation.
+    They are generally used for use cases outside of the default rules of object-oriented programming.
+    In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
+    which is an OOP anti-pattern as classes should not know about their subclasses.
+    """
     
     # new is called to create a new EntityFacade class
     def __new__( cls, classname, bases, dict_ ):
