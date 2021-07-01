@@ -179,6 +179,7 @@ class ShowHistory( Action ):
             
         obj = model_context.get_object()
         memento = model_context.admin.get_memento()
+        entity = obj.__subsystem_cls__ if isinstance(obj, EntityFacade) else model_context.admin.entity
         
         class ChangeAdmin( ObjectAdmin ):
             verbose_name = _('Change')
@@ -196,7 +197,7 @@ class ShowHistory( Action ):
             primary_key = model_context.admin.primary_key( obj )
             if primary_key is not None:
                 if None not in primary_key:
-                    changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
+                    changes = list( memento.get_changes( model = six.text_type( entity.__name__ ),
                                                          primary_key = primary_key,
                                                          current_attributes = {} ) )
                     admin = ChangeAdmin( model_context.admin, object )
