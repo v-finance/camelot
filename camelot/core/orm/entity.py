@@ -668,7 +668,9 @@ class EntityFacadeMeta(type):
             
 class EntityFacade(object, metaclass=EntityFacadeMeta):
     
-    def __init__(self, subsystem_object):
+    def __init__(self, subsystem_object=None, **kwargs):
+        if subsystem_object is None:
+            subsystem_object = self.__subsystem_cls__(**kwargs)
         assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
         object.__setattr__(self, '_subsystem_object', subsystem_object)
     
