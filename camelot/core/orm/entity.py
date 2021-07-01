@@ -259,12 +259,14 @@ class EntityMeta( DeclarativeMeta ):
               |
               | class SomeFacadeClass(SomeClass)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
               |
               | class DefaultFacadeClass(SomeClass)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
               |         'default': True
               |     }
               |     ...
@@ -643,14 +645,14 @@ class EntityFacadeMeta(type):
               |
               | class SomeFacadeClass(EntityFacade)
               |     __facade_args__ = {
-              |         'subsystem': SomeClass,
+              |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
               |
               | class DefaultFacadeClass(EntityFacade)
               |     __facade_args__ = {
-              |         'subsystem': SomeClass,
+              |         'subsystem_cls': SomeClass,
               |         'default': True
               |     }
               |     ...
@@ -713,8 +715,18 @@ class EntityFacadeMeta(type):
                 return cls_.__facade_args__[key]
             
 class EntityFacade(object, metaclass=EntityFacadeMeta):
+    """
+    Abstract object class that provides as a layer on top of an Entity subsystem and delegates all attribute access to that subsystem.
+    This can provide a simplified interface that makes a complex subsystem and its related systems more easier to access and use.
+    Facades register themselves for an Entity subsystem using the subsystem_cls facade argument, and either a specific type of the entity's discriminator,
+    or as the default facade (see EntityFacadeMeta's documentation).
+    """
     
     def __init__(self, subsystem_object=None, **kwargs):
+        """
+        :param subsystem_object: The subsystem_object to initialized this facade with. If not provided, the facade will create a new subsystem_object instance of its __subsystem_cls__ type.
+        :param kwargs: The argument to construct the subsystem_object with one needs to be created.
+        """
         if subsystem_object is None:
             subsystem_object = self.__subsystem_cls__(**kwargs)
         assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
