@@ -1099,9 +1099,12 @@ class AddNewObject( EditAction ):
         or the default session, if it is not yet attached to a session"."""
         admin = self.get_admin(model_context)
         new_object = admin.entity(_session=session)
+        subsystem_object = new_object
+        if isinstance(new_object, EntityFacade):
+            subsystem_object = new_object.subsystem_object
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        model_context.proxy.append(new_object)
+        model_context.proxy.append(subsystem_object)
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
@@ -1117,15 +1120,15 @@ class AddNewObject( EditAction ):
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((subsystem_object,))
-        if not len(admin.get_validator().validate_object(subsystem_object)):
+        if not len(admin.get_validator().validate_object(new_object)):
             yield action_steps.FlushSession(model_context.session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
-            tuple(admin.get_depending_objects(subsystem_object))
+            tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
+            yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
 
 class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""
