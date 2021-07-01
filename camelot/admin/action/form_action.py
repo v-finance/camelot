@@ -31,6 +31,7 @@ import six
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
 from camelot.admin.action.base import Action, GuiContext
+from camelot.core.orm.entity import EntityFacade
 from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
 
@@ -231,6 +232,9 @@ class CloseForm( Action ):
         yield action_steps.UpdateProgress( text = _('Closing form') )
         validator = model_context.admin.get_validator()
         obj = model_context.get_object()
+        subsystem_obj = obj
+        if isinstance(obj, EntityFacade):
+            subsystem_obj = obj.subsystem_object
         admin  = model_context.admin
         if obj is None:
             yield self.step_when_valid()
@@ -255,11 +259,11 @@ class CloseForm( Action ):
             if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
-                    yield action_steps.UpdateObjects((obj,))
+                    yield action_steps.UpdateObjects((subsystem_obj,))
                 else:
                     depending_objects = list(admin.get_depending_objects(obj))
                     model_context.proxy.remove(obj)
-                    yield action_steps.DeleteObjects((obj,))
+                    yield action_steps.DeleteObjects((subsystem_obj,))
                     admin.expunge(obj)
                     yield action_steps.UpdateObjects(depending_objects)
                 # only close the form after the object has been discarded or
