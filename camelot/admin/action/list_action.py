@@ -1099,9 +1099,7 @@ class AddNewObject( EditAction ):
         or the default session, if it is not yet attached to a session"."""
         admin = self.get_admin(model_context)
         new_object = admin.entity(_session=session)
-        subsystem_object = new_object
-        if isinstance(new_object, EntityFacade):
-            subsystem_object = new_object.subsystem_object
+        subsystem_object = admin.get_subsystem_object(new_object)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
         model_context.proxy.append(subsystem_object)
@@ -1114,9 +1112,7 @@ class AddNewObject( EditAction ):
         admin = self.get_admin(model_context)
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = self.create_object(model_context)
-        subsystem_object = new_object
-        if isinstance(new_object, EntityFacade):
-            subsystem_object = new_object.subsystem_object
+        subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((subsystem_object,))

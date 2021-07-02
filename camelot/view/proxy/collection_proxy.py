@@ -431,7 +431,6 @@ class SetData(Update):
         admin = model_context.admin
         for (row, obj), request_group in six.iteritems(grouped_requests):
             object_slice = list(model_context.proxy[row:row+1])
-            subsystem_obj = obj.subsystem_object if isinstance(obj, EntityFacade) else obj
             if not len(object_slice):
                 logger.error('Cannot set data : no object in row {0}'.format(row))
                 continue
@@ -495,6 +494,7 @@ class SetData(Update):
                     pass
                 changed = value_changed or changed
             if changed:
+                subsystem_obj = admin.get_subsystem_object(obj)
                 for message in model_context.validator.validate_object(obj):
                     break
                 else:
