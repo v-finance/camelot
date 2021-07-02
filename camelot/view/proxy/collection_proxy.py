@@ -62,7 +62,6 @@ from ...core.item_model import (
     ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
     CompletionsRole, CompletionPrefixRole
 )
-from ...core.orm.entity import EntityFacade
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings

@@ -31,7 +31,6 @@ import six
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
 from camelot.admin.action.base import Action, GuiContext
-from camelot.core.orm.entity import EntityFacade
 from camelot.core.utils import ugettext as _
 from camelot.view.art import FontIcon
 

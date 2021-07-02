@@ -35,7 +35,6 @@ import logging
 import six
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.orm.entity import EntityFacade
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
