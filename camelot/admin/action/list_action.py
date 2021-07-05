@@ -271,7 +271,7 @@ class EditAction( ListContextAction ):
             if editable == False:
                 state.enabled = False
         # Check for editability on the level of the entity
-        admin = self.get_admin( model_context )
+        admin = model_context.admin
         if admin and not admin.entity.is_editable():
             state.visible = False
             state.enabled = False
@@ -862,6 +862,9 @@ class ImportFromFile( EditAction ):
     name = 'import'
 
     def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         import os.path
         import chardet
         from camelot.view import action_steps
@@ -889,7 +892,6 @@ class ImportFromFile( EditAction ):
             #
             # select columns to import
             #
-            admin = model_context.admin
             default_fields = [field for field, fa in admin.get_columns() 
                               if fa.get('editable', True)]
             mappings = []
@@ -970,6 +972,9 @@ class ReplaceFieldContents( EditAction ):
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         from camelot.view import action_steps
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
@@ -1095,6 +1100,9 @@ class AddExistingObject( EditAction ):
     name = 'add_object'
     
     def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
@@ -1195,6 +1203,9 @@ class ActionGroup(EditAction):
         return state
     
     def model_run(self, model_context):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         if model_context.mode_name is not None:
             action = self.actions[int(model_context.mode_name)]
             yield from action.model_run(model_context)
