@@ -232,7 +232,7 @@ class OpenQmlTableView(OpenTableView):
             )):
             icon_name = None
             if action.icon is not None:
-                icon_name = action.icon._name
+                icon_name = action.icon.name
             qt_action = ActionAction(action, list_gui_context, table)
             rendered_action = item_view._qml_item.addAction(
                 action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name,
