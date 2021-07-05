@@ -43,6 +43,8 @@ from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
+from sqlalchemy.orm.base import _entity_descriptor
+
 import xlsxwriter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
@@ -1028,8 +1030,10 @@ class SetFilters(Action, AbstractModelFilter):
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
-        return query.filter_by(**values)
-
+        entity = query._entity_zero()
+        clauses = [_entity_descriptor(entity, key) == value for key, value in values.items()]
+        return query.filter(*clauses)
+    
     def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
