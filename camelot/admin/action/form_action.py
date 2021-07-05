@@ -260,7 +260,7 @@ class CloseForm( Action ):
                     yield action_steps.UpdateObjects((subsystem_obj,))
                 else:
                     depending_objects = list(admin.get_depending_objects(obj))
-                    model_context.proxy.remove(subsystem_obj)
+                    model_context.proxy.remove(obj)
                     yield action_steps.DeleteObjects((subsystem_obj,))
                     admin.expunge(obj)
                     yield action_steps.UpdateObjects(depending_objects)
