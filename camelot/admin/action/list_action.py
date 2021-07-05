@@ -257,17 +257,24 @@ class RowNumberAction( Action ):
 class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
-    not-editable.
+    not-editable. It will also be disabled and hidden if the entity is set
+    to be non-editable using __facade_args__ = { 'editable': False }.
     """
 
     render_hint = RenderHint.TOOL_BUTTON
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
+        # Check for editability on the level of the field
         if isinstance( model_context, ListActionModelContext ):
             editable = model_context.field_attributes.get( 'editable', True )
             if editable == False:
                 state.enabled = False
+        # Check for editability on the level of the entity
+        admin = self.get_admin( model_context )
+        if admin and not admin.entity.is_editable():
+            state.visible = False
+            state.enabled = False
         return state
 
 class CloseList(Action):
@@ -331,14 +338,6 @@ class DuplicateSelection( EditAction ):
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
 
-    def get_state(self, model_context):
-        state = super().get_state(model_context)
-        admin = model_context.admin
-        if admin and not admin.entity.is_editable():
-            state.visible = True
-            state.enabled = True
-        return state
-
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = model_context.admin
@@ -367,14 +366,6 @@ class DeleteSelection( EditAction ):
     tooltip = _('Delete')
     verbose_name = _('Delete')
 
-    def get_state(self, model_context):
-        state = super().get_state(model_context)
-        admin = model_context.admin
-        if admin and not admin.entity.is_editable():
-            state.visible = False
-            state.enabled = False
-        return state
-    
     def gui_run( self, gui_context ):
         #
         # if there is an open editor on a row that will be deleted, there
@@ -1139,14 +1130,6 @@ class AddNewObject( EditAction ):
         """
         return model_context.admin
 
-    def get_state(self, model_context):
-        state = super().get_state(model_context)
-        admin = self.get_admin(model_context)
-        if admin and not admin.entity.is_editable():
-            state.visible = False
-            state.enabled = False
-        return state
-    
     def create_object(self, model_context, admin, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
