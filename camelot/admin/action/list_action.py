@@ -1030,6 +1030,10 @@ class SetFilters(Action, AbstractModelFilter):
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
+        # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
+        # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
+        # This caused filters in some cases being tried to applied to the wrong entity.
+        # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         entity = query._entity_zero()
         clauses = [_entity_descriptor(entity, key) == value for key, value in values.items()]
         return query.filter(*clauses)
