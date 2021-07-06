@@ -100,9 +100,9 @@ class IntegerEditor(CustomEditor):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
-            spin_box.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-            spin_box.setPrefix(six.text_type(kwargs.get('prefix', '')))
-            spin_box.setSuffix(six.text_type(kwargs.get('suffix', '')))
+            spin_box.setToolTip(str(kwargs.get('tooltip') or ''))
+            spin_box.setPrefix(str(kwargs.get('prefix', '')))
+            spin_box.setSuffix(str(kwargs.get('suffix', '')))
             spin_box.setSingleStep(kwargs.get('single_step', 1))
 
     def set_value(self, value):
@@ -152,11 +152,11 @@ class IntegerEditor(CustomEditor):
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(str)
     def calculation_finished(self, value):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
-            spin_box.setValue(floor(float(six.text_type(value))))
+            spin_box.setValue(floor(float(str(value))))
             self.editingFinished.emit()
 
     @QtCore.qt_slot()

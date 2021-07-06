@@ -247,7 +247,7 @@ class SelectProfile( Action ):
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
                                                                      standard_buttons = QtWidgets.QMessageBox.Ok )
-                            exception_box.informative_text = six.text_type(e)
+                            exception_box.informative_text = str(e)
                             yield exception_box
                             edit_profile_name = profile.name
                             if profile in profiles:
@@ -418,7 +418,7 @@ class Refresh( Action ):
         # objects
         #
         session_items = len( session.identity_map )
-        for i, (_key, obj) in enumerate( six.iteritems(session.identity_map) ):
+        for i, (_key, obj) in enumerate( session.identity_map.items() ):
             try:
                 session.refresh( obj )
                 refreshed_objects.append( obj )

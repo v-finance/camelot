@@ -207,7 +207,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     def test_open_file( self ):
         stream = six.BytesIO(b'1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
-        self.assertTrue( six.text_type( open_stream ) )
+        self.assertTrue( str( open_stream ) )
         action_steps.OpenString( six.b('1, 2, 3, 4') )
         context = { 'columns':['width', 'height'],
                     'table':[[1,2],[3,4]] }
@@ -218,7 +218,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         update_progress = action_steps.UpdateProgress(
             20, 100, _('Importing data')
         )
-        self.assertTrue( six.text_type( update_progress ) )
+        self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()

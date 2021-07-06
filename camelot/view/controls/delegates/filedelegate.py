@@ -48,7 +48,7 @@ class FileDelegate(CustomDelegate):
         if model_context.value is not None:
             item.setData(py_to_variant(model_context.value.verbose_name), PreviewRole)
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.setData(py_to_variant(str()), PreviewRole)
         return item
 
 

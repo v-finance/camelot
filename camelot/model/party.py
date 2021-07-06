@@ -54,7 +54,7 @@ from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnly
 
 from .authentication import end_of_times
 
-@six.python_2_unicode_compatible
+
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
@@ -207,7 +207,7 @@ class Country( GeographicBoundary ):
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
-@six.python_2_unicode_compatible
+
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
@@ -276,11 +276,11 @@ class City( GeographicBoundary ):
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
              'alternative_names'],
             columns=2)
-        field_attributes = {k:copy.copy(v) for k,v in six.iteritems(GeographicBoundary.Admin.field_attributes)}
+        field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
         field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
         field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
         
-@six.python_2_unicode_compatible
+
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
@@ -570,7 +570,7 @@ class Party(Entity, WithAddresses):
         return orm.aliased( ContactMechanism ).mechanism
 
 
-@six.python_2_unicode_compatible
+
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
@@ -596,7 +596,7 @@ class Organization( Party ):
                 return _('An organization with the same name already exists')
 
 # begin short person definition
-@six.python_2_unicode_compatible
+
 class Person( Party ):
     """Person represents natural persons
     """
@@ -905,7 +905,7 @@ class Addressable(object):
                         delegate = delegates.VirtualAddressDelegate ), )
 
 
-@six.python_2_unicode_compatible
+
 class PartyAddress( Entity, Addressable ):
     using_options( tablename = 'party_address' )
     party_id = schema.Column(
@@ -929,7 +929,7 @@ class PartyAddress( Entity, Addressable ):
     comment = schema.Column( Unicode( 256 ) )
 
     def __str__(self):
-        return '%s : %s' % ( six.text_type( self.party ), six.text_type( self.address ) )
+        return '%s : %s' % ( str( self.party ), str( self.address ) )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -977,7 +977,7 @@ class PartyAddressRoleType( Entity ):
         verbose_name = _('Address role type')
         list_display = ['code', 'description']
 
-@six.python_2_unicode_compatible
+
 class ContactMechanism( Entity ):
     using_options( tablename = 'contact_mechanism' )
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
@@ -1002,7 +1002,7 @@ class ContactMechanism( Entity ):
                 if party:
                     yield party
 
-@six.python_2_unicode_compatible
+
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
@@ -1041,12 +1041,12 @@ class PartyContactMechanism( Entity ):
     party_name = ColumnProperty( party_name, deferred = True )
 
     def __str__(self):
-        return six.text_type( self.contact_mechanism )
+        return str( self.contact_mechanism )
 
     Admin = PartyContactMechanismAdmin
 
 # begin category definition
-@six.python_2_unicode_compatible
+
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = schema.Column( Unicode(40), index=True, nullable = False )

@@ -22,8 +22,8 @@ import camelot.types
 # build a list of the various column types for which the search functions
 # should be tested
 #
-possible_types = itertools.chain(six.iteritems(sqlalchemy.types.__dict__),
-                                 six.iteritems(camelot.types.__dict__) )
+possible_types = itertools.chain(sqlalchemy.types.__dict__.items(),
+                                 camelot.types.__dict__.items() )
 types_to_test = collections.OrderedDict()
 for i, (name, definition) in enumerate(possible_types):
     if not inspect.isclass( definition ):

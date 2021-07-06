@@ -88,7 +88,7 @@ class Table( object ):
         """
         fields = []
         for i, column in enumerate(self.columns):
-            if isinstance( column, six.string_types ):
+            if isinstance( column, strs ):
                 fields.append( column )
             else:
                 if (column_group is None) or (column_group==i):

@@ -95,7 +95,7 @@ def ugettext(string_to_translate):
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
     tries to get the translation from the .qm files)"""
-    assert isinstance(string_to_translate, six.string_types)
+    assert isinstance(string_to_translate, strs)
     result = _translations_.get(string_to_translate, None)
     if not result:
         result = qtranslate( string_to_translate )
@@ -112,7 +112,7 @@ def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
     """
-    assert isinstance(message, six.string_types)
+    assert isinstance(message, strs)
     from camelot.model.i18n import Translation
     from sqlalchemy import sql
     query = sql.select( [Translation.value],
@@ -129,7 +129,7 @@ class ugettext_lazy(object):
     """
 
     def __init__(self, string_to_translate):
-        assert isinstance(string_to_translate, six.string_types)
+        assert isinstance(string_to_translate, strs)
         self._string_to_translate = string_to_translate
 
     def __str__(self):
@@ -139,7 +139,7 @@ class ugettext_lazy(object):
         return ugettext(self._string_to_translate)
     
     def __eq__(self, other_string):
-        if isinstance(other_string, six.string_types):
+        if isinstance(other_string, strs):
             return other_string == self._string_to_translate
         if isinstance(other_string, ugettext_lazy):
             return other_string._string_to_translate == self._string_to_translate

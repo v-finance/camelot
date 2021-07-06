@@ -171,7 +171,7 @@ class Field(EntityBuilder):
         self.column_created = True
         if self.deferred:
             group = None
-            if isinstance( self.deferred, six.string_types ):
+            if isinstance( self.deferred, strs ):
                 group = self.deferred
             self.column = orm.deferred( self.column, group = group )            
         self.entity._descriptor.add_column( self.kwargs.get( 'key', self.name ), self.column )

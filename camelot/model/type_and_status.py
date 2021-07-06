@@ -123,7 +123,7 @@ class StatusHistory( object ):
 
 
     def __str__( self ):
-        return six.text_type(self.classified_by or u'')
+        return str(self.classified_by or u'')
 
     def sort_key(self):
         """Key to be used to sort the status histories to get a single

@@ -395,7 +395,7 @@ shortcut confusion and reduce the number of status updates.
         """
         :return: the name of the application, by default this is the class
             attribute name"""
-        return six.text_type( self.name )
+        return str( self.name )
 
     def get_version(self):
         """:return: string representing version of the application, by default this

@@ -176,7 +176,7 @@ the default mode.
         """
         action = QtWidgets.QAction( parent )
         action.setData( self.name )
-        action.setText( six.text_type(self.verbose_name) )
+        action.setText( str(self.verbose_name) )
         if self.icon is None:
             action.setIconVisibleInMenu(False)
         else:
@@ -435,7 +435,7 @@ with a view.
         tooltip = None
 
         if self.tooltip is not None:
-            tooltip = six.text_type(self.tooltip)
+            tooltip = str(self.tooltip)
 
         if isinstance(self.shortcut, QtGui.QKeySequence):
             tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
@@ -444,7 +444,7 @@ with a view.
                 tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
                 break
         elif self.shortcut is not None:
-            tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)
+            tooltip = (tooltip or u'') + '\n' + str(self.shortcut)
 
         return tooltip
 

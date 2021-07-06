@@ -264,7 +264,7 @@ allow all languages
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = six.text_type(self.profile_editor.currentText())
+        text = str(self.profile_editor.currentText())
         return text
 
     def set_current_profile(self, profile_name):
@@ -346,7 +346,7 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = six.text_type(QtWidgets.QFileDialog.getExistingDirectory(self, caption))
+        selected = str(QtWidgets.QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return

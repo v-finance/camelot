@@ -476,7 +476,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         form.add_field( 'tags' )
         form.add_field( forms.Break() )
         form.add_field( forms.Label('End') )
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
@@ -486,7 +486,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
 
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
@@ -498,20 +498,20 @@ class FormTest(unittest.TestCase, GrabMixinCase):
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):

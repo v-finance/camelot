@@ -54,7 +54,7 @@ class RichTextDelegate(CustomDelegate):
         item = super(RichTextDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
             value_str = u' '.join(text_from_richtext(model_context.value))[:256]
-            item.setData(py_to_variant(six.text_type(value_str)), PreviewRole)
+            item.setData(py_to_variant(str(value_str)), PreviewRole)
         return item
 
 

@@ -46,7 +46,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
-        self.setWindowTitle( six.text_type(window_title or ' ') )
+        self.setWindowTitle( str(window_title or ' ') )
         self.set_layouts()
 
     def set_layouts(self):
@@ -115,12 +115,12 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
         if accept != None:
-            ok_button = QtWidgets.QPushButton( six.text_type( accept ), self )
+            ok_button = QtWidgets.QPushButton( str( accept ), self )
             ok_button.setObjectName( 'accept' )
             ok_button.pressed.connect( self.accept )
             layout.addWidget( ok_button )
         if reject != None:
-            cancel_button = QtWidgets.QPushButton( six.text_type( reject ), self )
+            cancel_button = QtWidgets.QPushButton( str( reject ), self )
             cancel_button.setObjectName( 'reject' )
             cancel_button.pressed.connect( self.reject )
             layout.addWidget( cancel_button )

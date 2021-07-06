@@ -67,7 +67,7 @@ batch_job_statusses = [ (-2, 'planned'),
                         (2,  'errors'),
                         (3,  'canceled') ]
 
-@six.python_2_unicode_compatible
+
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
@@ -94,7 +94,7 @@ class BatchJobType( Entity ):
         
 def hostname():
     import socket
-    return six.text_type( socket.gethostname() )
+    return str( socket.gethostname() )
 
 class BatchJob( Entity, type_and_status.StatusMixin ):
     """A batch job is a long running task that is scheduled by
@@ -176,7 +176,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
                                    sio )
         traceback_print = sio.getvalue()
         sio.close()
-        self.add_strings_to_message([six.text_type(exc_type or sys.exc_info()[0])],
+        self.add_strings_to_message([str(exc_type or sys.exc_info()[0])],
                                     color = 'red' )
         self.add_strings_to_message(traceback_print.split('\n'),
                                     color = 'grey' )

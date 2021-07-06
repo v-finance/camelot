@@ -95,7 +95,7 @@ class AbstractActionWidget( object ):
                 selection_model = self.gui_context.item_view.selectionModel()
                 if (selection_model is not None) and selection_model.hasSelection():
                     parent = QtCore.QModelIndex()
-                    for row in six.moves.range(first, last+1):
+                    for row in range(first, last+1):
                         if selection_model.rowIntersectsSelection(row, parent):
                             self.current_row_changed(row)
                             return
@@ -178,7 +178,7 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
     @QtCore.qt_slot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
+            self.setText( str( state.verbose_name ) )
         else:
             self.setText( '' )
         if state.icon != None:
@@ -186,7 +186,7 @@ class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
+            self.setToolTip( str( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.setEnabled( state.enabled )
@@ -234,13 +234,13 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
     def set_state( self, state ):
         super( ActionPushButton, self ).set_state( state )
         if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
+            self.setText( str( state.verbose_name ) )
         if state.icon != None:
             self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
+            self.setToolTip( str( state.tooltip ) )
         else:
             self.setToolTip( '' )            
         self.set_menu(state, self)
@@ -276,13 +276,13 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
     def set_state( self, state ):
         AbstractActionWidget.set_state(self, state)
         if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
+            self.setText( str( state.verbose_name ) )
         if state.icon != None:
             self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
+            self.setToolTip( str( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.set_menu(state, self)

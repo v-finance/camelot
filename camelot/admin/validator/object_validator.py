@@ -95,7 +95,7 @@ class ObjectValidator(QtCore.QObject):
             for field_name, dynamic_fa in zip(self._all_fields, self.admin.get_dynamic_field_attributes(obj, self._all_fields)):
                 self._all_field_field_attributes[field_name].update(dynamic_fa)
             
-            for field, attributes in six.iteritems(self._all_field_field_attributes):
+            for field, attributes in self._all_field_field_attributes.items():
                 # if the field was not editable, don't waste any time
                 if attributes.get('editable', False):
                     # if the field, is nullable, don't waste time getting its value

@@ -80,8 +80,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
-        self.set_banner_title( six.text_type(title) )
-        self.set_banner_subtitle( six.text_type(subtitle) )
+        self.set_banner_title( str(title) )
+        self.set_banner_subtitle( str(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
         model = CollectionProxy(admin_route)
@@ -112,9 +112,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
 
-        cancel_button = QtWidgets.QPushButton(six.text_type(reject))
+        cancel_button = QtWidgets.QPushButton(str(reject))
         cancel_button.setObjectName( 'cancel' )
-        ok_button = QtWidgets.QPushButton(six.text_type(accept))
+        ok_button = QtWidgets.QPushButton(str(accept))
         ok_button.setObjectName( 'ok' )
         layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
@@ -377,9 +377,9 @@ class ChangeObjects( ActionStep ):
                                      self.columns,
                                      self.action_routes,
                                      self.invalid_rows)
-        dialog.setWindowTitle( six.text_type( self.window_title ) )
-        dialog.set_banner_title( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
+        dialog.setWindowTitle( str( self.window_title ) )
+        dialog.set_banner_title( str( self.title ) )
+        dialog.set_banner_subtitle( str( self.subtitle ) )
         dialog.set_banner_logo_pixmap( from_admin_icon(self.icon).getQPixmap() )
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
@@ -421,7 +421,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget( editor )
         self.main_widget().setLayout( layout )
-        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes)]
+        choices = [(field, str(attributes['name'])) for field, attributes in field_attributes.items()]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
         editor.set_value(self.field)
@@ -510,7 +510,7 @@ class ChangeField( ActionStep ):
         if field_attributes is None:
             field_attributes = dict(admin.get_all_fields_and_attributes())
             not_editable_fields = []
-            for key, attributes in six.iteritems(field_attributes):
+            for key, attributes in field_attributes.items():
                 if not attributes.get('editable', False):
                     not_editable_fields.append(key)
                 elif attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
@@ -528,9 +528,9 @@ class ChangeField( ActionStep ):
         dialog = ChangeFieldDialog(
             self.admin, self.field_attributes, self.field_name, self.field_value
         )
-        dialog.setWindowTitle( six.text_type( self.window_title ) )
-        dialog.set_banner_title( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
+        dialog.setWindowTitle( str( self.window_title ) )
+        dialog.set_banner_title( str( self.title ) )
+        dialog.set_banner_subtitle( str( self.subtitle ) )
         return dialog
 
     def gui_run( self, gui_context ):

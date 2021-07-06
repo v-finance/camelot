@@ -69,7 +69,7 @@ class ColumnGroupsWidget(QtWidgets.QTabBar):
         tab_index = 0
         for column in table.columns:
             if isinstance(column, ColumnGroup):
-                self.addTab(six.text_type(column.verbose_name))
+                self.addTab(str(column.verbose_name))
                 previous_column_index = column_index
                 column_index = column_index + len(column.get_fields())
                 self.groups[tab_index] = (previous_column_index,
@@ -93,7 +93,7 @@ class ColumnGroupsWidget(QtWidgets.QTabBar):
     def _current_index_changed(self, current_index):
         assert object_thread(self)
         for tab_index, (first_column,
-                        last_column) in six.iteritems(self.groups):
+                        last_column) in self.groups.items():
             for column_index in range(first_column, last_column):
                 self.table_widget.setColumnHidden(column_index,
                                                   tab_index != current_index)
@@ -164,7 +164,7 @@ class TableWidget(QtWidgets.QTableView):
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
         assert object_thread(self)
-        for logical_index, new_width in six.iteritems(self._columns_changed):
+        for logical_index, new_width in self._columns_changed.items():
             if self.horizontalHeader().isSectionHidden(logical_index):
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0

@@ -58,7 +58,7 @@ class PreviousAttribute( object ):
     
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
-        self.previous_value = six.text_type( previous_value )
+        self.previous_value = str( previous_value )
         
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']
@@ -90,7 +90,7 @@ class Memento( Entity ):
     def previous( self ):
         previous = self.previous_attributes
         if previous:
-            return [PreviousAttribute(k,v) for k,v in six.iteritems(previous)]
+            return [PreviousAttribute(k,v) for k,v in previous.items()]
         return []
 
     def __str__(self):

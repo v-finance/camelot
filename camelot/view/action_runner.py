@@ -259,7 +259,7 @@ class ActionRunner( QtCore.QEventLoop ):
             self.exit()
         else:
             LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( six.text_type( yielded ) )
+            LOGGER.error( str( yielded ) )
             raise Exception( 'this should not happen' )
 
 

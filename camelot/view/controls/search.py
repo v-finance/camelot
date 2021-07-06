@@ -79,5 +79,5 @@ class SimpleSearchControl(DecoratedLineEdit, AbstractActionWidget):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer is not None:
             timer.stop()
-        text = six.text_type(self.text())
+        text = str(self.text())
         self.run_action(text)

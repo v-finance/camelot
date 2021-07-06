@@ -78,7 +78,7 @@ class Change( object ):
         self.by = row.by
         self.changes = None
         if row.previous_attributes:
-            self.changes = u', '.join( ugettext('%s was %s')%(k,six.text_type(v)) for k,v in six.iteritems(row.previous_attributes) )
+            self.changes = u', '.join( ugettext('%s was %s')%(k,str(v)) for k,v in row.previous_attributes.items() )
         self.memento_type = row.memento_type
         
 class SqlMemento( object ):

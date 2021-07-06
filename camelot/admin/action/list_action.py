@@ -31,6 +31,7 @@ import codecs
 import copy
 import datetime
 import logging
+import itertools
 
 import six
 
@@ -251,7 +252,7 @@ class RowNumberAction( Action ):
 
     def get_state( self, model_context ):
         state = super(RowNumberAction, self).get_state(model_context)
-        state.verbose_name = six.text_type(model_context.current_row + 1)
+        state.verbose_name = str(model_context.current_row + 1)
         return state
 
 class EditAction( ListContextAction ):
@@ -316,7 +317,7 @@ class OpenFormView( ListContextAction ):
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
-        state.verbose_name = six.text_type()
+        state.verbose_name = str()
         return state
 
 
@@ -585,7 +586,7 @@ class RestoreExportMapping( SaveExportMapping ):
         from camelot.view import action_steps
 
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
         if mapping_name is not None:
             fields = mappings[mapping_name]
@@ -613,7 +614,7 @@ class RemoveExportMapping( SaveExportMapping ):
         from camelot.view import action_steps
     
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
         if mapping_name is not None:
             mappings.pop(mapping_name)
@@ -670,17 +671,17 @@ class ExportSpreadsheet( ListContextAction ):
         settings = get_settings(admin.get_name())
         settings.beginGroup('export_spreadsheet')
         all_fields = admin.get_all_fields_and_attributes()
-        field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
-                         six.iteritems(all_fields) ]
+        field_choices = [(f,str(entity_fa['name'])) for f,entity_fa in
+                         all_fields.items() ]
         field_choices.sort(key=lambda field_tuple:field_tuple[1])
         list_columns = admin.get_columns()
         # the admin might show more columns then fields available, if the
         # columns are generated dynamically
         max_mapping_length = max(len(list_columns), len(all_fields))
         row_data = [None] * max_mapping_length
-        column_range = six.moves.range(max_mapping_length)
+        column_range = range(max_mapping_length)
         mappings = []
-        for i, default_field in six.moves.zip_longest(column_range,
+        for i, default_field in itertools.zip_longest(column_range,
                                                       admin.get_columns(),
                                                       fillvalue=(None,None)):
             mappings.append(ColumnMapping(i, [row_data], default_field[0]))
@@ -764,7 +765,7 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(six.moves.zip(field_names, 
+            fields = enumerate(zip(field_names, 
                                              static_attributes,
                                              dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:
@@ -819,7 +820,7 @@ class PrintPreview( ListContextAction ):
         table = []
         fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
-        column_range = six.moves.range( len( columns ) )
+        column_range = range( len( columns ) )
         for obj in model_context.get_collection():
             table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
@@ -888,10 +889,10 @@ class ImportFromFile( EditAction ):
             # be better to explicitly allow foreign keys, but this info is not
             # in the field attributes
             #
-            all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
-                         six.iteritems(admin.get_all_fields_and_attributes()) if entity_fa.get('from_string')]
+            all_fields = [(f,str(entity_fa['name'])) for f,entity_fa in 
+                          admin.get_all_fields_and_attributes().items() if entity_fa.get('from_string')]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
-            for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
+            for i, default_field in itertools.zip_longest(range(len(all_fields)),
                                                           default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))
             

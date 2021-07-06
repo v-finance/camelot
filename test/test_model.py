@@ -146,7 +146,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
             
     def test_batch_job( self ):
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( six.text_type( batch_job_type ) )
+        self.assertTrue( str( batch_job_type ) )
         batch_job = BatchJob.create( batch_job_type )
         self.assertTrue( orm.object_session( batch_job ) )
         self.assertFalse( batch_job.is_canceled() )
@@ -173,7 +173,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         orm.object_session( mechanism ).expunge_all()
         mechanism = authentication.get_current_authentication()
         self.assertTrue( mechanism.username )
-        self.assertTrue( six.text_type( mechanism ) )
+        self.assertTrue( str( mechanism ) )
         
     def test_authentication_group( self ):
         # begin roles definition
@@ -215,7 +215,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )
-        self.assertTrue( six.text_type( belgium ) )
+        self.assertTrue( str( belgium ) )
         city = party.City.get_or_create( country = belgium,
                                          code = '1000',
                                          name = 'Brussels' )
@@ -227,7 +227,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
                                                street2 = None,
                                                zip_code = None,
                                                city = city )
-        self.assertTrue( six.text_type( address ) )
+        self.assertTrue( str( address ) )
         return address
 
     def test_party_address( self ):
@@ -259,7 +259,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual( org.street1, 'Avenue Louise 5' )
         self.assertEqual( org.street2, 'Boite 4' )
         self.assertEqual( org.city, city )        
-        self.assertTrue( six.text_type( party_address ) )
+        self.assertTrue( str( party_address ) )
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
         self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
@@ -331,7 +331,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         
     def test_contact_mechanism( self ):
         contact_mechanism = party.ContactMechanism( mechanism = (u'email', u'info@test.be') )
-        self.assertTrue( six.text_type( contact_mechanism ) )
+        self.assertTrue( str( contact_mechanism ) )
         
     def test_person_contact_mechanism( self ):
         # create a new person
@@ -388,7 +388,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         org.phone = ('phone', '1234')
         org.fax = ('fax', '4567')
         self.organization_admin.flush( org )
-        self.assertTrue( six.text_type( org ) )
+        self.assertTrue( str( org ) )
         query = orm.object_session( org ).query( party.Organization )
         self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
         self.assertTrue( query.filter( party.Organization.phone == ('phone', '1234') ).first() )
@@ -406,7 +406,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.person_admin.flush( person )
         self.assertFalse( party_contact_mechanism in self.session.new )
         self.assertFalse( party_contact_mechanism.contact_mechanism in self.session.new )        
-        self.assertTrue( six.text_type( party_contact_mechanism ) )
+        self.assertTrue( str( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
         # party contact mechanism is only valid when contact mechanism is
@@ -430,7 +430,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         category.parties.append( org )
         self.session.flush()
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
-        self.assertTrue( six.text_type( category ) )
+        self.assertTrue( str( category ) )
 
 class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model for fixtures"""
@@ -537,7 +537,7 @@ class StatusCase( TestMetaData ):
         ready = Invoice._status_type( code = 'READY' )
         session.flush()
         #end status types definition
-        self.assertTrue( six.text_type( ready ) )
+        self.assertTrue( str( ready ) )
         #begin status type use
         invoice = Invoice( book_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, None )
@@ -547,7 +547,7 @@ class StatusCase( TestMetaData ):
         self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
         self.assertTrue( len( invoice.status ) )
         for history in invoice.status:
-            self.assertTrue( six.text_type( history ) )
+            self.assertTrue( str( history ) )
         
     def test_status_enumeration( self ):
         Entity, session = self.Entity, self.session

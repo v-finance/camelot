@@ -152,7 +152,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.IntegerDelegate,
         'from_string': int_from_string,
-        'to_string': six.text_type,
+        'to_string': str,
         'widget': 'int',
         'operators': _numerical_operators,
         'search_strategy': list_filter.IntSearch,
@@ -257,7 +257,7 @@ doc = """Field types handled through introspection :
 """ + row_separator + """
 """
 
-field_types = sorted( six.iterkeys(_sqlalchemy_to_python_type_),
+field_types = sorted( _sqlalchemy_to_python_type_.keys(),
                       key = lambda ft:ft.__name__ )
 
 for field_type in field_types:

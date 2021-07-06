@@ -123,7 +123,7 @@ options_defaults = dict(
     table_options={},
 )
 
-valid_options = list( six.iterkeys(options_defaults) ) + [
+valid_options = list( options_defaults.keys() ) + [
     'metadata',
     'session',
 ]

@@ -298,12 +298,12 @@ be specified using the verbose_name attribute.
 
     def get_verbose_name(self):
         """ The name of the associated entity. """
-        return six.text_type(
+        return str(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
-        return six.text_type(
+        return str(
             self.verbose_name_plural
             or (self.get_verbose_name() + u's')
         )
@@ -323,7 +323,7 @@ be specified using the verbose_name attribute.
         """
         Textual representation of the current object.
         """
-        return six.text_type(obj)
+        return str(obj)
 
     def get_proxy(self, objects):
         """
@@ -337,7 +337,7 @@ be specified using the verbose_name attribute.
         The keys are Qt roles."""
         search_identifiers = {} 
 
-        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
         search_identifiers[Qt.EditRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
@@ -503,7 +503,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in six.iteritems(field_attributes):
+            for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
@@ -534,7 +534,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             dynamic_field_attributes = {'obj':obj}
-            for name, value in six.iteritems(field_attributes):
+            for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if name in ('default',):
@@ -727,7 +727,7 @@ be specified using the verbose_name attribute.
                 length = 10
             column_width = max( 
                 minimal_column_width or 0,
-                2 + len(six.text_type(field_attributes['name'])),
+                2 + len(str(field_attributes['name'])),
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
@@ -765,7 +765,7 @@ be specified using the verbose_name attribute.
             self.list_display = list()
             # no fields were defined, see if there are properties
             for cls in inspect.getmro(self.entity):
-                for desc_name, desc in six.iteritems(cls.__dict__):
+                for desc_name, desc in cls.__dict__.items():
                     if desc_name.startswith('__'):
                         continue
                     if len(self.get_descriptor_field_attributes(desc_name)):
@@ -823,7 +823,7 @@ be specified using the verbose_name attribute.
         fields = {}
         # capture all properties
         for cls in inspect.getmro(self.entity):
-            for desc_name, desc in six.iteritems(cls.__dict__):
+            for desc_name, desc in cls.__dict__.items():
                 if desc_name.startswith('__'):
                     continue
                 if len(self.get_descriptor_field_attributes(desc_name)):
@@ -915,7 +915,7 @@ be specified using the verbose_name attribute.
                 logger.debug(
                     u'set default for %s to %s'%(
                         field,
-                        six.text_type(default_value)
+                        str(default_value)
                     )
                 )
                 try:

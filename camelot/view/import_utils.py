@@ -152,7 +152,7 @@ class MatchNames(Action):
     def model_run(self, model_context):
         field_choices = model_context.admin.field_choices
         # create a dict that  will be used to search field names
-        matches = dict( (six.text_type(verbose_name).lower(), fn)
+        matches = dict( (str(verbose_name).lower(), fn)
                          for fn, verbose_name in field_choices if fn )
         matches.update( dict( (fn.lower().replace('_',''), fn)
                               for fn, _verbose_name in field_choices if fn) )
@@ -218,7 +218,7 @@ class UTF8Recoder( six.Iterator ):
         return self
 
     def __next__(self):
-        return six.next(self.reader).encode('utf-8')
+        return next(self.reader).encode('utf-8')
 
 # see http://docs.python.org/library/csv.html
 class UnicodeReader( six.Iterator ):
@@ -235,15 +235,15 @@ class UnicodeReader( six.Iterator ):
     def __next__( self ):
         self.line += 1
         try:
-            row = six.next(self.reader)
+            row = next(self.reader)
             if six.PY3==False:
-                return [six.text_type(s, 'utf-8') for s in row]
+                return [str(s, 'utf-8') for s in row]
             else:
                 return row
         except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
-                                 detail = ugettext('Exception occured at line %s : ') % self.line + six.text_type( exception ) )
+                                 detail = ugettext('Exception occured at line %s : ') % self.line + str( exception ) )
 
     def __iter__( self ):
         return self
@@ -288,9 +288,9 @@ class XlsReader( six.Iterator ):
                     value = u'true'
                 elif value is False:
                     value = u'false'
-                elif isinstance(value, six.integer_types):
+                elif isinstance(value, int):
                     # QLocale.toString doesn't seems to work with long ints
-                    value = six.text_type(value)
+                    value = str(value)
                 elif isinstance(value, float):
                     format_string = cell.number_format
                     ## try to display the number with the same precision as
@@ -302,15 +302,15 @@ class XlsReader( six.Iterator ):
                     ## see if it specifies scientific notation.  scientific
                     ## notation is not used because it loses precision when 
                     ## converting to a string
-                    value = six.text_type(self.locale.toString(
+                    value = str(self.locale.toString(
                         value, format = 'f', precision = precision
                     ))
                 elif isinstance(value, datetime.datetime):
                     dt = QtCore.QDate(value.year, value.month, value.day)
-                    value = six.text_type(dt.toString(self.date_format))
-                elif isinstance(value, six.binary_type):
+                    value = str(dt.toString(self.date_format))
+                elif isinstance(value, bytes):
                     value = value.decode('utf-8')
-                elif isinstance(value, six.text_type):
+                elif isinstance(value, str):
                     pass
                 else:
                     logger.error('unknown type {0} when importing excel'.format(type(value)))
@@ -357,7 +357,7 @@ class RowDataAdmin(ObjectAdmin):
         return self.admin.get_verbose_name_plural()
 
     def get_verbose_identifier(self, obj):
-        return six.text_type()
+        return str()
 
     def get_fields(self):
         return self.get_columns()

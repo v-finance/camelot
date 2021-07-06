@@ -128,7 +128,7 @@ and used as a custom action.
         try:
             self.mapper = orm.class_mapper(self.entity)
         except UnmappedClassError as exception:
-            mapped_entities = [six.text_type(m) for m in six.iterkeys(_mapper_registry)]
+            mapped_entities = [str(m) for m in _mapper_registry.keys()]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
@@ -210,14 +210,14 @@ and used as a custom action.
         if obj is not None:
             primary_key = self.mapper.primary_key_from_instance(obj)
             if not None in primary_key:
-                primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
+                primary_key_representation = u','.join([str(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
                     return u'%s %s : %s' % (
-                        six.text_type(self.get_verbose_name() or ''),
+                        str(self.get_verbose_name() or ''),
                         primary_key_representation,
-                        six.text_type(obj)
+                        str(obj)
                     )
-                elif six.PY3 and hasattr(obj, '__str__'):
+                elif hasattr(obj, '__str__'):
                     return u'%s %s : %s' % (
                         self.get_verbose_name() or '',
                         primary_key_representation,
@@ -233,7 +233,7 @@ and used as a custom action.
     def get_search_identifiers(self, obj):
         search_identifiers = {}
 
-        search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
+        search_identifiers[Qt.DisplayRole] = u'%s' % (str(obj))
         search_identifiers[Qt.EditRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
@@ -318,7 +318,7 @@ and used as a custom action.
                             columns = [class_attribute]
                         elif isinstance(class_attribute, sql.Select):
                             columns = class_attribute.columns
-                        for k, v in six.iteritems(self.get_sql_field_attributes(columns)):
+                        for k, v in self.get_sql_field_attributes(columns).items():
                             # the defaults or the nullable status of the column
                             # does not need to be the default or the nullable
                             # of the hybrid property
@@ -400,8 +400,8 @@ and used as a custom action.
         #
         from sqlalchemy.orm.mapper import _mapper_registry
         target = field_attributes.get('target', None)
-        if isinstance(target, six.string_types):
-            for mapped_class in six.iterkeys(_mapper_registry):
+        if isinstance(target, strs):
+            for mapped_class in _mapper_registry.keys():
                 if mapped_class.class_.__name__ == target:
                     field_attributes['target'] = mapped_class.class_
                     break
@@ -530,7 +530,7 @@ and used as a custom action.
                     memento = self.get_memento()
                     if memento != None:
                         modifications = entity_to_dict( entity_instance )
-                        change = memento_change( model = six.text_type( self.entity.__name__ ),
+                        change = memento_change( model = str( self.entity.__name__ ),
                                                  memento_type = 'before_delete',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
@@ -586,7 +586,7 @@ and used as a custom action.
                         logger.error( 'could not get modifications from object', exc_info = e )
                     primary_key = self.primary_key( obj_to_flush )
                     if modifications and (None not in primary_key):
-                        change = memento_change( model = six.text_type(type(obj_to_flush).__name__),
+                        change = memento_change( model = str(type(obj_to_flush).__name__),
                                                  memento_type = 'before_update',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )

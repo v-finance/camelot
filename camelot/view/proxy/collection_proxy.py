@@ -217,7 +217,7 @@ class UpdateMixin(object):
             header_item.setData(py_to_variant(message), ValidMessageRole)
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
-                header_item.setData(py_to_variant(six.text_type(action_state.verbose_name)), Qt.DisplayRole)
+                header_item.setData(py_to_variant(str(action_state.verbose_name)), Qt.DisplayRole)
                 header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
@@ -399,7 +399,7 @@ class RowData(Update):
                         break
                 limit = i - offset + 1
         except IndexError as e:
-            logger.error('index error with rows_to_get %s'%six.text_type(rows_to_get), exc_info=e)
+            logger.error('index error with rows_to_get %s'%str(rows_to_get), exc_info=e)
             raise e
         return (offset, limit)
 
@@ -438,7 +438,7 @@ class SetData(Update):
         for row, obj, column, value in self.updates:
             grouped_requests[(row, obj)].append((column, value))
         admin = model_context.admin
-        for (row, obj), request_group in six.iteritems(grouped_requests):
+        for (row, obj), request_group in grouped_requests.items():
             object_slice = list(model_context.proxy[row:row+1])
             if not len(object_slice):
                 logger.error('Cannot set data : no object in row {0}'.format(row))
@@ -497,7 +497,7 @@ class SetData(Update):
                     #
                     admin.set_defaults(obj)
                 except AttributeError as e:
-                    logger.error( u"Can't set attribute %s to %s" % ( field_name, six.text_type( new_value ) ), exc_info = e )
+                    logger.error( u"Can't set attribute %s to %s" % ( field_name, str( new_value ) ), exc_info = e )
                 except TypeError:
                     # type error can be raised in case we try to set to a collection
                     pass
@@ -664,7 +664,7 @@ class SetColumns(object):
         #
         item_model.setColumnCount(len(self.static_field_attributes))
         for i, fa in enumerate(self.static_field_attributes):
-            verbose_name = six.text_type(fa['name'])
+            verbose_name = str(fa['name'])
             field_name = fa['field_name']
             header_item = QtGui.QStandardItem()
             set_header_data = header_item.setData
@@ -896,7 +896,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         - the timer for handling the requests is started
         - the request is associated with the current model context
         """
-        request_id = six.next(self.__crud_request_counter)
+        request_id = next(self.__crud_request_counter)
         self.logger.debug('append request {0} {1}'.format(request_id, request))
         self.__crud_requests.append((self._model_context, request_id, request))
         self._start_timer()
@@ -909,7 +909,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
-        assert isinstance(rows, six.integer_types)
+        assert isinstance(rows, int)
         self._reset(row_count=rows)
         self.layoutChanged.emit()
 
@@ -977,7 +977,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         #self._filters = dict()
         self._reset()
         # filters might be applied before the value is set
-        for list_filter, value in six.iteritems(self._filters):
+        for list_filter, value in self._filters.items():
             self._append_request(Filter(list_filter, None, value))
         # the columns might be set before the value, but they might be running
         # in the model thread for a different model context as well, so

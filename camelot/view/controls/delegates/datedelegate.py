@@ -52,10 +52,10 @@ class DateDelegate(CustomDelegate):
     def get_standard_item(cls, locale, model_context):
         item = super(DateDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
-            value_str = six.text_type(locale.toString(model_context.value, QtCore.QLocale.ShortFormat))
+            value_str = str(locale.toString(model_context.value, QtCore.QLocale.ShortFormat))
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.setData(py_to_variant(str()), PreviewRole)
         return item
 
 

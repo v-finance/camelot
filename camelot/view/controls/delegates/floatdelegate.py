@@ -58,7 +58,7 @@ class FloatDelegate(CustomDelegate):
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
         precision = model_context.field_attributes.get('precision', 2)
         if model_context.value is not None:
-            value_str = six.text_type(
+            value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
             )
             if model_context.field_attributes.get('suffix') is not None:
@@ -67,7 +67,7 @@ class FloatDelegate(CustomDelegate):
                 value_str = model_context.field_attributes.get('prefix') + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.setData(py_to_variant(str()), PreviewRole)
         return item
 
 

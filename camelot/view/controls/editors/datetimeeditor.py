@@ -49,7 +49,7 @@ class TimeValidator(QtGui.QValidator):
             return accept, pos
 
     def _validate(self, input, pos):
-        input = six.text_type(input).strip()
+        input = str(input).strip()
         # allow None
         if len(input)==0:
             return (QtGui.QValidator.Acceptable, input, pos)
@@ -119,7 +119,7 @@ class DateTimeEditor(CustomEditor):
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 
-    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(str)
     @QtCore.qt_slot(int)
     @QtCore.qt_slot()
     def editing_finished(self, _arg=None):
@@ -168,7 +168,7 @@ class DateTimeEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             self.set_enabled(kwargs.get('editable', False))
-            line_edit.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            line_edit.setToolTip(str(kwargs.get('tooltip') or ''))
 
     def set_background_color(self, background_color):
         self.dateedit.set_background_color( background_color )
