@@ -181,6 +181,10 @@ and used as a custom action.
             break
         return sql_attributes
 
+    def get_mapper(self):
+        """Returns this entity admin's mapper."""
+        return self.mapper
+
     def get_query(self, session=None):
         """
         Overwrite this method to configure eager loading strategies
@@ -332,9 +336,8 @@ and used as a custom action.
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
         try:
-            property = self.mapper.get_property(
-                field_name
-            )
+            mapper = self.get_mapper()
+            property = mapper.get_property(field_name) if mapper else None
             if isinstance(property, orm.properties.ColumnProperty):
                 columns = property.columns
                 sql_attributes = self.get_sql_field_attributes( columns )
