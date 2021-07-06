@@ -212,7 +212,7 @@ and used as a custom action.
 
     def get_verbose_identifier(self, obj):
         if obj is not None:
-            primary_key = self.mapper.primary_key_from_instance(obj)
+            primary_key = self.primary_key(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
