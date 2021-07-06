@@ -465,7 +465,7 @@ and used as a custom action.
             if the object has no primary key yet or any more.
         """
         if not self.is_persistent( obj ):
-            return None
+            return []
         # this function is called on compound objects as well, so the
         # mapper might be different from the mapper related to this admin
         mapper = orm.object_mapper(obj)
