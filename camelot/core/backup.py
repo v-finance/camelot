@@ -28,7 +28,7 @@
 #  ============================================================================
 import logging
 
-import six
+
 from camelot.types import PrimaryKey
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 

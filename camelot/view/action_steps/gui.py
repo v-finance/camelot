@@ -33,7 +33,7 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 
 from ...core.qt import QtCore, QtWidgets, is_deleted
 
-import six
+
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest

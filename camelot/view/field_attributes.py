@@ -31,7 +31,7 @@
 
 import itertools
 
-import six
+
 
 import sqlalchemy.types
 

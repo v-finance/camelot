@@ -42,7 +42,7 @@ from camelot.admin.icon import Icon
 from camelot.view.utils import default_language
 import camelot.types
 
-import six
+
 
 from sqlalchemy import sql
 from sqlalchemy.schema import Column

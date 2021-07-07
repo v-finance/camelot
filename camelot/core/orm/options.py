@@ -89,7 +89,7 @@ For examples, please refer to the examples and unit tests.
 
 from sqlalchemy import types
 
-import six
+
 
 from . statements import ClassMutator
 

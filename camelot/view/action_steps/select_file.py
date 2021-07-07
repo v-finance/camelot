@@ -31,7 +31,7 @@ import os
 
 from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant, qt_api
 
-import six
+
 
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog

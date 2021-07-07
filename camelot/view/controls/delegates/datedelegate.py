@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore, py_to_variant
@@ -36,8 +36,7 @@ from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
 
-@six.add_metaclass(DocumentationMetaclass)
-class DateDelegate(CustomDelegate):
+class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor

@@ -39,7 +39,7 @@ import logging
 
 logger = logging.getLogger('camelot.types')
 
-import six
+
 
 from sqlalchemy import types
 

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ...core.qt import QtWidgets, Qt
 from camelot.view.model_thread import object_thread

@@ -29,7 +29,7 @@
 
 """Convenience functions and classes to present views to the user"""
 
-import six
+
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')

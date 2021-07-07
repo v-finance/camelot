@@ -38,7 +38,7 @@ from ...core.utils import ugettext_lazy
 from ...admin.icon import Icon
 from ...view.art import from_admin_icon
 
-import six
+
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 

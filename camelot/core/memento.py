@@ -41,7 +41,7 @@ import logging
 
 from sqlalchemy import sql, orm, exc
 
-import six
+
 
 
 from camelot.core.utils import ugettext

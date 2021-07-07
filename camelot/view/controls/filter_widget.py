@@ -31,7 +31,7 @@
 Widgets that represent Filter Actions
 """
 
-import six
+
 
 from ...admin.action.list_filter import All
 from ...core.utils import ugettext

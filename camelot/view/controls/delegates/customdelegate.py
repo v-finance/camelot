@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 import json
 import logging
 import dataclasses

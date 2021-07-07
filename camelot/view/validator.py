@@ -31,7 +31,7 @@
 editors or other widgets.
 """
 
-import six
+
 
 from camelot.core.qt import QtGui, variant_api
 

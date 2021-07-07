@@ -31,7 +31,7 @@ import contextlib
 import functools
 import logging
 
-import six
+
 
 from ..core.serializable import DataclassSerializable
 from ..core.qt import QtCore, is_deleted
@@ -150,7 +150,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     result = self._generator.throw( CancelRequest() )
                 else:
                     LOGGER.debug( 'move iterator forward' )
-                    result = six.advance_iterator( self._generator )
+                    result = next(self._generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
@@ -196,7 +196,7 @@ class ActionRunner( QtCore.QEventLoop ):
             post( self._iterate_until_blocking, 
                   self.__next__, 
                   self.exception,
-                  args = ( functools.partial( six.advance_iterator,
+                  args = ( functools.partial( next,
                                               self._generator ), ) )
         else:
             self.exit()

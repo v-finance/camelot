@@ -38,7 +38,7 @@ the custom `ApplicationAdmin`.
 
 import datetime
 
-import six
+
 
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType

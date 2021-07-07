@@ -30,7 +30,7 @@
 """ Tableview """
 
 import logging
-import six
+
 
 from sqlalchemy.ext.hybrid import hybrid_property
 

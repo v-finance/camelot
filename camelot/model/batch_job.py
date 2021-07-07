@@ -35,8 +35,8 @@ user to review or plan them.
 
 import logging
 import sys
+import io
 
-import six
 
 import sqlalchemy.types
 from sqlalchemy import orm, sql, schema
@@ -168,7 +168,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         :param exc_tb: a traceback object, such as in `sys.exc_traceback`
         """
         import traceback
-        sio = six.StringIO()
+        sio = io.StringIO()
         traceback.print_exception( exc_type or sys.exc_info()[0], 
                                    exc_val or sys.exc_info()[1],
                                    exc_tb or sys.exc_info()[2],

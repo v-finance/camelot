@@ -30,7 +30,7 @@
 from camelot.core.orm import Entity, Session
 from camelot.types import PrimaryKey
 
-import six
+
 
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, Integer
@@ -190,7 +190,7 @@ class Fixture( Entity ):
         
         :param entity: the class of the stored data
         """
-        keys_and_classes = six.itervalues(cls.find_fixture_keys_and_classes(entity))
+        keys_and_classes = cls.find_fixture_keys_and_classes(entity).items()
         for fixture_key, fixture_class in keys_and_classes:
             cls.remove_fixture( entity, fixture_key, fixture_class )
             

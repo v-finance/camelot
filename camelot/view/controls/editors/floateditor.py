@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
@@ -110,17 +110,12 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         an empty string as a special value for `None`.
         """
         result = super(CustomDoubleSpinBox, self).validate(qinput, pos)
-        if six.PY3:
-            valid, qinput, new_pos = result
-        else:
-            valid, new_pos = result
+        valid, qinput, new_pos = result
         if valid!=QtGui.QValidator.Acceptable:
             # this code is based on QSpinBoxPrivate::validateAndInterpret
             if len(self.stripped(qinput))==0:
                 valid = QtGui.QValidator.Acceptable
-        if six.PY3:
-            return valid, qinput, new_pos
-        return valid, new_pos
+        return valid, qinput, new_pos
     
     def valueFromText(self, text):
         # this code is based on QSpinBoxPrivate::validateAndInterpret

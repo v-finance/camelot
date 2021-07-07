@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets
 from .wideeditor import WideEditor

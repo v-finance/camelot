@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import six
+
 
 from .customeditor import AbstractCustomEditor
 from ....core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets
 from .customeditor import AbstractCustomEditor

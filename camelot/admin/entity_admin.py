@@ -30,7 +30,7 @@
 import inspect
 import itertools
 import logging
-import six
+
 
 logger = logging.getLogger('camelot.admin.entity_admin')
 
@@ -400,7 +400,7 @@ and used as a custom action.
         #
         from sqlalchemy.orm.mapper import _mapper_registry
         target = field_attributes.get('target', None)
-        if isinstance(target, strs):
+        if isinstance(target, str):
             for mapped_class in _mapper_registry.keys():
                 if mapped_class.class_.__name__ == target:
                     field_attributes['target'] = mapped_class.class_

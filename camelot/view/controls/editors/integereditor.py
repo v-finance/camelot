@@ -29,7 +29,7 @@
 
 from math import floor
 
-import six
+
 
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.art import FontIcon

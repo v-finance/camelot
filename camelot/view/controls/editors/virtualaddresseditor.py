@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette

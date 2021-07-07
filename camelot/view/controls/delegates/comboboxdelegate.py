@@ -32,14 +32,13 @@ logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-import six
+
 
 from ....core.item_model import PreviewRole, FieldAttributesRole
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class ComboBoxDelegate(CustomDelegate):
+class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     
     editor = editors.ChoicesEditor
 

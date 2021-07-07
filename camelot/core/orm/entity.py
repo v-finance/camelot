@@ -36,7 +36,7 @@ These classes can be reused if a custom base class is needed.
 
 import bisect
 import logging
-import six
+
 
 from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
@@ -220,7 +220,7 @@ class EntityDescriptor(object):
             return None    
 
     def translate_order_by( self, order_by ):
-        if isinstance( order_by, strs ):
+        if isinstance( order_by, str ):
             order_by = [order_by]
 
         order = []

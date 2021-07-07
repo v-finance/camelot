@@ -1,10 +1,10 @@
 import unittest
 import datetime
 
-import six
 
-if six.PY3:
-    long = int 
+
+
+long = int
 
 from camelot.core.qt import QtCore
 
@@ -49,6 +49,6 @@ class ViewUtilsCase(unittest.TestCase):
         self.assertEqual( int_from_string( '0' ), 0 )
         self.assertEqual( int_from_string( '' ), None )
         self.assertEqual( int_from_string( ' ' ), None )
-        txt = str(self.locale.toString( long( 123456789 ) ))
+        txt = str(self.locale.toString( long( 123456789 ) )) #TODO long?
         num = int_from_string( txt )
         self.assertEqual( num, 123456789 )

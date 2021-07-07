@@ -28,9 +28,8 @@
 #  ============================================================================
 """Helper functions for the view subpackage"""
 
-from six.moves import html_parser
+import html.parser as html_parser
 
-import six
 
 from datetime import datetime, time, date
 import decimal
@@ -253,7 +252,7 @@ def text_from_richtext( unstripped_text ):
     if not unstripped_text:
         return strings
 
-    class HtmlToTextParser(html_parser.HTMLParser):
+    class HtmlToTextParser(parser.HTMLParser):
         
         def handle_endtag(self, tag):
             if tag == 'br':
@@ -266,6 +265,7 @@ def text_from_richtext( unstripped_text ):
                 strings.append(escape(data))
 
     parser = HtmlToTextParser()
+    #TODO parser error only thrown when using strict mode https://stackoverflow.com/a/59968964
     try:
         parser.feed(unstripped_text.strip())
     except html_parser.HTMLParseError:

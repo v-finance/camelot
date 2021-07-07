@@ -6,7 +6,7 @@ import unittest
 
 import openpyxl
 
-import six
+
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.action import Action, ActionStep, State, Mode
@@ -205,10 +205,10 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.grab_widget(dialog)
 
     def test_open_file( self ):
-        stream = six.BytesIO(b'1, 2, 3, 4')
+        stream = io.BytesIO(b'1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
         self.assertTrue( str( open_stream ) )
-        action_steps.OpenString( six.b('1, 2, 3, 4') )
+        action_steps.OpenString(b'1, 2, 3, 4')
         context = { 'columns':['width', 'height'],
                     'table':[[1,2],[3,4]] }
         action_steps.OpenJinjaTemplate( 'list.html', context )

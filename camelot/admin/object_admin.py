@@ -46,7 +46,7 @@ from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from .validator.object_validator import ObjectValidator
 
-import six
+
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -504,7 +504,7 @@ be specified using the verbose_name attribute.
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
             for name, value in field_attributes.items():
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
+                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
 
@@ -542,7 +542,7 @@ be specified using the verbose_name attribute.
                     # and the continuous evaluation of it might be expensive,
                     # as it might be the max of a column
                     continue
-                if six.callable(value):
+                if callable(value):
                     try:
                         return_value = value(obj)
                     except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
@@ -874,7 +874,7 @@ be specified using the verbose_name attribute.
         default_set = False
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
-        for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
+        for field, attributes in self.get_all_fields_and_attributes().items():
             default = attributes.get('default')
             if default is None:
                 continue
@@ -901,7 +901,7 @@ be specified using the verbose_name attribute.
                 # Skip if the column default is a sequence, as setting it will cause an SQLA exception.
                 # The column should remain unset and will be set by the compilation to the next_val of the sequence automatically. 
                 continue
-            elif six.callable(default):
+            elif callable(default):
                 import inspect
                 args, _varargs, _kwargs, _defs = \
                     inspect.getargspec(default)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import six
+
 
 import datetime
 import dataclasses

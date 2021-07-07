@@ -29,7 +29,7 @@
 
 import logging
 
-import six
+
 
 from ....core.qt import (
     QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted

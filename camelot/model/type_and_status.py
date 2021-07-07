@@ -54,7 +54,7 @@ statuses as needed.
 """
 import datetime
 
-import six
+
 
 from sqlalchemy import orm, sql, schema, types, inspection
 from sqlalchemy.ext import hybrid

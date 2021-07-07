@@ -34,7 +34,7 @@ import sys
 
 logger = logging.getLogger('camelot.admin.application_admin')
 
-import six
+
 
 from .action.base import Action
 from .action.application_action import OpenTableView

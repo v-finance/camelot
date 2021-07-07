@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
@@ -36,8 +36,7 @@ from camelot.view.controls import editors
 
 long_int = int
 
-@six.add_metaclass(DocumentationMetaclass)
-class IntegerDelegate(CustomDelegate):
+class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor

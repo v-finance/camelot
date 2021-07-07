@@ -27,15 +27,14 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import py_to_variant
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class FileDelegate(CustomDelegate):
+class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
 from camelot.admin.icon import Icon

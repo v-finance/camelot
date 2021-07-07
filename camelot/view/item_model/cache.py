@@ -31,7 +31,7 @@ import collections
 
 _fill = object()
 
-import six
+
 
 class ValueCache(object):
     """

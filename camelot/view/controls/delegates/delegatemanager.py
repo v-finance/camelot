@@ -30,7 +30,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
-import six
+
 
 from ....core.qt import QtWidgets, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate

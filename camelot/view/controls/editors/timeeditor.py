@@ -28,7 +28,7 @@
 #  ============================================================================
 import datetime
 
-import six
+
 
 from ....core.qt import QtWidgets
 from .customeditor import AbstractCustomEditor, set_background_color_palette

@@ -29,7 +29,7 @@
 
 import datetime
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, Qt, QtWidgets
 from .customeditor import CustomEditor, set_background_color_palette
@@ -43,10 +43,7 @@ class TimeValidator(QtGui.QValidator):
     
     def validate(self, input, pos):
         accept, input, pos = self._validate(input, pos)
-        if six.PY3:
-            return accept, input, pos
-        else:
-            return accept, pos
+        return accept, input, pos
 
     def _validate(self, input, pos):
         input = str(input).strip()

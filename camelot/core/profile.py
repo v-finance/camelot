@@ -42,7 +42,7 @@ import base64
 import functools
 import logging
 
-import six
+
 
 from .qt import QtCore, variant_to_py, py_to_variant
 
@@ -187,12 +187,8 @@ class ProfileStore(object):
         """:return: the :class:`Crypto.Cipher` object used for encryption and
         decryption in :meth:`_encode` and :meth:`_decode`.
         """
-        if six.PY2:
-            from Crypto.Cipher import ARC4
-            return ARC4.new( self.cipher_key )
-        else:
-            from .pyarc4 import Arc4
-            return Arc4(self.cipher_key.encode('ascii'))
+        from .pyarc4 import Arc4
+        return Arc4(self.cipher_key.encode('ascii'))
 
     def _encode( self, value ):
         """Encrypt and encode a single value, this method is used to 
@@ -271,7 +267,7 @@ class ProfileStore(object):
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
             qsettings.setValue('encrypted', py_to_variant(1))
-            for key, value in six.iteritems(profile.__getstate__()):
+            for key, value in profile.__getstate__().items():
                 if key != 'profilename':
                     value = self._encode(value)
                 else:

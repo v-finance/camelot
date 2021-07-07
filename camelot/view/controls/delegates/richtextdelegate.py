@@ -30,14 +30,13 @@
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 
-import six
+
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
 
-@six.add_metaclass(DocumentationMetaclass)
-class RichTextDelegate(CustomDelegate):
+class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for rich text (HTML) string values
   """
     

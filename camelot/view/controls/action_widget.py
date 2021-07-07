@@ -29,7 +29,7 @@
 
 from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
 
-import six
+
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State

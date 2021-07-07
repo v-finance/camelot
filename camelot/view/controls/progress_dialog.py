@@ -35,7 +35,7 @@ import logging
 from camelot.core.utils import ugettext, ugettext_lazy
 from camelot.view.art import FontIcon
 
-import six
+
 
 from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 

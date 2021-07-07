@@ -35,7 +35,6 @@ import logging
 import os.path
 import string
 
-import six
 
 from ..core.qt import QtCore, Qt
 from camelot.view.controls import delegates
@@ -207,7 +206,7 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
         return self.related_toolbar_actions
 
 # see http://docs.python.org/library/csv.html
-class UTF8Recoder( six.Iterator ):
+class UTF8Recoder(object):
     """Iterator that reads an encoded stream and reencodes the input to
     UTF-8."""
 
@@ -221,13 +220,12 @@ class UTF8Recoder( six.Iterator ):
         return next(self.reader).encode('utf-8')
 
 # see http://docs.python.org/library/csv.html
-class UnicodeReader( six.Iterator ):
+class UnicodeReader( object ):
     """A CSV reader which will iterate over lines in the CSV file "f", which is
     encoded in the given encoding."""
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        if six.PY3==False:
-            f = UTF8Recoder(f, encoding)
+        f = UTF8Recoder(f, encoding)
         self.encoding = encoding
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.line = 0
@@ -236,10 +234,7 @@ class UnicodeReader( six.Iterator ):
         self.line += 1
         try:
             row = next(self.reader)
-            if six.PY3==False:
-                return [str(s, 'utf-8') for s in row]
-            else:
-                return row
+            return row
         except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
@@ -248,7 +243,7 @@ class UnicodeReader( six.Iterator ):
     def __iter__( self ):
         return self
     
-class XlsReader( six.Iterator ):
+class XlsReader( object ):
     """Read an XLS/XLSX file and iterator over its lines.
     
     The iterator returns each line of the excel as a list of strings.

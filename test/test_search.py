@@ -5,7 +5,7 @@ import itertools
 import types
 import unittest
 
-import six
+
 
 from sqlalchemy import sql, orm
 import sqlalchemy.types

@@ -36,7 +36,7 @@ by Len Silverston, Chapter 2
 
 import copy
 import datetime
-import six
+
 import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid

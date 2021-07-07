@@ -35,10 +35,9 @@ import logging
 import sys
 import time
 
-logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
+from PyQt5 import sip
 
-import six
-import sip
+logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from ...core.qt import QtCore
 from ...core.threading import synchronized
@@ -94,11 +93,12 @@ class Task(QtCore.QObject):
             self.exception.emit( exc_info )
             self.clear_exception_info()
             
-    def clear_exception_info( self ):
+    def clear_exception_info( self ): #TODO empty function
         # the exception info contains a stack that might contain references to 
         # Qt objects which could be kept alive this way
-        if not six.PY3:
-            sys.exc_clear()
+        # if not six.PY3:
+        #     sys.exc_clear()
+        pass
 
 class TaskHandler(QtCore.QObject):
     """A task handler is an object that handles tasks that appear in a queue,
@@ -194,8 +194,8 @@ class SignalSlotModelThread( AbstractModelThread ):
         task = Task(request, name = name, args = args)
         # QObject::connect is a thread safe function
         if response:
-            assert getattr( response, six._meth_self ) != None
-            assert isinstance( getattr( response, six._meth_self ), 
+            assert getattr( response, "__self__") != None
+            assert isinstance( getattr( response, "__self__"),
                                QtCore.QObject )
             # verify if the response has been defined as a slot
             #assert hasattr(response, '__pyqtSignature__')

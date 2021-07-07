@@ -27,15 +27,14 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class TextEditDelegate(CustomDelegate):
+class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
   
     editor = editors.TextEditEditor

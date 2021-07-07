@@ -30,7 +30,7 @@
 import logging
 import pkgutil
 
-import six
+
 
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
 

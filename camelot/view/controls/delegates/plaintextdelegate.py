@@ -30,7 +30,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
@@ -42,8 +42,7 @@ from camelot.view.controls import editors
 
 DEFAULT_COLUMN_WIDTH = 20
 
-@six.add_metaclass(DocumentationMetaclass)
-class PlainTextDelegate(CustomDelegate):
+class PlainTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
 
     editor = editors.TextLineEditor

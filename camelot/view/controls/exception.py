@@ -32,7 +32,7 @@
 import collections
 from ...core.qt import QtWidgets
 
-import six
+
 
 from camelot.core.utils import ugettext as _
 from camelot.core.exception import UserException
@@ -67,9 +67,9 @@ def register_exception(logger, text, exception):
     icon  = None
     # chop the size of the text to prevent error dialogs larger than the screen
     resolution = str(exception)[:1000]
-    from six.moves import cStringIO
+    from io import StringIO
     import traceback
-    sio = cStringIO()
+    sio = StringIO()
     traceback.print_exc(file=sio)
     detail = sio.getvalue()
     sio.close()

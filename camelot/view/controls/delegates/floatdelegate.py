@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant, Qt
@@ -35,8 +35,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
 
-@six.add_metaclass(DocumentationMetaclass)
-class FloatDelegate(CustomDelegate):
+class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for float values"""
 
     editor = editors.FloatEditor

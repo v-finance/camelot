@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import six
+
 
 from camelot.admin.action import Action
 from camelot.core.utils import ugettext_lazy as _

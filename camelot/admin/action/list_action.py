@@ -33,7 +33,7 @@ import datetime
 import logging
 import itertools
 
-import six
+
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted

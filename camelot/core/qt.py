@@ -42,7 +42,7 @@ import datetime
 import logging
 import os
 
-import six
+
 
 LOGGER = logging.getLogger('camelot.core.qt')
 

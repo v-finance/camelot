@@ -48,8 +48,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import six
-from six import moves
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -259,7 +257,7 @@ class Update(UpdateMixin):
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
             #
-            columns = tuple(six.iterkeys(model_context.edit_cache.get_data(row)))
+            columns = tuple(model_context.edit_cache.get_data(row).keys())
             if len(columns):
                 logger.debug('evaluate changes in row {0}, column {1} to {2}'.format(row, min(columns), max(columns)))
             else:
@@ -516,7 +514,7 @@ class SetData(Update):
                     if was_persistent is False:
                         created_objects.add(obj)
                 # update the cache
-                columns = tuple(moves.xrange(len(model_context.static_field_attributes)))
+                columns = tuple(range(len(model_context.static_field_attributes)))
                 self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
                 updated_objects.add(obj)
                 updated_objects.update(set(admin.get_depending_objects(obj)))

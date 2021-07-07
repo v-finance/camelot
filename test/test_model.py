@@ -2,7 +2,7 @@ import datetime
 import os
 import unittest
 
-import six
+
 
 from sqlalchemy import orm, schema, types, create_engine
 
@@ -130,7 +130,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         model_context.obj = translation
         try:
             generator = export_action.model_run( model_context )
-            file_step = six.advance_iterator( generator )
+            file_step = next( generator )
             generator.send('/tmp/test.po')
         except StopIteration:
             pass

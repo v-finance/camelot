@@ -88,7 +88,7 @@ entities = EntityCollection()
 #   before and after mapper and table creation.
 #
 
-import six
+
 
 from . entity import EntityBase, EntityMeta
 

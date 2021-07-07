@@ -39,7 +39,7 @@ logger = logging.getLogger( 'camelot.view.forms' )
 from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
-import six
+
 
 class Form( list ):
     """Base Form class to put fields on a form.  The base class of a form is
@@ -81,7 +81,7 @@ and takes these parameters :
                 for nested_field in  field._get_fields_from_form():
                     yield nested_field
             else:
-                assert isinstance( field, (strs)) or (field is None)
+                assert isinstance( field, (str)) or (field is None)
                 yield field;
 
 
@@ -605,7 +605,7 @@ class WidgetOnlyForm( Form ):
     """Renders a single widget without its label, typically a one2many widget"""
 
     def __init__( self, field ):
-        assert isinstance( field, strs )
+        assert isinstance( field, str )
         super( WidgetOnlyForm, self ).__init__( [field] )
 
     def render( self, widgets, parent = None, toplevel = False ):

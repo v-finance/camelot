@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _

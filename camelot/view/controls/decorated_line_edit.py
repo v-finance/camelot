@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ...core.qt import QtCore, QtGui, QtWidgets
 from ..art import ColorScheme
@@ -62,7 +62,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
         :param width: the number of characters that should be visible in the
             editor or a string that should fit in the editor
         """
-        if isinstance( width, strs ):
+        if isinstance( width, str ):
             self.setMinimumWidth( self._font_metrics.width( width ) )
         else:
             self.setMinimumWidth( self._font_metrics.averageCharWidth() )

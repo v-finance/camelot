@@ -29,7 +29,7 @@
 
 import datetime
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets, Qt, py_to_variant
 

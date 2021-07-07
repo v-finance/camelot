@@ -29,7 +29,7 @@
 
 import os.path
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette

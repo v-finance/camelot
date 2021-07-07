@@ -30,7 +30,7 @@
 import logging
 import time
 
-import six
+
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
@@ -493,7 +493,7 @@ class Profiler( Action ):
 
     def model_run(self, model_context):
         from ...view import action_steps
-        from six import StringIO
+        from io import StringIO
         import cProfile
         import pstats
         if self.model_profile is None:
