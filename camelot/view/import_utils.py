@@ -217,7 +217,7 @@ class UTF8Recoder(object):
         return self
 
     def __next__(self):
-        return next(self.reader).encode('utf-8')
+        return next(self.reader)
 
 # see http://docs.python.org/library/csv.html
 class UnicodeReader( object ):

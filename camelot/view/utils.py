@@ -252,7 +252,7 @@ def text_from_richtext( unstripped_text ):
     if not unstripped_text:
         return strings
 
-    class HtmlToTextParser(parser.HTMLParser):
+    class HtmlToTextParser(html_parser.HTMLParser):
         
         def handle_endtag(self, tag):
             if tag == 'br':
@@ -266,10 +266,12 @@ def text_from_richtext( unstripped_text ):
 
     parser = HtmlToTextParser()
     #TODO parser error only thrown when using strict mode https://stackoverflow.com/a/59968964
-    try:
-        parser.feed(unstripped_text.strip())
-    except html_parser.HTMLParseError:
-        logger.debug('html parse error')
+
+    # try:
+    #     parser.feed(unstripped_text.strip())
+    # except html_parser.HTMLParseError: # HTMLParseError doesn't exist anymore
+    #     logger.debug('html parse error')
+    parser.feed(unstripped_text.strip())
 
     return strings
 
