@@ -36,6 +36,7 @@ the `ListActionGuiContext`.
 import itertools
 import typing
 
+from ...admin.admin_route import AdminRoute
 from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
@@ -103,10 +104,11 @@ class UpdateTableView( ActionStep ):
     #right_toolbar_actions: TODO
     #top_toolbar_actions: TODO
     #bottom_toolbar_actions: TODO
-    #list_action: TODO
+    list_action: tuple # admin route for the action
     proxy: int # id of proxy in ProxyRegistry
 
     def __init__( self, admin, value ):
+        self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
@@ -117,7 +119,7 @@ class UpdateTableView( ActionStep ):
         self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
         self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
-        self.list_action = admin.get_list_action()
+        self.list_action = AdminRoute._register_list_action_route(self.admin_route, admin.get_list_action())
         proxy = admin.get_proxy(value)
         self.proxy = ProxyRegistry.register(proxy)
     
@@ -132,7 +134,7 @@ class UpdateTableView( ActionStep ):
         table_view.set_filters(self.filters)
         table_view.set_value(self.proxy)
         table_view.set_list_actions(self.list_actions)
-        table_view.list_action = self.list_action
+        table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
             Qt.LeftToolBarArea, self.left_toolbar_actions
         )
