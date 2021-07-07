@@ -399,6 +399,7 @@ class EntityMeta( DeclarativeMeta ):
                 assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
                 _class.__cls_for_type__[_group] = _class
                 
+                
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
@@ -757,14 +758,22 @@ class EntityFacadeMeta(type):
             if _type is not None:
                 assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type in subsystem_cls.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-                if _type in subsystem_cls.__types__:
-                    assert _type not in subsystem_cls.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
-                    subsystem_cls.__cls_for_type__[_type] = _facade_class
-            if facade_args.get('default') == True:
+                assert _type not in subsystem_cls.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                subsystem_cls.__cls_for_type__[_type] = _facade_class
+            _default = facade_args.get('default')
+            if _default == True:
                 assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
                 assert None not in subsystem_cls.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(subsystem_cls.__types__, subsystem_cls.__cls_for_type__[None])
                 subsystem_cls.__cls_for_type__[None] = _facade_class
+            _group = facade_args.get('type_group')
+            if _group is not None:
+                assert subsystem_cls.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
+                assert _type is None, 'Can not register this class for both a specific type and for a specific type group'
+                assert _default is None, 'Can not register this class as both the default class and for a specific type group'
+                assert _group in subsystem_cls.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
+                assert _group not in subsystem_cls.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
+                subsystem_cls.__cls_for_type__[_group] = _facade_class
     
     def _get_facade_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
