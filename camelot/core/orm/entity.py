@@ -736,6 +736,8 @@ class EntityFacade(object, metaclass=EntityFacadeMeta):
     def subsystem_object(self):
         return self._subsystem_object
     
+    # Proxy attribute access to the subsystem object for now to keep existing self logic from the previous facade implementations working.
+    # TODO: Eventually this coupling should be removed and the logic should be written to explicitly use the subsystem object where needed.
     def __getattr__(self, name):
         return getattr(self.subsystem_object, name)
     
@@ -743,3 +745,4 @@ class EntityFacade(object, metaclass=EntityFacadeMeta):
         if not hasattr(type(self), name):
             setattr(self.subsystem_object, name, value)
         super().__setattr__(name, value)
+    # End of subsystem attribute access proxying.
