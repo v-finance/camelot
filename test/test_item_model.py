@@ -9,7 +9,7 @@ from camelot.core.qt import variant_to_py, QtCore, Qt, py_to_variant, delete
 from camelot.model.party import Person
 from camelot.view.item_model.cache import ValueCache
 from camelot.view.proxy.collection_proxy import (
-    CollectionProxy, invalid_item)
+    ProxyRegistry, CollectionProxy, invalid_item)
 from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
     VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
     CompletionsRole, CompletionPrefixRole, ActionRoutesRole, ActionStatesRole
@@ -179,7 +179,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.item_model = CollectionProxy(self.admin_route)
-        self.item_model.set_value(self.admin.get_proxy(self.collection))
+        proxy = self.admin.get_proxy(self.collection)
+        self.item_model.set_value(ProxyRegistry.register(proxy))
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
         self.item_model.timeout_slot()
@@ -562,7 +563,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     @classmethod
     def setup_item_model(cls, admin_route, admin_name):
         cls.item_model = CollectionProxy(admin_route)
-        cls.item_model.set_value(cls.proxy)
+        cls.item_model.set_value(ProxyRegistry.register(cls.proxy))
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
         cls.item_model.timeout_slot()
@@ -673,7 +674,7 @@ class QueryQStandardItemModelCase(
 
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
-        item_model.set_value(self.proxy)
+        item_model.set_value(ProxyRegistry.register(self.proxy))
         item_model.set_filter(SingleItemFilter('id'), self.first_person_id)
         list(item_model.add_columns(self.columns))
         self._load_data(item_model)

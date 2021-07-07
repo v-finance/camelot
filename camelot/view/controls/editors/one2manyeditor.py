@@ -31,7 +31,7 @@ import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.proxy.collection_proxy import ProxyRegistry, CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
@@ -183,7 +183,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(collection)
+            model.set_value(ProxyRegistry.register(collection))
             self.update_action_status()
 
     @QtCore.qt_slot(int)

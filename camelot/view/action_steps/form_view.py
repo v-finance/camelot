@@ -37,7 +37,7 @@ from ...core.qt import Qt, is_deleted
 
 from ...core.item_model import AbstractModelProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import CollectionProxy
+from ..proxy.collection_proxy import ProxyRegistry, CollectionProxy
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way.
@@ -86,7 +86,7 @@ class OpenFormView( ActionStep ):
         
         self.objects = [obj]
         self.row = proxy.index(obj)
-        self.proxy = proxy
+        self.proxy = ProxyRegistry.register(proxy)
         
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests

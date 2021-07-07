@@ -32,16 +32,20 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
+#from dataclasses import dataclass
 import itertools
+import typing
 
 from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
+from ...core.utils import ugettext_lazy
+#from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import CollectionProxy
+from ..proxy.collection_proxy import ProxyRegistry, CollectionProxy
 
 
 class Sort( ActionStep ):
@@ -79,7 +83,8 @@ class SetFilter( ActionStep ):
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
 
-
+#@dataclass
+#class UpdateTableView( ActionStep, DataclassSerializable ):
 class UpdateTableView( ActionStep ):
     """Change the admin and or value of an existing table view
     
@@ -87,6 +92,19 @@ class UpdateTableView( ActionStep ):
     :param value: a list of objects or a query
     
     """
+
+    #value: not needed
+    search_text: typing.Union[str, None]
+    title: typing.Union[str, ugettext_lazy]
+    #filters: TODO
+    #list_actions: TODO
+    #columns: TODO
+    #left_toolbar_actions: TODO
+    #right_toolbar_actions: TODO
+    #top_toolbar_actions: TODO
+    #bottom_toolbar_actions: TODO
+    #list_action: TODO
+    proxy: int # id of proxy in ProxyRegistry
 
     def __init__( self, admin, value ):
         self.value = value
@@ -100,7 +118,8 @@ class UpdateTableView( ActionStep ):
         self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
         self.list_action = admin.get_list_action()
-        self.proxy = admin.get_proxy(value)
+        proxy = admin.get_proxy(value)
+        self.proxy = ProxyRegistry.register(proxy)
     
     def update_table_view(self, table_view):
         from camelot.view.controls.search import SimpleSearchControl

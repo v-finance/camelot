@@ -35,7 +35,7 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.mainwindowproxy import MainWindowProxy
 from camelot.view import forms
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.proxy.collection_proxy import ProxyRegistry, CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
 from camelot.view.controls.progress_dialog import ProgressDialog
 
@@ -443,7 +443,8 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.movie_admin = self.app_admin.get_related_admin( Movie )
         self.admin_route = self.movie_admin.get_admin_route()
         self.movie_model = CollectionProxy(self.admin_route)
-        self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
+        proxy = self.movie_admin.get_proxy(self.movie_admin.get_query())
+        self.movie_model.set_value(ProxyRegistry.register(proxy))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
         ))
@@ -842,7 +843,7 @@ class ControlsTest(
         widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
-        model.set_value(self.proxy)
+        model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
         model.timeout_slot()
         self.process()
@@ -870,7 +871,7 @@ class ControlsTest(
         widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
-        model.set_value(self.proxy)
+        model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
         model.timeout_slot()
         self.process()

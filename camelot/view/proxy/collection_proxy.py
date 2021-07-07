@@ -711,7 +711,34 @@ class SetHeaderData(object):
         item_model.settings.setValue(self.field_name, self.width)
         item_model.settings.endGroup()
         item_model.settings.endGroup()
-        
+
+
+class ProxyRegistry:
+    """Registry to hold proxy objects"""
+
+    _register = {}
+    _last_id = 0
+
+    @classmethod
+    def register(cls, proxy):
+        """Register a proxy
+
+        :return: The id associated with the registered proxy.
+        """
+        next_id = cls._last_id + 1
+        cls._register[next_id] = proxy
+        cls._last_id = next_id
+        return next_id
+
+    @classmethod
+    def get(cls, key, default=None):
+        return cls._register.get(key, default)
+
+    @classmethod
+    def pop(cls, key, default=None):
+        return cls._register.pop(key, default)
+
+
 class CollectionProxy(QtGui.QStandardItemModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
@@ -967,10 +994,11 @@ class CollectionProxy(QtGui.QStandardItemModel):
         :param value: the collection of objects to display or None
         """
         self.logger.debug('set_value called')
-        assert isinstance(value, AbstractModelProxy)
+        assert isinstance(value, int)
         model_context = RowModelContext()
         model_context.admin = AdminRoute.admin_for(self.admin_route)
-        model_context.proxy = value
+        model_context.proxy = ProxyRegistry.pop(value)
+        assert isinstance(model_context.proxy, AbstractModelProxy)
         # todo : remove the concept of a validator
         model_context.validator = model_context.admin.get_validator()
         self._model_context = model_context
