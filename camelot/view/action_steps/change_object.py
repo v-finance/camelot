@@ -49,7 +49,7 @@ from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.proxy.collection_proxy import ProxyRegistry, CollectionProxy
 from camelot.view.art import from_admin_icon
 
 class ChangeObjectDialog( StandaloneWizardPage ):
@@ -128,7 +128,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         # set the actions in the actions panel
         self.set_actions(form_actions)
         # set the value last, so the validity can be updated
-        model.set_value(admin.get_proxy([obj]))
+        proxy = admin.get_proxy([obj])
+        model.set_value(ProxyRegistry.register(proxy))
         list(model.add_columns((fn for fn, _fa in columns)))
 
     def render_action(self, action, parent):
