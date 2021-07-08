@@ -2,6 +2,8 @@ import logging
 import faulthandler
 import sys
 
+import wingdbstub
+
 #warnings.filterwarnings( 'error' )
 
 from camelot.core.conf import settings

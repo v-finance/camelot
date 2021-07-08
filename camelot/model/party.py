@@ -1159,7 +1159,7 @@ class PersonAdmin( Party.Admin ):
                                                               'fax',
                                                               'street1',
                                                               'street2',
-                                                              'zip_code'
+                                                              'zip_code',
                                                               'city',] ),
                                                             [WidgetOnlyForm('picture'),
                                                              Stretch()],

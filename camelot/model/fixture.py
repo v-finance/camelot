@@ -190,7 +190,7 @@ class Fixture( Entity ):
         
         :param entity: the class of the stored data
         """
-        keys_and_classes = cls.find_fixture_keys_and_classes(entity).items()
+        keys_and_classes = cls.find_fixture_keys_and_classes(entity).values()
         for fixture_key, fixture_class in keys_and_classes:
             cls.remove_fixture( entity, fixture_key, fixture_class )
             
