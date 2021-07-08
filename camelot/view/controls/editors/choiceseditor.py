@@ -29,7 +29,7 @@
 
 import logging
 
-import six
+
 
 from ....core.qt import (
     QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
@@ -82,7 +82,7 @@ class ChoicesEditor(CustomEditor):
         :param data: a dictionary mapping roles to values
         """
         item = QtGui.QStandardItem(data[Qt.DisplayRole])
-        for role, value in six.iteritems(data):
+        for role, value in data.items():
             if isinstance(value, Icon):
                 value = from_admin_icon(value).getQIcon()
             item.setData(py_to_variant(value), role)
@@ -97,7 +97,7 @@ class ChoicesEditor(CustomEditor):
         for choice in choices:
             if not isinstance(choice, dict):
                 (value, name) = choice
-                choice = {Qt.DisplayRole: six.text_type(name),
+                choice = {Qt.DisplayRole: str(name),
                           Qt.UserRole: value}
             else:
                 value = choice[Qt.UserRole]
@@ -130,7 +130,7 @@ class ChoicesEditor(CustomEditor):
         # method has not happened yet or the choices don't contain the value
         # set
         if display_role is None:
-            display_role = six.text_type(value)
+            display_role = str(value)
         cls.append_item(model,
                         {Qt.DisplayRole: display_role,
                          Qt.BackgroundRole: QtGui.QBrush(ColorScheme.VALIDATION_ERROR),
@@ -157,7 +157,7 @@ class ChoicesEditor(CustomEditor):
         """
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         current_value = self.get_value()
-        current_display_role = six.text_type(combobox.itemText(combobox.currentIndex()))
+        current_display_role = str(combobox.itemText(combobox.currentIndex()))
         # set i to -1 to handle case of no available choices
         i = -1
         for i in range(combobox.count(), 0, -1):
@@ -186,7 +186,7 @@ class ChoicesEditor(CustomEditor):
     """
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         return [(variant_to_py(combobox.itemData(i)),
-                 six.text_type(combobox.itemText(i))) for i in range(combobox.count())]
+                 str(combobox.itemText(i))) for i in range(combobox.count())]
 
     def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed

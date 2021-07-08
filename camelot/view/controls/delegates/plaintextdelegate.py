@@ -30,7 +30,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
@@ -42,8 +42,7 @@ from camelot.view.controls import editors
 
 DEFAULT_COLUMN_WIDTH = 20
 
-@six.add_metaclass(DocumentationMetaclass)
-class PlainTextDelegate(CustomDelegate):
+class PlainTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
 
     editor = editors.TextLineEditor
@@ -65,7 +64,7 @@ class PlainTextDelegate(CustomDelegate):
             completer.moveToThread(QtWidgets.QApplication.instance().thread())
         item = super(PlainTextDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
-            item.setData(py_to_variant(six.text_type(model_context.value)), PreviewRole)
+            item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item
 
 

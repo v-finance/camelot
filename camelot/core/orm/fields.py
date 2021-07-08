@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import six
+
 
 from sqlalchemy import schema, orm
 
@@ -171,7 +171,7 @@ class Field(EntityBuilder):
         self.column_created = True
         if self.deferred:
             group = None
-            if isinstance( self.deferred, six.string_types ):
+            if isinstance( self.deferred, str ):
                 group = self.deferred
             self.column = orm.deferred( self.column, group = group )            
         self.entity._descriptor.add_column( self.kwargs.get( 'key', self.name ), self.column )

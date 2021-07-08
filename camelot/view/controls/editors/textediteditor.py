@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets
 from .wideeditor import WideEditor
@@ -52,7 +52,7 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value is not None:
-            self.setText(six.text_type(value))
+            self.setText(str(value))
         else:
             self.setText('')
         return value
@@ -61,7 +61,7 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
         val = AbstractCustomEditor.get_value(self)
         if val is not None:  # we need to distinguish between None
             return val       # and other falsy values
-        return six.text_type(self.toPlainText())
+        return str(self.toPlainText())
 
     def set_enabled(self, editable=True):
         self.setEnabled(editable)

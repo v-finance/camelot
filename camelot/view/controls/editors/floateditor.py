@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
@@ -102,7 +102,7 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         if q_string_size(self.suffix()):
             if q_string_endswith(qinput, self.suffix()):
                 copy_to = -1*q_string_size(self.suffix())
-        partial_input = six.text_type(qinput)[copy_from:copy_to]
+        partial_input = str(qinput)[copy_from:copy_to]
         return partial_input.strip()
     
     def validate(self, qinput, pos):
@@ -110,17 +110,12 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         an empty string as a special value for `None`.
         """
         result = super(CustomDoubleSpinBox, self).validate(qinput, pos)
-        if six.PY3:
-            valid, qinput, new_pos = result
-        else:
-            valid, new_pos = result
+        valid, qinput, new_pos = result
         if valid!=QtGui.QValidator.Acceptable:
             # this code is based on QSpinBoxPrivate::validateAndInterpret
             if len(self.stripped(qinput))==0:
                 valid = QtGui.QValidator.Acceptable
-        if six.PY3:
-            return valid, qinput, new_pos
-        return valid, new_pos
+        return valid, qinput, new_pos
     
     def valueFromText(self, text):
         # this code is based on QSpinBoxPrivate::validateAndInterpret
@@ -192,9 +187,9 @@ class FloatEditor(CustomEditor):
         focus_policy = kwargs.get('focus_policy')
         if focus_policy is not None:
             spinBox.setFocusPolicy(focus_policy)
-        spinBox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-        spinBox.setPrefix(six.text_type(kwargs.get('prefix', '')))
-        spinBox.setSuffix(six.text_type(kwargs.get('suffix', '')))
+        spinBox.setToolTip(str(kwargs.get('tooltip') or ''))
+        spinBox.setPrefix(str(kwargs.get('prefix', '')))
+        spinBox.setSuffix(str(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
         spinBox.setReadOnly(not editable)
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
@@ -236,10 +231,10 @@ class FloatEditor(CustomEditor):
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(str)
     def calculation_finished(self, value):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setValue(float(six.text_type(value)))
+        spinBox.setValue(float(str(value)))
         self.editingFinished.emit()
 
     @QtCore.qt_slot()

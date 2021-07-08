@@ -31,7 +31,7 @@ import logging
 
 logger = logging.getLogger('camelot.admin.validator.object_validator')
 
-import six
+
 
 from ...core.qt import QtCore
 from camelot.core.utils import ugettext as _
@@ -86,7 +86,7 @@ class ObjectValidator(QtCore.QObject):
             # initialize cached static field attributes on first use
             #
             if self._all_fields is None:
-                self._all_fields = [fn for fn,_fa in six.iteritems(self.admin.get_all_fields_and_attributes())]
+                self._all_fields = [fn for fn,_fa in self.admin.get_all_fields_and_attributes().items()]
                 for field_name, static_fa in zip(self._all_fields, self.admin.get_static_field_attributes(self._all_fields)):
                     self._all_field_field_attributes[field_name] = static_fa
             #
@@ -95,7 +95,7 @@ class ObjectValidator(QtCore.QObject):
             for field_name, dynamic_fa in zip(self._all_fields, self.admin.get_dynamic_field_attributes(obj, self._all_fields)):
                 self._all_field_field_attributes[field_name].update(dynamic_fa)
             
-            for field, attributes in six.iteritems(self._all_field_field_attributes):
+            for field, attributes in self._all_field_field_attributes.items():
                 # if the field was not editable, don't waste any time
                 if attributes.get('editable', False):
                     # if the field, is nullable, don't waste time getting its value

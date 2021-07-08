@@ -30,7 +30,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
@@ -39,8 +39,7 @@ from .customdelegate import DocumentationMetaclass
 
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class LocalFileDelegate(CustomDelegate):
+class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """

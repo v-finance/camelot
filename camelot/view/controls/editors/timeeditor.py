@@ -28,7 +28,7 @@
 #  ============================================================================
 import datetime
 
-import six
+
 
 from ....core.qt import QtWidgets
 from .customeditor import AbstractCustomEditor, set_background_color_palette
@@ -64,7 +64,7 @@ class TimeEditor(QtWidgets.QTimeEdit, AbstractCustomEditor):
     def set_field_attributes(self, **kwargs):
         super(TimeEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
-        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+        self.setToolTip(str(kwargs.get('tooltip') or ''))
       
     def set_enabled(self, editable=True):
         self.setEnabled(editable)

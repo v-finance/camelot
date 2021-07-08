@@ -28,15 +28,14 @@
 #  ============================================================================
 import datetime
 
-import six
+
 
 from ....core.qt import variant_to_py, Qt, QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class TimeDelegate(CustomDelegate):
+class TimeDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
    
     editor = editors.TimeEditor
       

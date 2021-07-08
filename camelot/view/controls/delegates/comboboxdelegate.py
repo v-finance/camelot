@@ -32,14 +32,13 @@ logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-import six
+
 
 from ....core.item_model import PreviewRole, FieldAttributesRole
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class ComboBoxDelegate(CustomDelegate):
+class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     
     editor = editors.ChoicesEditor
 
@@ -49,15 +48,15 @@ class ComboBoxDelegate(CustomDelegate):
         choices = model_context.field_attributes.get('choices', [])
         for key, verbose in choices:
             if key == model_context.value:
-                item.setData(py_to_variant(six.text_type(verbose)), PreviewRole)
+                item.setData(py_to_variant(str(verbose)), PreviewRole)
                 break
         else:
             if model_context.value is None:
-                item.setData(py_to_variant(six.text_type()), PreviewRole)
+                item.setData(py_to_variant(str()), PreviewRole)
             else:
                 # the model has a value that is not in the list of choices,
                 # still try to display it
-                item.setData(py_to_variant(six.text_type(model_context.value)), PreviewRole)
+                item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item
 
     def setEditorData(self, editor, index):

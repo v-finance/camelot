@@ -59,7 +59,7 @@ Here is a quick example of how to use ``has_property``.
 """
 from sqlalchemy import orm, schema
 
-import six
+
 
 from . statements import ClassMutator
 from . import options
@@ -78,8 +78,7 @@ class CounterMeta(type):
         CounterMeta.counter += 1
         return instance
 
-@six.add_metaclass(CounterMeta)
-class EntityBuilder(object):
+class EntityBuilder(object, metaclass=CounterMeta):
     """
     Abstract base class for all entity builders. An Entity builder is a class
     of objects which can be added to an Entity (usually by using special
