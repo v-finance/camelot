@@ -181,6 +181,10 @@ and used as a custom action.
             break
         return sql_attributes
 
+    def get_mapper(self):
+        """Returns this entity admin's mapper."""
+        return self.mapper
+
     def get_query(self, session=None):
         """
         Overwrite this method to configure eager loading strategies
@@ -208,7 +212,7 @@ and used as a custom action.
 
     def get_verbose_identifier(self, obj):
         if obj is not None:
-            primary_key = self.mapper.primary_key_from_instance(obj)
+            primary_key = self.primary_key(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
@@ -332,9 +336,8 @@ and used as a custom action.
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
         try:
-            property = self.mapper.get_property(
-                field_name
-            )
+            mapper = self.get_mapper()
+            property = mapper.get_property(field_name) if mapper else None
             if isinstance(property, orm.properties.ColumnProperty):
                 columns = property.columns
                 sql_attributes = self.get_sql_field_attributes( columns )
@@ -462,7 +465,7 @@ and used as a custom action.
             if the object has no primary key yet or any more.
         """
         if not self.is_persistent( obj ):
-            return None
+            return []
         # this function is called on compound objects as well, so the
         # mapper might be different from the mapper related to this admin
         mapper = orm.object_mapper(obj)
