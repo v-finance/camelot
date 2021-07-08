@@ -242,7 +242,7 @@ class EntityMeta( DeclarativeMeta ):
     Facade class registration
     -------------------------
     This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
-    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
+    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
     To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
     This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
     In order to register a facade class: see documentation on EntityFacadeMeta.
@@ -257,14 +257,26 @@ class EntityMeta( DeclarativeMeta ):
               |     }
               |     ...
               |
-              | class SomeFacadeClass(SomeClass)
+              | class SomeFacadeClass(EntityFacade)
               |     __facade_args__ = {
               |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
               |
-              | class DefaultFacadeClass(SomeClass)
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
+              |     }
+              |     ...
+              |
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
+              |     }
+              |     ...
+              |
+              | class DefaultFacadeClass(EntityFacade)
               |     __facade_args__ = {
               |         'subsystem_cls': SomeClass,
               |         'default': True
@@ -272,10 +284,11 @@ class EntityMeta( DeclarativeMeta ):
               |     ...
     
     This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
-    This will return the registered class for a specific given type, if any are registered on the class (or its Base). See its documentation for more details.
+    This will return the registered class for a specific given type or type group, if any are registered on the class (or its Base). See its documentation for more details.
     
     :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
               | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
+              | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
     
     Notes on metaclasses
     --------------------
@@ -332,6 +345,12 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__types__', None)
             
             for base in bases:
+                if hasattr(base, '__type_groups__'):
+                    break
+            else:
+                dict_.setdefault('__type_groups__', None)
+            
+            for base in bases:
                 if hasattr(base, '__cls_for_type__'):
                     break
             else:
@@ -340,11 +359,16 @@ class EntityMeta( DeclarativeMeta ):
             facade_args = dict_.get('__facade_args__')
             if facade_args is not None:
                 discriminator = facade_args.get('discriminator')
-                if discriminator is not None:                
-                    assert isinstance(discriminator, sql.schema.Column), 'Discriminator must be a sql.schema.Column'
-                    assert isinstance(discriminator.type, Enumeration), 'Discriminator column must be of type Enumeration'
-                    assert isinstance(discriminator.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
-                    dict_['__types__'] = discriminator.type.enum
+                if discriminator is not None:
+                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
+                    discriminator_col = discriminator
+                    if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
+                        discriminator_col = discriminator.prop.columns[0]
+                    assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
+                    assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
+                    dict_['__types__'] = discriminator_col.type.enum
+                    if hasattr(discriminator_col.type.enum, 'get_groups'):
+                        dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
             
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
@@ -358,32 +382,56 @@ class EntityMeta( DeclarativeMeta ):
             if _type is not None:
                 assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-                if _type in _class.__types__:
-                    assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
-                    _class.__cls_for_type__[_type] = _class
-            if facade_args.get('default') == True:
+                assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                _class.__cls_for_type__[_type] = _class
+            _default = facade_args.get('default')
+            if _default == True:
                 assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
                 assert None not in _class.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class.__cls_for_type__[None])
                 _class.__cls_for_type__[None] = _class
+            _group = facade_args.get('type_group')
+            if _group is not None:
+                assert _class.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
+                assert _type is None, 'Can not register this class for both a specific type and for a specific type group'
+                assert _default is None, 'Can not register this class as both the default class and for a specific type group'
+                assert _group in _class.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
+                assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
+                _class.__cls_for_type__[_group] = _class
+                
                 
     def get_cls_by_type(cls, _type):
         """
-        Retrieve the corresponding class for the given type if one is registered on this class or its base.
-        This can be the class that is specifically registered for the given type, or a possible registered default class otherwise.
+        Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
+        This can be the class that is specifically registered for the given type or type group, or a possible registered default class otherwise.
         Providing no type will also return the default registered class if present.
         
-        :param _type:  a member of a sqlalchemy.util.OrderedProperties instance.
-                       If this class or its base have types registration enabled, this should be a member of the set __types__.
-        :return:       the class for the given type, which inherits from the class where the allowed types are registered on or the class itself if not.
+        :param _type:  either None which will lookup a possible registered default class, or a member of a sqlalchemy.util.OrderedProperties instance.
+                       If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
+                       __type_groups__, that get auto-set in case the set types are grouped.
+        :return:       the class that is registered for the given type, which inherits from the class where the allowed types are registered on, or the class itself if not.
+                       In case the given type is:
+                        * None; the registered default class will be returned, if present.
+                        * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
+                        * a member of the allowed __types__; a possible registered class for the type will be returned,
+                          otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
                        Examples:
                        | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
+                       | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
                        | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
         :raises :      an AttributeException when the given argument is not a valid type
         """
         if cls.__types__ is not None:
-            if _type is None or _type in cls.__types__.__members__:
-                return cls.__cls_for_type__.get(_type) or cls.__cls_for_type__.get(None)
+            groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
+            types = cls.__types__
+            if _type is None or _type in types.__members__ or _type in groups:
+                group = _type
+                if groups and _type in types.__members__ and types[_type].grouped_by is not None:
+                    group = types[_type].grouped_by.name
+                
+                return cls.__cls_for_type__.get(_type) or \
+                       cls.__cls_for_type__.get(group) or \
+                       cls.__cls_for_type__.get(None)
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
@@ -395,7 +443,9 @@ class EntityMeta( DeclarativeMeta ):
     def get_cls_discriminator(cls):
         discriminator = cls._get_facade_arg('discriminator')
         if discriminator is not None:
-            return getattr(cls, discriminator.key)
+            if isinstance(discriminator, sql.schema.Column):
+                return getattr(cls, discriminator.key)
+            return discriminator
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
@@ -632,6 +682,8 @@ class EntityFacadeMeta(type):
     To register a facade class, the subsystem_cls argument should be defined to link the facade to a subsystem entity class, which should have the discriminator defined.
     In order to register a facade class for a specific type, the 'type' argument should also be defined as a specific type of the subsystem entity class' '__types__'.
     To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
+    In case the registered types are grouped, it is also possible to register a facade class for one of those type groups and thereby registering if as the default class
+    for all types in that group if they do not have a specific class registered.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
@@ -647,6 +699,12 @@ class EntityFacadeMeta(type):
               |     __facade_args__ = {
               |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
+              |     }
+              |     ...
+              |
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
               |     }
               |     ...
               |
@@ -700,14 +758,22 @@ class EntityFacadeMeta(type):
             if _type is not None:
                 assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type in subsystem_cls.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-                if _type in subsystem_cls.__types__:
-                    assert _type not in subsystem_cls.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
-                    subsystem_cls.__cls_for_type__[_type] = _facade_class
-            if facade_args.get('default') == True:
+                assert _type not in subsystem_cls.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                subsystem_cls.__cls_for_type__[_type] = _facade_class
+            _default = facade_args.get('default')
+            if _default == True:
                 assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
                 assert _type is None, 'Can not register this class for a specific type and as the default class'
                 assert None not in subsystem_cls.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(subsystem_cls.__types__, subsystem_cls.__cls_for_type__[None])
                 subsystem_cls.__cls_for_type__[None] = _facade_class
+            _group = facade_args.get('type_group')
+            if _group is not None:
+                assert subsystem_cls.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
+                assert _type is None, 'Can not register this class for both a specific type and for a specific type group'
+                assert _default is None, 'Can not register this class as both the default class and for a specific type group'
+                assert _group in subsystem_cls.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
+                assert _group not in subsystem_cls.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
+                subsystem_cls.__cls_for_type__[_group] = _facade_class
     
     def _get_facade_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
