@@ -736,8 +736,9 @@ class EntityFacadeMeta(type):
             subsystem_cls = dict_.get('__facade_args__', {}).get('subsystem_cls')
             if subsystem_cls is None:
                 for base in bases:
-                    if hasattr(base, '__facade_args__'):
-                        subsystem_cls = base.__facade_args__.get('subsystem_cls', subsystem_cls)
+                    for base_cls in base.__mro__:
+                        if hasattr(base_cls, '__facade_args__'):
+                            subsystem_cls = base_cls.__facade_args__.get('subsystem_cls', subsystem_cls)
             assert isinstance(subsystem_cls, EntityMeta), 'EntityFacade must be coupled with an Entity subsystem class'
             dict_['__subsystem_cls__'] = subsystem_cls
         
