@@ -18,17 +18,13 @@ class TestManyToMany( TestMetaData ):
     def test_simple( self ):
         
         class A( self.Entity ):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'A'
             name = Field(String(60))
             as_ = ManyToMany('A')
             bs_ = ManyToMany('B')
 
         class B( self.Entity ):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'B'
             name = Field(String(60))
             as_ = ManyToMany('A')
 
@@ -191,9 +187,7 @@ class TestManyToMany( TestMetaData ):
 
     def test_selfref(self):
         class Person(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'Person'
             name = Field(String(30))
 
             friends = ManyToMany('Person')
@@ -219,9 +213,7 @@ class TestManyToMany( TestMetaData ):
 
     def test_bidirectional_selfref(self):
         class Person(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'Person'
             name = Field(String(30))
 
             friends = ManyToMany('Person')
@@ -278,9 +270,7 @@ class TestManyToMany( TestMetaData ):
 
     def test_local_and_remote_colnames(self):
         class A(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'A'
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
@@ -288,9 +278,7 @@ class TestManyToMany( TestMetaData ):
                                   remote_colname="baz")
 
         class B(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'B'
             name = Field(String(60))
             as_ = ManyToMany('A', remote_colname=['foo', 'bar'],
                                   local_colname="baz")
@@ -319,18 +307,14 @@ class TestManyToMany( TestMetaData ):
                                                        ['a.key1', 'a.key2']))
 
         class A(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'A'
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
             bs_ = ManyToMany('B', table=a_b)
 
         class B(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'B'
             name = Field(String(60))
             as_ = ManyToMany('A', table=a_b)
 
@@ -356,9 +340,7 @@ class TestManyToMany( TestMetaData ):
                            schema.Column('b_id', String(60)))
 
         class A(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'A'
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
@@ -370,9 +352,7 @@ class TestManyToMany( TestMetaData ):
                                  a_b.c.b_id])
 
         class B(self.Entity):
-            __mapper_args__ = {
-                'shortnames': True
-            }
+            __tablename__ = 'B'
             name = Field(String(60))
 
         self.create_all()
