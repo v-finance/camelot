@@ -242,7 +242,7 @@ class EntityMeta( DeclarativeMeta ):
     Facade class registration
     -------------------------
     This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
-    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
+    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
     To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
     This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
     In order to register a facade class: see documentation on EntityFacadeMeta.
@@ -257,20 +257,21 @@ class EntityMeta( DeclarativeMeta ):
               |     }
               |     ...
               |
-              | class SomeFacadeClass(SomeClass)
+              | class SomeFacadeClass(EntityFacade)
               |     __facade_args__ = {
               |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
               |
-              | class SomeGroupFacadeClass(SomeClass)
+              | class SomeGroupFacadeClass(EntityFacade)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass, 
               |         'group': allowed_type_groups.certain_type_group.name
               |     }
               |     ...
               |
-              | class DefaultFacadeClass(SomeClass)
+              | class DefaultFacadeClass(EntityFacade)
               |     __facade_args__ = {
               |         'subsystem_cls': SomeClass,
               |         'default': True
@@ -676,6 +677,8 @@ class EntityFacadeMeta(type):
     To register a facade class, the subsystem_cls argument should be defined to link the facade to a subsystem entity class, which should have the discriminator defined.
     In order to register a facade class for a specific type, the 'type' argument should also be defined as a specific type of the subsystem entity class' '__types__'.
     To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
+    In case the registered types are grouped, it is also possible to register a facade class for one of those type groups and thereby registering if as the default class
+    for all types in that group if they do not have a specific class registered.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
@@ -691,6 +694,12 @@ class EntityFacadeMeta(type):
               |     __facade_args__ = {
               |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
+              |     }
+              |     ...
+              |
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
               |     }
               |     ...
               |
