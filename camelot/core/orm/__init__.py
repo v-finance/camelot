@@ -61,6 +61,7 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
 
+from . options import using_options
 from . fields import has_field, Field
 from . relationships import ( belongs_to, has_one, has_many,
                               has_and_belongs_to_many, 
@@ -152,6 +153,7 @@ __all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta,
             has_property, GenericProperty, ColumnProperty,
             belongs_to, has_one, has_many, has_and_belongs_to_many,
             ManyToOne, OneToOne, OneToMany, ManyToMany,
+            using_options,
             setup_all, transaction
             ] ] + ['Session', 'entities']
 
