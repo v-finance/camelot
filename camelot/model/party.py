@@ -45,8 +45,7 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
-                               ManyToOne, OneToMany, ColumnProperty )
+from camelot.core.orm import Entity, Field, ManyToMany, ManyToOne, OneToMany, ColumnProperty
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
@@ -186,7 +185,7 @@ class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
-    using_options( tablename = 'geographic_boundary_country' )
+    __tablename__ = 'geographic_boundary_country'
     geographicboundary_id = Field( camelot.types.PrimaryKey(), 
                                    ForeignKey('geographic_boundary.id'), 
                                    primary_key = True,
@@ -211,7 +210,7 @@ class Country( GeographicBoundary ):
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
-    using_options( tablename = 'geographic_boundary_city' )
+    __tablename__ = 'geographic_boundary_city'
     country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     geographicboundary_id = Field( camelot.types.PrimaryKey(),
                                    ForeignKey('geographic_boundary.id'),
@@ -283,7 +282,7 @@ class City( GeographicBoundary ):
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
-    using_options( tablename = 'address' )
+    __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
     city = ManyToOne( City,
@@ -463,7 +462,7 @@ class WithAddresses(object):
 class Party(Entity, WithAddresses):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
-    using_options( tablename = 'party' )
+    __tablename__ = 'party'
     
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
@@ -574,7 +573,7 @@ class Party(Entity, WithAddresses):
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
-    using_options( tablename = 'organization' )
+    __tablename__ = 'organization'
     party_id = Field( camelot.types.PrimaryKey(),
                       ForeignKey('party.id'),
                       primary_key = True )
@@ -600,7 +599,7 @@ class Organization( Party ):
 class Person( Party ):
     """Person represents natural persons
     """
-    using_options( tablename = 'person' )
+    __tablename__ = 'person'
     party_id = Field( camelot.types.PrimaryKey(),
                       ForeignKey('party.id'),
                       primary_key = True )
@@ -636,7 +635,7 @@ class Person( Party ):
         return self.name or ''
 
 #class PartyRelationship( Entity ):
-    #using_options( tablename = 'party_relationship' )
+    #__tablename__ = 'party_relationship'
     #from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     #thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     #comment = Field( camelot.types.RichText() )
@@ -651,7 +650,7 @@ class Person( Party ):
 
 #class EmployerEmployee( PartyRelationship ):
     #"""Relation from employer to employee"""
-    #using_options( tablename = 'party_relationship_empl' )
+    #__tablename__ = 'party_relationship_empl'
     #established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
                                   #backref=orm.backref('employees', cascade='all, delete, delete-orphan' ) )    # the employer
     #established_to = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade'
@@ -697,7 +696,7 @@ class Person( Party ):
 
 #class DirectedDirector( PartyRelationship ):
     #"""Relation from a directed organization to a director"""
-    #using_options( tablename = 'party_relationship_dir' )
+    #__tablename__ = 'party_relationship_dir'
     #established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
                                   #backref=orm.backref('directors', cascade='all, delete, delete-orphan' ))
     #established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
@@ -731,7 +730,7 @@ class Person( Party ):
 
 #class RepresentedRepresentor( Entity ):
     #"""Relation from a representing party to the person representing the party"""
-    #using_options( tablename = 'party_representor' )
+    #__tablename__ = 'party_representor'
     #from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     #thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     #comment = Field( camelot.types.RichText() )
@@ -746,7 +745,7 @@ class Person( Party ):
 
 #class SupplierCustomer( PartyRelationship ):
     #"""Relation from supplier to customer"""
-    #using_options( tablename = 'party_relationship_suppl' )
+    #__tablename__ = 'party_relationship_suppl'
     #established_from = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
                                   #backref=orm.backref('customers', cascade='all, delete, delete-orphan' ))
     #established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
@@ -775,7 +774,7 @@ class Person( Party ):
 
 #class SharedShareholder( PartyRelationship ):
     #"""Relation from a shared organization to a shareholder"""
-    #using_options( tablename = 'party_relationship_shares' )
+    #__tablename__ = 'party_relationship_shares'
     #established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade',
                                   #backref=orm.backref('shareholders', cascade='all, delete, delete-orphan' ))
     #established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
@@ -907,7 +906,7 @@ class Addressable(object):
 
 
 class PartyAddress( Entity, Addressable ):
-    using_options( tablename = 'party_address' )
+    __tablename__ = 'party_address'
     party_id = schema.Column(
         camelot.types.PrimaryKey(),
         ForeignKey('party.id', ondelete='cascade', onupdate='cascade'),
@@ -969,7 +968,7 @@ class AddressAdmin( PartyAddress.Admin ):
             yield party_address.party
 
 class PartyAddressRoleType( Entity ):
-    using_options( tablename = 'party_address_role_type' )
+    __tablename__ = 'party_address_role_type'
     code = schema.Column( Unicode( 10 ) )
     description = schema.Column( Unicode( 40 ) )
 
@@ -979,7 +978,7 @@ class PartyAddressRoleType( Entity ):
 
 
 class ContactMechanism( Entity ):
-    using_options( tablename = 'contact_mechanism' )
+    __tablename__ = 'contact_mechanism'
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
     party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
     party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
@@ -1004,7 +1003,7 @@ class ContactMechanism( Entity ):
 
 
 class PartyContactMechanism( Entity ):
-    using_options( tablename = 'party_contact_mechanism' )
+    __tablename__ = 'party_contact_mechanism'
 
     party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
                        backref = orm.backref('contact_mechanisms', lazy = 'select',
@@ -1048,7 +1047,7 @@ class PartyContactMechanism( Entity ):
 # begin category definition
 
 class PartyCategory( Entity ):
-    using_options( tablename = 'party_category' )
+    __tablename__ = 'party_category'
     name = schema.Column( Unicode(40), index=True, nullable = False )
     color = schema.Column(Unicode(8))
 # end category definition
