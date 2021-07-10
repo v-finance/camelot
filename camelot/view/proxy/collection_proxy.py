@@ -668,9 +668,11 @@ class SetColumns(object):
             #
             # Set the header data
             #
+            fa_copy = fa.copy()
+            fa_copy.setdefault('editable', True)
             set_header_data(py_to_variant(field_name), Qt.UserRole)
             set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
-            set_header_data(py_to_variant({'editable': fa.get('editable', True)}), FieldAttributesRole)
+            set_header_data(fa_copy, FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.FontRole)
             else:
