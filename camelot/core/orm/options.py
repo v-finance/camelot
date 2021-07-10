@@ -89,7 +89,7 @@ For examples, please refer to the examples and unit tests.
 
 from sqlalchemy import types
 
-import six
+
 
 from . statements import ClassMutator
 
@@ -123,7 +123,7 @@ options_defaults = dict(
     table_options={},
 )
 
-valid_options = list( six.iterkeys(options_defaults) ) + [
+valid_options = list( options_defaults.keys() ) + [
     'metadata',
     'session',
 ]

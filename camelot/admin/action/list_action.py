@@ -31,8 +31,9 @@ import codecs
 import copy
 import datetime
 import logging
+import itertools
 
-import six
+
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
@@ -251,23 +252,30 @@ class RowNumberAction( Action ):
 
     def get_state( self, model_context ):
         state = super(RowNumberAction, self).get_state(model_context)
-        state.verbose_name = six.text_type(model_context.current_row + 1)
+        state.verbose_name = str(model_context.current_row + 1)
         return state
 
 class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
-    not-editable.
+    not-editable. It will also be disabled and hidden if the entity is set
+    to be non-editable using __facade_args__ = { 'editable': False }.
     """
 
     render_hint = RenderHint.TOOL_BUTTON
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
+        # Check for editability on the level of the field
         if isinstance( model_context, ListActionModelContext ):
             editable = model_context.field_attributes.get( 'editable', True )
             if editable == False:
                 state.enabled = False
+        # Check for editability on the level of the entity
+        admin = model_context.admin
+        if admin and not admin.entity.is_editable():
+            state.visible = False
+            state.enabled = False
         return state
 
 class CloseList(Action):
@@ -316,7 +324,7 @@ class OpenFormView( ListContextAction ):
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
-        state.verbose_name = six.text_type()
+        state.verbose_name = str()
         return state
 
 
@@ -330,10 +338,12 @@ class DuplicateSelection( EditAction ):
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
-    
+
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         new_objects = list()
         updated_objects = set()
         for i, obj in enumerate(model_context.get_selection()):
@@ -356,7 +366,7 @@ class DeleteSelection( EditAction ):
     icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
     verbose_name = _('Delete')
-    
+
     def gui_run( self, gui_context ):
         #
         # if there is an open editor on a row that will be deleted, there
@@ -372,9 +382,11 @@ class DeleteSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         if model_context.selection_count <= 0:
             return
-        admin = model_context.admin
         objects_to_remove = list( model_context.get_selection() )
         #
         # it might be impossible to determine the depending objects once
@@ -585,7 +597,7 @@ class RestoreExportMapping( SaveExportMapping ):
         from camelot.view import action_steps
 
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
         if mapping_name is not None:
             fields = mappings[mapping_name]
@@ -613,7 +625,7 @@ class RemoveExportMapping( SaveExportMapping ):
         from camelot.view import action_steps
     
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
         if mapping_name is not None:
             mappings.pop(mapping_name)
@@ -670,17 +682,17 @@ class ExportSpreadsheet( ListContextAction ):
         settings = get_settings(admin.get_name())
         settings.beginGroup('export_spreadsheet')
         all_fields = admin.get_all_fields_and_attributes()
-        field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
-                         six.iteritems(all_fields) ]
+        field_choices = [(f,str(entity_fa['name'])) for f,entity_fa in
+                         all_fields.items() ]
         field_choices.sort(key=lambda field_tuple:field_tuple[1])
         list_columns = admin.get_columns()
         # the admin might show more columns then fields available, if the
         # columns are generated dynamically
         max_mapping_length = max(len(list_columns), len(all_fields))
         row_data = [None] * max_mapping_length
-        column_range = six.moves.range(max_mapping_length)
+        column_range = range(max_mapping_length)
         mappings = []
-        for i, default_field in six.moves.zip_longest(column_range,
+        for i, default_field in itertools.zip_longest(column_range,
                                                       admin.get_columns(),
                                                       fillvalue=(None,None)):
             mappings.append(ColumnMapping(i, [row_data], default_field[0]))
@@ -764,7 +776,7 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(six.moves.zip(field_names, 
+            fields = enumerate(zip(field_names, 
                                              static_attributes,
                                              dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:
@@ -819,7 +831,7 @@ class PrintPreview( ListContextAction ):
         table = []
         fields = [field for field, _field_attributes in columns]
         to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
-        column_range = six.moves.range( len( columns ) )
+        column_range = range( len( columns ) )
         for obj in model_context.get_collection():
             table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
         context = {
@@ -851,6 +863,9 @@ class ImportFromFile( EditAction ):
     name = 'import'
 
     def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         import os.path
         import chardet
         from camelot.view import action_steps
@@ -878,7 +893,6 @@ class ImportFromFile( EditAction ):
             #
             # select columns to import
             #
-            admin = model_context.admin
             default_fields = [field for field, fa in admin.get_columns() 
                               if fa.get('editable', True)]
             mappings = []
@@ -888,10 +902,10 @@ class ImportFromFile( EditAction ):
             # be better to explicitly allow foreign keys, but this info is not
             # in the field attributes
             #
-            all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
-                         six.iteritems(admin.get_all_fields_and_attributes()) if entity_fa.get('from_string')]
+            all_fields = [(f,str(entity_fa['name'])) for f,entity_fa in 
+                          admin.get_all_fields_and_attributes().items() if entity_fa.get('from_string')]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
-            for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
+            for i, default_field in itertools.zip_longest(range(len(all_fields)),
                                                           default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))
             
@@ -959,6 +973,9 @@ class ReplaceFieldContents( EditAction ):
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         from camelot.view import action_steps
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
@@ -1084,6 +1101,9 @@ class AddExistingObject( EditAction ):
     name = 'add_object'
     
     def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
@@ -1118,7 +1138,7 @@ class AddNewObject( EditAction ):
         By default, the given model_context's admin is used.
         """
         return model_context.admin
-    
+
     def create_object(self, model_context, admin, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
@@ -1135,8 +1155,10 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        create_inline = model_context.field_attributes.get('create_inline', False)
         admin = self.get_admin(model_context)
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
+        create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
@@ -1182,6 +1204,9 @@ class ActionGroup(EditAction):
         return state
     
     def model_run(self, model_context):
+        admin = model_context.admin
+        if not admin.entity.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         if model_context.mode_name is not None:
             action = self.actions[int(model_context.mode_name)]
             yield from action.model_run(model_context)

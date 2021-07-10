@@ -31,7 +31,7 @@ import collections
 
 _fill = object()
 
-import six
+
 
 class ValueCache(object):
     """
@@ -67,7 +67,7 @@ class ValueCache(object):
         :return: a interator of the row numbers for which this fifo
         had data
         """
-        return six.iterkeys(self.data_by_rows)
+        return self.data_by_rows.keys()
 
     def add_data(self, row, entity, values):
         """The entity might already be on another row, and this row
@@ -79,10 +79,10 @@ class ValueCache(object):
         old_value = self.delete_by_entity(entity)[1]
         if old_value is None:
             # there was no old data, so everything has changed
-            changed_columns = set(six.iterkeys(values))
+            changed_columns = set(values.keys())
             new_values = values
         else:
-            changed_columns = set(col for col, value in six.iteritems(values) if value != old_value.get(col, _fill))
+            changed_columns = set(col for col, value in values.items() if value != old_value.get(col, _fill))
             new_values = old_value
             new_values.update(values)
         self.data_by_rows[row] = new_values

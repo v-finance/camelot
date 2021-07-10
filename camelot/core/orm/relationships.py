@@ -404,7 +404,7 @@ ManyToMany_ relationships.
 
 import logging
 
-import six
+
 
 from sqlalchemy import schema, sql
 from sqlalchemy.orm import relationship, backref, class_mapper
@@ -435,7 +435,7 @@ class Relationship( DeferredProperty ):
     @property
     def target( self ):
         if not self._target:
-            if isinstance( self.of_kind, six.string_types ):
+            if isinstance( self.of_kind, str ):
                 try:
                     # for Elixir compatibility, support full class names,
                     # including the modules, but only use the last part
@@ -1127,7 +1127,7 @@ def _get_join_clauses( local_table, local_cols1, local_cols2, target_table ):
     # match.
 
 #TODO: rewrite this. Even with the comment, I don't even understand it myself.
-    for cols, constraint in six.iteritems(constraint_map):
+    for cols, constraint in constraint_map.items():
         if cols == cols1 or (cols != cols2 and
                              not cols1 and (cols2 in constraint_map or
                                             cols2 is None)):

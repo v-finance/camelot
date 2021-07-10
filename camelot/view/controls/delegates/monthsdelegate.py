@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import Qt, variant_to_py, qtranslate
 from camelot.view.controls.editors import MonthsEditor
@@ -35,8 +35,7 @@ from camelot.view.controls.delegates.customdelegate import CustomDelegate, Docum
 from camelot.core.utils import ugettext
 from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class MonthsDelegate(CustomDelegate):
+class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """MonthsDelegate
 
     custom delegate for showing and editing months and years

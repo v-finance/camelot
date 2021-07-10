@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .wideeditor import WideEditor
@@ -279,7 +279,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def get_value(self):
         from xml.dom import minidom
-        tree = minidom.parseString(six.text_type(self.textedit.toHtml()).encode('utf-8'))
+        tree = minidom.parseString(str(self.textedit.toHtml()).encode('utf-8'))
         value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
         return CustomEditor.get_value(self) or value
 
@@ -292,7 +292,7 @@ class RichTextEditor(CustomEditor, WideEditor):
     def set_value( self, value ):
         value = CustomEditor.set_value(self, value)
         if value!=None:
-            if six.text_type(self.textedit.toHtml())!=value:
+            if str(self.textedit.toHtml())!=value:
                 self.textedit.setHtml(value)
         else:
             self.textedit.clear()

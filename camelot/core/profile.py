@@ -42,7 +42,7 @@ import base64
 import functools
 import logging
 
-import six
+
 
 from .qt import QtCore, variant_to_py, py_to_variant
 
@@ -70,7 +70,7 @@ class Profile(object):
         kwargs['name'] = name
         for profile_field in profile_fields:
             kwargs.setdefault( profile_field, '' )
-        for key, value in six.iteritems(kwargs):
+        for key, value in kwargs.items():
             setattr(self, key, value )
     
     def get_connection_string( self ):
@@ -118,7 +118,7 @@ class Profile(object):
             encoded form
         """
         state = dict()
-        for key, value in six.iteritems(self.__dict__):
+        for key, value in self.__dict__.items():
             # flip 'pass' and 'password' for backward compatibility
             if key=='password':
                 key='pass'
@@ -133,7 +133,7 @@ class Profile(object):
         :param state: a `dict` with the profile information in encrypted and
             encoded form, as created by `__getstate__`.
         """
-        for key, value in six.iteritems(state):
+        for key, value in state.items():
             if key=='pass':
                 key='password'
             if key=='profilename':
@@ -187,18 +187,14 @@ class ProfileStore(object):
         """:return: the :class:`Crypto.Cipher` object used for encryption and
         decryption in :meth:`_encode` and :meth:`_decode`.
         """
-        if six.PY2:
-            from Crypto.Cipher import ARC4
-            return ARC4.new( self.cipher_key )
-        else:
-            from .pyarc4 import Arc4
-            return Arc4(self.cipher_key.encode('ascii'))
+        from .pyarc4 import Arc4
+        return Arc4(self.cipher_key.encode('ascii'))
 
     def _encode( self, value ):
         """Encrypt and encode a single value, this method is used to 
         write profiles."""
         cipher = self._cipher()
-        return base64.b64encode( cipher.encrypt( six.text_type(value).encode('utf-8' ) ) ).decode('ascii')
+        return base64.b64encode( cipher.encrypt( str(value).encode('utf-8' ) ) ).decode('ascii')
             
     def _decode( self, value ):
         """Decrypt and decode a single value, this method is used to
@@ -239,7 +235,7 @@ class ProfileStore(object):
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
             encrypted = int(variant_to_py(qsettings.value('encrypted', py_to_variant(1))))
-            for key in six.iterkeys(state):
+            for key in state.keys():
                 value = variant_to_py(qsettings.value(key, empty))
                 if (key != 'profilename') and (encrypted==1):
                     value = self._decode(value or b'')
@@ -271,7 +267,7 @@ class ProfileStore(object):
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
             qsettings.setValue('encrypted', py_to_variant(1))
-            for key, value in six.iteritems(profile.__getstate__()):
+            for key, value in profile.__getstate__().items():
                 if key != 'profilename':
                     value = self._encode(value)
                 else:

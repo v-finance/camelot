@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ...core.qt import QtCore, QtWidgets, QtGui
 from camelot.core.utils import ugettext as _
@@ -68,16 +68,16 @@ class SimpleSearchControl(DecoratedLineEdit, AbstractActionWidget):
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)
-    def _start_search_timer(self, str=''):
+    def _start_search_timer(self, str_=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer is not None:
             timer.start()
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)
-    def start_search(self, str=''):
+    def start_search(self, str_=''):
         timer = self.findChild( QtCore.QTimer, 'timer' )
         if timer is not None:
             timer.stop()
-        text = six.text_type(self.text())
+        text = str(self.text())
         self.run_action(text)

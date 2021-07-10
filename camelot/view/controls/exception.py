@@ -32,7 +32,7 @@
 import collections
 from ...core.qt import QtWidgets
 
-import six
+
 
 from camelot.core.utils import ugettext as _
 from camelot.core.exception import UserException
@@ -66,10 +66,10 @@ def register_exception(logger, text, exception):
     text  = _('An unexpected event occurred')
     icon  = None
     # chop the size of the text to prevent error dialogs larger than the screen
-    resolution = six.text_type(exception)[:1000]
-    from six.moves import cStringIO
+    resolution = str(exception)[:1000]
+    from io import StringIO
     import traceback
-    sio = cStringIO()
+    sio = StringIO()
     traceback.print_exc(file=sio)
     detail = sio.getvalue()
     sio.close()
@@ -90,10 +90,10 @@ class ExceptionDialog(QtWidgets.QMessageBox):
 
         (title, text, icon, resolution, detail) = exception_info
         super( ExceptionDialog, self ).__init__(QtWidgets.QMessageBox.Warning,
-                                                six.text_type(title), 
-                                                six.text_type(text))
-        self.setInformativeText(six.text_type(resolution or ''))
-        self.setDetailedText(six.text_type(detail or ''))
+                                                str(title), 
+                                                str(text))
+        self.setInformativeText(str(resolution or ''))
+        self.setDetailedText(str(detail or ''))
         if icon is not None:
             self.setIconPixmap(from_admin_icon(icon).getQPixmap())
 

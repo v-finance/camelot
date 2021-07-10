@@ -6,7 +6,7 @@ import unittest
 
 import openpyxl
 
-import six
+
 
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.action import Action, ActionStep, State, Mode
@@ -205,10 +205,10 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.grab_widget(dialog)
 
     def test_open_file( self ):
-        stream = six.BytesIO(b'1, 2, 3, 4')
+        stream = io.BytesIO(b'1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
-        self.assertTrue( six.text_type( open_stream ) )
-        action_steps.OpenString( six.b('1, 2, 3, 4') )
+        self.assertTrue( str( open_stream ) )
+        action_steps.OpenString(b'1, 2, 3, 4')
         context = { 'columns':['width', 'height'],
                     'table':[[1,2],[3,4]] }
         action_steps.OpenJinjaTemplate( 'list.html', context )
@@ -218,7 +218,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         update_progress = action_steps.UpdateProgress(
             20, 100, _('Importing data')
         )
-        self.assertTrue( six.text_type( update_progress ) )
+        self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()

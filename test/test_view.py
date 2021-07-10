@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import six
+
 
 import datetime
 import dataclasses
@@ -35,7 +35,7 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.mainwindowproxy import MainWindowProxy
 from camelot.view import forms
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.proxy.collection_proxy import ProxyRegistry, CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
 from camelot.view.controls.progress_dialog import ProgressDialog
 
@@ -443,7 +443,8 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.movie_admin = self.app_admin.get_related_admin( Movie )
         self.admin_route = self.movie_admin.get_admin_route()
         self.movie_model = CollectionProxy(self.admin_route)
-        self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
+        proxy = self.movie_admin.get_proxy(self.movie_admin.get_query())
+        self.movie_model.set_value(ProxyRegistry.register(proxy))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
         ))
@@ -476,7 +477,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         form.add_field( 'tags' )
         form.add_field( forms.Break() )
         form.add_field( forms.Label('End') )
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
@@ -486,7 +487,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
 
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
@@ -498,20 +499,20 @@ class FormTest(unittest.TestCase, GrabMixinCase):
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
@@ -842,7 +843,7 @@ class ControlsTest(
         widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
-        model.set_value(self.proxy)
+        model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
         model.timeout_slot()
         self.process()
@@ -870,7 +871,7 @@ class ControlsTest(
         widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
-        model.set_value(self.proxy)
+        model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
         model.timeout_slot()
         self.process()

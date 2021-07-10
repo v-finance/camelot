@@ -31,7 +31,7 @@
 editors or other widgets.
 """
 
-import six
+
 
 from camelot.core.qt import QtGui, variant_api
 
@@ -41,7 +41,7 @@ class DateValidator(QtGui.QValidator):
 
     def validate(self, input_, pos):
         try:
-            date_from_string(six.text_type(input_))
+            date_from_string(str(input_))
         except ParsingError:
             if variant_api == 1:
                 return (QtGui.QValidator.Intermediate, pos)

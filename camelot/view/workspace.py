@@ -29,7 +29,7 @@
 
 """Convenience functions and classes to present views to the user"""
 
-import six
+
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')
@@ -96,7 +96,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         i = self.currentIndex()
         return self.widget(i)
 
-    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(str)
     def change_title(self, new_title):
         """
         Slot to be called when the tile of a view needs to change.

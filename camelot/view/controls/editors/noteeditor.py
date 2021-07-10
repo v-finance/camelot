@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, QtWidgets
 from camelot.view.art import ColorScheme
@@ -68,7 +68,7 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         value = super( NoteEditor, self ).set_value( value )
         self.setVisible( value != None )
         if value:
-            self.setText( six.text_type( value ) )
+            self.setText( str( value ) )
     
     def set_field_attributes(self, **kwargs):
         kwargs['background_color'] = kwargs.get('background_color') or color
