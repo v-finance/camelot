@@ -180,6 +180,10 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
 top_level_windows = []
 
 def apply_form_state(view, parent, state):
+    # make sure all window events are processed before starting to move,
+    # and resize the window, in a possibly futile attempt to have consistent
+    # application of the form state.
+    QtCore.QCoreApplication.instance().processEvents()
     #
     # position the new window in the center of the same screen
     # as the parent.
@@ -267,4 +271,5 @@ def show_top_level(view, parent, state=None):
     #
     view.show()
     apply_form_state(view, parent, state)
+
 
