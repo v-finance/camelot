@@ -50,6 +50,7 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             if (forever is not None) and (model_context.value==forever):
                 value_str = qtranslate('Forever')
             else:
+                value_str = ''
                 years, months = divmod(model_context.value, 12)
                 if years!=0:
                     value_str = qtranslate('%n years', n=years) + ' '
