@@ -51,7 +51,6 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
