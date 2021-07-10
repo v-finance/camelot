@@ -117,9 +117,10 @@ class FormWidget(QtWidgets.QWidget):
 
     def __init__(self, admin, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
+        self.columns, self.form_display, self.admin = columns, form_display, admin
         widget_mapper = QtWidgets.QDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
-        widget_mapper.setItemDelegate(DelegateManager(columns, parent=self))
+        widget_mapper.setItemDelegate(DelegateManager(parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )
         widget_layout = QtWidgets.QHBoxLayout()
         widget_layout.setSpacing(0)
@@ -127,7 +128,6 @@ class FormWidget(QtWidgets.QWidget):
         self._index = 0
         self.setLayout(widget_layout)
         self.set_model(model)
-        self.create_widgets(widget_mapper, columns, form_display, admin)
 
     def set_model(self, model):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
@@ -166,6 +166,15 @@ class FormWidget(QtWidgets.QWidget):
     def _layout_changed(self, index=None, start=None, end=None):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper is not None:
+            if (widget_mapper.mappedWidgetAt(0) is None) and (widget_mapper.model().columnCount()>0):
+                # no widgets have been mapped yet, but only create and map them
+                # when the columns are available in the model
+                self.create_widgets(
+                    widget_mapper,
+                    self.columns,
+                    self.form_display,
+                    self.admin
+                )
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
                 widget_mapper.setCurrentIndex(self._index)
