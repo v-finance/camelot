@@ -68,11 +68,6 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
-    def paint(self, painter, option, index):
-        """Use a custom delegate paint method if it exists"""
-        delegate = self.get_column_delegate(index.column())
-        delegate.paint(painter, option, index)
-
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
         try:
