@@ -15,7 +15,7 @@ class Icon(DataclassSerializable):
 
 .. attribute:: pixmap_size
 
-    The desired size of the pixmap.
+    The desired size of the pixmap, should be higher than 0, or the painter will fail
 
 .. attribute:: color
 
