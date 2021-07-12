@@ -8,6 +8,8 @@ from camelot.core.orm import (Field, ManyToMany, ManyToOne, OneToMany, has_field
                               has_and_belongs_to_many)
 
 from sqlalchemy.types import String, Unicode, Integer
+from sqlalchemy import text
+
 
 class TestOrderBy( TestMetaData ):
     
@@ -22,7 +24,7 @@ class TestOrderBy( TestMetaData ):
     
             # order titles descending by year, then by title
             __mapper_args__ = {
-                'order_by': ['-year', 'title']
+                'order_by': [text('-year'), 'title']
             }
     
             def __str__(self):

@@ -13,18 +13,20 @@ from camelot.core.orm import (Field, ManyToMany, ManyToOne,
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import orm, and_, schema
 
+# import wingdbstub
+
 class TestManyToMany( TestMetaData ):
 
     def test_simple( self ):
         
         class A( self.Entity ):
-            __tablename__ = 'A'
+            __tablename__ = 'TestManyToMany_A'
             name = Field(String(60))
             as_ = ManyToMany('A')
             bs_ = ManyToMany('B')
 
         class B( self.Entity ):
-            __tablename__ = 'B'
+            __tablename__ = 'TestManyToMany_B'
             name = Field(String(60))
             as_ = ManyToMany('A')
 
@@ -270,7 +272,7 @@ class TestManyToMany( TestMetaData ):
 
     def test_local_and_remote_colnames(self):
         class A(self.Entity):
-            __tablename__ = 'A'
+            __tablename__ = 'TestManyToMany_A'
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
@@ -278,7 +280,7 @@ class TestManyToMany( TestMetaData ):
                                   remote_colname="baz")
 
         class B(self.Entity):
-            __tablename__ = 'B'
+            __tablename__ = 'TestManyToMany_B'
             name = Field(String(60))
             as_ = ManyToMany('A', remote_colname=['foo', 'bar'],
                                   local_colname="baz")
@@ -307,14 +309,14 @@ class TestManyToMany( TestMetaData ):
                                                        ['a.key1', 'a.key2']))
 
         class A(self.Entity):
-            __tablename__ = 'A'
+            __tablename__ = 'a'
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
             bs_ = ManyToMany('B', table=a_b)
 
         class B(self.Entity):
-            __tablename__ = 'B'
+            __tablename__ = 'b'
             name = Field(String(60))
             as_ = ManyToMany('A', table=a_b)
 
@@ -340,7 +342,7 @@ class TestManyToMany( TestMetaData ):
                            schema.Column('b_id', String(60)))
 
         class A(self.Entity):
-            __tablename__ = 'A'
+            __tablename__ = 'TestManyToMany_A'
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
@@ -352,7 +354,7 @@ class TestManyToMany( TestMetaData ):
                                  a_b.c.b_id])
 
         class B(self.Entity):
-            __tablename__ = 'B'
+            __tablename__ = 'TestManyToMany_B'
             name = Field(String(60))
 
         self.create_all()
