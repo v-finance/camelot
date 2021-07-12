@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets
 
@@ -74,7 +74,7 @@ class TextLineEditor(CustomEditor):
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             if value is not None:
-                text_input.setText(six.text_type(value))
+                text_input.setText(str(value))
             else:
                 text_input.setText('')
         return value
@@ -86,7 +86,7 @@ class TextLineEditor(CustomEditor):
 
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
-            value = six.text_type(text_input.text())
+            value = str(text_input.text())
             if len(value) == 0:
                 # convert an empty string to None, but not if the original
                 # value itself was an empty string
@@ -95,7 +95,7 @@ class TextLineEditor(CustomEditor):
                 return None
             return value
 
-    value = QtCore.qt_property(six.text_type, get_value, set_value)
+    value = QtCore.qt_property(str, get_value, set_value)
 
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
@@ -107,7 +107,7 @@ class TextLineEditor(CustomEditor):
             value = text_input.text()
             text_input.setReadOnly(not editable)
             text_input.setText(value)
-            text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            text_input.setToolTip(str(kwargs.get('tooltip') or ''))
             set_background_color_palette(text_input,
                                          kwargs.get('background_color'))
             if completer:

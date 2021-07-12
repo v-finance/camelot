@@ -27,13 +27,12 @@
 #
 #  ============================================================================
 
-import six
+
 
 from .texteditdelegate import TextEditDelegate, DocumentationMetaclass
 from camelot.view.controls.editors.noteeditor import NoteEditor
 
-@six.add_metaclass(DocumentationMetaclass)
-class NoteDelegate(TextEditDelegate):
+class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
     
     editor = NoteEditor
 

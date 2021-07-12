@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import variant_to_py, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
@@ -35,8 +35,7 @@ from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 # from camelot.view.art import Icon
 
-@six.add_metaclass(DocumentationMetaclass)
-class VirtualAddressDelegate(CustomDelegate):
+class VirtualAddressDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """
   """
   

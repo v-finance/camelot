@@ -27,13 +27,12 @@
 #
 #  ============================================================================
 
-import six
+
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class LabelDelegate(CustomDelegate):
+class LabelDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate to display an attribute as a label
     """
     

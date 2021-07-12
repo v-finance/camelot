@@ -27,20 +27,16 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-if six.PY3:
-    long_int = int
-else:
-    long_int = six.integer_types[-1]
+long_int = int
 
-@six.add_metaclass(DocumentationMetaclass)
-class IntegerDelegate(CustomDelegate):
+class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
@@ -52,9 +48,9 @@ class IntegerDelegate(CustomDelegate):
         if model_context.value is not None:
             value_str = locale.toString(long_int(model_context.value))
             if model_context.field_attributes.get('suffix') is not None:
-                value_str = value_str + ' ' + six.text_type(model_context.field_attributes.get('suffix'))
+                value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
             if model_context.field_attributes.get('prefix') is not None:
-                value_str = six.text_type(model_context.field_attributes.get('prefix')) + ' ' + value_str
+                value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         return item
 

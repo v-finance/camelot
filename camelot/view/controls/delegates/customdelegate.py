@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 import json
 import logging
 import dataclasses
@@ -85,7 +85,7 @@ def DocumentationMetaclass(name, bases, dct):
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
         dct['__doc__'] = dct['__doc__'] + row_format%('**Field Attributes**', '**Editor**') + '\n'
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
-        for state, attrs in six.iteritems(states):
+        for state, attrs in states.items():
             for i,attr in enumerate(attrs):
                 if i==0:
                     image = '.. image:: /_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
@@ -219,7 +219,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
-            editor.setToolTip( six.text_type( field_attributes.get('tooltip', '') ) )
+            editor.setToolTip( str( field_attributes.get('tooltip', '') ) )
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
@@ -288,9 +288,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         
 
         if prefix:
-            text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )
+            text = '%s %s' % (str( prefix ).strip(), str( text ).strip() )
         if suffix:
-            text = '%s %s' % (six.text_type( text ).strip(), six.text_type( suffix ).strip() )
+            text = '%s %s' % (str( text ).strip(), str( suffix ).strip() )
 
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
@@ -114,9 +114,9 @@ class VirtualAddressEditor(CustomEditor):
             idx = camelot.types.VirtualAddress.virtual_address_types.index(self._address_type or value[0])
             self.combo.setCurrentIndex(idx)
             icon = FontIcon('print').getQIcon() # 'tango/16x16/devices/printer.png'
-            if six.text_type(self.combo.currentText()) == 'fax':
+            if str(self.combo.currentText()) == 'fax':
                 icon = FontIcon('fax').getQIcon() # 'tango/16x16/devices/printer.png'
-            if six.text_type(self.combo.currentText()) == 'email':
+            if str(self.combo.currentText()) == 'email':
                 icon = FontIcon('envelope-open').getQIcon() # 'tango/16x16/apps/internet-mail.png'
                 self.label.setIcon(icon)
                 self.label.show()
@@ -127,11 +127,11 @@ class VirtualAddressEditor(CustomEditor):
             self.update_validator()
 
     def get_value(self):
-        address_value = six.text_type(self.editor.text())
+        address_value = str(self.editor.text())
         if not len(address_value):
             value = None
         else:
-            value = (six.text_type(self.combo.currentText()), address_value)
+            value = (str(self.combo.currentText()), address_value)
         return CustomEditor.get_value(self) or value
 
     def set_enabled(self, editable=True):
@@ -144,7 +144,7 @@ class VirtualAddressEditor(CustomEditor):
                 self.label.setEnabled(True)
 
     def update_validator(self):
-        address_type = six.text_type(self.combo.currentText())
+        address_type = str(self.combo.currentText())
         validator = validators.get(address_type, any_character_validator)
         # change the validator instead of the regexp of the validator to inform
         # the editor it needs to update its background color
@@ -154,13 +154,13 @@ class VirtualAddressEditor(CustomEditor):
     def mail_click(self):
         address = self.editor.text()
         url = QtCore.QUrl()
-        url.setUrl( u'mailto:%s?subject=Subject'%six.text_type(address) )
+        url.setUrl( u'mailto:%s?subject=Subject'%str(address) )
         QtGui.QDesktopServices.openUrl(url)
 
     def emit_editing_finished(self):
         self.value = []
-        self.value.append(six.text_type(self.combo.currentText()))
-        self.value.append(six.text_type(self.editor.text()))
+        self.value.append(str(self.combo.currentText()))
+        self.value.append(str(self.editor.text()))
         self.set_value(self.value)
         # emiting editingFinished without a value for the mechanism itself will lead to
         # integrity errors
@@ -173,7 +173,7 @@ class VirtualAddressEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(VirtualAddressEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
-        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+        self.setToolTip(str(kwargs.get('tooltip') or ''))
 
 
 

@@ -27,12 +27,11 @@
 #
 #  ============================================================================
 
-import six
+
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class ColorDelegate(CustomDelegate):
+class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     editor = editors.ColorEditor

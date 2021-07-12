@@ -31,10 +31,9 @@ from .customdelegate import DocumentationMetaclass
 from .datedelegate import DateDelegate
 from camelot.view.controls import editors
 
-import six
 
-@six.add_metaclass(DocumentationMetaclass)
-class DateTimeDelegate(DateDelegate):
+
+class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
 
     editor = editors.DateTimeEditor
 

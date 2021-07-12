@@ -88,7 +88,7 @@ entities = EntityCollection()
 #   before and after mapper and table creation.
 #
 
-import six
+
 
 from . entity import EntityBase, EntityMeta
 
@@ -99,7 +99,7 @@ def process_deferred_properties( class_registry = entities ):
     """
     LOGGER.debug( 'process deferred properties' )
     descriptors = list()
-    for cls in six.itervalues(class_registry):
+    for cls in class_registry.values():
         if isinstance( cls, ( _ModuleMarker, _MultipleClassMarker ) ):
             continue
         descriptor = getattr(cls, '_descriptor')

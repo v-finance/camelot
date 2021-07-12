@@ -27,15 +27,14 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class TextEditDelegate(CustomDelegate):
+class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
   
     editor = editors.TextEditEditor
@@ -49,7 +48,7 @@ class TextEditDelegate(CustomDelegate):
     def get_standard_item(cls, locale, model_context):
         item = super(TextEditDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
-            item.setData(py_to_variant(six.text_type(model_context.value)), PreviewRole)
+            item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item
 
 

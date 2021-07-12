@@ -29,7 +29,7 @@
 
 import datetime
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets, Qt, py_to_variant
 
@@ -61,7 +61,7 @@ class DateEditor(CustomEditor):
         line_edit = DecoratedLineEdit()
         line_edit.setValidator(validator)
         line_edit.setObjectName('date_line_edit')
-        line_edit.set_minimum_width(six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)))
+        line_edit.set_minimum_width(str(QtCore.QDate(2000,12,22).toString(self.date_format)))
         line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))
 
         # The order of creation of this widgets and their parenting
@@ -147,7 +147,7 @@ class DateEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             try:
-                value = date_from_string( six.text_type( line_edit.text() ) )
+                value = date_from_string( str( line_edit.text() ) )
             except ParsingError:
                 value = None
         return CustomEditor.get_value(self) or value
@@ -157,7 +157,7 @@ class DateEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             self.set_enabled(kwargs.get('editable', False))
-            line_edit.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            line_edit.setToolTip(str(kwargs.get('tooltip') or ''))
 
     def set_background_color(self, background_color):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
@@ -176,11 +176,11 @@ class DateEditor(CustomEditor):
     def set_special_date(self, action):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
-            if six.text_type(action.text()) == ugettext('Today'):
+            if str(action.text()) == ugettext('Today'):
                 self.set_value(datetime.date.today())
-            elif six.text_type(action.text()) == ugettext('Far future'):
+            elif str(action.text()) == ugettext('Far future'):
                 self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-            elif six.text_type(action.text()) == ugettext('Clear'):
+            elif str(action.text()) == ugettext('Clear'):
                 self.set_value(None)
             line_edit.setFocus()
             self.editingFinished.emit()

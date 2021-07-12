@@ -29,7 +29,7 @@
 
 import logging
 
-import six
+
 
 from ....core.qt import QtCore, py_to_variant, variant_to_py
 from ....core.item_model import (
@@ -40,8 +40,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
-@six.add_metaclass(DocumentationMetaclass)
-class Many2OneDelegate(CustomDelegate):
+class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
 
   .. image:: /_static/manytoone.png

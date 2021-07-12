@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.item_model import FieldAttributesRole
 from ....core.qt import variant_to_py, Qt, py_to_variant
@@ -37,10 +37,9 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 
-@six.add_metaclass(DocumentationMetaclass)
-class One2ManyDelegate(CustomDelegate):
+class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
-  
+
   .. image:: /_static/onetomany.png
   """
 
