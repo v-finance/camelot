@@ -135,7 +135,11 @@ class FormWidget(QtWidgets.QWidget):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
         if model is not None:
             model.headerDataChanged.connect(self._header_data_changed)
-            model.layoutChanged.connect(self._layout_changed)
+            #
+            # connecting to layoutChanged causes a huge slowdown, as it appears
+            # that layoutChanged is emitted once for each column
+            #
+            #model.layoutChanged.connect(self._layout_changed)
             model.modelReset.connect(self._layout_changed)
             model.rowsInserted.connect(self._layout_changed)
             model.rowsRemoved.connect(self._layout_changed)
@@ -171,6 +175,7 @@ class FormWidget(QtWidgets.QWidget):
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
                 widget_mapper.setCurrentIndex(self._index)
+            print('layout changed', self.sender(), index, start, end, widget_mapper.model().columnCount(), widget_mapper.model().rowCount())
             widget_mapper.revert()
             self.changed_signal.emit( widget_mapper.currentIndex() )
 
