@@ -13,20 +13,20 @@ from camelot.core.orm import (Field, ManyToMany, ManyToOne,
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import orm, and_, schema
 
-# import wingdbstub
+#import wingdbstub
 
 class TestManyToMany( TestMetaData ):
 
     def test_simple( self ):
         
         class A( self.Entity ):
-            __tablename__ = 'TestManyToMany_A'
+            __tablename__ = 'a'
             name = Field(String(60))
             as_ = ManyToMany('A')
             bs_ = ManyToMany('B')
 
         class B( self.Entity ):
-            __tablename__ = 'TestManyToMany_B'
+            __tablename__ = 'b'
             name = Field(String(60))
             as_ = ManyToMany('A')
 
