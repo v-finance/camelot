@@ -36,7 +36,7 @@ the `ListActionGuiContext`.
 import itertools
 import typing
 
-from ...admin.admin_route import AdminRoute
+from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
@@ -106,7 +106,7 @@ class UpdateTableView( ActionStep ):
     #top_toolbar_actions: TODO
     #bottom_toolbar_actions: TODO
     list_action: tuple # admin route for the action
-    proxy: int # id of proxy in ProxyRegistry
+    proxy_route: Route
 
     def __init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
@@ -122,7 +122,7 @@ class UpdateTableView( ActionStep ):
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
         self.list_action = AdminRoute._register_list_action_route(self.admin_route, admin.get_list_action())
         proxy = admin.get_proxy(value)
-        self.proxy = ProxyRegistry.register(proxy)
+        self.proxy_route = [str(ProxyRegistry.register(proxy))]
     
     def update_table_view(self, table_view):
         from camelot.view.controls.search import SimpleSearchControl
@@ -133,7 +133,7 @@ class UpdateTableView( ActionStep ):
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
-        table_view.set_value(self.proxy)
+        table_view.set_value(int(self.proxy_route[0]))
         table_view.set_list_actions(self.list_actions)
         table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
@@ -232,7 +232,7 @@ class OpenQmlTableView(OpenTableView):
         new_model = CollectionProxy(self.admin_route)
         new_model.setParent(quick_view)
         list(new_model.add_columns((fn for fn, _fa in self.columns)))
-        new_model.set_value(self.proxy)
+        new_model.set_value(int(self.proxy_route[0]))
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
