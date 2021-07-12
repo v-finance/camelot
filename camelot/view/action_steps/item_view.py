@@ -42,11 +42,12 @@ from ...admin.action.base import ActionStep
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
+from ...core.item_model import ProxyRegistry
 #from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import ProxyRegistry, CollectionProxy
+from ..proxy.collection_proxy import CollectionProxy
 
 
 class Sort( ActionStep ):

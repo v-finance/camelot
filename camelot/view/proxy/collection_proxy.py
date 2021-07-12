@@ -53,7 +53,6 @@ from six import moves
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
@@ -63,7 +62,7 @@ from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
     ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
     CompletionsRole, CompletionPrefixRole, ActionRoutesRole,
-    ActionStatesRole
+    ActionStatesRole, ProxyRegistry
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -711,32 +710,6 @@ class SetHeaderData(object):
         item_model.settings.setValue(self.field_name, self.width)
         item_model.settings.endGroup()
         item_model.settings.endGroup()
-
-
-class ProxyRegistry:
-    """Registry to hold proxy objects"""
-
-    _register = {}
-    _last_id = 0
-
-    @classmethod
-    def register(cls, proxy):
-        """Register a proxy
-
-        :return: The id associated with the registered proxy.
-        """
-        next_id = cls._last_id + 1
-        cls._register[next_id] = proxy
-        cls._last_id = next_id
-        return next_id
-
-    @classmethod
-    def get(cls, key, default=None):
-        return cls._register.get(key, default)
-
-    @classmethod
-    def pop(cls, key, default=None):
-        return cls._register.pop(key, default)
 
 
 class CollectionProxy(QtGui.QStandardItemModel):

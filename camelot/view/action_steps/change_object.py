@@ -39,7 +39,7 @@ from ..controls.action_widget import ActionPushButton
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
-from camelot.core.item_model import ValidRole, ValidMessageRole
+from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
@@ -49,7 +49,7 @@ from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import ProxyRegistry, CollectionProxy
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.art import from_admin_icon
 
 class ChangeObjectDialog( StandaloneWizardPage ):

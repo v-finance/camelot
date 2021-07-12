@@ -31,11 +31,11 @@ import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
-from camelot.view.proxy.collection_proxy import ProxyRegistry, CollectionProxy
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
-from ....core.item_model import ListModelProxy
+from ....core.item_model import ListModelProxy, ProxyRegistry
 from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
 from ..filter_widget import ComboBoxFilterWidget
 from .wideeditor import WideEditor
