@@ -39,7 +39,6 @@ from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
 from ..action_widget import ActionToolbutton
-from camelot.view.proxy import ValueLoading
 
 LOGGER = logging.getLogger(__name__)
 
@@ -248,54 +247,3 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
-
-    def paint_text(
-        self,
-        painter,
-        option,
-        index,
-        text,
-        margin_left=0,
-        margin_right=0,
-        horizontal_align=None,
-        vertical_align=Qt.AlignVCenter
-    ):
-        """Paint unicode text into the given rect defined by option, and fill the rect with
-        the background color
-        :arg margin_left: additional margin to the left, to be used for icons or others
-        :arg margin_right: additional margin to the right, to be used for icons or others"""
-
-        rect = option.rect
-        # prevent text being centered if the height of the cell increases beyond multiple
-        # lines of text
-        if rect.height() > 2 * self._height:
-            vertical_align = Qt.AlignTop
-
-        field_attributes = variant_to_py(index.data(FieldAttributesRole))
-        if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            background_color = field_attributes.get( 'background_color', None )
-            prefix = field_attributes.get( 'prefix', None )
-            suffix = field_attributes.get( 'suffix', None )
-
-        if( option.state & QtWidgets.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = option.palette.highlightedText().color()
-        else:
-            color_group = color_groups[editable]
-            painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.Base) )
-            fontColor = option.palette.color(color_group, QtGui.QPalette.Text)
-        
-
-        if prefix:
-            text = '%s %s' % (str( prefix ).strip(), str( text ).strip() )
-        if suffix:
-            text = '%s %s' % (str( text ).strip(), str( suffix ).strip() )
-
-        painter.setPen(fontColor.toRgb())
-        painter.drawText(rect.x() + 2 + margin_left,
-                         rect.y() + 2,
-                         rect.width() - 4 - (margin_left + margin_right),
-                         rect.height() - 4, # not -10, because the row might not be high enough for this
-                         vertical_align | (horizontal_align or self.horizontal_align),
-                         text)

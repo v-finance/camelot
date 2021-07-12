@@ -129,7 +129,6 @@ class UpdateTableView( ActionStep ):
         table_view.set_admin()
         model = table_view.get_model()
         list(model.add_columns((fn for fn, _fa in self.columns)))
-        table_view.set_columns(self.columns)
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)

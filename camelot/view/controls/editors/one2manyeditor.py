@@ -161,7 +161,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
-            delegate = DelegateManager(columns, parent=self)
+            delegate = DelegateManager(parent=self)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
