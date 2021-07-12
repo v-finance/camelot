@@ -105,7 +105,7 @@ class UpdateTableView( ActionStep ):
     #right_toolbar_actions: TODO
     #top_toolbar_actions: TODO
     #bottom_toolbar_actions: TODO
-    list_action: tuple # admin route for the action
+    list_action: Route
     proxy_route: Route
 
     def __init__( self, admin, value ):
