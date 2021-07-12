@@ -175,7 +175,6 @@ class FormWidget(QtWidgets.QWidget):
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
                 widget_mapper.setCurrentIndex(self._index)
-            print('layout changed', self.sender(), index, start, end, widget_mapper.model().columnCount(), widget_mapper.model().rowCount())
             widget_mapper.revert()
             self.changed_signal.emit( widget_mapper.currentIndex() )
 
