@@ -272,10 +272,15 @@ class EditAction( ListContextAction ):
                 state.enabled = False
         # Check for editability on the level of the entity
         admin = model_context.admin
-        if admin and not admin.entity.is_editable():
+        if admin and not admin.is_editable():
             state.visible = False
             state.enabled = False
         return state
+
+    def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
 
 class CloseList(Action):
     """
@@ -340,9 +345,8 @@ class DuplicateSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         new_objects = list()
         updated_objects = set()
         for i, obj in enumerate(model_context.get_selection()):
@@ -381,9 +385,8 @@ class DeleteSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         if model_context.selection_count <= 0:
             return
         objects_to_remove = list( model_context.get_selection() )
@@ -862,9 +865,6 @@ class ImportFromFile( EditAction ):
     name = 'import'
 
     def model_run( self, model_context ):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         import os.path
         import chardet
         from camelot.view import action_steps
@@ -874,6 +874,8 @@ class ImportFromFile( EditAction ):
                                                 XlsReader,
                                                 ColumnMapping,
                                                 ColumnMappingAdmin )
+        super().model_run(model_context)
+        admin = model_context.admin
         file_names = yield action_steps.SelectFile()
         for file_name in file_names:
             yield action_steps.UpdateProgress( text = _('Reading data') )
@@ -972,10 +974,8 @@ class ReplaceFieldContents( EditAction ):
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context ):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         from camelot.view import action_steps
+        super().model_run(model_context)
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
             field_name = model_context.current_field_name
@@ -1100,11 +1100,9 @@ class AddExistingObject( EditAction ):
     name = 'add_object'
     
     def model_run( self, model_context ):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
+        super().model_run(model_context)
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
@@ -1154,9 +1152,8 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = self.get_admin(model_context)
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin)
         # if the object is valid, flush it, but in ancy case inform the gui
@@ -1203,9 +1200,7 @@ class ActionGroup(EditAction):
         return state
     
     def model_run(self, model_context):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
+        super().model_run(model_context)
         if model_context.mode_name is not None:
             action = self.actions[int(model_context.mode_name)]
             yield from action.model_run(model_context)
