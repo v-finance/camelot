@@ -120,7 +120,7 @@ class UpdateTableView( ActionStep ):
         self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
         self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
-        self.list_action = AdminRoute._register_list_action_route(self.admin_route, admin.get_list_action())
+        self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = [str(ProxyRegistry.register(proxy))]
     

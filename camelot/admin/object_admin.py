@@ -35,7 +35,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
-from .admin_route import AdminRoute
+from .admin_route import Route, AdminRoute
 from .action import field_action
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
@@ -417,13 +417,13 @@ be specified using the verbose_name attribute.
     def get_list_actions(self):
         return self.list_actions
 
-    def get_list_action(self):
-        """Get the action that should be triggered when an object is selected
+    def get_list_action(self) -> Route:
+        """Get the route for the action that should be triggered when an object is selected
         in a table of objects.
 
-        :return: by default returns the `list_action` attribute
+        :return: by default returns the route for the `list_action` attribute
         """
-        return self.list_action
+        return AdminRoute._register_list_action_route(self._admin_route, self.list_action)
 
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
