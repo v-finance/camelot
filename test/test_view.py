@@ -449,7 +449,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
             [fn for fn,fa in self.movie_admin.get_fields()]
         ))
 
-        delegate = DelegateManager(self.movie_admin.get_fields())
+        delegate = DelegateManager()
         self.qt_parent = QtCore.QObject()
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.movie_model )

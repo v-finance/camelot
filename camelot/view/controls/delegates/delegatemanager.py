@@ -33,7 +33,9 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 from ....core.item_model import FieldAttributesRole
 from ....core.qt import QtWidgets, Qt, variant_to_py, is_deleted
+from ..editors.customeditor import CustomEditor
 from .plaintextdelegate import PlainTextDelegate
+
 
 class DelegateManager(QtWidgets.QItemDelegate):
     """Manages custom delegates, should not be used by the application
@@ -52,8 +54,9 @@ class DelegateManager(QtWidgets.QItemDelegate):
             field_attributes = index.model().headerData(
                 column, Qt.Horizontal, FieldAttributesRole
             )
-            delegate = field_attributes['delegate'](parent=self, **field_attributes)
-            self.insert_column_delegate(column, delegate)
+            if field_attributes is not None:
+                delegate = field_attributes['delegate'](parent=self, **field_attributes)
+                self.insert_column_delegate(column, delegate)
         return delegate
 
     def insert_column_delegate(self, column, delegate):
@@ -77,7 +80,8 @@ class DelegateManager(QtWidgets.QItemDelegate):
             editor = delegate.createEditor(parent, option, index)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
-            return QtWidgets.QWidget( parent = parent )
+            #return QtWidgets.QWidget( parent = parent )
+            return CustomEditor( parent = parent )
         return editor
 
     def setEditorData(self, editor, index):
