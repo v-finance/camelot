@@ -333,17 +333,17 @@ class RowDataAdmin(ObjectAdmin):
         super(RowDataAdmin, self).__init__(admin, RowData)
         self.admin = admin
         self._new_field_attributes = {}
-        self._columns = []
+        self._fields = []
         for column_mapping in column_mappings:
             field_name = 'column_%i'%column_mapping.column
             original_field = column_mapping.field
             if original_field != None:
                 fa = self.new_field_attributes(original_field)
-                self._columns.append( (field_name, fa) )
+                self._fields.append( (field_name, fa) )
                 self._new_field_attributes[field_name] = fa
 
     def get_columns(self):
-        return self._columns
+        return [field for field, fa in self._fields]
 
     def get_verbose_name(self):
         return self.admin.get_verbose_name()
@@ -355,7 +355,7 @@ class RowDataAdmin(ObjectAdmin):
         return str()
 
     def get_fields(self):
-        return self.get_columns()
+        return self._fields
 
     def get_settings(self):
         settings = self.admin.get_settings()
@@ -363,7 +363,7 @@ class RowDataAdmin(ObjectAdmin):
         return settings
 
     def get_table(self):
-        return Table( [fn for fn, _fa in self.get_columns()] )
+        return Table( self.get_columns() )
 
     def get_all_fields_and_attributes(self):
         """
@@ -384,7 +384,7 @@ class RowDataAdmin(ObjectAdmin):
                 columns = self.admin.get_columns()
                 dynamic_attributes = self.admin.get_dynamic_field_attributes(
                     obj,
-                    [c[0] for c in columns]
+                    columns
                 )
                 for attrs in dynamic_attributes:
                     if attrs['background_color'] == ColorScheme.pink_1:

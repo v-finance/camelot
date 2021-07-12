@@ -99,7 +99,7 @@ class UpdateTableView( ActionStep ):
     search_text: typing.Union[str, None]
     title: typing.Union[str, ugettext_lazy]
     #filters: TODO
-    #columns: TODO
+    columns: typing.List[str]
     #left_toolbar_actions: TODO
     #right_toolbar_actions: TODO
     #top_toolbar_actions: TODO
@@ -128,7 +128,7 @@ class UpdateTableView( ActionStep ):
         from camelot.view.controls.search import SimpleSearchControl
         table_view.set_admin()
         model = table_view.get_model()
-        list(model.add_columns((fn for fn, _fa in self.columns)))
+        list(model.add_columns(self.columns))
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
@@ -226,11 +226,11 @@ class OpenQmlTableView(OpenTableView):
         quick_view = view.quick_view
         views = quick_view.findChild(QtCore.QObject, "qml_views")
         header_model = QtCore.QStringListModel(parent=quick_view)
-        header_model.setStringList(list(fn for fn, _fa in self.columns))
+        header_model.setStringList(self.columns)
         header_model.setParent(quick_view)
         new_model = CollectionProxy(self.admin_route)
         new_model.setParent(quick_view)
-        list(new_model.add_columns((fn for fn, _fa in self.columns)))
+        list(new_model.add_columns(self.columns))
         new_model.set_value(int(self.proxy_route[0]))
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")

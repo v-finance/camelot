@@ -851,7 +851,7 @@ class ControlsTest(
         widget.set_admin()
         model = widget.get_model()
         model.set_value(ProxyRegistry.register(self.proxy))
-        list(model.add_columns((fn for fn, fa in admin.get_columns())))
+        list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
         self.grab_widget( widget )
@@ -879,7 +879,7 @@ class ControlsTest(
         widget.set_admin()
         model = widget.get_model()
         model.set_value(ProxyRegistry.register(self.proxy))
-        list(model.add_columns((fn for fn, fa in admin.get_columns())))
+        list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
         self.grab_widget(widget)
@@ -1066,7 +1066,7 @@ class SnippetsTest(RunningThreadCase,
 
     def test_background_color(self):
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
-        person_columns = list(person_admin.get_columns())
+        person_columns = [(column, person_admin.get_field_attributes(column)) for column in person_admin.get_columns()]
         editor = One2ManyEditor(
             admin_route=person_admin.get_admin_route(),
             columns=person_columns,

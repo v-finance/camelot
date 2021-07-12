@@ -694,7 +694,7 @@ be specified using the verbose_name attribute.
             #
             direction = field_attributes.get('direction', 'onetomany')
             if direction.endswith('many') and related_admin:
-                field_attributes['columns'] = related_admin.get_columns()
+                field_attributes['columns'] = [(field, related_admin.get_field_attributes(field)) for field in related_admin.get_columns()]
                 if field_attributes.get('actions') is None:
                     field_attributes['actions'] = related_admin.get_related_toolbar_actions(
                         Qt.RightToolBarArea, direction
@@ -775,21 +775,12 @@ be specified using the verbose_name attribute.
 
     def get_columns(self):
         """
-        The columns to be displayed in the list view, returns a list of pairs
-        of the name of the field and its attributes needed to display it
-        properly
+        The columns to be displayed in the list view, returns a list of field names.
 
-        :return: [(field_name,
-                  {'widget': widget_type,
-                   'editable': True or False,
-                   'blank': True or False,
-                   'validator_list':[...],
-                   'name':'Field name'}),
-                 ...]
+        :return: [field_name, ...]
         """
         table = self.get_table()
-        return [(field, self.get_field_attributes(field))
-                for field in table.get_fields() ]
+        return [field for field in table.get_fields()]
 
     def get_validator( self, model = None):
         """Get a validator object
@@ -828,7 +819,7 @@ be specified using the verbose_name attribute.
                     continue
                 if len(self.get_descriptor_field_attributes(desc_name)):
                     fields[desc_name] = self.get_field_attributes(desc_name)
-        fields.update(self.get_columns())
+        fields.update([(field, self.get_field_attributes(field)) for field in self.get_columns()])
         fields.update(self.get_fields())
         return fields
 

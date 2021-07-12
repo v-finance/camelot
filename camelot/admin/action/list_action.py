@@ -697,8 +697,8 @@ class ExportSpreadsheet( ListContextAction ):
         mappings = []
         for i, default_field in itertools.zip_longest(column_range,
                                                       admin.get_columns(),
-                                                      fillvalue=(None,None)):
-            mappings.append(ColumnMapping(i, [row_data], default_field[0]))
+                                                      fillvalue=None):
+            mappings.append(ColumnMapping(i, [row_data], default_field))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
@@ -829,18 +829,18 @@ class PrintPreview( ListContextAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        columns = model_context.admin.get_columns()
+        admin = model_context.admin
+        columns = admin.get_columns()
         
         table = []
-        fields = [field for field, _field_attributes in columns]
-        to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
+        to_strings = [admin.get_field_attributes(field)['to_string'] for field in columns]
         column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
+            table.append( [to_strings[i]( getattr( obj, columns[i] ) ) for i in column_range] )
         context = {
-          'title': model_context.admin.get_verbose_name_plural(),
+          'title': admin.get_verbose_name_plural(),
           'table': table,
-          'columns': [field_attributes['name'] for _field, field_attributes in columns],
+          'columns': [admin.get_field_attributes(field)['name'] for field in columns],
         }
         yield action_steps.PrintJinjaTemplate( template = 'list.html',
                                                context = context )
@@ -895,8 +895,8 @@ class ImportFromFile( EditAction ):
             #
             # select columns to import
             #
-            default_fields = [field for field, fa in admin.get_columns() 
-                              if fa.get('editable', True)]
+            default_fields = [field for field in admin.get_columns()
+                              if admin.get_field_attributes(field).get('editable', True)]
             mappings = []
             # 
             # it should be possible to select not editable fields, to be able to
@@ -938,7 +938,8 @@ class ImportFromFile( EditAction ):
             with model_context.session.begin():
                 for i,row in enumerate(collection):
                     new_entity_instance = admin.entity()
-                    for field_name, attributes in row_data_admin.get_columns():
+                    for field_name in row_data_admin.get_columns():
+                        attributes = row_data_admin.get_field_attributes(field_name)
                         from_string = attributes['from_string']
                         setattr(
                             new_entity_instance,
