@@ -38,7 +38,7 @@ import typing
 
 from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
-from ...admin.action.base import ActionStep
+from ...admin.action.base import ActionStep, RenderHint
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
@@ -99,7 +99,6 @@ class UpdateTableView( ActionStep ):
     search_text: typing.Union[str, None]
     title: typing.Union[str, ugettext_lazy]
     #filters: TODO
-    #list_actions: TODO
     #columns: TODO
     #left_toolbar_actions: TODO
     #right_toolbar_actions: TODO
@@ -107,6 +106,7 @@ class UpdateTableView( ActionStep ):
     #bottom_toolbar_actions: TODO
     list_action: Route
     proxy_route: Route
+    actions: typing.List[typing.Tuple[Route, RenderHint]]
 
     def __init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
@@ -114,7 +114,7 @@ class UpdateTableView( ActionStep ):
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
-        self.list_actions = admin.get_list_actions()
+        self.actions = [(AdminRoute._register_list_action_route(self.admin_route, action), action.render_hint) for action in admin.get_list_actions()]
         self.columns = admin.get_columns()
         self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
         self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
@@ -134,7 +134,7 @@ class UpdateTableView( ActionStep ):
         # the value is set
         table_view.set_filters(self.filters)
         table_view.set_value(int(self.proxy_route[0]))
-        table_view.set_list_actions(self.list_actions)
+        table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions])
         table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
             Qt.LeftToolBarArea, self.left_toolbar_actions
