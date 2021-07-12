@@ -41,7 +41,7 @@ from camelot.view.controls.progress_dialog import ProgressDialog
 
 from .import app_admin
 
-from .test_item_model import A, QueryQStandardItemModelMixinCase
+from .test_item_model import A, QueryQStandardItemModelMixinCase, ItemModelCaseMixin
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -433,12 +433,28 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, 12 )
 
 
-class FormTest(unittest.TestCase, GrabMixinCase):
+class FormTest(
+    RunningThreadCase,
+    GrabMixinCase, ItemModelCaseMixin,ExampleModelMixinCase
+    ):
 
     images_path = static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.process()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.thread.post(cls.tear_down_sample_model)
+        cls.process()
+        super().tearDownClass()
+
     def setUp(self):
-        self.entities = [e for e in entities]
+        super().setUp()
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
         self.admin_route = self.movie_admin.get_admin_route()
@@ -448,9 +464,9 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
         ))
-
-        delegate = DelegateManager()
+        self._load_data(self.movie_model)
         self.qt_parent = QtCore.QObject()
+        delegate = DelegateManager(self.qt_parent)
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate(delegate)
@@ -459,14 +475,6 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         )
         self.person_entity = Person
         self.gui_context = GuiContext()
-
-    def tearDown(self):
-        #
-        # The global list of entities should remain clean for subsequent tests
-        #
-        for e in entities:
-            if e not in self.entities:
-                entities.remove(e)
 
     def test_form(self):
         self.grab_widget(Movie.Admin.form_display.render(self.widgets))
