@@ -791,13 +791,31 @@ class EntityFacade(object, metaclass=EntityFacadeMeta):
     
     def __init__(self, subsystem_object=None, **kwargs):
         """
-        :param subsystem_object: The subsystem_object to initialized this facade with. If not provided, the facade will create a new subsystem_object instance of its __subsystem_cls__ type.
+        :param subsystem_object: The subsystem_object to initialized this facade with. If not provided, the facade will create a new subsystem_object instance of its __subsystem_cls__ type with the given keyword arguments.
         :param kwargs: The argument to construct the subsystem_object with one needs to be created.
         """
+        subsystem_obj = subsystem_object or self.__subsystem_cls__(**kwargs)
+        assert isinstance(subsystem_obj, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
+        object.__setattr__(self, '_subsystem_object', subsystem_obj)
+        # If the subsystem object was created, try to set the discriminator value if it can be inferred (specific type registered):
         if subsystem_object is None:
-            subsystem_object = self.__subsystem_cls__(**kwargs)
-        assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
-        object.__setattr__(self, '_subsystem_object', subsystem_object)
+            discriminator_value = self.__class__._get_facade_arg('type')
+            if discriminator_value is not None:
+                self.set_discriminator_value(discriminator_value)
+    
+    def set_discriminator_value(self, discriminator_value):
+        assert discriminator_value in self.__subsystem_cls__.__types__.__members__, '{} is not a valid discriminator value for this facade.'.format(discriminator_value)
+        discriminator = self.__subsystem_cls__.get_cls_discriminator()
+        assert discriminator is not None
+        initiator = self.__class__._get_facade_arg('initiator')
+        if discriminator_value is not None:
+            if initiator is None:
+                discriminator.__set__(self.subsystem_object, discriminator_value)
+            else:
+                from vfinance.facade.properties.general import abstract_subsystem_handler
+                assert isinstance(initiator, abstract_subsystem_handler.FacadeProperty)
+                assert initiator._field_handler._field.prop == discriminator.prop
+                initiator.__set__(self, discriminator_value)
     
     @property
     def subsystem_object(self):
