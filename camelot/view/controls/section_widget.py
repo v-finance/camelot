@@ -61,22 +61,18 @@ class PaneSection(QtWidgets.QWidget):
         section_tree.setWordWrap( False )
         layout.addWidget( section_tree )
         self.setLayout(layout)
-        self.set_items(items)
+        self._items = self.set_items(items)
 
     @QtCore.qt_slot(object)
     def set_items(self, items, parent = None):
         logger.debug('setting items for current navpane section')
         section_tree = self.findChild(QtWidgets.QWidget, 'SectionTree')
+        appended_items = []
         if section_tree:
             if parent == None:
-                # take a copy, so the copy can be extended
-                self._items = list(i for i in items)
                 section_tree.clear()
                 section_tree.clear_model_items()
                 parent = section_tree
-    
-            if not items: return
-    
             for item in items:
                 if item["action_route"]:
                     state = self.action_states[tuple(item["action_route"])]
@@ -90,11 +86,13 @@ class PaneSection(QtWidgets.QWidget):
                     icon = FontIcon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
                     model_item.set_icon(icon.getQIcon())
                 section_tree.modelitems.append(model_item)
+                appended_items.append(item)
                 if len(item["items"]):
                     self.set_items(item["items"], parent = model_item)
                     self._items.extend(item["items"])
                     
             section_tree.resizeColumnToContents( 0 )
+            return appended_items
 
     @QtCore.qt_slot(QtCore.QPoint)
     def create_context_menu(self, point):

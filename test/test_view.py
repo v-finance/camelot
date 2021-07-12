@@ -557,7 +557,14 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context = FieldActionModelContext()
         field_action_model_context.value = value
         field_action_model_context.field_attributes = field_attributes
-        model.setItem(0, 0, delegate.get_standard_item(self.locale, field_action_model_context))
+
+        item = delegate.get_standard_item(
+            self.locale, field_action_model_context
+        )
+        # make sure a DisplayRole is available in the item, the standard
+        # model otherwise returns the EditRole as a DisplayRole
+        item.setData(item.data(PreviewRole), Qt.DisplayRole)
+        model.setItem(0, 0, item)
         index = model.index(0, 0, QtCore.QModelIndex())
 
         option = QtWidgets.QStyleOptionViewItem()

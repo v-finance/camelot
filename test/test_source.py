@@ -33,7 +33,7 @@ class SourceQualityCase( unittest.TestCase ):
         # test for the use of constructs that should be handled through
         # the qt compatibility module
         qt_incompatible = [
-            'QVariant',
+            #'QVariant', can be used in slot definitions
             'toBool',
             'toString()',
             'toSize()',

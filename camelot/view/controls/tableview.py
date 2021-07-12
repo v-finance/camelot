@@ -554,6 +554,8 @@ class TableView(AbstractView):
                 self.table.model().deleteLater()
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         self.table = self.AdminTableWidget(splitter)
+        delegate = DelegateManager(parent=self.table)
+        self.table.setItemDelegate(delegate)
         self.table.setObjectName('AdminTableWidget')
         new_model = CollectionProxy(self.admin_route)
         self.table.setModel(new_model)
@@ -592,11 +594,6 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.refresh()
-
-    def set_columns(self, columns):
-        delegate = DelegateManager(columns, parent=self)
-        table = self.table
-        table.setItemDelegate(delegate)
 
     def set_filters(self, filters):
         logger.debug('setting filters for tableview')
