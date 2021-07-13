@@ -122,7 +122,7 @@ class UpdateTableView( ActionStep ):
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
-        self.proxy_route = [str(ProxyRegistry.register(proxy))]
+        self.proxy_route = ProxyRegistry.register(proxy)
     
     def update_table_view(self, table_view):
         from camelot.view.controls.search import SimpleSearchControl
@@ -132,7 +132,7 @@ class UpdateTableView( ActionStep ):
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
-        table_view.set_value(int(self.proxy_route[0]))
+        table_view.set_value(self.proxy_route)
         table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions])
         table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
@@ -231,7 +231,7 @@ class OpenQmlTableView(OpenTableView):
         new_model = CollectionProxy(self.admin_route)
         new_model.setParent(quick_view)
         list(new_model.add_columns(self.columns))
-        new_model.set_value(int(self.proxy_route[0]))
+        new_model.set_value(self.proxy_route)
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)

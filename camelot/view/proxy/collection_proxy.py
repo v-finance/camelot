@@ -964,10 +964,12 @@ class CollectionProxy(QtGui.QStandardItemModel):
 
     def set_value(self, value):
         """
-        :param value: the collection of objects to display or None
+        :param value: The route containing the proxy id of te collection of objects to display.
+                      This route will contain only 1 integer which is a valid id for the
+                      :class:`camelot.core.item_model.ProxyRegistry` (e.g. ['123']).
+                      This is also the return type of ProxyRegistry.register().
         """
         self.logger.debug('set_value called')
-        assert isinstance(value, int)
         model_context = RowModelContext()
         model_context.admin = AdminRoute.admin_for(self.admin_route)
         model_context.proxy = ProxyRegistry.pop(value)
