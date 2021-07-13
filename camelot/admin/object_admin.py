@@ -694,7 +694,6 @@ be specified using the verbose_name attribute.
             #
             direction = field_attributes.get('direction', 'onetomany')
             if direction.endswith('many') and related_admin:
-                field_attributes['columns'] = [(field, related_admin.get_field_attributes(field)) for field in related_admin.get_columns()]
                 if field_attributes.get('actions') is None:
                     field_attributes['actions'] = related_admin.get_related_toolbar_actions(
                         Qt.RightToolBarArea, direction

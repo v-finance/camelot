@@ -1074,7 +1074,7 @@ class SnippetsTest(RunningThreadCase,
 
     def test_background_color(self):
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
-        person_columns = [(column, person_admin.get_field_attributes(column)) for column in person_admin.get_columns()]
+        person_columns = person_admin.get_columns()
         editor = One2ManyEditor(
             admin_route=person_admin.get_admin_route(),
             columns=person_columns,

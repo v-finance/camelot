@@ -346,7 +346,7 @@ class ChangeObjects( ActionStep ):
         self.subtitle = _('Please review the data below.')
         self.icon = Icon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.invalid_rows = set()
-        self.columns = [(field, admin.get_field_attributes(field)) for field in admin.get_columns()]
+        self.columns = admin.get_columns()
         self.action_routes = [
             AdminRoute._register_list_action_route(self.admin_route, action)
             for action in admin.get_related_toolbar_actions(
