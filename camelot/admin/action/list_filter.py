@@ -57,6 +57,8 @@ class All(object):
 class Filter(Action):
     """Base class for filters"""
 
+    name = 'filter'
+
     def __init__(self, attribute, default=All, verbose_name=None):
         """
         :param attribute: the attribute on which to filter, this attribute
@@ -169,6 +171,7 @@ class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
 
     render_hint = RenderHint.GROUP_BOX
+    name = 'group_box_filter'
 
     def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
         super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
@@ -179,6 +182,7 @@ class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
 
     render_hint = RenderHint.COMBO_BOX
+    name = 'combo_box_filter'
 
 class AbstractSearchStrategy(object):
     """
@@ -388,6 +392,7 @@ class VirtualAddressSearch(FieldSearch):
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
+    name = 'search_filter'
 
     #shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find),
                                #self)
