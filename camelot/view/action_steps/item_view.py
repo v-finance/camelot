@@ -114,8 +114,7 @@ class UpdateTableView( ActionStep ):
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
-        #self.actions = [(AdminRoute._register_list_action_route(self.admin_route, action), action.render_hint) for action in admin.get_list_actions()]
-        self.list_actions = admin.get_list_actions()
+        self.actions = admin.get_list_actions()
         self.columns = admin.get_columns()
         self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
         self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
@@ -134,8 +133,7 @@ class UpdateTableView( ActionStep ):
         # the value is set
         table_view.set_filters(self.filters)
         table_view.set_value(self.proxy_route)
-        #table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions])
-        table_view.set_list_actions(self.list_actions)
+        table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions if action[1] == RenderHint.PUSH_BUTTON])
         table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
             Qt.LeftToolBarArea, self.left_toolbar_actions
