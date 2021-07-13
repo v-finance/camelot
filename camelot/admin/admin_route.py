@@ -82,8 +82,33 @@ class AdminRoute(object):
             )
         return admin
 
+    @staticmethod
+    def _validate_action_name(action) -> bool:
+        """
+        Check to make sure that each action in an inheritance hierarchy has a different name.
+        """
+        names = set(action.name)
+        success = True
+        for cls in action.__class__.mro():
+            if not hasattr(cls, 'name'):
+                continue
+            if cls.name in names:
+                success = False
+                break
+            names.add(cls.name)
+        if not success:
+            LOGGER.error('Action name validation failed, each action in an inheritance hierarchy should have a different name:')
+            for cls in action.__class__.mro():
+                if not hasattr(cls, 'name'):
+                    continue
+                LOGGER.error('{} has name: {}'.format(cls, cls.name))
+            return False
+        return True
+
+
     @classmethod
     def _register_field_action_route(cls, admin_route, field_name, action) -> Route:
+        assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert isinstance(field_name, str)
         assert admin_route in cls._admin_routes
@@ -94,6 +119,7 @@ class AdminRoute(object):
 
     @classmethod
     def _register_list_action_route(cls, admin_route, action) -> Route:
+        assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'list', 'actions', action.get_name())
@@ -103,6 +129,7 @@ class AdminRoute(object):
 
     @classmethod
     def _register_action_route(cls, admin_route, action) -> Route:
+        assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'actions', action.get_name())
