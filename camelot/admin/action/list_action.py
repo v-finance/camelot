@@ -273,10 +273,15 @@ class EditAction( ListContextAction ):
                 state.enabled = False
         # Check for editability on the level of the entity
         admin = model_context.admin
-        if admin and not admin.entity.is_editable():
+        if admin and not admin.is_editable():
             state.visible = False
             state.enabled = False
         return state
+
+    def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
 
 class CloseList(Action):
     """
@@ -341,9 +346,8 @@ class DuplicateSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         new_objects = list()
         updated_objects = set()
         for i, obj in enumerate(model_context.get_selection()):
@@ -382,9 +386,8 @@ class DeleteSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         if model_context.selection_count <= 0:
             return
         objects_to_remove = list( model_context.get_selection() )
@@ -694,8 +697,8 @@ class ExportSpreadsheet( ListContextAction ):
         mappings = []
         for i, default_field in itertools.zip_longest(column_range,
                                                       admin.get_columns(),
-                                                      fillvalue=(None,None)):
-            mappings.append(ColumnMapping(i, [row_data], default_field[0]))
+                                                      fillvalue=None):
+            mappings.append(ColumnMapping(i, [row_data], default_field))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
@@ -826,18 +829,18 @@ class PrintPreview( ListContextAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        columns = model_context.admin.get_columns()
+        admin = model_context.admin
+        columns = admin.get_columns()
         
         table = []
-        fields = [field for field, _field_attributes in columns]
-        to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
+        to_strings = [admin.get_field_attributes(field)['to_string'] for field in columns]
         column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
+            table.append( [to_strings[i]( getattr( obj, columns[i] ) ) for i in column_range] )
         context = {
-          'title': model_context.admin.get_verbose_name_plural(),
+          'title': admin.get_verbose_name_plural(),
           'table': table,
-          'columns': [field_attributes['name'] for _field, field_attributes in columns],
+          'columns': [admin.get_field_attributes(field)['name'] for field in columns],
         }
         yield action_steps.PrintJinjaTemplate( template = 'list.html',
                                                context = context )
@@ -863,9 +866,6 @@ class ImportFromFile( EditAction ):
     name = 'import'
 
     def model_run( self, model_context ):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         import os.path
         import chardet
         from camelot.view import action_steps
@@ -875,6 +875,8 @@ class ImportFromFile( EditAction ):
                                                 XlsReader,
                                                 ColumnMapping,
                                                 ColumnMappingAdmin )
+        super().model_run(model_context)
+        admin = model_context.admin
         file_names = yield action_steps.SelectFile()
         for file_name in file_names:
             yield action_steps.UpdateProgress( text = _('Reading data') )
@@ -893,8 +895,8 @@ class ImportFromFile( EditAction ):
             #
             # select columns to import
             #
-            default_fields = [field for field, fa in admin.get_columns() 
-                              if fa.get('editable', True)]
+            default_fields = [field for field in admin.get_columns()
+                              if admin.get_field_attributes(field).get('editable', True)]
             mappings = []
             # 
             # it should be possible to select not editable fields, to be able to
@@ -936,7 +938,8 @@ class ImportFromFile( EditAction ):
             with model_context.session.begin():
                 for i,row in enumerate(collection):
                     new_entity_instance = admin.entity()
-                    for field_name, attributes in row_data_admin.get_columns():
+                    for field_name in row_data_admin.get_columns():
+                        attributes = row_data_admin.get_field_attributes(field_name)
                         from_string = attributes['from_string']
                         setattr(
                             new_entity_instance,
@@ -973,10 +976,8 @@ class ReplaceFieldContents( EditAction ):
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context ):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         from camelot.view import action_steps
+        super().model_run(model_context)
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
             field_name = model_context.current_field_name
@@ -1101,11 +1102,9 @@ class AddExistingObject( EditAction ):
     name = 'add_object'
     
     def model_run( self, model_context ):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
+        super().model_run(model_context)
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
@@ -1155,9 +1154,8 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = self.get_admin(model_context)
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin)
         # if the object is valid, flush it, but in ancy case inform the gui
@@ -1204,9 +1202,7 @@ class ActionGroup(EditAction):
         return state
     
     def model_run(self, model_context):
-        admin = model_context.admin
-        if not admin.entity.is_editable():
-            raise RuntimeError("Action's model_run() called on noneditable entity")
+        super().model_run(model_context)
         if model_context.mode_name is not None:
             action = self.actions[int(model_context.mode_name)]
             yield from action.model_run(model_context)

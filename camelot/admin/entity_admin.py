@@ -782,4 +782,12 @@ and used as a custom action.
                          getattr( obj, relationship_property.key ) )
         return new_obj
 
+    def is_editable(self):
+        """Return True if the Entity is editable.
 
+        An entity is consdered editable if there is no __facade_args__ { 'editable': False }
+        """
+        editable = self.entity._get_facade_arg('editable')
+        if editable is None:
+            return True
+        return editable

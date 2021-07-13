@@ -36,16 +36,18 @@ the `ListActionGuiContext`.
 import itertools
 import typing
 
+from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
-from ...admin.action.base import ActionStep
+from ...admin.action.base import ActionStep, RenderHint
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
+from ...core.item_model import ProxyRegistry
 #from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import ProxyRegistry, CollectionProxy
+from ..proxy.collection_proxy import CollectionProxy
 
 
 class Sort( ActionStep ):
@@ -97,20 +99,22 @@ class UpdateTableView( ActionStep ):
     search_text: typing.Union[str, None]
     title: typing.Union[str, ugettext_lazy]
     #filters: TODO
-    #list_actions: TODO
-    #columns: TODO
+    columns: typing.List[str]
     #left_toolbar_actions: TODO
     #right_toolbar_actions: TODO
     #top_toolbar_actions: TODO
     #bottom_toolbar_actions: TODO
-    #list_action: TODO
-    proxy: int # id of proxy in ProxyRegistry
+    list_action: Route
+    proxy_route: Route
+    actions: typing.List[typing.Tuple[Route, RenderHint]]
 
     def __init__( self, admin, value ):
+        self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
+        #self.actions = [(AdminRoute._register_list_action_route(self.admin_route, action), action.render_hint) for action in admin.get_list_actions()]
         self.list_actions = admin.get_list_actions()
         self.columns = admin.get_columns()
         self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
@@ -119,19 +123,20 @@ class UpdateTableView( ActionStep ):
         self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
-        self.proxy = ProxyRegistry.register(proxy)
+        self.proxy_route = ProxyRegistry.register(proxy)
     
     def update_table_view(self, table_view):
         from camelot.view.controls.search import SimpleSearchControl
         table_view.set_admin()
         model = table_view.get_model()
-        list(model.add_columns((fn for fn, _fa in self.columns)))
+        list(model.add_columns(self.columns))
         # filters can have default values, so they need to be set before
         # the value is set
         table_view.set_filters(self.filters)
-        table_view.set_value(self.proxy)
+        table_view.set_value(self.proxy_route)
+        #table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions])
         table_view.set_list_actions(self.list_actions)
-        table_view.list_action = self.list_action
+        table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
             Qt.LeftToolBarArea, self.left_toolbar_actions
         )
@@ -223,12 +228,12 @@ class OpenQmlTableView(OpenTableView):
         quick_view = view.quick_view
         views = quick_view.findChild(QtCore.QObject, "qml_views")
         header_model = QtCore.QStringListModel(parent=quick_view)
-        header_model.setStringList(list(fn for fn, _fa in self.columns))
+        header_model.setStringList(self.columns)
         header_model.setParent(quick_view)
         new_model = CollectionProxy(self.admin_route)
         new_model.setParent(quick_view)
-        list(new_model.add_columns((fn for fn, _fa in self.columns)))
-        new_model.set_value(self.proxy)
+        list(new_model.add_columns(self.columns))
+        new_model.set_value(self.proxy_route)
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)

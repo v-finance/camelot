@@ -33,7 +33,9 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 from ....core.item_model import FieldAttributesRole
 from ....core.qt import QtWidgets, Qt, variant_to_py, is_deleted
+from ..editors.customeditor import CustomEditor
 from .plaintextdelegate import PlainTextDelegate
+
 
 class DelegateManager(QtWidgets.QItemDelegate):
     """Manages custom delegates, should not be used by the application

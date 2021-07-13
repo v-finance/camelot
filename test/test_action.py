@@ -394,7 +394,7 @@ class ListActionsCase(
             ['first_name', 'last_name'],
             ['Unknown',    'Unknown'],
         ]
-        fields = [field for field, _fa in self.admin.get_columns()]
+        fields = self.admin.get_columns()
         mapping = ColumnMapping(0, rows)
         self.assertNotEqual(mapping.field, 'first_name' )
         
