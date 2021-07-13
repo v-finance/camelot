@@ -974,7 +974,10 @@ be specified using the verbose_name attribute.
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
 
-    def get_subsystem_object(self, entity_instance):
-        """Return the given entity_instance's applicable subsystem object."""
-        return entity_instance
+    def get_subsystem_object(self, obj):
+        """Return the given object's applicable subsystem object."""
+        return obj
     
+    def set_discriminator_value(self, obj, discriminator_value):
+        """Set the given discriminator value on the provided obj."""
+        pass
