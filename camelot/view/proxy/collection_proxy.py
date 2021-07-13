@@ -1047,6 +1047,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if len(self._columns) and (self._model_context is not None):
             self._append_request(SetColumns(self._columns))
 
+    @QtCore.qt_slot(int, int, QtCore.QSize, int)
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
@@ -1083,7 +1084,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
 
         return super(CollectionProxy, self).headerData(section, orientation, role)
 
-    def sort( self, column, order ):
+    # this needs to be defined as a slot, to have the function available
+    # in QML
+    @QtCore.qt_slot(int, int)
+    def sort(self, column, order=Qt.AscendingOrder):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         self.logger.debug('sort called')
         assert object_thread( self )
