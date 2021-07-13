@@ -110,6 +110,7 @@ class FieldAction(Action):
     """Action class that renders itself as a toolbutton, small enough to
     fit in an editor"""
 
+    name = 'field_action'
     render_hint = RenderHint.TOOL_BUTTON
 
 

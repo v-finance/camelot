@@ -54,6 +54,7 @@ logger = logging.getLogger( 'camelot.model.i18n' )
 class ExportAsPO( Action ):
 
     verbose_name = _('PO Export')
+    name = 'export_as_po'
     icon = Icon('save') # 'tango/16x16/actions/document-save.png'
 
     def model_run( self, model_context ):
