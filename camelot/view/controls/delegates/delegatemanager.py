@@ -54,9 +54,8 @@ class DelegateManager(QtWidgets.QItemDelegate):
             field_attributes = index.model().headerData(
                 column, Qt.Horizontal, FieldAttributesRole
             )
-            if field_attributes is not None:
-                delegate = field_attributes['delegate'](parent=self, **field_attributes)
-                self.insert_column_delegate(column, delegate)
+            delegate = field_attributes['delegate'](parent=self, **field_attributes)
+            self.insert_column_delegate(column, delegate)
         return delegate
 
     def insert_column_delegate(self, column, delegate):
@@ -80,8 +79,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
             editor = delegate.createEditor(parent, option, index)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
-            #return QtWidgets.QWidget( parent = parent )
-            return CustomEditor( parent = parent )
+            return QtWidgets.QWidget( parent = parent )
         return editor
 
     def setEditorData(self, editor, index):
