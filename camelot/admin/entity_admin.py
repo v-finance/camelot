@@ -472,7 +472,7 @@ and used as a custom action.
                     structure = list_filter.GroupBoxFilter(structure)
                 yield structure
 
-        return list(filter_generator())
+        return [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in filter_generator()]
 
     def primary_key( self, obj ):
         """Get the primary key of an object

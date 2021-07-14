@@ -98,7 +98,6 @@ class UpdateTableView( ActionStep ):
     #value: not needed
     search_text: typing.Union[str, None]
     title: typing.Union[str, ugettext_lazy]
-    #filters: TODO
     columns: typing.List[str]
     list_action: Route
     proxy_route: Route
@@ -109,8 +108,8 @@ class UpdateTableView( ActionStep ):
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
-        self.filters = admin.get_filters()
         self.actions = admin.get_list_actions()
+        self.actions.extend(admin.get_filters())
         self.actions.extend(admin.get_list_toolbar_actions())
         self.columns = admin.get_columns()
         self.list_action = admin.get_list_action()
@@ -124,7 +123,7 @@ class UpdateTableView( ActionStep ):
         list(model.add_columns(self.columns))
         # filters can have default values, so they need to be set before
         # the value is set
-        table_view.set_filters(self.filters)
+        table_view.set_filters([AdminRoute.action_for(action[0]) for action in self.actions if action[1] in [RenderHint.COMBO_BOX, RenderHint.GROUP_BOX]])
         table_view.set_value(self.proxy_route)
         table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions if action[1] == RenderHint.PUSH_BUTTON])
         table_view.list_action = AdminRoute.action_for(self.list_action)
