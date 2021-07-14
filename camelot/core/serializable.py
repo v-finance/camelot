@@ -3,6 +3,7 @@ import io
 import json
 
 from .utils import ugettext_lazy
+from enum import Enum
 
 class Serializable(object):
     """
@@ -50,6 +51,8 @@ class DataclassEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ugettext_lazy):
             return str(obj)
+        if isinstance(obj, Enum):
+            return obj.value
         return json.JSONEncoder.default(self, obj)
 
 
