@@ -415,7 +415,7 @@ be specified using the verbose_name attribute.
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
 
     def get_list_actions(self):
-        return self.list_actions
+        return [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in self.list_actions]
 
     def get_list_action(self) -> Route:
         """Get the route for the action that should be triggered when an object is selected
@@ -985,3 +985,6 @@ be specified using the verbose_name attribute.
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
 
+    def is_editable(self):
+        """Default implementation always returns True"""
+        return True

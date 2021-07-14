@@ -386,6 +386,8 @@ class ChangeStatus( Action ):
     this might slow down list views too much.
     """
 
+    name = 'change_status'
+
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status

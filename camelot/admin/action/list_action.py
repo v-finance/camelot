@@ -233,6 +233,8 @@ class ListContextAction( Action ):
     """An base class for actions that should only be enabled if the
     gui_context is a :class:`ListActionModelContext`
     """
+
+    name = 'list_context_action'
     
     def get_state( self, model_context ):
         state = super( ListContextAction, self ).get_state( model_context )
@@ -262,6 +264,7 @@ class EditAction( ListContextAction ):
     to be non-editable using __facade_args__ = { 'editable': False }.
     """
 
+    name = 'edit_action'
     render_hint = RenderHint.TOOL_BUTTON
 
     def get_state( self, model_context ):
@@ -321,7 +324,7 @@ class OpenFormView( ListContextAction ):
     # verbose name is set to None to avoid displaying it in the vertical
     # header of the table view
     verbose_name = None
-    name = 'open'
+    name = 'open_form_view'
 
     def model_run(self, model_context):
         from camelot.view import action_steps

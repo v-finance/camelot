@@ -34,6 +34,7 @@ from camelot.view.art import FontIcon
 
 class ImportCovers( Action ):
     verbose_name = _('Import cover images')
+    name = 'import_covers'
     icon = FontIcon('image')
     
 # begin select files

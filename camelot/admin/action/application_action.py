@@ -277,6 +277,8 @@ class SelectProfile( Action ):
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
 
+    name = 'entity_action'
+
     def __init__( self, 
                   entity_admin ):
         """
