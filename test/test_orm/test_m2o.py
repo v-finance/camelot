@@ -6,8 +6,7 @@ import logging
 
 from . import TestMetaData
 
-from camelot.core.orm import ( Field, OneToMany, ManyToOne, using_options,
-                               has_field, has_many, belongs_to )
+from camelot.core.orm import Field, OneToMany, ManyToOne, has_field, has_many, belongs_to
 
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import orm, and_

@@ -4,11 +4,12 @@ test ordering options
 
 from . import TestMetaData
 
-from camelot.core.orm import ( Field, ManyToMany, ManyToOne, OneToMany, using_options,
-                               has_field, has_many, belongs_to, options,
-                               has_and_belongs_to_many )
+from camelot.core.orm import (Field, ManyToMany, ManyToOne, OneToMany, has_field, has_many, belongs_to, options,
+                              has_and_belongs_to_many)
 
 from sqlalchemy.types import String, Unicode, Integer
+from sqlalchemy import text
+
 
 class TestOrderBy( TestMetaData ):
     
@@ -22,7 +23,9 @@ class TestOrderBy( TestMetaData ):
             genres = ManyToMany('Genre')
     
             # order titles descending by year, then by title
-            using_options(order_by=['-year', 'title'])
+            __mapper_args__ = {
+                'order_by': [text('-year'), 'title']
+            }
     
             def __str__(self):
                 return "%s - %s (%d)" % (self.artist.name, self.title, self.year)
