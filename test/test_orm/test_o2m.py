@@ -6,8 +6,7 @@ import logging
 
 from . import TestMetaData
 
-from camelot.core.orm import ( Field, OneToMany, ManyToOne, using_options,
-                               has_field, has_many, belongs_to )
+from camelot.core.orm import Field, OneToMany, ManyToOne, has_field, has_many, belongs_to
 
 from sqlalchemy.types import String, Unicode
 from sqlalchemy import and_
@@ -72,7 +71,9 @@ class TestOneToMany( TestMetaData ):
         # define a self-referential table with several relations
 
         class TreeNode( self.Entity ):
-            using_options(order_by='name')
+            __mapper_args__ = {
+                'order_by': 'name'
+            }
             name = Field(String(50), required=True)
 
             parent = ManyToOne('TreeNode')

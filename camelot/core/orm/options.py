@@ -127,20 +127,5 @@ valid_options = list( options_defaults.keys() ) + [
     'metadata',
     'session',
 ]
-    
-class using_options( ClassMutator ):
-    """This statement its sole reason of existence is to keep existing Elixir
-    model definitions working.  Do not use it when writing new code, instead
-    use Declarative directly."""
-    
-    def process( self, entity_dict, tablename = None, **kwargs ):
-        if tablename:
-            entity_dict.setdefault('__tablename__', tablename )
-        for kwarg in kwargs:
-            if kwarg in valid_options:
-                setattr( entity_dict['_descriptor'], kwarg, kwargs[kwarg])
-            else:
-                raise Exception("'%s' is not a valid option for entities."
-                                % kwarg)
 
 
