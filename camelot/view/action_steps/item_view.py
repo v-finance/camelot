@@ -115,11 +115,11 @@ class UpdateTableView( ActionStep ):
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
         self.actions = admin.get_list_actions()
+        self.actions.extend(admin.get_list_toolbar_actions(Qt.LeftToolBarArea))
+        self.actions.extend(admin.get_list_toolbar_actions(Qt.RightToolBarArea))
+        self.actions.extend(admin.get_list_toolbar_actions(Qt.TopToolBarArea))
+        self.actions.extend(admin.get_list_toolbar_actions(Qt.BottomToolBarArea))
         self.columns = admin.get_columns()
-        self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
-        self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
-        self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
-        self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
@@ -136,16 +136,8 @@ class UpdateTableView( ActionStep ):
         table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions if action[1] == RenderHint.PUSH_BUTTON])
         table_view.list_action = AdminRoute.action_for(self.list_action)
         table_view.set_toolbar_actions(
-            Qt.LeftToolBarArea, self.left_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.RightToolBarArea, self.right_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.TopToolBarArea, self.top_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.BottomToolBarArea, self.bottom_toolbar_actions
+            Qt.TopToolBarArea,
+            [AdminRoute.action_for(action[0]) for action in self.actions if action[1] in [RenderHint.TOOL_BUTTON, RenderHint.SEARCH_BUTTON, RenderHint.LABEL]]
         )
         if self.search_text is not None:
             search_control = table_view.findChild(SimpleSearchControl)

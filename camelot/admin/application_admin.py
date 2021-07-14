@@ -154,6 +154,23 @@ shortcut confusion and reduce the number of status updates.
         self._admin_route = super()._register_admin_route(self)
         self._main_menu = MenuItem()
         self._navigation_menu = MenuItem()
+        self._toolbar_actions = None
+
+    def _register_action_list(self, actions):
+        return [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in actions]
+
+    def register_toolbar_actions(self):
+        """
+        Register toolbar actions for this admin. This function is called only once
+        to ensure actions are only registered once. This function can be overloaded in
+        subclasses if different actions are needed.
+
+        :return: The registered actions as a list of tuples (action_route, RenderHint).
+        """
+        return self._register_action_list(self.list_toolbar_actions) + \
+               self._register_action_list(self.edit_actions) + \
+               self._register_action_list(self.change_row_actions) + \
+               self._register_action_list(self.export_actions)
 
     def get_admin_route(self):
         return self._admin_route
@@ -298,10 +315,10 @@ shortcut confusion and reduce the number of status updates.
             None if no toolbar should be created.
         """
         if toolbar_area == Qt.TopToolBarArea:
-            return self.list_toolbar_actions + \
-                self.edit_actions + \
-                self.change_row_actions + \
-                self.export_actions
+            if self._toolbar_actions is None:
+                # delay registration of actions since this may require calling get_current_authentication()
+                self._toolbar_actions = self.register_toolbar_actions()
+            return self._toolbar_actions
         return []
 
     def get_select_list_toolbar_actions( self, toolbar_area ):
