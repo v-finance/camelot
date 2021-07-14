@@ -100,10 +100,6 @@ class UpdateTableView( ActionStep ):
     title: typing.Union[str, ugettext_lazy]
     #filters: TODO
     columns: typing.List[str]
-    #left_toolbar_actions: TODO
-    #right_toolbar_actions: TODO
-    #top_toolbar_actions: TODO
-    #bottom_toolbar_actions: TODO
     list_action: Route
     proxy_route: Route
     actions: typing.List[typing.Tuple[Route, RenderHint]]
@@ -115,10 +111,7 @@ class UpdateTableView( ActionStep ):
         self.title = admin.get_verbose_name_plural()
         self.filters = admin.get_filters()
         self.actions = admin.get_list_actions()
-        self.actions.extend(admin.get_list_toolbar_actions(Qt.LeftToolBarArea))
-        self.actions.extend(admin.get_list_toolbar_actions(Qt.RightToolBarArea))
-        self.actions.extend(admin.get_list_toolbar_actions(Qt.TopToolBarArea))
-        self.actions.extend(admin.get_list_toolbar_actions(Qt.BottomToolBarArea))
+        self.actions.extend(admin.get_list_toolbar_actions())
         self.columns = admin.get_columns()
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)

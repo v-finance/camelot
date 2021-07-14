@@ -305,21 +305,16 @@ shortcut confusion and reduce the number of status updates.
                         if type(action) != form_action.CloseForm]
             return self.form_toolbar_actions
 
-    def get_list_toolbar_actions( self, toolbar_area ):
+    def get_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
-            if self._toolbar_actions is None:
-                # delay registration of actions since this may require calling get_current_authentication()
-                self._toolbar_actions = self.register_toolbar_actions()
-            return self._toolbar_actions
-        return []
+        if self._toolbar_actions is None:
+            # delay registration of actions since this may require calling get_current_authentication()
+            self._toolbar_actions = self.register_toolbar_actions()
+        return self._toolbar_actions
 
     def get_select_list_toolbar_actions( self, toolbar_area ):
         """
