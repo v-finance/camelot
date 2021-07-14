@@ -142,9 +142,16 @@ class ListModelProxy(AbstractModelProxy, dict):
             return self._indexed_objects[obj]
         except KeyError:
             i = self._objects.index(obj)
-            # the object is in _objects, but has not been indexed yet,
-            # so index it
+            
+            # The object is present in _objects, but has not been indexed yet, so index it.
+            if i in self._indexed_objects:
+                # If the object's index is already present in the indexed_objects, pop the old existing object at the index,
+                # as this indicates the old object having been removed from the _objects outside the proxy's interface.
+                old_obj = self._indexed_objects[i]
+                self._indexed_objects.pop(old_obj)
+                self._indexed_objects.pop(i)
             self._indexed_objects[i] = obj
+            
             # now the length is outdated
             self._length = None
             return i
