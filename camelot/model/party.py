@@ -211,7 +211,8 @@ class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     __tablename__ = 'geographic_boundary_city'
-    country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    country_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(Country.id, ondelete='cascade', onupdate='cascade'))
+    country = orm.relationship(Country)
     geographicboundary_id = Field( camelot.types.PrimaryKey(),
                                    ForeignKey('geographic_boundary.id'),
                                    primary_key = True,
