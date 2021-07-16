@@ -286,11 +286,8 @@ class Address( Entity ):
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
-    city = ManyToOne( City,
-                      required = True,
-                      ondelete = 'cascade',
-                      onupdate = 'cascade',
-                      lazy = 'subquery' )
+    city_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(City.id, ondelete='cascade', onupdate='cascade'))
+    city = orm.relationship(City, lazy='subquery')
     
     # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
     _zip_code = schema.Column(Unicode(10))
