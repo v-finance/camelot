@@ -915,12 +915,10 @@ class PartyAddress( Entity, Addressable ):
                                      cascade='all, delete, delete-orphan'),
         lazy='subquery',
     )
-    address = ManyToOne( Address,
-                         required = True,
-                         backref = 'party_addresses',
-                         ondelete = 'cascade',
-                         onupdate = 'cascade',
-                         lazy = 'subquery' )
+    address_id = schema.Column(sqlalchemy.types.Integer(),
+                               schema.ForeignKey(Address.id, ondelete='cascade', onupdate='cascade'))
+    address = orm.relationship(Address, backref=orm.backref('party_addresses'), lazy='subquery')
+
     from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, nullable=False, index = True )
     comment = schema.Column( Unicode( 256 ) )
