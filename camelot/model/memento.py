@@ -73,10 +73,9 @@ class Memento( Entity ):
     model = schema.Column( Unicode( 256 ), index = True, nullable = False )
     primary_key = schema.Column(PrimaryKey(), index=True, nullable=False)
     creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
-    authentication = ManyToOne( AuthenticationMechanism,
-                                required = True,
-                                ondelete = 'restrict',
-                                onupdate = 'cascade' )
+    authentication_id = schema.Column(Integer(), schema.ForeignKey(AuthenticationMechanism.id, ondelete='restrict', onupdate='cascade'),
+                                      nullable=False, index=True)
+    authentication = orm.relationship(AuthenticationMechanism)
     memento_type = schema.Column( Integer, 
                                   nullable = False,
                                   index = True )    

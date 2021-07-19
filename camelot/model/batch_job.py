@@ -75,8 +75,7 @@ class BatchJobType( Entity ):
     __tablename__ = 'batch_job_type'
     
     name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
-    parent = ManyToOne( 'BatchJobType' )
-    
+
     def __str__(self):
         return self.name or ''
     
@@ -91,6 +90,9 @@ class BatchJobType( Entity ):
     class Admin(EntityAdmin):
         verbose_name = _('Batch job type')
         list_display = ['name', 'parent']
+
+BatchJobType.parent_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id), index=True)
+BatchJobType.parent = orm.relationship(BatchJobType)
         
 def hostname():
     import socket
@@ -106,7 +108,9 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     __tablename__ = 'batch_job'
     
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
-    type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
+    type_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id, ondelete='restrict', onupdate='cascade'),
+                            nullable=False, index=True)
+    type = orm.relationship(BatchJobType)
     status  = type_and_status.Status( batch_job_statusses )
     message = orm.deferred(schema.Column(camelot.types.RichText()))
 
