@@ -248,7 +248,7 @@ authentication_group_member_table = schema.Table('authentication_group_member', 
                                           nullable=False, primary_key=True)
                             )
 
-AuthenticationGroup.members = orm.relationship(AuthenticationMechanism, secondary=authentication_group_member_table,
+AuthenticationGroup.members = orm.relationship(AuthenticationMechanism, backref='groups', secondary=authentication_group_member_table,
                                                foreign_keys=[
                                                    authentication_group_member_table.c.authentication_group_id,
                                                    authentication_group_member_table.c.authentication_mechanism_id])
