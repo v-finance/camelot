@@ -75,8 +75,7 @@ class BatchJobType( Entity ):
     __tablename__ = 'batch_job_type'
     
     name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
-    parent = ManyToOne( 'BatchJobType' )
-    
+
     def __str__(self):
         return self.name or ''
     
@@ -91,6 +90,9 @@ class BatchJobType( Entity ):
     class Admin(EntityAdmin):
         verbose_name = _('Batch job type')
         list_display = ['name', 'parent']
+
+BatchJobType.parent_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id))
+BatchJobType.parent = orm.relationship(BatchJobType)
         
 def hostname():
     import socket
