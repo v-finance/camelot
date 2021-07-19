@@ -511,9 +511,13 @@ class SetData(Update):
                 columns = tuple(moves.xrange(len(model_context.static_field_attributes)))
                 self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
                 updated_objects.add(subsystem_obj)
-                depending_objects = set(admin.get_depending_objects(obj))
-                updated_objects.update(depending_objects)
-                deleted_objects.update(depending_objects_before_set-depending_objects)
+                depending_objects = depending_objects_before_set.union(set(admin.get_depending_objects(obj)))
+                for depending_object in depending_objects:
+                    related_admin = admin.get_related_admin(type(depending_object))
+                    if related_admin.is_deleted(depending_object):
+                        deleted_objects.update({depending_object})
+                    else:
+                        updated_objects.update({depending_object})
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
         self.deleted_objects = tuple(deleted_objects)
