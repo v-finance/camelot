@@ -211,9 +211,12 @@ class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     __tablename__ = 'geographic_boundary_city'
-    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'))
+    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                                  nullable=False, index=True)
     country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
-    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(GeographicBoundary.id), primary_key=True)
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
+                                          primary_key=True, nullable=False)
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
     
     __mapper_args__ = {'polymorphic_identity': 'city'}
@@ -283,7 +286,9 @@ class Address( Entity ):
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
-    city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(City.id, ondelete='cascade', onupdate='cascade'))
+    city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                               schema.ForeignKey(City.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                               nullable=False, index=True)
     city = orm.relationship(City, lazy='subquery')
     
     # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
@@ -913,7 +918,8 @@ class PartyAddress( Entity, Addressable ):
         lazy='subquery',
     )
     address_id = schema.Column(sqlalchemy.types.Integer(),
-                               schema.ForeignKey(Address.id, ondelete='cascade', onupdate='cascade'))
+                               schema.ForeignKey(Address.id, ondelete='cascade', onupdate='cascade'),
+                               nullable=False, index=True)
     address = orm.relationship(Address, backref=orm.backref('party_addresses'), lazy='subquery')
 
     from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )

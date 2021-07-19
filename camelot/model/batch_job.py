@@ -91,7 +91,7 @@ class BatchJobType( Entity ):
         verbose_name = _('Batch job type')
         list_display = ['name', 'parent']
 
-BatchJobType.parent_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id))
+BatchJobType.parent_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id), index=True)
 BatchJobType.parent = orm.relationship(BatchJobType)
         
 def hostname():
