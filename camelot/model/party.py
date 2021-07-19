@@ -1005,10 +1005,9 @@ class ContactMechanism( Entity ):
 class PartyContactMechanism( Entity ):
     __tablename__ = 'party_contact_mechanism'
 
-    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                       backref = orm.backref('contact_mechanisms', lazy = 'select',
-                                             cascade='all, delete, delete-orphan' )
-                       )
+    party_id = schema.Column(Integer(), schema.ForeignKey(Party.id, ondelete='cascade', onupdate='cascade'))
+    party = orm.relationship(Party, backref=orm.backref('contact_mechanisms', lazy='select',
+                                                        cascade='all, delete, delete-orphan'))
     contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = schema.Column( Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, index = True )
