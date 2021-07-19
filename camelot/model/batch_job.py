@@ -108,7 +108,9 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     __tablename__ = 'batch_job'
     
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
-    type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
+    type_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id, ondelete='restrict', onupdate='cascade'),
+                            nullable=False)
+    type = orm.relationship(BatchJobType)
     status  = type_and_status.Status( batch_job_statusses )
     message = orm.deferred(schema.Column(camelot.types.RichText()))
 
