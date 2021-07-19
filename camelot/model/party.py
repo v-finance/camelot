@@ -40,7 +40,7 @@ import datetime
 import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Date, Unicode
+from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
@@ -979,7 +979,8 @@ class PartyAddressRoleType( Entity ):
 class ContactMechanism( Entity ):
     __tablename__ = 'contact_mechanism'
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
-    party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
+    party_address_id = schema.Column(Integer(), schema.ForeignKey(PartyAddress.id, ondelete='set null', onupdate='cascade'))
+    party_address = orm.relationship(PartyAddress)
     party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
 
     def __str__(self):
