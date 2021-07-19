@@ -979,7 +979,8 @@ class PartyAddressRoleType( Entity ):
 class ContactMechanism( Entity ):
     __tablename__ = 'contact_mechanism'
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
-    party_address_id = schema.Column(Integer(), schema.ForeignKey(PartyAddress.id, ondelete='set null', onupdate='cascade'))
+    party_address_id = schema.Column(Integer(), schema.ForeignKey(PartyAddress.id, ondelete='set null', onupdate='cascade'),
+                                     index=True)
     party_address = orm.relationship(PartyAddress)
 
     def __str__(self):
@@ -1004,10 +1005,12 @@ class ContactMechanism( Entity ):
 class PartyContactMechanism( Entity ):
     __tablename__ = 'party_contact_mechanism'
 
-    party_id = schema.Column(Integer(), schema.ForeignKey(Party.id, ondelete='cascade', onupdate='cascade'))
+    party_id = schema.Column(Integer(), schema.ForeignKey(Party.id, ondelete='cascade', onupdate='cascade'),
+                             nullable=False, index=True)
     party = orm.relationship(Party, backref=orm.backref('contact_mechanisms', lazy='select',
                                                         cascade='all, delete, delete-orphan'))
-    contact_mechanism_id = schema.Column(Integer(), schema.ForeignKey(ContactMechanism.id, ondelete='cascade', onupdate='cascade'))
+    contact_mechanism_id = schema.Column(Integer(), schema.ForeignKey(ContactMechanism.id, ondelete='cascade', onupdate='cascade'),
+                                         nullable=False, index=True)
     contact_mechanism = orm.relationship(ContactMechanism, lazy='joined', backref=orm.backref('party_contact_mechanisms'))
     from_date = schema.Column( Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, index = True )
