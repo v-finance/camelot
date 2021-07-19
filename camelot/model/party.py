@@ -76,9 +76,12 @@ class GeographicBoundary( Entity ):
     @property
     def name_FR(self):
         return self.translation(language='fr_BE')
-    
-    __mapper_args__ = { 'polymorphic_on' : row_type }
-    
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'geographic_boundary',
+        'polymorphic_on': row_type
+    }
+
     __table_args__ = (
         schema.Index(
             'ix_geographic_boundary_name', name,
@@ -186,10 +189,7 @@ class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
     __tablename__ = 'geographic_boundary_country'
-    geographicboundary_id = Field( camelot.types.PrimaryKey(), 
-                                   ForeignKey('geographic_boundary.id'), 
-                                   primary_key = True,
-                                   autoincrement = False )
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(GeographicBoundary.id), primary_key=True)
 
     __mapper_args__ = {'polymorphic_identity': 'country'}
 
@@ -211,12 +211,9 @@ class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     __tablename__ = 'geographic_boundary_city'
-    country_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(Country.id, ondelete='cascade', onupdate='cascade'))
-    country = orm.relationship(Country)
-    geographicboundary_id = Field( camelot.types.PrimaryKey(),
-                                   ForeignKey('geographic_boundary.id'),
-                                   primary_key = True,
-                                   autoincrement = False )
+    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'))
+    country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(GeographicBoundary.id), primary_key=True)
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
     
     __mapper_args__ = {'polymorphic_identity': 'city'}
@@ -279,14 +276,14 @@ class City( GeographicBoundary ):
         field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
         field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
         field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
-        
+
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
-    city_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(City.id, ondelete='cascade', onupdate='cascade'))
+    city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(City.id, ondelete='cascade', onupdate='cascade'))
     city = orm.relationship(City, lazy='subquery')
     
     # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
