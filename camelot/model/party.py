@@ -1008,7 +1008,8 @@ class PartyContactMechanism( Entity ):
     party_id = schema.Column(Integer(), schema.ForeignKey(Party.id, ondelete='cascade', onupdate='cascade'))
     party = orm.relationship(Party, backref=orm.backref('contact_mechanisms', lazy='select',
                                                         cascade='all, delete, delete-orphan'))
-    contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    contact_mechanism_id = schema.Column(Integer(), schema.ForeignKey(ContactMechanism.id, ondelete='cascade', onupdate='cascade'))
+    contact_mechanism = orm.relationship(ContactMechanism, lazy='joined')
     from_date = schema.Column( Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, index = True )
     comment = schema.Column( Unicode( 256 ) )
