@@ -11,8 +11,6 @@ from camelot.core.sql import metadata
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import text, schema, orm
 
-import wingdbstub
-
 class TestOrderBy( TestMetaData ):
     
     def setUp( self ):

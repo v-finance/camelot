@@ -1,7 +1,8 @@
-from sqlalchemy import schema, types
+from sqlalchemy import schema, types, orm
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import ManyToMany, Entity
+from camelot.core.sql import metadata
 from camelot.model.party import Person
 
 class PersonOnMailingGroupAdmin(EntityAdmin):
@@ -9,10 +10,13 @@ class PersonOnMailingGroupAdmin(EntityAdmin):
 
 class MailingGroup(Entity):
     name = schema.Column(types.Unicode(30), nullable=False)
-    persons = ManyToMany(Person)
-    
+
     class Admin(EntityAdmin):
         list_display = ['name']
         form_display = ['name', 'persons']
         field_attributes = {'persons': {'admin': PersonOnMailingGroupAdmin}
                             }
+
+t = schema.Table('mailing_group_table', metadata, schema.Column('person_id', types.Integer(), schema.ForeignKey(Person.id), primary_key=True),
+                         schema.Column('mailing_group_id', types.Integer(), schema.ForeignKey(MailingGroup.id), primary_key=True))
+MailingGroup.persons = orm.relationship(Person, backref=orm.backref('mailing_group'), secondary=t, foreign_keys=[t.c.person_id, t.c.mailing_group_id])
