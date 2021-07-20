@@ -600,9 +600,7 @@ class Person( Party ):
     """Person represents natural persons
     """
     __tablename__ = 'person'
-    party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'),
-                      primary_key = True )
+    party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
     first_name = schema.Column( Unicode( 40 ), nullable = False )
     last_name = schema.Column( Unicode( 40 ), nullable = False )
