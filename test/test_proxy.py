@@ -155,6 +155,59 @@ class ListModelProxyCase(unittest.TestCase):
         self.proxy.remove(obj)
         self.assertEqual(len(self.proxy), size-1)
 
+    def test_remove_outside_proxy(self):
+        # Test proxy handling the reindexing of objects that are removed from the list model outside the proxy interface.
+        size = len(self.proxy)
+        first_obj, second_obj, third_obj, fourth_obj = self.list_model
+        
+        # Remove an object from the list model directly and verify it is removed from the proxy's _objects, but still present in the _indexed_objects.
+        self.list_model.remove(second_obj)
+        self.assertEqual(len(self.proxy), size)
+        self.assertEqual(len(self.proxy._objects), size-1)
+        self.assertNotIn(second_obj, self.proxy._objects)
+        self.assertIn(second_obj, self.proxy._indexed_objects)
+        
+        # Then create a new object and append it to the proxy, which has the result of the new object having an _objects' index
+        # that is still present in the proxy's _indexed_objects, refering to the old removed object.
+        # In the extending of its indexed objects, the proxy should detect those cases, and assign the new object a new index at the end:        
+        new_obj = self.create_object()
+        self.proxy.append(new_obj)
+        self.assertEqual(len(self.proxy), size+1)
+        self.assertEqual(len(self.proxy._objects), size)
+        self.assertNotIn(second_obj, self.proxy._objects)
+        self.assertIn(second_obj, self.proxy._indexed_objects)
+        self.assertIn(new_obj, self.proxy._objects)
+        self.assertIn(new_obj, self.proxy._indexed_objects)
+        self.assertEqual(self.proxy.index(new_obj), size)
+        
+        # Remove another object from the list model
+        self.list_model.remove(fourth_obj)
+        self.assertEqual(len(self.proxy), size+1)
+        self.assertEqual(len(self.proxy._objects), size-1)
+        self.assertNotIn(fourth_obj, self.proxy._objects)
+        self.assertIn(fourth_obj, self.proxy._indexed_objects)
+        
+        # Then create a new object and append it to list model directly, outside the proxy.
+        new_obj_2 = self.create_object()
+        self.list_model.append(new_obj_2)
+        self.assertEqual(len(self.proxy), size+1)
+        self.assertEqual(len(self.proxy._objects), size)
+        self.assertNotIn(fourth_obj, self.proxy._objects)
+        self.assertIn(fourth_obj, self.proxy._indexed_objects)
+        self.assertIn(new_obj_2, self.proxy._objects)
+        self.assertNotIn(new_obj_2, self.proxy._indexed_objects)
+
+        # This time the proxy should detect the removed object's index still being present in the _indexed_objects when we index the new object
+        # on the proxy and again gets assigned a new index at the end:        
+        i = self.proxy.index(new_obj_2)
+        self.assertEqual(len(self.proxy), size+2)
+        self.assertEqual(len(self.proxy._objects), size)
+        self.assertNotIn(fourth_obj, self.proxy._objects)
+        self.assertIn(fourth_obj, self.proxy._indexed_objects)
+        self.assertIn(new_obj_2, self.proxy._objects)
+        self.assertIn(new_obj_2, self.proxy._indexed_objects)
+        self.assertEqual(i, size+1)
+        
     def test_copy_after_sort(self):
         self.proxy.sort(self.attribute_name)
         length = len(self.proxy)
@@ -254,4 +307,7 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
             #self.assertEqual(union_all_objects[i], objects[i])
 
     def test_filter(self):
+        pass
+    
+    def test_remove_outside_proxy(self):
         pass
