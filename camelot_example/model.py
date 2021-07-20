@@ -111,13 +111,6 @@ class Movie( Entity ):
     #
     director_party_id = Column(sqlalchemy.types.Integer(), ForeignKey(Person.party_id))
     director = orm.relationship(Person)
-    # director = ManyToOne('Person')
-    # cast = OneToMany('Cast')
-    # visitor_reports = OneToMany('VisitorReport', cascade='delete')
-    # tags = ManyToMany('Tag',
-    #                   tablename = 'tags_movies__movies_tags',
-    #                   local_colname = 'tags_id',
-    #                   remote_colname = 'movies_id' )
 
 # end short movie definition
     #
@@ -217,10 +210,8 @@ class Cast( Entity ):
     role = Column( sqlalchemy.types.Unicode(60) )
     movie_id = Column(sqlalchemy.types.Integer(), ForeignKey(Movie.id), nullable=False)
     movie = orm.relationship(Movie, backref='cast')
-    # movie = ManyToOne( 'Movie', required = True, backref = 'cast' )
     actor_id = Column(sqlalchemy.types.Integer(), ForeignKey(Person.id), nullable=False)
     actor = orm.relationship(Person)
-    # actor = ManyToOne( Person, required = True )
 
     class Admin( EntityAdmin ):
         verbose_name = 'Actor'
@@ -236,10 +227,6 @@ class Tag(Entity):
     __tablename__ = 'tags'
 
     name = Column( sqlalchemy.types.Unicode(60), nullable = False )
-    # movies = ManyToMany( 'Movie',
-    #                      tablename = 'tags_movies__movies_tags',
-    #                      local_colname = 'movies_id',
-    #                      remote_colname = 'tags_id' )
 
     def __unicode__( self ):
         return self.name
@@ -265,7 +252,6 @@ class VisitorReport(Entity):
                        default = 0 )
     movie_id = Column(sqlalchemy.types.Integer(), ForeignKey(Movie.id), nullable=False)
     movie = orm.relationship(Movie, backref=orm.backref('visitor_reports', cascade='delete'))
-    # movie = ManyToOne( 'Movie', required = True )
 # end visitor report definition
 
     class Admin(EntityAdmin):
