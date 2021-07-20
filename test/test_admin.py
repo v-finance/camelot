@@ -378,7 +378,8 @@ class EntityAdminCase(TestMetaData):
             pass
 
         class B(self.Entity):
-            a = ManyToOne(A, nullable=False)
+            a_id = schema.Column(types.Integer(), schema.ForeignKey(A.id), nullable=False)
+            a = orm.relationship(A)
             x = schema.Column(types.Integer(), nullable=False)
             z = schema.Column(types.Integer())
 
