@@ -115,12 +115,6 @@ class AbstractModelProxy(object):
         Add an object to the proxy and the model
         """
         raise NotImplementedError()
-    
-    def swap(self, obj, new_obj):
-        """
-        Swap the given object in the proxy and the model with the given new object.
-        """
-        raise NotImplementedError()
 
     def remove(self, obj):
         """
