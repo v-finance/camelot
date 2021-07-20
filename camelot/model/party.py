@@ -1055,10 +1055,6 @@ class PartyCategory( Entity ):
     name = schema.Column( Unicode(40), index=True, nullable = False )
     color = schema.Column(Unicode(8))
 # end category definition
-#     parties = ManyToMany( 'Party', lazy = True, backref='categories',
-#                           tablename='party_category_party',
-#                           remote_colname='party_id',
-#                           local_colname='party_category_id')
 
     def get_contact_mechanisms(self, virtual_address_type):
         """Function to be used to do messaging
