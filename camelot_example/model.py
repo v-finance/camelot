@@ -40,8 +40,7 @@ import sqlalchemy.types
 # end basic imports
 
 import camelot.types
-from camelot.core.orm import (ManyToOne, OneToMany,
-                              ManyToMany, ColumnProperty)
+from camelot.core.orm import ColumnProperty
 from camelot.admin.action import Action
 from camelot.admin.action import list_filter
 from camelot.core.utils import ugettext_lazy as _

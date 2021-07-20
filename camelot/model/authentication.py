@@ -42,7 +42,7 @@ import camelot.types
 from ..admin.action import list_filter
 from ..admin.entity_admin import EntityAdmin
 from ..core.qt import QtCore, QtGui
-from ..core.orm import Entity, Session, ManyToMany
+from ..core.orm import Entity, Session
 from ..core.sql import metadata
 from ..core.utils import ugettext_lazy as _
 from ..view import forms

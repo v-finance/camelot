@@ -46,7 +46,7 @@ from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
