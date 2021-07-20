@@ -424,7 +424,7 @@ class SetData(Update):
 
     def model_run(self, model_context):
         grouped_requests = collections.defaultdict( list )
-        updated_objects, created_objects = set(), set()
+        updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj, column, value in self.updates:
             grouped_requests[(row, obj)].append((column, value))
         admin = model_context.admin
@@ -453,6 +453,7 @@ class SetData(Update):
                 logger.debug( 'set data for row %s;col %s' % ( row, column ) )
 
                 old_value = getattr(obj, field_name )
+                depending_objects_before_set = set(admin.get_depending_objects(obj))
                 value_changed = ( new_value != old_value )
                 #
                 # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
@@ -510,9 +511,16 @@ class SetData(Update):
                 columns = tuple(moves.xrange(len(model_context.static_field_attributes)))
                 self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
                 updated_objects.add(subsystem_obj)
-                updated_objects.update(set(admin.get_depending_objects(obj)))
+                depending_objects = depending_objects_before_set.union(set(admin.get_depending_objects(obj)))
+                for depending_object in depending_objects:
+                    related_admin = admin.get_related_admin(type(depending_object))
+                    if related_admin.is_deleted(depending_object):
+                        deleted_objects.update({depending_object})
+                    else:
+                        updated_objects.update({depending_object})
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
+        self.deleted_objects = tuple(deleted_objects)
         return self
 
     def gui_run(self, item_model):
@@ -520,6 +528,7 @@ class SetData(Update):
         signal_handler = item_model._crud_signal_handler
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
+        signal_handler.send_objects_deleted(item_model, self.deleted_objects)        
 
 class Created(UpdateMixin):
     """
