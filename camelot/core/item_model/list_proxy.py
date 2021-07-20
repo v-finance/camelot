@@ -139,7 +139,7 @@ class ListModelProxy(AbstractModelProxy, dict):
                 # If the object's index, despite the object itself not being in the indexed objects, is present in the indexed_objects,
                 # this might indicate that another old object was removed from _objects outside the proxy's interface, which did not remove it from the indexed objects.
                 # So in this case we reassign the new object a new index at the end:
-                i = self._length
+                i = len(self._indexed_objects) // 2
             self._indexed_objects[i] = obj
             
             # now the length is outdated
@@ -227,6 +227,11 @@ class ListModelProxy(AbstractModelProxy, dict):
                             for model_filter, filter_value in iteritems(self._filters):
                                 obj_iterator = model_filter.filter(obj_iterator, filter_value)
                             for obj in obj_iterator:
+                                if i in self._indexed_objects:
+                                    # If the object's index, despite the object itself not being in the indexed objects, is present in the indexed_objects,
+                                    # this might indicate that another old object was removed from _objects outside the proxy's interface, which did not remove it from the indexed objects.
+                                    # So in this case we reassign the new object a new index at the end:
+                                    i = len(self._indexed_objects) // 2
                                 self._indexed_objects[i] = obj
                                 object_found = True
                                 break
