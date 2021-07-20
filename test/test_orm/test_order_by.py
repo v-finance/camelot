@@ -6,10 +6,12 @@ from . import TestMetaData
 
 from camelot.core.orm import (Field, ManyToMany, ManyToOne, OneToMany, has_field, has_many, belongs_to, options,
                               has_and_belongs_to_many)
+from camelot.core.sql import metadata
 
 from sqlalchemy.types import String, Unicode, Integer
-from sqlalchemy import text
+from sqlalchemy import text, schema, orm
 
+import wingdbstub
 
 class TestOrderBy( TestMetaData ):
     
@@ -17,11 +19,9 @@ class TestOrderBy( TestMetaData ):
         super( TestOrderBy, self ).setUp()
     
         class Record( self.Entity ):
-            title = Field(String(100))
-            year = Field(Integer)
-            artist = ManyToOne('Artist')
-            genres = ManyToMany('Genre')
-    
+            title = schema.Column(String(100))
+            year = schema.Column(Integer)
+
             # order titles descending by year, then by title
             __mapper_args__ = {
                 'order_by': [text('-year'), 'title']
@@ -31,12 +31,22 @@ class TestOrderBy( TestMetaData ):
                 return "%s - %s (%d)" % (self.artist.name, self.title, self.year)
     
         class Artist( self.Entity ):
-            name = Field(String(30))
-            records = OneToMany('Record', order_by=['year', '-title'])
-    
+            name = schema.Column(String(30))
+
         class Genre( self.Entity ):
-            name = Field(String(30))
-            records = ManyToMany('Record', order_by='-title')
+            name = schema.Column(String(30))
+
+        Record.artist_id = schema.Column(Integer(), schema.ForeignKey(Artist.id))
+        Record.artist = orm.relationship(Artist, backref=orm.backref('records', order_by=[Record.year, Record.title.desc()]))
+        test_order_by_table = schema.Table('TestOrderBy_table', self.metadata, schema.Column('records_id', Integer(),
+                                                                                        schema.ForeignKey(Record.id),
+                                                                                        primary_key=True),
+                                           schema.Column('genres_id', Integer(), schema.ForeignKey(Genre.id),
+                                                         primary_key=True))
+
+        Record.genres = orm.relationship(Genre, backref=orm.backref('records', order_by=Record.title.desc()),
+                                         secondary=test_order_by_table,
+                                         foreign_keys=[test_order_by_table.c.records_id, test_order_by_table.c.genres_id])
     
         self.create_all()
         self.Record = Record
