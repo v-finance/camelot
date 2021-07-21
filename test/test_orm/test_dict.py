@@ -2,7 +2,7 @@
     test the deep-set functionality
 """
 
-from sqlalchemy import schema
+from sqlalchemy import schema, orm
 from sqlalchemy.types import Integer, String
 
 from camelot.core.orm import Field, ManyToOne, OneToMany, OneToOne
@@ -20,8 +20,6 @@ class TestDeepSet( TestMetaData ):
 
             t1id = Field(Integer, primary_key=True)
             name = Field(String(30))
-            tbl2s = OneToMany('Table2')
-            tbl3 = OneToOne('Table3')
 
             row_type = schema.Column( String(40), nullable = False )
             __mapper_args__ = {'polymorphic_on' : row_type,
@@ -33,15 +31,17 @@ class TestDeepSet( TestMetaData ):
 
             t2id = Field(Integer, primary_key=True)
             name = Field(String(30))
-            tbl1 = ManyToOne(Table1)
-        
+            tbl1_t1id = schema.Column(Integer(), schema.ForeignKey(Table1.t1id))
+            tbl1 = orm.relationship(Table1, backref='tbl2s')
+
         class Table3( self.Entity ):
 
             __tablename__ = 'table_3'
 
             t3id = Field(Integer, primary_key=True)
             name = Field(String(30))
-            tbl1 = ManyToOne(Table1)  
+            tbl1_id = schema.Column(Integer(), schema.ForeignKey(Table1.t1id))
+            tbl1 = orm.relationship(Table1, backref=orm.backref('tbl3', uselist=False))
 
         class Table4( Table1 ):
 

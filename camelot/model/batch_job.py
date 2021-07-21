@@ -41,7 +41,7 @@ import io
 import sqlalchemy.types
 from sqlalchemy import orm, sql, schema
 
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin

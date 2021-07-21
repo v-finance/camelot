@@ -45,11 +45,13 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, Field, ManyToMany, ManyToOne, OneToMany, ColumnProperty
+from camelot.core.orm import Entity, Field, ColumnProperty
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+
+from ..core.sql import metadata
 
 from .authentication import end_of_times
 
@@ -1053,10 +1055,6 @@ class PartyCategory( Entity ):
     name = schema.Column( Unicode(40), index=True, nullable = False )
     color = schema.Column(Unicode(8))
 # end category definition
-    parties = ManyToMany( 'Party', lazy = True, backref='categories',
-                          tablename='party_category_party',
-                          remote_colname='party_id',
-                          local_colname='party_category_id')
 
     def get_contact_mechanisms(self, virtual_address_type):
         """Function to be used to do messaging
@@ -1079,6 +1077,22 @@ class PartyCategory( Entity ):
         verbose_name = _('Category')
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
+
+
+party_category_table = schema.Table('party_category_party', metadata,
+                                    schema.Column('party_category_id', sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(PartyCategory.id, name='party_category_parties_fk'),
+                                                  nullable=False, primary_key=True),
+                                    schema.Column('party_id', sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(Party.id, name='party_category_parties_inverse_fk'),
+                                                  nullable=False, primary_key=True)
+                                    )
+
+PartyCategory.parties = orm.relationship(Party, secondary=party_category_table,
+                                               foreign_keys=[
+                                                   party_category_table.c.party_id,
+                                                   party_category_table.c.party_category_id])
+
 
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')

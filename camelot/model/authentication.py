@@ -34,7 +34,7 @@ import datetime
 import getpass
 import threading
 
-from sqlalchemy import types, orm
+from sqlalchemy import types, orm, schema
 from sqlalchemy.schema import Column, ForeignKey
 
 import camelot.types
@@ -42,7 +42,8 @@ import camelot.types
 from ..admin.action import list_filter
 from ..admin.entity_admin import EntityAdmin
 from ..core.qt import QtCore, QtGui
-from ..core.orm import Entity, Session, ManyToMany
+from ..core.orm import Entity, Session
+from ..core.sql import metadata
 from ..core.utils import ugettext_lazy as _
 from ..view import forms
 from ..view.controls import delegates
@@ -192,9 +193,6 @@ class AuthenticationGroup( Entity ):
     __tablename__ = 'authentication_group'
     
     name = Column( types.Unicode(256), nullable=False )
-    members = ManyToMany( AuthenticationMechanism, 
-                          tablename = 'authentication_group_member',
-                          backref = 'groups' )
     
     def __getattr__( self, name ):
         for role_id, role_name in roles:
@@ -240,7 +238,21 @@ class AuthenticationGroup( Entity ):
                 fa['delegate'] = delegates.BoolDelegate
                 fa['editable'] = True
             return fa
-        
+
+authentication_group_member_table = schema.Table('authentication_group_member', metadata,
+                            schema.Column('authentication_group_id', types.Integer(),
+                                          schema.ForeignKey(AuthenticationGroup.id, name='authentication_group_members_fk'),
+                                          nullable=False, primary_key=True),
+                            schema.Column('authentication_mechanism_id', types.Integer(),
+                                          schema.ForeignKey(AuthenticationMechanism.id, name='authentication_group_members_inverse_fk'),
+                                          nullable=False, primary_key=True)
+                            )
+
+AuthenticationGroup.members = orm.relationship(AuthenticationMechanism, backref='groups', secondary=authentication_group_member_table,
+                                               foreign_keys=[
+                                                   authentication_group_member_table.c.authentication_group_id,
+                                                   authentication_group_member_table.c.authentication_mechanism_id])
+
 class AuthenticationGroupRole( Entity ):
     """Table with the different roles associated with an
     :class:`AuthenticationGroup`
