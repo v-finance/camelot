@@ -1,7 +1,7 @@
 from sqlalchemy import schema, types, orm
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import ManyToMany, Entity
+from camelot.core.orm import Entity
 from camelot.core.sql import metadata
 from camelot.model.party import Person
 

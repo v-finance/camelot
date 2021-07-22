@@ -7,7 +7,7 @@ import unittest
 
 
 
-from sqlalchemy import sql, orm
+from sqlalchemy import sql, orm, schema
 import sqlalchemy.types
 
 from . import test_orm
@@ -71,9 +71,11 @@ class SearchCase( test_orm.TestMetaData ):
 
         class T( self.Entity ):
             """An entity with for each column type a column"""
-            for (i,name), definition in types_to_test.items():
-                has_field( name, definition )
-                
+            pass
+        
+        for (i,name), definition in types_to_test.items():
+            setattr(T, name, schema.Column(definition))
+
         class TAdmin(EntityAdmin):
             search_all_fields = True
             list_search = []
