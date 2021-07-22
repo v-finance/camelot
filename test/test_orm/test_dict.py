@@ -5,7 +5,6 @@
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Integer, String
 
-from camelot.core.orm import Field, ManyToOne, OneToMany, OneToOne
 
 from . import TestMetaData
 

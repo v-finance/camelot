@@ -61,10 +61,6 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
 
-from . fields import has_field, Field
-from . relationships import ( belongs_to, has_one, has_many,
-                              has_and_belongs_to_many, 
-                              ManyToOne, OneToOne, OneToMany, ManyToMany )
 from . properties import has_property, GenericProperty, ColumnProperty
 
 #
@@ -147,12 +143,9 @@ def transaction( original_function ):
     
     return decorated_function
 
-__all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, 
-            EntityCollection, Field, has_field,
-            has_property, GenericProperty, ColumnProperty,
-            belongs_to, has_one, has_many, has_and_belongs_to_many,
-            ManyToOne, OneToOne, OneToMany, ManyToMany,
-            setup_all, transaction
-            ] ] + ['Session', 'entities']
 
-
+__all__ = [obj.__name__ for obj in [Entity, EntityBase, EntityMeta,
+                                    EntityCollection, has_property, GenericProperty,
+                                    ColumnProperty,
+                                    setup_all, transaction
+                                    ]] + ['Session', 'entities']
