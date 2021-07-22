@@ -7,8 +7,9 @@ import threading
 from . import TestMetaData
 
 from camelot.core.qt import QtCore
-from camelot.core.orm import Field, Session
+from camelot.core.orm import Session
 
+from sqlalchemy import schema
 from sqlalchemy.types import String, Unicode, Integer
 
 class TestClassMethods( TestMetaData ):
@@ -16,7 +17,7 @@ class TestClassMethods( TestMetaData ):
     def test_get( self ):
         
         class A( self.Entity ):
-            name = Field(String(32))
+            name = schema.Column(String(32))
 
         self.create_all()
 
@@ -33,7 +34,7 @@ class TestClassMethods( TestMetaData ):
         #
         
         class A( self.Entity ):
-            name = Field(String(32))
+            name = schema.Column(String(32))
             
         self.create_all()
         

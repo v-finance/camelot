@@ -45,7 +45,7 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, Field, ColumnProperty
+from camelot.core.orm import Entity, ColumnProperty
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
@@ -576,9 +576,7 @@ class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
     __tablename__ = 'organization'
-    party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'),
-                      primary_key = True )
+    party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
     logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
@@ -602,9 +600,7 @@ class Person( Party ):
     """Person represents natural persons
     """
     __tablename__ = 'person'
-    party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'),
-                      primary_key = True )
+    party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
     first_name = schema.Column( Unicode( 40 ), nullable = False )
     last_name = schema.Column( Unicode( 40 ), nullable = False )

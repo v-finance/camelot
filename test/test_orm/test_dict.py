@@ -5,7 +5,6 @@
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Integer, String
 
-from camelot.core.orm import Field, ManyToOne, OneToMany, OneToOne
 
 from . import TestMetaData
 
@@ -18,8 +17,8 @@ class TestDeepSet( TestMetaData ):
 
             __tablename__ = 'table_1'
 
-            t1id = Field(Integer, primary_key=True)
-            name = Field(String(30))
+            t1id = schema.Column(Integer, primary_key=True)
+            name = schema.Column(String(30))
 
             row_type = schema.Column( String(40), nullable = False )
             __mapper_args__ = {'polymorphic_on' : row_type,
@@ -29,8 +28,8 @@ class TestDeepSet( TestMetaData ):
 
             __tablename__ = 'table_2'
 
-            t2id = Field(Integer, primary_key=True)
-            name = Field(String(30))
+            t2id = schema.Column(Integer, primary_key=True)
+            name = schema.Column(String(30))
             tbl1_t1id = schema.Column(Integer(), schema.ForeignKey(Table1.t1id))
             tbl1 = orm.relationship(Table1, backref='tbl2s')
 
@@ -38,8 +37,8 @@ class TestDeepSet( TestMetaData ):
 
             __tablename__ = 'table_3'
 
-            t3id = Field(Integer, primary_key=True)
-            name = Field(String(30))
+            t3id = schema.Column(Integer, primary_key=True)
+            name = schema.Column(String(30))
             tbl1_id = schema.Column(Integer(), schema.ForeignKey(Table1.t1id))
             tbl1 = orm.relationship(Table1, backref=orm.backref('tbl3', uselist=False))
 
@@ -47,7 +46,7 @@ class TestDeepSet( TestMetaData ):
 
             __tablename__ = 'table_4'
 
-            second_name = Field(String(30))
+            second_name = schema.Column(String(30))
             t1id = schema.Column(Integer,
                                  schema.ForeignKey(Table1.t1id), 
                                  primary_key=True)
@@ -216,7 +215,7 @@ class TestDeepSet( TestMetaData ):
     def test_set_on_aliased_column(self):
         
         class A( self.Entity ):
-            name = Field(String(60), colname='strName')
+            name = schema.Column('strName', String(60))
 
         self.create_all()
 

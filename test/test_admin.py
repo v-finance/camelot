@@ -5,10 +5,6 @@ Tests for the Admin classes
 
 import unittest
 
-from camelot.core.orm import (
-    OneToMany, ManyToMany, ManyToOne, OneToOne
-)
-
 from camelot.core.qt import Qt
 from camelot.core.sql import metadata
 from camelot.admin.application_admin import ApplicationAdmin
