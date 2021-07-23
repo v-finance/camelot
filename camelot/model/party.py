@@ -45,7 +45,7 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, ColumnProperty
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
@@ -91,10 +91,8 @@ class GeographicBoundary( Entity ):
             postgresql_using='gin'
         ),
     )
-    
-    @ColumnProperty
-    def full_name( self ):
-        return self.code + ' ' + self.name
+
+    full_name = orm.column_property(code + ' ' + name)
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
@@ -307,12 +305,10 @@ class Address( Entity ):
         # Only allow to overrule the address' zip code if its city's code is unknown.
         if self.city is not None and self.city.code == '':
             self._zip_code = value
-    
-    def name( self ):
-        return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
-                           whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
 
-    name = ColumnProperty( name, deferred = True )
+    name = orm.column_property(sql.select(
+        [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
+        whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
 
     @classmethod
     def get_or_create( cls, street1, street2, city, zip_code):
@@ -1033,11 +1029,7 @@ class PartyContactMechanism( Entity ):
             [ContactMechanism.mechanism],
             whereclause=ContactMechanism.id==self.contact_mechanism_id).as_scalar()
 
-    def party_name( self ):
-        return sql.select( [Party.full_name],
-                           whereclause = (Party.id==self.party_id))
-
-    party_name = ColumnProperty( party_name, deferred = True )
+    party_name = orm.column_property(sql.select([Party.full_name], whereclause=(Party.id == party_id)), deferred=True)
 
     def __str__(self):
         return str( self.contact_mechanism )
