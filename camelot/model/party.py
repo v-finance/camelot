@@ -1029,7 +1029,10 @@ class PartyContactMechanism( Entity ):
             [ContactMechanism.mechanism],
             whereclause=ContactMechanism.id==self.contact_mechanism_id).as_scalar()
 
-    party_name = orm.column_property(sql.select([Party.full_name], whereclause=(Party.id == party_id)), deferred=True)
+    @classmethod
+    def __declare_after__(cls):
+        cls.party_name = orm.column_property(sql.select([Party.full_name], whereclause=(Party.id == cls.party_id)),
+                                         deferred=True)
 
     def __str__(self):
         return str( self.contact_mechanism )
