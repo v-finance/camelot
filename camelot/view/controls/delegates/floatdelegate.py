@@ -57,6 +57,10 @@ class FloatDelegate(CustomDelegate):
         })
         item = super(FloatDelegate, cls).get_standard_item(locale, value, fa_values)
         precision = fa_values.get('precision', 2)
+        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+        # as that only handles the precision key not being present, not it being explicitly set to None.
+        if precision is None:
+            precision = 2
         if value is not None:
             value_str = six.text_type(
                 locale.toString(float(value), 'f', precision)

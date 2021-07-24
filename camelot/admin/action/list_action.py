@@ -759,7 +759,11 @@ class ExportSpreadsheet( ListContextAction ):
                         separator = attributes.get('separator', ', ')
                         value = separator.join([str(el) for el in value])
                     elif isinstance( value, float ):
-                        precision = attributes.get('precision', 2)
+                        precision = attributes.get('precision')
+                        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+                        # as that only handles the precision key not being present, not it being explicitly set to None.
+                        if precision is None:
+                            precision = 2
                         style = numeric_style[precision]
                     elif isinstance( value, int ):
                         style = int_format
