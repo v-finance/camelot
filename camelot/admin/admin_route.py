@@ -136,3 +136,31 @@ class AdminRoute(object):
         assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
         cls._admin_routes[action_route] = action
         return action_route
+
+
+def register_list_actions(attr_cache, attr_admin_route):
+    """
+    Function decorator that registers list actions.
+
+    :param str attr_cache: Name of the attribute to cache the registered actions
+    :param str attr_admin_route: Name of the attribute that contains the AdminRoute.
+    """
+    def decorator(func):
+        def wrapper(self, *args, **kwargs):
+            # check for existing attribute
+            if hasattr(self, attr_cache) and getattr(self, attr_cache) is not None:
+                return getattr(self, attr_cache)
+            # register actions
+            assert hasattr(self, attr_admin_route)
+            admin_route = getattr(self, attr_admin_route)
+            actions = func(self, *args, **kwargs)
+            result = []
+            for action in actions:
+                if isinstance(action, tuple):
+                    result.append(action) # action is already registered
+                else:
+                    result.append((AdminRoute._register_list_action_route(admin_route, action), action.render_hint))
+            setattr(self, attr_cache, result)
+            return result
+        return wrapper
+    return decorator
