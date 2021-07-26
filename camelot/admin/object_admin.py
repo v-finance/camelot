@@ -35,7 +35,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
-from .admin_route import Route, AdminRoute
+from .admin_route import Route, AdminRoute, register_list_actions
 from .action import field_action
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
@@ -411,8 +411,9 @@ be specified using the verbose_name attribute.
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
 
+    @register_list_actions('_list_actions', '_admin_route')
     def get_list_actions(self):
-        return [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in self.list_actions]
+        return self.list_actions
 
     def get_list_action(self) -> Route:
         """Get the route for the action that should be triggered when an object is selected
