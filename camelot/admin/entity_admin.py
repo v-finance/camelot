@@ -445,6 +445,7 @@ and used as a custom action.
             return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
+    @register_list_actions('_filter_actions', '_admin_route')
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
@@ -457,9 +458,7 @@ and used as a custom action.
                     structure = list_filter.GroupBoxFilter(structure)
                 yield structure
 
-        if self._filter_actions is None:
-            self._filter_actions = [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in filter_generator()]
-        return self._filter_actions
+        return list(filter_generator())
 
     def primary_key( self, obj ):
         """Get the primary key of an object
