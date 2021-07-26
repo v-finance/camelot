@@ -71,6 +71,7 @@ class Filter(Action):
         :param verbose_name: the name of the filter as shown to the user, defaults
             to the name of the field on which to filter.
         """
+        assert isinstance(attribute, str)
         self.attribute = attribute
         self.default = default
         self.verbose_name = verbose_name
