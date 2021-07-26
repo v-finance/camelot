@@ -36,7 +36,7 @@ logger = logging.getLogger('camelot.admin.entity_admin')
 
 from ..core.item_model import QueryModelProxy
 
-from camelot.admin.admin_route import AdminRoute
+from camelot.admin.admin_route import AdminRoute, register_list_actions
 from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -135,25 +135,7 @@ and used as a custom action.
             raise exception
         # caching
         self._search_fields = None
-        self._toolbar_actions = None
         self._filter_actions = None
-
-    def _register_action_list(self, actions):
-        return [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in actions]
-
-    def register_toolbar_actions(self):
-        """
-        Register toolbar actions for this admin. This function is called only once
-        to ensure actions are only registered once. This function can be overloaded in
-        subclasses if different actions are needed.
-
-        :return: The registered actions as a list of tuples (action_route, RenderHint).
-        """
-        return self._register_action_list([
-            list_filter.SearchFilter(self),
-            list_action.SetFilters(),
-            application_action.Refresh(),
-        ])
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -259,6 +241,7 @@ and used as a custom action.
 
         return search_identifiers
 
+    @register_list_actions('_toolbar_actions', '_admin_route')
     def get_list_toolbar_actions( self ):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
@@ -266,10 +249,11 @@ and used as a custom action.
             None if no toolbar should be created.
         """
         toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions()
-        if self._toolbar_actions is None:
-            # delay registration of actions since this may require calling get_current_authentication()
-            self._toolbar_actions = self.register_toolbar_actions()
-        return toolbar_actions + self._toolbar_actions
+        return toolbar_actions + [
+            list_filter.SearchFilter(self),
+            list_action.SetFilters(),
+            application_action.Refresh(),
+        ]
 
     def get_select_list_toolbar_actions( self, toolbar_area ):
         """
