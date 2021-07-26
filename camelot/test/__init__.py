@@ -166,7 +166,7 @@ class ActionMixinCase(object):
                 super(IteratingActionRunner, self).generator(self._generator)
                 cls.process()
                 step = self.return_queue.pop()
-                while isinstance(step, ActionStep):
+                while isinstance(step, (ActionStep, tuple)):
                     if isinstance(step, AbstractCrudSignal):
                         LOGGER.debug('crud step, update view')
                         step.gui_run(gui_context)

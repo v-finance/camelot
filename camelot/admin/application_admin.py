@@ -300,21 +300,14 @@ shortcut confusion and reduce the number of status updates.
                self.change_row_actions + \
                self.export_actions
 
-    def get_select_list_toolbar_actions( self, toolbar_area ):
+    @register_list_actions('_select_toolbar_actions', '_admin_route')
+    def get_select_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned when selecting objects 
-            from a table.
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
-            return [
-                list_action.CloseList(), list_action.ListLabel()
-                ] + self.change_row_actions
-        return []
+        return self.list_toolbar_actions + self.change_row_actions
 
     def add_main_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
         """

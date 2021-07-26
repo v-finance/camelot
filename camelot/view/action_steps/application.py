@@ -220,6 +220,8 @@ class MainMenu(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(self, gui_context, serialized_step):
         from ..controls.busy_widget import BusyWidget
+        if gui_context.workspace is None:
+            return
         main_window = gui_context.workspace.parent()
         if main_window is None:
             return

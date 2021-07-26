@@ -502,7 +502,8 @@ class ListActionsCase(
         action = list_action.AddExistingObject()
         steps = self.gui_run(action, self.gui_context)
         for step in steps:
-            if isinstance(step, action_steps.SelectObjects):
+            # SelectObjects is a serializable action
+            if isinstance(step, tuple) and step[0] == action_steps.SelectObjects.__name__:
                 steps.send([Person(first_name='Unknown', last_name='Unknown')])
         new_row_count = self._row_count(self.item_model)
         self.assertEqual(new_row_count, initial_row_count+1)
