@@ -367,6 +367,7 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
+                # table.primary_key returns an iterator so we can't test the length or something like that
                 if (table := dict_.get('__table__', None)) is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
                 

@@ -139,6 +139,3 @@ class EntityBuilder(object, metaclass=CounterMeta):
 
     def finalize(self):
         pass
-
-
-
