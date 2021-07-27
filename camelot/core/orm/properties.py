@@ -139,29 +139,6 @@ class EntityBuilder(object, metaclass=CounterMeta):
 
     def finalize(self):
         pass
-    
-# class PrimaryKeyProperty( EntityBuilder ):
-#
-#     def create_pk_cols(self):
-#         from camelot.types import PrimaryKey
-#         setattr( self.entity,
-#                  self.name,
-#                  schema.Column( self.name, PrimaryKey(),
-#                                 **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS) )
-    
-class DeferredProperty( EntityBuilder ):
-    """Abstract base class for all properties of an Entity that are not 
-    handled by Declarative but should be handled after a mapper was
-    configured"""
-        
-    def _setup_reverse( self, key, rel, target_cls ):
-        """Setup bidirectional behavior between two relationships."""
 
-        reverse = self.kw.get( 'reverse' )
-        if reverse:
-            reverse_attr = getattr( target_cls, reverse )
-            if not isinstance( reverse_attr, DeferredProperty ):
-                reverse_attr.property._add_reverse_property( key )
-                rel._add_reverse_property( reverse )
 
 
