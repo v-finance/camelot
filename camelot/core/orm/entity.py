@@ -43,9 +43,9 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
-from ...types import Enumeration
+from ...types import Enumeration, PrimaryKey
 from . statements import MUTATORS
-from . properties import EntityBuilder, PrimaryKeyProperty
+from . properties import EntityBuilder
 from . import Session, options
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
@@ -136,16 +136,6 @@ class EntityDescriptor(object):
 
         if self._pk_col_done:
             return
-
-        base_descriptor = getattr( self.entity_base, '_descriptor', None )
-        has_table = hasattr(self.entity, '__table__')
-
-        if not self.has_pk and base_descriptor == None and not has_table:
-            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
-            builder = PrimaryKeyProperty()
-            builder.attach( self.entity, colname )
-            self.add_builder(builder)
-            builder.create_pk_cols()
 
         self._pk_col_done = True
 
@@ -370,6 +360,16 @@ class EntityMeta( DeclarativeMeta ):
                     dict_['__cls_for_type__'] = dict()
             
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+        # adds primary key column to the class
+        if classname != 'Entity' and dict_.get('__tablename__') is not None:
+            for val in dict_.values():
+                if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
+                    break
+            else:
+                # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
+                if (table := dict_.get('__table__', None)) is None or table.primary_key.issubset([]):
+                    _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
+                
         cls.register_class(cls, _class, dict_)
         return _class
     

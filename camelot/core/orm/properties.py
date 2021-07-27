@@ -140,14 +140,14 @@ class EntityBuilder(object, metaclass=CounterMeta):
     def finalize(self):
         pass
     
-class PrimaryKeyProperty( EntityBuilder ):
-    
-    def create_pk_cols(self):
-        from camelot.types import PrimaryKey
-        setattr( self.entity,
-                 self.name,
-                 schema.Column( self.name, PrimaryKey(), 
-                                **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS) )
+# class PrimaryKeyProperty( EntityBuilder ):
+#
+#     def create_pk_cols(self):
+#         from camelot.types import PrimaryKey
+#         setattr( self.entity,
+#                  self.name,
+#                  schema.Column( self.name, PrimaryKey(),
+#                                 **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS) )
     
 class DeferredProperty( EntityBuilder ):
     """Abstract base class for all properties of an Entity that are not 
