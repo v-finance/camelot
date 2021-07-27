@@ -205,43 +205,5 @@ class GenericProperty( DeferredProperty ):
         else:
             prop_value = self.prop
         setattr( cls, key, prop_value )
-        
-class ColumnProperty( GenericProperty ):
-    """A specialized form of the GenericProperty to generate SQLAlchemy
-    ``column_property``'s.
-
-    It takes a function (often given as an anonymous lambda) as its first
-    argument. Other arguments and keyword arguments are forwarded to the
-    column_property construct. That first-argument function must accept exactly
-    one argument and must return the desired (scalar-returning) SQLAlchemy
-    ClauseElement.
-
-    The function will be called whenever the entity table is completely
-    defined, and will be given
-    the .c attribute of the table of the entity as argument (as a way to
-    access the entity columns). The ColumnProperty will first wrap your
-    ClauseElement in an
-    "empty" label (ie it will be labelled automatically during queries),
-    then wrap that in a column_property.
-
-    .. sourcecode:: python
-
-        class OrderLine(Entity):
-            quantity = Field(Float)
-            unit_price = Field(Numeric)
-            price = ColumnProperty(lambda c: c.quantity * c.unit_price,
-                                   deferred=True)
-
-    Please look at the `corresponding SQLAlchemy
-    documentation <http://docs.sqlalchemy.org/en/rel_0_7/orm/mapper_config.html#sql-expressions-as-mapped-attributes>`_ 
-    for details."""
-
-    def evaluate_property( self, prop ):
-        return orm.column_property( prop.label( None ), *self.args, **self.kwargs )
-
-class has_property( ClassMutator ):
-    
-    def process( self, entity_dict, name, prop, *args, **kwargs ):
-        entity_dict[ name ] = GenericProperty( prop, *args, **kwargs )
 
 
