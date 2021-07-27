@@ -163,47 +163,5 @@ class DeferredProperty( EntityBuilder ):
             if not isinstance( reverse_attr, DeferredProperty ):
                 reverse_attr.property._add_reverse_property( key )
                 rel._add_reverse_property( reverse )
-        
-class GenericProperty( DeferredProperty ):
-    '''
-    Generic catch-all class to wrap an SQLAlchemy property.
-
-    .. sourcecode:: python
-
-        class OrderLine(Entity):
-            quantity = Field(Float)
-            unit_price = Field(Numeric)
-            price = GenericProperty(lambda c: column_property(
-                             (c.quantity * c.unit_price).label('price')))
-    '''
-    
-    process_order = 4
-    
-    def __init__( self, prop, *args, **kwargs ):
-        super( GenericProperty, self ).__init__()
-        self.prop = prop
-        self.args = args
-        self.kwargs = kwargs
-        
-    def create_properties( self ):
-        table = orm.class_mapper( self.entity ).local_table
-        if hasattr( self.prop, '__call__' ):
-            prop_value = self.prop( table.c )
-        else:
-            prop_value = self.prop
-        prop_value = self.evaluate_property( prop_value )
-        setattr( self.entity, self.name, prop_value )
-
-    def evaluate_property( self, prop ):
-        if self.args or self.kwargs:
-            raise Exception('superfluous arguments passed to GenericProperty')
-        return prop
-    
-    def _config( self, cls, mapper, key ):
-        if hasattr(self.prop, '__call__'):
-            prop_value = self.prop( mapper.local_table.c )
-        else:
-            prop_value = self.prop
-        setattr( cls, key, prop_value )
 
 

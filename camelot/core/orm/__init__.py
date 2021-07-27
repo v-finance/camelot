@@ -61,8 +61,6 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
 
-from . properties import GenericProperty
-
 #
 # Default registry for subclasses of Entity that have been mapped
 #
@@ -145,6 +143,5 @@ def transaction( original_function ):
 
 
 __all__ = [obj.__name__ for obj in [Entity, EntityBase, EntityMeta,
-                                    EntityCollection, GenericProperty,
-                                    setup_all, transaction
+                                    EntityCollection, setup_all, transaction
                                     ]] + ['Session', 'entities']
