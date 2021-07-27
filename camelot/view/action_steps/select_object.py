@@ -104,14 +104,14 @@ class SelectObjects( OpenTableView ):
         super(SelectObjects, self).__init__(admin, value)
         self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
-        # list_action
-        confirm_selection = ConfirmSelection()
-        self.list_action = AdminRoute._register_list_action_route(self.admin_route, confirm_selection)
         # actions
-        cancel_selection = CancelSelection()
-        self.actions = [(AdminRoute._register_list_action_route(self.admin_route, cancel_selection), cancel_selection.render_hint)]
-        self.actions.append((self.list_action, confirm_selection.render_hint)) # reuse list_action
+        self.actions = admin.get_select_list_actions()
         self.actions.extend(admin.get_select_list_toolbar_actions())
+        # list_action
+        for action in self.actions:
+            if action[0][-1] == ConfirmSelection.name:
+                self.list_action = action[0]
+                break
 
     @classmethod
     def render(cls, gui_context, step):

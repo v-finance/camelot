@@ -817,6 +817,7 @@ be specified using the verbose_name attribute.
         fields.update(self.get_fields())
         return fields
 
+    @register_list_actions('_filter_actions', '_admin_route')
     def get_filters(self):
         return []
 

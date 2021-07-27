@@ -269,6 +269,14 @@ and used as a custom action.
         toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions()
         return toolbar_actions + self._get_shared_toolbar_actions()
 
+    @register_list_actions('_select_actions', '_admin_route')
+    def get_select_list_actions( self ):
+        from camelot.view.action_steps.select_object import CancelSelection, ConfirmSelection
+        return [
+            CancelSelection(),
+            ConfirmSelection()
+        ]
+
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
