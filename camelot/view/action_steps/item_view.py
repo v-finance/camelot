@@ -196,6 +196,7 @@ class OpenTableView( UpdateTableView ):
         table_view.setFocus(Qt.PopupFocusReason)
 
 
+@dataclass
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
     
@@ -214,17 +215,19 @@ class OpenQmlTableView(OpenTableView):
         super().__init__(admin, value)
         self.list_action = admin.get_list_action()
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         view = gui_context.workspace.active_view()
         quick_view = view.quick_view
         views = quick_view.findChild(QtCore.QObject, "qml_views")
         header_model = QtCore.QStringListModel(parent=quick_view)
-        header_model.setStringList(self.columns)
+        header_model.setStringList(step['columns'])
         header_model.setParent(quick_view)
-        new_model = CollectionProxy(self.admin_route)
+        new_model = CollectionProxy(tuple(step['admin_route']))
         new_model.setParent(quick_view)
-        list(new_model.add_columns(self.columns))
-        new_model.set_value(self.proxy_route)
+        list(new_model.add_columns(step['columns']))
+        new_model.set_value(step['proxy_route'])
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
@@ -236,14 +239,14 @@ class OpenQmlTableView(OpenTableView):
 
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
-        list_gui_context.admin_route = self.admin_route
+        list_gui_context.admin_route = tuple(step['admin_route'])
         list_gui_context.view = table
 
-        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
+        list_action = AdminRoute.action_for(tuple(step['list_action']))
+        qt_action = ActionAction(list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for i, action in enumerate(itertools.chain(
-            self.top_toolbar_actions, self.list_actions, self.filters
-            )):
+        for i, action_route in enumerate(step['actions']):
+            action = AdminRoute.action_for(tuple(action_route['route']))
             icon_name = None
             if action.icon is not None:
                 icon_name = action.icon.name
