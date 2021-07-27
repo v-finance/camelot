@@ -32,7 +32,6 @@ import json
 
 from ...core.qt import QtWidgets
 
-from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
@@ -109,8 +108,8 @@ class SelectObjects( OpenTableView ):
         self.actions.extend(admin.get_select_list_toolbar_actions())
         # list_action
         for action in self.actions:
-            if action[0][-1] == ConfirmSelection.name:
-                self.list_action = action[0]
+            if action.route[-1] == ConfirmSelection.name:
+                self.list_action = action.route
                 break
 
     @classmethod

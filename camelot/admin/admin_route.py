@@ -1,14 +1,28 @@
+from dataclasses import dataclass
 import collections
 import itertools
 import logging
 import typing
 
+from ..admin.action.base import RenderHint
 from ..core.exception import UserException
 from ..core.utils import ugettext
+from ..core.serializable import DataclassSerializable
 
 LOGGER = logging.getLogger(__name__)
 
 Route = typing.Tuple[str, ...]
+
+
+@dataclass
+class RouteWithRenderHint(DataclassSerializable):
+    """
+    A :class:`camelot.admin.admin_route.Route` with associated :class:`camelot.admin.action.base.RenderHint`.
+    """
+
+    route: Route
+    render_hint: RenderHint
+
 
 class AdminRoute(object):
     """
@@ -156,10 +170,10 @@ def register_list_actions(attr_cache, attr_admin_route):
             actions = func(self, *args, **kwargs)
             result = []
             for action in actions:
-                if isinstance(action, tuple):
+                if isinstance(action, RouteWithRenderHint):
                     result.append(action) # action is already registered
                 else:
-                    result.append((AdminRoute._register_list_action_route(admin_route, action), action.render_hint))
+                    result.append(RouteWithRenderHint(AdminRoute._register_list_action_route(admin_route, action), action.render_hint))
             setattr(self, attr_cache, result)
             return result
         return wrapper

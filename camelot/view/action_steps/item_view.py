@@ -124,13 +124,13 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         list(model.add_columns(step['columns']))
         # filters can have default values, so they need to be set before
         # the value is set
-        table_view.set_filters([AdminRoute.action_for(tuple(action[0])) for action in step['actions'] if action[1] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
+        table_view.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
         table_view.set_value(step['proxy_route'])
-        table_view.set_list_actions([AdminRoute.action_for(tuple(action[0])) for action in step['actions'] if action[1] == RenderHint.PUSH_BUTTON.value])
+        table_view.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
         table_view.set_toolbar_actions(
             Qt.TopToolBarArea,
-            [AdminRoute.action_for(tuple(action[0])) for action in step['actions'] if action[1] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
+            [AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
         )
         if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
