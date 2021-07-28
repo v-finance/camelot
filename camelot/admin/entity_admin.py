@@ -36,6 +36,7 @@ logger = logging.getLogger('camelot.admin.entity_admin')
 
 from ..core.item_model import QueryModelProxy
 
+from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -134,6 +135,7 @@ and used as a custom action.
             raise exception
         # caching
         self._search_fields = None
+        self._filter_actions = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -239,42 +241,41 @@ and used as a custom action.
 
         return search_identifiers
 
-    def get_list_toolbar_actions( self, toolbar_area ):
-        """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
+    @register_list_actions('_shared_toolbar_actions', '_admin_route')
+    def _get_shared_toolbar_actions( self ):
+        return [
+            list_filter.SearchFilter(self),
+            list_action.SetFilters(),
+            application_action.Refresh(),
+        ]
 
+    @register_list_actions('_toolbar_actions', '_admin_route')
+    def get_list_toolbar_actions( self ):
+        """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions(toolbar_area)
-        if toolbar_area == Qt.TopToolBarArea:
-            return toolbar_actions + [
-                list_filter.SearchFilter(self),
-                list_action.SetFilters(),
-                application_action.Refresh(),
-            ]
-        return toolbar_actions
+        toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions()
+        return toolbar_actions + self._get_shared_toolbar_actions()
 
-    def get_select_list_toolbar_actions( self, toolbar_area ):
+    @register_list_actions('_select_toolbar_actions', '_admin_route')
+    def get_select_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned when selecting objects 
-            from a table.
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions(toolbar_area)
-        if toolbar_area == Qt.TopToolBarArea:
-            return toolbar_actions + [
-                list_filter.SearchFilter(self),
-                list_action.SetFilters(),
-                application_action.Refresh(),
-            ]
-        return toolbar_actions
+        toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions()
+        return toolbar_actions + self._get_shared_toolbar_actions()
+
+    @register_list_actions('_select_actions', '_admin_route')
+    def get_select_list_actions( self ):
+        from camelot.view.action_steps.select_object import CancelSelection, ConfirmSelection
+        return [
+            CancelSelection(),
+            ConfirmSelection()
+        ]
 
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
@@ -447,6 +448,7 @@ and used as a custom action.
             return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
+    @register_list_actions('_filter_actions', '_admin_route')
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 

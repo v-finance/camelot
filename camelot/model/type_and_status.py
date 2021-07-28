@@ -452,6 +452,8 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     :param attribute: the attribute that holds the status
     """
 
+    name = 'status_filter'
+
     def decorate_query(self, query, values):
         if list_filter.All in values:
             return query
