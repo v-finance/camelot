@@ -108,7 +108,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
-        self.actions = admin.get_list_actions()
+        self.actions = admin.get_list_actions().copy()
         self.actions.extend(admin.get_filters())
         self.actions.extend(admin.get_list_toolbar_actions())
         self.columns = admin.get_columns()
