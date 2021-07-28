@@ -43,6 +43,8 @@ from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
+from sqlalchemy.orm.base import _entity_descriptor
+
 import xlsxwriter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
@@ -1032,8 +1034,14 @@ class SetFilters(Action, AbstractModelFilter):
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
-        return query.filter_by(**values)
-
+        # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
+        # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
+        # This caused filters in some cases being tried to applied to the wrong entity.
+        # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
+        entity = query._entity_zero()
+        clauses = [_entity_descriptor(entity, key) == value for key, value in values.items()]
+        return query.filter(*clauses)
+    
     def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
