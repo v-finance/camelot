@@ -54,9 +54,7 @@ statuses as needed.
 """
 import datetime
 
-
-
-from sqlalchemy import orm, sql, schema, types, inspection
+from sqlalchemy import orm, sql, schema, types, inspection, util
 from sqlalchemy.ext import hybrid
 
 from camelot.admin.action import list_filter
@@ -162,6 +160,56 @@ class StatusHistoryAdmin( EntityAdmin ):
     
     def get_related_toolbar_actions(self, toolbar_area, direction):
         return []
+
+class WithStatus(object):
+    """
+    cls var 'status_types': Required, sets the status types for the WithStatus class
+    cls var  'status_history_table': Optional, sets the tablename for the history_table
+    """
+    
+    status_types = None
+    status_history_table = None
+
+    @classmethod
+    def __declare_first__(cls):
+        #import wingdbstub
+        assert isinstance(cls.status_types, util.OrderedProperties), "This class' should define its status_types enumeration types."
+        # Only create status history on base entity mapper.
+        if cls.__mapper__ == cls.__mapper__.base_mapper and not cls.__mapper__.configured:
+            status_history_table = cls.__name__.lower() + '_status' if cls.status_history_table is None else cls.status_history_table
+    
+            status_history_admin = type(cls.__name__ + 'StatusHistoryAdmin',
+                                        (StatusHistoryAdmin,),
+                                        {'verbose_name': _(cls.__name__ + ' Status'),
+                                         'verbose_name_plural': _(cls.__name__ + ' Statuses')})
+    
+            status_history = type(cls.__name__ + 'StatusHistory',
+                                  (Entity, StatusHistory),
+                                  {'__tablename__': status_history_table,
+                                   'classified_by': schema.Column(
+                                       Enumeration(cls.status_types),
+                                       nullable=False,
+                                       index=True
+                                   ),
+                                   'Admin': status_history_admin, })
+            cls._status_history = status_history
+            status_history.__table__.schema = cls.__table__.schema
+            status_history.__table__.info = cls.__table__.info.copy()
+            #table = orm.class_mapper(cls).local_table
+            for col in cls.__table__.primary_key.columns:
+                col_name = u'status_for_%s' % col.name
+                if not hasattr(status_history, col_name):
+                    constraint = schema.ForeignKey(col,
+                                                   ondelete='cascade',
+                                                   onupdate='cascade')
+                    column = schema.Column(PrimaryKey(),
+                                           constraint,
+                                           nullable=False,
+                                           index=True)
+                    setattr(status_history, col_name, column)
+    
+            status_history.status_for = orm.relationship(cls, backref=orm.backref('status', cascade='all, delete, delete-orphan'), enable_typechecks=False)
+
 
 class Status( EntityBuilder ):
     """EntityBuilder that adds a related status table(s) to an `Entity`.
