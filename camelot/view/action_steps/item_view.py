@@ -32,9 +32,10 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
-#from dataclasses import dataclass
+from dataclasses import dataclass
 import itertools
 import typing
+import json
 
 from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
@@ -43,7 +44,7 @@ from ...admin.action.list_action import ListActionGuiContext, ApplicationActionG
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry
-#from ...core.serializable import DataclassSerializable
+from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
@@ -85,9 +86,8 @@ class SetFilter( ActionStep ):
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
 
-#@dataclass
-#class UpdateTableView( ActionStep, DataclassSerializable ):
-class UpdateTableView( ActionStep ):
+@dataclass
+class UpdateTableView( ActionStep, DataclassSerializable ):
     """Change the admin and or value of an existing table view
     
     :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
@@ -98,12 +98,7 @@ class UpdateTableView( ActionStep ):
     #value: not needed
     search_text: typing.Union[str, None]
     title: typing.Union[str, ugettext_lazy]
-    #filters: TODO
     columns: typing.List[str]
-    #left_toolbar_actions: TODO
-    #right_toolbar_actions: TODO
-    #top_toolbar_actions: TODO
-    #bottom_toolbar_actions: TODO
     list_action: Route
     proxy_route: Route
     actions: typing.List[typing.Tuple[Route, RenderHint]]
@@ -113,52 +108,44 @@ class UpdateTableView( ActionStep ):
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
-        self.filters = admin.get_filters()
         self.actions = admin.get_list_actions()
+        self.actions.extend(admin.get_filters())
+        self.actions.extend(admin.get_list_toolbar_actions())
         self.columns = admin.get_columns()
-        self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.LeftToolBarArea)
-        self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.RightToolBarArea)
-        self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.TopToolBarArea)
-        self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.BottomToolBarArea)
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
-    
-    def update_table_view(self, table_view):
+
+    @staticmethod
+    def update_table_view(table_view, step):
         from camelot.view.controls.search import SimpleSearchControl
         table_view.set_admin()
         model = table_view.get_model()
-        list(model.add_columns(self.columns))
+        list(model.add_columns(step['columns']))
         # filters can have default values, so they need to be set before
         # the value is set
-        table_view.set_filters(self.filters)
-        table_view.set_value(self.proxy_route)
-        table_view.set_list_actions([AdminRoute.action_for(action[0]) for action in self.actions if action[1] == RenderHint.PUSH_BUTTON])
-        table_view.list_action = AdminRoute.action_for(self.list_action)
+        table_view.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
+        table_view.set_value(step['proxy_route'])
+        table_view.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
+        table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
         table_view.set_toolbar_actions(
-            Qt.LeftToolBarArea, self.left_toolbar_actions
+            Qt.TopToolBarArea,
+            [AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
         )
-        table_view.set_toolbar_actions(
-            Qt.RightToolBarArea, self.right_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.TopToolBarArea, self.top_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.BottomToolBarArea, self.bottom_toolbar_actions
-        )
-        if self.search_text is not None:
+        if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
-            search_control.setText(self.search_text)
+            search_control.setText(step['search_text'])
             search_control.start_search()
 
-    def gui_run(self, gui_context):
-        self.update_table_view(gui_context.view)
-        gui_context.view.change_title(self.title)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        cls.update_table_view(gui_context.view, step)
+        gui_context.view.change_title(step['title'])
 
         gui_context.view.findChild(Qt)
 
-
+@dataclass
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
     
@@ -175,34 +162,41 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
+
+    new_tab: bool
+    admin_route: Route
     
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
         self.new_tab = False
         self.admin_route = admin.get_admin_route()
 
-    def render(self, gui_context):
+    @classmethod
+    def render(cls, gui_context, step):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, self.admin_route)
-        self.update_table_view(table_view)
+        table_view = TableView(gui_context, tuple(step['admin_route']))
+        cls.update_table_view(table_view, step)
         return table_view
         
-    def gui_run( self, gui_context ):
-        table_view = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        table_view = cls.render(gui_context, step)
         if gui_context.workspace is not None:
-            if self.new_tab == True:
+            if step['new_tab'] == True:
                 gui_context.workspace.add_view(table_view)
             else:
                 gui_context.workspace.set_view(table_view)
         else:
             table_view.setObjectName('table.{}.{}'.format(
-                self.admin_name, id(table_view)
+                step['admin_name'], id(table_view)
             ))
             show_top_level(table_view, None)
-        table_view.change_title(self.title)
+        table_view.change_title(step['title'])
         table_view.setFocus(Qt.PopupFocusReason)
 
 
+@dataclass
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
     
@@ -221,17 +215,19 @@ class OpenQmlTableView(OpenTableView):
         super().__init__(admin, value)
         self.list_action = admin.get_list_action()
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         view = gui_context.workspace.active_view()
         quick_view = view.quick_view
         views = quick_view.findChild(QtCore.QObject, "qml_views")
         header_model = QtCore.QStringListModel(parent=quick_view)
-        header_model.setStringList(self.columns)
+        header_model.setStringList(step['columns'])
         header_model.setParent(quick_view)
-        new_model = CollectionProxy(self.admin_route)
+        new_model = CollectionProxy(tuple(step['admin_route']))
         new_model.setParent(quick_view)
-        list(new_model.add_columns(self.columns))
-        new_model.set_value(self.proxy_route)
+        list(new_model.add_columns(step['columns']))
+        new_model.set_value(step['proxy_route'])
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
@@ -243,14 +239,14 @@ class OpenQmlTableView(OpenTableView):
 
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
-        list_gui_context.admin_route = self.admin_route
+        list_gui_context.admin_route = tuple(step['admin_route'])
         list_gui_context.view = table
 
-        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
+        list_action = AdminRoute.action_for(tuple(step['list_action']))
+        qt_action = ActionAction(list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
-        for i, action in enumerate(itertools.chain(
-            self.top_toolbar_actions, self.list_actions, self.filters
-            )):
+        for i, action_route in enumerate(step['actions']):
+            action = AdminRoute.action_for(tuple(action_route['route']))
             icon_name = None
             if action.icon is not None:
                 icon_name = action.icon.name

@@ -27,7 +27,10 @@
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtWidgets
+from dataclasses import dataclass
+import json
+
+from ...core.qt import QtWidgets
 
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.icon import Icon
@@ -51,6 +54,7 @@ class SetSelectedObjects(ActionStep):
 class ConfirmSelection(Action):
 
     verbose_name = _('OK')
+    name = 'confirm_selection'
     icon = Icon('check') # 'tango/16x16/emblems/emblem-symbolic-link.png'
 
     def model_run(self, model_context):
@@ -59,6 +63,7 @@ class ConfirmSelection(Action):
 class CancelSelection(Action):
 
     verbose_name = _('Cancel')
+    name = 'cancel_selection'
 
     def gui_run(self, gui_context):
         gui_context.view.parent().reject()
@@ -78,6 +83,7 @@ class SelectDialog(QtWidgets.QDialog):
         self.setLayout( layout )
         self.objects = []
 
+@dataclass
 class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
@@ -89,27 +95,34 @@ class SelectObjects( OpenTableView ):
         be made.  If none is given, the default query from the admin is taken.
     """
 
+    verbose_name_plural: str
+
     def __init__(self, admin, search_text=None, value=None):
         if value is None:
             value = admin.get_query()
         super(SelectObjects, self).__init__(admin, value)
         self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
-        self.list_actions = [CancelSelection(), ConfirmSelection()]
-        self.left_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.LeftToolBarArea)
-        self.right_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.RightToolBarArea)
-        self.top_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.TopToolBarArea)
-        self.bottom_toolbar_actions = admin.get_select_list_toolbar_actions(Qt.BottomToolBarArea)
-        self.list_action = ConfirmSelection()
+        # actions
+        self.actions = admin.get_select_list_actions()
+        self.actions.extend(admin.get_select_list_toolbar_actions())
+        # list_action
+        for action in self.actions:
+            if action.route[-1] == ConfirmSelection.name:
+                self.list_action = action.route
+                break
 
-    def render(self, gui_context):
-        dialog = SelectDialog(gui_context, self.admin_route, self.verbose_name_plural)
+    @classmethod
+    def render(cls, gui_context, step):
+        dialog = SelectDialog(gui_context, tuple(step['admin_route']), step['verbose_name_plural'])
         table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
-        self.update_table_view(table_view)
+        cls.update_table_view(table_view, step)
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = cls.render(gui_context, step)
         with hide_progress_dialog(gui_context):
             # strange things happen on windows 7 and later with maximizing
             # this dialog, maximizing it here appears to work

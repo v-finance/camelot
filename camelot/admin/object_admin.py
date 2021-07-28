@@ -35,7 +35,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
-from .admin_route import Route, AdminRoute
+from .admin_route import Route, AdminRoute, register_list_actions
 from .action import field_action
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
@@ -376,30 +376,23 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         return app_admin.get_form_toolbar_actions( toolbar_area )
 
-    def get_list_toolbar_actions( self, toolbar_area ):
+    def get_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
         app_admin = self.get_application_admin()
-        return app_admin.get_list_toolbar_actions(toolbar_area)
+        return app_admin.get_list_toolbar_actions()
 
-    def get_select_list_toolbar_actions( self, toolbar_area ):
+    def get_select_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned when selecting objects 
-            from a table.
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
         app_admin = self.get_application_admin()
-        return app_admin.get_select_list_toolbar_actions(toolbar_area)
+        return app_admin.get_select_list_toolbar_actions()
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
@@ -414,8 +407,9 @@ be specified using the verbose_name attribute.
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
 
+    @register_list_actions('_list_actions', '_admin_route')
     def get_list_actions(self):
-        return [(AdminRoute._register_list_action_route(self._admin_route, action), action.render_hint) for action in self.list_actions]
+        return self.list_actions
 
     def get_list_action(self) -> Route:
         """Get the route for the action that should be triggered when an object is selected
@@ -823,6 +817,7 @@ be specified using the verbose_name attribute.
         fields.update(self.get_fields())
         return fields
 
+    @register_list_actions('_filter_actions', '_admin_route')
     def get_filters(self):
         return []
 

@@ -80,6 +80,9 @@ class Filter(Action):
         self.attributes = None
         self.filter_names = []
 
+    def get_name(self):
+        return '{}_{}'.format(self.name, self.attribute)
+
     def gui_run(self, gui_context, value):
         model = gui_context.item_view.model()
         if model is not None:
