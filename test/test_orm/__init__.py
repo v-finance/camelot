@@ -27,8 +27,6 @@ class TestMetaData( unittest.TestCase ):
         self.session = Session()
 
     def create_all(self):
-        from camelot.core.orm import process_deferred_properties
-        process_deferred_properties( self.class_registry )
         self.metadata.create_all()
         
     def tearDown(self):
