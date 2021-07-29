@@ -8,7 +8,7 @@ from sqlalchemy import orm, schema, types, create_engine
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session, process_deferred_properties
+from camelot.core.orm import Session
 from camelot.core.conf import settings
 from camelot.core.sql import metadata
 
@@ -40,7 +40,6 @@ class ExampleModelMixinCase(object):
 
     @classmethod
     def setup_sample_model(cls):
-        process_deferred_properties()
         setup_views()
         metadata.bind = model_engine
         metadata.create_all(model_engine)
@@ -518,87 +517,59 @@ class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
         
 class StatusCase( TestMetaData ):
     
-    def test_status_type( self ):
-        Entity, session = self.Entity, self.session
-        
-        #begin status type definition
-        from camelot.model import type_and_status
-        
-        class Invoice( Entity, type_and_status.StatusMixin ):
-            book_date = schema.Column( types.Date(), nullable = False )
-            status = type_and_status.Status()
-            
-        #end status type definition
-        self.create_all()
-        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusTypeMixin ) )
-        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        #begin status types definition
-        draft = Invoice._status_type( code = 'DRAFT' )
-        ready = Invoice._status_type( code = 'READY' )
-        session.flush()
-        #end status types definition
-        self.assertTrue( str( ready ) )
-        #begin status type use
-        invoice = Invoice( book_date = datetime.date.today() )
-        self.assertEqual( invoice.current_status, None )
-        invoice.change_status( draft, status_from_date = datetime.date.today() )
-        #end status type use
-        self.assertEqual( invoice.current_status, draft )
-        self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
-        self.assertTrue( len( invoice.status ) )
-        for history in invoice.status:
-            self.assertTrue( str( history ) )
-        
     def test_status_enumeration( self ):
-        Entity, session = self.Entity, self.session
-        
-        #begin status enumeration definition
+        session = self.session
+        from camelot.core.orm import Entity
+        from unittest.mock import patch, Mock
         from camelot.model import type_and_status
         
-        class Invoice( Entity, type_and_status.StatusMixin ):
-            book_date = schema.Column( types.Date(), nullable = False )
-            status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
-                                                             (2, 'READY'),
-                                                             (3, 'BLOCKED')] )
+        with patch('camelot.core.orm.Entity.metadata') as mock_entity_metadata:
+            mock_entity_metadata.__get__ = Mock(return_value=self.metadata)
             
-            class Admin( EntityAdmin ):
-                list_display = ['book_date', 'current_status']
-                list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
-                                 type_and_status.ChangeStatus( 'READY' ) ]
-                form_actions = list_actions
+            class Invoice( Entity, type_and_status.WithStatus, type_and_status.StatusMixin ):
+                status_types = [(1, 'DRAFT'),
+                                (2, 'READY'),
+                                (3, 'BLOCKED')]
+                book_date = schema.Column( types.Date(), nullable = False )
                 
-        #end status enumeration definition
-        self.create_all()
-        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        #begin status enumeration use
-        invoice = Invoice( book_date = datetime.date.today() )
-        self.assertEqual( invoice.current_status, None )
-        invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1) )
-        session.flush()
-        self.assertEqual( invoice.current_status, 'DRAFT' )
-        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
-        draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
-        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
-        #end status enumeration use
-        self.assertEqual( draft_invoices, 1 )
-        self.assertEqual( ready_invoices, 0 )
-        ready_action = Invoice.Admin.list_actions[-1]
-        model_context = MockModelContext()
-        model_context.obj = invoice
-        model_context.admin = app_admin.get_related_admin(Invoice)
-        list( ready_action.model_run( model_context ) )
-        self.assertTrue( invoice.current_status, 'READY' )
-        # changing the status should work without flushing
-        invoice.status.append(Invoice._status_history(
-            status_from_date=datetime.date.today(),
-            status_thru_date=party.end_of_times(),
-            classified_by='DRAFT'))
-        session.flush()
-        self.assertTrue( invoice.current_status, 'DRAFT')
-        invoice.status.append(Invoice._status_history(
-            status_from_date=datetime.date.today(),
-            status_thru_date=party.end_of_times(),
-            classified_by='BLOCKED'))
-        self.assertTrue( invoice.current_status, 'BLOCKED')
-        session.flush()
-        self.assertTrue( invoice.current_status, 'BLOCKED')
+                class Admin( EntityAdmin ):
+                    list_display = ['book_date', 'current_status']
+                    list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
+                                     type_and_status.ChangeStatus( 'READY' ) ]
+                    form_actions = list_actions
+                    
+            #end status enumeration definition
+            self.create_all()
+            self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+            #begin status enumeration use
+            invoice = Invoice( book_date = datetime.date.today() )
+            self.assertEqual( invoice.current_status, None )
+            invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1), session=session)
+            session.flush()
+            self.assertEqual( invoice.current_status, 'DRAFT' )
+            self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
+            draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
+            ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
+            #end status enumeration use
+            self.assertEqual( draft_invoices, 1 )
+            self.assertEqual( ready_invoices, 0 )
+            ready_action = Invoice.Admin.list_actions[-1]
+            model_context = MockModelContext()
+            model_context.obj = invoice
+            model_context.admin = app_admin.get_related_admin(Invoice)
+            list( ready_action.model_run( model_context ) )
+            self.assertTrue( invoice.current_status, 'READY' )
+            # changing the status should work without flushing
+            invoice.status.append(Invoice._status_history(
+                status_from_date=datetime.date.today(),
+                status_thru_date=party.end_of_times(),
+                classified_by='DRAFT'))
+            session.flush()
+            self.assertTrue( invoice.current_status, 'DRAFT')
+            invoice.status.append(Invoice._status_history(
+                status_from_date=datetime.date.today(),
+                status_thru_date=party.end_of_times(),
+                classified_by='BLOCKED'))
+            self.assertTrue( invoice.current_status, 'BLOCKED')
+            session.flush()
+            self.assertTrue( invoice.current_status, 'BLOCKED')
