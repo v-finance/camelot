@@ -448,31 +448,13 @@ class EntityMeta( DeclarativeMeta ):
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
-        if '_descriptor' in dict_:
-            descriptor = dict_['_descriptor']
-            descriptor.set_entity( cls )
-            for key, value in dict_.items():
-                if isinstance( value, EntityBuilder ):
-                    value.attach( cls, key )
-                    descriptor.add_builder(value)
-            cls._descriptor.create_pk_cols()
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
         # the table for this class
         #
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
-
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
-
-    def __setattr__(cls, key, value):
-        if isinstance( value, EntityBuilder ):
-            if '__mapper__' in cls.__dict__:
-                value.attach( cls, key )
-                cls._descriptor.add_builder(value)
-                value.create_pk_cols()
-        else:
-            super(EntityMeta,cls).__setattr__(key,value)
 
 #
 # Keep these functions separated from EntityBase to be able

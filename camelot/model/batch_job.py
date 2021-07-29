@@ -98,7 +98,7 @@ def hostname():
     import socket
     return str( socket.gethostname() )
 
-class BatchJob( Entity, type_and_status.StatusMixin ):
+class BatchJob( Entity, type_and_status.WithStatus, type_and_status.StatusMixin ):
     """A batch job is a long running task that is scheduled by
     the user or started periodically.  The BatchJob objects can be used
     to store information on such running task so the end user can review
@@ -106,12 +106,12 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     """
     
     __tablename__ = 'batch_job'
+    status_types = batch_job_statusses
     
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
     type_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id, ondelete='restrict', onupdate='cascade'),
                             nullable=False, index=True)
     type = orm.relationship(BatchJobType)
-    status  = type_and_status.Status( batch_job_statusses )
     message = orm.deferred(schema.Column(camelot.types.RichText()))
 
     def __str__(self):
