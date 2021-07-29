@@ -54,10 +54,9 @@ statuses as needed.
 """
 import datetime
 
-
-
-from sqlalchemy import orm, sql, schema, types, inspection
+from sqlalchemy import orm, sql, schema, types, inspection, util
 from sqlalchemy.ext import hybrid
+from sqlalchemy.ext.declarative import declared_attr
 
 from camelot.admin.action import list_filter
 from camelot.model.authentication import end_of_times
@@ -163,125 +162,54 @@ class StatusHistoryAdmin( EntityAdmin ):
     def get_related_toolbar_actions(self, toolbar_area, direction):
         return []
 
-class Status( EntityBuilder ):
-    """EntityBuilder that adds a related status table(s) to an `Entity`.
-
-    These additional entities are created :
-
-     * a `StatusType` this is the list of possible statuses an entity can have.
-       If the `enumeration` parameter is used at construction, no such entity is
-       created, and the list of possible statuses is limited to this enumeration.
-
-     * a `StatusHistory` is the history of statusses an object has had.  The Status
-       History refers to which `StatusType` was valid at a certain point in time.
-
-    :param enumeration: if this parameter is used, no `StatusType` entity is created, 
-        but the status type is described by the enumeration.  This parameter should
-    be a list of all possible statuses the entity can have ::
-
-    enumeration = [(1, 'draft'), (2,'ready')]
-
-    :param status_history_table: the tablename to use to store the status
-        history
-
-    :param status_type_table: the tablename to use to store the status types
+class WithStatus(object):
     """
+    cls var 'status_types': Required, sets the status types for the WithStatus class
+    cls var  'status_history_table': Optional, sets the tablename for the history_table
+    """
+    
+    status_types = None
+    status_history_table = None
 
-    def __init__( self, enumeration = None, 
-                  status_history_table = None, status_type_table=None ):
-        super( Status, self ).__init__()
-        self.property = None
-        self.enumeration = enumeration
-        self.status_history_table = status_history_table
-        self.status_type_table = status_type_table
+    @declared_attr
+    def _status_history(cls):
+        assert isinstance(cls.status_types, (util.OrderedProperties, list)), "This class' should define its status_types enumeration types."
+        status_history_table = cls.__name__.lower() + '_status' if cls.status_history_table is None else cls.status_history_table
+        status_history_admin = type(cls.__name__ + 'StatusHistoryAdmin',
+                                    (StatusHistoryAdmin,),
+                                    {'verbose_name': _(cls.__name__ + ' Status'),
+                                     'verbose_name_plural': _(cls.__name__ + ' Statuses')})
+        status_types = cls.status_types
+        if isinstance(status_types, util.OrderedProperties):
+            status_types = [(member.id, name) for name, member in cls.status_types.__members__.items()]
+        status_history = type(cls.__name__ + 'StatusHistory',
+                              (Entity, StatusHistory),
+                              {'__tablename__': status_history_table,
+                               'classified_by': schema.Column(
+                                   Enumeration(status_types),
+                                   nullable=False,
+                                   index=True
+                               ),
+                               'Admin': status_history_admin, })
+        if hasattr(cls, '__table_args__'):
+            table_args = cls.__table_args__
+            if not isinstance(cls.__table_args__, dict):
+                table_args = cls.__table_args__[-1]
+            table_info = table_args.get('info')
+            status_history.__table__.info = table_info.copy()
+        if not hasattr(status_history, 'status_for_id'):
+            constraint = schema.ForeignKey(cls.id,
+                                           ondelete='cascade',
+                                           onupdate='cascade')
+            column = schema.Column(PrimaryKey(),
+                                   constraint,
+                                   nullable=False,
+                                   index=True)
+            setattr(status_history, 'status_for_id', column)
 
-    def attach( self, entity, name ):
-        super( Status, self ).attach( entity, name )
-        assert entity != Entity
+        status_history.status_for = orm.relationship(cls, backref=orm.backref('status', cascade='all, delete, delete-orphan'), enable_typechecks=False)
+        return status_history
 
-        if self.status_history_table==None:
-            self.status_history_table = entity.__name__.lower() + '_status'
-        if self.status_type_table==None:
-            self.status_type_table = entity.__name__.lower() + '_status_type'
-
-        status_history_admin = type( entity.__name__ + 'StatusHistoryAdmin',
-                                     ( StatusHistoryAdmin, ),
-                                     { 'verbose_name':_(entity.__name__ + ' Status'),
-                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
-
-        # use `type` instead of `class`, to give status type and history
-        # classes a specific name, so these classes can be used whithin the
-        # memento and the fixture module
-        if self.enumeration is None:
-
-            status_type_admin = type( entity.__name__ + 'StatusType',
-                                      ( StatusTypeAdmin, ),
-                                      { 'verbose_name':_(entity.__name__ + ' Status'),
-                                        'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
-
-            status_type = type( entity.__name__ + 'StatusType', 
-                                (StatusTypeMixin, entity._descriptor.get_top_entity_base(),),
-                                { '__tablename__':self.status_type_table,
-                                  'Admin':status_type_admin } )
-
-            foreign_key = schema.ForeignKey( status_type.id,
-                                             ondelete = 'cascade', 
-                                             onupdate = 'cascade')
-
-            status_history = type( entity.__name__ + 'StatusHistory',
-                                   ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
-                                   {'__tablename__':self.status_history_table,
-                                    'classified_by_id':schema.Column(
-                                        PrimaryKey(),
-                                        foreign_key,
-                                        nullable=False,
-                                        index=True),
-                                    'classified_by':orm.relationship( status_type ),
-                                    'Admin':status_history_admin, } )
-        else:
-            status_type = None
-            status_history = type( entity.__name__ + 'StatusHistory',
-                                   ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
-                                   {'__tablename__':self.status_history_table,
-                                    'classified_by':schema.Column(
-                                        Enumeration( self.enumeration ), 
-                                        nullable=False,
-                                        index=True
-                                        ),
-                                    'Admin':status_history_admin,} )
-            setattr( entity, '_%s_enumeration'%name, self.enumeration )
-
-        self.status_type = status_type
-        self.status_history = status_history
-        setattr( entity, '_%s_type'%name, status_type )
-        setattr( entity, '_%s_history'%name, self.status_history )
-
-    def create_tables(self):
-        self.status_history.__table__.schema = self.entity.__table__.schema
-        self.status_history.__table__.info = self.entity.__table__.info.copy()
-        if self.status_type is not None:
-            self.status_type.__table__.schema = self.entity.__table__.schema
-            self.status_type.__table__.info = self.entity.__table__.info.copy()
-
-    def create_non_pk_cols( self ):
-        table = orm.class_mapper( self.entity ).local_table
-        for col in table.primary_key.columns:
-            col_name = u'status_for_%s'%col.name
-            if not hasattr( self.status_history, col_name ):
-                constraint = schema.ForeignKey(col,
-                                               ondelete = 'cascade', 
-                                               onupdate = 'cascade')
-                column = schema.Column(PrimaryKey(),
-                                       constraint,
-                                       nullable=False,
-                                       index=True)
-                setattr( self.status_history, col_name, column )
-
-    def create_properties( self ):
-        if not self.property:
-            backref = orm.backref(self.name, cascade='all, delete, delete-orphan')
-            self.property = orm.relationship(self.entity, backref = backref, enable_typechecks=False)
-            self.status_history.status_for = self.property
 
 class StatusMixin( object ):
     """This class adds additional methods to classes that have a status.
@@ -528,82 +456,6 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
         state.modes = modes
         state.verbose_name = self.attributes['name']
         return state
-
-class Type(EntityBuilder):
-    """EntityBuilder that adds a related type table to an `Entity`.
-
-    An additional `Type` entity is created, this is the list of possible types an
-    entity can have.
-
-    :param type_table: the tablename used to store the `Type` entity
-
-    :param nullable: if the underlying column is nullable
-    
-    :param type_verbose_name: the verbose name of the `Type Entity`
-    
-    :param type_verbose_name_plural: the verbose plural name of the `Type Entity`
-    """
-
-    def __init__(self,
-                 type_table=None,
-                 nullable=False,
-                 type_verbose_name=None,
-                 type_verbose_name_plural=None,
-                 ):
-        super(Type, self ).__init__()
-        self.property = None
-        self.type_table = type_table
-        self.nullable = nullable
-        self.type_verbose_name = type_verbose_name
-        self.type_verbose_name_plural = type_verbose_name_plural
-
-    def attach( self, entity, name ):
-        super(Type, self ).attach( entity, name )
-        assert entity != Entity
-
-        if self.type_table is None:
-            self.type_table = entity.__tablename__ + '_type'
-
-        # use `type` instead of `class`, to give status type and history
-        # classes a specific name, so these classes can be used whithin the
-        # memento and the fixture module
-
-        type_verbose_name = self.type_verbose_name or _(entity.__name__ + ' Type')
-        type_verbose_name_plural = self.type_verbose_name_plural or _(entity.__name__ + ' Type')
-        
-        type_admin = type( entity.__name__ + 'TypeAdmin',
-                           ( TypeAdmin, ),
-                           { 'verbose_name':  type_verbose_name,
-                             'verbose_name_plural': type_verbose_name_plural, }
-                           )
-
-        type_entity = type( entity.__name__ + 'Type', 
-                            (TypeMixin, entity._descriptor.get_top_entity_base(),),
-                            { '__tablename__':self.type_table,
-                              'Admin':type_admin }
-                            )
-
-        self.type_entity = type_entity
-        setattr(entity, '_%s_type'%name, self.type_entity)
-
-    def create_non_pk_cols( self ):
-        table = orm.class_mapper(self.type_entity).local_table
-        for col in table.primary_key.columns:
-            col_name = u'%s_%s'%(self.name, col.name)
-            if not hasattr(self.entity, col_name):
-                constraint = schema.ForeignKey(col,
-                                               ondelete = 'restrict', 
-                                               onupdate = 'cascade')
-                column = schema.Column(PrimaryKey(),
-                                       constraint,
-                                       index=True,
-                                       nullable=self.nullable)
-                setattr(self.entity, col_name, column )
-
-    def create_properties( self ):
-        if not self.property:
-            self.property = orm.relationship(self.type_entity)
-            setattr(self.entity, self.name, self.property)
 
 
 class TypeFilter(list_filter.GroupBoxFilter):

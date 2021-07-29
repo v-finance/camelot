@@ -43,196 +43,12 @@ from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
-from ...types import Enumeration
+from ...types import Enumeration, PrimaryKey
 from . statements import MUTATORS
-from . properties import EntityBuilder, PrimaryKeyProperty
+from . properties import EntityBuilder
 from . import Session, options
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
-
-class EntityDescriptor(object):
-    """
-    EntityDescriptor holds information about the Entity before it is
-    passed to Declarative.  It is used to search for inverse relations
-    defined on an Entity before the relation is passed to Declarative.
-
-    :param entity_base: The Declarative base class used to subclass the
-        entity
-    """
-
-    global_counter = 0
-
-    def __init__( self, entity_base ):
-        self.processed = False
-        self.entity_base = entity_base
-        self.parent = None
-        self.relationships = []
-        self.has_pk = False
-        self._pk_col_done = False
-        self.builders = [] 
-        self.constraints = []
-        self.counter = EntityDescriptor.global_counter
-        EntityDescriptor.global_counter += 1
-        # set default value for other options
-        for key, value in options.options_defaults.items():
-            if isinstance( value, dict ):
-                value = value.copy()
-            setattr( self, key, value )
-
-    def set_entity( self, entity ):
-        self.entity = entity
-        self.tablename = entity.__tablename__
-        #
-        # verify if a primary key was set manually
-        #
-        for key, value in entity.__dict__.items():
-            if isinstance( value, schema.Column ):
-                if value.primary_key:
-                    self.has_pk = True
-    
-    def get_top_entity_base(self):
-        """
-        :return: the Declarative base class in the top of the class hierarchy
-        """
-        base_descriptor = getattr( self.entity_base, '_descriptor', None )
-        if base_descriptor is not None:
-            return base_descriptor.get_top_entity_base()
-        return self.entity_base
-
-    def add_builder( self, builder ):
-        """Add an `EntityBuilder`
-        """
-        # builders have to be executed in the order they were
-        # created
-        bisect.insort( self.builders, builder )
-
-    @property
-    def primary_keys( self ):
-        return self.entity.__table__.primary_key
-
-    @property
-    def table_fullname( self ):
-        return self.entity.__tablename__
-
-    @property
-    def metadata( self ):
-        return self.entity.__table__.metadata
-
-    def create_non_pk_cols(self):
-        self.call_builders( 'create_non_pk_cols' )
-
-    def create_pk_cols( self ):
-        """
-        Create primary_key columns. That is, call the 'create_pk_cols'
-        builders then add a primary key to the table if it hasn't already got
-        one and needs one.
-
-        This method is "semi-recursive" in some cases: it calls the
-        create_keys method on ManyToOne relationships and those in turn call
-        create_pk_cols on their target. It shouldn't be possible to have an
-        infinite loop since a loop of primary_keys is not a valid situation.
-        """
-        self.call_builders( 'create_pk_cols' )
-
-        if self._pk_col_done:
-            return
-
-        base_descriptor = getattr( self.entity_base, '_descriptor', None )
-        has_table = hasattr(self.entity, '__table__')
-
-        if not self.has_pk and base_descriptor == None and not has_table:
-            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
-            builder = PrimaryKeyProperty()
-            builder.attach( self.entity, colname )
-            self.add_builder(builder)
-            builder.create_pk_cols()
-
-        self._pk_col_done = True
-
-    def create_properties(self):
-        self.call_builders( 'create_properties' )
-
-    def create_tables(self):
-        self.call_builders( 'create_tables' )
-
-    def finalize(self):
-        self.call_builders( 'finalize' )
-        mapper = orm.class_mapper(self.entity)
-        if self.order_by:
-            mapper.order_by = self.translate_order_by( self.order_by )
-        # set some convenience attributes to the Entity
-        setattr(self.entity, 'table', mapper.local_table)
-
-    def add_column( self, key, col ):
-        setattr( self.entity, key, col )
-        if hasattr( col, 'primary_key' ) and col.primary_key:
-            self.has_pk = True   
-
-    def add_constraint( self, constraint ):
-        self.constraints.append( constraint )            
-
-    def append_constraints( self ): 
-        table = orm.class_mapper( self.entity ).local_table
-        for constraint in self.constraints:
-            table.append_constraint( constraint )
-
-    def get_inverse_relation( self, rel, check_reverse=True ):
-        '''
-        Return the inverse relation of rel, if any, None otherwise.
-        '''
-        matching_rel = None
-        for other_rel in self.relationships:
-            if rel.is_inverse( other_rel ):
-                if matching_rel is None:
-                    matching_rel = other_rel
-                else:
-                    raise Exception(
-                        "Several relations match as inverse of the '%s' "
-                        "relation in entity '%s'. You should specify "
-                        "inverse relations manually by using the inverse "
-                        "keyword."
-                        % (rel.name, rel.entity.__name__))
-        # When a matching inverse is found, we check that it has only
-        # one relation matching as its own inverse. We don't need the result
-        # of the method though. But we do need to be careful not to start an
-        # infinite recursive loop.
-        if matching_rel and check_reverse:
-            rel.entity._descriptor.get_inverse_relation(matching_rel, False)
-
-        return matching_rel
-
-    def add_property( self, name, prop ):
-        mapper = orm.class_mapper( self.entity )
-        mapper.add_property( name, property )
-
-    def call_builders(self, what):
-        for builder in self.builders:
-            if hasattr(builder, what):
-                getattr(builder, what)()
-
-    def find_relationship(self, name):
-        for rel in self.relationships:
-            if rel.name == name:
-                return rel
-        if self.parent:
-            return self.parent._descriptor.find_relationship(name)
-        else:
-            return None    
-
-    def translate_order_by( self, order_by ):
-        if isinstance( order_by, str ):
-            order_by = [order_by]
-
-        order = []
-
-        mapper = orm.class_mapper( self.entity )
-        for colname in order_by:
-            prop = mapper.columns[ colname.strip('-') ]
-            if colname.startswith('-'):
-                prop = sql.desc( prop )
-            order.append( prop )
-
-        return order        
 
 class EntityMeta( DeclarativeMeta ):
     """
@@ -310,7 +126,6 @@ class EntityMeta( DeclarativeMeta ):
                 if hasattr(base, '_decl_class_registry'):
                     entity_base = base
                     break
-            dict_['_descriptor'] = EntityDescriptor( entity_base )
             #
             # process the mutators
             #
@@ -370,6 +185,18 @@ class EntityMeta( DeclarativeMeta ):
                     dict_['__cls_for_type__'] = dict()
             
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+        # adds primary key column to the class
+        if classname != 'Entity' and dict_.get('__tablename__') is not None:
+            for val in dict_.values():
+                if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
+                    break
+            else:
+                # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
+                # table.primary_key returns an iterator so we can't test the length or something like that
+                table = dict_.get('__table__', None)
+                if table is None or table.primary_key.issubset([]):
+                    _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
+                
         cls.register_class(cls, _class, dict_)
         return _class
     
@@ -447,31 +274,13 @@ class EntityMeta( DeclarativeMeta ):
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
-        if '_descriptor' in dict_:
-            descriptor = dict_['_descriptor']
-            descriptor.set_entity( cls )
-            for key, value in dict_.items():
-                if isinstance( value, EntityBuilder ):
-                    value.attach( cls, key )
-                    descriptor.add_builder(value)
-            cls._descriptor.create_pk_cols()
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
         # the table for this class
         #
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
-
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
-
-    def __setattr__(cls, key, value):
-        if isinstance( value, EntityBuilder ):
-            if '__mapper__' in cls.__dict__:
-                value.attach( cls, key )
-                cls._descriptor.add_builder(value)
-                value.create_pk_cols()
-        else:
-            super(EntityMeta,cls).__setattr__(key,value)
 
 #
 # Keep these functions separated from EntityBase to be able

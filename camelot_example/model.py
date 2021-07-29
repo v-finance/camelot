@@ -40,7 +40,6 @@ import sqlalchemy.types
 # end basic imports
 
 import camelot.types
-from camelot.core.orm import ColumnProperty
 from camelot.core.sql import metadata
 from camelot.admin.action import Action
 from camelot.admin.action import list_filter

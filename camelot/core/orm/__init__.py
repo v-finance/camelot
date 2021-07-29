@@ -61,8 +61,6 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
 
-from . properties import has_property, GenericProperty, ColumnProperty
-
 #
 # Default registry for subclasses of Entity that have been mapped
 #
@@ -87,40 +85,10 @@ entities = EntityCollection()
 
 from . entity import EntityBase, EntityMeta
 
-@event.listens_for( mapper, 'after_configured' )
-def process_deferred_properties( class_registry = entities ):
-    """After all mappers have been configured, process the Deferred Properties.
-    This function is called automatically for the default class_registry.
-    """
-    LOGGER.debug( 'process deferred properties' )
-    descriptors = list()
-    for cls in class_registry.values():
-        if isinstance( cls, ( _ModuleMarker, _MultipleClassMarker ) ):
-            continue
-        descriptor = getattr(cls, '_descriptor')
-        if descriptor.processed == True:
-            # because orm.class_mapper will trigger the 'after_configured' event,
-            # there might be a recursive call of this function, if this function
-            # was called by the application code, and not by the event.
-            continue
-        descriptors.append( (descriptor.counter, descriptor) )
-        descriptor.processed = True
-    descriptors.sort()
-
-    for method_name in ( 'create_non_pk_cols',
-                         'create_tables',
-                         'append_constraints',
-                         'create_properties',
-                         'finalize', ):
-        for counter, descriptor in descriptors:
-            method = getattr(descriptor, method_name)
-            method()
-
 
 def setup_all( create_tables=False, *args, **kwargs ):
     """Create all tables that are registered in the metadata
     """
-    process_deferred_properties()
     if create_tables:
         metadata.create_all( *args, **kwargs )
         
@@ -145,7 +113,5 @@ def transaction( original_function ):
 
 
 __all__ = [obj.__name__ for obj in [Entity, EntityBase, EntityMeta,
-                                    EntityCollection, has_property, GenericProperty,
-                                    ColumnProperty,
-                                    setup_all, transaction
+                                    EntityCollection, setup_all, transaction
                                     ]] + ['Session', 'entities']
