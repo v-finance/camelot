@@ -1,11 +1,11 @@
+from ....camelot.admin.entity_admin import EntityAdmin
+from ....camelot.core.orm import Entity
+from ....camelot.view import forms
 from sqlalchemy.schema import Column
-from sqlalchemy.types import Unicode, Date
+from sqlalchemy.types import Date, Unicode
 
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity
-from camelot.view import forms
 
-class Movie( Entity ):    
+class Movie( Entity ):
     title = Column( Unicode(60), nullable=False )
     short_description = Column( Unicode(512) )
     releasedate = Column( Date )
