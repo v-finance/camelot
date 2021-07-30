@@ -1,7 +1,7 @@
-from camelot.core.qt import QtWidgets, QtGui
+from ....camelot.admin.entity_admin import EntityAdmin
+from ....camelot.core.qt import QtGui, QtWidgets
+from ....camelot.view import forms
 
-from camelot.view import forms
-from camelot.admin.entity_admin import EntityAdmin
 
 class CustomForm( forms.Form ):
     
