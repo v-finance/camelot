@@ -2,26 +2,23 @@ import json
 import logging
 import unittest
 
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.action.list_filter import Filter
-from camelot.admin.action.field_action import SelectObject, ClearObject
-from camelot.core.qt import variant_to_py, QtCore, Qt, py_to_variant, delete
-from camelot.model.party import Person
-from camelot.view.item_model.cache import ValueCache
-from camelot.view.proxy.collection_proxy import (
-    ProxyRegistry, CollectionProxy, invalid_item)
-from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
-    VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
-    CompletionsRole, CompletionPrefixRole, ActionRoutesRole, ActionStatesRole
-)
-from camelot.core.item_model.query_proxy import QueryModelProxy
-from camelot.test import RunningThreadCase, RunningProcessCase
-
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase
 from .test_proxy import A, B
+from ..camelot.admin.action.field_action import ClearObject, SelectObject
+from ..camelot.admin.action.list_filter import Filter
+from ..camelot.admin.application_admin import ApplicationAdmin
+from ..camelot.core.item_model import (AbstractModelProxy, ActionRoutesRole, ActionStatesRole, CompletionPrefixRole,
+                                       CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
+                                       VerboseIdentifierRole)
+from ..camelot.core.item_model.query_proxy import QueryModelProxy
+from ..camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
+from ..camelot.model.party import Person
+from ..camelot.test import RunningProcessCase, RunningThreadCase
+from ..camelot.view.item_model.cache import ValueCache
+from ..camelot.view.proxy.collection_proxy import (CollectionProxy, ProxyRegistry, invalid_item)
 
 LOGGER = logging.getLogger(__name__)
 
