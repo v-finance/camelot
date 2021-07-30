@@ -6,20 +6,20 @@ from unittest.mock import Mock, patch
 from sqlalchemy import create_engine, orm, schema, types
 
 from .test_orm import TestMetaData
-from ..camelot.admin.application_admin import ApplicationAdmin
-from ..camelot.admin.entity_admin import EntityAdmin
-from ..camelot.core.orm import Entity, Session
-from ..camelot.core.sql import metadata
-from ..camelot.model import authentication, memento, party, type_and_status
-from ..camelot.model.authentication import (get_current_authentication, update_last_login)
-from ..camelot.model.batch_job import BatchJob, BatchJobType
-from ..camelot.model.fixture import Fixture, FixtureVersion
-from ..camelot.model.i18n import ExportAsPO, Translation
-from ..camelot.model.party import Person
-from ..camelot.test.action import MockModelContext
-from ..camelot.view.import_utils import XlsReader
-from ..camelot_example.fixtures import load_movie_fixtures
-from ..camelot_example.view import setup_views
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity, Session
+from camelot.core.sql import metadata
+from camelot.model import authentication, memento, party, type_and_status
+from camelot.model.authentication import (get_current_authentication, update_last_login)
+from camelot.model.batch_job import BatchJob, BatchJobType
+from camelot.model.fixture import Fixture, FixtureVersion
+from camelot.model.i18n import ExportAsPO, Translation
+from camelot.model.party import Person
+from camelot.test.action import MockModelContext
+from camelot.view.import_utils import XlsReader
+from camelot_example.fixtures import load_movie_fixtures
+from camelot_example.view import setup_views
 
 app_admin = ApplicationAdmin()
 

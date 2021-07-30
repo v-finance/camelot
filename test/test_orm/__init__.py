@@ -3,12 +3,12 @@ import unittest
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 
-from ...camelot.core.orm import EntityBase, EntityMeta, Session
+from camelot.core.orm import EntityBase, EntityMeta, Session
 
 
 class TestMetaData( unittest.TestCase ):
     """Test case that provides setUp and tearDown
-    of metadata separated from the camelot default
+    of metadata separated from camelot default
     metadata.  
     
     This can be used to setup and test various

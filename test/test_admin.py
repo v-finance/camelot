@@ -10,16 +10,16 @@ from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import hybrid
 
 from .test_orm import TestMetaData
-from ..camelot.admin.application_admin import ApplicationAdmin
-from ..camelot.admin.entity_admin import EntityAdmin
-from ..camelot.admin.field_admin import FieldAdmin
-from ..camelot.admin.not_editable_admin import not_editable_admin
-from ..camelot.admin.object_admin import ObjectAdmin
-from ..camelot.core.qt import Qt
-from ..camelot.core.sql import metadata
-from ..camelot.model.i18n import Translation
-from ..camelot.model.party import Person
-from ..camelot.view.controls import delegates
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.field_admin import FieldAdmin
+from camelot.admin.not_editable_admin import not_editable_admin
+from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.qt import Qt
+from camelot.core.sql import metadata
+from camelot.model.i18n import Translation
+from camelot.model.party import Person
+from camelot.view.controls import delegates
 
 
 class ApplicationAdminCase(unittest.TestCase):

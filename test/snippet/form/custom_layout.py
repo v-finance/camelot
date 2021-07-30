@@ -1,6 +1,6 @@
-from ....camelot.admin.entity_admin import EntityAdmin
-from ....camelot.core.qt import QtGui, QtWidgets
-from ....camelot.view import forms
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.qt import QtGui, QtWidgets
+from camelot.view import forms
 
 
 class CustomForm( forms.Form ):

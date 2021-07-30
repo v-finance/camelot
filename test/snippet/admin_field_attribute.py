@@ -1,7 +1,7 @@
-from ...camelot.admin.entity_admin import EntityAdmin
-from ...camelot.core.orm import Entity
-from ...camelot.core.sql import metadata
-from ...camelot.model.party import Person
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity
+from camelot.core.sql import metadata
+from camelot.model.party import Person
 from sqlalchemy import orm, schema, types
 
 

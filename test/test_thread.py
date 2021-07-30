@@ -1,5 +1,5 @@
-from ..camelot.test import RunningProcessCase, RunningThreadCase
-from ..camelot.view.model_thread.signal_slot_model_thread import Task, TaskHandler
+from camelot.test import RunningProcessCase, RunningThreadCase
+from camelot.view.model_thread.signal_slot_model_thread import Task, TaskHandler
 
 
 class ModelThreadCase(RunningThreadCase):

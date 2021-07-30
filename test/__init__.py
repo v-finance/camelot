@@ -9,11 +9,11 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 
 faulthandler.enable()
 # import here because mac osx causes crashes with imports later on
-from ..camelot.core.qt import QtCore
-from ..camelot.core.qt import QtGui
-from ..camelot.core.qt import QtWidgets
-from ..camelot.core.qt import QtNetwork
-from ..camelot.admin.application_admin import ApplicationAdmin
+from camelot.core.qt import QtCore
+from camelot.core.qt import QtGui
+from camelot.core.qt import QtWidgets
+from camelot.core.qt import QtNetwork
+from camelot.admin.application_admin import ApplicationAdmin
 
 from sqlalchemy.pool import StaticPool
 from sqlalchemy import create_engine

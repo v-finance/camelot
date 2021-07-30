@@ -1,7 +1,7 @@
 # begin camelot imports
-from ....camelot.admin.action import Action
-from ....camelot.view import action_steps
-from ....camelot.view.main import main_action
+from camelot.admin.action import Action
+from camelot.view import action_steps
+from camelot.view.main import main_action
 # end camelot imports
 
 # begin application definition

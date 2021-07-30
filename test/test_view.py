@@ -16,41 +16,41 @@ from .snippet.form.custom_layout import Admin as CustomLayoutAdmin
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
-from ..camelot.admin.action import GuiContext
-from ..camelot.admin.action.application_action import ApplicationActionGuiContext
-from ..camelot.admin.action.field_action import FieldActionModelContext
-from ..camelot.admin.action.list_filter import SearchFilter
-from ..camelot.admin.application_admin import ApplicationAdmin
-from ..camelot.admin.table import ColumnGroup
-from ..camelot.core.constants import camelot_maxfloat, camelot_minfloat
-from ..camelot.core.exception import UserException
-from ..camelot.core.files.storage import Storage, StoredFile
-from ..camelot.core.item_model import FieldAttributesRole, PreviewRole
-from ..camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
-from ..camelot.core.utils import ugettext_lazy as _
-from ..camelot.model.party import City, Person
-from ..camelot.test import GrabMixinCase, RunningThreadCase
-from ..camelot.view import action_steps, forms
-from ..camelot.view.action_steps import OpenFormView
-from ..camelot.view.action_steps.application import MainWindow
-from ..camelot.view.art import ColorScheme
-from ..camelot.view.controls import delegates, editors
-from ..camelot.view.controls.busy_widget import BusyWidget
-from ..camelot.view.controls.delegates import DelegateManager
-from ..camelot.view.controls.editors.datetimeeditor import TimeValidator
-from ..camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from ..camelot.view.controls.exception import ExceptionDialog, register_exception
-from ..camelot.view.controls.formview import FormEditors
-from ..camelot.view.controls.progress_dialog import ProgressDialog
-from ..camelot.view.controls.search import SimpleSearchControl
-from ..camelot.view.controls.tableview import ColumnGroupsWidget, HeaderWidget, RowsWidget, TableView, TableWidget
-from ..camelot.view.mainwindowproxy import MainWindowProxy
-from ..camelot.view.proxy import ValueLoading
-from ..camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
-from ..camelot.view.workspace import DesktopWorkspace
-from ..camelot_example.application_admin import MyApplicationAdmin, app_admin
-from ..camelot_example.model import Movie
-from ..camelot_example.view import VisitorsPerDirector
+from camelot.admin.action import GuiContext
+from camelot.admin.action.application_action import ApplicationActionGuiContext
+from camelot.admin.action.field_action import FieldActionModelContext
+from camelot.admin.action.list_filter import SearchFilter
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.table import ColumnGroup
+from camelot.core.constants import camelot_maxfloat, camelot_minfloat
+from camelot.core.exception import UserException
+from camelot.core.files.storage import Storage, StoredFile
+from camelot.core.item_model import FieldAttributesRole, PreviewRole
+from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
+from camelot.core.utils import ugettext_lazy as _
+from camelot.model.party import City, Person
+from camelot.test import GrabMixinCase, RunningThreadCase
+from camelot.view import action_steps, forms
+from camelot.view.action_steps import OpenFormView
+from camelot.view.action_steps.application import MainWindow
+from camelot.view.art import ColorScheme
+from camelot.view.controls import delegates, editors
+from camelot.view.controls.busy_widget import BusyWidget
+from camelot.view.controls.delegates import DelegateManager
+from camelot.view.controls.editors.datetimeeditor import TimeValidator
+from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.controls.exception import ExceptionDialog, register_exception
+from camelot.view.controls.formview import FormEditors
+from camelot.view.controls.progress_dialog import ProgressDialog
+from camelot.view.controls.search import SimpleSearchControl
+from camelot.view.controls.tableview import ColumnGroupsWidget, HeaderWidget, RowsWidget, TableView, TableWidget
+from camelot.view.mainwindowproxy import MainWindowProxy
+from camelot.view.proxy import ValueLoading
+from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
+from camelot.view.workspace import DesktopWorkspace
+from camelot_example.application_admin import MyApplicationAdmin, app_admin
+from camelot_example.model import Movie
+from camelot_example.view import VisitorsPerDirector
 
 logger = logging.getLogger('view.unittests')
 

@@ -1,9 +1,9 @@
 import datetime
 import unittest
 
-from ..camelot.core.qt import QtCore
-from ..camelot.view import utils
-from ..camelot.view.utils import date_from_string, datetime_from_string, int_from_string, time_from_string
+from camelot.core.qt import QtCore
+from camelot.view import utils
+from camelot.view.utils import date_from_string, datetime_from_string, int_from_string, time_from_string
 
 
 class ViewUtilsCase(unittest.TestCase):

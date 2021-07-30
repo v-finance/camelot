@@ -1,8 +1,8 @@
-from ....camelot.admin.application_admin import ApplicationAdmin
-from ....camelot.admin.object_admin import ObjectAdmin
-from ....camelot.core.qt import QtCore, QtGui
-from ....camelot.view import forms
-from ....camelot.view.controls import delegates
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.qt import QtCore, QtGui
+from camelot.view import forms
+from camelot.view.controls import delegates
 
 
 class FormWithHiddenWidget(forms.Form):
@@ -34,7 +34,7 @@ class ExampleObject(object):
                             'details':{'delegate':delegates.RichTextDelegate, 'editable':True}}
         
 if __name__ == "__main__":
-    from ....camelot.view.main import main
+    from camelot.view.main import main
     app_admin = ApplicationAdmin()
     
     def show_form():

@@ -9,32 +9,32 @@ import openpyxl
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
-from ..camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
+from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
-from ..camelot.admin.action.application import Application
-from ..camelot.admin.action.base import GuiContext
-from ..camelot.bin.meta import NewProjectOptions
-from ..camelot.core.exception import CancelRequest
-from ..camelot.core.item_model import ListModelProxy, ObjectRole
-from ..camelot.core.orm import Session
-from ..camelot.core.qt import Qt, QtGui, QtWidgets
-from ..camelot.core.utils import ugettext_lazy as _
-from ..camelot.model import party
-from ..camelot.model.party import Person
-from ..camelot.test import GrabMixinCase, RunningThreadCase
-from ..camelot.test.action import MockListActionGuiContext, MockModelContext
-from ..camelot.view import action_steps, import_utils, utils
-from ..camelot.view.action_runner import hide_progress_dialog
-from ..camelot.view.action_steps import PrintHtml, SelectItem
-from ..camelot.view.action_steps.change_object import ChangeObject
-from ..camelot.view.action_steps.profile import EditProfiles
-from ..camelot.view.controls import actionsbox, tableview
-from ..camelot.view.controls.action_widget import ActionPushButton
-from ..camelot.view.controls.tableview import TableView
-from ..camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
-from ..camelot.view.workspace import DesktopWorkspace
-from ..camelot_example.importer import ImportCovers
-from ..camelot_example.model import Movie
+from camelot.admin.action.application import Application
+from camelot.admin.action.base import GuiContext
+from camelot.bin.meta import NewProjectOptions
+from camelot.core.exception import CancelRequest
+from camelot.core.item_model import ListModelProxy, ObjectRole
+from camelot.core.orm import Session
+from camelot.core.qt import Qt, QtGui, QtWidgets
+from camelot.core.utils import ugettext_lazy as _
+from camelot.model import party
+from camelot.model.party import Person
+from camelot.test import GrabMixinCase, RunningThreadCase
+from camelot.test.action import MockListActionGuiContext, MockModelContext
+from camelot.view import action_steps, import_utils, utils
+from camelot.view.action_runner import hide_progress_dialog
+from camelot.view.action_steps import PrintHtml, SelectItem
+from camelot.view.action_steps.change_object import ChangeObject
+from camelot.view.action_steps.profile import EditProfiles
+from camelot.view.controls import actionsbox, tableview
+from camelot.view.controls.action_widget import ActionPushButton
+from camelot.view.controls.tableview import TableView
+from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
+from camelot.view.workspace import DesktopWorkspace
+from camelot_example.importer import ImportCovers
+from camelot_example.model import Movie
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -744,7 +744,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         class CustomApplication(Application):
         
             def model_run( self, model_context ):
-                from ..camelot.view import action_steps
+                from camelot.view import action_steps
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
 

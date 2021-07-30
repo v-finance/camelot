@@ -2,14 +2,14 @@ import logging
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger('database administrator')
 
-from ....camelot.admin.application_admin import ApplicationAdmin
-from ....camelot.admin.action.application import Application
-from ....camelot.admin.action.application_action import SelectProfile
-from ....camelot.view import action_steps
-from ....camelot.core.profile import ProfileStore
-from ....camelot.admin.object_admin import ObjectAdmin
-from ....camelot.admin.entity_admin import EntityAdmin
-from ....camelot.view.main import main_action
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.action.application import Application
+from camelot.admin.action.application_action import SelectProfile
+from camelot.view import action_steps
+from camelot.core.profile import ProfileStore
+from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.view.main import main_action
 
 from sqlalchemy import MetaData, Table, orm
 

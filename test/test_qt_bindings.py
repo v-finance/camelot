@@ -5,7 +5,7 @@ import gc
 import random
 import unittest
 
-from ..camelot.core.qt import QtCore, QtWidgets, variant_to_py
+from camelot.core.qt import QtCore, QtWidgets, variant_to_py
 
 
 #

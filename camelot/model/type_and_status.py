@@ -63,7 +63,6 @@ from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration, PrimaryKey
-from camelot.core.orm.properties import EntityBuilder
 from camelot.core.orm import Entity
 from camelot.core.item_model.proxy import AbstractModelFilter
 from camelot.core.exception import UserException

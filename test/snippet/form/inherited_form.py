@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from ....camelot.view import forms
+from camelot.view import forms
 
 from .nested_form import Admin
 

@@ -2,8 +2,8 @@ import os
 import tempfile
 import unittest
 
-from ..camelot.bin.meta import CreateNewProject, templates
-from ..camelot.view import action_steps
+from camelot.bin.meta import CreateNewProject, templates
+from camelot.view import action_steps
 
 
 class BinCase(unittest.TestCase):

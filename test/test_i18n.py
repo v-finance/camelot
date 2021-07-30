@@ -1,7 +1,7 @@
 import unittest
 
-from ..camelot.admin.application_admin import ApplicationAdmin
-from ..camelot.core.qt import QtCore
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.core.qt import QtCore
 
 
 class I18NTest(unittest.TestCase):

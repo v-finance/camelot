@@ -2,8 +2,8 @@
     simple test case
 """
 
-from ...camelot.core.orm import Session
-from ...camelot.core.qt import QtCore
+from camelot.core.orm import Session
+from camelot.core.qt import QtCore
 from sqlalchemy import schema
 from sqlalchemy.types import String
 
