@@ -1,10 +1,12 @@
 """Test the behaviour of the qt bindings in various circumstances.
 """
 
-import unittest
 import gc
+import random
+import unittest
 
-from camelot.core.qt import variant_to_py, QtWidgets, QtCore, QtGui
+from ..camelot.core.qt import QtCore, QtWidgets, variant_to_py
+
 
 #
 # some helper classes to create all kinds of weird object structures
@@ -165,8 +167,6 @@ class SignalSlotCase( unittest.TestCase ):
         
         this corrupts the program.
         """
-        import random
-        import time
         receiver = SignalReceiver()
         #threads = []
         for i in range(1000):
