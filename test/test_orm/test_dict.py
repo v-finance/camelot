@@ -2,11 +2,11 @@
     test the deep-set functionality
 """
 
-from sqlalchemy import schema, orm
+from sqlalchemy import orm, schema
 from sqlalchemy.types import Integer, String
 
-
 from . import TestMetaData
+
 
 class TestDeepSet( TestMetaData ):
     
