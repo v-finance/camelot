@@ -40,7 +40,6 @@ import sqlalchemy.types
 # end basic imports
 
 import camelot.types
-from camelot.core.orm import ColumnProperty
 from camelot.core.sql import metadata
 from camelot.admin.action import Action
 from camelot.admin.action import list_filter
@@ -129,10 +128,9 @@ class Movie( Entity ):
 
 # begin column_property
 
-    @ColumnProperty
-    def total_visitors( self ):
-        return sql.select( [sql.func.sum( VisitorReport.visitors) ],
-                                          VisitorReport.movie_id == self.id )
+    @classmethod
+    def __declare_last__(cls):  # gets called when all mappers have been set
+        cls.total_visitors = orm.column_property(sql.select([sql.func.sum(VisitorReport.visitors)], VisitorReport.movie_id == cls.id))
     
 # end column_property
 

@@ -2,15 +2,13 @@
     simple test case
 """
 
-import threading
+from camelot.core.orm import Session
+from camelot.core.qt import QtCore
+from sqlalchemy import schema
+from sqlalchemy.types import String
 
 from . import TestMetaData
 
-from camelot.core.qt import QtCore
-from camelot.core.orm import Session
-
-from sqlalchemy import schema
-from sqlalchemy.types import String, Unicode, Integer
 
 class TestClassMethods( TestMetaData ):
 
@@ -22,7 +20,7 @@ class TestClassMethods( TestMetaData ):
         self.create_all()
 
         with self.session.begin():
-            a1 = A(name="a1")
+            A(name="a1")
 
         self.session.expire_all()
         self.assertEqual(  A.get(1).name, "a1" )
@@ -39,7 +37,7 @@ class TestClassMethods( TestMetaData ):
         self.create_all()
         
         with self.session.begin():
-            a1 = A(name="a1")
+            A(name="a1")
             
         self.assertEqual( A.query.count(), 1 )
         

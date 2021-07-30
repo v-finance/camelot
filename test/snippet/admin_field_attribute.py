@@ -1,9 +1,9 @@
-from sqlalchemy import schema, types, orm
-
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Entity
 from camelot.core.sql import metadata
 from camelot.model.party import Person
+from sqlalchemy import orm, schema, types
+
 
 class PersonOnMailingGroupAdmin(EntityAdmin):
     list_display = ['first_name', 'last_name', 'street1', 'city']
