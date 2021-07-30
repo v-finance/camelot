@@ -54,20 +54,20 @@ statuses as needed.
 """
 import datetime
 
-from sqlalchemy import orm, sql, schema, types, inspection, util
+from sqlalchemy import inspection, orm, schema, sql, types, util
 from sqlalchemy.ext import hybrid
 from sqlalchemy.ext.declarative import declared_attr
 
-from camelot.admin.action import list_filter
-from camelot.model.authentication import end_of_times
-from camelot.admin.action import Action
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.types import Enumeration, PrimaryKey
-from camelot.core.orm import Entity
-from camelot.core.item_model.proxy import AbstractModelFilter
-from camelot.core.exception import UserException
-from camelot.core.utils import ugettext, ugettext_lazy as _
-from camelot.view import action_steps
+from ..admin.action import Action, list_filter
+from ..admin.entity_admin import EntityAdmin
+from ..core.exception import UserException
+from ..core.item_model.proxy import AbstractModelFilter
+from ..core.orm import Entity
+from ..core.utils import ugettext, ugettext_lazy as _
+from ..model.authentication import end_of_times
+from ..types import Enumeration, PrimaryKey
+from ..view import action_steps
+
 
 class TypeMixin(object):
     """Mixin class to describe the different types of objects
