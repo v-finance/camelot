@@ -238,7 +238,7 @@ class SignalSlotCase( unittest.TestCase ):
                 
             @QtCore.pyqtSlot(object)
             def my_slot(self, obj):
-                child = self.findChild(QtCore.QObject, 'child')
+                self.findChild(QtCore.QObject, 'child')
         
         class ReceiverParent(QtWidgets.QTabWidget):
             

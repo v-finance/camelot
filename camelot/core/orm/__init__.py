@@ -48,11 +48,10 @@ import logging
 LOGGER = logging.getLogger('camelot.core.orm')
 
 from camelot.core.sql import metadata
-from sqlalchemy import orm, event
+from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.declarative.clsregistry import ( _ModuleMarker,
-                                                     _MultipleClassMarker )
-from sqlalchemy.orm import scoped_session, sessionmaker, mapper
+
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 #
 # Singleton session factory, to be used when a session is needed

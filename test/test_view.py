@@ -48,7 +48,7 @@ from camelot.view.mainwindowproxy import MainWindowProxy
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
 from camelot.view.workspace import DesktopWorkspace
-from camelot_example.application_admin import MyApplicationAdmin, app_admin
+from camelot_example.application_admin import MyApplicationAdmin
 from camelot_example.model import Movie
 from camelot_example.view import VisitorsPerDirector
 
@@ -945,12 +945,12 @@ class ControlsTest(
             return result
 
         action_step1 = MainWindow(app_admin)
-        main_window1 = action_step1.render(self.gui_context)
+        action_step1.render(self.gui_context)
 
         num_main_windows1 = count_main_windows()
 
         action_step2 = MainWindow(app_admin)
-        main_window2 = action_step2.render(self.gui_context)
+        action_step2.render(self.gui_context)
 
         num_main_windows2 = count_main_windows()
 

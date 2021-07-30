@@ -20,7 +20,7 @@ class TestClassMethods( TestMetaData ):
         self.create_all()
 
         with self.session.begin():
-            a1 = A(name="a1")
+            A(name="a1")
 
         self.session.expire_all()
         self.assertEqual(  A.get(1).name, "a1" )
@@ -37,7 +37,7 @@ class TestClassMethods( TestMetaData ):
         self.create_all()
         
         with self.session.begin():
-            a1 = A(name="a1")
+            A(name="a1")
             
         self.assertEqual( A.query.count(), 1 )
         

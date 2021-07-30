@@ -33,7 +33,6 @@ the `ListActionGuiContext`.
 """
 
 from dataclasses import dataclass
-import itertools
 import typing
 import json
 

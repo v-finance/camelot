@@ -60,11 +60,9 @@ class ExampleModelMixinCase(object):
         cls.session.expunge_all()
         # create objects in various states
         #
-        p1 = Person(first_name = u'p1', last_name = u'persistent' )
         p2 = Person(first_name = u'p2', last_name = u'dirty' )
         p3 = Person(first_name = u'p3', last_name = u'deleted' )
         p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
-        p5 = Person(first_name = u'p5', last_name = u'detached' )
         p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
         cls.session.flush()
         p3.delete()
@@ -121,7 +119,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         model_context.obj = translation
         try:
             generator = export_action.model_run( model_context )
-            file_step = next( generator )
+            next( generator )
             generator.send('/tmp/test.po')
         except StopIteration:
             pass
@@ -500,7 +498,7 @@ class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
         party.Person.language = schema.Column( types.Unicode(30) )
         
         metadata.create_all()
-        p = party.Person( first_name = u'Peter', 
+        party.Person( first_name = u'Peter',
                           last_name = u'Principle', 
                           language = u'English' )
         session.flush()

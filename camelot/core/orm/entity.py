@@ -34,7 +34,6 @@ blocks for creating the :class:`camelot.core.orm.Entity`.
 These classes can be reused if a custom base class is needed.
 """
 
-import bisect
 import logging
 
 
@@ -118,13 +117,6 @@ class EntityMeta( DeclarativeMeta ):
         # don't modify the Entity class itself
         #
         if classname != 'Entity':
-            entity_base = None
-            for base in bases:
-                # in case the base class is itself a subclass of Entity,
-                # get to Entity itself.
-                if hasattr(base, '_decl_class_registry'):
-                    entity_base = base
-                    break
             #
             # process the mutators
             #
