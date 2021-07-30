@@ -1,7 +1,8 @@
 import math
 
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.controls import delegates
+from ...camelot.admin.object_admin import ObjectAdmin
+from ...camelot.view.controls import delegates
+
 
 class Coordinate( object ):
   
