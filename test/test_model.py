@@ -1,33 +1,25 @@
 import datetime
 import os
 import unittest
+from unittest.mock import Mock, patch
 
-
-
-from sqlalchemy import orm, schema, types, create_engine
-
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session
-from camelot.core.conf import settings
-from camelot.core.sql import metadata
-
-from camelot.model import party, memento, authentication
-from camelot.model.party import Person
-from camelot.model.authentication import (
-    update_last_login, get_current_authentication
-)
-from camelot.model.batch_job import BatchJob, BatchJobType
-from camelot.model.fixture import Fixture, FixtureVersion
-from camelot.model.i18n import Translation, ExportAsPO
-
-from camelot.test.action import MockModelContext
-
-from camelot_example.fixtures import load_movie_fixtures
-from camelot_example import model
-from camelot_example.view import setup_views
+from sqlalchemy import create_engine, orm, schema, types
 
 from .test_orm import TestMetaData
+from ..camelot.admin.application_admin import ApplicationAdmin
+from ..camelot.admin.entity_admin import EntityAdmin
+from ..camelot.core.orm import Entity, Session
+from ..camelot.core.sql import metadata
+from ..camelot.model import authentication, memento, party, type_and_status
+from ..camelot.model.authentication import (get_current_authentication, update_last_login)
+from ..camelot.model.batch_job import BatchJob, BatchJobType
+from ..camelot.model.fixture import Fixture, FixtureVersion
+from ..camelot.model.i18n import ExportAsPO, Translation
+from ..camelot.model.party import Person
+from ..camelot.test.action import MockModelContext
+from ..camelot.view.import_utils import XlsReader
+from ..camelot_example.fixtures import load_movie_fixtures
+from ..camelot_example.view import setup_views
 
 app_admin = ApplicationAdmin()
 
@@ -484,7 +476,6 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
                                      'import_example.xlsx' )
         person_count_before_import = Person.query.count()
         # begin load csv if fixture version
-        from camelot.view.import_utils import XlsReader
         if FixtureVersion.get_current_version( u'demo_data' ) == 0:
             reader = XlsReader(example_file)
             for line in reader:
@@ -519,9 +510,6 @@ class StatusCase( TestMetaData ):
     
     def test_status_enumeration( self ):
         session = self.session
-        from camelot.core.orm import Entity
-        from unittest.mock import patch, Mock
-        from camelot.model import type_and_status
         
         with patch('camelot.core.orm.Entity.metadata') as mock_entity_metadata:
             mock_entity_metadata.__get__ = Mock(return_value=self.metadata)
