@@ -27,6 +27,7 @@ def create_test_environment(ctx):
         ctx.run('pyvenv-3 {} --symlinks'.format(env_dir))
     ctx.run('{}/bin/pip3 install --upgrade pip'.format(env_dir))
     ctx.run('{}/bin/pip3 install nose'.format(env_dir))
+    ctx.run('{}/bin/pip3 install pyflakes'.format(env_dir))
     ctx.run('{}/bin/pip3 install -r requirements.txt'.format(env_dir))
 
 def extract_fontawesome_metadata(original_json, output_json):
@@ -83,3 +84,7 @@ def fontawesome_update(ctx):
     extract_fontawesome_metadata('tmp/fontawesome-free-{}-web/metadata/icons.json'.format(version), 'camelot/art/awesome/name_to_code.json')
     # Cleanup
     ctx.run('rm -r tmp')
+
+@task()
+def source_check(ctx):
+    ctx.run('{}/bin/python -m pyflakes camelot camelot_example test'.format(default_test_env))
