@@ -2,21 +2,16 @@ import collections
 import datetime
 import inspect
 import itertools
-import types
-import unittest
 
-
-
-from sqlalchemy import sql, orm, schema
+import camelot.types
 import sqlalchemy.types
+from sqlalchemy import orm, schema, sql
 
 from . import test_orm
+from ..camelot.admin.action.list_filter import SearchFilter
+from ..camelot.admin.application_admin import ApplicationAdmin
+from ..camelot.admin.entity_admin import EntityAdmin
 
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.action.list_filter import SearchFilter
-from camelot.core.conf import settings
-import camelot.types
 #
 # build a list of the various column types for which the search functions
 # should be tested
