@@ -1,5 +1,5 @@
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.controls import delegates
+from ...camelot.admin.object_admin import ObjectAdmin
+from ...camelot.view.controls import delegates
 
 def dynamic_tooltip_x(coordinate):
   return u'The <b>x</b> value of the coordinate, now set to %s'%(coordinate.x)
