@@ -6,38 +6,35 @@ import unittest
 
 import openpyxl
 
-
-
-from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.admin.action import Action, ActionStep, State, Mode
-from camelot.admin.action import (
-    list_action, application_action, form_action, list_filter,
-    ApplicationActionGuiContext
-)
-from camelot.admin.action.application import Application
-from camelot.core.qt import QtGui, QtWidgets, Qt
-from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
-from camelot.core.orm import Session
-
-from camelot.model import party
-from camelot.model.party import Person
-
-from camelot.test import GrabMixinCase, RunningThreadCase
-from camelot.test.action import MockModelContext
-from camelot.view import action_steps, import_utils
-from camelot.view.controls import tableview, actionsbox
-from camelot.view import utils
-from camelot.view.import_utils import (
-    ColumnMapping, MatchNames, ColumnMappingAdmin
-)
-from camelot.view.workspace import DesktopWorkspace
-from camelot_example.model import Movie
-
-from . import app_admin
-from . import test_view
+from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
+from ..camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
+    form_action, list_action, list_filter
+from ..camelot.admin.action.application import Application
+from ..camelot.admin.action.base import GuiContext
+from ..camelot.bin.meta import NewProjectOptions
+from ..camelot.core.exception import CancelRequest
+from ..camelot.core.item_model import ListModelProxy, ObjectRole
+from ..camelot.core.orm import Session
+from ..camelot.core.qt import Qt, QtGui, QtWidgets
+from ..camelot.core.utils import ugettext_lazy as _
+from ..camelot.model import party
+from ..camelot.model.party import Person
+from ..camelot.test import GrabMixinCase, RunningThreadCase
+from ..camelot.test.action import MockListActionGuiContext, MockModelContext
+from ..camelot.view import action_steps, import_utils, utils
+from ..camelot.view.action_runner import hide_progress_dialog
+from ..camelot.view.action_steps import PrintHtml, SelectItem
+from ..camelot.view.action_steps.change_object import ChangeObject
+from ..camelot.view.action_steps.profile import EditProfiles
+from ..camelot.view.controls import actionsbox, tableview
+from ..camelot.view.controls.action_widget import ActionPushButton
+from ..camelot.view.controls.tableview import TableView
+from ..camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
+from ..camelot.view.workspace import DesktopWorkspace
+from ..camelot_example.importer import ImportCovers
+from ..camelot_example.model import Movie
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -97,7 +94,6 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     images_path = test_view.static_images_path
 
     def setUp(self):
-        from camelot_example.importer import ImportCovers
         self.action = ImportCovers()
         self.admin_route = app_admin.get_admin_route()
         self.workspace = DesktopWorkspace(self.admin_route, None)
@@ -119,14 +115,12 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
                                                        state_name ) )
 
     def test_action_push_botton( self ):
-        from camelot.view.controls.action_widget import ActionPushButton
         widget = ActionPushButton( self.action,
                                    self.gui_context,
                                    self.parent )
         self.grab_widget_states( widget, 'application' )
 
     def test_hide_progress_dialog( self ):
-        from camelot.view.action_runner import hide_progress_dialog
         dialog = self.gui_context.get_progress_dialog()
         dialog.show()
         with hide_progress_dialog(self.gui_context):
@@ -160,8 +154,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.gui_context = self.workspace.gui_context
 
     def test_change_object( self ):
-        from camelot.bin.meta import NewProjectOptions
-        from camelot.view.action_steps.change_object import ChangeObject
         admin = app_admin.get_related_admin(NewProjectOptions)
         options = NewProjectOptions()
         options.name = 'Videostore'
@@ -175,7 +167,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         action_steps.SelectFile('Image Files (*.png *.jpg);;All Files (*)')
 
     def test_select_item( self ):
-        from camelot.view.action_steps import SelectItem
 
         # begin select item
         class SendDocumentAction( Action ):
@@ -198,7 +189,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.assertTrue(dialog)
 
     def test_edit_profile(self):
-        from camelot.view.action_steps.profile import EditProfiles
         step = EditProfiles([], '')
         dialog = step.render(self.gui_context)
         dialog.show()
@@ -302,7 +292,6 @@ class ListActionsCase(
         model_context.get_object()
 
     def test_change_row_actions( self ):
-        from camelot.test.action import MockListActionGuiContext
 
         gui_context = MockListActionGuiContext()
         to_first = list_action.ToFirstRow()
@@ -344,7 +333,6 @@ class ListActionsCase(
         openpyxl.load_workbook(filename)
 
     def test_save_restore_export_mapping(self):
-        from camelot_example.model import Movie
 
         admin = app_admin.get_related_admin(Movie)
 
@@ -557,9 +545,6 @@ class ListActionsCase(
         return action_box
 
     def test_filter_list_in_table_view(self):
-        from camelot.view.controls.tableview import TableView
-        from camelot.model.party import Person
-        from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
         gui_context.action_routes = {}
         person_admin = Person.Admin(app_admin, Person)
@@ -654,7 +639,6 @@ class ListActionsCase(
             verbose_name = _('Summary')
 
             def model_run(self, model_context):
-                from camelot.view.action_steps import PrintHtml
                 person = model_context.get_object()
                 yield PrintHtml("<h1>This will become the personal report of {}!</h1>".format(person))
         # end html print
@@ -760,7 +744,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         class CustomApplication(Application):
         
             def model_run( self, model_context ):
-                from camelot.view import action_steps
+                from ..camelot.view import action_steps
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
 
@@ -790,7 +774,6 @@ class ApplicationActionsCase(
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
-        from camelot.view.workspace import DesktopWorkspace
         self.context = MockModelContext(session=self.session)
         self.context.admin = app_admin
         self.admin_route = app_admin.get_admin_route()
@@ -812,7 +795,6 @@ class ApplicationActionsCase(
         self.assertTrue(len(updates))
 
     def test_select_profile(self):
-        from . import test_core
         profile_case = test_core.ProfileCase('setUp')
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
