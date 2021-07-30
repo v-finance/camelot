@@ -1,6 +1,10 @@
 import unittest
 
-from camelot.core.orm import EntityBase, EntityMeta, Session
+from sqlalchemy import MetaData
+from sqlalchemy.ext.declarative import declarative_base
+
+from ...camelot.core.orm import EntityBase, EntityMeta, Session
+
 
 class TestMetaData( unittest.TestCase ):
     """Test case that provides setUp and tearDown
@@ -13,8 +17,6 @@ class TestMetaData( unittest.TestCase ):
     """
     
     def setUp(self):
-        from sqlalchemy import MetaData
-        from sqlalchemy.ext.declarative import declarative_base
         self.metadata = MetaData()
         self.class_registry = dict()
         self.Entity = declarative_base( cls = EntityBase, 
