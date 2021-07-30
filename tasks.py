@@ -88,3 +88,4 @@ def fontawesome_update(ctx):
 @task()
 def source_check(ctx):
     ctx.run('{}/bin/python -m pyflakes camelot camelot_example test'.format(default_test_env))
+    ctx.run('echo Done')
