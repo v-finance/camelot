@@ -2,15 +2,13 @@ import datetime
 import logging
 import unittest
 
-from camelot.core.item_model import (
+from ..camelot.admin.action.field_action import ClearObject, SelectObject
+from ..camelot.admin.object_admin import ObjectAdmin
+from ..camelot.core.item_model import (
     AbstractModelFilter, ListModelProxy, QueryModelProxy
 )
-
-from camelot.model.party import Person, Party
-
-from camelot.view.controls import delegates
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.action.field_action import SelectObject, ClearObject
+from ..camelot.model.party import Party, Person
+from ..camelot.view.controls import delegates
 
 LOGGER = logging.getLogger(__name__)
 
