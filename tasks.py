@@ -87,5 +87,8 @@ def fontawesome_update(ctx):
 
 @task()
 def source_check(ctx):
+    """
+    check the source code for unused imports and unused variables
+    """
     ctx.run('{}/bin/python -m pyflakes camelot camelot_example test'.format(default_test_env))
     ctx.run('echo Done')
