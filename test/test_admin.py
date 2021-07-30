@@ -5,21 +5,22 @@ Tests for the Admin classes
 
 import unittest
 
-from camelot.core.qt import Qt
-from camelot.core.sql import metadata
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.not_editable_admin import not_editable_admin
-from camelot.admin.field_admin import FieldAdmin
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.model.party import Person
-from camelot.model.i18n import Translation
-from camelot.view.controls import delegates
-
-from sqlalchemy import schema, types, sql, orm
+from sqlalchemy import orm, schema, sql, types
+from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import hybrid
 
 from .test_orm import TestMetaData
+from ..camelot.admin.application_admin import ApplicationAdmin
+from ..camelot.admin.entity_admin import EntityAdmin
+from ..camelot.admin.field_admin import FieldAdmin
+from ..camelot.admin.not_editable_admin import not_editable_admin
+from ..camelot.admin.object_admin import ObjectAdmin
+from ..camelot.core.qt import Qt
+from ..camelot.core.sql import metadata
+from ..camelot.model.i18n import Translation
+from ..camelot.model.party import Person
+from ..camelot.view.controls import delegates
+
 
 class ApplicationAdminCase(unittest.TestCase):
 
@@ -241,7 +242,6 @@ class EntityAdminCase(TestMetaData):
         #
         # test a vendor specific field type
         #
-        from sqlalchemy.dialects import mysql
         column_3 = schema.Column( mysql.BIGINT(), default = 2 )
         fa_3 = EntityAdmin.get_sql_field_attributes( [column_3] )
         self.assertTrue( fa_3['default'] )
