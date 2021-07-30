@@ -45,7 +45,6 @@ from sqlalchemy.ext import hybrid
 
 from ...types import Enumeration, PrimaryKey
 from . statements import MUTATORS
-from . properties import EntityBuilder
 from . import Session, options
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
