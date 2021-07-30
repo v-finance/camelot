@@ -163,7 +163,11 @@ class StatusHistoryAdmin( EntityAdmin ):
 
 class WithStatus(object):
     """
-    cls var 'status_types': Required, sets the status types for the WithStatus class
+    creates related Table/class: ls.__name__ + 'StatusHistory', this table has a column classified_by, that holds the status types.
+    this table has a relationship with cls. The table has a primary key column: status_for_id, and the relationship is stored in status for.
+    This relationship also defines a backref(on cls) named 'status'
+
+    cls var 'status_types': Required, sets the status types for the classified_by column
     cls var  'status_history_table': Optional, sets the tablename for the history_table
     """
     
@@ -172,39 +176,30 @@ class WithStatus(object):
 
     @declared_attr
     def _status_history(cls):
-        assert isinstance(cls.status_types, (util.OrderedProperties, list)), "This class' should define its status_types enumeration types."
+        assert isinstance(cls.status_types, (util.OrderedProperties, list)), "This class '{}', should define its status_types enumeration types.".format(cls.__name__)
+        assert hasattr(cls, 'id'), "This class '{}' hasn't got an id set. Make sure the id is defined and the name of the id is 'id'".format(cls.__name__)
         status_history_table = cls.__name__.lower() + '_status' if cls.status_history_table is None else cls.status_history_table
-        status_history_admin = type(cls.__name__ + 'StatusHistoryAdmin',
-                                    (StatusHistoryAdmin,),
+        status_history_admin = type(cls.__name__ + 'StatusHistoryAdmin', (StatusHistoryAdmin,),
                                     {'verbose_name': _(cls.__name__ + ' Status'),
                                      'verbose_name_plural': _(cls.__name__ + ' Statuses')})
+        # the status types need to be a list of tuples (with strings) so we convert the OrderedProperties
         status_types = cls.status_types
         if isinstance(status_types, util.OrderedProperties):
             status_types = [(member.id, name) for name, member in cls.status_types.__members__.items()]
-        status_history = type(cls.__name__ + 'StatusHistory',
-                              (Entity, StatusHistory),
+        status_history = type(cls.__name__ + 'StatusHistory', (Entity, StatusHistory),
                               {'__tablename__': status_history_table,
-                               'classified_by': schema.Column(
-                                   Enumeration(status_types),
-                                   nullable=False,
-                                   index=True
-                               ),
-                               'Admin': status_history_admin, })
+                               'classified_by': schema.Column(Enumeration(status_types), nullable=False, index=True ),
+                               'Admin': status_history_admin})
+
         if hasattr(cls, '__table_args__'):
             table_args = cls.__table_args__
             if not isinstance(cls.__table_args__, dict):
                 table_args = cls.__table_args__[-1]
             table_info = table_args.get('info')
             status_history.__table__.info = table_info.copy()
-        if not hasattr(status_history, 'status_for_id'):
-            constraint = schema.ForeignKey(cls.id,
-                                           ondelete='cascade',
-                                           onupdate='cascade')
-            column = schema.Column(PrimaryKey(),
-                                   constraint,
-                                   nullable=False,
-                                   index=True)
-            setattr(status_history, 'status_for_id', column)
+    
+        status_history.status_for_id = schema.Column(PrimaryKey(), schema.ForeignKey(cls.id, ondelete='cascade', onupdate='cascade'),
+                                                     nullable=False, index=True)
 
         status_history.status_for = orm.relationship(cls, backref=orm.backref('status', cascade='all, delete, delete-orphan'), enable_typechecks=False)
         return status_history
