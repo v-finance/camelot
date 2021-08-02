@@ -212,7 +212,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
             20, 100, _('Importing data')
         )
         self.assertTrue( six.text_type( update_progress ) )
-        update_progress = self._write_read_action_step(update_progress)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run( self.gui_context )
