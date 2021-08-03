@@ -40,7 +40,7 @@ from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
-from ...admin.action.list_filter import All
+from ...admin.action.list_filter import Filter, All
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry
@@ -102,7 +102,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     list_action: Route
     proxy_route: Route
     actions: typing.List[typing.Tuple[Route, RenderHint]]
-    filter_states: typing.List[typing.Tuple[Route, State]]
+    action_states: typing.List[typing.Tuple[Route, State]]
 
     def __init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
@@ -116,17 +116,18 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
-        self.filter_states = list()
+        self.action_states = list()
         model_context = ListActionModelContext()
         model_context.admin = admin
-        self._add_filter_states(model_context, admin.get_filters(), self.filter_states)
+        model_context.proxy = proxy
+        self._add_action_states(model_context, self.actions, self.action_states)
 
-    @classmethod
-    def _add_filter_states(self, model_context, filters, filter_states):
-        for item in filters:
-            action = AdminRoute.action_for(item.route)
+    @staticmethod
+    def _add_action_states(model_context, actions, action_states):
+        for action_route in actions:
+            action = AdminRoute.action_for(action_route.route)
             state = action.get_state(model_context)
-            filter_states.append((item.route, state))
+            action_states.append((action_route.route, state))
 
     @staticmethod
     def update_table_view(table_view, step):
@@ -136,10 +137,12 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         list(model.add_columns(step['columns']))
         # filters can have default values, so they need to be set before
         # the value is set
-        for filter_state in step['filter_states']:
-            route = tuple(filter_state[0])
-            state = filter_state[1]
+        for action_state in step['action_states']:
+            route = tuple(action_state[0])
             action = AdminRoute.action_for(route)
+            if not isinstance(action, Filter):
+                continue
+            state = action_state[1]
             values = [mode['name'] for mode in state['modes'] if mode['checked']]
             # if all modes are checked, replace with [All]
             if len(values) == len(state['modes']):
