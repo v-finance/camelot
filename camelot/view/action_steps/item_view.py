@@ -38,8 +38,9 @@ import json
 
 from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
-from ...admin.action.base import ActionStep, RenderHint
-from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.base import ActionStep, RenderHint, State
+from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.list_filter import All
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry
@@ -101,6 +102,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     list_action: Route
     proxy_route: Route
     actions: typing.List[typing.Tuple[Route, RenderHint]]
+    filter_states: typing.List[typing.Tuple[Route, State]]
 
     def __init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
@@ -114,6 +116,17 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
+        self.filter_states = list()
+        model_context = ListActionModelContext()
+        model_context.admin = admin
+        self._add_filter_states(model_context, admin.get_filters(), self.filter_states)
+
+    @classmethod
+    def _add_filter_states(self, model_context, filters, filter_states):
+        for item in filters:
+            action = AdminRoute.action_for(item.route)
+            state = action.get_state(model_context)
+            filter_states.append((item.route, state))
 
     @staticmethod
     def update_table_view(table_view, step):
@@ -123,6 +136,20 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         list(model.add_columns(step['columns']))
         # filters can have default values, so they need to be set before
         # the value is set
+        for filter_state in step['filter_states']:
+            route = tuple(filter_state[0])
+            state = filter_state[1]
+            action = AdminRoute.action_for(route)
+            values = [mode['name'] for mode in state['modes'] if mode['checked']]
+            # if all modes are checked, replace with [All]
+            if len(values) == len(state['modes']):
+                values = [All]
+            # replace 'All' string with All type object
+            for i, value in enumerate(values):
+                if value == 'All':
+                    values[i] = All
+            model.set_filter(action, values)
+
         table_view.set_value(step['proxy_route'])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
         table_view.set_actions(step['actions'])

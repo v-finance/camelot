@@ -153,6 +153,7 @@ the default mode.
     name: str
     verbose_name: typing.Union[str, ugettext_lazy]
     icon: typing.Union[Icon, None]
+    checked: typing.Union[bool, None]
     
     def __init__( self, name, verbose_name=None, icon=None):
         """
@@ -166,6 +167,7 @@ the default mode.
             verbose_name = name.capitalize()
         self.verbose_name = verbose_name
         self.icon = icon
+        self.checked = None
 
     def render( self, parent ):
         """Create a :class:`QtWidgets.QAction` that can be used to enable widget
