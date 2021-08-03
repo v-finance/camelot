@@ -31,6 +31,7 @@
 Actions to filter table views
 """
 
+from dataclasses import dataclass
 import camelot.types
 import datetime
 import decimal
@@ -42,7 +43,10 @@ from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
 from .base import Action, Mode, RenderHint
 
+@dataclass
 class FilterMode(Mode):
+
+    checked: bool
 
     def __init__(self, value, verbose_name, checked=False):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
