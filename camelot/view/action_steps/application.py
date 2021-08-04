@@ -27,13 +27,13 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, InitVar
 import json
 import logging
 import typing
 
 from ..controls.action_widget import ActionAction
-from ...admin.action.base import ActionStep, State
+from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
@@ -127,13 +127,13 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     # this could be non-blocking, but that causes unittest segmentation
     # fault issues which are not worth investigating
-    blocking = True
     menu: MenuItem
-    action_states: typing.List[typing.Tuple[Route, State]]
+    action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
+    model_context: InitVar(ModelContext) = None
 
-    def __init__(self, model_context, menu: MenuItem):
-        self.menu = self._filter_items(menu, get_current_authentication())
-        self.action_states = list()
+    # noinspection PyDataclass
+    def __post_init__(self, model_context):
+        self.menu = self._filter_items(self.menu, get_current_authentication())
         self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
