@@ -39,10 +39,12 @@ from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_de
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
+from .list_filter import FieldSearch
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.base import _entity_descriptor
 
 import xlsxwriter
@@ -1055,6 +1057,7 @@ class SetFilters(Action, AbstractModelFilter):
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
         ])
+        self.attributes = model_context.admin.get_all_fields_and_attributes()
         return state
 
     def get_state(self, model_context):
