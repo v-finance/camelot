@@ -203,9 +203,6 @@ class MainMenu(ActionStep, DataclassSerializable):
     blocking = False
     menu: MenuItem
 
-    def __init__(self, menu):
-        self.menu = menu
-
     @classmethod
     def render(cls, gui_context, items, parent_menu):
         """
