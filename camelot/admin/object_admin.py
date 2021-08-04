@@ -42,6 +42,7 @@ from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
 from camelot.view.utils import to_string
+from camelot.core.orm.entity import EntityFacade
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from .validator.object_validator import ObjectValidator
@@ -983,3 +984,9 @@ be specified using the verbose_name attribute.
     def is_editable(self):
         """Default implementation always returns True"""
         return True
+
+    def get_subsystem_object(self, entity_instance):
+        """Return the given entity_instance's applicable subsystem object."""
+        if isinstance(entity_instance, EntityFacade):
+            return entity_instance.subsystem_object
+        return entity_instance

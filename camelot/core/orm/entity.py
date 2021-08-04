@@ -55,17 +55,12 @@ class EntityMeta( DeclarativeMeta ):
     
     Facade class registration
     -------------------------
-    This metaclass also provides type-based entity classes with a means to register facade classes for specific types, type groups or a default one for unregistered types,
-    on one of its base classes, to allow type-specific facade and related Admin behaviour.
-    To use this behaviour, the '__facade_args__' property is used on both the base Entity class for which specific facade classes are needed,
-    as on the specific facade classes.
-    This property is a dictionary that contains all the necessary facade arguments.
-    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+
+    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
+    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
+    To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
     This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
-    In order to register a facade class for a specific type, the 'type' argument should be defined as a specific type of the base Entity class' '__types__'.
-    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
-    In case the registered types are grouped, it is also possible to register a facade class for one of those type groups and thereby registering if as the default class
-    for all types in that group if they do not have a specific class registered.
+    In order to register a facade class: see documentation on EntityFacadeMeta.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
@@ -77,20 +72,22 @@ class EntityMeta( DeclarativeMeta ):
               |     }
               |     ...
               |
-              | class SomeFacadeClass(SomeClass)
+              | class SomeFacadeClass(EntityFacade)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
               |
-              | class SomeGroupFacadeClass(SomeClass)
+              | class SomeGroupFacadeClass(EntityFacade)
               |     __facade_args__ = {
               |         'group': allowed_type_groups.certain_type_group.name
               |     }
               |     ...
               |
-              | class DefaultFacadeClass(SomeClass)
+              | class DefaultFacadeClass(EntityFacade)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
               |         'default': True
               |     }
               |     ...
@@ -214,7 +211,7 @@ class EntityMeta( DeclarativeMeta ):
                 assert _group in _class.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
                 assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
                 _class.__cls_for_type__[_group] = _class
-                
+
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
@@ -461,3 +458,154 @@ class EntityBase( object ):
         """
         return Session().query( cls ).get(*args, **kwargs)
 
+
+class EntityFacadeMeta(type):
+    
+    """
+    Metaclass that provides entity facade classes with a means to register themselves on a subsystem entity class.
+    
+    Facade class registration
+    -------------------------
+    This metaclass provides type-based entity facade classes with a means to register facade classes for specific types (or a default one for multiple types)
+    on an entity base classes, to allow type-specific facade and related Admin behaviour.
+    To use this behaviour, the '__facade_args__' property is used on both the base Entity class for which specific facade classes are needed, as on the facade classes.
+    This metaclass thereby works together with the EntityMeta.
+    This __facade_args__ property is a dictionary that contains all the necessary facade arguments.
+    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
+    To register a facade class, the subsystem_cls argument should be defined to link the facade to a subsystem entity class, which should have the discriminator defined.
+    In order to register a facade class for a specific type, the 'type' argument should also be defined as a specific type of the subsystem entity class' '__types__'.
+    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
+    In case the registered types are grouped, it is also possible to register a facade class for one of those type groups and thereby registering if as the default class
+    for all types in that group if they do not have a specific class registered.
+    
+    :example: | class SomeClass(Entity):
+              |     __tablename__ = 'some_tablename'
+              |     ...
+              |     described_by = Column(IntEnum(some_class_types), ...)
+              |     ...
+              |     __facade_args__ = {
+              |         'discriminator': described_by
+              |     }
+              |     ...
+              |
+              | class SomeFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
+              |         'type': some_class_types.certain_type.name
+              |     }
+              |     ...
+              |
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
+              |     }
+              |     ...
+              |
+              | class DefaultFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
+              |         'default': True
+              |     }
+              |     ...
+    
+   
+    Notes on metaclasses
+    --------------------
+    Metaclasses are not part of objects' class hierarchy whereas base classes are.
+    So when a method is called on an object it will not look on the metaclass for this method, however the metaclass may have created it during the class' or object's creation.
+    They are generally used for use cases outside of the default rules of object-oriented programming.
+    In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
+    which is an OOP anti-pattern as classes should not know about their subclasses.
+    """
+    
+    # new is called to create a new EntityFacade class
+    def __new__( cls, classname, bases, dict_ ):
+        #
+        # don't modify the EntityFacade class itself
+        #
+        if classname != 'EntityFacade':
+            
+            for base in bases:
+                if hasattr(base, '__facade_args__'):
+                    break
+            else:
+                dict_.setdefault('__facade_args__', dict())
+            
+            subsystem_cls = dict_.get('__facade_args__', {}).get('subsystem_cls')
+            if subsystem_cls is None:
+                for base in bases:
+                    if hasattr(base, '__facade_args__'):
+                        subsystem_cls = base.__facade_args__.get('subsystem_cls', subsystem_cls)
+            assert isinstance(subsystem_cls, EntityMeta), 'EntityFacade must be coupled with an Entity subsystem class'
+            dict_['__subsystem_cls__'] = subsystem_cls
+        
+        _facade_class = super( EntityFacadeMeta, cls ).__new__( cls, classname, bases, dict_ )
+        cls.register_class(cls, _facade_class, dict_)
+        return _facade_class
+    
+    def register_class(cls, _facade_class, dict_):
+        facade_args = dict_.get('__facade_args__')
+        if facade_args is not None:
+            subsystem_cls = dict_.get('__subsystem_cls__')
+            _type = facade_args.get('type')
+            if _type is not None:
+                assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type in subsystem_cls.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
+                assert _type not in subsystem_cls.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
+                subsystem_cls.__cls_for_type__[_type] = _facade_class
+            _default = facade_args.get('default')
+            if _default == True:
+                assert subsystem_cls.__types__ is not None, 'This class has no types defined to register classes for.'
+                assert _type is None, 'Can not register this class for a specific type and as the default class'
+                assert None not in subsystem_cls.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(subsystem_cls.__types__, subsystem_cls.__cls_for_type__[None])
+                subsystem_cls.__cls_for_type__[None] = _facade_class
+            _group = facade_args.get('type_group')
+            if _group is not None:
+                assert subsystem_cls.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
+                assert _type is None, 'Can not register this class for both a specific type and for a specific type group'
+                assert _default is None, 'Can not register this class as both the default class and for a specific type group'
+                assert _group in subsystem_cls.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
+                assert _group not in subsystem_cls.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
+                subsystem_cls.__cls_for_type__[_group] = _facade_class
+    
+    def _get_facade_arg(cls, key):
+        for cls_ in (cls,) + cls.__mro__:
+            if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
+                return cls_.__facade_args__[key]
+            
+class EntityFacade(object, metaclass=EntityFacadeMeta):
+    """
+    Abstract object class that provides as a layer on top of an Entity subsystem and delegates all attribute access to that subsystem.
+    This can provide a simplified interface that makes a complex subsystem and its related systems more easier to access and use.
+    Facades register themselves for an Entity subsystem using the subsystem_cls facade argument, and either a specific type of the entity's discriminator,
+    or as the default facade (see EntityFacadeMeta's documentation).
+    """
+    
+    def __init__(self, subsystem_object=None, **kwargs):
+        """
+        :param subsystem_object: The subsystem_object to initialized this facade with. If not provided, the facade will create a new subsystem_object instance of its __subsystem_cls__ type.
+        :param kwargs: The argument to construct the subsystem_object with one needs to be created.
+        """
+        if subsystem_object is None:
+            subsystem_object = self.__subsystem_cls__(**kwargs)
+        assert isinstance(subsystem_object, self.__subsystem_cls__), 'This EntityFacade needs to be initialized with an instance of {}'.format(self.__subsystem_cls__)
+        object.__setattr__(self, '_subsystem_object', subsystem_object)
+    
+    @property
+    def subsystem_object(self):
+        return self._subsystem_object
+
+    def __str__(self):
+        return str(self.subsystem_object if self.subsystem_object is not None else '')
+
+    # Proxy attribute access to the subsystem object for now to keep existing self logic from the previous facade implementations working.
+    # TODO: Eventually this coupling should be removed and the logic should be written to explicitly use the subsystem object where needed.
+    def __getattr__(self, name):
+        return getattr(self.subsystem_object, name)
+    
+    def __setattr__(self, name, value):
+        if not hasattr(type(self), name):
+            setattr(self.subsystem_object, name, value)
+        super().__setattr__(name, value)
+    # End of subsystem attribute access proxying.

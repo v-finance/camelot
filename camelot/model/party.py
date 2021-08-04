@@ -286,6 +286,7 @@ class Address( Entity ):
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
+
     city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
                                                schema.ForeignKey(City.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
                                                nullable=False, index=True)

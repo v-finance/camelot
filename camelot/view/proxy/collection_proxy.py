@@ -500,6 +500,7 @@ class SetData(Update):
                     pass
                 changed = value_changed or changed
             if changed:
+                subsystem_obj = admin.get_subsystem_object(obj)
                 for message in model_context.validator.validate_object(obj):
                     break
                 else:
@@ -511,11 +512,11 @@ class SetData(Update):
                         #@todo: when flushing fails ??
                         logger.error( 'Programming Error, could not flush object', exc_info = e )
                     if was_persistent is False:
-                        created_objects.add(obj)
+                        created_objects.add(subsystem_obj)
                 # update the cache
                 columns = tuple(range(len(model_context.static_field_attributes)))
                 self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-                updated_objects.add(obj)
+                updated_objects.add(subsystem_obj)
                 updated_objects.update(set(admin.get_depending_objects(obj)))
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
