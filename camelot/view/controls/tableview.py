@@ -35,10 +35,11 @@ import logging
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.admin_route import AdminRoute
-from camelot.admin.action.base import RenderHint
+from camelot.admin.action.base import State, RenderHint
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
+from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.model_thread import object_thread
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
@@ -560,6 +561,7 @@ class TableView(AbstractView):
         self.table.setItemDelegate(delegate)
         self.table.setObjectName('AdminTableWidget')
         new_model = CollectionProxy(self.admin_route)
+        new_model.action_state_changed_signal.connect(self.action_state_changed)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
@@ -613,6 +615,7 @@ class TableView(AbstractView):
             self.filters_layout.addWidget(filters_widget)
             for action in filters:
                 action_widget = self.render_action(action, filters_widget)
+                action_widget.current_row_changed_signal.connect(self.get_model().change_selection)
                 filters_widget.layout().addWidget(action_widget)
         self.filters_layout.addStretch(1)
 
@@ -624,9 +627,9 @@ class TableView(AbstractView):
             actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
             for action in actions:
-                actions_widget.layout().addWidget(
-                    self.render_action(action, actions_widget)
-                )
+                action_widget = self.render_action(action, actions_widget)
+                action_widget.current_row_changed_signal.connect(self.get_model().change_selection)
+                actions_widget.layout().addWidget(action_widget)
             self.filters_layout.addWidget(actions_widget)
 
     @QtCore.qt_slot( object, object )
@@ -643,6 +646,7 @@ class TableView(AbstractView):
             assert toolbar
             for action in toolbar_actions:
                 rendered = self.render_action(action, toolbar)
+                rendered.current_row_changed_signal.connect(self.get_model().change_selection)
                 # both QWidgets and QActions can be put in a toolbar
                 if isinstance(rendered, QtWidgets.QWidget):
                     toolbar.addWidget(rendered)
@@ -673,3 +677,10 @@ class TableView(AbstractView):
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
+
+    @QtCore.qt_slot(tuple, State)
+    def action_state_changed(self, route, state):
+        action = AdminRoute.action_for(route)
+        action_name = self.gui_context.action_routes[action]
+        action_widget = self.findChild(AbstractActionWidget, action_name)
+        action_widget.set_state(state)
