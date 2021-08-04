@@ -1041,7 +1041,20 @@ class SetFilters(Action, AbstractModelFilter):
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         entity = query._entity_zero()
-        clauses = [_entity_descriptor(entity, key) == value for key, value in values.items()]
+        clauses = []
+        for name, filter_value in values.items():
+            attribute = _entity_descriptor(entity, name)
+            field_attributes = self.attributes.get(name)
+            search_strategy = field_attributes.get('search_strategy')
+            if search_strategy is not None and isinstance(attribute, InstrumentedAttribute):
+                # If the search strategy is set, initialize it with the instrumented attribute, if it hasn't been already.
+                if issubclass(search_strategy, FieldSearch):
+                    search_strategy = search_strategy(attribute)
+                clause = search_strategy.get_clause(filter_value, entity, query.session)
+                if clause is not None:
+                    clauses.append(clause)
+            else:
+                clauses.append(attribute == filter_value)
         return query.filter(*clauses)
     
     def _get_state(self, model_context, filter_value):
