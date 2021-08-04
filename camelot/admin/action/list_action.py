@@ -992,7 +992,7 @@ class SetFilters(Action, AbstractModelFilter):
            filter upon.
         """
         field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators')]
+        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators') or fa.get('filter_strategy')]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -1044,13 +1044,13 @@ class SetFilters(Action, AbstractModelFilter):
         clauses = []
         for name, filter_value in values.items():
             attribute = _entity_descriptor(entity, name)
-            field_attributes = self.attributes.get(name)
-            search_strategy = field_attributes.get('search_strategy')
-            if search_strategy is not None and isinstance(attribute, InstrumentedAttribute):
-                # If the search strategy is set, initialize it with the instrumented attribute, if it hasn't been already.
-                if issubclass(search_strategy, FieldSearch):
-                    search_strategy = search_strategy(attribute)
-                clause = search_strategy.get_clause(filter_value, entity, query.session)
+            field_attributes = self.admin.get_field_attributes(name)
+            filter_strategy = field_attributes.get('filter_strategy')
+            if isinstance(filter_strategy, type) and issubclass(filter_strategy, FieldSearch):
+                # Initialize the filter strategy with the instrumented attribute, if it hasn't been already.
+                filter_strategy = filter_strategy(attribute)                
+            if filter_strategy is not None:
+                clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
                 if clause is not None:
                     clauses.append(clause)
             else:
@@ -1070,7 +1070,7 @@ class SetFilters(Action, AbstractModelFilter):
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
         ])
-        self.attributes = model_context.admin.get_all_fields_and_attributes()
+        self.admin = model_context.admin
         return state
 
     def get_state(self, model_context):
