@@ -57,6 +57,7 @@ class AbstractActionWidget( object ):
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
         if isinstance( gui_context, ListActionGuiContext ):
             gui_context.item_view.model().headerDataChanged.connect(self.header_data_changed)
             #gui_context.item_view.model().modelReset.connect(self.model_reset)
@@ -68,7 +69,6 @@ class AbstractActionWidget( object ):
                 selection_model.currentRowChanged.connect(
                     self.current_row_changed, type=Qt.QueuedConnection
                 )
-        post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
         self.state = state
@@ -149,7 +149,10 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                if mode_data['icon'] is not None:
+                    icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                else:
+                    icon = None
                 mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)

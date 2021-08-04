@@ -148,7 +148,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
 
         table_view.set_value(step['proxy_route'])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
-        table_view.set_actions(step['actions'])
+        table_view.set_actions(step['actions'], step['action_states'])
         if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
             search_control.setText(step['search_text'])
