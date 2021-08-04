@@ -32,7 +32,7 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, InitVar, field
 import typing
 import json
 
@@ -94,15 +94,16 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     
     """
 
-    #value: not needed
-    search_text: typing.Union[str, None]
-    title: typing.Union[str, ugettext_lazy]
-    columns: typing.List[str]
-    list_action: Route
-    proxy_route: Route
-    actions: typing.List[typing.Tuple[Route, RenderHint]]
+    admin: InitVar
+    value: InitVar
+    search_text: typing.Union[str, None] = field(init=False)
+    title: typing.Union[str, ugettext_lazy] = field(init=False)
+    columns: typing.List[str] = field(init=False)
+    list_action: Route = field(init=False)
+    proxy_route: Route = field(init=False)
+    actions: typing.List[typing.Tuple[Route, RenderHint]] = field(init=False)
 
-    def __init__( self, admin, value ):
+    def __post_init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
@@ -161,13 +162,13 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
+    admin: InitVar
+    value: InitVar
+    admin_route: Route = field(init=False)
+    new_tab: bool = False
 
-    new_tab: bool
-    admin_route: Route
-    
-    def __init__( self, admin, value ):
-        super(OpenTableView, self).__init__(admin, value)
-        self.new_tab = False
+    def __post_init__( self, admin, value ):
+        super(OpenTableView, self).__post_init__(admin, value)
         self.admin_route = admin.get_admin_route()
 
     @classmethod
