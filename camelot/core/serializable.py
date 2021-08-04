@@ -49,13 +49,10 @@ class Serializable(object):
 class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        from camelot.admin.action.list_filter import All
         if isinstance(obj, ugettext_lazy):
             return str(obj)
         if isinstance(obj, Enum):
             return obj.value
-        if obj == All:
-            return 'All'
         return json.JSONEncoder.default(self, obj)
 
 

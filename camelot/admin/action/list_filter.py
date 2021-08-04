@@ -55,8 +55,14 @@ class FilterMode(Mode):
     def decorate_query(self, query, value):
         return self.decorator(query, value)
 
-class All(object):
-    pass
+# This used to be:
+#
+#     class All(object):
+#         pass
+#
+# It has been replaced by All = '__all' to allow serialization
+#
+All = '__all'
 
 class Filter(Action):
     """Base class for filters"""

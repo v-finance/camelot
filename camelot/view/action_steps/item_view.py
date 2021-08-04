@@ -147,10 +147,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             # if all modes are checked, replace with [All]
             if len(values) == len(state['modes']):
                 values = [All]
-            # replace 'All' string with All type object
-            for i, value in enumerate(values):
-                if value == 'All':
-                    values[i] = All
             model.set_filter(action, values)
 
         table_view.set_value(step['proxy_route'])
