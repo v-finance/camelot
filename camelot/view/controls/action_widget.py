@@ -80,11 +80,11 @@ class AbstractActionWidget( object ):
         self.setVisible(state['visible'])
 
     def current_row_changed( self, current=None, previous=None ):
-        if isinstance( self.gui_context, FormActionGuiContext ):
+        if isinstance( self.gui_context, FormActionGuiContext ) or isinstance(current, int):
             post( self.action.get_state,
                   self.set_state,
                   args = (self.gui_context.create_model_context(),) )
-        if isinstance( self.gui_context, ListActionGuiContext ):
+        elif isinstance( self.gui_context, ListActionGuiContext ):
             selection_model = self.gui_context.item_view.selectionModel()
             self.current_row_changed_signal.emit(selection_model, current)
 
