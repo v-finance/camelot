@@ -42,16 +42,16 @@ from ...model.authentication import get_current_authentication
 
 LOGGER = logging.getLogger(__name__)
 
-
-class Exit(ActionStep):
+@dataclass
+class Exit(ActionStep, DataclassSerializable):
     """
     Stop the event loop, and exit the application
     """
 
-    def __init__(self, return_code=0):
-        self.return_code = return_code
+    return_code: int = 0
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
         from camelot.view.model_thread import get_model_thread
         model_thread = get_model_thread()
         # we might exit the application when the workspace is not even there
