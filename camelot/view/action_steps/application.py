@@ -278,7 +278,7 @@ class RemoveTranslators(ActionStep):
         for active_translator in app.findChildren(QtCore.QTranslator):
             app.removeTranslator(active_translator)
 
-
+@dataclass
 class UpdateActionsState(ActionStep):
     """
     Update the the state of a list of `Actions`
@@ -288,8 +288,7 @@ class UpdateActionsState(ActionStep):
 
     """
 
-    def __init__(self, actions_state):
-        self.actions_state = actions_state
+    actions_state: field(default_factory=dict)
 
     def gui_run(self, gui_context):
         for action_route, action_state in self.actions_state.items():
