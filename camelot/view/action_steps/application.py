@@ -239,7 +239,7 @@ class MainMenu(ActionStep, DataclassSerializable):
         self.render(gui_context, step["menu"]["items"], menu_bar)
         menu_bar.setCornerWidget(BusyWidget())
 
-
+@dataclass
 class InstallTranslator(ActionStep):
     """
     Install a translator in the application.  Ownership of the translator will
@@ -250,8 +250,7 @@ class InstallTranslator(ActionStep):
 
     """
 
-    def __init__(self, admin):
-        self.admin = admin
+    admin: ApplicationAdmin
 
     def gui_run(self, gui_context):
         app = QtCore.QCoreApplication.instance()
