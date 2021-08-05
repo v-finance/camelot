@@ -35,6 +35,7 @@ import typing
 from ..controls.action_widget import ActionAction
 from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
+from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
 from ...core.serializable import DataclassSerializable
@@ -61,7 +62,7 @@ class Exit(ActionStep, DataclassSerializable):
             model_thread.stop()
         QtCore.QCoreApplication.exit(self.return_code)
 
-
+@dataclass
 class MainWindow(ActionStep):
     """
     Open a top level application window
@@ -76,9 +77,11 @@ class MainWindow(ActionStep):
 
     """
 
-    def __init__(self, admin):
-        self.admin = admin
-        self.window_title = admin.get_name()
+    admin: ApplicationAdmin
+    window_title: str = field(init=False)
+
+    def __post_init__(self):
+        self.window_title = self.admin.get_name()
 
     def render(self, gui_context):
         """create the main window. this method is used to unit test
