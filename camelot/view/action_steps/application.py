@@ -262,7 +262,7 @@ class InstallTranslator(ActionStep):
         else:
             app.installTranslator(translator)
 
-
+@dataclass
 class RemoveTranslators(ActionStep):
     """
     Unregister all previously installed translators from the application.
@@ -271,8 +271,7 @@ class RemoveTranslators(ActionStep):
         object
     """
 
-    def __init__(self, admin):
-        self.admin = admin
+    admin: ApplicationAdmin
 
     def gui_run(self, gui_context):
         app = QtCore.QCoreApplication.instance()
