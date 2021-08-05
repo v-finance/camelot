@@ -27,18 +27,17 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass, field, InitVar
-from enum import Enum
 import logging
 import typing
+from enum import Enum
 
+from dataclasses import dataclass, field
+
+from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui, Qt
 from ...core.serializable import DataclassSerializable, Serializable
 from ...core.utils import ugettext_lazy
-from ...admin.icon import Icon
 from ...view.art import from_admin_icon
-
-
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
