@@ -26,8 +26,9 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from dataclasses import InitVar, dataclass
 
-
+from camelot.admin.application_admin import ApplicationAdmin
 from ...admin.admin_route import AdminRoute
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
@@ -465,6 +466,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
         if value_editor != None:
             self.value = value_editor.get_value()
 
+@dataclass
 class ChangeField( ActionStep ):
     """
     Pop up a list of fields from an object a user can change.  When the
@@ -496,18 +498,18 @@ class ChangeField( ActionStep ):
 
     """
 
-    def __init__(self,
-                 admin,
-                 field_attributes = None,
-                 field_name = None,
-                 field_value = None,
-                 ):
+    admin: ApplicationAdmin
+    field_attributes: InitVar = None
+    field_name: str = None
+    field_value: str = None
+    title = _('Replace field contents')
+    subtitle = _('Select the field to update and enter its new value')
+
+    def __post_init__(self, field_attributes):
         super( ChangeField, self ).__init__()
-        self.admin = admin
-        self.field_name = field_name
-        self.field_value = field_value
+
         if field_attributes is None:
-            field_attributes = dict(admin.get_all_fields_and_attributes())
+            field_attributes = dict(self.admin.get_all_fields_and_attributes())
             not_editable_fields = []
             for key, attributes in field_attributes.items():
                 if not attributes.get('editable', False):
@@ -517,9 +519,8 @@ class ChangeField( ActionStep ):
             for key in not_editable_fields:
                 field_attributes.pop(key)
         self.field_attributes = field_attributes
-        self.window_title = admin.get_verbose_name_plural()
-        self.title = _('Replace field contents')
-        self.subtitle = _('Select the field to update and enter its new value')
+
+        self.window_title = self.admin.get_verbose_name_plural()
 
     def render( self ):
         """create the dialog. this method is used to unit test
