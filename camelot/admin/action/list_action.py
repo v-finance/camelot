@@ -39,10 +39,12 @@ from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_de
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
+from .list_filter import FieldSearch
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.base import _entity_descriptor
 
 import xlsxwriter
@@ -990,7 +992,7 @@ class SetFilters(Action, AbstractModelFilter):
            filter upon.
         """
         field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators')]
+        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators') or fa.get('filter_strategy')]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -1039,7 +1041,20 @@ class SetFilters(Action, AbstractModelFilter):
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         entity = query._entity_zero()
-        clauses = [_entity_descriptor(entity, key) == value for key, value in values.items()]
+        clauses = []
+        for name, filter_value in values.items():
+            attribute = _entity_descriptor(entity, name)
+            field_attributes = self.admin.get_field_attributes(name)
+            filter_strategy = field_attributes.get('filter_strategy')
+            if isinstance(filter_strategy, type) and issubclass(filter_strategy, FieldSearch):
+                # Initialize the filter strategy with the instrumented attribute, if it hasn't been already.
+                filter_strategy = filter_strategy(attribute)                
+            if filter_strategy is not None:
+                clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
+                if clause is not None:
+                    clauses.append(clause)
+            else:
+                clauses.append(attribute == filter_value)
         return query.filter(*clauses)
     
     def _get_state(self, model_context, filter_value):
@@ -1055,6 +1070,7 @@ class SetFilters(Action, AbstractModelFilter):
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
         ])
+        self.admin = model_context.admin
         return state
 
     def get_state(self, model_context):
