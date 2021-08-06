@@ -64,7 +64,7 @@ class UpdateEditor(ActionStep):
         if self.propagate:
             gui_context.editor.editingFinished.emit()
 
-
+@dataclass
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
