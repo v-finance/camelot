@@ -30,6 +30,8 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+from typing import Any, List, Tuple
+
 from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtWidgets, is_deleted
@@ -114,6 +116,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         if combobox != None:
             return combobox.set_value(value)
 
+@dataclass
 class SelectItem(ActionStep):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
@@ -126,12 +129,12 @@ class SelectItem(ActionStep):
        :guilabel:`OK` first.
     """
 
-    def __init__( self, items, value=None ):
-        self.items = items
-        self.value = value
-        self.autoaccept = True
-        self.title =  _('Please select')
-        self.subtitle = _('Make a selection and press the OK button')
+    items: List[Tuple]
+    value: str = None
+
+    autoaccept = True
+    title = _('Please select')
+    subtitle = _('Make a selection and press the OK button')
 
     def render(self):
         dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
