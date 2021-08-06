@@ -26,30 +26,36 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from dataclasses import InitVar, dataclass
+import typing
 
-from camelot.admin.application_admin import ApplicationAdmin
-from ...admin.admin_route import AdminRoute
-from ...admin.action import RenderHint
-from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
-from ..workspace import apply_form_state
-from ..controls.action_widget import ActionPushButton
+from dataclasses import InitVar, dataclass, field
+from typing import List, Dict
 
-from camelot.admin.action import ActionStep
+from camelot.admin.action import ActionStep, Action
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
-from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
 from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
+from camelot.view.art import from_admin_icon
 from camelot.view.controls import delegates, editors
-from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
+from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from camelot.view.art import from_admin_icon
+from ..controls.action_widget import ActionPushButton
+from ..controls.delegates import ComboBoxDelegate
+from ..forms import Form
+from ..workspace import apply_form_state
+from ...admin.action import RenderHint
+from ...admin.admin_route import AdminRoute
+from ...admin.object_admin import ObjectAdmin
+from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -244,7 +250,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                     variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
                 ))
 
-
+@dataclass
 class ChangeObject(ActionStep):
     """
     Pop up a form for the user to change an object
@@ -262,16 +268,21 @@ class ChangeObject(ActionStep):
 
     """
 
-    def __init__(self, obj, admin):
-        assert admin is not None
-        self.obj = obj
-        self.admin = admin
-        self.accept = _('OK')
-        self.reject = _('Cancel')
+    obj: typing.Any
+    admin: ObjectAdmin
+    form_display: Form = field(init=False)
+    columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
+    form_actions: List[Action] = field(init=False)
+    admin_route: AdminRoute = field(init=False)
+    accept = _('OK')
+    reject = _('Cancel')
+
+    def __post_init__(self):
+        assert self.admin is not None
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
-        self.admin_route = admin.get_admin_route()
+        self.admin_route = self.admin.get_admin_route()
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
