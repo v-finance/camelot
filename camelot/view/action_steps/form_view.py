@@ -31,6 +31,7 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
+from dataclasses import dataclass
 
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, is_deleted
@@ -121,6 +122,8 @@ class OpenFormView( ActionStep ):
             else:
                 gui_context.workspace.set_view(formview)
 
+
+@dataclass
 class ChangeFormIndex(ActionStep):
 
     def gui_run( self, gui_context ):
