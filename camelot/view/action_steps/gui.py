@@ -30,6 +30,7 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtWidgets, is_deleted
 
@@ -176,6 +177,7 @@ class SelectSubclass(SelectItem):
         return super().gui_run(gui_context)
 
 
+@dataclass
 class CloseView( ActionStep ):
     """
     Close the view that triggered the action, if such a view is available.
@@ -188,8 +190,7 @@ class CloseView( ActionStep ):
         the user.
     """
 
-    def __init__( self, accept = True ):
-        self.accept = accept
+    accept: bool = True
 
     def gui_run( self, gui_context ):
         view = gui_context.view
