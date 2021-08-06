@@ -315,6 +315,7 @@ class ChangeObject(ActionStep):
             return self.obj
 
 
+@dataclass
 class ChangeObjects( ActionStep ):
     """
     Pop up a list for the user to change objects
@@ -349,25 +350,32 @@ class ChangeObjects( ActionStep ):
 
     """
 
-    def __init__(self, objects, admin, validate=True):
-        self.objects = objects
-        self.admin = admin
-        self.admin_route = admin.get_admin_route()
-        self.window_title = admin.get_verbose_name_plural()
-        self.title = _('Data Preview')
-        self.subtitle = _('Please review the data below.')
-        self.icon = Icon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.invalid_rows = set()
-        self.columns = admin.get_columns()
+    objects: list
+    admin: ObjectAdmin
+    validate: bool = True
+    admin_route: AdminRoute = field(init=False)
+    window_title: str = field(init=False)
+    columns: List[str] = field(init=False)
+    action_routes: List[Action] = field(init=False)
+
+    title = _('Data Preview')
+    subtitle = _('Please review the data below.')
+    icon = Icon('file-excel')
+    invalid_rows = set()
+
+    def __post_init__(self):
+        self.admin_route = self.admin.get_admin_route()
+        self.window_title = self.admin.get_verbose_name_plural()
+        self.columns = self.admin.get_columns()
         self.action_routes = [
             AdminRoute._register_list_action_route(self.admin_route, action)
-            for action in admin.get_related_toolbar_actions(
+            for action in self.admin.get_related_toolbar_actions(
                 Qt.RightToolBarArea, 'onetomany'
             )
         ]
-        if validate==True:
+        if self.validate:
             validator = self.admin.get_validator()
-            for row, obj in enumerate(objects):
+            for row, obj in enumerate(self.objects):
                 for message in validator.validate_object(obj):
                     self.invalid_rows.add(row)
                     break
