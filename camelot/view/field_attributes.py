@@ -185,8 +185,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.VirtualAddressDelegate,
         'operators' : _text_operators,
         'from_string' : lambda str:None,
-        'search_strategy': list_filter.VirtualAddressSearch,
-        'filter_strategy': list_filter.VirtualAddressSearch,
+        'search_strategy': list_filter.NoSearch,
+        'filter_strategy': list_filter.NoSearch,
     },
 
     camelot.types.RichText: lambda f: {
