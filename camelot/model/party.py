@@ -374,7 +374,7 @@ class WithAddresses(object):
         return self._get_address_field( u'street2' )
 
     @street2.expression
-    def street2_expression(cls):
+    def street2(cls):
         return sql.select([Address.street2],
                           whereclause=cls.first_address_filter(),
                           limit=1).as_scalar()
@@ -821,7 +821,7 @@ class Addressable(object):
         return self._set_address_field( u'city', value )
 
     @city.expression
-    def city_expression( self ):
+    def city( self ):
         return Address.city_geographicboundary_id
 
     class Admin(object):
