@@ -57,7 +57,7 @@ class Sort( ActionStep ):
             :param order: a :class:`Qt.SortOrder`
     """
     column: int
-    order: Qt = Qt.SortOrder,
+    order: Qt = Qt.SortOrder
 
     def gui_run( self, gui_context ):
         if gui_context.item_view != None:
