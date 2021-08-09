@@ -267,6 +267,7 @@ class ClearSelection(ActionStep):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
 
+@dataclass
 class RefreshItemView(ActionStep):
     """
     Refresh only the current item view
