@@ -74,6 +74,7 @@ class AdminRoute(object):
         # put name of the admin in the last part of the route, so it can
         # be used as a reference to store settings
         admin_route = ('admin', str(next_admin), admin.get_name())
+        LOGGER.debug('Register admin route: {} -> {}'.format(admin_route, admin))
         cls._admin_routes[admin_route] = admin
         return admin_route
 
@@ -128,6 +129,7 @@ class AdminRoute(object):
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
         assert action_route not in cls._admin_routes, cls.verbose_route(action_route) + ' registered before'
+        LOGGER.debug('Register field action route: {} -> {}'.format(action_route, action))
         cls._admin_routes[action_route] = action
         return action_route
 
@@ -138,6 +140,7 @@ class AdminRoute(object):
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'list', 'actions', action.get_name())
         assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
         cls._admin_routes[action_route] = action
         return action_route
 
@@ -148,6 +151,7 @@ class AdminRoute(object):
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'actions', action.get_name())
         assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Register action route: {} -> {}'.format(action_route, action))
         cls._admin_routes[action_route] = action
         return action_route
 
