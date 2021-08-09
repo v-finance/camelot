@@ -44,6 +44,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
+@dataclass
 class UpdateEditor(ActionStep):
     """This step should be used in the context of an editor action.  It
     will update an attribute of the editor.
@@ -54,10 +55,9 @@ class UpdateEditor(ActionStep):
        model of it's change, so that the changes can be written to the model
     """
 
-    def __init__(self, attribute, value, propagate=False):
-        self.attribute = attribute
-        self.value = value
-        self.propagate = propagate
+    attribute: str
+    value: Any
+    propagate: bool = False
 
     def gui_run(self, gui_context):
         if is_deleted(gui_context.editor):
