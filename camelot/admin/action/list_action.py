@@ -39,7 +39,7 @@ from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_de
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-from .list_filter import FieldSearch
+from .list_filter import FieldSearch, NoSearch
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
@@ -968,11 +968,12 @@ class FieldFilter(object):
     Helper class for the `SetFilters` action that allows the user to
     configure a filter on an individual field.
     """
-
+    
+    value = None
+    
     def __init__(self, value=None):
         self.value = value
-
-
+    
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -992,7 +993,7 @@ class SetFilters(Action, AbstractModelFilter):
            filter upon.
         """
         field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators') or fa.get('filter_strategy')]
+        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if not isinstance(fa.get('filter_strategy'), NoSearch)]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -1008,6 +1009,7 @@ class SetFilters(Action, AbstractModelFilter):
             filter_value = model_context.proxy.get_filter(self) or {}
             filter_field_name = model_context.mode_name
             filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
+            filter_strategy = filter_field_attributes.get('filter_strategy')
             filter_value_attributes = {
                 'name': filter_field_attributes['name'],
                 'editable': True,
@@ -1029,7 +1031,8 @@ class SetFilters(Action, AbstractModelFilter):
             filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
             change_filter = action_steps.ChangeObject(field_filter, filter_admin)
             yield change_filter
-            new_filter_value = {filter_field_name: field_filter.value}
+            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
+            new_filter_value = {filter_field_name: filter_text}
 
         yield action_steps.SetFilter(self, new_filter_value)
         new_state = self._get_state(model_context, new_filter_value)
@@ -1046,9 +1049,6 @@ class SetFilters(Action, AbstractModelFilter):
             attribute = _entity_descriptor(entity, name)
             field_attributes = self.admin.get_field_attributes(name)
             filter_strategy = field_attributes.get('filter_strategy')
-            if isinstance(filter_strategy, type) and issubclass(filter_strategy, FieldSearch):
-                # Initialize the filter strategy with the instrumented attribute, if it hasn't been already.
-                filter_strategy = filter_strategy(attribute)                
             if filter_strategy is not None:
                 clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
                 if clause is not None:
