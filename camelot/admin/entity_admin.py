@@ -708,17 +708,13 @@ and used as a custom action.
                         # Append a search clause for the column using a set search strategy, or the basic strategy by default.
                         fa = related_admin.get_field_attributes(instrumented_attribute.key)
                         search_strategy = fa['search_strategy']
-                        if search_strategy is not None:
-                            # If the search strategy is set, initialize it with the instrumented attribute.
-                            assert issubclass(search_strategy, list_filter.FieldSearch)
-                            field_search = search_strategy(instrumented_attribute)
-                            # In case the attribute is of a related entity,
-                            # create a related search using the field search and the encountered joins.
-                            if joins:
-                                field_search = list_filter.RelatedSearch(field_search, joins=joins)
-                            arg = field_search.get_clause(text, self, query.session)
-                            if arg is not None:
-                                args.append(arg)
+                        # In case the attribute is of a related entity,
+                        # create a related search using the field search and the encountered joins.
+                        if joins:
+                            search_strategy = list_filter.RelatedSearch(search_strategy, joins=joins)
+                        arg = search_strategy.get_clause(text, self, query.session)
+                        if arg is not None:
+                            args.append(arg)
                                 
             elif isinstance(search_field, list_filter.AbstractSearchStrategy):
                 arg = search_field.get_clause(text, self, query.session)
