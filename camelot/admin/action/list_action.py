@@ -1018,6 +1018,8 @@ class SetFilters(Action, AbstractModelFilter):
             # can be reused
             if isinstance(filter_field_attributes.get('choices'), list):
                 filter_value_attributes['choices'] = filter_field_attributes['choices']
+            if 'precision' in filter_field_attributes:
+                filter_value_attributes['precision'] = filter_field_attributes['precision']
     
             class FieldFilterAdmin(ObjectAdmin):
                 verbose_name = _('Filter')
