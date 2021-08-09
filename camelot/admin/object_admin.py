@@ -394,6 +394,7 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         return app_admin.get_select_list_toolbar_actions()
 
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
@@ -690,9 +691,11 @@ be specified using the verbose_name attribute.
             if direction.endswith('many') and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
                 if field_attributes.get('actions') is None:
-                    field_attributes['actions'] = related_admin.get_related_toolbar_actions(
-                        Qt.RightToolBarArea, direction
-                    )
+                    field_attributes['actions'] = [
+                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(
+                            Qt.RightToolBarArea, direction
+                        )
+                    ]
                 if column_width is None:
                     table = related_admin.get_table()
                     fields = table.get_fields(column_group=0)

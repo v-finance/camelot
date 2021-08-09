@@ -348,8 +348,7 @@ class ChangeObjects( ActionStep ):
         self.invalid_rows = set()
         self.columns = admin.get_columns()
         self.action_routes = [
-            AdminRoute._register_list_action_route(self.admin_route, action)
-            for action in admin.get_related_toolbar_actions(
+            action.route for action in admin.get_related_toolbar_actions(
                 Qt.RightToolBarArea, 'onetomany'
             )
         ]

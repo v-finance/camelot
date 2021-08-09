@@ -59,6 +59,7 @@ import datetime
 from sqlalchemy import orm, sql, schema, types, inspection
 from sqlalchemy.ext import hybrid
 
+from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action import list_filter
 from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
@@ -160,6 +161,7 @@ class StatusHistoryAdmin( EntityAdmin ):
         if obj.status_for is not None:
             yield obj.status_for
     
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions(self, toolbar_area, direction):
         return []
 
