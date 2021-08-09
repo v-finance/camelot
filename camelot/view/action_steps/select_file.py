@@ -40,6 +40,7 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 
+@dataclass
 class SelectFile( ActionStep ):
     """Select one or more files to open
     
@@ -64,11 +65,11 @@ class SelectFile( ActionStep ):
     This action step stores its last location into the :class:`QtCore.QSettings` 
     and uses it as the initial location the next time it is invoked.
     """
-    
-    def __init__( self, file_name_filter = ''):
-        self.file_name_filter = str(file_name_filter)
-        self.single = True
-        self.caption = _('Open')
+
+    file_name_filter: str = ''
+
+    single = True
+    caption = _('Open')
 
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
