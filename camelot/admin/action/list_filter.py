@@ -219,7 +219,11 @@ class FieldSearch(AbstractSearchStrategy):
     @classmethod
     def assert_valid_attribute(cls, attribute):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
-        assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
+        if isinstance(attribute, orm.attributes.InstrumentedAttribute):
+            python_type = attribute.type.python_type
+        else:
+            python_type = attribute.expression.type.python_type
+        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
     def get_clause(self, text, admin, session):
         """
