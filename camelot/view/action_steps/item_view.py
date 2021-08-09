@@ -259,7 +259,7 @@ class OpenQmlTableView(OpenTableView):
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
 
-
+@dataclass
 class ClearSelection(ActionStep):
     """Deselect all selected items."""
 
