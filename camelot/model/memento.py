@@ -46,7 +46,7 @@ from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
@@ -73,10 +73,9 @@ class Memento( Entity ):
     model = schema.Column( Unicode( 256 ), index = True, nullable = False )
     primary_key = schema.Column(PrimaryKey(), index=True, nullable=False)
     creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
-    authentication = ManyToOne( AuthenticationMechanism,
-                                required = True,
-                                ondelete = 'restrict',
-                                onupdate = 'cascade' )
+    authentication_id = schema.Column(Integer(), schema.ForeignKey(AuthenticationMechanism.id, ondelete='restrict', onupdate='cascade'),
+                                      nullable=False, index=True)
+    authentication = orm.relationship(AuthenticationMechanism)
     memento_type = schema.Column( Integer, 
                                   nullable = False,
                                   index = True )    

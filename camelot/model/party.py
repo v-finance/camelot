@@ -40,16 +40,18 @@ import datetime
 import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Date, Unicode
+from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, Field, ManyToMany, ManyToOne, OneToMany, ColumnProperty
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+
+from ..core.sql import metadata
 
 from .authentication import end_of_times
 
@@ -76,9 +78,12 @@ class GeographicBoundary( Entity ):
     @property
     def name_FR(self):
         return self.translation(language='fr_BE')
-    
-    __mapper_args__ = { 'polymorphic_on' : row_type }
-    
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'geographic_boundary',
+        'polymorphic_on': row_type
+    }
+
     __table_args__ = (
         schema.Index(
             'ix_geographic_boundary_name', name,
@@ -86,10 +91,8 @@ class GeographicBoundary( Entity ):
             postgresql_using='gin'
         ),
     )
-    
-    @ColumnProperty
-    def full_name( self ):
-        return self.code + ' ' + self.name
+
+    full_name = orm.column_property(code + ' ' + name)
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
@@ -186,10 +189,7 @@ class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
     __tablename__ = 'geographic_boundary_country'
-    geographicboundary_id = Field( camelot.types.PrimaryKey(), 
-                                   ForeignKey('geographic_boundary.id'), 
-                                   primary_key = True,
-                                   autoincrement = False )
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(GeographicBoundary.id), primary_key=True)
 
     __mapper_args__ = {'polymorphic_identity': 'country'}
 
@@ -211,11 +211,12 @@ class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     __tablename__ = 'geographic_boundary_city'
-    country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    geographicboundary_id = Field( camelot.types.PrimaryKey(),
-                                   ForeignKey('geographic_boundary.id'),
-                                   primary_key = True,
-                                   autoincrement = False )
+    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                                  nullable=False, index=True)
+    country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
+                                          primary_key=True, nullable=False)
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
     
     __mapper_args__ = {'polymorphic_identity': 'city'}
@@ -278,18 +279,17 @@ class City( GeographicBoundary ):
         field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
         field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
         field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
-        
+
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
-    city = ManyToOne( City,
-                      required = True,
-                      ondelete = 'cascade',
-                      onupdate = 'cascade',
-                      lazy = 'subquery' )
+    city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                               schema.ForeignKey(City.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                               nullable=False, index=True)
+    city = orm.relationship(City, lazy='subquery')
     
     # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
     _zip_code = schema.Column(Unicode(10))
@@ -305,12 +305,10 @@ class Address( Entity ):
         # Only allow to overrule the address' zip code if its city's code is unknown.
         if self.city is not None and self.city.code == '':
             self._zip_code = value
-    
-    def name( self ):
-        return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
-                           whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
 
-    name = ColumnProperty( name, deferred = True )
+    name = orm.column_property(sql.select(
+        [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
+        whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
 
     @classmethod
     def get_or_create( cls, street1, street2, city, zip_code):
@@ -574,9 +572,7 @@ class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
     __tablename__ = 'organization'
-    party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'),
-                      primary_key = True )
+    party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
     logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
@@ -600,9 +596,7 @@ class Person( Party ):
     """Person represents natural persons
     """
     __tablename__ = 'person'
-    party_id = Field( camelot.types.PrimaryKey(),
-                      ForeignKey('party.id'),
-                      primary_key = True )
+    party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
     first_name = schema.Column( Unicode( 40 ), nullable = False )
     last_name = schema.Column( Unicode( 40 ), nullable = False )
@@ -917,12 +911,11 @@ class PartyAddress( Entity, Addressable ):
                                      cascade='all, delete, delete-orphan'),
         lazy='subquery',
     )
-    address = ManyToOne( Address,
-                         required = True,
-                         backref = 'party_addresses',
-                         ondelete = 'cascade',
-                         onupdate = 'cascade',
-                         lazy = 'subquery' )
+    address_id = schema.Column(sqlalchemy.types.Integer(),
+                               schema.ForeignKey(Address.id, ondelete='cascade', onupdate='cascade'),
+                               nullable=False, index=True)
+    address = orm.relationship(Address, backref=orm.backref('party_addresses'), lazy='subquery')
+
     from_date = schema.Column( Date(), default = datetime.date.today, nullable=False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, nullable=False, index = True )
     comment = schema.Column( Unicode( 256 ) )
@@ -980,8 +973,9 @@ class PartyAddressRoleType( Entity ):
 class ContactMechanism( Entity ):
     __tablename__ = 'contact_mechanism'
     mechanism = schema.Column( camelot.types.VirtualAddress( 256 ), nullable = False )
-    party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
-    party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
+    party_address_id = schema.Column(Integer(), schema.ForeignKey(PartyAddress.id, ondelete='set null', onupdate='cascade'),
+                                     index=True)
+    party_address = orm.relationship(PartyAddress)
 
     def __str__(self):
         if self.mechanism:
@@ -1005,11 +999,13 @@ class ContactMechanism( Entity ):
 class PartyContactMechanism( Entity ):
     __tablename__ = 'party_contact_mechanism'
 
-    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade',
-                       backref = orm.backref('contact_mechanisms', lazy = 'select',
-                                             cascade='all, delete, delete-orphan' )
-                       )
-    contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    party_id = schema.Column(Integer(), schema.ForeignKey(Party.id, ondelete='cascade', onupdate='cascade'),
+                             nullable=False, index=True)
+    party = orm.relationship(Party, backref=orm.backref('contact_mechanisms', lazy='select',
+                                                        cascade='all, delete, delete-orphan'))
+    contact_mechanism_id = schema.Column(Integer(), schema.ForeignKey(ContactMechanism.id, ondelete='cascade', onupdate='cascade'),
+                                         nullable=False, index=True)
+    contact_mechanism = orm.relationship(ContactMechanism, lazy='joined', backref=orm.backref('party_contact_mechanisms'))
     from_date = schema.Column( Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = schema.Column( Date(), default = end_of_times, index = True )
     comment = schema.Column( Unicode( 256 ) )
@@ -1033,11 +1029,10 @@ class PartyContactMechanism( Entity ):
             [ContactMechanism.mechanism],
             whereclause=ContactMechanism.id==self.contact_mechanism_id).as_scalar()
 
-    def party_name( self ):
-        return sql.select( [Party.full_name],
-                           whereclause = (Party.id==self.party_id))
-
-    party_name = ColumnProperty( party_name, deferred = True )
+    @classmethod
+    def __declare_last__(cls):
+        cls.party_name = orm.column_property(sql.select([Party.full_name], whereclause=(Party.id == cls.party_id)),
+                                         deferred=True)
 
     def __str__(self):
         return str( self.contact_mechanism )
@@ -1051,10 +1046,6 @@ class PartyCategory( Entity ):
     name = schema.Column( Unicode(40), index=True, nullable = False )
     color = schema.Column(Unicode(8))
 # end category definition
-    parties = ManyToMany( 'Party', lazy = True, backref='categories',
-                          tablename='party_category_party',
-                          remote_colname='party_id',
-                          local_colname='party_category_id')
 
     def get_contact_mechanisms(self, virtual_address_type):
         """Function to be used to do messaging
@@ -1077,6 +1068,22 @@ class PartyCategory( Entity ):
         verbose_name = _('Category')
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
+
+
+party_category_table = schema.Table('party_category_party', metadata,
+                                    schema.Column('party_category_id', sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(PartyCategory.id, name='party_category_parties_fk'),
+                                                  nullable=False, primary_key=True),
+                                    schema.Column('party_id', sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(Party.id, name='party_category_parties_inverse_fk'),
+                                                  nullable=False, primary_key=True)
+                                    )
+
+PartyCategory.parties = orm.relationship(Party, secondary=party_category_table,
+                                               foreign_keys=[
+                                                   party_category_table.c.party_id,
+                                                   party_category_table.c.party_category_id])
+
 
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')

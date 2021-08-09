@@ -41,7 +41,7 @@ import io
 import sqlalchemy.types
 from sqlalchemy import orm, sql, schema
 
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
@@ -75,8 +75,7 @@ class BatchJobType( Entity ):
     __tablename__ = 'batch_job_type'
     
     name   = schema.Column( sqlalchemy.types.Unicode(256), nullable=False)
-    parent = ManyToOne( 'BatchJobType' )
-    
+
     def __str__(self):
         return self.name or ''
     
@@ -91,12 +90,15 @@ class BatchJobType( Entity ):
     class Admin(EntityAdmin):
         verbose_name = _('Batch job type')
         list_display = ['name', 'parent']
+
+BatchJobType.parent_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id), index=True)
+BatchJobType.parent = orm.relationship(BatchJobType)
         
 def hostname():
     import socket
     return str( socket.gethostname() )
 
-class BatchJob( Entity, type_and_status.StatusMixin ):
+class BatchJob( Entity, type_and_status.WithStatus, type_and_status.StatusMixin ):
     """A batch job is a long running task that is scheduled by
     the user or started periodically.  The BatchJob objects can be used
     to store information on such running task so the end user can review
@@ -104,10 +106,12 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
     """
     
     __tablename__ = 'batch_job'
+    status_types = batch_job_statusses
     
     host    = schema.Column( sqlalchemy.types.Unicode(256), nullable=False, default=hostname )
-    type    = ManyToOne( 'BatchJobType', nullable=False, ondelete = 'restrict', onupdate = 'cascade' )
-    status  = type_and_status.Status( batch_job_statusses )
+    type_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(BatchJobType.id, ondelete='restrict', onupdate='cascade'),
+                            nullable=False, index=True)
+    type = orm.relationship(BatchJobType)
     message = orm.deferred(schema.Column(camelot.types.RichText()))
 
     def __str__(self):

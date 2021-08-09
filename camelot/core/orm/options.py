@@ -90,9 +90,6 @@ For examples, please refer to the examples and unit tests.
 from sqlalchemy import types
 
 
-
-from . statements import ClassMutator
-
 DEFAULT_AUTO_PRIMARYKEY_NAME = "id"
 DEFAULT_AUTO_PRIMARYKEY_KWARGS = dict(primary_key=True, doc='The primary key')
 DEFAULT_AUTO_PRIMARYKEY_TYPE = types.Integer

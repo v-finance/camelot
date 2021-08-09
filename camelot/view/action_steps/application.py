@@ -40,22 +40,22 @@ from ...core.qt import QtCore, Qt, QtWidgets
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
 
-
 LOGGER = logging.getLogger(__name__)
 
 
-class Exit( ActionStep ):
+class Exit(ActionStep):
     """
     Stop the event loop, and exit the application
     """
-    
-    def __init__( self, return_code=0 ):
+
+    def __init__(self, return_code=0):
         self.return_code = return_code
-        
-    def gui_run( self, gui_context ):
+
+    def gui_run(self, gui_context):
         QtCore.QCoreApplication.exit(self.return_code)
 
-class MainWindow( ActionStep ):
+
+class MainWindow(ActionStep):
     """
     Open a top level application window
     
@@ -68,12 +68,12 @@ class MainWindow( ActionStep ):
         is given
 
     """
-    
+
     def __init__(self, admin):
         self.admin = admin
         self.window_title = admin.get_name()
 
-    def render( self, gui_context ):
+    def render(self, gui_context):
         """create the main window. this method is used to unit test
         the action step."""
         from ..mainwindowproxy import MainWindowProxy
@@ -98,14 +98,15 @@ class MainWindow( ActionStep ):
         )
 
         gui_context.workspace = main_window_context.workspace
-        main_window_proxy.parent().setWindowTitle( self.window_title )
+        main_window_proxy.parent().setWindowTitle(self.window_title)
         return main_window_proxy.parent()
-        
-    def gui_run( self, gui_context ):
-        main_window = self.render( gui_context )
+
+    def gui_run(self, gui_context):
+        main_window = self.render(gui_context)
         if main_window.statusBar() is not None:
             main_window.statusBar().hide()
         main_window.show()
+
 
 @dataclass
 class NavigationPanel(ActionStep, DataclassSerializable):
@@ -142,7 +143,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
         )
         new_menu.items.extend(
             cls._filter_items(item, auth) for item in menu.items if (
-                (item.role is None) or auth.has_role(item.role)
+                    (item.role is None) or auth.has_role(item.role)
             )
         )
         return new_menu
@@ -181,6 +182,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
         gui_context.workspace.parent().addDockWidget(
             Qt.LeftDockWidgetArea, navigation_panel
         )
+
 
 @dataclass
 class MainMenu(ActionStep, DataclassSerializable):

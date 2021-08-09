@@ -3,12 +3,11 @@ import os
 import tempfile
 import unittest
 
-from camelot.core.conf import settings, SimpleSettings
-from camelot.core.memento import memento_change, SqlMemento, memento_types
+from .test_model import ExampleModelMixinCase
+from camelot.core.conf import SimpleSettings, settings
+from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import py_to_variant, variant_to_py
-
-from .test_model import ExampleModelMixinCase
 
 memento_id_counter = 0
 

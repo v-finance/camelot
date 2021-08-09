@@ -2,22 +2,16 @@ import collections
 import datetime
 import inspect
 import itertools
-import types
-import unittest
 
-
-
-from sqlalchemy import sql, orm
+import camelot.types
 import sqlalchemy.types
+from sqlalchemy import orm, schema, sql
 
 from . import test_orm
-
+from camelot.admin.action.list_filter import SearchFilter
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.action.list_filter import SearchFilter
-from camelot.core.conf import settings
-from camelot.core.orm import has_field
-import camelot.types
+
 #
 # build a list of the various column types for which the search functions
 # should be tested
@@ -72,9 +66,11 @@ class SearchCase( test_orm.TestMetaData ):
 
         class T( self.Entity ):
             """An entity with for each column type a column"""
-            for (i,name), definition in types_to_test.items():
-                has_field( name, definition )
-                
+            pass
+        
+        for (i,name), definition in types_to_test.items():
+            setattr(T, name, schema.Column(definition))
+
         class TAdmin(EntityAdmin):
             search_all_fields = True
             list_search = []

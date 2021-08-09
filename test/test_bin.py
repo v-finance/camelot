@@ -1,15 +1,16 @@
+import os
 import tempfile
 import unittest
-import os
 
+from camelot.bin.meta import CreateNewProject, templates
 from camelot.view import action_steps
+
 
 class BinCase(unittest.TestCase):
     """test functions from camelot.bin
     """
             
     def test_create_new_project(self):
-        from camelot.bin.meta import CreateNewProject, templates, NewProjectOptions
         new_project_action = CreateNewProject()
         for step in new_project_action.model_run( None ):
             if isinstance(step, action_steps.ChangeObject):

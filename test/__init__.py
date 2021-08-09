@@ -1,8 +1,6 @@
-import logging
 import faulthandler
+import logging
 import sys
-
-#warnings.filterwarnings( 'error' )
 
 from camelot.core.conf import settings
 
@@ -15,6 +13,10 @@ from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
 from camelot.core.qt import QtNetwork
+from camelot.admin.application_admin import ApplicationAdmin
+
+from sqlalchemy.pool import StaticPool
+from sqlalchemy import create_engine
 
 # a QApplication is needed to be able to construct other
 # objects.
@@ -32,17 +34,13 @@ getattr(QtGui, 'QColor')
 getattr(QtWidgets, 'QWidget')
 getattr(QtNetwork, 'QNetworkAccessManager')
 
-from camelot.admin.application_admin import ApplicationAdmin
-
 app_admin = ApplicationAdmin()
 
 class TestSettings( object ):
 
     CAMELOT_MEDIA_ROOT = 'media'
 
-    def __init__( self ): 
-        from sqlalchemy.pool import StaticPool
-        from sqlalchemy import create_engine
+    def __init__( self ):
         # static pool to preserve tables and data accross threads
         self.engine = create_engine('sqlite:///', poolclass = StaticPool)
 
