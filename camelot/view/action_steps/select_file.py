@@ -154,6 +154,7 @@ class SaveFile( ActionStep ):
             else:
                 raise CancelRequest()
 
+@dataclass
 class SelectDirectory(ActionStep):
     """Select a single directory
 
@@ -167,11 +168,10 @@ class SelectDirectory(ActionStep):
         defaults to :const:`QtWidgets.QFileDialog.ShowDirsOnly`
 
     """
-    
-    def __init__(self):
-        self.caption = _('Select directory')
-        self.options = QtWidgets.QFileDialog.ShowDirsOnly
-        self.directory = None
+
+    caption = _('Select directory')
+    options = QtWidgets.QFileDialog.ShowDirsOnly
+    directory = None
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
