@@ -111,8 +111,6 @@ class SelectObjects( OpenTableView ):
             if action.route[-1] == ConfirmSelection.name:
                 self.list_action = action.route
                 break
-        self.action_states = list()
-        self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
 
     @classmethod
     def render(cls, gui_context, step):
