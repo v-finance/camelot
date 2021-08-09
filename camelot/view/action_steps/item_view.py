@@ -49,18 +49,16 @@ from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
 
-
+@dataclass
 class Sort( ActionStep ):
-    
-    def __init__( self, column, order = Qt.AscendingOrder ):
-        """Sort the items in the item view ( list, table or tree )
-        
-        :param column: the index of the column on which to sort
-        :param order: a :class:`Qt.SortOrder`
-        """
-        self.column = column
-        self.order = order
-        
+    """Sort the items in the item view ( list, table or tree )
+
+            :param column: the index of the column on which to sort
+            :param order: a :class:`Qt.SortOrder`
+    """
+    column: int
+    order: Qt = Qt.SortOrder,
+
     def gui_run( self, gui_context ):
         if gui_context.item_view != None:
             model = gui_context.item_view.model()
