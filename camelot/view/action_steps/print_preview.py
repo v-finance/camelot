@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtGui, QtPrintSupport
 
@@ -35,7 +36,7 @@ from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
 
-
+@dataclass
 class PrintPreview( ActionStep ):
     """
     Display a print preview dialog box.
@@ -87,18 +88,20 @@ class PrintPreview( ActionStep ):
     
     .. image:: /_static/simple_report.png
         """
+
+    document: QtGui.QTextDocument
+
+    printer = None
+    margin_left = None
+    margin_top = None
+    margin_right = None
+    margin_bottom = None
+    margin_unit = QtPrintSupport.QPrinter.Millimeter
+    page_size = None
+    page_orientation = None
     
-    def __init__( self, document ):
-        self.document = document
+    def __post_init__(self):
         self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
-        self.printer = None
-        self.margin_left = None
-        self.margin_top = None
-        self.margin_right = None
-        self.margin_bottom = None
-        self.margin_unit = QtPrintSupport.QPrinter.Millimeter
-        self.page_size = None
-        self.page_orientation = None
 
     def get_printer(self):
         if self.printer is not None:

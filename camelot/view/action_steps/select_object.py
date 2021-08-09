@@ -41,10 +41,10 @@ from camelot.view.controls.tableview import TableView
 
 from .item_view import OpenTableView
 
+@dataclass
 class SetSelectedObjects(ActionStep):
 
-    def __init__(self, objects):
-        self.objects = objects
+    objects: list
 
     def gui_run(self, gui_context):
         dialog = gui_context.view.parent()

@@ -33,7 +33,7 @@ the `ListActionGuiContext`.
 """
 
 from dataclasses import dataclass, InitVar, field
-import typing
+from typing import Any, Union, List, Tuple
 import json
 
 from ...admin.admin_route import Route, AdminRoute
@@ -42,43 +42,40 @@ from ...admin.action.base import ActionStep, RenderHint
 from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
-from ...core.item_model import ProxyRegistry
+from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
 
-
+@dataclass
 class Sort( ActionStep ):
-    
-    def __init__( self, column, order = Qt.AscendingOrder ):
-        """Sort the items in the item view ( list, table or tree )
-        
-        :param column: the index of the column on which to sort
-        :param order: a :class:`Qt.SortOrder`
-        """
-        self.column = column
-        self.order = order
-        
+    """Sort the items in the item view ( list, table or tree )
+
+            :param column: the index of the column on which to sort
+            :param order: a :class:`Qt.SortOrder`
+    """
+    column: int
+    order: Qt = Qt.SortOrder
+
     def gui_run( self, gui_context ):
         if gui_context.item_view != None:
             model = gui_context.item_view.model()
             model.sort( self.column, self.order )
 
+@dataclass
 class SetFilter( ActionStep ):
+    """Filter the items in the item view
+
+            :param list_filter: the `AbstractModelFilter` to apply
+            :param value: the value on which to filter
+    """
+    list_filter: AbstractModelFilter
+    value: Any
 
     blocking = False
     cancelable = False
-
-    def __init__( self, list_filter, value ):
-        """Filter the items in the item view
-        
-        :param list_filter: the `AbstractModelFilter` to apply
-        :param value: the value on which to filter
-        """
-        self.list_filter = list_filter
-        self.value = value
 
     def gui_run( self, gui_context ):
         if gui_context.item_view is not None:
@@ -96,12 +93,12 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
 
     admin: InitVar
     value: InitVar
-    search_text: typing.Union[str, None] = field(init=False)
-    title: typing.Union[str, ugettext_lazy] = field(init=False)
-    columns: typing.List[str] = field(init=False)
+    search_text: Union[str, None] = field(init=False)
+    title: Union[str, ugettext_lazy] = field(init=False)
+    columns: List[str] = field(init=False)
     list_action: Route = field(init=False)
     proxy_route: Route = field(init=False)
-    actions: typing.List[typing.Tuple[Route, RenderHint]] = field(init=False)
+    actions: List[Tuple[Route, RenderHint]] = field(init=False)
 
     def __post_init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
@@ -164,8 +161,9 @@ class OpenTableView( UpdateTableView ):
     """
     admin: InitVar
     value: InitVar
-    admin_route: Route = field(init=False)
     new_tab: bool = False
+
+    admin_route: Route = field(init=False)
 
     def __post_init__( self, admin, value ):
         super(OpenTableView, self).__post_init__(admin, value)
@@ -259,7 +257,7 @@ class OpenQmlTableView(OpenTableView):
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
 
-
+@dataclass
 class ClearSelection(ActionStep):
     """Deselect all selected items."""
 
@@ -267,6 +265,7 @@ class ClearSelection(ActionStep):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
 
+@dataclass
 class RefreshItemView(ActionStep):
     """
     Refresh only the current item view

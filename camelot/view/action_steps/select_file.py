@@ -29,6 +29,8 @@
 
 import os
 
+from dataclasses import dataclass
+
 from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant, qt_api
 
 
@@ -38,6 +40,7 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 
+@dataclass
 class SelectFile( ActionStep ):
     """Select one or more files to open
     
@@ -62,11 +65,11 @@ class SelectFile( ActionStep ):
     This action step stores its last location into the :class:`QtCore.QSettings` 
     and uses it as the initial location the next time it is invoked.
     """
-    
-    def __init__( self, file_name_filter = ''):
-        self.file_name_filter = str(file_name_filter)
-        self.single = True
-        self.caption = _('Open')
+
+    file_name_filter: str = ''
+
+    single = True
+    caption = _('Open')
 
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
@@ -105,6 +108,7 @@ class SelectFile( ActionStep ):
             else:
                 raise CancelRequest()
 
+@dataclass
 class SaveFile( ActionStep ):
     """Select a file for saving
     
@@ -126,10 +130,10 @@ class SaveFile( ActionStep ):
     and uses it as the initial location the next time it is invoked.
     """
 
-    def __init__(self, file_name_filter='', file_name=None):
-        self.file_name_filter = str(file_name_filter)
-        self.file_name = file_name
-        self.caption = _('Save')
+    file_name_filter: str = ''
+    file_name: str = None
+
+    caption = _('Save')
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
@@ -151,6 +155,7 @@ class SaveFile( ActionStep ):
             else:
                 raise CancelRequest()
 
+@dataclass
 class SelectDirectory(ActionStep):
     """Select a single directory
 
@@ -164,11 +169,10 @@ class SelectDirectory(ActionStep):
         defaults to :const:`QtWidgets.QFileDialog.ShowDirsOnly`
 
     """
-    
-    def __init__(self):
-        self.caption = _('Select directory')
-        self.options = QtWidgets.QFileDialog.ShowDirsOnly
-        self.directory = None
+
+    caption = _('Select directory')
+    options = QtWidgets.QFileDialog.ShowDirsOnly
+    directory = None
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
