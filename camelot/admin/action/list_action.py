@@ -39,12 +39,11 @@ from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_de
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-from .list_filter import FieldSearch, NoSearch
+from .list_filter import NoSearch
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.base import _entity_descriptor
 
 import xlsxwriter

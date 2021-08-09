@@ -31,7 +31,6 @@
 Actions to filter table views
 """
 
-import camelot.types
 import datetime
 import decimal
 
