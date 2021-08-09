@@ -29,6 +29,8 @@
 
 import os
 
+from dataclasses import dataclass
+
 from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant, qt_api
 
 
@@ -105,6 +107,7 @@ class SelectFile( ActionStep ):
             else:
                 raise CancelRequest()
 
+@dataclass
 class SaveFile( ActionStep ):
     """Select a file for saving
     
@@ -126,10 +129,10 @@ class SaveFile( ActionStep ):
     and uses it as the initial location the next time it is invoked.
     """
 
-    def __init__(self, file_name_filter='', file_name=None):
-        self.file_name_filter = str(file_name_filter)
-        self.file_name = file_name
-        self.caption = _('Save')
+    file_name_filter: str = ''
+    file_name: str = None
+
+    caption = _('Save')
         
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
