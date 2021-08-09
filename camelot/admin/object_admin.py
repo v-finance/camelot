@@ -722,7 +722,17 @@ be specified using the verbose_name attribute.
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+        
 
+        # Initialize the search/filter strategies with the corresponding instrumented attribute, if they havn't been already.
+        attribute = getattr(self.entity, field_name, None)
+        filter_strategy = field_attributes['filter_strategy']
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
+            field_attributes['filter_strategy'] = filter_strategy(attribute)
+        search_strategy = field_attributes['search_strategy']
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldSearch):
+            field_attributes['search_strategy'] = search_strategy(attribute)
+        
     def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
