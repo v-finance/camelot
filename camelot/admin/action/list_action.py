@@ -1005,6 +1005,7 @@ class SetFilters(Action, AbstractModelFilter):
         elif model_context.mode_name is None:
             new_filter_value = {}
         else:
+            filter_value = model_context.proxy.get_filter(self) or {}
             filter_field_name = model_context.mode_name
             filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
             filter_strategy = filter_field_attributes.get('filter_strategy')
@@ -1027,12 +1028,13 @@ class SetFilters(Action, AbstractModelFilter):
                     'value': filter_value_attributes
                 }
     
-            field_filter = FieldFilter(None)
+            field_filter = FieldFilter(value=None)
             filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
             change_filter = action_steps.ChangeObject(field_filter, filter_admin)
             yield change_filter
             filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
-            new_filter_value = {filter_field_name: filter_text}
+            new_filter_value = {k:v for k,v in filter_value.items()}
+            new_filter_value[filter_field_name] = filter_text
 
         yield action_steps.SetFilter(self, new_filter_value)
         new_state = self._get_state(model_context, new_filter_value)
