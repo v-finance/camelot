@@ -656,7 +656,7 @@ class TableView(AbstractView):
         self.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
         self.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
         self.set_toolbar_actions(
-            Qt.TopToolBarArea,
+            Qt.ToolBarAreas.TopToolBarArea,
             [AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
         )
 
