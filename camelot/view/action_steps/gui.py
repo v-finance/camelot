@@ -132,9 +132,11 @@ class SelectItem(ActionStep):
     items: List[Tuple]
     value: str = None
 
-    autoaccept = True
     title = _('Please select')
     subtitle = _('Make a selection and press the OK button')
+
+    def __post_init__(self):
+        self.autoaccept = True
 
     def render(self):
         dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
