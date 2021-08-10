@@ -35,7 +35,7 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
-from ....core.item_model import ListModelProxy
+from ....core.item_model import ListModelProxy, ProxyRegistry
 from ..action_widget import ActionAction, ActionToolbutton, ActionPushButton
 from ..filter_widget import ComboBoxFilterWidget
 from .wideeditor import WideEditor
@@ -68,7 +68,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  field_name='onetomany',
                  column_width=None,
                  columns=[],
-                 toolbar_actions=[],
                  rows=5,
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
@@ -102,7 +101,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.view = self
         self.gui_context.admin_route = self.admin_route
         self.gui_context.item_view = table
-        self.set_right_toolbar_actions(toolbar_actions)
+        self.set_right_toolbar_actions(kw['action_routes'])
         self.set_columns(columns)
 
     def render_action(self, action, parent):
@@ -117,12 +116,13 @@ class One2ManyEditor(CustomEditor, WideEditor):
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
     @QtCore.qt_slot(object)
-    def set_right_toolbar_actions(self, toolbar_actions):
-        if toolbar_actions is not None:
+    def set_right_toolbar_actions(self, action_routes):
+        if action_routes is not None:
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Orientations.Vertical)
-            for action in toolbar_actions:
+            for action_route in action_routes:
+                action = AdminRoute.action_for(action_route)
                 qaction = self.render_action(action, toolbar)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
@@ -161,11 +161,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
         from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
-            delegate = DelegateManager(columns, parent=self)
+            delegate = DelegateManager(parent=self)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                list(model.add_columns((fn for fn, _fa in columns)))
+                list(model.add_columns(columns))
                 # this code should be useless, since at this point, the
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
@@ -183,7 +183,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(collection)
+            model.set_value(ProxyRegistry.register(collection))
             self.update_action_status()
 
     @QtCore.qt_slot(int)

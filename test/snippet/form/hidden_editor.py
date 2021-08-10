@@ -1,9 +1,9 @@
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.qt import QtCore, QtGui
-
 from camelot.view import forms
 from camelot.view.controls import delegates
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.application_admin import ApplicationAdmin
+
 
 class FormWithHiddenWidget(forms.Form):
     

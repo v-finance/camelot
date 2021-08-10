@@ -35,7 +35,8 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
-from .admin_route import AdminRoute
+from .admin_route import Route, AdminRoute, register_list_actions
+from .action import field_action
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
@@ -45,7 +46,7 @@ from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from .validator.object_validator import ObjectValidator
 
-import six
+
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -297,12 +298,12 @@ be specified using the verbose_name attribute.
 
     def get_verbose_name(self):
         """ The name of the associated entity. """
-        return six.text_type(
+        return str(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
-        return six.text_type(
+        return str(
             self.verbose_name_plural
             or (self.get_verbose_name() + u's')
         )
@@ -322,7 +323,7 @@ be specified using the verbose_name attribute.
         """
         Textual representation of the current object.
         """
-        return six.text_type(obj)
+        return str(obj)
 
     def get_proxy(self, objects):
         """
@@ -336,7 +337,7 @@ be specified using the verbose_name attribute.
         The keys are Qt roles."""
         search_identifiers = {} 
 
-        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
+        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
         search_identifiers[Qt.ItemDataRole.EditRole] = obj
         search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
@@ -375,18 +376,25 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         return app_admin.get_form_toolbar_actions( toolbar_area )
 
-    def get_list_toolbar_actions( self, toolbar_area ):
+    def get_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
         app_admin = self.get_application_admin()
-        return app_admin.get_list_toolbar_actions(toolbar_area)
+        return app_admin.get_list_toolbar_actions()
 
+    def get_select_list_toolbar_actions( self ):
+        """
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_select_list_toolbar_actions()
+
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
@@ -400,16 +408,17 @@ be specified using the verbose_name attribute.
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
 
+    @register_list_actions('_list_actions', '_admin_route')
     def get_list_actions(self):
         return self.list_actions
 
-    def get_list_action(self):
-        """Get the action that should be triggered when an object is selected
+    def get_list_action(self) -> Route:
+        """Get the route for the action that should be triggered when an object is selected
         in a table of objects.
 
-        :return: by default returns the `list_action` attribute
+        :return: by default returns the route for the `list_action` attribute
         """
-        return self.list_action
+        return AdminRoute._register_list_action_route(self._admin_route, self.list_action)
 
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
@@ -489,8 +498,8 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in six.iteritems(field_attributes):
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
+            for name, value in field_attributes.items():
+                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
 
@@ -520,7 +529,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             dynamic_field_attributes = {'obj':obj}
-            for name, value in six.iteritems(field_attributes):
+            for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if name in ('default',):
@@ -528,7 +537,7 @@ be specified using the verbose_name attribute.
                     # and the continuous evaluation of it might be expensive,
                     # as it might be the max of a column
                     continue
-                if six.callable(value):
+                if callable(value):
                     try:
                         return_value = value(obj)
                     except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
@@ -631,6 +640,7 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
                 search_strategy=list_filter.NoSearch,
+                action_routes=[],
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
@@ -680,9 +690,12 @@ be specified using the verbose_name attribute.
             direction = field_attributes.get('direction', 'onetomany')
             if direction.endswith('many') and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
-                field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
-                    Qt.ToolBarAreas.RightToolBarArea, direction
-                )
+                if field_attributes.get('actions') is None:
+                    field_attributes['actions'] = [
+                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(
+                            Qt.ToolBarAreas.RightToolBarArea, direction
+                        )
+                    ]
                 if column_width is None:
                     table = related_admin.get_table()
                     fields = table.get_fields(column_group=0)
@@ -691,6 +704,13 @@ be specified using the verbose_name attribute.
                         related_field_attributes(field).get('column_width', 0) for 
                         field in fields)
                     column_width = sum(related_column_widths, 0)
+            elif direction.startswith('many') and (field_attributes.get('actions') is None):
+                field_attributes['actions'] = [
+                    field_action.ClearObject(),
+                    field_action.SelectObject(),
+                    field_action.NewObject(),
+                    field_action.OpenObject()
+                ]
             field_attributes['admin'] = related_admin
             field_attributes['admin_route'] = related_admin.get_admin_route()
             field_attributes['admin_name'] = related_admin.get_name()
@@ -704,10 +724,20 @@ be specified using the verbose_name attribute.
                 length = 10
             column_width = max( 
                 minimal_column_width or 0,
-                2 + len(six.text_type(field_attributes['name'])),
+                2 + len(str(field_attributes['name'])),
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+        #
+        # Convert field actions to action routes
+        #
+        field_attributes['action_routes'] = [
+            AdminRoute._register_field_action_route(
+                self.get_admin_route(),
+                field_name,
+                action,
+            ) for action in field_attributes.get('actions', [])
+        ]
 
     def _get_search_fields(self, substring):
         """
@@ -732,7 +762,7 @@ be specified using the verbose_name attribute.
             self.list_display = list()
             # no fields were defined, see if there are properties
             for cls in inspect.getmro(self.entity):
-                for desc_name, desc in six.iteritems(cls.__dict__):
+                for desc_name, desc in cls.__dict__.items():
                     if desc_name.startswith('__'):
                         continue
                     if len(self.get_descriptor_field_attributes(desc_name)):
@@ -742,21 +772,12 @@ be specified using the verbose_name attribute.
 
     def get_columns(self):
         """
-        The columns to be displayed in the list view, returns a list of pairs
-        of the name of the field and its attributes needed to display it
-        properly
+        The columns to be displayed in the list view, returns a list of field names.
 
-        :return: [(field_name,
-                  {'widget': widget_type,
-                   'editable': True or False,
-                   'blank': True or False,
-                   'validator_list':[...],
-                   'name':'Field name'}),
-                 ...]
+        :return: [field_name, ...]
         """
         table = self.get_table()
-        return [(field, self.get_field_attributes(field))
-                for field in table.get_fields() ]
+        return [field for field in table.get_fields()]
 
     def get_validator( self, model = None):
         """Get a validator object
@@ -790,15 +811,16 @@ be specified using the verbose_name attribute.
         fields = {}
         # capture all properties
         for cls in inspect.getmro(self.entity):
-            for desc_name, desc in six.iteritems(cls.__dict__):
+            for desc_name, desc in cls.__dict__.items():
                 if desc_name.startswith('__'):
                     continue
                 if len(self.get_descriptor_field_attributes(desc_name)):
                     fields[desc_name] = self.get_field_attributes(desc_name)
-        fields.update(self.get_columns())
+        fields.update([(field, self.get_field_attributes(field)) for field in self.get_columns()])
         fields.update(self.get_fields())
         return fields
 
+    @register_list_actions('_filter_actions', '_admin_route')
     def get_filters(self):
         return []
 
@@ -841,7 +863,7 @@ be specified using the verbose_name attribute.
         default_set = False
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
-        for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
+        for field, attributes in self.get_all_fields_and_attributes().items():
             default = attributes.get('default')
             if default is None:
                 continue
@@ -868,7 +890,7 @@ be specified using the verbose_name attribute.
                 # Skip if the column default is a sequence, as setting it will cause an SQLA exception.
                 # The column should remain unset and will be set by the compilation to the next_val of the sequence automatically. 
                 continue
-            elif six.callable(default):
+            elif callable(default):
                 import inspect
                 args, _varargs, _kwargs, _defs = \
                     inspect.getargspec(default)
@@ -882,7 +904,7 @@ be specified using the verbose_name attribute.
                 logger.debug(
                     u'set default for %s to %s'%(
                         field,
-                        six.text_type(default_value)
+                        str(default_value)
                     )
                 )
                 try:
@@ -961,3 +983,6 @@ be specified using the verbose_name attribute.
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
 
+    def is_editable(self):
+        """Default implementation always returns True"""
+        return True

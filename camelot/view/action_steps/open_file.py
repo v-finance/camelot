@@ -32,7 +32,7 @@ from ...core.qt import QtCore, QtGui
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 
-from six import BytesIO
+from io import BytesIO
 
 class OpenFile( ActionStep ):
     """

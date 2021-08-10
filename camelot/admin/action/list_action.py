@@ -31,8 +31,9 @@ import codecs
 import copy
 import datetime
 import logging
+import itertools
 
-import six
+
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
@@ -41,7 +42,7 @@ from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view.art import FontIcon
+from camelot.admin.icon import Icon
 
 import xlsxwriter
 
@@ -232,6 +233,8 @@ class ListContextAction( Action ):
     """An base class for actions that should only be enabled if the
     gui_context is a :class:`ListActionModelContext`
     """
+
+    name = 'list_context_action'
     
     def get_state( self, model_context ):
         state = super( ListContextAction, self ).get_state( model_context )
@@ -247,26 +250,41 @@ class RowNumberAction( Action ):
     the user.
     """
 
+    name = 'row_number'
+
     def get_state( self, model_context ):
         state = super(RowNumberAction, self).get_state(model_context)
-        state.verbose_name = six.text_type(model_context.current_row + 1)
+        state.verbose_name = str(model_context.current_row + 1)
         return state
 
 class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
-    not-editable.
+    not-editable. It will also be disabled and hidden if the entity is set
+    to be non-editable using __facade_args__ = { 'editable': False }.
     """
 
+    name = 'edit_action'
     render_hint = RenderHint.TOOL_BUTTON
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
+        # Check for editability on the level of the field
         if isinstance( model_context, ListActionModelContext ):
             editable = model_context.field_attributes.get( 'editable', True )
             if editable == False:
                 state.enabled = False
+        # Check for editability on the level of the entity
+        admin = model_context.admin
+        if admin and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
         return state
+
+    def model_run( self, model_context ):
+        admin = model_context.admin
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
 
 class CloseList(Action):
     """
@@ -275,8 +293,9 @@ class CloseList(Action):
 
     render_hint = RenderHint.TOOL_BUTTON
 
-    icon = FontIcon('backspace')
+    icon = Icon('backspace')
     tooltip = _('Close')
+    name = 'close'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -288,6 +307,7 @@ class ListLabel(Action):
     """
 
     render_hint = RenderHint.LABEL
+    name = 'label'
 
     def get_state(self, model_context):
         state = super().get_state(model_context)
@@ -299,11 +319,12 @@ class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
     shortcut = QtGui.QKeySequence.StandardKey.Open
-    icon = FontIcon('folder') # 'tango/16x16/places/folder.png'
+    icon = Icon('folder') # 'tango/16x16/places/folder.png'
     tooltip = _('Open')
     # verbose name is set to None to avoid displaying it in the vertical
     # header of the table view
     verbose_name = None
+    name = 'open_form_view'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -311,7 +332,7 @@ class OpenFormView( ListContextAction ):
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
-        state.verbose_name = six.text_type()
+        state.verbose_name = str()
         return state
 
 
@@ -320,13 +341,15 @@ class DuplicateSelection( EditAction ):
     
     # no shortcut here, as this is too dangerous if the user
     # presses the shortcut without being aware of the consequences
-    icon = FontIcon('copy') # 'tango/16x16/actions/edit-copy.png'
-    #icon = FontIcon('clone') # 'tango/16x16/actions/edit-copy.png'
+    icon = Icon('copy') # 'tango/16x16/actions/edit-copy.png'
+    #icon = Icon('clone') # 'tango/16x16/actions/edit-copy.png'
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
-    
+    name = 'duplicate_selection'
+
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = model_context.admin
         new_objects = list()
         updated_objects = set()
@@ -347,10 +370,10 @@ class DeleteSelection( EditAction ):
     
     shortcut = QtGui.QKeySequence.StandardKey.Delete
     name = 'delete_selection'
-    icon = FontIcon('trash') # 'tango/16x16/places/user-trash.png'
+    icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
     verbose_name = _('Delete')
-    
+
     def gui_run( self, gui_context ):
         #
         # if there is an open editor on a row that will be deleted, there
@@ -366,9 +389,10 @@ class DeleteSelection( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
+        admin = model_context.admin
         if model_context.selection_count <= 0:
             return
-        admin = model_context.admin
         objects_to_remove = list( model_context.get_selection() )
         #
         # it might be impossible to determine the depending objects once
@@ -404,12 +428,14 @@ class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.StandardKey.MoveToPreviousPage
-    icon = FontIcon('step-backward') # 'tango/16x16/actions/go-previous.png'
+    icon = Icon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
     verbose_name = _('Previous')
     
 class ToPreviousRow( AbstractToPrevious, ListContextAction ):
     """Move to the previous row in a table"""
+
+    name = 'to_previous'
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
@@ -434,12 +460,14 @@ class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.StandardKey.MoveToStartOfDocument
-    icon = FontIcon('fast-backward') # 'tango/16x16/actions/go-first.png'
+    icon = Icon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
     verbose_name = _('First')
 
 class ToFirstRow( AbstractToFirst, ToPreviousRow ):
     """Move to the first row in a table"""
+
+    name = 'to_first'
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
@@ -448,13 +476,15 @@ class AbstractToNext(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.StandardKey.MoveToNextPage
-    icon = FontIcon('step-forward') # 'tango/16x16/actions/go-next.png'
+    icon = Icon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
     verbose_name = _('Next')
     
 class ToNextRow( AbstractToNext, ListContextAction ):
     """Move to the next row in a table"""
-    
+
+    name = 'to_next'
+
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         selection = item_view.selectedIndexes()
@@ -479,12 +509,14 @@ class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.StandardKey.MoveToEndOfDocument
-    icon = FontIcon('fast-forward') # 'tango/16x16/actions/go-last.png'
+    icon = Icon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
     verbose_name = _('Last')
     
 class ToLastRow( AbstractToLast, ToNextRow ):
     """Move to the last row in a table"""
+
+    name = 'to_last'
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
@@ -497,6 +529,7 @@ class SaveExportMapping( Action ):
 
     verbose_name = _('Save')
     tooltip = _('Save the order of the columns for future use')
+    name = 'save_mapping'
 
     def __init__(self, settings):
         self.settings = settings
@@ -564,12 +597,13 @@ class RestoreExportMapping( SaveExportMapping ):
 
     verbose_name = _('Restore')
     tooltip = _('Restore the previously stored order of the columns')
+    name = 'restore_mapping'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
 
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
         if mapping_name is not None:
             fields = mappings[mapping_name]
@@ -591,12 +625,13 @@ class RemoveExportMapping( SaveExportMapping ):
 
     verbose_name = _('Remove')
     tooltip = _('Remove the previously stored order of the columns')
+    name = 'remove_mapping'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
     
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in six.iterkeys(mappings)]
+        mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
         if mapping_name is not None:
             mappings.pop(mapping_name)
@@ -609,6 +644,7 @@ class ClearMapping(Action):
     """
 
     verbose_name = _('Clear')
+    name = 'clear_mapping'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -625,9 +661,10 @@ class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
 
     render_hint = RenderHint.TOOL_BUTTON
-    icon = FontIcon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
+    icon = Icon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
+    name = 'export'
 
     max_width = 40
     font_name = 'Calibri'
@@ -651,20 +688,20 @@ class ExportSpreadsheet( ListContextAction ):
         settings = get_settings(admin.get_name())
         settings.beginGroup('export_spreadsheet')
         all_fields = admin.get_all_fields_and_attributes()
-        field_choices = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in
-                         six.iteritems(all_fields) ]
+        field_choices = [(f,str(entity_fa['name'])) for f,entity_fa in
+                         all_fields.items() ]
         field_choices.sort(key=lambda field_tuple:field_tuple[1])
         list_columns = admin.get_columns()
         # the admin might show more columns then fields available, if the
         # columns are generated dynamically
         max_mapping_length = max(len(list_columns), len(all_fields))
         row_data = [None] * max_mapping_length
-        column_range = six.moves.range(max_mapping_length)
+        column_range = range(max_mapping_length)
         mappings = []
-        for i, default_field in six.moves.zip_longest(column_range,
+        for i, default_field in itertools.zip_longest(column_range,
                                                       admin.get_columns(),
-                                                      fillvalue=(None,None)):
-            mappings.append(ColumnMapping(i, [row_data], default_field[0]))
+                                                      fillvalue=None):
+            mappings.append(ColumnMapping(i, [row_data], default_field))
             
         mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
         mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
@@ -745,7 +782,7 @@ class ExportSpreadsheet( ListContextAction ):
             row = offset + j
             if j % 100 == 0:
                 yield action_steps.UpdateProgress( j, model_context.collection_count )
-            fields = enumerate(six.moves.zip(field_names, 
+            fields = enumerate(zip(field_names, 
                                              static_attributes,
                                              dynamic_attributes))
             for i, (name, attributes, delta_attributes) in fields:
@@ -788,24 +825,25 @@ class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
 
     render_hint = RenderHint.TOOL_BUTTON
-    icon = FontIcon('print') # 'tango/16x16/actions/document-print-preview.png'
+    icon = Icon('print') # 'tango/16x16/actions/document-print-preview.png'
     tooltip = _('Print Preview')
     verbose_name = _('Print Preview')
+    name = 'print'
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        columns = model_context.admin.get_columns()
+        admin = model_context.admin
+        columns = admin.get_columns()
         
         table = []
-        fields = [field for field, _field_attributes in columns]
-        to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
-        column_range = six.moves.range( len( columns ) )
+        to_strings = [admin.get_field_attributes(field)['to_string'] for field in columns]
+        column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getattr( obj, fields[i] ) ) for i in column_range] )
+            table.append( [to_strings[i]( getattr( obj, columns[i] ) ) for i in column_range] )
         context = {
-          'title': model_context.admin.get_verbose_name_plural(),
+          'title': admin.get_verbose_name_plural(),
           'table': table,
-          'columns': [field_attributes['name'] for _field, field_attributes in columns],
+          'columns': [admin.get_field_attributes(field)['name'] for field in columns],
         }
         yield action_steps.PrintJinjaTemplate( template = 'list.html',
                                                context = context )
@@ -816,6 +854,7 @@ class SelectAll( ListContextAction ):
     verbose_name = _('Select &All')
     shortcut = QtGui.QKeySequence.StandardKey.SelectAll
     tooltip = _('Select all rows in the table')
+    name = 'select_all'
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectAll()
@@ -825,8 +864,9 @@ class ImportFromFile( EditAction ):
 
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Import from file')
-    icon = FontIcon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
+    icon = Icon('file-import') # 'tango/16x16/mimetypes/text-x-generic.png'
     tooltip = _('Import from file')
+    name = 'import'
 
     def model_run( self, model_context ):
         import os.path
@@ -838,6 +878,8 @@ class ImportFromFile( EditAction ):
                                                 XlsReader,
                                                 ColumnMapping,
                                                 ColumnMappingAdmin )
+        super().model_run(model_context)
+        admin = model_context.admin
         file_names = yield action_steps.SelectFile()
         for file_name in file_names:
             yield action_steps.UpdateProgress( text = _('Reading data') )
@@ -856,9 +898,8 @@ class ImportFromFile( EditAction ):
             #
             # select columns to import
             #
-            admin = model_context.admin
-            default_fields = [field for field, fa in admin.get_columns() 
-                              if fa.get('editable', True)]
+            default_fields = [field for field in admin.get_columns()
+                              if admin.get_field_attributes(field).get('editable', True)]
             mappings = []
             # 
             # it should be possible to select not editable fields, to be able to
@@ -866,10 +907,10 @@ class ImportFromFile( EditAction ):
             # be better to explicitly allow foreign keys, but this info is not
             # in the field attributes
             #
-            all_fields = [(f,six.text_type(entity_fa['name'])) for f,entity_fa in 
-                         six.iteritems(admin.get_all_fields_and_attributes()) if entity_fa.get('from_string')]
+            all_fields = [(f,str(entity_fa['name'])) for f,entity_fa in 
+                          admin.get_all_fields_and_attributes().items() if entity_fa.get('from_string')]
             all_fields.sort(key=lambda field_tuple:field_tuple[1])
-            for i, default_field in six.moves.zip_longest(six.moves.range(len(all_fields)),
+            for i, default_field in itertools.zip_longest(range(len(all_fields)),
                                                           default_fields):
                 mappings.append(ColumnMapping(i, items, default_field))
             
@@ -900,7 +941,8 @@ class ImportFromFile( EditAction ):
             with model_context.session.begin():
                 for i,row in enumerate(collection):
                     new_entity_instance = admin.entity()
-                    for field_name, attributes in row_data_admin.get_columns():
+                    for field_name in row_data_admin.get_columns():
+                        attributes = row_data_admin.get_field_attributes(field_name)
                         from_string = attributes['from_string']
                         setattr(
                             new_entity_instance,
@@ -921,10 +963,11 @@ class ReplaceFieldContents( EditAction ):
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
-    icon = FontIcon('edit') # 'tango/16x16/actions/edit-find-replace.png'
+    icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.StandardKey.Replace
+    name = 'replace'
 
     def gui_run( self, gui_context ):
         #
@@ -937,6 +980,7 @@ class ReplaceFieldContents( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
             field_name = model_context.current_field_name
@@ -976,7 +1020,8 @@ class SetFilters(Action, AbstractModelFilter):
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Find')
     tooltip = _('Filter the data')
-    icon = FontIcon('filter')
+    icon = Icon('filter')
+    name = 'filter'
 
     def get_field_name_choices(self, model_context):
         """
@@ -1037,11 +1082,11 @@ class SetFilters(Action, AbstractModelFilter):
             state.notification = True
         for name, verbose_name in self.get_field_name_choices(model_context):
             if name in filter_value:
-                modes.append(Mode(name, verbose_name, icon=FontIcon('check-circle')))
+                modes.append(Mode(name, verbose_name, icon=Icon('check-circle')))
             else:
                 modes.append(Mode(name, verbose_name))
         modes.extend([
-            Mode('__clear', _('Clear filter'), icon=FontIcon('minus-circle')),
+            Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
         return state
 
@@ -1056,11 +1101,13 @@ class AddExistingObject( EditAction ):
     
     tooltip = _('Add')
     verbose_name = _('Add')
-    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
+    name = 'add_object'
     
     def model_run( self, model_context ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
+        super().model_run(model_context)
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
@@ -1081,10 +1128,11 @@ class AddNewObject( EditAction ):
     """
 
     shortcut = QtGui.QKeySequence.StandardKey.New
-    #icon = FontIcon('plus-square') # 'tango/16x16/actions/document-new.png'
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    #icon = Icon('plus-square') # 'tango/16x16/actions/document-new.png'
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')
+    name = 'new_object'
     
     def get_admin(self, model_context):
         """
@@ -1092,11 +1140,12 @@ class AddNewObject( EditAction ):
         By default, the given model_context's admin is used.
         """
         return model_context.admin
-    
-    def create_object(self, model_context, session=None):
-        """Create a new entity instance from the given model_context's admin and add it to given session,
-        or the default session, if it is not yet attached to a session"."""
-        admin = self.get_admin(model_context)
+
+    def create_object(self, model_context, admin, session=None):
+        """
+        Create a new entity instance based on the given model_context as an instance of the given admin's entity.
+        This is done in the given session, or the default session if it is not yet attached to a session.
+        """
         new_object = admin.entity(_session=session)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
@@ -1104,12 +1153,14 @@ class AddNewObject( EditAction ):
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
+        yield
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
+        super().model_run(model_context)
         admin = self.get_admin(model_context)
         create_inline = model_context.field_attributes.get('create_inline', False)
-        new_object = self.create_object(model_context)
+        new_object = yield from self.create_object(model_context, admin)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((new_object,))
@@ -1129,7 +1180,8 @@ class RemoveSelection(DeleteSelection):
     shortcut = None
     tooltip = _('Remove')
     verbose_name = _('Remove')
-    icon = FontIcon('minus') # 'tango/16x16/actions/list-remove.png'
+    icon = Icon('minus') # 'tango/16x16/actions/list-remove.png'
+    name = 'remove_selection'
             
     def handle_object( self, model_context, obj ):
         model_context.proxy.remove( obj )
@@ -1141,8 +1193,9 @@ class ActionGroup(EditAction):
     """Group a number of actions in a pull down"""
 
     tooltip = _('More')
-    icon = FontIcon('cog') # 'tango/16x16/emblems/emblem-system.png'
+    icon = Icon('cog') # 'tango/16x16/emblems/emblem-system.png'
     actions = (ImportFromFile(), ReplaceFieldContents())
+    name = 'import_replace'
     
     def get_state(self, model_context):
         state = super(ActionGroup, self).get_state(model_context)
@@ -1152,6 +1205,7 @@ class ActionGroup(EditAction):
         return state
     
     def model_run(self, model_context):
+        super().model_run(model_context)
         if model_context.mode_name is not None:
             action = self.actions[int(model_context.mode_name)]
             yield from action.model_run(model_context)

@@ -29,13 +29,14 @@
 
 import logging
 
-import six
+
 
 from ....core.qt import (
     QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
 )
 from camelot.view.proxy import ValueLoading
-from ...art import Icon, ColorScheme
+from camelot.admin.icon import Icon
+from ...art import from_admin_icon, ColorScheme
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
@@ -48,7 +49,6 @@ class ChoicesEditor(CustomEditor):
                   parent = None,
                   nullable = True,
                   field_name = 'choices',
-                  actions = [],
                   **kwargs ):
         super(ChoicesEditor, self).__init__(parent)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
@@ -65,7 +65,7 @@ class ChoicesEditor(CustomEditor):
         # make sure None is in the list of choices
         self.set_choices([(None, '')])
         self.setLayout(layout)
-        self.add_actions(actions, layout)
+        self.add_actions(kwargs['action_routes'], layout)
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):
@@ -79,9 +79,9 @@ class ChoicesEditor(CustomEditor):
         :param data: a dictionary mapping roles to values
         """
         item = QtGui.QStandardItem(data[Qt.ItemDataRole.DisplayRole])
-        for role, value in six.iteritems(data):
+        for role, value in data.items():
             if isinstance(value, Icon):
-                value = value.getQIcon()
+                value = from_admin_icon(value).getQIcon()
             item.setData(py_to_variant(value), role)
         model.appendRow(item)
 
@@ -94,7 +94,7 @@ class ChoicesEditor(CustomEditor):
         for choice in choices:
             if not isinstance(choice, dict):
                 (value, name) = choice
-                choice = {Qt.ItemDataRole.DisplayRole: six.text_type(name),
+                choice = {Qt.ItemDataRole.DisplayRole: str(name),
                           Qt.ItemDataRole.UserRole: value}
             else:
                 value = choice[Qt.ItemDataRole.UserRole]
@@ -127,7 +127,7 @@ class ChoicesEditor(CustomEditor):
         # method has not happened yet or the choices don't contain the value
         # set
         if display_role is None:
-            display_role = six.text_type(value)
+            display_role = str(value)
         cls.append_item(model,
                         {Qt.ItemDataRole.DisplayRole: display_role,
                          Qt.ItemDataRole.BackgroundRole: QtGui.QBrush(ColorScheme.VALIDATION_ERROR),
@@ -154,7 +154,7 @@ class ChoicesEditor(CustomEditor):
         """
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         current_value = self.get_value()
-        current_display_role = six.text_type(combobox.itemText(combobox.currentIndex()))
+        current_display_role = str(combobox.itemText(combobox.currentIndex()))
         # set i to -1 to handle case of no available choices
         i = -1
         for i in range(combobox.count(), 0, -1):
@@ -183,7 +183,7 @@ class ChoicesEditor(CustomEditor):
     """
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         return [(variant_to_py(combobox.itemData(i)),
-                 six.text_type(combobox.itemText(i))) for i in range(combobox.count())]
+                 str(combobox.itemText(i))) for i in range(combobox.count())]
 
     def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed
@@ -200,7 +200,6 @@ class ChoicesEditor(CustomEditor):
             combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
             row = self.row_with_value(combobox.model(), value, display_role)
             combobox.setCurrentIndex(row)
-        self.update_actions()
 
     def get_value(self):
         """Get the current value of the combobox"""

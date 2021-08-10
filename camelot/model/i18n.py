@@ -38,11 +38,11 @@ from camelot.core.orm import Entity, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.view.art import FontIcon
+from camelot.admin.icon import Icon
 from camelot.view.utils import default_language
 import camelot.types
 
-import six
+
 
 from sqlalchemy import sql
 from sqlalchemy.schema import Column
@@ -54,7 +54,8 @@ logger = logging.getLogger( 'camelot.model.i18n' )
 class ExportAsPO( Action ):
 
     verbose_name = _('PO Export')
-    icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
+    name = 'export_as_po'
+    icon = Icon('save') # 'tango/16x16/actions/document-save.png'
 
     def model_run( self, model_context ):
         from camelot.view.action_steps import SaveFile
@@ -98,7 +99,7 @@ class Translation( Entity ):
             if key in cls._cache:
                 return cls._cache[key]
             query = Session().query( cls )
-            query = query.filter( sql.and_( cls.source == six.text_type( source ),
+            query = query.filter( sql.and_( cls.source == str( source ),
                                             cls.language == language,
                                             cls.value != None,
                                             cls.value != '' ) )
@@ -114,7 +115,7 @@ class Translation( Entity ):
         """Translate source to language, if no translation is found, register the
         source as to be translated and return the source"""
         if source:
-            source = six.text_type( source )
+            source = str( source )
             translation = cls.translate( source, language )
             if not translation:
                 session = Session()

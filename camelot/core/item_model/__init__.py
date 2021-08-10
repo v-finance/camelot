@@ -38,6 +38,7 @@ from ..qt import Qt
 from .list_proxy import ListModelProxy
 from .proxy import AbstractModelProxy, AbstractModelFilter
 from .query_proxy import QueryModelProxy
+from .proxy_registry import ProxyRegistry
 
 #
 # Custom Roles
@@ -50,6 +51,8 @@ ValidMessageRole = Qt.ItemDataRole.UserRole + 5
 FieldAttributesRole = Qt.ItemDataRole.UserRole + 6
 CompletionPrefixRole = Qt.ItemDataRole.UserRole + 7
 CompletionsRole = Qt.ItemDataRole.UserRole + 8
+ActionRoutesRole = Qt.ItemDataRole.UserRole + 9
+ActionStatesRole = Qt.ItemDataRole.UserRole + 10
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent
@@ -63,5 +66,6 @@ __all__ = [
     ListModelProxy.__name__,
     ProxyDict.__name__,
     QueryModelProxy.__name__,
+    ProxyRegistry.__name__,
 ]
 

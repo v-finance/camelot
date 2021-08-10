@@ -27,50 +27,34 @@
 #
 #  ============================================================================
 
-import six
 
-from ....core.qt import Qt, variant_to_py, qtranslate
+from ....core.item_model import PreviewRole
+from ....core.qt import Qt, qtranslate
 from camelot.view.controls.editors import MonthsEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.core.utils import ugettext
-from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class MonthsDelegate(CustomDelegate):
+class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """MonthsDelegate
 
     custom delegate for showing and editing months and years
     """
 
     editor = MonthsEditor
+    horizontal_align = Qt.Alignment.AlignRight | Qt.Alignment.AlignVCenter
 
-    def __init__(self, parent=None, forever=200*12, **kwargs):
-        """
-        :param forever: number of months that will be indicated as Forever, set
-        to None if not appliceable
-        """
-        super(MonthsDelegate, self).__init__(parent=parent, **kwargs)
-        self._forever = forever
-        
-    def sizeHint(self, option, index):
-        q = MonthsEditor(None)
-        return q.sizeHint()
-
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.ItemDataRole.EditRole ) )
-        
-        value_str = u''
-        if self._forever != None and value == self._forever:
-            value_str = ugettext('Forever')
-        elif value not in (None, ValueLoading):
-            years, months = divmod( value, 12 )
-            if years:
-                value_str = qtranslate('%n years', n=years) + u' '
-            if months:
-                value_str = value_str + qtranslate('%n months', n=months)
-
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
-
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super(MonthsDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            forever = model_context.field_attributes.get('forever')
+            if (forever is not None) and (model_context.value==forever):
+                value_str = qtranslate('Forever')
+            else:
+                value_str = ''
+                years, months = divmod(model_context.value, 12)
+                if years!=0:
+                    value_str = qtranslate('%n years', n=years) + ' '
+                if months!=0:
+                    value_str = value_str + qtranslate('%n months', n=months)
+            item.setData(value_str, PreviewRole)
+        return item

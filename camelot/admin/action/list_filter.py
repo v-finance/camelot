@@ -31,6 +31,7 @@
 Actions to filter table views
 """
 
+from dataclasses import dataclass
 import camelot.types
 import datetime
 import decimal
@@ -42,7 +43,10 @@ from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
 from .base import Action, Mode, RenderHint
 
+@dataclass
 class FilterMode(Mode):
+
+    checked: bool
 
     def __init__(self, value, verbose_name, checked=False):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
@@ -51,11 +55,19 @@ class FilterMode(Mode):
     def decorate_query(self, query, value):
         return self.decorator(query, value)
 
-class All(object):
-    pass
+# This used to be:
+#
+#     class All(object):
+#         pass
+#
+# It has been replaced by All = '__all' to allow serialization
+#
+All = '__all'
 
 class Filter(Action):
     """Base class for filters"""
+
+    name = 'filter'
 
     def __init__(self, attribute, default=All, verbose_name=None):
         """
@@ -77,6 +89,9 @@ class Filter(Action):
         self.column = None
         self.attributes = None
         self.filter_names = []
+
+    def get_name(self):
+        return '{}_{}'.format(self.name, self.attribute)
 
     def gui_run(self, gui_context, value):
         model = gui_context.item_view.model()
@@ -169,6 +184,7 @@ class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
 
     render_hint = RenderHint.GROUP_BOX
+    name = 'group_box_filter'
 
     def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
         super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
@@ -179,6 +195,7 @@ class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
 
     render_hint = RenderHint.COMBO_BOX
+    name = 'combo_box_filter'
 
 class AbstractSearchStrategy(object):
     """
@@ -388,6 +405,7 @@ class VirtualAddressSearch(FieldSearch):
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
+    name = 'search_filter'
 
     #shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find),
                                #self)

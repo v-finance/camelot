@@ -35,7 +35,7 @@ context of the `Qt` model-view-delegate framework.
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, is_deleted
 
-from ...core.item_model import AbstractModelProxy
+from ...core.item_model import AbstractModelProxy, ProxyRegistry
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
 
@@ -86,7 +86,7 @@ class OpenFormView( ActionStep ):
         
         self.objects = [obj]
         self.row = proxy.index(obj)
-        self.proxy = proxy
+        self.proxy = ProxyRegistry.register(proxy)
         
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests

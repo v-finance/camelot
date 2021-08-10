@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore, py_to_variant
@@ -36,8 +36,7 @@ from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
 
-@six.add_metaclass(DocumentationMetaclass)
-class DateDelegate(CustomDelegate):
+class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor
@@ -49,13 +48,13 @@ class DateDelegate(CustomDelegate):
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(DateDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = six.text_type(locale.toString(value, QtCore.QLocale.FormatType.ShortFormat))
+    def get_standard_item(cls, locale, model_context):
+        item = super(DateDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.setData(py_to_variant(str()), PreviewRole)
         return item
 
 

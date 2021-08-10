@@ -30,12 +30,13 @@
 import inspect
 import itertools
 import logging
-import six
+
 
 logger = logging.getLogger('camelot.admin.entity_admin')
 
 from ..core.item_model import QueryModelProxy
 
+from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -128,12 +129,13 @@ and used as a custom action.
         try:
             self.mapper = orm.class_mapper(self.entity)
         except UnmappedClassError as exception:
-            mapped_entities = [six.text_type(m) for m in six.iterkeys(_mapper_registry)]
+            mapped_entities = [str(m) for m in _mapper_registry.keys()]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
         # caching
         self._search_fields = None
+        self._filter_actions = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -210,14 +212,14 @@ and used as a custom action.
         if obj is not None:
             primary_key = self.mapper.primary_key_from_instance(obj)
             if not None in primary_key:
-                primary_key_representation = u','.join([six.text_type(v) for v in primary_key])
+                primary_key_representation = u','.join([str(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
                     return u'%s %s : %s' % (
-                        six.text_type(self.get_verbose_name() or ''),
+                        str(self.get_verbose_name() or ''),
                         primary_key_representation,
-                        six.text_type(obj)
+                        str(obj)
                     )
-                elif six.PY3 and hasattr(obj, '__str__'):
+                elif hasattr(obj, '__str__'):
                     return u'%s %s : %s' % (
                         self.get_verbose_name() or '',
                         primary_key_representation,
@@ -233,29 +235,47 @@ and used as a custom action.
     def get_search_identifiers(self, obj):
         search_identifiers = {}
 
-        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (six.text_type(obj))
+        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (str(obj))
         search_identifiers[Qt.ItemDataRole.EditRole] = obj
         search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
 
-    def get_list_toolbar_actions( self, toolbar_area ):
-        """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
+    @register_list_actions('_shared_toolbar_actions', '_admin_route')
+    def _get_shared_toolbar_actions( self ):
+        return [
+            list_filter.SearchFilter(self),
+            list_action.SetFilters(),
+            application_action.Refresh(),
+        ]
 
+    @register_list_actions('_toolbar_actions', '_admin_route')
+    def get_list_toolbar_actions( self ):
+        """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions(toolbar_area)
-        if toolbar_area == Qt.ToolBarAreas.TopToolBarArea:
-            return toolbar_actions + [
-                list_filter.SearchFilter(self),
-                list_action.SetFilters(),
-                application_action.Refresh(),
-            ]
-        return toolbar_actions
+        toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions()
+        return toolbar_actions + self._get_shared_toolbar_actions()
+
+    @register_list_actions('_select_toolbar_actions', '_admin_route')
+    def get_select_list_toolbar_actions( self ):
+        """
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions()
+        return toolbar_actions + self._get_shared_toolbar_actions()
+
+    @register_list_actions('_select_actions', '_admin_route')
+    def get_select_list_actions( self ):
+        from camelot.view.action_steps.select_object import CancelSelection, ConfirmSelection
+        return [
+            CancelSelection(),
+            ConfirmSelection()
+        ]
 
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
@@ -299,7 +319,7 @@ and used as a custom action.
                             columns = [class_attribute]
                         elif isinstance(class_attribute, sql.Select):
                             columns = class_attribute.columns
-                        for k, v in six.iteritems(self.get_sql_field_attributes(columns)):
+                        for k, v in self.get_sql_field_attributes(columns).items():
                             # the defaults or the nullable status of the column
                             # does not need to be the default or the nullable
                             # of the hybrid property
@@ -364,6 +384,12 @@ and used as a custom action.
             # the default stuff
             #
             pass
+        # Check __facade_args__ for 'editable' & 'editable_fields'
+        facade_arg_editable = self.entity._get_facade_arg('editable')
+        if facade_arg_editable is not None and not facade_arg_editable:
+             facade_arg_editable_fields = self.entity._get_facade_arg('editable_fields')
+             if facade_arg_editable_fields is None or field_name not in facade_arg_editable_fields:
+                 attributes['editable'] = False
         return attributes
 
     def _expand_field_attributes(self, field_attributes, field_name):
@@ -375,14 +401,14 @@ and used as a custom action.
         #
         from sqlalchemy.orm.mapper import _mapper_registry
         target = field_attributes.get('target', None)
-        if isinstance(target, six.string_types):
-            for mapped_class in six.iterkeys(_mapper_registry):
+        if isinstance(target, str):
+            for mapped_class in _mapper_registry.keys():
                 if mapped_class.class_.__name__ == target:
                     field_attributes['target'] = mapped_class.class_
                     break
             else:
                 raise Exception('No mapped class found for target %s'%target)
-        super(EntityAdmin, self)._expand_field_attributes(field_attributes, field_name)
+        super()._expand_field_attributes(field_attributes, field_name)
 
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
@@ -422,6 +448,7 @@ and used as a custom action.
             return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
+    @register_list_actions('_filter_actions', '_admin_route')
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
@@ -505,7 +532,7 @@ and used as a custom action.
                     memento = self.get_memento()
                     if memento != None:
                         modifications = entity_to_dict( entity_instance )
-                        change = memento_change( model = six.text_type( self.entity.__name__ ),
+                        change = memento_change( model = str( self.entity.__name__ ),
                                                  memento_type = 'before_delete',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
@@ -561,7 +588,7 @@ and used as a custom action.
                         logger.error( 'could not get modifications from object', exc_info = e )
                     primary_key = self.primary_key( obj_to_flush )
                     if modifications and (None not in primary_key):
-                        change = memento_change( model = six.text_type(type(obj_to_flush).__name__),
+                        change = memento_change( model = str(type(obj_to_flush).__name__),
                                                  memento_type = 'before_update',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
@@ -702,7 +729,7 @@ and used as a custom action.
                 arg = search_field.get_clause(text, self, query.session)
                 if arg is not None:
                     args.append(arg)
-        
+            
         query = query.filter(sql.or_(*args))
     
         return query
@@ -757,4 +784,12 @@ and used as a custom action.
                          getattr( obj, relationship_property.key ) )
         return new_obj
 
+    def is_editable(self):
+        """Return True if the Entity is editable.
 
+        An entity is consdered editable if there is no __facade_args__ { 'editable': False }
+        """
+        editable = self.entity._get_facade_arg('editable')
+        if editable is None:
+            return True
+        return editable

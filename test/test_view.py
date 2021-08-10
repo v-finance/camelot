@@ -1,55 +1,56 @@
 # -*- coding: utf-8 -*-
 
-import six
 
+
+import dataclasses
 import datetime
 import logging
 import os
 import sys
 import unittest
 
-from camelot.admin.action.application_action import ApplicationActionGuiContext
-from camelot.admin.action.list_filter import SearchFilter
-from camelot.model.party import Person
-
-from camelot.admin.action import GuiContext
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-from camelot.core.item_model import FieldAttributesRole, PreviewRole
-from camelot.core.orm import entities
-from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_string
-from camelot.core.utils import ugettext_lazy as _
-from camelot.core.files.storage import StoredFile, Storage
-from camelot.test import GrabMixinCase, RunningThreadCase
-from camelot.view import action_steps
-from camelot.view.action_steps import OpenFormView
-from camelot.view.art import ColorScheme
-from camelot.view.controls.tableview import TableView, TableWidget
-from camelot.view.controls import delegates
-from camelot.view.controls.formview import FormEditors
-from camelot.view.controls import editors
-from camelot.view.controls.editors.datetimeeditor import TimeValidator
-from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from camelot.view.mainwindowproxy import MainWindowProxy
-from camelot.view import forms
-from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
-from camelot.view.controls.delegates import DelegateManager
-from camelot.view.controls.progress_dialog import ProgressDialog
-
-from .import app_admin
-
-from .test_item_model import A, QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
-
+from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.custom_layout import Admin as CustomLayoutAdmin
 from .snippet.form.inherited_form import InheritedAdmin
-
-from camelot_example.model import Movie
+from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
+from .test_model import ExampleModelMixinCase
+from camelot.admin.action import GuiContext
+from camelot.admin.action.application_action import ApplicationActionGuiContext
+from camelot.admin.action.field_action import FieldActionModelContext
+from camelot.admin.action.list_filter import SearchFilter
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.table import ColumnGroup
+from camelot.core.constants import camelot_maxfloat, camelot_minfloat
+from camelot.core.exception import UserException
+from camelot.core.files.storage import Storage, StoredFile
+from camelot.core.item_model import FieldAttributesRole, PreviewRole
+from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
+from camelot.core.utils import ugettext_lazy as _
+from camelot.model.party import City, Person
+from camelot.test import GrabMixinCase, RunningThreadCase
+from camelot.view import action_steps, forms
+from camelot.view.action_steps import OpenFormView
+from camelot.view.action_steps.application import MainWindow
+from camelot.view.art import ColorScheme
+from camelot.view.controls import delegates, editors
+from camelot.view.controls.busy_widget import BusyWidget
+from camelot.view.controls.delegates import DelegateManager
+from camelot.view.controls.editors.datetimeeditor import TimeValidator
+from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.controls.exception import ExceptionDialog, register_exception
+from camelot.view.controls.formview import FormEditors
+from camelot.view.controls.progress_dialog import ProgressDialog
+from camelot.view.controls.search import SimpleSearchControl
+from camelot.view.controls.tableview import ColumnGroupsWidget, HeaderWidget, RowsWidget, TableView, TableWidget
+from camelot.view.mainwindowproxy import MainWindowProxy
+from camelot.view.proxy import ValueLoading
+from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
+from camelot.view.workspace import DesktopWorkspace
 from camelot_example.application_admin import MyApplicationAdmin
-
+from camelot_example.model import Movie
+from camelot_example.view import VisitorsPerDirector
 
 logger = logging.getLogger('view.unittests')
 
@@ -86,6 +87,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # a form view and not on a table view, so it should not
         # set its background
         self.option.version = 5
+        self.editable_kwargs = dict(editable=True, action_routes=[])
 
     def assert_valid_editor( self, editor, value ):
         """Test the basic functions of an editor that are needed to integrate
@@ -130,7 +132,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, datetime.date(1980, 12, 31) )
 
     def test_TextLineEditor(self):
-        editor = editors.TextLineEditor(parent=None, length=10)
+        editor = editors.TextLineEditor(parent=None, length=10, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
@@ -138,7 +140,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( ValueLoading )
         self.assertEqual( editor.get_value(), ValueLoading )
-        editor = editors.TextLineEditor(parent=None, length=10)
+        editor = editors.TextLineEditor(parent=None, length=10, **self.editable_kwargs)
         editor.set_field_attributes( editable=False )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
@@ -215,7 +217,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), 'green')
 
     def test_ChoicesEditor(self):
-        editor = editors.ChoicesEditor(parent=None, editable=True)
+        editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
         editor.set_choices( choices1 )
@@ -247,14 +249,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value(4)
         self.assertEqual(number_of_choices-1, len(editor.get_choices()))
         # try strings as keys
-        editor = editors.ChoicesEditor(parent=None, editable=True)
+        editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
         editor.set_choices( [('a',u'A'), ('b',u'B'), ('c',u'C')] )
         editor.set_value( 'c' )
         self.assertEqual( editor.get_value(), 'c' )
         self.assert_valid_editor( editor, 'c' )
 
     def test_FileEditor(self):
-        editor = editors.FileEditor(parent=None, editable=True)
+        editor = editors.FileEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         self.grab_default_states( editor )
@@ -285,10 +287,13 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
         delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
-        item = delegate.get_standard_item(QtCore.QLocale(), 3, {})
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = 3
+        field_action_model_context.field_attributes = {}
+        item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
         field_attributes = item.data(FieldAttributesRole)
         
-        editor = editors.FloatEditor(parent=None)
+        editor = editors.FloatEditor(parent=None, **self.editable_kwargs)
         editor.set_field_attributes(prefix='prefix', editable=True, **field_attributes)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
@@ -297,7 +302,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor = editors.FloatEditor(parent=None, option=self.option)
+        editor = editors.FloatEditor(parent=None, option=self.option, **self.editable_kwargs)
         editor.set_field_attributes(suffix=' suffix', editable=True, **field_attributes)
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
@@ -314,7 +319,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         spinbox.keyPressEvent(up)
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
-        editor = editors.FloatEditor(parent=None)
+        editor = editors.FloatEditor(parent=None, **self.editable_kwargs)
         editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True, **field_attributes)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
@@ -322,8 +327,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
         self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
         # verify if the calculator button is turned off
-        editor = editors.FloatEditor(parent=None,
-                                          calculator=False)
+        editor = editors.FloatEditor(
+            parent=None, calculator=False, **self.editable_kwargs
+        )
         editor.set_field_attributes( editable=True, **field_attributes )
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
@@ -377,7 +383,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, 'en_US' )
 
     def test_Many2OneEditor(self):
-        editor = editors.Many2OneEditor(parent=None)
+        editor = editors.Many2OneEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, lambda:object )
@@ -426,23 +432,40 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, 12 )
 
 
-class FormTest(unittest.TestCase, GrabMixinCase):
+class FormTest(
+    RunningThreadCase,
+    GrabMixinCase, ItemModelCaseMixin,ExampleModelMixinCase
+    ):
 
     images_path = static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.process()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.thread.post(cls.tear_down_sample_model)
+        cls.process()
+        super().tearDownClass()
+
     def setUp(self):
-        self.entities = [e for e in entities]
+        super().setUp()
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
         self.admin_route = self.movie_admin.get_admin_route()
         self.movie_model = CollectionProxy(self.admin_route)
-        self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
+        proxy = self.movie_admin.get_proxy(self.movie_admin.get_query())
+        self.movie_model.set_value(ProxyRegistry.register(proxy))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
         ))
-
-        delegate = DelegateManager(self.movie_admin.get_fields())
+        self._load_data(self.movie_model)
         self.qt_parent = QtCore.QObject()
+        delegate = DelegateManager(self.qt_parent)
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate(delegate)
@@ -451,14 +474,6 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         )
         self.person_entity = Person
         self.gui_context = GuiContext()
-
-    def tearDown(self):
-        #
-        # The global list of entities should remain clean for subsequent tests
-        #
-        for e in entities:
-            if e not in self.entities:
-                entities.remove(e)
 
     def test_form(self):
         self.grab_widget(Movie.Admin.form_display.render(self.widgets))
@@ -469,7 +484,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         form.add_field( 'tags' )
         form.add_field( forms.Break() )
         form.add_field( forms.Label('End') )
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
@@ -479,7 +494,7 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
 
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
@@ -491,20 +506,20 @@ class FormTest(unittest.TestCase, GrabMixinCase):
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
-        self.assertTrue( six.text_type( form ) )
+        self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
@@ -534,7 +549,8 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         super(DelegateCase, self).setUp()
-        self.kwargs = dict(editable=True)
+        self.editable_kwargs = dict(editable=True, action_routes=[])
+        self.non_editable_kwargs = dict(editable=False, action_routes=[])
         self.option = QtWidgets.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view, so it should not
@@ -545,7 +561,17 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
     def grab_delegate(self, delegate, value, suffix='editable', field_attributes={}):
 
         model = QtGui.QStandardItemModel(1, 1)
-        model.setItem(0, 0, delegate.get_standard_item(self.locale, value, field_attributes))
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = value
+        field_action_model_context.field_attributes = field_attributes
+
+        item = delegate.get_standard_item(
+            self.locale, field_action_model_context
+        )
+        # make sure a DisplayRole is available in the item, the standard
+        # model otherwise returns the EditRole as a DisplayRole
+        item.setData(item.data(PreviewRole), Qt.DisplayRole)
+        model.setItem(0, 0, item)
         index = model.index(0, 0, QtCore.QModelIndex())
 
         option = QtWidgets.QStyleOptionViewItem()
@@ -588,16 +614,16 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
                         'PNG')
 
     def test_plaintextdelegate(self):
-        delegate = delegates.PlainTextDelegate(parent=None,
-                                                    length=30,
-                                                    editable=True)
+        delegate = delegates.PlainTextDelegate(
+            parent=None, length=30, **self.editable_kwargs
+        )
         editor = delegate.createEditor(None, self.option, None)
         self.assertEqual(editor.findChild(QtWidgets.QLineEdit).maxLength(), 30)
         self.assertTrue(isinstance(editor, editors.TextLineEditor))
         self.grab_delegate(delegate, 'Plain Text')
-        delegate = delegates.PlainTextDelegate(parent=None,
-                                                    length=20,
-                                                    editable=False)
+        delegate = delegates.PlainTextDelegate(
+            parent=None, length=20, **self.non_editable_kwargs
+        )
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.TextLineEditor))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
@@ -608,69 +634,72 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.assertTrue( small_size < wide_size )
 
     def test_texteditdelegate(self):
-        delegate = delegates.TextEditDelegate(parent=None, **self.kwargs)
+        delegate = delegates.TextEditDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, QtWidgets.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text')
-        delegate = delegates.TextEditDelegate(parent=None, editable=False)
+        delegate = delegates.TextEditDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, QtWidgets.QTextEdit))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
     def test_richtextdelegate(self):
-        delegate = delegates.RichTextDelegate(parent=None, **self.kwargs)
+        delegate = delegates.RichTextDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.RichTextEditor))
         self.grab_delegate(delegate, '<b>Rich Text</b>')
-        delegate = delegates.RichTextDelegate(parent=None, editable=False)
+        delegate = delegates.RichTextDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.RichTextEditor))
         self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
 
     def test_booldelegate(self):
-        delegate = delegates.BoolDelegate(parent=None, **self.kwargs)
+        delegate = delegates.BoolDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.BoolEditor))
         self.grab_delegate(delegate, True)
-        delegate = delegates.BoolDelegate(parent=None, editable=False)
+        delegate = delegates.BoolDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.BoolEditor))
         self.grab_delegate(delegate, True, 'disabled')
 
     def test_datedelegate(self):
-        delegate = delegates.DateDelegate(parent=None, **self.kwargs)
+        delegate = delegates.DateDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateEditor))
         today = datetime.date.today()
         self.grab_delegate(delegate, today)
-        delegate = delegates.DateDelegate(parent=None, editable=False)
+        delegate = delegates.DateDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateEditor))
         self.grab_delegate(delegate, today, 'disabled')
-        item = delegate.get_standard_item(self.locale, today, {})
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = today
+        field_action_model_context.field_attributes = {}
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
         self.assertTrue(variant_to_py(item.data(PreviewRole)))
 
     def test_datetimedelegate(self):
-        delegate = delegates.DateTimeDelegate(parent=None, **self.kwargs)
+        delegate = delegates.DateTimeDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateTimeEditor))
         DateTime = datetime.datetime.now()
         self.grab_delegate(delegate, DateTime)
-        delegate = delegates.DateTimeDelegate(parent=None, editable=False)
+        delegate = delegates.DateTimeDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateTimeEditor))
         self.grab_delegate(delegate, DateTime, 'disabled')
 
     def test_localfileDelegate(self):
-        delegate = delegates.LocalFileDelegate(parent=None)
+        delegate = delegates.LocalFileDelegate(parent=None, **self.editable_kwargs)
         self.grab_delegate(delegate, '/home/lancelot/quests.txt')
-        delegate = delegates.LocalFileDelegate(parent=None, editable=False)
+        delegate = delegates.LocalFileDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, '/home/lancelot/quests.txt', 'disabled')
 
     def test_labeldelegate(self):
-        delegate = delegates.LabelDelegate(parent=None)
+        delegate = delegates.LabelDelegate(parent=None, **self.editable_kwargs)
         self.grab_delegate(delegate, 'dynamic label')
-        delegate = delegates.LabelDelegate(parent=None, editable=False)
+        delegate = delegates.LabelDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, 'dynamic label', 'disabled')
 
     def test_notedelegate(self):
@@ -714,31 +743,31 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, 0, 'disabled')
 
     def test_floatdelegate(self):
-        delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
+        delegate = delegates.FloatDelegate(parent=None, suffix='euro', **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FloatEditor))
         self.grab_delegate(delegate, 3.145)
-        delegate = delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
+        delegate = delegates.FloatDelegate(parent=None, prefix='prefix', **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FloatEditor))
         self.grab_delegate(delegate, 0, 'disabled')
 
     def test_filedelegate(self):
-        delegate = delegates.FileDelegate(parent=None)
+        delegate = delegates.FileDelegate(parent=None, **self.editable_kwargs)
         file = StoredFile(None, 'agreement.pdf')
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FileEditor))
         self.grab_delegate(delegate, file)
-        delegate = delegates.FileDelegate(parent=None, editable=False)
+        delegate = delegates.FileDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, file, 'disabled')
 
     def test_colordelegate(self):
-        delegate = delegates.ColorDelegate(parent=None, **self.kwargs)
+        delegate = delegates.ColorDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
         color = [255, 255, 0]
         self.grab_delegate(delegate, color)
-        delegate = delegates.ColorDelegate(parent=None, editable=False)
+        delegate = delegates.ColorDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
         self.grab_delegate(delegate, color, 'disabled')
@@ -747,7 +776,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         CHOICES = (('1','A'), ('2','B'), ('3','C'))
         delegate = delegates.ComboBoxDelegate(parent=None,
                                                    choices=CHOICES,
-                                                   **self.kwargs)
+                                                   **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ChoicesEditor))
         self.grab_delegate(delegate, 1)
@@ -755,12 +784,15 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
                                                    choices=CHOICES,
                                                    editable=False)
         self.grab_delegate(delegate, 1, 'disabled')
-        item = delegate.get_standard_item(self.locale, '2', {'choices':CHOICES})
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.value = '2'
+        field_action_model_context.field_attributes = {'choices':CHOICES}
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
         self.assertEqual(variant_to_py(item.data(PreviewRole)), 'B')
 
     def test_virtualaddressdelegate(self):
         delegate = delegates.VirtualAddressDelegate(parent=None,
-                                                         **self.kwargs)
+                                                         **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.VirtualAddressEditor))
         self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
@@ -768,11 +800,11 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
     def test_monthsdelegate(self):
-        delegate = delegates.MonthsDelegate(parent=None, **self.kwargs)
+        delegate = delegates.MonthsDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.MonthsEditor))
         self.grab_delegate(delegate, 12)
-        delegate = delegates.MonthsDelegate(parent=None, editable=False)
+        delegate = delegates.MonthsDelegate(parent=None, **self.non_editable_kwargs)
         self.grab_delegate(delegate, 12, 'disabled')
 
 
@@ -808,8 +840,6 @@ class ControlsTest(
         self.grab_widget(widget)
 
     def test_rows_widget(self):
-        from camelot.view.controls.tableview import RowsWidget
-        from camelot.model.party import City
         city_admin = self.app_admin.get_entity_admin(City)
         table = TableView(self.gui_context, city_admin.get_admin_route())
         table.set_admin()
@@ -825,8 +855,8 @@ class ControlsTest(
         widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
-        model.set_value(self.proxy)
-        list(model.add_columns((fn for fn, fa in admin.get_columns())))
+        model.set_value(ProxyRegistry.register(self.proxy))
+        list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
         self.grab_widget( widget )
@@ -853,8 +883,8 @@ class ControlsTest(
         widget = TableView(self.gui_context, admin.get_admin_route())
         widget.set_admin()
         model = widget.get_model()
-        model.set_value(self.proxy)
-        list(model.add_columns((fn for fn, fa in admin.get_columns())))
+        model.set_value(ProxyRegistry.register(self.proxy))
+        list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
         self.grab_widget(widget)
@@ -869,8 +899,6 @@ class ControlsTest(
         self.assertEqual(first_name_width, suffix_width)
 
     def test_column_group( self ):
-        from camelot.admin.table import ColumnGroup
-        from camelot.model.party import Person
 
         class ColumnWidthAdmin( Person.Admin ):
             #begin column group
@@ -885,28 +913,25 @@ class ControlsTest(
         self.grab_widget( widget )
 
     def test_section_widget(self):
-        action_step = action_steps.NavigationPanel(
-            self.app_admin.get_sections()
+        model_context = self.gui_context.create_model_context()
+        # to avoid the default constructor accessing the db
+        step = action_steps.NavigationPanel.__new__(action_steps.NavigationPanel)
+        step.menu = self.app_admin.get_navigation_menu()
+        step.action_states = list()
+        action_steps.NavigationPanel._add_action_states(
+            model_context, step.menu.items, step.action_states
         )
-        widget = action_step.render(self.gui_context)
+        widget = action_steps.NavigationPanel.render(
+            self.gui_context, dataclasses.asdict(step)
+        )
         self.grab_widget(widget)
 
     def test_main_window(self):
         proxy = MainWindowProxy( self.gui_context )
         self.grab_widget(proxy.parent())
 
-    def test_reduced_main_window(self):
-        from camelot_example.application_admin import MiniApplicationAdmin
-        app_admin = MiniApplicationAdmin()
-        proxy = MainWindowProxy(self.gui_context)
-        proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
-        proxy.parent().show()
-        self.grab_widget( proxy.parent() )
-
     def test_multiple_main_windows(self):
         """Make sure we can still create multiple QMainWindows"""
-        from camelot.view.action_steps.application import MainWindow
-        from camelot_example.application_admin import MiniApplicationAdmin
 
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -919,35 +944,29 @@ class ControlsTest(
                     result += 1
             return result
 
-        app_admin1 = MiniApplicationAdmin()
-        action_step1 = MainWindow(app_admin1)
-        main_window1 = action_step1.render(self.gui_context)
+        action_step1 = MainWindow(app_admin)
+        action_step1.render(self.gui_context)
 
         num_main_windows1 = count_main_windows()
 
-        app_admin2 = MiniApplicationAdmin()
-        action_step2 = MainWindow(app_admin2)
-        main_window2 = action_step2.render(self.gui_context)
+        action_step2 = MainWindow(app_admin)
+        action_step2.render(self.gui_context)
 
         num_main_windows2 = count_main_windows()
 
         self.assertEqual( num_main_windows1 + 1, num_main_windows2 )
 
     def test_busy_widget(self):
-        from camelot.view.controls.busy_widget import BusyWidget
         busy_widget = BusyWidget()
         busy_widget.set_busy( True )
         self.grab_widget( busy_widget )
 
     def test_search_control(self):
-        from camelot.view.controls.search import SimpleSearchControl
         filter_action = SearchFilter(self.app_admin)
         search = SimpleSearchControl(filter_action, self.gui_context, None)
         self.grab_widget(search)
 
     def test_header_widget(self):
-        from camelot.model.party import City
-        from camelot.view.controls.tableview import HeaderWidget
         city_admin = self.app_admin.get_entity_admin(City)
         table = TableView(self.gui_context, city_admin.get_admin_route())
         table.set_admin()
@@ -955,8 +974,6 @@ class ControlsTest(
         self.grab_widget(header)
 
     def test_column_groups_widget(self):
-        from camelot.view.controls.tableview import ColumnGroupsWidget
-        from camelot_example.view import VisitorsPerDirector
         table = VisitorsPerDirector.Admin.list_display
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
@@ -982,7 +999,6 @@ class ControlsTest(
         self.grab_widget( widget, 'second_tab' )
 
     def test_desktop_workspace(self):
-        from camelot.view.workspace import DesktopWorkspace
         workspace = DesktopWorkspace(self.gui_context.admin_route, None)
         self.grab_widget(workspace)
 
@@ -995,11 +1011,9 @@ class ControlsTest(
         self.grab_widget(dialog, suffix='detail')
 
     def test_user_exception(self):
-        from camelot.view.controls.exception import register_exception, ExceptionDialog
         exc = None
         try:
             #begin user_exception
-            from camelot.core.exception import UserException
 
             raise UserException( text = "Could not burn movie to non empty DVD",
                                  resolution = "Insert an empty DVD and retry" )
@@ -1044,10 +1058,11 @@ class SnippetsTest(RunningThreadCase,
 
     def test_background_color(self):
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
-        person_columns = list(person_admin.get_columns())
+        person_columns = person_admin.get_columns()
         editor = One2ManyEditor(
             admin_route=person_admin.get_admin_route(),
             columns=person_columns,
+            action_routes=[],
         )
         editor.set_value(self.proxy)
         self.process()

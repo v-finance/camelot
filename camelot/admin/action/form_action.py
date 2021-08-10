@@ -27,12 +27,13 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
+from camelot.admin.admin_route import register_list_actions
+from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext
 from camelot.core.utils import ugettext as _
-from camelot.view.art import FontIcon
 
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -167,7 +168,7 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
 class ShowHistory( Action ):
 
     render_hint = RenderHint.TOOL_BUTTON
-    icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
+    icon = Icon('history') # 'tango/16x16/actions/format-justify-fill.png'
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
         
@@ -188,6 +189,7 @@ class ShowHistory( Action ):
                                                 'choices':memento.memento_types,
                                                 'name':_('Type')} }
     
+            @register_list_actions('_related_toolbar_actions', '_admin_route')
             def get_related_toolbar_actions( self, toolbar_area, direction ):
                 return []
             
@@ -195,12 +197,12 @@ class ShowHistory( Action ):
             primary_key = model_context.admin.primary_key( obj )
             if primary_key is not None:
                 if None not in primary_key:
-                    changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
+                    changes = list( memento.get_changes( model = str( model_context.admin.entity.__name__ ),
                                                          primary_key = primary_key,
                                                          current_attributes = {} ) )
                     admin = ChangeAdmin( model_context.admin, object )
                     step = action_steps.ChangeObjects( changes, admin )
-                    step.icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
+                    step.icon = Icon('history') # 'tango/16x16/actions/format-justify-fill.png'
                     step.title = _('Recent changes')
                     step.subtitle = model_context.admin.get_verbose_identifier( obj )
                     yield step
@@ -210,7 +212,7 @@ class CloseForm( Action ):
 
     render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.StandardKey.Close
-    icon = FontIcon('times-circle') # 'tango/16x16/actions/system-log-out.png'
+    icon = Icon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
     

@@ -5,30 +5,28 @@ Tests for the Admin classes
 
 import unittest
 
-from camelot.core.orm import (
-    OneToMany, ManyToMany, ManyToOne, OneToOne
-)
-
-from camelot.core.qt import Qt
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.not_editable_admin import not_editable_admin
-from camelot.admin.field_admin import FieldAdmin
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.model.party import Person
-from camelot.model.i18n import Translation
-from camelot.view.controls import delegates
-
-from sqlalchemy import schema, types, sql
+from sqlalchemy import orm, schema, sql, types
+from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import hybrid
 
 from .test_orm import TestMetaData
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.field_admin import FieldAdmin
+from camelot.admin.not_editable_admin import not_editable_admin
+from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.qt import Qt
+from camelot.core.sql import metadata
+from camelot.model.i18n import Translation
+from camelot.model.party import Person
+from camelot.view.controls import delegates
+
 
 class ApplicationAdminCase(unittest.TestCase):
 
     def test_application_admin(self):
         app_admin = ApplicationAdmin()
-        self.assertTrue( app_admin.get_sections() )
+        self.assertTrue( app_admin.get_navigation_menu() )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'manytomany' ) )
         self.assertTrue( app_admin.get_version() )
@@ -44,7 +42,7 @@ class ApplicationAdminCase(unittest.TestCase):
 
     def test_admin_for_exising_database( self ):
         from .snippet.existing_database import app_admin
-        self.assertTrue(app_admin.get_sections())
+        self.assertTrue(app_admin.get_navigation_menu())
 
 class ObjectAdminCase(unittest.TestCase):
     """Test the ObjectAdmin
@@ -179,6 +177,7 @@ class ObjectAdminCase(unittest.TestCase):
 
         fa = admin.get_field_attributes('y')
         self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['action_routes'], [])
         fa = admin.get_field_attributes('z')
         self.assertEqual(fa['editable'], False)
 
@@ -243,7 +242,6 @@ class EntityAdminCase(TestMetaData):
         #
         # test a vendor specific field type
         #
-        from sqlalchemy.dialects import mysql
         column_3 = schema.Column( mysql.BIGINT(), default = 2 )
         fa_3 = EntityAdmin.get_sql_field_attributes( [column_3] )
         self.assertTrue( fa_3['default'] )
@@ -308,11 +306,6 @@ class EntityAdminCase(TestMetaData):
     def test_relational_field_attributes( self ):
 
         class A(self.Entity):
-            b = ManyToOne('B')
-            c = OneToOne('C')
-            d = OneToMany('D', lazy='dynamic')
-            e = ManyToMany('E')
-            a = ManyToOne('A', backref='related_a')
 
             class Admin(EntityAdmin):
                 list_display = ['b', 'd', 'related_a']
@@ -320,34 +313,49 @@ class EntityAdminCase(TestMetaData):
                                     'd':{'column_width': 73}}
 
         class B(self.Entity):
-            a = OneToMany('A')
 
             class Admin(EntityAdmin):
                 pass
 
         class C(self.Entity):
-            a = ManyToOne('A')
+            pass
 
         class D(self.Entity):
-            a = ManyToOne('A')
+            pass
 
         class E(self.Entity):
-            a = ManyToMany('A')
+            pass
+
+        A.b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id))
+        A.b = orm.relationship(B, backref='a')
+        A.related_a_id = schema.Column(types.Integer(), schema.ForeignKey(A.id))
+        A.related_a = orm.relationship(A, backref=orm.backref('a', remote_side=[A.id]))
+        t = schema.Table('table', metadata, schema.Column('a_id', types.Integer(), schema.ForeignKey(A.id)),
+                         schema.Column('e_id', types.Integer(), schema.ForeignKey(E.id)))
+        A.e = orm.relationship(E, secondary=t, foreign_keys=[t.c.a_id, t.c.e_id])
+        C.a_id = schema.Column(types.Integer(), schema.ForeignKey(A.id))
+        C.a = orm.relationship(A, backref=orm.backref('c', uselist=False))
+        D.a_id = schema.Column(types.Integer(), schema.ForeignKey(A.id))
+        D.a = orm.relationship(A, backref=orm.backref('d', lazy='dynamic'))
+
 
         self.create_all()
         a_admin = self.app_admin.get_related_admin( A )
 
         b_fa = a_admin.get_field_attributes('b')
         self.assertEqual( b_fa['delegate'], delegates.Many2OneDelegate )
+        self.assertTrue(len(b_fa['actions']))
 
         c_fa = a_admin.get_field_attributes('c')
         self.assertEqual( c_fa['delegate'], delegates.Many2OneDelegate )
 
         d_fa = a_admin.get_field_attributes('d')
         self.assertEqual( d_fa['delegate'], delegates.One2ManyDelegate )
+        self.assertTrue(len(d_fa['actions']))
 
         e_fa = a_admin.get_field_attributes('e')
         self.assertEqual( e_fa['delegate'], delegates.One2ManyDelegate )
+        self.assertTrue(len(e_fa['actions']))
 
         b_admin = self.app_admin.get_related_admin( B )
         a_fa = b_admin.get_field_attributes('a')
@@ -366,7 +374,8 @@ class EntityAdminCase(TestMetaData):
             pass
 
         class B(self.Entity):
-            a = ManyToOne(A, nullable=False)
+            a_id = schema.Column(types.Integer(), schema.ForeignKey(A.id), nullable=False)
+            a = orm.relationship(A)
             x = schema.Column(types.Integer(), nullable=False)
             z = schema.Column(types.Integer())
 

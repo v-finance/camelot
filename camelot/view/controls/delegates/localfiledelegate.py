@@ -30,7 +30,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
-import six
+
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
@@ -39,8 +39,7 @@ from .customdelegate import DocumentationMetaclass
 
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class LocalFileDelegate(CustomDelegate):
+class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """
@@ -55,10 +54,10 @@ class LocalFileDelegate(CustomDelegate):
         CustomDelegate.__init__(self, parent, **kw)
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
+    def get_standard_item(cls, locale, model_context):
         item = super(LocalFileDelegate, cls).get_standard_item(
-            locale, value, fa_values
+            locale, model_context
         )
-        if value is not None:
-            item.setData(py_to_variant(str(value)), PreviewRole)
+        if model_context.value is not None:
+            item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item

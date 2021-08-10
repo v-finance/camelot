@@ -14,11 +14,11 @@ class DbImageDelegate(CustomDelegate):
     editor = editors.DbImageEditor
     
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(DbImageDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
+    def get_standard_item(cls, locale, model_context):
+        item = super(DbImageDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
             image = QtGui.QImage()
-            byte_array = QtCore.QByteArray.fromBase64( value.encode() )
+            byte_array = QtCore.QByteArray.fromBase64( model_context.value.encode() )
             image.loadFromData( byte_array )
             thumbnail = image.scaled(100,100, Qt.AspectRatioMode.KeepAspectRatio)
             item.setData(py_to_variant(thumbnail), PreviewRole)

@@ -27,10 +27,9 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtWidgets, Qt
-from ....admin.action import field_action
 from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import FontIcon
@@ -46,10 +45,6 @@ class FileEditor(CustomEditor):
                  storage=None,
                  field_name='file',
                  remove_original=False,
-                 actions = [field_action.DetachFile(),
-                            field_action.OpenFile(),
-                            field_action.UploadFile(),
-                            field_action.SaveFile()],
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
@@ -60,15 +55,15 @@ class FileEditor(CustomEditor):
         self.value = None
         self.file_name = None
         self.remove_original = remove_original
-        self.actions = actions
         self.setup_widget()
+        self.add_actions(kwargs['action_routes'], self.layout())
 
     def setup_widget(self):
         """Called inside init, overwrite this method for custom
         file edit widgets"""
-        self.layout = QtWidgets.QHBoxLayout()
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # Filename
         self.filename = DecoratedLineEdit( self )
@@ -78,10 +73,9 @@ class FileEditor(CustomEditor):
         # Setup layout
         self.document_label = QtWidgets.QLabel(self)
         self.document_label.setPixmap(self.document_pixmap.getQPixmap())
-        self.layout.addWidget(self.document_label)
-        self.layout.addWidget(self.filename)
-        self.add_actions(self.actions, self.layout)
-        self.setLayout(self.layout)
+        layout.addWidget(self.document_label)
+        layout.addWidget(self.filename)
+        self.setLayout(layout)
 
     def file_completion_activated(self, index):
         from camelot.view.storage import create_stored_file
@@ -104,7 +98,6 @@ class FileEditor(CustomEditor):
             self.filename.setText(value.verbose_name)
         else:
             self.filename.setText('')
-        self.update_actions()
         return value
 
     def get_value(self):
@@ -115,7 +108,7 @@ class FileEditor(CustomEditor):
         self.set_enabled(kwargs.get('editable', False))
         if self.filename:
             set_background_color_palette( self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            self.filename.setToolTip(str(kwargs.get('tooltip') or ''))
         self.remove_original = kwargs.get('remove_original', False)
 
     def set_enabled(self, editable=True):

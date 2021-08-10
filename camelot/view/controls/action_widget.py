@@ -29,12 +29,14 @@
 
 from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
 
-import six
 
-from ...admin.action import State
+
+from ...admin.icon import Icon
+from ...admin.action import Mode, State
 from ...admin.action.form_action import FormActionGuiContext
 from ...admin.action.list_action import ListActionGuiContext
 from camelot.view.model_thread import post
+from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
 
@@ -71,6 +73,10 @@ class AbstractActionWidget( object ):
         self.setEnabled(state.enabled)
         self.setVisible(state.visible)
 
+    def set_state_v2(self, state):
+        self.setEnabled(state['enabled'])
+        self.setVisible(state['visible'])
+
     def current_row_changed( self, index1=None, index2=None ):
         post( self.action.get_state,
               self.set_state,
@@ -89,7 +95,7 @@ class AbstractActionWidget( object ):
                 selection_model = self.gui_context.item_view.selectionModel()
                 if (selection_model is not None) and selection_model.hasSelection():
                     parent = QtCore.QModelIndex()
-                    for row in six.moves.range(first, last+1):
+                    for row in range(first, last+1):
                         if selection_model.rowIntersectsSelection(row, parent):
                             self.current_row_changed(row)
                             return
@@ -116,6 +122,29 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode in state.modes:
+                mode_action = mode.render(menu)
+                mode_action.triggered.connect(self.action_triggered)
+                menu.addAction(mode_action)
+
+    def set_menu_v2(self, state, parent):
+        """This method creates a menu for an object with as its menu items
+        the different modes in which an action can be triggered.
+
+        :param state: a `camelot.admin.action.State` object
+        :param parent: a parent for the menu
+        """
+        if state['modes']:
+            # self is not always a QWidget, so QMenu is created without
+            # parent
+            menu = self.menu()
+            if menu is None:
+                menu = QtWidgets.QMenu(parent=parent)
+                # setMenu does not transfer ownership
+                self.setMenu(menu)
+            menu.clear()
+            for mode_data in state['modes']:
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)
                 menu.addAction(mode_action)
@@ -149,21 +178,41 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
     @QtCore.qt_slot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
+            self.setText( str( state.verbose_name ) )
         else:
             self.setText( '' )
         if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
+            self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
+            self.setToolTip( str( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
         # todo : determine the parent for the menu
         self.set_menu(state, None)
+
+    @QtCore.qt_slot( object )
+    def set_state_v2( self, state ):
+        if state['verbose_name'] != None:
+            self.setText( str( state['verbose_name'] ) )
+        else:
+            self.setText( '' )
+        if state['icon'] != None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            self.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            self.setToolTip( str( state['tooltip'] ) )
+        else:
+            self.setToolTip( '' )
+        self.setEnabled( state['enabled'] )
+        self.setVisible( state['visible'] )
+        # todo : determine the parent for the menu
+        self.set_menu_v2(state, None)
 
 class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
@@ -185,16 +234,31 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
     def set_state( self, state ):
         super( ActionPushButton, self ).set_state( state )
         if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
+            self.setText( str( state.verbose_name ) )
         if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
+            self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
+            self.setToolTip( str( state.tooltip ) )
         else:
             self.setToolTip( '' )            
         self.set_menu(state, self)
+
+    def set_state_v2( self, state ):
+        super( ActionPushButton, self ).set_state_v2( state )
+        if state['verbose_name'] != None:
+            self.setText( str( state['verbose_name'] ) )
+        if state['icon'] != None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            self.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            self.setToolTip( str( state['tooltip'] ) )
+        else:
+            self.setToolTip( '' )
+        self.set_menu_v2(state, self)
 
     @QtCore.qt_slot()
     def action_triggered(self):
@@ -212,18 +276,36 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
     def set_state( self, state ):
         AbstractActionWidget.set_state(self, state)
         if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
+            self.setText( str( state.verbose_name ) )
         if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
+            self.setIcon( from_admin_icon(state.icon).getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
         if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
+            self.setToolTip( str( state.tooltip ) )
         else:
             self.setToolTip( '' )
         self.set_menu(state, self)
         if state.modes:
             self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+
+    def set_state_v2( self, state ):
+        AbstractActionWidget.set_state_v2(self, state)
+        if state['verbose_name'] != None:
+            self.setText( str( state['verbose_name'] ) )
+        if state['icon'] != None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            self.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            self.setToolTip( str( state['tooltip'] ) )
+        else:
+            self.setToolTip( '' )
+        self.set_menu_v2(state, self)
+        if state['modes']:
+            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
 
     @QtCore.qt_slot()
     def action_triggered(self):
@@ -243,3 +325,7 @@ class ActionLabel(QtWidgets.QLabel, AbstractActionWidget):
     def set_state(self, state):
         AbstractActionWidget.set_state(self, state)
         self.setText(state.verbose_name or '')
+
+    def set_state_v2(self, state):
+        AbstractActionWidget.set_state_v2(self, state)
+        self.setText(state.get('verbose_name') or '')

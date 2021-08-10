@@ -35,10 +35,10 @@ import logging
 import os.path
 import string
 
-import six
 
 from ..core.qt import QtCore, Qt
 from camelot.view.controls import delegates
+from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action.list_action import DeleteSelection
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
@@ -126,6 +126,7 @@ class ColumnMapping( object ):
 class ShowNext(Action):
     
     verbose_name = _('Show next')
+    name = 'show_next'
     
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
@@ -135,6 +136,7 @@ class ShowNext(Action):
 class ShowPrevious(Action):
     
     verbose_name = _('Show previous')
+    name = 'show_previous'
     
     def model_run(self, model_context):
         for mapping in model_context.get_collection():
@@ -145,11 +147,12 @@ class MatchNames(Action):
     """Use the data in the current row to determine field names"""
     
     verbose_name = _('Match names')
+    name = 'match_names'
     
     def model_run(self, model_context):
         field_choices = model_context.admin.field_choices
         # create a dict that  will be used to search field names
-        matches = dict( (six.text_type(verbose_name).lower(), fn)
+        matches = dict( (str(verbose_name).lower(), fn)
                          for fn, verbose_name in field_choices if fn )
         matches.update( dict( (fn.lower().replace('_',''), fn)
                               for fn, _verbose_name in field_choices if fn) )
@@ -171,6 +174,7 @@ class ColumnMappingAdmin(ObjectAdmin):
     
     verbose_name = _('Select field')
     verbose_name_plural = _('Select fields')
+    toolbar_actions = [ShowNext(), ShowPrevious(), MatchNames()]
 
     list_action = None
     list_display = ['column_name', 'field', 'value']
@@ -188,8 +192,9 @@ class ColumnMappingAdmin(ObjectAdmin):
                         'choices': self.field_choices })
         return fa
     
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions(self, toolbar_area, direction):
-        return [ShowNext(), ShowPrevious(), MatchNames()]
+        return self.toolbar_actions
 
 class ColumnSelectionAdmin(ColumnMappingAdmin):
     """Admin to edit a `ColumnMapping` class without data preview
@@ -199,11 +204,12 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
     list_actions = []
     related_toolbar_actions = []
     
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions(self, toolbar_area, direction):
         return self.related_toolbar_actions
 
 # see http://docs.python.org/library/csv.html
-class UTF8Recoder( six.Iterator ):
+class UTF8Recoder(object):
     """Iterator that reads an encoded stream and reencodes the input to
     UTF-8."""
 
@@ -214,16 +220,15 @@ class UTF8Recoder( six.Iterator ):
         return self
 
     def __next__(self):
-        return six.next(self.reader).encode('utf-8')
+        return next(self.reader)
 
 # see http://docs.python.org/library/csv.html
-class UnicodeReader( six.Iterator ):
+class UnicodeReader( object ):
     """A CSV reader which will iterate over lines in the CSV file "f", which is
     encoded in the given encoding."""
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        if six.PY3==False:
-            f = UTF8Recoder(f, encoding)
+        f = UTF8Recoder(f, encoding)
         self.encoding = encoding
         self.reader = csv.reader(f, dialect=dialect, **kwds)
         self.line = 0
@@ -231,20 +236,17 @@ class UnicodeReader( six.Iterator ):
     def __next__( self ):
         self.line += 1
         try:
-            row = six.next(self.reader)
-            if six.PY3==False:
-                return [six.text_type(s, 'utf-8') for s in row]
-            else:
-                return row
+            row = next(self.reader)
+            return row
         except UnicodeError as exception:
             raise UserException( text = ugettext('This file contains unexpected characters'),
                                  resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
-                                 detail = ugettext('Exception occured at line %s : ') % self.line + six.text_type( exception ) )
+                                 detail = ugettext('Exception occured at line %s : ') % self.line + str( exception ) )
 
     def __iter__( self ):
         return self
     
-class XlsReader( six.Iterator ):
+class XlsReader( object ):
     """Read an XLS/XLSX file and iterator over its lines.
     
     The iterator returns each line of the excel as a list of strings.
@@ -284,9 +286,9 @@ class XlsReader( six.Iterator ):
                     value = u'true'
                 elif value is False:
                     value = u'false'
-                elif isinstance(value, six.integer_types):
+                elif isinstance(value, int):
                     # QLocale.toString doesn't seems to work with long ints
-                    value = six.text_type(value)
+                    value = str(value)
                 elif isinstance(value, float):
                     format_string = cell.number_format
                     ## try to display the number with the same precision as
@@ -298,15 +300,15 @@ class XlsReader( six.Iterator ):
                     ## see if it specifies scientific notation.  scientific
                     ## notation is not used because it loses precision when 
                     ## converting to a string
-                    value = six.text_type(self.locale.toString(
+                    value = str(self.locale.toString(
                         value, format = 'f', precision = precision
                     ))
                 elif isinstance(value, datetime.datetime):
                     dt = QtCore.QDate(value.year, value.month, value.day)
-                    value = six.text_type(dt.toString(self.date_format))
-                elif isinstance(value, six.binary_type):
+                    value = str(dt.toString(self.date_format))
+                elif isinstance(value, bytes):
                     value = value.decode('utf-8')
-                elif isinstance(value, six.text_type):
+                elif isinstance(value, str):
                     pass
                 else:
                     logger.error('unknown type {0} when importing excel'.format(type(value)))
@@ -334,17 +336,17 @@ class RowDataAdmin(ObjectAdmin):
         super(RowDataAdmin, self).__init__(admin, RowData)
         self.admin = admin
         self._new_field_attributes = {}
-        self._columns = []
+        self._fields = []
         for column_mapping in column_mappings:
             field_name = 'column_%i'%column_mapping.column
             original_field = column_mapping.field
             if original_field != None:
                 fa = self.new_field_attributes(original_field)
-                self._columns.append( (field_name, fa) )
+                self._fields.append( (field_name, fa) )
                 self._new_field_attributes[field_name] = fa
 
     def get_columns(self):
-        return self._columns
+        return [field for field, fa in self._fields]
 
     def get_verbose_name(self):
         return self.admin.get_verbose_name()
@@ -353,10 +355,10 @@ class RowDataAdmin(ObjectAdmin):
         return self.admin.get_verbose_name_plural()
 
     def get_verbose_identifier(self, obj):
-        return six.text_type()
+        return str()
 
     def get_fields(self):
-        return self.get_columns()
+        return self._fields
 
     def get_settings(self):
         settings = self.admin.get_settings()
@@ -364,7 +366,7 @@ class RowDataAdmin(ObjectAdmin):
         return settings
 
     def get_table(self):
-        return Table( [fn for fn, _fa in self.get_columns()] )
+        return Table( self.get_columns() )
 
     def get_all_fields_and_attributes(self):
         """
@@ -385,7 +387,7 @@ class RowDataAdmin(ObjectAdmin):
                 columns = self.admin.get_columns()
                 dynamic_attributes = self.admin.get_dynamic_field_attributes(
                     obj,
-                    [c[0] for c in columns]
+                    columns
                 )
                 for attrs in dynamic_attributes:
                     if attrs['background_color'] == ColorScheme.pink_1:
@@ -398,6 +400,7 @@ class RowDataAdmin(ObjectAdmin):
     def get_related_admin(self, cls):
         return self.admin.get_related_admin(cls)
 
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions(self, toolbar_area, direction):
         if toolbar_area==Qt.ToolBarAreas.RightToolBarArea:
             return self.list_actions

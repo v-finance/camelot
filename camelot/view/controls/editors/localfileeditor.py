@@ -29,7 +29,7 @@
 
 import os.path
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
@@ -102,7 +102,7 @@ class LocalFileEditor( CustomEditor ):
                                                           directory = current_directory,
                                                           filter = self._file_filter)
         if value!='':
-            value = os.path.abspath( six.text_type( value ) )
+            value = os.path.abspath( str( value ) )
             self.filename.setText( value )
             self.valueChanged.emit()
             self.editingFinished.emit()
@@ -117,7 +117,7 @@ class LocalFileEditor( CustomEditor ):
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or six.text_type( self.filename.text() )
+        return CustomEditor.get_value(self) or str( self.filename.text() )
 
     value = QtCore.qt_property( str, get_value, set_value )
 
@@ -127,6 +127,6 @@ class LocalFileEditor( CustomEditor ):
         self._directory=kwargs.get('directory',False)
         if self.filename:
             set_background_color_palette(self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            self.filename.setToolTip(str(kwargs.get('tooltip') or ''))
 
 

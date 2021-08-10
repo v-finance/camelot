@@ -2,14 +2,13 @@ import datetime
 import logging
 import unittest
 
+from camelot.admin.action.field_action import ClearObject, SelectObject
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.item_model import (
     AbstractModelFilter, ListModelProxy, QueryModelProxy
 )
-
-from camelot.model.party import Person, Party
-
+from camelot.model.party import Party, Person
 from camelot.view.controls import delegates
-from camelot.admin.object_admin import ObjectAdmin
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +41,7 @@ class A(object):
             'w': {'editable': True,
                   'delegate': delegates.Many2OneDelegate,
                   'target': B,
+                  'actions':[SelectObject(), ClearObject()],
                   },
             'x': {'editable': True,
                   'static':'static',
@@ -139,6 +139,23 @@ class ListModelProxyCase(unittest.TestCase):
         self.proxy.append(first_obj)
         self.assertEqual(len(self.proxy), size+1)
 
+    def test_swap(self):
+        # Create a new object and swap it with an existing object.
+        new_obj = self.create_object()
+        size = len(self.proxy)
+        first_obj, second_obj = list(self.proxy[0:2])
+        index = 1
+        self.proxy.swap(second_obj, new_obj)
+        self.assertEqual(len(self.proxy), size)
+        new_first_obj, new_second_obj = list(self.proxy[0:2])
+        self.assertEqual(first_obj, new_first_obj)
+        self.assertEqual(new_obj, new_second_obj)
+        self.assertNotIn(second_obj, self.proxy._objects)
+        self.assertNotIn(second_obj, self.proxy._indexed_objects)
+        self.assertEqual(self.proxy._indexed_objects.get(index), new_obj)
+        self.assertEqual(self.proxy._indexed_objects.get(new_obj), index)
+        self.assertEqual(self.proxy.index(new_obj), index)
+
     def test_remove(self):
         # remove an existing object
         size = len(self.proxy)
@@ -228,6 +245,43 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
         self.session.flush()
         self.assertEqual(len(self.proxy), size+1)
         list(self.proxy[0:size+1])[0]
+
+    def test_swap(self):
+        # a new object is created, and the proxy is aware
+        new_obj = self.create_object()
+        initial_length = len(self.proxy)
+        self.assertTrue(initial_length)
+        first_obj, second_obj = list(self.proxy[0:2])
+        index = 1
+        self.proxy.swap(second_obj, new_obj)
+        self.assertEqual(len(self.proxy), initial_length)
+        new_first_obj, new_second_obj = list(self.proxy[0:2])
+        self.assertEqual(first_obj, new_first_obj)
+        self.assertEqual(new_obj, new_second_obj)
+        self.assertNotIn(second_obj, self.proxy._objects)
+        self.assertNotIn(second_obj, self.proxy._indexed_objects)
+        self.assertEqual(self.proxy._indexed_objects.get(index), new_obj)
+        self.assertEqual(self.proxy._indexed_objects.get(new_obj), index)
+        self.assertEqual(self.proxy.index(new_obj), index)
+        
+        # Verify swapping on pending object
+        pending_obj = self.create_object()
+        new_obj = self.create_object()
+        self.proxy.append(pending_obj)
+        initial_length = len(self.proxy)
+        index = initial_length - 1
+        self.assertIn(pending_obj, self.proxy._objects)
+        self.assertEqual(self.proxy.index(pending_obj), index)
+        self.assertEqual(self.proxy._objects.index(pending_obj), 0)
+        self.proxy.swap(pending_obj, new_obj)
+        self.assertNotIn(pending_obj, self.proxy._objects)
+        self.assertNotIn(pending_obj, self.proxy._indexed_objects)
+        self.assertIn(new_obj, self.proxy._objects)
+        self.assertIn(new_obj, self.proxy._indexed_objects)
+        self.assertEqual(self.proxy._indexed_objects.get(index), new_obj)
+        self.assertEqual(self.proxy._indexed_objects.get(new_obj), index)
+        self.assertEqual(self.proxy.index(new_obj), index)
+        self.assertEqual(self.proxy._objects.index(new_obj), 0)
 
     def test_unique_primary_key(self):
         # A query returns multiple objects with the same primary key

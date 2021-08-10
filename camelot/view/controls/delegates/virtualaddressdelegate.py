@@ -27,43 +27,27 @@
 #
 #  ============================================================================
 
-import six
 
-from ....core.qt import variant_to_py, Qt
+from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
-# from camelot.view.art import Icon
 
-@six.add_metaclass(DocumentationMetaclass)
-class VirtualAddressDelegate(CustomDelegate):
+class VirtualAddressDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """
-  """
-  
+    """
+
     editor = editors.VirtualAddressEditor
-  
-    def __init__(self, parent=None, editable=True, address_type=None, **kwargs):
-        super(VirtualAddressDelegate, self).__init__(parent=parent,
-                                                     editable = editable,
-                                                     address_type = address_type,
-                                                     **kwargs )
-        self._address_type = address_type
-        
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        virtual_address = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
-  
-        if virtual_address and virtual_address!=ValueLoading:
-            if virtual_address[0]:
-                if not self._address_type:
-                    self.paint_text(painter, option, index, u'%s : %s'%(virtual_address[0], virtual_address[1]), margin_left=0, margin_right=18)
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super(VirtualAddressDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            virtual_address = model_context.value[0]
+            if virtual_address is not None:
+                address_type = model_context.field_attributes.get('address_type')
+                if address_type is None:
+                    value_str = '%s : %s'%(virtual_address[0], virtual_address[1])
                 else:
-                    self.paint_text(painter, option, index, u'%s'%virtual_address[1], margin_left=0, margin_right=18)
-
-        painter.restore()
-
-
-
-
-
+                    value_str = str(virtual_address[1])
+                item.setData(value_str, PreviewRole)
+        return item

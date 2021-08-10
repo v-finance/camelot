@@ -5,3 +5,4 @@ six==1.10.0
 openpyxl==2.4.5
 PyQt5
 xlsxwriter
+dataclasses

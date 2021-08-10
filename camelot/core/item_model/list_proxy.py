@@ -29,8 +29,6 @@
 import logging
 from sys import maxsize
 
-from six import moves, iteritems
-
 from .proxy import AbstractModelProxy
 
 LOGGER = logging.getLogger(__name__)
@@ -118,6 +116,15 @@ class ListModelProxy(AbstractModelProxy, dict):
             self._objects.append(obj)
             self._length = None
 
+    def swap(self, obj, new_obj):
+        assert not isinstance(obj, assert_value_objects)
+        assert not isinstance(new_obj, assert_value_objects)
+        assert obj in self._objects
+        i = self.index(obj)
+        self._objects[i] = new_obj
+        self._indexed_objects.pop(obj)
+        self._indexed_objects.update({i: new_obj, new_obj: i})
+
     def remove(self, obj):
         assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
@@ -182,7 +189,7 @@ class ListModelProxy(AbstractModelProxy, dict):
         if not (0<=sl.stop<=size):
             raise IndexError('stop of slice not in range', sl.stop, 0, size)
         limit = min(size-sl.start, sl.stop-sl.start)
-        for i in moves.xrange(sl.start, sl.stop):
+        for i in range(sl.start, sl.stop):
             try:
                 obj = self._indexed_objects[i]
             except KeyError:
@@ -218,7 +225,7 @@ class ListModelProxy(AbstractModelProxy, dict):
                                 object_found = True
                         else:
                             obj_iterator = (obj,)
-                            for model_filter, filter_value in iteritems(self._filters):
+                            for model_filter, filter_value in self._filters.items():
                                 obj_iterator = model_filter.filter(obj_iterator, filter_value)
                             for obj in obj_iterator:
                                 self._indexed_objects[i] = obj

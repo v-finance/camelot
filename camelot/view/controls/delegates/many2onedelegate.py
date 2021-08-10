@@ -29,7 +29,7 @@
 
 import logging
 
-import six
+
 
 from ....core.qt import QtCore, py_to_variant, variant_to_py
 from ....core.item_model import (
@@ -40,8 +40,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
-@six.add_metaclass(DocumentationMetaclass)
-class Many2OneDelegate(CustomDelegate):
+class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
 
   .. image:: /_static/manytoone.png
@@ -66,11 +65,11 @@ class Many2OneDelegate(CustomDelegate):
         self._width = self._width * 2
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(Many2OneDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            admin = fa_values['admin']
-            verbose_name = admin.get_verbose_object_name(value)
+    def get_standard_item(cls, locale, model_context):
+        item = super(Many2OneDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            admin = model_context.field_attributes['admin']
+            verbose_name = admin.get_verbose_object_name(model_context.value)
             item.setData(py_to_variant(verbose_name), PreviewRole)
         return item
 

@@ -35,7 +35,7 @@ import logging
 from camelot.core.utils import ugettext, ugettext_lazy
 from camelot.view.art import FontIcon
 
-import six
+
 
 from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 
@@ -128,7 +128,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             return
         model = details.model()
         if model is not None:
-            text = u'\n'.join([six.text_type(s) for s in model.stringList()])
+            text = u'\n'.join([str(s) for s in model.stringList()])
             QtWidgets.QApplication.clipboard().setText(text)
 
     def push_level(self, verbose_name):

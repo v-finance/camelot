@@ -30,7 +30,7 @@
 import logging
 import pkgutil
 
-import six
+
 
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
 
@@ -134,23 +134,23 @@ allow all languages
         # 32767 is Qt max length for string
         # should be more than enough for folders
         # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
-        self.dialect_editor = ChoicesEditor(parent=self)
+        self.dialect_editor = ChoicesEditor(parent=self, action_routes=[])
         self.dialect_editor.set_value(None)
-        self.host_editor = TextLineEditor(self, length=32767)
+        self.host_editor = TextLineEditor(self, length=32767, action_routes=[])
         self.host_editor.set_value('')
-        self.port_editor = TextLineEditor(self)
+        self.port_editor = TextLineEditor(self, action_routes=[])
         self.port_editor.setFixedWidth(60)
         self.port_editor.set_value('')
-        self.database_name_editor = TextLineEditor(self, length=32767)
+        self.database_name_editor = TextLineEditor(self, length=32767, action_routes=[])
         self.database_name_editor.set_value('')
-        self.username_editor = TextLineEditor(self)
+        self.username_editor = TextLineEditor(self, action_routes=[])
         self.username_editor.set_value('')
         self.password_editor = TextLineEditor(
             echo_mode=QtWidgets.QLineEdit.EchoMode.Password,
-            parent=self
+            parent=self, action_routes=[]
         )
         self.password_editor.set_value('')
-        self.media_location_editor = TextLineEditor(self, length=32767)
+        self.media_location_editor = TextLineEditor(self, length=32767, action_routes=[])
         self.media_location_editor.set_value('')
         self.language_editor = LanguageEditor(languages=self.languages,
                                               parent=self)
@@ -166,15 +166,15 @@ allow all languages
         else:
             self.language_editor.set_value( system_language )
 
-        self.proxy_host_editor = TextLineEditor(self, length=32767)
+        self.proxy_host_editor = TextLineEditor(self, length=32767, action_routes=[])
         self.proxy_host_editor.set_value('')
-        self.proxy_port_editor = TextLineEditor(self)
+        self.proxy_port_editor = TextLineEditor(self, action_routes=[])
         self.proxy_port_editor.setFixedWidth(60)
         self.proxy_port_editor.set_value('')
-        self.proxy_username_editor = TextLineEditor(self)
+        self.proxy_username_editor = TextLineEditor(self, action_routes=[])
         self.proxy_username_editor.set_value('')
         self.proxy_password_editor = TextLineEditor(
-            echo_mode=QtWidgets.QLineEdit.EchoMode.Password,
+            echo_mode=QtWidgets.QLineEdit.EchoMode.Password, action_routes=[],
             parent=self
         )
         self.proxy_password_editor.set_value('')
@@ -264,7 +264,7 @@ allow all languages
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = six.text_type(self.profile_editor.currentText())
+        text = str(self.profile_editor.currentText())
         return text
 
     def set_current_profile(self, profile_name):
@@ -346,7 +346,7 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = six.text_type(QtWidgets.QFileDialog.getExistingDirectory(self, caption))
+        selected = str(QtWidgets.QFileDialog.getExistingDirectory(self, caption))
 
         if not selected:
             return

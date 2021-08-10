@@ -29,7 +29,7 @@
 import functools
 import logging
 
-import six
+
 
 from sqlalchemy import orm, sql, exc
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -100,6 +100,15 @@ class QueryModelProxy(ListModelProxy):
             self._length = None
             return
         self._objects.append(obj)
+    
+    def swap(self, obj, new_obj):
+        assert not isinstance(obj, assert_value_objects)
+        assert not isinstance(new_obj, assert_value_objects)
+        i = self.index(obj)
+        if obj in self._objects:
+            self._objects[i-self._length] = new_obj
+        self._indexed_objects.pop(obj)
+        self._indexed_objects.update({i: new_obj, new_obj: i})        
 
     def index(self, obj):
         assert not isinstance(obj, assert_value_objects)
@@ -131,7 +140,7 @@ class QueryModelProxy(ListModelProxy):
         """
         query = self._query
         # filters might be changed in the gui thread while being iterated
-        for filter_, value in six.iteritems(self._filters.copy()):
+        for filter_, value in self._filters.copy().items():
             query = filter_.decorate_query(query, value)
         if order_clause:
             query = self._sort_decorator(query)

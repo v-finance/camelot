@@ -30,15 +30,16 @@
 """ Tableview """
 
 import logging
-import six
+
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from camelot.admin.admin_route import AdminRoute
+from camelot.admin.action.base import RenderHint
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
-from ...admin.admin_route import AdminRoute
 from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
@@ -70,7 +71,7 @@ class ColumnGroupsWidget(QtWidgets.QTabBar):
         tab_index = 0
         for column in table.columns:
             if isinstance(column, ColumnGroup):
-                self.addTab(six.text_type(column.verbose_name))
+                self.addTab(str(column.verbose_name))
                 previous_column_index = column_index
                 column_index = column_index + len(column.get_fields())
                 self.groups[tab_index] = (previous_column_index,
@@ -94,7 +95,7 @@ class ColumnGroupsWidget(QtWidgets.QTabBar):
     def _current_index_changed(self, current_index):
         assert object_thread(self)
         for tab_index, (first_column,
-                        last_column) in six.iteritems(self.groups):
+                        last_column) in self.groups.items():
             for column_index in range(first_column, last_column):
                 self.table_widget.setColumnHidden(column_index,
                                                   tab_index != current_index)
@@ -165,7 +166,7 @@ class TableWidget(QtWidgets.QTableView):
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
         assert object_thread(self)
-        for logical_index, new_width in six.iteritems(self._columns_changed):
+        for logical_index, new_width in self._columns_changed.items():
             if self.horizontalHeader().isSectionHidden(logical_index):
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0
@@ -472,7 +473,7 @@ class TableView(AbstractView):
     AdminTableWidget = AdminTableWidget
 
     def __init__(
-        self, gui_context, admin_route, parent=None
+        self, gui_context, admin_route, parent=None, list_action=None
         ):
         super(TableView, self).__init__(parent)
         assert object_thread(self)
@@ -509,6 +510,7 @@ class TableView(AbstractView):
         splitter.addWidget(filters_widget)
         self.setLayout(widget_layout)
         self.widget_layout = widget_layout
+        self.list_action = list_action
 
     def close_view(self, accept):
         self.close_clicked_signal.emit()
@@ -525,8 +527,8 @@ class TableView(AbstractView):
         #
         if self.table:
             self.table.close_editor()
-        admin = AdminRoute.admin_for(self.admin_route)
-        admin.list_action.gui_run(self.gui_context)
+        if self.list_action is not None:
+            self.list_action.gui_run(self.gui_context)
 
     def get_admin(self):
         return self.admin
@@ -554,6 +556,8 @@ class TableView(AbstractView):
                 self.table.model().deleteLater()
         splitter = self.findChild(QtWidgets.QWidget, 'splitter')
         self.table = self.AdminTableWidget(splitter)
+        delegate = DelegateManager(parent=self.table)
+        self.table.setItemDelegate(delegate)
         self.table.setObjectName('AdminTableWidget')
         new_model = CollectionProxy(self.admin_route)
         self.table.setModel(new_model)
@@ -592,11 +596,6 @@ class TableView(AbstractView):
         model = self.get_model()
         if model is not None:
             model.refresh()
-
-    def set_columns(self, columns):
-        delegate = DelegateManager(columns, parent=self)
-        table = self.table
-        table.setItemDelegate(delegate)
 
     def set_filters(self, filters):
         logger.debug('setting filters for tableview')
@@ -649,6 +648,17 @@ class TableView(AbstractView):
                     toolbar.addWidget(rendered)
                 elif isinstance(rendered, QtGui.QAction):
                     toolbar.addAction( rendered )
+
+    def set_actions(self, actions):
+        """Set all the actions (filters, list actions and toolbar actions).
+        :param actions: A list of serialized :class:`camelot.admin.admin_route.RouteWithRenderHint` objects
+        """
+        self.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
+        self.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
+        self.set_toolbar_actions(
+            Qt.TopToolBarArea,
+            [AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
+        )
 
     @QtCore.qt_slot(bool)
     def action_triggered(self, _checked = False):

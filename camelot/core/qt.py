@@ -42,7 +42,7 @@ import datetime
 import logging
 import os
 
-import six
+
 
 LOGGER = logging.getLogger('camelot.core.qt')
 
@@ -205,7 +205,7 @@ def _variant_to_py_1(qvariant=None):
         return None
     type = qvariant.type()
     if type == QtCore.QVariant.String:
-        value = six.text_type(qvariant.toString())
+        value = str(qvariant.toString())
     elif type == QtCore.QVariant.Date:
         value = qvariant.toDate()
         value = datetime.date( year=value.year(),
@@ -299,7 +299,7 @@ if qt_api in ('PyQt4', 'PySide'):
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
-        return six.text_type(QtCore.QCoreApplication.translate(
+        return str(QtCore.QCoreApplication.translate(
             '',
             string_to_translate.encode('utf-8'),
             '',
@@ -314,7 +314,7 @@ else:
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
-        return six.text_type(QtCore.QCoreApplication.translate(
+        return str(QtCore.QCoreApplication.translate(
             '',
             string_to_translate.encode('utf-8'),
             '',

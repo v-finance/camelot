@@ -27,51 +27,34 @@
 #
 #  ============================================================================
 
-from .action import Action
-from ..core.qt import QtWidgets
+from dataclasses import dataclass
+import typing
 
+from .admin_route import Route
+from .icon import Icon
+from ..core.serializable import DataclassSerializable
+from ..core.utils import ugettext_lazy
 
-class Menu(object):
-    """A menu is a part of the main menu shown on the main window.  Each Menu
-contains a list of items the user select.  Such a menu item is either a Menu
-itself, an Action object or None to insert a separator.
+@dataclass
+class MenuItem(DataclassSerializable):
+    """A MenuItem is a part of a menu. A MenuItem can either have a verbose_name
+    and an icon and be a menu in itself, or it can have an action.  If the
+    MenuItem has neither of those, it acts as a separator.
+
+    Using subclasses is avoided here to to keep serializability of nested
+    menu items straightforward.
     """
-        
-    def __init__( self, 
-                  verbose_name,
-                  items,
-                  icon=None ):
+
+    verbose_name: typing.Union[str, ugettext_lazy, None]
+    icon: typing.Union[Icon, None]
+    action_route: typing.Union[Route, None]
+    items: typing.List['MenuItem']
+    role: typing.Optional[str]
+
+    def __init__(self, verbose_name=None, icon=None, action_route=None, role=None):
+        assert (action_route is None) or ((verbose_name is None) and (icon is None))
         self.verbose_name = verbose_name
         self.icon = icon
-        self.items = items
-
-    def get_verbose_name( self ):
-        return self.verbose_name
-
-    def get_icon( self ):
-        return self.icon
-
-    def get_items( self ):
-        return self.items
-    
-    def render( self, gui_context, parent ):
-        """
-        :return: a :class:`QtWidgets.QMenu` object
-        """
-        from ..view.controls.action_widget import ActionAction
-        menu = QtWidgets.QMenu(str(self.get_verbose_name()), parent)
-        for item in self.get_items():
-            if item is None:
-                menu.addSeparator()
-                continue
-            if isinstance(item, Menu):
-                menu.addMenu(item.render(gui_context, menu))
-            elif isinstance(item, Action):
-                action = ActionAction(item, gui_context, menu)
-                menu.addAction(action)
-            else:
-                raise Exception('Cannot handle menu items of type %s'%type(item))
-        return menu
-
-
-
+        self.action_route = action_route
+        self.items = list()
+        self.role = role

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets
 from .customeditor import AbstractCustomEditor
@@ -54,7 +54,7 @@ class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
             
     def set_field_attributes(self, **kwargs):
         super(LabelEditor, self).set_field_attributes(**kwargs)
-        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+        self.setToolTip(str(kwargs.get('tooltip') or ''))
 
 
 

@@ -27,9 +27,8 @@
 #
 #  ============================================================================
 
-import six
-from six import moves
 
+from ...admin.admin_route import AdminRoute
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
@@ -37,18 +36,19 @@ from ..controls.action_widget import ActionPushButton
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.core.item_model import ValidRole, ValidMessageRole
+from camelot.admin.icon import Icon
+from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.art import FontIcon
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.art import from_admin_icon
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -72,14 +72,14 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   reject,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
-                  icon = FontIcon('cog'), # 'tango/22x22/categories/preferences-system.png'
+                  icon = Icon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
                   flags=QtCore.Qt.WindowFlags.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
-        self.set_banner_logo_pixmap( icon.getQPixmap() )
-        self.set_banner_title( six.text_type(title) )
-        self.set_banner_subtitle( six.text_type(subtitle) )
+        self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
+        self.set_banner_title( str(title) )
+        self.set_banner_subtitle( str(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
         model = CollectionProxy(admin_route)
@@ -110,9 +110,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
 
-        cancel_button = QtWidgets.QPushButton(six.text_type(reject))
+        cancel_button = QtWidgets.QPushButton(str(reject))
         cancel_button.setObjectName( 'cancel' )
-        ok_button = QtWidgets.QPushButton(six.text_type(accept))
+        ok_button = QtWidgets.QPushButton(str(accept))
         ok_button.setObjectName( 'ok' )
         layout = QtWidgets.QHBoxLayout()
         layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
@@ -126,7 +126,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         # set the actions in the actions panel
         self.set_actions(form_actions)
         # set the value last, so the validity can be updated
-        model.set_value(admin.get_proxy([obj]))
+        proxy = admin.get_proxy([obj])
+        model.set_value(ProxyRegistry.register(proxy))
         list(model.add_columns((fn for fn, _fa in columns)))
 
     def render_action(self, action, parent):
@@ -184,7 +185,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   objects,
                   admin_route,
                   columns,
-                  toolbar_actions,
+                  action_routes,
                   invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.WindowFlags.Window ):
@@ -195,7 +196,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             parent = self,
             create_inline = True,
             columns=columns,
-            toolbar_actions=toolbar_actions,
+            action_routes=action_routes,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -216,7 +217,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Orientations.Vertical:
             model = self.sender()
-            for row in moves.xrange(first, last+1):
+            for row in range(first, last+1):
                 valid = variant_to_py(model.headerData(row, orientation, ValidRole))
                 if (valid==True) and (row in self.invalid_rows):
                     self.invalid_rows.remove(row)
@@ -331,7 +332,7 @@ class ChangeObjects( ActionStep ):
 
     .. attribute:: icon
 
-        the :class:`camelot.view.art.FontIcon` in the top right corner of
+        the :class:`camelot.admin.icon.Icon` in the top right corner of
         the dialog
 
     """
@@ -343,12 +344,14 @@ class ChangeObjects( ActionStep ):
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
-        self.icon = FontIcon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
+        self.icon = Icon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.invalid_rows = set()
         self.columns = admin.get_columns()
-        self.toolbar_actions = admin.get_related_toolbar_actions(
-            Qt.ToolBarAreas.RightToolBarArea, 'onetomany'
-        )
+        self.action_routes = [
+            action.route for action in admin.get_related_toolbar_actions(
+                Qt.ToolBarAreas.RightToolBarArea, 'onetomany'
+            )
+        ]
         if validate==True:
             validator = self.admin.get_validator()
             for row, obj in enumerate(objects):
@@ -370,12 +373,12 @@ class ChangeObjects( ActionStep ):
         dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
                                      self.admin_route,
                                      self.columns,
-                                     self.toolbar_actions,
+                                     self.action_routes,
                                      self.invalid_rows)
-        dialog.setWindowTitle( six.text_type( self.window_title ) )
-        dialog.set_banner_title( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
-        dialog.set_banner_logo_pixmap( self.icon.getQPixmap() )
+        dialog.setWindowTitle( str( self.window_title ) )
+        dialog.set_banner_title( str( self.title ) )
+        dialog.set_banner_subtitle( str( self.subtitle ) )
+        dialog.set_banner_logo_pixmap( from_admin_icon(self.icon).getQPixmap() )
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
@@ -411,12 +414,12 @@ class ChangeFieldDialog(StandaloneWizardPage):
         self.value = None
         self.static_field_attributes = admin.get_static_field_attributes
         self.banner_widget().setStyleSheet('background-color: white;')
-        editor = ChoicesEditor( parent=self )
+        editor = ChoicesEditor(parent=self, action_routes=[])
         editor.setObjectName( 'field_choice' )
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget( editor )
         self.main_widget().setLayout( layout )
-        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes)]
+        choices = [(field, str(attributes['name'])) for field, attributes in field_attributes.items()]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices + [(None,'')] )
         editor.set_value(self.field)
@@ -505,7 +508,7 @@ class ChangeField( ActionStep ):
         if field_attributes is None:
             field_attributes = dict(admin.get_all_fields_and_attributes())
             not_editable_fields = []
-            for key, attributes in six.iteritems(field_attributes):
+            for key, attributes in field_attributes.items():
                 if not attributes.get('editable', False):
                     not_editable_fields.append(key)
                 elif attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
@@ -523,9 +526,9 @@ class ChangeField( ActionStep ):
         dialog = ChangeFieldDialog(
             self.admin, self.field_attributes, self.field_name, self.field_value
         )
-        dialog.setWindowTitle( six.text_type( self.window_title ) )
-        dialog.set_banner_title( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
+        dialog.setWindowTitle( str( self.window_title ) )
+        dialog.set_banner_title( str( self.title ) )
+        dialog.set_banner_subtitle( str( self.subtitle ) )
         return dialog
 
     def gui_run( self, gui_context ):

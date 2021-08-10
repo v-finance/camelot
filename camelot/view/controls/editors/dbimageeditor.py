@@ -1,5 +1,6 @@
 import os
 
+from ....admin.icon import Icon
 from ....view.art import FontIcon
 from ....view.action import ActionFactory
 from ....core.qt import QtCore, QtWidgets, Qt, QtGui
@@ -47,7 +48,7 @@ class DbImageEditor(CustomEditor):
         open_button.setDefaultAction( ActionFactory.create_action(text=_('Open'),
                                                                       slot=self.open,
                                                                       parent=self,
-                                                                      actionicon=FontIcon('plus'), # 'tango/16x16/actions/list-add.png'
+                                                                      actionicon=Icon('plus'), # 'tango/16x16/actions/list-add.png'
                                                                       tip=_('Attach file')))        
     
         clear_button = QtWidgets.QToolButton()
@@ -57,7 +58,7 @@ class DbImageEditor(CustomEditor):
         clear_button.setDefaultAction( ActionFactory.create_action(text=_('Clear'),
                                                                    slot=self.clear,
                                                                    parent=self,
-                                                                   actionicon=FontIcon('trash'), # 'tango/16x16/actions/edit-clear.png'
+                                                                   actionicon=Icon('trash'), # 'tango/16x16/actions/edit-clear.png'
                                                                    tip=_('clear')))
     
         copy_button = QtWidgets.QToolButton()
@@ -109,7 +110,6 @@ class DbImageEditor(CustomEditor):
             self.set_image(thumbnail)
         else:
             self.clear_image()               
-        self.update_actions()       
         return value
     
     def get_value(self):

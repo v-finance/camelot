@@ -30,18 +30,18 @@
 import logging
 import time
 
-import six
+
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
 from ..admin_route import AdminRoute
 from .base import RenderHint
+from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
-from camelot.view.art import FontIcon
 
 """ModelContext, GuiContext and Actions that run in the context of an 
 application.
@@ -164,10 +164,11 @@ class SelectProfile( Action ):
     This action is also useable as an action step, which will return the
     selected profile.
     """
-    
-    new_icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    save_icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
-    load_icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
+
+    name = 'select_profile'
+    new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
+    load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store, edit_dialog_class=None):
@@ -246,7 +247,7 @@ class SelectProfile( Action ):
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
                                                                      standard_buttons = QtWidgets.QMessageBox.StandardButtons.Ok )
-                            exception_box.informative_text = six.text_type(e)
+                            exception_box.informative_text = str(e)
                             yield exception_box
                             edit_profile_name = profile.name
                             if profile in profiles:
@@ -276,6 +277,8 @@ class SelectProfile( Action ):
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
 
+    name = 'entity_action'
+
     def __init__( self, 
                   entity_admin ):
         """
@@ -296,6 +299,7 @@ class OpenTableView( EntityAction ):
     
     """
 
+    name = 'open_table_view'
     modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
         
     def get_state( self, model_context ):
@@ -325,7 +329,7 @@ class OpenNewView( EntityAction ):
 
     verbose_name = _('New')
     shortcut = QtGui.QKeySequence.StandardKey.New
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
             
     def get_state( self, model_context ):
@@ -348,9 +352,10 @@ class ShowAbout(Action):
     """Show the about dialog with the content returned by the
     :meth:`ApplicationAdmin.get_about` method
     """
-    
+
+    name = 'about'
     verbose_name = _('&About')
-    icon = FontIcon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
+    icon = Icon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
     tooltip = _("Show the application's About box")
 
     def model_run(self, model_context):
@@ -371,10 +376,11 @@ Backup the database to disk
     A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
     the application to perform backups an restores.
     """
-    
+
+    name = 'backup'
     verbose_name = _('&Backup')
     tooltip = _('Backup the database')
-    icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
+    icon = Icon('save') # 'tango/16x16/actions/document-save.png'
     backup_mechanism = BackupMechanism
 
     def model_run( self, model_context ):
@@ -392,11 +398,12 @@ class Refresh( Action ):
     """Reload all objects from the database and update all views in the
     application."""
 
+    name = 'refresh'
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key.Key_F9.value )
-    icon = FontIcon('sync') # 'tango/16x16/actions/view-refresh.png'
+    icon = Icon('sync') # 'tango/16x16/actions/view-refresh.png'
     
     def model_run( self, model_context ):
         import sqlalchemy.exc as sa_exc
@@ -413,7 +420,7 @@ class Refresh( Action ):
         # objects
         #
         session_items = len( session.identity_map )
-        for i, (_key, obj) in enumerate( six.iteritems(session.identity_map) ):
+        for i, (_key, obj) in enumerate( session.identity_map.items() ):
             try:
                 session.refresh( obj )
                 refreshed_objects.append( obj )
@@ -443,10 +450,11 @@ Restore the database to disk
     A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
     the application to perform backups an restores.
 """
-    
+
+    name = 'restore'
     verbose_name = _('&Restore')
     tooltip = _('Restore the database from a backup')
-    icon = FontIcon('hdd') # 'tango/16x16/devices/drive-harddisk.png'
+    icon = Icon('hdd') # 'tango/16x16/devices/drive-harddisk.png'
     backup_mechanism = BackupMechanism
     shortcut = None
             
@@ -468,7 +476,8 @@ class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.
     """
-    
+
+    name = 'profiler'
     verbose_name = _('Profiler start/stop')
     
     def __init__(self):
@@ -486,7 +495,7 @@ class Profiler( Action ):
 
     def model_run(self, model_context):
         from ...view import action_steps
-        from six import StringIO
+        from io import StringIO
         import cProfile
         import pstats
         if self.model_profile is None:
@@ -518,10 +527,11 @@ class Profiler( Action ):
             
 class Exit( Action ):
     """Exit the application"""
-    
+
+    name = 'exit'
     verbose_name = _('E&xit')
     shortcut = QtGui.QKeySequence.StandardKey.Quit
-    icon = FontIcon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
+    icon = Icon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
     
     def gui_run( self, gui_context ):
@@ -540,9 +550,10 @@ class Exit( Action ):
 
 class ChangeLogging( Action ):
     """Allow the user to change the logging configuration"""
-    
+
+    name = 'change_logging'
     verbose_name = _('Change logging')
-    icon = FontIcon('wrench') # 'tango/16x16/emblems/emblem-photos.png'
+    icon = Icon('wrench') # 'tango/16x16/emblems/emblem-photos.png'
     tooltip = _('Change the logging configuration of the application')
 
     @classmethod
@@ -638,7 +649,8 @@ class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test
         the faulthandling functions.  this method is triggered by pressing
         :kbd:`Ctrl-Alt-0` in the GUI"""
-    
+
+    name = 'segfault'
     verbose_name = _('Segmentation Fault')
     shortcut = QtGui.QKeySequence( QtCore.Qt.Modifiers.CTRL.value + QtCore.Qt.Modifiers.ALT.value + QtCore.Qt.Key.Key_0.value )
     

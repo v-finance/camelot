@@ -27,12 +27,18 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass, field
 from enum import Enum
 import logging
+import typing
 
 from ...core.qt import QtWidgets, QtGui, Qt
+from ...core.serializable import DataclassSerializable, Serializable
+from ...core.utils import ugettext_lazy
+from ...admin.icon import Icon
+from ...view.art import from_admin_icon
 
-import six
+
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -123,7 +129,64 @@ strictly to the :class:`ModelContext`
         new_context.mode_name = self.mode_name
         return new_context
 
-class State( object ):
+
+@dataclass
+class Mode(DataclassSerializable):
+    """A mode is a way in which an action can be triggered, a print action could
+be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
+the default mode.
+    
+.. attribute:: name
+
+    a string representing the mode to the developer and the authentication
+    system.  this name will be used in the :class:`GuiContext`
+    
+.. attribute:: verbose_name
+
+    The name shown to the user
+    
+.. attribute:: icon
+
+    The icon of the mode
+    """
+
+    name: str
+    verbose_name: typing.Union[str, ugettext_lazy]
+    icon: typing.Union[Icon, None]
+    
+    def __init__( self, name, verbose_name=None, icon=None):
+        """
+        :param name: the name of the mode, as it will be passed to the
+            gui_run and model_run method
+        :param verbose_name: the name shown to the user
+        :param icon: the icon of the mode
+        """
+        self.name = name
+        if verbose_name is None:
+            verbose_name = name.capitalize()
+        self.verbose_name = verbose_name
+        self.icon = icon
+
+    def render( self, parent ):
+        """Create a :class:`QtGui.QAction` that can be used to enable widget
+        to trigger the action in a specific mode.  The data attribute of the
+        action will contain the name of the mode.
+        
+        :return: a :class:`QtGui.QAction` class to use this mode
+        """
+        action = QtGui.QAction( parent )
+        action.setData( self.name )
+        action.setText( str(self.verbose_name) )
+        if self.icon is None:
+            action.setIconVisibleInMenu(False)
+        else:
+            action.setIcon(from_admin_icon(self.icon).getQIcon())
+            action.setIconVisibleInMenu(True)
+        return action
+
+
+@dataclass
+class State(DataclassSerializable):
     """A state represents the appearance and behavior of the widget that
 triggers the action.  When the objects in the model change, the 
 :meth:`Action.get_state` method will be called, which should return the
@@ -137,7 +200,7 @@ updated state for the widget.
 .. attribute:: icon
 
     The icon that represents the action, of type 
-    :class:`camelot.view.art.Icon`, this defaults to the icon of the action.
+    :class:`camelot.admin.icon.Icon`, this defaults to the icon of the action.
 
 .. attribute:: tooltip
 
@@ -165,66 +228,26 @@ updated state for the widget.
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
     """
-    
-    def __init__( self ):
-        self.verbose_name = None
-        self.icon = None
-        self.tooltip = None
-        self.enabled = True
-        self.visible = True
-        self.notification = False
-        self.modes = []
 
-class Mode( object ):
-    """A mode is a way in which an action can be triggered, a print action could
-be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
-the default mode.
-    
-.. attribute:: name
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    icon: typing.Union[Icon, None] = None
+    tooltip: typing.Union[str, ugettext_lazy, None] = None
+    enabled: bool = True
+    visible: bool = True
+    notification: bool = False
+    modes: typing.List[Mode] = field(default_factory=list)
 
-    a string representing the mode to the developer and the authentication
-    system.  this name will be used in the :class:`GuiContext`
-    
-.. attribute:: verbose_name
+class MetaActionStep(type):
 
-    The name shown to the user
-    
-.. attribute:: icon
+    action_steps = dict()
 
-    The icon of the mode
-    """
-    
-    def __init__( self, name, verbose_name=None, icon=None):
-        """
-        :param name: the name of the mode, as it will be passed to the
-            gui_run and model_run method
-        :param verbose_name: the name shown to the user
-        :param icon: the icon of the mode
-        """
-        self.name = name
-        if verbose_name is None:
-            verbose_name = name.capitalize()
-        self.verbose_name = verbose_name
-        self.icon = icon
-        
-    def render( self, parent ):
-        """Create a :class:`QtGui.QAction` that can be used to enable widget
-        to trigger the action in a specific mode.  The data attribute of the
-        action will contain the name of the mode.
-        
-        :return: a :class:`QtGui.QAction` class to use this mode
-        """
-        action = QtGui.QAction( parent )
-        action.setData( self.name )
-        action.setText( six.text_type(self.verbose_name) )
-        if self.icon is None:
-            action.setIconVisibleInMenu(False)
-        else:
-            action.setIcon(self.icon.getQIcon())
-            action.setIconVisibleInMenu(True)
-        return action
-        
-class ActionStep( object ):
+    def __new__(cls, clsname, bases, attrs):
+        newclass = super().__new__(cls, clsname, bases, attrs)
+        if issubclass(newclass, (Serializable,)):
+            cls.action_steps[clsname] = newclass
+        return newclass
+
+class ActionStep(metaclass=MetaActionStep):
     """A reusable part of an action.  Action step object can be yielded inside
 the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
 be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
@@ -344,7 +367,7 @@ method.
 .. attribute:: icon
 
     The icon that represents the action, of type 
-    :class:`camelot.view.art.Icon`
+    :class:`camelot.admin.icon.Icon`
 
 .. attribute:: tooltip
 
@@ -412,7 +435,7 @@ with a view.
         tooltip = None
 
         if self.tooltip is not None:
-            tooltip = six.text_type(self.tooltip)
+            tooltip = str(self.tooltip)
 
         if isinstance(self.shortcut, QtGui.QKeySequence):
             tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
@@ -421,7 +444,7 @@ with a view.
                 tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
                 break
         elif self.shortcut is not None:
-            tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)
+            tooltip = (tooltip or u'') + '\n' + str(self.shortcut)
 
         return tooltip
 

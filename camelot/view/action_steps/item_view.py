@@ -32,12 +32,19 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
-import itertools
+from dataclasses import dataclass
+import typing
+import json
 
+from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
-from ...admin.action.base import ActionStep
-from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.base import ActionStep, RenderHint, State
+from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.list_filter import Filter, All
 from ...core.qt import Qt, QtCore
+from ...core.utils import ugettext_lazy
+from ...core.item_model import ProxyRegistry
+from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
@@ -79,8 +86,8 @@ class SetFilter( ActionStep ):
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
 
-
-class UpdateTableView( ActionStep ):
+@dataclass
+class UpdateTableView( ActionStep, DataclassSerializable ):
     """Change the admin and or value of an existing table view
     
     :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
@@ -88,54 +95,77 @@ class UpdateTableView( ActionStep ):
     
     """
 
+    #value: not needed
+    search_text: typing.Union[str, None]
+    title: typing.Union[str, ugettext_lazy]
+    columns: typing.List[str]
+    list_action: Route
+    proxy_route: Route
+    actions: typing.List[typing.Tuple[Route, RenderHint]]
+    action_states: typing.List[typing.Tuple[Route, State]]
+
     def __init__( self, admin, value ):
+        self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
-        self.filters = admin.get_filters()
-        self.list_actions = admin.get_list_actions()
+        self.actions = admin.get_list_actions().copy()
+        self.actions.extend(admin.get_filters())
+        self.actions.extend(admin.get_list_toolbar_actions())
         self.columns = admin.get_columns()
-        self.left_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.LeftToolBarArea)
-        self.right_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.RightToolBarArea)
-        self.top_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.TopToolBarArea)
-        self.bottom_toolbar_actions = admin.get_list_toolbar_actions(Qt.ToolBarAreas.BottomToolBarArea)
-        self.proxy = admin.get_proxy(value)
-    
-    def update_table_view(self, table_view):
+        self.list_action = admin.get_list_action()
+        proxy = admin.get_proxy(value)
+        self.proxy_route = ProxyRegistry.register(proxy)
+        self.action_states = list()
+        model_context = ListActionModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        self._add_action_states(model_context, self.actions, self.action_states)
+
+    @staticmethod
+    def _add_action_states(model_context, actions, action_states):
+        for action_route in actions:
+            action = AdminRoute.action_for(action_route.route)
+            state = action.get_state(model_context)
+            action_states.append((action_route.route, state))
+
+    @staticmethod
+    def update_table_view(table_view, step):
         from camelot.view.controls.search import SimpleSearchControl
         table_view.set_admin()
         model = table_view.get_model()
-        list(model.add_columns((fn for fn, _fa in self.columns)))
-        table_view.set_columns(self.columns)
+        list(model.add_columns(step['columns']))
         # filters can have default values, so they need to be set before
         # the value is set
-        table_view.set_filters(self.filters)
-        table_view.set_value(self.proxy)
-        table_view.set_list_actions(self.list_actions)
-        table_view.set_toolbar_actions(
-            Qt.ToolBarAreas.LeftToolBarArea, self.left_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.ToolBarAreas.RightToolBarArea, self.right_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.ToolBarAreas.TopToolBarArea, self.top_toolbar_actions
-        )
-        table_view.set_toolbar_actions(
-            Qt.ToolBarAreas.BottomToolBarArea, self.bottom_toolbar_actions
-        )
-        if self.search_text is not None:
+        for action_state in step['action_states']:
+            route = tuple(action_state[0])
+            action = AdminRoute.action_for(route)
+            if not isinstance(action, Filter):
+                continue
+            state = action_state[1]
+            values = [mode['name'] for mode in state['modes'] if mode['checked']]
+            # if all modes are checked, replace with [All]
+            if len(values) == len(state['modes']):
+                values = [All]
+            model.set_filter(action, values)
+
+        table_view.set_value(step['proxy_route'])
+        table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
+        table_view.set_actions(step['actions'])
+        if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
-            search_control.setText(self.search_text)
+            search_control.setText(step['search_text'])
             search_control.start_search()
 
-    def gui_run(self, gui_context):
-        self.update_table_view(gui_context.view)
-        gui_context.view.change_title(self.title)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        cls.update_table_view(gui_context.view, step)
+        gui_context.view.change_title(step['title'])
 
         gui_context.view.findChild(Qt)
 
-
+@dataclass
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
     
@@ -152,34 +182,41 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
+
+    new_tab: bool
+    admin_route: Route
     
     def __init__( self, admin, value ):
         super(OpenTableView, self).__init__(admin, value)
         self.new_tab = False
         self.admin_route = admin.get_admin_route()
 
-    def render(self, gui_context):
+    @classmethod
+    def render(cls, gui_context, step):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, self.admin_route)
-        self.update_table_view(table_view)
+        table_view = TableView(gui_context, tuple(step['admin_route']))
+        cls.update_table_view(table_view, step)
         return table_view
         
-    def gui_run( self, gui_context ):
-        table_view = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        table_view = cls.render(gui_context, step)
         if gui_context.workspace is not None:
-            if self.new_tab == True:
+            if step['new_tab'] == True:
                 gui_context.workspace.add_view(table_view)
             else:
                 gui_context.workspace.set_view(table_view)
         else:
             table_view.setObjectName('table.{}.{}'.format(
-                self.admin_name, id(table_view)
+                step['admin_name'], id(table_view)
             ))
             show_top_level(table_view, None)
-        table_view.change_title(self.title)
+        table_view.change_title(step['title'])
         table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
+@dataclass
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
     
@@ -198,17 +235,19 @@ class OpenQmlTableView(OpenTableView):
         super().__init__(admin, value)
         self.list_action = admin.get_list_action()
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         view = gui_context.workspace.active_view()
         quick_view = view.quick_view
         views = quick_view.findChild(QtCore.QObject, "qml_views")
         header_model = QtCore.QStringListModel(parent=quick_view)
-        header_model.setStringList(list(fn for fn, _fa in self.columns))
+        header_model.setStringList(step['columns'])
         header_model.setParent(quick_view)
-        new_model = CollectionProxy(self.admin_route)
+        new_model = CollectionProxy(tuple(step['admin_route']))
         new_model.setParent(quick_view)
-        list(new_model.add_columns((fn for fn, _fa in self.columns)))
-        new_model.set_value(self.proxy)
+        list(new_model.add_columns(step['columns']))
+        new_model.set_value(step['proxy_route'])
         view = views.addView(new_model, header_model)
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
@@ -220,17 +259,17 @@ class OpenQmlTableView(OpenTableView):
 
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
-        list_gui_context.admin_route = self.admin_route
+        list_gui_context.admin_route = tuple(step['admin_route'])
         list_gui_context.view = table
 
-        qt_action = ActionAction(self.list_action, list_gui_context, quick_view)
+        list_action = AdminRoute.action_for(tuple(step['list_action']))
+        qt_action = ActionAction(list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
-        for i, action in enumerate(itertools.chain(
-            self.top_toolbar_actions, self.list_actions, self.filters
-            )):
+        for i, action_route in enumerate(step['actions']):
+            action = AdminRoute.action_for(tuple(action_route['route']))
             icon_name = None
             if action.icon is not None:
-                icon_name = action.icon._name
+                icon_name = action.icon.name
             qt_action = ActionAction(action, list_gui_context, table)
             rendered_action = item_view._qml_item.addAction(
                 action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name,

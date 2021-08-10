@@ -34,14 +34,13 @@ import datetime
 from camelot.core.orm import Entity
 from camelot.admin.entity_admin import EntityAdmin
 
-from sqlalchemy import sql
-from sqlalchemy.schema import Column
+from sqlalchemy import sql, orm
+from sqlalchemy.schema import Column, ForeignKey, Table
 import sqlalchemy.types
 # end basic imports
 
 import camelot.types
-from camelot.core.orm import (ManyToOne, OneToMany,
-                              ManyToMany, ColumnProperty)
+from camelot.core.sql import metadata
 from camelot.admin.action import Action
 from camelot.admin.action import list_filter
 from camelot.core.utils import ugettext_lazy as _
@@ -109,13 +108,9 @@ class Movie( Entity ):
     #
     # All relation types are covered with their own editor
     #
-    director = ManyToOne('Person')
-    cast = OneToMany('Cast')
-    visitor_reports = OneToMany('VisitorReport', cascade='delete')
-    tags = ManyToMany('Tag',
-                      tablename = 'tags_movies__movies_tags',
-                      local_colname = 'tags_id',
-                      remote_colname = 'movies_id' )
+    director_party_id = Column(sqlalchemy.types.Integer(), ForeignKey(Person.party_id))
+    director = orm.relationship(Person)
+
 # end short movie definition
     #
     # Camelot includes custom sqlalchemy types, like Image, which stores an
@@ -133,10 +128,9 @@ class Movie( Entity ):
 
 # begin column_property
 
-    @ColumnProperty
-    def total_visitors( self ):
-        return sql.select( [sql.func.sum( VisitorReport.visitors) ],
-                                          VisitorReport.movie_id == self.id )
+    @classmethod
+    def __declare_last__(cls):  # gets called when all mappers have been set
+        cls.total_visitors = orm.column_property(sql.select([sql.func.sum(VisitorReport.visitors)], VisitorReport.movie_id == cls.id))
     
 # end column_property
 
@@ -212,8 +206,10 @@ class Cast( Entity ):
     __tablename__ = 'cast'
 
     role = Column( sqlalchemy.types.Unicode(60) )
-    movie = ManyToOne( 'Movie', required = True, backref = 'cast' )
-    actor = ManyToOne( Person, required = True )
+    movie_id = Column(sqlalchemy.types.Integer(), ForeignKey(Movie.id), nullable=False)
+    movie = orm.relationship(Movie, backref='cast')
+    actor_id = Column(sqlalchemy.types.Integer(), ForeignKey(Person.id), nullable=False)
+    actor = orm.relationship(Person)
 
     class Admin( EntityAdmin ):
         verbose_name = 'Actor'
@@ -229,10 +225,6 @@ class Tag(Entity):
     __tablename__ = 'tags'
 
     name = Column( sqlalchemy.types.Unicode(60), nullable = False )
-    movies = ManyToMany( 'Movie',
-                         tablename = 'tags_movies__movies_tags',
-                         local_colname = 'movies_id',
-                         remote_colname = 'tags_id' )
 
     def __unicode__( self ):
         return self.name
@@ -240,6 +232,10 @@ class Tag(Entity):
     class Admin( EntityAdmin ):
         form_size = (400,200)
         list_display = ['name']
+
+t = Table('tags_movies__movies_tags', metadata, Column('movies_id', sqlalchemy.types.Integer(), ForeignKey(Movie.id), primary_key=True),
+          Column('tags_id', sqlalchemy.types.Integer(), ForeignKey(Tag.id), primary_key=True))
+Tag.movies = orm.relationship(Movie, backref='tags', secondary=t, foreign_keys=[t.c.movies_id, t.c.tags_id])
 
 # begin visitor report definition
 class VisitorReport(Entity):
@@ -252,7 +248,8 @@ class VisitorReport(Entity):
     visitors = Column( sqlalchemy.types.Integer, 
                        nullable = False, 
                        default = 0 )
-    movie = ManyToOne( 'Movie', required = True )
+    movie_id = Column(sqlalchemy.types.Integer(), ForeignKey(Movie.id), nullable=False)
+    movie = orm.relationship(Movie, backref=orm.backref('visitor_reports', cascade='delete'))
 # end visitor report definition
 
     class Admin(EntityAdmin):

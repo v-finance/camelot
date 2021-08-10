@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import six
+
 
 from .customeditor import AbstractCustomEditor
 from ....core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
@@ -54,7 +54,7 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
                 language = QtCore.QLocale.Language(i)
                 if languages and (language not in languages):
                     continue
-                language_name = six.text_type(QtCore.QLocale.languageToString(language))
+                language_name = str(QtCore.QLocale.languageToString(language))
                 self.language_choices.append( (language, language_name ) )
             self.language_choices.sort(key=lambda x:x[1])
         for i, (language, language_name) in enumerate( self.language_choices ):
@@ -81,7 +81,7 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
         if current_index >= 0:
             language = variant_to_py(self.itemData(self.currentIndex()))
             locale = QtCore.QLocale( language )
-            value = six.text_type( locale.name() )
+            value = str( locale.name() )
         else:
             value = None
         return AbstractCustomEditor.get_value(self) or value

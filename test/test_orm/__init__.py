@@ -1,10 +1,14 @@
 import unittest
 
+from sqlalchemy import MetaData
+from sqlalchemy.ext.declarative import declarative_base
+
 from camelot.core.orm import EntityBase, EntityMeta, Session
+
 
 class TestMetaData( unittest.TestCase ):
     """Test case that provides setUp and tearDown
-    of metadata separated from the camelot default
+    of metadata separated from camelot default
     metadata.  
     
     This can be used to setup and test various
@@ -13,8 +17,6 @@ class TestMetaData( unittest.TestCase ):
     """
     
     def setUp(self):
-        from sqlalchemy import MetaData
-        from sqlalchemy.ext.declarative import declarative_base
         self.metadata = MetaData()
         self.class_registry = dict()
         self.Entity = declarative_base( cls = EntityBase, 
@@ -27,8 +29,6 @@ class TestMetaData( unittest.TestCase ):
         self.session = Session()
 
     def create_all(self):
-        from camelot.core.orm import process_deferred_properties
-        process_deferred_properties( self.class_registry )
         self.metadata.create_all()
         
     def tearDown(self):

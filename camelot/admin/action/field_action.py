@@ -32,17 +32,15 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
-import inspect
 import os
 
 from ...core.qt import QtWidgets
 from ...core.utils import ugettext_lazy as _
-from ...view.art import FontIcon
+from ...admin.icon import Icon
 from .base import Action, RenderHint
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
-import six
 
 class FieldActionModelContext( ApplicationActionModelContext ):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
@@ -112,39 +110,17 @@ class FieldAction(Action):
     """Action class that renders itself as a toolbutton, small enough to
     fit in an editor"""
 
+    name = 'field_action'
     render_hint = RenderHint.TOOL_BUTTON
 
-
-class ShowFieldAttributes(Action):
-    
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        from camelot.admin.object_admin import ObjectAdmin
-
-        class Attribute(object):
-            """Helper class representing a field attribute's name and its value"""
-            def __init__(self, name, value):
-                self.name = six.text_type(name)
-                if inspect.isclass(value):
-                    self.value = value.__name__
-                else:
-                    self.value = six.text_type(value)
-                        
-            class Admin(ObjectAdmin):
-                list_display = ['name', 'value']
-                field_attributes = {'name':{'minimal_column_width':25},
-                                    'value':{'minimal_column_width':25}}
-        
-        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes)]
-        yield action_steps.ChangeObjects(attributes, 
-                                         model_context.admin.get_related_admin(Attribute))
 
 class SelectObject(FieldAction):
     """Allows the user to select an object, and set the selected object as
     the new value of the editor"""
 
-    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
+    icon = Icon('search') # 'tango/16x16/actions/system-search.png'
     tooltip = _('select existing')
+    name = 'select_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -165,8 +141,9 @@ class NewObject(SelectObject):
     """Open a form for the creation of a new object, and set this
     object as the new value of the editor"""
 
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('create new')
+    name = 'new_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -182,8 +159,9 @@ class NewObject(SelectObject):
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 
-    icon = FontIcon('folder-open') # 'tango/16x16/places/folder.png'
+    icon = Icon('folder-open') # 'tango/16x16/places/folder.png'
     tooltip = _('open')
+    name = 'open_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -202,8 +180,9 @@ class OpenObject(SelectObject):
 class ClearObject(OpenObject):
     """Set the new value of the editor to `None`"""
 
-    icon = FontIcon('eraser') # 'tango/16x16/actions/edit-clear.png'
+    icon = Icon('eraser') # 'tango/16x16/actions/edit-clear.png'
     tooltip = _('clear')
+    name = 'clear_object'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -217,9 +196,10 @@ class ClearObject(OpenObject):
 class UploadFile(FieldAction):
     """Upload a new file into the storage of the field"""
 
-    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     tooltip = _('Attach file')
     file_name_filter = 'All files (*)'
+    name = 'attach_file'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -256,10 +236,11 @@ class DetachFile(FieldAction):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
-    icon = FontIcon('trash') # 'tango/16x16/actions/edit-delete.png'
+    icon = Icon('trash') # 'tango/16x16/actions/edit-delete.png'
     tooltip = _('Detach file')
     message_title = _('Detach this file ?')
     message_text = _('If you continue, you will no longer be able to open this file.')
+    name = 'detach_file'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -280,8 +261,9 @@ class DetachFile(FieldAction):
 class OpenFile(FieldAction):
     """Open the file shown in the editor"""
 
-    icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
+    icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
+    name = 'open_file'
 
     def model_run(self, model_context):
         from camelot.view import action_steps
@@ -300,8 +282,9 @@ class OpenFile(FieldAction):
 class SaveFile(OpenFile):
     """Copy the file shown in the editor to another location"""
 
-    icon = FontIcon('save') # 'tango/16x16/actions/document-save-as.png'
+    icon = Icon('save') # 'tango/16x16/actions/document-save-as.png'
     tooltip = _('Save as')
+    name = 'file_save_as'
 
     def model_run(self, model_context):
         from camelot.view import action_steps

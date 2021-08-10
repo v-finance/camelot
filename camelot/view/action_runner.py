@@ -31,10 +31,12 @@ import contextlib
 import functools
 import logging
 
-import six
 
-from ..core.qt import QtCore
+
+from ..core.serializable import DataclassSerializable
+from ..core.qt import QtCore, is_deleted
 from camelot.admin.action import ActionStep
+from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog
 from camelot.view.model_thread import post
@@ -58,9 +60,10 @@ def hide_progress_dialog( gui_context ):
             progress_dialog.hide()
         yield
     finally:
-        progress_dialog.setMinimumDuration(original_minimum_duration)
-        if original_state == False:
-            progress_dialog.show()
+        if not is_deleted(progress_dialog):
+            progress_dialog.setMinimumDuration(original_minimum_duration)
+            if original_state == False:
+                progress_dialog.show()
 
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action
@@ -72,6 +75,7 @@ class ActionRunner( QtCore.QEventLoop ):
     """
     
     non_blocking_action_step_signal = QtCore.qt_signal(object)
+    non_blocking_serializable_action_step_signal = QtCore.qt_signal(str, bytes)
     
     def __init__( self, generator_function, gui_context ):
         """
@@ -86,8 +90,9 @@ class ActionRunner( QtCore.QEventLoop ):
         self._gui_context = gui_context
         self._model_context = gui_context.create_model_context()
         self._non_blocking_cancel_request = False
-        self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
-        post( self._initiate_generator, self.generator, self.exception )
+        self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
+        self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
+        post(self._initiate_generator, self.generator, self.exception)
     
     def exit( self, return_code = 0 ):
         """Reimplementation of exit to store the return code"""
@@ -107,7 +112,7 @@ class ActionRunner( QtCore.QEventLoop ):
     def _initiate_generator( self ):
         """Create the model context and start the generator"""
         return self._generator_function( self._model_context )
-            
+
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that
@@ -121,9 +126,18 @@ class ActionRunner( QtCore.QEventLoop ):
             result = generator_method( *args )
             while True:
                 if isinstance(result, ActionStep):
-                    if result.blocking:
+                    if result.blocking and isinstance(result, (DataclassSerializable,)):
+                        LOGGER.debug( 'serializable blocking step, yield it' )
+                        return (type(result).__name__, result._to_bytes())
+                    elif result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
                         return result
+                    # for now, only send data class serializable steps over the wire
+                    elif isinstance(result, (DataclassSerializable,)):
+                        LOGGER.debug( 'non blocking serializable step, use signal slot' )
+                        self.non_blocking_serializable_action_step_signal.emit(
+                            type(result).__name__, result._to_bytes()
+                        )
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
                         self.non_blocking_action_step_signal.emit( result )
@@ -136,7 +150,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     result = self._generator.throw( CancelRequest() )
                 else:
                     LOGGER.debug( 'move iterator forward' )
-                    result = six.advance_iterator( self._generator )
+                    result = next(self._generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
@@ -152,7 +166,17 @@ class ActionRunner( QtCore.QEventLoop ):
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
-        
+
+    @QtCore.qt_slot(str, bytes)
+    def non_blocking_serializable_action_step(self, step_type, serialized_step):
+        cls = MetaActionStep.action_steps[step_type]
+        try:
+            self._was_canceled(self._gui_context)
+            cls.gui_run(self._gui_context, serialized_step)
+        except CancelRequest:
+            LOGGER.debug( 'non blocking action step requests cancel, set flag' )
+            self._non_blocking_cancel_request = True
+
     @QtCore.qt_slot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
@@ -172,7 +196,7 @@ class ActionRunner( QtCore.QEventLoop ):
             post( self._iterate_until_blocking, 
                   self.__next__, 
                   self.exception,
-                  args = ( functools.partial( six.advance_iterator,
+                  args = ( functools.partial( next,
                                               self._generator ), ) )
         else:
             self.exit()
@@ -194,10 +218,15 @@ class ActionRunner( QtCore.QEventLoop ):
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        if isinstance( yielded, ActionStep ):
+        if isinstance(yielded, (ActionStep, tuple)):
             try:
-                self._was_canceled( self._gui_context )
-                to_send = yielded.gui_run( self._gui_context )
+                self._was_canceled(self._gui_context)
+                if isinstance(yielded, tuple):
+                    step_type, serialized_step = yielded
+                    cls = MetaActionStep.action_steps[step_type]
+                    to_send = cls.gui_run(self._gui_context, serialized_step)
+                else:
+                    to_send = yielded.gui_run(self._gui_context)
                 self._was_canceled( self._gui_context )
                 post( self._iterate_until_blocking, 
                       self.__next__, 
@@ -230,7 +259,7 @@ class ActionRunner( QtCore.QEventLoop ):
             self.exit()
         else:
             LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( six.text_type( yielded ) )
+            LOGGER.error( str( yielded ) )
             raise Exception( 'this should not happen' )
 
 

@@ -31,9 +31,10 @@
 
 import logging
 
-import six
+
 
 from .qt import QtCore, qtranslate
+from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -76,20 +77,16 @@ def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
 
-def load_translations():
+def load_translations(connectable):
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
-    language = six.text_type(QtCore.QLocale().name())
-    from sqlalchemy import sql
+    language = str(QtCore.QLocale().name())
     from camelot.model.i18n import Translation
-    # only load translations when the camelot model is active
-    if not hasattr(Translation, 'query'):
-        return
-    query = sql.select( [Translation.source, Translation.value],
-                        whereclause = sql.and_(Translation.language==language,
-                                               Translation.value!=None,
-                                               Translation.value!=u'') )
-    for source, value in Translation.query.session.execute(query):
+    query = sql.select([Translation.source, Translation.value],
+                       whereclause = sql.and_(Translation.language==language,
+                                              Translation.value!=None,
+                                              Translation.value!=u''))
+    for source, value in connectable.execute(query):
         _translations_[source] = value
 
 def ugettext(string_to_translate):
@@ -98,7 +95,7 @@ def ugettext(string_to_translate):
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
     tries to get the translation from the .qm files)"""
-    assert isinstance(string_to_translate, six.string_types)
+    assert isinstance(string_to_translate, str)
     result = _translations_.get(string_to_translate, None)
     if not result:
         result = qtranslate( string_to_translate )
@@ -115,7 +112,7 @@ def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
     """
-    assert isinstance(message, six.string_types)
+    assert isinstance(message, str)
     from camelot.model.i18n import Translation
     from sqlalchemy import sql
     query = sql.select( [Translation.value],
@@ -132,7 +129,7 @@ class ugettext_lazy(object):
     """
 
     def __init__(self, string_to_translate):
-        assert isinstance(string_to_translate, six.string_types)
+        assert isinstance(string_to_translate, str)
         self._string_to_translate = string_to_translate
 
     def __str__(self):
@@ -142,7 +139,7 @@ class ugettext_lazy(object):
         return ugettext(self._string_to_translate)
     
     def __eq__(self, other_string):
-        if isinstance(other_string, six.string_types):
+        if isinstance(other_string, str):
             return other_string == self._string_to_translate
         if isinstance(other_string, ugettext_lazy):
             return other_string._string_to_translate == self._string_to_translate

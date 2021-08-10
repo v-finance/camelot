@@ -31,7 +31,7 @@
 
 import itertools
 
-import six
+
 
 import sqlalchemy.types
 
@@ -42,7 +42,7 @@ import datetime
 import operator
 
 from .controls import delegates
-from camelot.admin.action import list_filter
+from ..admin.action import list_filter, field_action
 from camelot.core import constants
 from camelot.view.utils import (
     bool_from_string,
@@ -152,7 +152,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.IntegerDelegate,
         'from_string': int_from_string,
-        'to_string': six.text_type,
+        'to_string': str,
         'widget': 'int',
         'operators': _numerical_operators,
         'search_strategy': list_filter.IntSearch,
@@ -201,7 +201,8 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'widget': 'combobox',
         'operators' : _numerical_operators,
-        'search_strategy': list_filter.NoSearch,
+        'to_string': enumeration_to_string,
+        'search_strategy': list_filter.NoSearch
     },
 
     camelot.types.Language: lambda f: {
@@ -223,6 +224,12 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
         'remove_original': False,
         'search_strategy': list_filter.NoSearch,
+        'actions': [
+            field_action.DetachFile(),
+            field_action.OpenFile(),
+            field_action.UploadFile(),
+            field_action.SaveFile()
+        ],
     },
 }
 
@@ -250,7 +257,7 @@ doc = """Field types handled through introspection :
 """ + row_separator + """
 """
 
-field_types = sorted( six.iterkeys(_sqlalchemy_to_python_type_),
+field_types = sorted( _sqlalchemy_to_python_type_.keys(),
                       key = lambda ft:ft.__name__ )
 
 for field_type in field_types:

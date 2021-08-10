@@ -28,36 +28,25 @@
 #  ============================================================================
 import datetime
 
-import six
-
-from ....core.qt import variant_to_py, Qt, QtCore, py_to_variant
+from ....core.item_model import PreviewRole
+from ....core.qt import QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class TimeDelegate(CustomDelegate):
-   
+class TimeDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
+
     editor = editors.TimeEditor
-      
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable)
-        locale = QtCore.QLocale()
-        self.time_format = locale.timeFormat(locale.FormatType.ShortFormat)
-        
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.ItemDataRole.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            time = QtCore.QTime(value.hour, value.minute, value.second)
-            value_str = time.toString(self.time_format)
 
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
-      
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super(TimeDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            value = model_context.value
+            time = QtCore.QTime(value.hour, value.minute, value.second)
+            value_str = time.toString(locale.timeFormat(locale.FormatType.ShortFormat))
+            item.setData(value_str, PreviewRole)
+        return item
+
     def setModelData(self, editor, model, index):
         value = editor.time()
         t = datetime.time(hour=value.hour(),

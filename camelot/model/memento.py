@@ -38,7 +38,7 @@ the custom `ApplicationAdmin`.
 
 import datetime
 
-import six
+
 
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
@@ -46,8 +46,7 @@ from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.not_editable_admin import not_editable_admin
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
@@ -59,7 +58,7 @@ class PreviousAttribute( object ):
     
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
-        self.previous_value = six.text_type( previous_value )
+        self.previous_value = str( previous_value )
         
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']
@@ -74,20 +73,23 @@ class Memento( Entity ):
     model = schema.Column( Unicode( 256 ), index = True, nullable = False )
     primary_key = schema.Column(PrimaryKey(), index=True, nullable=False)
     creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
-    authentication = ManyToOne( AuthenticationMechanism,
-                                required = True,
-                                ondelete = 'restrict',
-                                onupdate = 'cascade' )
+    authentication_id = schema.Column(Integer(), schema.ForeignKey(AuthenticationMechanism.id, ondelete='restrict', onupdate='cascade'),
+                                      nullable=False, index=True)
+    authentication = orm.relationship(AuthenticationMechanism)
     memento_type = schema.Column( Integer, 
                                   nullable = False,
                                   index = True )    
     previous_attributes = orm.deferred( schema.Column( PickleType() ) )
+
+    __facade_args__ = {
+        'editable': False
+    }
     
     @property
     def previous( self ):
         previous = self.previous_attributes
         if previous:
-            return [PreviousAttribute(k,v) for k,v in six.iteritems(previous)]
+            return [PreviousAttribute(k,v) for k,v in previous.items()]
         return []
 
     def __str__(self):
@@ -106,7 +108,3 @@ class Memento( Entity ):
                                         'delegate':delegates.One2ManyDelegate,
                                         'python_type':list}
                             }
-        
-    Admin = not_editable_admin( Admin )
-
-

@@ -1,25 +1,24 @@
+import json
 import logging
 import unittest
-
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.action.list_filter import Filter
-from camelot.core.qt import variant_to_py, QtCore, Qt, py_to_variant, delete
-from camelot.model.party import Person
-from camelot.view.item_model.cache import ValueCache
-from camelot.view.proxy.collection_proxy import (
-    CollectionProxy, invalid_item)
-from camelot.core.item_model import (FieldAttributesRole, ObjectRole,
-    VerboseIdentifierRole, ValidRole, ValidMessageRole, AbstractModelProxy,
-    CompletionsRole, CompletionPrefixRole
-)
-from camelot.core.item_model.query_proxy import QueryModelProxy
-from camelot.test import RunningThreadCase, RunningProcessCase
 
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase
 from .test_proxy import A, B
+from camelot.admin.action.field_action import ClearObject, SelectObject
+from camelot.admin.action.list_filter import Filter
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.core.item_model import (AbstractModelProxy, ActionRoutesRole, ActionStatesRole, CompletionPrefixRole,
+                                       CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
+                                       VerboseIdentifierRole)
+from camelot.core.item_model.query_proxy import QueryModelProxy
+from camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
+from camelot.model.party import Person
+from camelot.test import RunningProcessCase, RunningThreadCase
+from camelot.view.item_model.cache import ValueCache
+from camelot.view.proxy.collection_proxy import (CollectionProxy, ProxyRegistry, invalid_item)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -177,7 +176,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.item_model = CollectionProxy(self.admin_route)
-        self.item_model.set_value(self.admin.get_proxy(self.collection))
+        proxy = self.admin.get_proxy(self.collection)
+        self.item_model.set_value(ProxyRegistry.register(proxy))
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
         self.item_model.timeout_slot()
@@ -203,8 +203,10 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         # why would there be a need to get static fa before the timout has passed ?
         #self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole).get('prefix'), None)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), "[]")
         self._data(1, 2, self.item_model)
         self._data(1, 3, self.item_model)
+        self._data(1, 4, self.item_model)
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.EditRole), 1)
@@ -216,6 +218,12 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['prefix'], 'pre')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ToolTipRole), 'Hint')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.BackgroundRole), 'red')
+        self.assertEqual(len(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))), 2)
+        self._data(1, 4, self.item_model, role=ActionRoutesRole)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['tooltip'], SelectObject.tooltip)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['icon']['name'], SelectObject.icon.name)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['tooltip'], ClearObject.tooltip)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['icon']['name'], ClearObject.icon.name)
         self.assertTrue(isinstance(self._data(1, 2, self.item_model), AbstractModelProxy))
         self.assertEqual(self._data(1, 3, self.item_model), self.collection[1].created)
         
@@ -552,7 +560,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     @classmethod
     def setup_item_model(cls, admin_route, admin_name):
         cls.item_model = CollectionProxy(admin_route)
-        cls.item_model.set_value(cls.proxy)
+        cls.item_model.set_value(ProxyRegistry.register(cls.proxy))
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
         cls.item_model.timeout_slot()
@@ -663,7 +671,7 @@ class QueryQStandardItemModelCase(
 
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
-        item_model.set_value(self.proxy)
+        item_model.set_value(ProxyRegistry.register(self.proxy))
         item_model.set_filter(SingleItemFilter('id'), self.first_person_id)
         list(item_model.add_columns(self.columns))
         self._load_data(item_model)

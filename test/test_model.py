@@ -1,33 +1,25 @@
 import datetime
 import os
 import unittest
+from unittest.mock import Mock, patch
 
-import six
-
-from sqlalchemy import orm, schema, types, create_engine
-
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session, process_deferred_properties
-from camelot.core.conf import settings
-from camelot.core.sql import metadata
-
-from camelot.model import party, memento, authentication
-from camelot.model.party import Person
-from camelot.model.authentication import (
-    update_last_login, get_current_authentication
-)
-from camelot.model.batch_job import BatchJob, BatchJobType
-from camelot.model.fixture import Fixture, FixtureVersion
-from camelot.model.i18n import Translation, ExportAsPO
-
-from camelot.test.action import MockModelContext
-
-from camelot_example.fixtures import load_movie_fixtures
-from camelot_example import model
-from camelot_example.view import setup_views
+from sqlalchemy import create_engine, orm, schema, types
 
 from .test_orm import TestMetaData
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity, Session
+from camelot.core.sql import metadata
+from camelot.model import authentication, memento, party, type_and_status
+from camelot.model.authentication import (get_current_authentication, update_last_login)
+from camelot.model.batch_job import BatchJob, BatchJobType
+from camelot.model.fixture import Fixture, FixtureVersion
+from camelot.model.i18n import ExportAsPO, Translation
+from camelot.model.party import Person
+from camelot.test.action import MockModelContext
+from camelot.view.import_utils import XlsReader
+from camelot_example.fixtures import load_movie_fixtures
+from camelot_example.view import setup_views
 
 app_admin = ApplicationAdmin()
 
@@ -40,7 +32,6 @@ class ExampleModelMixinCase(object):
 
     @classmethod
     def setup_sample_model(cls):
-        process_deferred_properties()
         setup_views()
         metadata.bind = model_engine
         metadata.create_all(model_engine)
@@ -69,11 +60,9 @@ class ExampleModelMixinCase(object):
         cls.session.expunge_all()
         # create objects in various states
         #
-        p1 = Person(first_name = u'p1', last_name = u'persistent' )
         p2 = Person(first_name = u'p2', last_name = u'dirty' )
         p3 = Person(first_name = u'p3', last_name = u'deleted' )
         p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
-        p5 = Person(first_name = u'p5', last_name = u'detached' )
         p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
         cls.session.flush()
         p3.delete()
@@ -130,7 +119,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         model_context.obj = translation
         try:
             generator = export_action.model_run( model_context )
-            file_step = six.advance_iterator( generator )
+            next( generator )
             generator.send('/tmp/test.po')
         except StopIteration:
             pass
@@ -146,7 +135,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
             
     def test_batch_job( self ):
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( six.text_type( batch_job_type ) )
+        self.assertTrue( str( batch_job_type ) )
         batch_job = BatchJob.create( batch_job_type )
         self.assertTrue( orm.object_session( batch_job ) )
         self.assertFalse( batch_job.is_canceled() )
@@ -173,7 +162,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         orm.object_session( mechanism ).expunge_all()
         mechanism = authentication.get_current_authentication()
         self.assertTrue( mechanism.username )
-        self.assertTrue( six.text_type( mechanism ) )
+        self.assertTrue( str( mechanism ) )
         
     def test_authentication_group( self ):
         # begin roles definition
@@ -215,7 +204,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )
-        self.assertTrue( six.text_type( belgium ) )
+        self.assertTrue( str( belgium ) )
         city = party.City.get_or_create( country = belgium,
                                          code = '1000',
                                          name = 'Brussels' )
@@ -225,8 +214,9 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         city = self.test_geographic_boundary()
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
+                                               zip_code = None,
                                                city = city )
-        self.assertTrue( six.text_type( address ) )
+        self.assertTrue( str( address ) )
         return address
 
     def test_party_address( self ):
@@ -258,7 +248,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual( org.street1, 'Avenue Louise 5' )
         self.assertEqual( org.street2, 'Boite 4' )
         self.assertEqual( org.city, city )        
-        self.assertTrue( six.text_type( party_address ) )
+        self.assertTrue( str( party_address ) )
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
         self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
@@ -330,7 +320,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         
     def test_contact_mechanism( self ):
         contact_mechanism = party.ContactMechanism( mechanism = (u'email', u'info@test.be') )
-        self.assertTrue( six.text_type( contact_mechanism ) )
+        self.assertTrue( str( contact_mechanism ) )
         
     def test_person_contact_mechanism( self ):
         # create a new person
@@ -387,7 +377,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         org.phone = ('phone', '1234')
         org.fax = ('fax', '4567')
         self.organization_admin.flush( org )
-        self.assertTrue( six.text_type( org ) )
+        self.assertTrue( str( org ) )
         query = orm.object_session( org ).query( party.Organization )
         self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
         self.assertTrue( query.filter( party.Organization.phone == ('phone', '1234') ).first() )
@@ -405,7 +395,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.person_admin.flush( person )
         self.assertFalse( party_contact_mechanism in self.session.new )
         self.assertFalse( party_contact_mechanism.contact_mechanism in self.session.new )        
-        self.assertTrue( six.text_type( party_contact_mechanism ) )
+        self.assertTrue( str( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
         # party contact mechanism is only valid when contact mechanism is
@@ -429,7 +419,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         category.parties.append( org )
         self.session.flush()
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
-        self.assertTrue( six.text_type( category ) )
+        self.assertTrue( str( category ) )
 
 class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model for fixtures"""
@@ -484,7 +474,6 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
                                      'import_example.xlsx' )
         person_count_before_import = Person.query.count()
         # begin load csv if fixture version
-        from camelot.view.import_utils import XlsReader
         if FixtureVersion.get_current_version( u'demo_data' ) == 0:
             reader = XlsReader(example_file)
             for line in reader:
@@ -509,7 +498,7 @@ class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
         party.Person.language = schema.Column( types.Unicode(30) )
         
         metadata.create_all()
-        p = party.Person( first_name = u'Peter', 
+        party.Person( first_name = u'Peter',
                           last_name = u'Principle', 
                           language = u'English' )
         session.flush()
@@ -517,87 +506,56 @@ class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
         
 class StatusCase( TestMetaData ):
     
-    def test_status_type( self ):
-        Entity, session = self.Entity, self.session
-        
-        #begin status type definition
-        from camelot.model import type_and_status
-        
-        class Invoice( Entity, type_and_status.StatusMixin ):
-            book_date = schema.Column( types.Date(), nullable = False )
-            status = type_and_status.Status()
-            
-        #end status type definition
-        self.create_all()
-        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusTypeMixin ) )
-        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        #begin status types definition
-        draft = Invoice._status_type( code = 'DRAFT' )
-        ready = Invoice._status_type( code = 'READY' )
-        session.flush()
-        #end status types definition
-        self.assertTrue( six.text_type( ready ) )
-        #begin status type use
-        invoice = Invoice( book_date = datetime.date.today() )
-        self.assertEqual( invoice.current_status, None )
-        invoice.change_status( draft, status_from_date = datetime.date.today() )
-        #end status type use
-        self.assertEqual( invoice.current_status, draft )
-        self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
-        self.assertTrue( len( invoice.status ) )
-        for history in invoice.status:
-            self.assertTrue( six.text_type( history ) )
-        
     def test_status_enumeration( self ):
-        Entity, session = self.Entity, self.session
+        session = self.session
         
-        #begin status enumeration definition
-        from camelot.model import type_and_status
-        
-        class Invoice( Entity, type_and_status.StatusMixin ):
-            book_date = schema.Column( types.Date(), nullable = False )
-            status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
-                                                             (2, 'READY'),
-                                                             (3, 'BLOCKED')] )
+        with patch('camelot.core.orm.Entity.metadata') as mock_entity_metadata:
+            mock_entity_metadata.__get__ = Mock(return_value=self.metadata)
             
-            class Admin( EntityAdmin ):
-                list_display = ['book_date', 'current_status']
-                list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
-                                 type_and_status.ChangeStatus( 'READY' ) ]
-                form_actions = list_actions
+            class Invoice( Entity, type_and_status.WithStatus, type_and_status.StatusMixin ):
+                status_types = [(1, 'DRAFT'),
+                                (2, 'READY'),
+                                (3, 'BLOCKED')]
+                book_date = schema.Column( types.Date(), nullable = False )
                 
-        #end status enumeration definition
-        self.create_all()
-        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        #begin status enumeration use
-        invoice = Invoice( book_date = datetime.date.today() )
-        self.assertEqual( invoice.current_status, None )
-        invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1) )
-        session.flush()
-        self.assertEqual( invoice.current_status, 'DRAFT' )
-        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
-        draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
-        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
-        #end status enumeration use
-        self.assertEqual( draft_invoices, 1 )
-        self.assertEqual( ready_invoices, 0 )
-        ready_action = Invoice.Admin.list_actions[-1]
-        model_context = MockModelContext()
-        model_context.obj = invoice
-        model_context.admin = app_admin.get_related_admin(Invoice)
-        list( ready_action.model_run( model_context ) )
-        self.assertTrue( invoice.current_status, 'READY' )
-        # changing the status should work without flushing
-        invoice.status.append(Invoice._status_history(
-            status_from_date=datetime.date.today(),
-            status_thru_date=party.end_of_times(),
-            classified_by='DRAFT'))
-        session.flush()
-        self.assertTrue( invoice.current_status, 'DRAFT')
-        invoice.status.append(Invoice._status_history(
-            status_from_date=datetime.date.today(),
-            status_thru_date=party.end_of_times(),
-            classified_by='BLOCKED'))
-        self.assertTrue( invoice.current_status, 'BLOCKED')
-        session.flush()
-        self.assertTrue( invoice.current_status, 'BLOCKED')
+                class Admin( EntityAdmin ):
+                    list_display = ['book_date', 'current_status']
+                    list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
+                                     type_and_status.ChangeStatus( 'READY' ) ]
+                    form_actions = list_actions
+                    
+            #end status enumeration definition
+            self.create_all()
+            self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+            #begin status enumeration use
+            invoice = Invoice( book_date = datetime.date.today() )
+            self.assertEqual( invoice.current_status, None )
+            invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1), session=session)
+            session.flush()
+            self.assertEqual( invoice.current_status, 'DRAFT' )
+            self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
+            draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
+            ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
+            #end status enumeration use
+            self.assertEqual( draft_invoices, 1 )
+            self.assertEqual( ready_invoices, 0 )
+            ready_action = Invoice.Admin.list_actions[-1]
+            model_context = MockModelContext()
+            model_context.obj = invoice
+            model_context.admin = app_admin.get_related_admin(Invoice)
+            list( ready_action.model_run( model_context ) )
+            self.assertTrue( invoice.current_status, 'READY' )
+            # changing the status should work without flushing
+            invoice.status.append(Invoice._status_history(
+                status_from_date=datetime.date.today(),
+                status_thru_date=party.end_of_times(),
+                classified_by='DRAFT'))
+            session.flush()
+            self.assertTrue( invoice.current_status, 'DRAFT')
+            invoice.status.append(Invoice._status_history(
+                status_from_date=datetime.date.today(),
+                status_thru_date=party.end_of_times(),
+                classified_by='BLOCKED'))
+            self.assertTrue( invoice.current_status, 'BLOCKED')
+            session.flush()
+            self.assertTrue( invoice.current_status, 'BLOCKED')

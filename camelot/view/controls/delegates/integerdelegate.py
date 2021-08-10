@@ -27,34 +27,30 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-if six.PY3:
-    long_int = int
-else:
-    long_int = six.integer_types[-1]
+long_int = int
 
-@six.add_metaclass(DocumentationMetaclass)
-class IntegerDelegate(CustomDelegate):
+class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
     horizontal_align = Qt.Alignment.AlignRight | Qt.Alignment.AlignVCenter
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(IntegerDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = locale.toString(long_int(value))
-            if fa_values.get('suffix') is not None:
-                value_str = value_str + ' ' + six.text_type(fa_values.get('suffix'))
-            if fa_values.get('prefix') is not None:
-                value_str = six.text_type(fa_values.get('prefix')) + ' ' + value_str
+    def get_standard_item(cls, locale, model_context):
+        item = super(IntegerDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            value_str = locale.toString(long_int(model_context.value))
+            if model_context.field_attributes.get('suffix') is not None:
+                value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
+            if model_context.field_attributes.get('prefix') is not None:
+                value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
             item.setData(py_to_variant(value_str), PreviewRole)
         return item
 

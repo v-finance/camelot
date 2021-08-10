@@ -39,7 +39,7 @@ logger = logging.getLogger( 'camelot.view.forms' )
 from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
-import six
+
 
 class Form( list ):
     """Base Form class to put fields on a form.  The base class of a form is
@@ -81,7 +81,7 @@ and takes these parameters :
                 for nested_field in  field._get_fields_from_form():
                     yield nested_field
             else:
-                assert isinstance( field, (six.string_types)) or (field is None)
+                assert isinstance( field, (str)) or (field is None)
                 yield field;
 
 
@@ -120,7 +120,7 @@ and takes these parameters :
         self.append( new_field )
 
     def __str__( self ):
-        return 'Form(%s)' % ( u','.join( six.text_type( c ) for c in self ) )
+        return 'Form(%s)' % ( u','.join( str( c ) for c in self ) )
 
     def render( self, widgets, parent = None, toplevel = False):
         """
@@ -220,7 +220,7 @@ and takes these parameters :
                         c.next_col()
                     size_policy = editor.sizePolicy()
                 else:
-                    log_programming_error( logger, 'widgets should contain a widget for field %s'%six.text_type(field) )
+                    log_programming_error( logger, 'widgets should contain a widget for field %s'%str(field) )
             if size_policy and size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Policy.Expanding:
                 has_vertical_expanding_row = True
 
@@ -271,9 +271,9 @@ class Label( Form ):
 
     def render( self, widgets, parent = None, toplevel = False ):
         if self.style:
-            widget = QtWidgets.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,six.text_type(self.label)) )
+            widget = QtWidgets.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,str(self.label)) )
         else:
-            widget = QtWidgets.QLabel( '<p align="%s">%s</p>' % (self.alignment,six.text_type(self.label)) )
+            widget = QtWidgets.QLabel( '<p align="%s">%s</p>' % (self.alignment,str(self.label)) )
         widget.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                               QtWidgets.QSizePolicy.Policy.Fixed )    
         return widget
@@ -297,7 +297,7 @@ the moment the tab is shown.
         for tab_label, tab_form in tabs:
             self._forms.append( tab_form )
             tab_widget = QtWidgets.QWidget( self )
-            self.addTab( tab_widget, six.text_type(tab_label) )
+            self.addTab( tab_widget, str(tab_label) )
         #
         # render the first tab and continue rendering until we have
         # a tab with an expanding size policy, because then we know
@@ -375,7 +375,7 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
                                       for tab_label, tab_form in self.tabs ), [] ) )
 
     def __str__( self ):
-        return 'TabForm { %s\n        }' % ( u'\n  '.join( '%s : %s' % ( label, six.text_type( form ) ) for label, form in self.tabs ) )
+        return 'TabForm { %s\n        }' % ( u'\n  '.join( '%s : %s' % ( label, str( form ) ) for label, form in self.tabs ) )
 
     def add_tab_at_index( self, tab_label, tab_form, index ):
         """Add a tab to the form at the specified index
@@ -453,7 +453,7 @@ class HBoxForm( Form ):
                                       for column_form in self.columns ), [] ), scrollbars=scrollbars )
 
     def __str__( self ):
-        return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [six.text_type( form ) for form in self.columns] ) )
+        return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [str( form ) for form in self.columns] ) )
 
     def replace_field( self, original_field, new_field ):
         for form in self.columns:
@@ -510,7 +510,7 @@ class VBoxForm( Form ):
                 yield field
 
     def __str__( self ):
-        return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [six.text_type( form ) for form in self.rows] ) )
+        return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [str( form ) for form in self.rows] ) )
 
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
@@ -605,7 +605,7 @@ class WidgetOnlyForm( Form ):
     """Renders a single widget without its label, typically a one2many widget"""
 
     def __init__( self, field ):
-        assert isinstance( field, six.string_types )
+        assert isinstance( field, str )
         super( WidgetOnlyForm, self ).__init__( [field] )
 
     def render( self, widgets, parent = None, toplevel = False ):
@@ -643,7 +643,7 @@ class GroupBoxForm( Form ):
         Form.__init__( self, content, scrollbars, columns=columns )
 
     def render( self, widgets, parent = None, toplevel = False ):
-        widget = QtWidgets.QGroupBox( six.text_type(self.title), parent )
+        widget = QtWidgets.QGroupBox( str(self.title), parent )
         layout = QtWidgets.QVBoxLayout()
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )

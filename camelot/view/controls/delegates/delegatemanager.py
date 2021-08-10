@@ -30,26 +30,29 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
-import six
 
+from ....core.item_model import FieldAttributesRole
 from ....core.qt import QtWidgets, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate
+
 
 class DelegateManager(QtWidgets.QItemDelegate):
     """Manages custom delegates, should not be used by the application
   developer
   """
 
-    def __init__(self, columns, parent=None):
+    def __init__(self, parent=None):
         QtWidgets.QItemDelegate.__init__(self, parent)
         # set a delegate for the vertical header
         self.insert_column_delegate(-1, PlainTextDelegate(parent=self))
-        self._columns = columns
 
-    def get_column_delegate(self, column):
+    def get_column_delegate(self, index):
+        column = index.column()
         delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
-            field_name, field_attributes = self._columns[column]
+            field_attributes = index.model().headerData(
+                column, Qt.Horizontal, FieldAttributesRole
+            )
             delegate = field_attributes['delegate'](parent=self, **field_attributes)
             self.insert_column_delegate(column, delegate)
         return delegate
@@ -68,15 +71,10 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
-    def paint(self, painter, option, index):
-        """Use a custom delegate paint method if it exists"""
-        delegate = self.get_column_delegate(index.column())
-        delegate.paint(painter, option, index)
-
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
         try:
-            delegate = self.get_column_delegate(index.column())
+            delegate = self.get_column_delegate(index)
             editor = delegate.createEditor(parent, option, index)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
@@ -90,22 +88,22 @@ class DelegateManager(QtWidgets.QItemDelegate):
         # editor from its list of editors for which the data is set
         if not is_deleted(editor):
             try:
-                delegate = self.get_column_delegate(index.column())
+                delegate = self.get_column_delegate(index)
                 delegate.setEditorData(editor, index)
             except Exception as e:
                 logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
-                logger.error('value that could not be set : %s'%six.text_type(variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))))
+                logger.error('value that could not be set : %s'%str(variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))))
                 logger.error('editor that failed %s %s'%(type(editor).__name__, editor.objectName()))
 
     def setModelData(self, editor, model, index):
         """Use a custom delegate setModelData method if it exists"""
         logger.debug('setting model data for column %s' % index.column())
-        delegate = self.get_column_delegate(index.column())
+        delegate = self.get_column_delegate(index)
         delegate.setModelData(editor, model, index)
 
     def sizeHint(self, option, index):
         option = QtWidgets.QStyleOptionViewItem()
-        delegate = self.get_column_delegate(index.column())
+        delegate = self.get_column_delegate(index)
         return delegate.sizeHint(option, index)
 
     #def eventFilter(self, *args):

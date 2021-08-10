@@ -27,15 +27,14 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import py_to_variant
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class FileDelegate(CustomDelegate):
+class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """
@@ -43,12 +42,12 @@ class FileDelegate(CustomDelegate):
     editor = editors.FileEditor
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(FileDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            item.setData(py_to_variant(value.verbose_name), PreviewRole)
+    def get_standard_item(cls, locale, model_context):
+        item = super(FileDelegate, cls).get_standard_item(locale, model_context)
+        if model_context.value is not None:
+            item.setData(py_to_variant(model_context.value.verbose_name), PreviewRole)
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.setData(py_to_variant(str()), PreviewRole)
         return item
 
 

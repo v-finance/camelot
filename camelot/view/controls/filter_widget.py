@@ -31,7 +31,7 @@
 Widgets that represent Filter Actions
 """
 
-import six
+
 
 from ...admin.action.list_filter import All
 from ...core.utils import ugettext
@@ -122,14 +122,14 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
 
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
-        self.setTitle(six.text_type(state.verbose_name))
+        self.setTitle(str(state.verbose_name))
         group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
         self.modes = state.modes
 
         for i, mode in enumerate(state.modes):
-            button = self.button_type(six.text_type(mode.verbose_name), self)
+            button = self.button_type(str(mode.verbose_name), self)
             button_layout.addWidget(button)
             group.addButton(button, i)
             if mode.checked:
@@ -157,7 +157,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
 
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
-        self.setTitle(six.text_type(state.verbose_name))
+        self.setTitle(str(state.verbose_name))
         combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
             current_index = 0
@@ -165,7 +165,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
                 if mode.checked == True:
                     current_index = i
                 combobox.insertItem(i,
-                                    six.text_type(mode.verbose_name),
+                                    str(mode.verbose_name),
                                     py_to_variant(mode))
             # setting the current index will trigger the run of the action to
             # apply the initial filter
@@ -210,14 +210,14 @@ class OperatorFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
 
     def set_state(self, state):
         layout = self.layout()
-        self.setTitle(six.text_type(state.verbose_name))
+        self.setTitle(str(state.verbose_name))
 
         combobox = QtWidgets.QComboBox(self)
         layout.addWidget(combobox)
         default_index = 0
         for i, mode in enumerate(state.modes):
             combobox.insertItem(i,
-                                six.text_type(mode.verbose_name),
+                                str(mode.verbose_name),
                                 py_to_variant(mode))
             if mode.checked == True:
                 default_index = i

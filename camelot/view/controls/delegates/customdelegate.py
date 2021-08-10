@@ -27,13 +27,20 @@
 #
 #  ============================================================================
 
-import six
+
+import json
+import logging
+import dataclasses
 
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.item_model import ProxyDict, FieldAttributesRole
-from camelot.view.proxy import ValueLoading
+from ....core.serializable import json_encoder
+from ....core.item_model import (
+    ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
+)
+from ..action_widget import ActionToolbutton
 
+LOGGER = logging.getLogger(__name__)
 
 def DocumentationMetaclass(name, bases, dct):
     dct['__doc__'] = (dct.get('__doc__') or '') + """
@@ -77,7 +84,7 @@ def DocumentationMetaclass(name, bases, dct):
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
         dct['__doc__'] = dct['__doc__'] + row_format%('**Field Attributes**', '**Editor**') + '\n'
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
-        for state, attrs in six.iteritems(states):
+        for state, attrs in states.items():
             for i,attr in enumerate(attrs):
                 if i==0:
                     image = '.. image:: /_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
@@ -132,27 +139,41 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         self._width = self._font_metrics.averageCharWidth() * 20
 
     @classmethod
-    def get_standard_item(cls, locale, value, field_attributes_values):
+    def get_standard_item(cls, locale, model_context):
         """
         This method is used by the proxy to convert the value of a field
         to the data for the standard item model.  The result of this call can be
         used by the methods of the delegate.
 
         :param locale: the `QLocale` to be used to display locale dependent values
-        :param value: the value of the field on the object
-        :param field_attributes_values: the values of the field attributes on the
-           object
+        :param model_context: a FieldActionModelContext object
         
         :return: a `QStandardItem` object
         """
+        routes = model_context.field_attributes.get('action_routes', [])
+        states = []
+        for action in model_context.field_attributes.get('actions', []):
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
+        #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
+        if len(routes) != len(states):
+            LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
+
+        # eventually, the whole item will need to be serialized, while this
+        # is not yet the case, serialize some roles to make the usable outside
+        # python.
+        serialized_action_routes = json_encoder.encode(routes)
+        serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
-        item.setData(py_to_variant(value), Qt.ItemDataRole.EditRole)
+        item.setData(py_to_variant(model_context.value), Qt.ItemDataRole.EditRole)
+        item.setData(serialized_action_routes, ActionRoutesRole)
+        item.setData(serialized_action_states, ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
-        item.setData(py_to_variant(ProxyDict(field_attributes_values)),
+        item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
-        item.setData(py_to_variant(field_attributes_values.get('tooltip')),
+        item.setData(py_to_variant(model_context.field_attributes.get('tooltip')),
                      Qt.ItemDataRole.ToolTipRole)
-        item.setData(py_to_variant(field_attributes_values.get('background_color')),
+        item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.ItemDataRole.BackgroundRole)
         return item
 
@@ -197,7 +218,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
-            editor.setToolTip( six.text_type( field_attributes.get('tooltip', '') ) )
+            editor.setToolTip( str( field_attributes.get('tooltip', '') ) )
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
@@ -206,56 +227,23 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
 
+        # update actions
+        action_states = json.loads(index.model().data(index, ActionStatesRole))
+        action_routes = json.loads(index.model().data(index, ActionRoutesRole))
+        if len(action_routes) == 0:
+            return
+        for action_widget in editor.findChildren(ActionToolbutton):
+            try:
+                action_index = action_routes.index(list(action_widget.action_route))
+            except ValueError:
+                LOGGER.error('action route not found {}, available routes'.format(
+                    action_widget.action_route
+                ))
+                for route in action_routes:
+                    LOGGER.error(route)
+                continue
+            state = action_states[action_index]
+            action_widget.set_state_v2(state)
+
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
-
-    def paint_text(
-        self,
-        painter,
-        option,
-        index,
-        text,
-        margin_left=0,
-        margin_right=0,
-        horizontal_align=None,
-        vertical_align=Qt.Alignment.AlignVCenter
-    ):
-        """Paint unicode text into the given rect defined by option, and fill the rect with
-        the background color
-        :arg margin_left: additional margin to the left, to be used for icons or others
-        :arg margin_right: additional margin to the right, to be used for icons or others"""
-
-        rect = option.rect
-        # prevent text being centered if the height of the cell increases beyond multiple
-        # lines of text
-        if rect.height() > 2 * self._height:
-            vertical_align = Qt.Alignment.AlignTop
-
-        field_attributes = variant_to_py(index.data(FieldAttributesRole))
-        if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            background_color = field_attributes.get( 'background_color', None )
-            prefix = field_attributes.get( 'prefix', None )
-            suffix = field_attributes.get( 'suffix', None )
-
-        if( option.state & QtWidgets.QStyle.State.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = option.palette.highlightedText().color()
-        else:
-            color_group = color_groups[editable]
-            painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.ColorRole.Base) )
-            fontColor = option.palette.color(color_group, QtGui.QPalette.ColorRole.Text)
-        
-
-        if prefix:
-            text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )
-        if suffix:
-            text = '%s %s' % (six.text_type( text ).strip(), six.text_type( suffix ).strip() )
-
-        painter.setPen(fontColor.toRgb())
-        painter.drawText(rect.x() + 2 + margin_left,
-                         rect.y() + 2,
-                         rect.width() - 4 - (margin_left + margin_right),
-                         rect.height() - 4, # not -10, because the row might not be high enough for this
-                         vertical_align | (horizontal_align or self.horizontal_align),
-                         text)

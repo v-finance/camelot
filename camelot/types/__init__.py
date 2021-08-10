@@ -39,11 +39,10 @@ import logging
 
 logger = logging.getLogger('camelot.types')
 
-import six
+
 
 from sqlalchemy import types
 
-from camelot.core.orm import options
 from camelot.core.files.storage import StoredFile, Storage
 
 """
@@ -61,10 +60,12 @@ class PrimaryKey(types.TypeDecorator):
     _type_affinity = types.Integer
     
     def load_dialect_impl(self, dialect):
+        from camelot.core.orm import options
         return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
     
     @property
     def python_type(self):
+        from camelot.core.orm import options
         return options.DEFAULT_AUTO_PRIMARYKEY_TYPE().python_type
 
     def __repr__(self):
@@ -214,7 +215,7 @@ class Enumeration(types.TypeDecorator):
                     value = self._string_to_int[value]
                     return impl_processor(value)
                 except KeyError as e:
-                    logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(six.iterkeys(self._string_to_int)))), exc_info=e)
+                    logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(self._string_to_int.keys()))), exc_info=e)
                     raise
             else:
                 impl_processor(value)

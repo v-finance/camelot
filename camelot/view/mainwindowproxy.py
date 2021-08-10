@@ -34,8 +34,6 @@ from ..core.qt import (
     QtWidgets, QtCore, py_to_variant, variant_to_py, transferto
 )
 
-from camelot.view.controls.busy_widget import BusyWidget
-
 
 class MainWindowProxy(QtCore.QObject):
     """Proxy for a main window of a Desktop Camelot application
@@ -91,20 +89,6 @@ class MainWindowProxy(QtCore.QObject):
         settings = QtCore.QSettings()
         settings.setValue('geometry', py_to_variant(self.parent().saveGeometry()))
         logger.debug('settings written')
-
-    @QtCore.qt_slot( object )
-    def set_main_menu( self, main_menu ):
-        """Set the main menu
-        :param main_menu: a list of :class:`camelot.admin.menu.Menu` objects,
-            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_main_menu`
-            method.
-        """
-        if main_menu == None:
-            return
-        menu_bar = self.parent().menuBar()
-        for menu in main_menu:
-            menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
-        menu_bar.setCornerWidget( BusyWidget() )
 
     def get_gui_context( self ):
         """Get the :class:`GuiContext` of the active view in the mainwindow,

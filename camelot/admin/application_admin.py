@@ -34,15 +34,17 @@ import sys
 
 logger = logging.getLogger('camelot.admin.application_admin')
 
-import six
 
-from .admin_route import AdminRoute
+
+from .action.base import Action
+from .action.application_action import OpenTableView
+from .admin_route import AdminRoute, register_list_actions
 from .entity_admin import EntityAdmin
+from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import Qt, QtCore
 from camelot.admin.action import application_action, form_action, list_action
-from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 
 #
@@ -102,6 +104,10 @@ shortcut confusion and reduce the number of status updates.
     #
     # actions that will be shared between the toolbar and the main menu
     #
+    list_toolbar_actions = [
+        list_action.CloseList(),
+        list_action.ListLabel(),
+    ]
     change_row_actions = [ list_action.ToFirstRow(),
                            list_action.ToLastRow(), ]
     edit_actions = [ list_action.AddNewObject(),
@@ -117,6 +123,12 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
+    export_spreadsheet_action = [ list_action.ExportSpreadsheet() ]
+    onetomany_actions = edit_actions + export_spreadsheet_action
+    manytomany_actions = [
+        list_action.AddExistingObject(),
+        list_action.RemoveSelection(),
+    ] + export_spreadsheet_action
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -135,6 +147,8 @@ shortcut confusion and reduce the number of status updates.
         if domain is not None:
             self.domain = domain
         self._admin_route = super()._register_admin_route(self)
+        self._main_menu = MenuItem()
+        self._navigation_menu = MenuItem()
 
     def get_admin_route(self):
         return self._admin_route
@@ -151,17 +165,11 @@ shortcut confusion and reduce the number of status updates.
         """
         self.admins[entity] = admin_class
 
-    def get_sections( self ):
-        """A list of :class:`camelot.admin.section.Section` objects,
-        these are the sections to be displayed in the left panel.
-
-        .. image:: /_static/picture2.png
+    def get_navigation_menu(self):
         """
-        from camelot.admin.section import Section
-
-        return [ Section( _('Relations'), self ),
-                 Section( _('Configuration'), self ),
-                 ]
+        :return: a :class:`camelot.admin.menu.MenuItem` object
+        """
+        return self._navigation_menu
 
     def get_memento( self ):
         """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
@@ -229,6 +237,7 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
@@ -239,14 +248,9 @@ shortcut confusion and reduce the number of status updates.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         if toolbar_area == Qt.ToolBarAreas.RightToolBarArea and direction == 'onetomany':
-            return [ list_action.AddNewObject(),
-                     list_action.DeleteSelection(),
-                     list_action.DuplicateSelection(),
-                     list_action.ExportSpreadsheet(), ]
+            return self.onetomany_actions
         if toolbar_area == Qt.ToolBarAreas.RightToolBarArea and direction == 'manytomany':
-            return [ list_action.AddExistingObject(),
-                     list_action.RemoveSelection(),
-                     list_action.ExportSpreadsheet(), ]
+            return self.manytomany_actions
 
     def get_form_actions( self ):
         """Specify the action buttons that should appear on each form in the
@@ -280,46 +284,103 @@ shortcut confusion and reduce the number of status updates.
                         if type(action) != form_action.CloseForm]
             return self.form_toolbar_actions
 
-    def get_list_toolbar_actions( self, toolbar_area ):
+    @register_list_actions('_toolbar_actions', '_admin_route')
+    def get_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.ToolBarAreas.TopToolBarArea:
-            return [
-                list_action.CloseList(), list_action.ListLabel()
-                ] + self.edit_actions + self.change_row_actions + self.export_actions
-        return []
+        return self.list_toolbar_actions + \
+               self.edit_actions + \
+               self.change_row_actions + \
+               self.export_actions
 
-    def get_main_menu( self ):
+    @register_list_actions('_select_toolbar_actions', '_admin_route')
+    def get_select_list_toolbar_actions( self ):
         """
-        :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
-            there should be no main menu
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
         """
-        from camelot.admin.menu import Menu
+        return self.list_toolbar_actions + self.change_row_actions
 
-        return [ Menu( _('&File'),
-                       [ application_action.Backup(),
-                         application_action.Restore(),
-                         None,
-                         application_action.Exit(),
-                         ] ),
-                 Menu( _('View'),
-                       [ application_action.Refresh(),] ),
-                 Menu( _('&Help'),
-                       self.help_actions + [
-                           application_action.ShowAbout() ] )
-                 ]
+    def add_main_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
+        """
+        add a new item to the main menu
+
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
+        """
+        menu = MenuItem(verbose_name, icon, role=role)
+        if parent_menu is None:
+            parent_menu = self._main_menu
+        parent_menu.items.append(menu)
+        return menu
+
+    def add_navigation_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
+        """
+        add a new item to the navigation menu
+
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
+        """
+        menu = MenuItem(verbose_name, icon, role=role)
+        if parent_menu is None:
+            parent_menu = self._navigation_menu
+        parent_menu.items.append(menu)
+        return menu
+
+    def add_navigation_entity_table(self, entity, parent_menu, add_before=None):
+        """
+        Add an action to open a table view of an entity to the navigation menu
+        """
+        admin = self.get_related_admin(entity)
+        return self.add_navigation_admin_table(admin, parent_menu, add_before)
+
+    def add_navigation_admin_table(self, admin, parent_menu, add_before=None):
+        """
+        Add an action to open a table view for a specified admin
+        """
+        action = OpenTableView(admin)
+        action_route = self._register_action_route(admin._admin_route, action)
+        menu = MenuItem(action_route=action_route)
+        if add_before is None:
+            parent_menu.items.append(menu)
+        else:
+            parent_menu.items.insert(parent_menu.items.index(add_before), menu)
+        return menu
+
+    def add_navigation_action(self, action, parent_menu, role=None, add_before=None):
+        action_route = self._register_action_route(self._admin_route, action)
+        menu = MenuItem(action_route=action_route, role=role)
+        if add_before is None:
+            parent_menu.items.append(menu)
+        else:
+            parent_menu.items.insert(parent_menu.items.index(add_before), menu)
+        return menu
+
+    def add_main_action(self, action, parent_menu):
+        assert isinstance(action, Action)
+        assert isinstance(parent_menu, MenuItem)
+        action_route = self._register_action_route(self._admin_route, action)
+        parent_menu.items.append(MenuItem(action_route=action_route))
+
+    def add_main_separator(self, parent_menu):
+        assert isinstance(parent_menu, MenuItem)
+        parent_menu.items.append(MenuItem())
+
+    def get_main_menu(self) -> MenuItem:
+        """
+        :return: a :class:`camelot.admin.menu.MenuItem` object
+        """
+        return self._main_menu
 
     def get_name(self):
         """
         :return: the name of the application, by default this is the class
             attribute name"""
-        return six.text_type( self.name )
+        return str( self.name )
 
     def get_version(self):
         """:return: string representing version of the application, by default this
@@ -327,7 +388,7 @@ shortcut confusion and reduce the number of status updates.
         return self.version
 
     def get_icon(self):
-        """:return: the :class:`camelot.view.art.FontIcon` that should be used for the application"""
+        """:return: the :class:`QtGui.QIcon` that should be used for the application"""
         from camelot.view.art import FontIcon
         return FontIcon('users').getQIcon() # 'tango/32x32/apps/system-users.png'
 
