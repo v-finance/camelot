@@ -68,8 +68,10 @@ class SelectFile( ActionStep ):
 
     file_name_filter: str = ''
 
-    single = True
     caption = _('Open')
+
+    def __post_init__(self):
+        self.single = True
 
     def gui_run(self, gui_context):
         settings = QtCore.QSettings()
