@@ -723,9 +723,12 @@ be specified using the verbose_name attribute.
             )
         field_attributes['column_width'] = column_width
         
-
-        # Initialize the search/filter strategies with the corresponding instrumented attribute, if they havn't been already.
-        attribute = getattr(self.entity, field_name, None)
+        # Initialize the search/filter strategies with the corresponding queryable/instrumented attribute, if they haven't been already.
+        # The attribute is retrieved on this admin's entity class using the field name, which behaves correctly for Entity classes that define their attributes on the class level.
+        # Regular objects can have properties defined at its construction time, meaning those properties won't be available on its class.
+        # As the default strategy for those kind of non-queryable properties is NoSearch, which does not constrain on the passed attribute,
+        # we define the default argument for the getattr attribute retrieval as the textual field_name.
+        attribute = getattr(self.entity, field_name, field_name)
         filter_strategy = field_attributes['filter_strategy']
         if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
             field_attributes['filter_strategy'] = filter_strategy(attribute)
