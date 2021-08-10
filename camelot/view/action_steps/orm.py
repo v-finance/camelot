@@ -45,16 +45,17 @@ Or use introspection of the SQLAlchemy session to update the GUI :
    :end-before: end auto update
    
 """
+from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from ..crud_signals import CrudSignalHandler
 
+@dataclass
 class AbstractCrudSignal(ActionStep):
 
-    def __init__(self):
-        self.objects_deleted = tuple()
-        self.objects_updated = tuple()
-        self.objects_created = tuple()
+    objects_deleted: tuple = field(default_factory=tuple)
+    objects_updated: tuple = field(default_factory=tuple)
+    objects_created: tuple = field(default_factory=tuple)
 
     def gui_run(self, gui_context):
         super(AbstractCrudSignal, self).gui_run(gui_context)

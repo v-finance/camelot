@@ -29,9 +29,11 @@
 
 import logging
 import pkgutil
+from typing import List
 
+from dataclasses import dataclass, InitVar
 
-
+from ...core.profile import Profile
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
 
 from camelot.admin.action import ActionStep
@@ -364,6 +366,7 @@ allow all languages
         self.media_location_editor.set_value(selected)
 
 
+@dataclass
 class EditProfiles(ActionStep):
     """Allows the user to change or create his current database and media
     settings.
@@ -377,13 +380,15 @@ class EditProfiles(ActionStep):
     .. image:: /_static/actionsteps/edit_profile.png
     """
 
-    def __init__(self, profiles, current_profile='', dialog_class=None):
-        self.profiles = profiles
+    profiles: List[Profile]
+    current_profile: str = ''
+    dialog_class: InitVar(QtWidgets.QDialog) = None
+
+    def __post_init__(self, dialog_class):
         if dialog_class is None:
             self.dialog_class = ProfileWizard
         else:
             self.dialog_class = dialog_class
-        self.current_profile = current_profile
 
     def render(self, gui_context):
         dialog = self.dialog_class(self.profiles)
@@ -396,4 +401,3 @@ class EditProfiles(ActionStep):
         if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()
         return dialog.get_profile_info()
-

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, InitVar, field
 import json
 
 from ...core.qt import QtWidgets
@@ -41,10 +41,10 @@ from camelot.view.controls.tableview import TableView
 
 from .item_view import OpenTableView
 
+@dataclass
 class SetSelectedObjects(ActionStep):
 
-    def __init__(self, objects):
-        self.objects = objects
+    objects: list
 
     def gui_run(self, gui_context):
         dialog = gui_context.view.parent()
@@ -95,12 +95,15 @@ class SelectObjects( OpenTableView ):
         be made.  If none is given, the default query from the admin is taken.
     """
 
-    verbose_name_plural: str
+    admin: InitVar
+    search_text: InitVar = None
+    value: InitVar = None
+    verbose_name_plural: str = field(init=False)
 
-    def __init__(self, admin, search_text=None, value=None):
+    def __post_init__(self, admin, search_text, value):
         if value is None:
             value = admin.get_query()
-        super(SelectObjects, self).__init__(admin, value)
+        super(SelectObjects, self).__post_init__(admin, value)
         self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         # actions
