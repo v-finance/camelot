@@ -27,14 +27,15 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, InitVar
 import json
 import logging
 import typing
 
 from ..controls.action_widget import ActionAction
-from ...admin.action.base import ActionStep, State
+from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
+from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.qt import QtCore, Qt, QtWidgets
 from ...core.serializable import DataclassSerializable
@@ -42,19 +43,26 @@ from ...model.authentication import get_current_authentication
 
 LOGGER = logging.getLogger(__name__)
 
-
-class Exit(ActionStep):
+@dataclass
+class Exit(ActionStep, DataclassSerializable):
     """
     Stop the event loop, and exit the application
     """
 
-    def __init__(self, return_code=0):
-        self.return_code = return_code
+    return_code: int = 0
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        from camelot.view.model_thread import get_model_thread
+        model_thread = get_model_thread()
+        # we might exit the application when the workspace is not even there
+        if gui_context.workspace != None:
+            gui_context.workspace.close_all_views()
+        if model_thread != None:
+            model_thread.stop()
         QtCore.QCoreApplication.exit(self.return_code)
 
-
+@dataclass
 class MainWindow(ActionStep):
     """
     Open a top level application window
@@ -69,9 +77,11 @@ class MainWindow(ActionStep):
 
     """
 
-    def __init__(self, admin):
-        self.admin = admin
-        self.window_title = admin.get_name()
+    admin: ApplicationAdmin
+    window_title: str = field(init=False)
+
+    def __post_init__(self):
+        self.window_title = self.admin.get_name()
 
     def render(self, gui_context):
         """create the main window. this method is used to unit test
@@ -120,13 +130,13 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     # this could be non-blocking, but that causes unittest segmentation
     # fault issues which are not worth investigating
-    blocking = True
     menu: MenuItem
-    action_states: typing.List[typing.Tuple[Route, State]]
+    action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
+    model_context: InitVar(ModelContext) = None
 
-    def __init__(self, model_context, menu: MenuItem):
-        self.menu = self._filter_items(menu, get_current_authentication())
-        self.action_states = list()
+    # noinspection PyDataclass
+    def __post_init__(self, model_context):
+        self.menu = self._filter_items(self.menu, get_current_authentication())
         self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
@@ -196,9 +206,6 @@ class MainMenu(ActionStep, DataclassSerializable):
     blocking = False
     menu: MenuItem
 
-    def __init__(self, menu):
-        self.menu = menu
-
     @classmethod
     def render(cls, gui_context, items, parent_menu):
         """
@@ -232,7 +239,7 @@ class MainMenu(ActionStep, DataclassSerializable):
         self.render(gui_context, step["menu"]["items"], menu_bar)
         menu_bar.setCornerWidget(BusyWidget())
 
-
+@dataclass
 class InstallTranslator(ActionStep):
     """
     Install a translator in the application.  Ownership of the translator will
@@ -243,8 +250,7 @@ class InstallTranslator(ActionStep):
 
     """
 
-    def __init__(self, admin):
-        self.admin = admin
+    admin: ApplicationAdmin
 
     def gui_run(self, gui_context):
         app = QtCore.QCoreApplication.instance()
@@ -256,7 +262,7 @@ class InstallTranslator(ActionStep):
         else:
             app.installTranslator(translator)
 
-
+@dataclass
 class RemoveTranslators(ActionStep):
     """
     Unregister all previously installed translators from the application.
@@ -265,15 +271,14 @@ class RemoveTranslators(ActionStep):
         object
     """
 
-    def __init__(self, admin):
-        self.admin = admin
+    admin: ApplicationAdmin
 
     def gui_run(self, gui_context):
         app = QtCore.QCoreApplication.instance()
         for active_translator in app.findChildren(QtCore.QTranslator):
             app.removeTranslator(active_translator)
 
-
+@dataclass
 class UpdateActionsState(ActionStep):
     """
     Update the the state of a list of `Actions`
@@ -283,8 +288,7 @@ class UpdateActionsState(ActionStep):
 
     """
 
-    def __init__(self, actions_state):
-        self.actions_state = actions_state
+    actions_state: field(default_factory=dict)
 
     def gui_run(self, gui_context):
         for action_route, action_state in self.actions_state.items():

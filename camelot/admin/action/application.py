@@ -128,6 +128,6 @@ class Application( Action ):
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
         yield action_steps.NavigationPanel(
-            model_context, self.application_admin.get_navigation_menu()
+            self.application_admin.get_navigation_menu(), model_context=model_context
         )
         yield action_steps.MainMenu(self.application_admin.get_main_menu())

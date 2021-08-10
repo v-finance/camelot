@@ -32,8 +32,8 @@ Various ``ActionStep`` subclasses that manipulate the `item_view` of
 the `ListActionGuiContext`.
 """
 
-from dataclasses import dataclass
-import typing
+from dataclasses import dataclass, InitVar, field
+from typing import Any, Union, List, Tuple
 import json
 
 from ...admin.admin_route import Route, AdminRoute
@@ -43,43 +43,40 @@ from ...admin.action.list_action import ListActionModelContext, ListActionGuiCon
 from ...admin.action.list_filter import Filter, All
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
-from ...core.item_model import ProxyRegistry
+from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
 
-
+@dataclass
 class Sort( ActionStep ):
-    
-    def __init__( self, column, order = Qt.AscendingOrder ):
-        """Sort the items in the item view ( list, table or tree )
-        
-        :param column: the index of the column on which to sort
-        :param order: a :class:`Qt.SortOrder`
-        """
-        self.column = column
-        self.order = order
-        
+    """Sort the items in the item view ( list, table or tree )
+
+            :param column: the index of the column on which to sort
+            :param order: a :class:`Qt.SortOrder`
+    """
+    column: int
+    order: Qt = Qt.SortOrder
+
     def gui_run( self, gui_context ):
         if gui_context.item_view != None:
             model = gui_context.item_view.model()
             model.sort( self.column, self.order )
 
+@dataclass
 class SetFilter( ActionStep ):
+    """Filter the items in the item view
+
+            :param list_filter: the `AbstractModelFilter` to apply
+            :param value: the value on which to filter
+    """
+    list_filter: AbstractModelFilter
+    value: Any
 
     blocking = False
     cancelable = False
-
-    def __init__( self, list_filter, value ):
-        """Filter the items in the item view
-        
-        :param list_filter: the `AbstractModelFilter` to apply
-        :param value: the value on which to filter
-        """
-        self.list_filter = list_filter
-        self.value = value
 
     def gui_run( self, gui_context ):
         if gui_context.item_view is not None:
@@ -95,16 +92,17 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     
     """
 
-    #value: not needed
-    search_text: typing.Union[str, None]
-    title: typing.Union[str, ugettext_lazy]
-    columns: typing.List[str]
-    list_action: Route
-    proxy_route: Route
-    actions: typing.List[typing.Tuple[Route, RenderHint]]
-    action_states: typing.List[typing.Tuple[Route, State]]
+    admin: InitVar
+    value: InitVar
+    search_text: Union[str, None] = field(init=False)
+    title: Union[str, ugettext_lazy] = field(init=False)
+    columns: List[str] = field(init=False)
+    list_action: Route = field(init=False)
+    proxy_route: Route = field(init=False)
+    actions: List[Tuple[Route, RenderHint]] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(init=False)
 
-    def __init__( self, admin, value ):
+    def __post_init__( self, admin, value ):
         self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
@@ -182,13 +180,14 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
+    admin: InitVar
+    value: InitVar
+    new_tab: bool = False
 
-    new_tab: bool
-    admin_route: Route
-    
-    def __init__( self, admin, value ):
-        super(OpenTableView, self).__init__(admin, value)
-        self.new_tab = False
+    admin_route: Route = field(init=False)
+
+    def __post_init__( self, admin, value ):
+        super(OpenTableView, self).__post_init__(admin, value)
         self.admin_route = admin.get_admin_route()
 
     @classmethod
@@ -279,7 +278,7 @@ class OpenQmlTableView(OpenTableView):
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
 
-
+@dataclass
 class ClearSelection(ActionStep):
     """Deselect all selected items."""
 
@@ -287,6 +286,7 @@ class ClearSelection(ActionStep):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
 
+@dataclass
 class RefreshItemView(ActionStep):
     """
     Refresh only the current item view
