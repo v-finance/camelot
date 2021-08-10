@@ -723,19 +723,18 @@ be specified using the verbose_name attribute.
             )
         field_attributes['column_width'] = column_width
         
-        # Initialize search & filter strategies.
+        # Initialize search & filter strategies with the retrieved corresponding attribute.
+        # We take the field_name as the default, to handle properties that do not exist on the admin's entity class.
+        # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
+        # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
+        # which is enforced by the strategy constructor.
+        attribute = getattr(self.entity, field_name, field_name)
         filter_strategy = field_attributes['filter_strategy']
         if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
-            field_attributes['filter_strategy'] = self._initialize_filter_strategy(filter_strategy, field_name)
+            field_attributes['filter_strategy'] = filter_strategy(attribute)
         search_strategy = field_attributes['search_strategy']
         if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldSearch):
-            field_attributes['search_strategy'] = self._initialize_filter_strategy(search_strategy, field_name)
-        
-    def _initialize_filter_strategy(self, filter_strategy, field_name):
-        """Initialize the given filter strategy class for the given field_name."""
-        # This should always be the NoSearch strategy for regular objects, as they do not have queryable attributes.
-        # We pass the field_name to have some kind of back-reference, which the NoSearch strategy allows.
-        return filter_strategy(field_name)
+            field_attributes['search_strategy'] = search_strategy(attribute)
         
     def _get_search_fields(self, substring):
         """

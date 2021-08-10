@@ -405,12 +405,6 @@ and used as a custom action.
             else:
                 raise Exception('No mapped class found for target %s'%target)
         super(EntityAdmin, self)._expand_field_attributes(field_attributes, field_name)
-        
-    def _initialize_filter_strategy(self, filter_strategy, field_name):
-        # Extract the corresponding attribute on the entity class, which should be a queryable/instrumented attribute for concrete strategies.
-        # Regular properties should always result in a NoSearch strategy.
-        attribute = getattr(self.entity, field_name)
-        return filter_strategy(attribute)
 
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
