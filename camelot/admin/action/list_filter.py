@@ -350,8 +350,8 @@ class StringSearch(FieldSearch):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
     
-    def __init__(self, attribute, allow_digits=True):
-        super().__init__(attribute)
+    def __init__(self, attribute, allow_digits=True, where=None, name=None, verbose_name=None):
+        super().__init__(attribute, where, name, verbose_name)
         self.allow_digits = allow_digits
         
     def get_type_clause(self, text, field_attributes):
