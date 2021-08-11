@@ -43,6 +43,8 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from ...core.serializable import DataclassSerializable
+
 
 @dataclass
 class UpdateEditor(ActionStep):
@@ -183,7 +185,7 @@ class SelectSubclass(SelectItem):
 
 
 @dataclass
-class CloseView( ActionStep ):
+class CloseView(ActionStep, DataclassSerializable):
     """
     Close the view that triggered the action, if such a view is available.
 
