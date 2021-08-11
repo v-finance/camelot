@@ -30,19 +30,17 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+import functools
 from typing import Any, List, Tuple
 
-from dataclasses import dataclass
-
-from ...core.qt import QtCore, QtWidgets, is_deleted
-
-
+from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 
 
@@ -225,12 +223,10 @@ class MessageBox( ActionStep ):
 
     """
 
-    default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
-
     text: _
     icon: QtWidgets = QtWidgets.QMessageBox.Information
     title: _ = _('Message')
-    standard_buttons: QtWidgets = default_buttons
+    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Cancel])
 
     def __post_init__(self):
         self.title = str(self.title)
@@ -244,7 +240,7 @@ class MessageBox( ActionStep ):
         message_box = QtWidgets.QMessageBox(self.icon,
                                             self.title,
                                             self.text,
-                                            self.standard_buttons)
+                                            functools.reduce(lambda a, b: a | b, self.standard_buttons))
         message_box.setInformativeText(str(self.informative_text))
         message_box.setDetailedText(str(self.detailed_text))
         return message_box
