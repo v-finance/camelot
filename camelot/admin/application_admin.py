@@ -240,7 +240,7 @@ shortcut confusion and reduce the number of status updates.
         return []
 
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions( self, toolbar_area, direction ):
+    def get_related_toolbar_actions( self, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
 
@@ -249,9 +249,9 @@ shortcut confusion and reduce the number of status updates.
             'manytomany'
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
-        if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
+        if direction == 'onetomany':
             return self.onetomany_actions
-        if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
+        if direction == 'manytomany':
             return self.manytomany_actions
 
     def get_form_actions( self ):
