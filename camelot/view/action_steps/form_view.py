@@ -34,6 +34,7 @@ context of the `Qt` model-view-delegate framework.
 from typing import List, Any, Tuple, Optional, Dict, Union, Type
 from dataclasses import dataclass, InitVar, field
 
+from camelot.core.serializable import DataclassSerializable
 from ..controls.delegates import ComboBoxDelegate
 from ..forms import Form
 from ..proxy.collection_proxy import CollectionProxy
@@ -142,7 +143,7 @@ class OpenFormView(ActionStep):
 
 
 @dataclass
-class ChangeFormIndex(ActionStep):
+class ChangeFormIndex(ActionStep, DataclassSerializable):
 
     def gui_run( self, gui_context ):
         # a pending request might change the number of rows, and therefor
