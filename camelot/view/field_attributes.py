@@ -76,6 +76,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': bool_from_string,
         'operators' : (operator.eq,),
         'search_strategy': list_filter.BoolSearch,
+        'filter_strategy': list_filter.BoolSearch,
     },
 
     sqlalchemy.types.Date: lambda f: {
@@ -89,6 +90,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': date_from_string,
         'operators' : _numerical_operators,
         'search_strategy': list_filter.DateSearch,
+        'filter_strategy': list_filter.DateSearch,
     },
 
     sqlalchemy.types.Time : lambda f: {
@@ -102,6 +104,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': time_from_string,
         'operators': _numerical_operators,
         'search_strategy': list_filter.TimeSearch,
+        'filter_strategy': list_filter.TimeSearch,
     },
 
     sqlalchemy.types.DateTime : lambda f: {
@@ -115,6 +118,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': datetime_from_string,
         'operators': _numerical_operators,
         'search_strategy': list_filter.DateSearch,
+        'filter_strategy': list_filter.DateSearch,
     },
 
     sqlalchemy.types.Float: lambda f: {
@@ -128,6 +132,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': float_from_string,
         'operators': _numerical_operators,
         'search_strategy': list_filter.DecimalSearch,
+        'filter_strategy': list_filter.DecimalSearch,
     },
 
     sqlalchemy.types.Numeric: lambda f: {
@@ -142,6 +147,7 @@ _sqlalchemy_to_python_type_ = {
         'operators': _numerical_operators,
         'decimal':True,
         'search_strategy': list_filter.DecimalSearch,
+        'filter_strategy': list_filter.DecimalSearch,
     },
 
     sqlalchemy.types.Integer: lambda f: {
@@ -156,6 +162,7 @@ _sqlalchemy_to_python_type_ = {
         'widget': 'int',
         'operators': _numerical_operators,
         'search_strategy': list_filter.IntSearch,
+        'filter_strategy': list_filter.IntSearch,
     },
 
     sqlalchemy.types.String: lambda f: {
@@ -168,6 +175,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': string_from_string,
         'operators' : _text_operators,
         'search_strategy': list_filter.StringSearch,
+        'filter_strategy': list_filter.StringSearch,
     },
 
     camelot.types.VirtualAddress: lambda f: {
@@ -177,7 +185,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.VirtualAddressDelegate,
         'operators' : _text_operators,
         'from_string' : lambda str:None,
-        'search_strategy': list_filter.VirtualAddressSearch,
+        'search_strategy': list_filter.NoSearch,
+        'filter_strategy': list_filter.NoSearch,
     },
 
     camelot.types.RichText: lambda f: {
@@ -189,6 +198,7 @@ _sqlalchemy_to_python_type_ = {
         'operators' : [],
         'to_string': richtext_to_string,
         'search_strategy': list_filter.StringSearch,
+        'filter_strategy': list_filter.StringSearch,
     },
 
     camelot.types.Enumeration: lambda f: {
@@ -202,6 +212,7 @@ _sqlalchemy_to_python_type_ = {
         'widget': 'combobox',
         'operators' : _numerical_operators,
         'search_strategy': list_filter.NoSearch,
+        'filter_strategy': list_filter.NoSearch,
     },
 
     camelot.types.Language: lambda f: {
@@ -213,6 +224,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': False,
         'widget': 'combobox',
         'search_strategy': list_filter.StringSearch,
+        'filter_strategy': list_filter.StringSearch,
     },
 
     camelot.types.File : lambda f: {
@@ -223,6 +235,7 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
         'remove_original': False,
         'search_strategy': list_filter.NoSearch,
+        'filter_strategy': list_filter.NoSearch,
     },
 }
 

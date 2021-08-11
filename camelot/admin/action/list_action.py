@@ -39,13 +39,9 @@ from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_de
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-from .list_filter import FieldSearch
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
-
-from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.orm.base import _entity_descriptor
 
 import xlsxwriter
 
@@ -968,11 +964,10 @@ class FieldFilter(object):
     Helper class for the `SetFilters` action that allows the user to
     configure a filter on an individual field.
     """
-
+    
     def __init__(self, value=None):
         self.value = value
-
-
+    
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -991,8 +986,8 @@ class SetFilters(Action, AbstractModelFilter):
         :return: a list of choices with the fields the user can select to
            filter upon.
         """
-        field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators') or fa.get('filter_strategy')]
+        filter_strategies = model_context.admin.get_field_filters()
+        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -1007,6 +1002,8 @@ class SetFilters(Action, AbstractModelFilter):
         else:
             filter_value = model_context.proxy.get_filter(self) or {}
             filter_field_name = model_context.mode_name
+            filter_strategies = model_context.admin.get_field_filters()
+            filter_strategy = filter_strategies.get(filter_field_name)
             filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
             filter_value_attributes = {
                 'name': filter_field_attributes['name'],
@@ -1017,6 +1014,8 @@ class SetFilters(Action, AbstractModelFilter):
             # can be reused
             if isinstance(filter_field_attributes.get('choices'), list):
                 filter_value_attributes['choices'] = filter_field_attributes['choices']
+            if 'precision' in filter_field_attributes:
+                filter_value_attributes['precision'] = filter_field_attributes['precision']
     
             class FieldFilterAdmin(ObjectAdmin):
                 verbose_name = _('Filter')
@@ -1025,11 +1024,13 @@ class SetFilters(Action, AbstractModelFilter):
                     'value': filter_value_attributes
                 }
     
-            field_filter = FieldFilter(filter_value.get(filter_field_name))
+            field_filter = FieldFilter(value=None)
             filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
             change_filter = action_steps.ChangeObject(field_filter, filter_admin)
             yield change_filter
-            new_filter_value = {filter_field_name: field_filter.value}
+            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
+            new_filter_value = {k:v for k,v in filter_value.items()}
+            new_filter_value[filter_field_name] = filter_text
 
         yield action_steps.SetFilter(self, new_filter_value)
         new_state = self._get_state(model_context, new_filter_value)
@@ -1040,21 +1041,12 @@ class SetFilters(Action, AbstractModelFilter):
         # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
-        entity = query._entity_zero()
         clauses = []
         for name, filter_value in values.items():
-            attribute = _entity_descriptor(entity, name)
-            field_attributes = self.admin.get_field_attributes(name)
-            filter_strategy = field_attributes.get('filter_strategy')
-            if isinstance(filter_strategy, type) and issubclass(filter_strategy, FieldSearch):
-                # Initialize the filter strategy with the instrumented attribute, if it hasn't been already.
-                filter_strategy = filter_strategy(attribute)                
-            if filter_strategy is not None:
-                clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
-                if clause is not None:
-                    clauses.append(clause)
-            else:
-                clauses.append(attribute == filter_value)
+            filter_strategy = self.admin.get_field_filters().get(name)
+            clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
+            if clause is not None:
+                clauses.append(clause)
         return query.filter(*clauses)
     
     def _get_state(self, model_context, filter_value):
