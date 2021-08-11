@@ -968,8 +968,6 @@ class FieldFilter(object):
     configure a filter on an individual field.
     """
     
-    value = None
-    
     def __init__(self, value=None):
         self.value = value
     
@@ -991,8 +989,8 @@ class SetFilters(Action, AbstractModelFilter):
         :return: a list of choices with the fields the user can select to
            filter upon.
         """
-        field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if not isinstance(fa.get('filter_strategy'), NoSearch)]
+        filter_strategies = model_context.admin.get_field_filters()
+        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
@@ -1007,8 +1005,9 @@ class SetFilters(Action, AbstractModelFilter):
         else:
             filter_value = model_context.proxy.get_filter(self) or {}
             filter_field_name = model_context.mode_name
+            filter_strategies = model_context.admin.get_field_filters()
+            filter_strategy = filter_strategies.get(filter_field_name)
             filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-            filter_strategy = filter_field_attributes.get('filter_strategy')
             filter_value_attributes = {
                 'name': filter_field_attributes['name'],
                 'editable': True,
@@ -1049,8 +1048,7 @@ class SetFilters(Action, AbstractModelFilter):
         clauses = []
         for name, filter_value in values.items():
             attribute = _entity_descriptor(entity, name)
-            field_attributes = self.admin.get_field_attributes(name)
-            filter_strategy = field_attributes.get('filter_strategy')
+            filter_strategy = self.admin.get_field_filters().get(name)
             if filter_strategy is not None:
                 clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
                 if clause is not None:
