@@ -363,6 +363,7 @@ class ChangeObjects( ActionStep ):
     icon = Icon('file-excel')
 
     def __post_init__(self):
+        self.invalid_rows = set()
         self.admin_route = self.admin.get_admin_route()
         self.window_title = self.admin.get_verbose_name_plural()
         self.columns = self.admin.get_columns()
@@ -378,7 +379,6 @@ class ChangeObjects( ActionStep ):
                 for message in validator.validate_object(obj):
                     self.invalid_rows.add(row)
                     break
-        self.invalid_rows = set()
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
