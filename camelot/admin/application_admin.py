@@ -105,17 +105,17 @@ shortcut confusion and reduce the number of status updates.
     # actions that will be shared between the toolbar and the main menu
     #
     list_toolbar_actions = [
-        list_action.CloseList(),
-        list_action.ListLabel(),
+        list_action.close_list,
+        list_action.list_label,
     ]
-    change_row_actions = [ list_action.ToFirstRow(),
-                           list_action.ToLastRow(), ]
-    edit_actions = [ list_action.AddNewObject(),
-                     list_action.DeleteSelection(),
-                     list_action.DuplicateSelection(),]
+    change_row_actions = [ list_action.to_first_row,
+                           list_action.to_last_row ]
+    edit_actions = [ list_action.add_new_object,
+                     list_action.delete_selection,
+                     list_action.duplicate_selection ]
     help_actions = []
-    export_actions = [ list_action.PrintPreview(),
-                       list_action.ExportSpreadsheet() ]
+    export_actions = [ list_action.print_preview,
+                       list_action.export_spreadsheet ]
     form_toolbar_actions = [ form_action.CloseForm(),
                              form_action.ToFirstForm(),
                              form_action.ToPreviousForm(),
@@ -123,12 +123,14 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
-    export_spreadsheet_action = [ list_action.ExportSpreadsheet() ]
-    onetomany_actions = edit_actions + export_spreadsheet_action
+    onetomany_actions = [ list_action.add_new_object,
+                          list_action.delete_selection,
+                          list_action.duplicate_selection,
+                          list_action.export_spreadsheet ]
     manytomany_actions = [
-        list_action.AddExistingObject(),
-        list_action.RemoveSelection(),
-    ] + export_spreadsheet_action
+        list_action.add_existing_object,
+        list_action.remove_selection,
+        list_action.export_spreadsheet ]
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -237,7 +239,7 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
-    @register_list_actions('_related_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route')
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
@@ -284,7 +286,7 @@ shortcut confusion and reduce the number of status updates.
                         if type(action) != form_action.CloseForm]
             return self.form_toolbar_actions
 
-    @register_list_actions('_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_toolbar_actions')
     def get_list_toolbar_actions( self ):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
@@ -296,7 +298,7 @@ shortcut confusion and reduce the number of status updates.
                self.change_row_actions + \
                self.export_actions
 
-    @register_list_actions('_select_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_select_toolbar_actions')
     def get_select_list_toolbar_actions( self ):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects

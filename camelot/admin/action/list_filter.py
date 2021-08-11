@@ -46,7 +46,7 @@ from .base import Action, Mode, RenderHint
 @dataclass
 class FilterMode(Mode):
 
-    checked: bool
+    checked: bool = False
 
     def __init__(self, value, verbose_name, checked=False):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)

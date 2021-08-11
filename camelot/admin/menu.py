@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import typing
 
 from .admin_route import Route
@@ -45,16 +45,11 @@ class MenuItem(DataclassSerializable):
     menu items straightforward.
     """
 
-    verbose_name: typing.Union[str, ugettext_lazy, None]
-    icon: typing.Union[Icon, None]
-    action_route: typing.Union[Route, None]
-    items: typing.List['MenuItem']
-    role: typing.Optional[str]
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    icon: typing.Union[Icon, None] = None
+    action_route: typing.Union[Route, None] = None
+    role: typing.Optional[str] = None
+    items: typing.List['MenuItem'] = field(default_factory=list)
 
-    def __init__(self, verbose_name=None, icon=None, action_route=None, role=None):
-        assert (action_route is None) or ((verbose_name is None) and (icon is None))
-        self.verbose_name = verbose_name
-        self.icon = icon
-        self.action_route = action_route
-        self.items = list()
-        self.role = role
+    def __post_init__(self, ):
+        assert (self.action_route is None) or ((self.verbose_name is None) and (self.icon is None))

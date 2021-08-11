@@ -27,18 +27,17 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import typing
+from enum import Enum
 
+from dataclasses import dataclass, field
+
+from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui, Qt
 from ...core.serializable import DataclassSerializable, Serializable
 from ...core.utils import ugettext_lazy
-from ...admin.icon import Icon
 from ...view.art import from_admin_icon
-
-
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -151,21 +150,12 @@ the default mode.
     """
 
     name: str
-    verbose_name: typing.Union[str, ugettext_lazy]
-    icon: typing.Union[Icon, None]
+    verbose_name: typing.Union[str, ugettext_lazy] = None
+    icon: typing.Union[Icon, None] = None
     
-    def __init__( self, name, verbose_name=None, icon=None):
-        """
-        :param name: the name of the mode, as it will be passed to the
-            gui_run and model_run method
-        :param verbose_name: the name shown to the user
-        :param icon: the icon of the mode
-        """
-        self.name = name
-        if verbose_name is None:
-            verbose_name = name.capitalize()
-        self.verbose_name = verbose_name
-        self.icon = icon
+    def __post_init__(self):
+        if self.verbose_name is None:
+            self.verbose_name = self.name.capitalize()
 
     def render( self, parent ):
         """Create a :class:`QtGui.QAction` that can be used to enable widget

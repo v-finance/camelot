@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtGui
   
@@ -34,6 +35,7 @@ from camelot.core.templates import environment
 
 from io import BytesIO
 
+@dataclass
 class OpenFile( ActionStep ):
     """
     Open a file with the preferred application from the user.  The absolute
@@ -46,8 +48,7 @@ class OpenFile( ActionStep ):
     opend successfull.
     """
         
-    def __init__( self, path ):
-        self.path = path
+    path: str
 
     def __str__( self ):
         return u'Open file {}'.format( self.path )

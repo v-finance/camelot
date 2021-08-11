@@ -441,6 +441,8 @@ class Refresh( Action ):
         yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
 
+refresh = Refresh()
+
 class Restore(Refresh):
     """
 Restore the database to disk
@@ -533,16 +535,10 @@ class Exit( Action ):
     shortcut = QtGui.QKeySequence.StandardKey.Quit
     icon = Icon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.model_thread import get_model_thread
-        model_thread = get_model_thread()
-        # we might exit the application when the workspace is not even there
-        if gui_context.workspace != None:
-            gui_context.workspace.close_all_views()
-        if model_thread != None:
-            model_thread.stop()
-        QtCore.QCoreApplication.exit(0)
+
+    def model_run( self, model_context ):
+        from camelot.view.action_steps.application import Exit
+        yield Exit()
         
 #
 # Some actions to assist the debugging process

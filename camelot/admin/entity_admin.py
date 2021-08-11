@@ -241,15 +241,15 @@ and used as a custom action.
 
         return search_identifiers
 
-    @register_list_actions('_shared_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_shared_toolbar_actions')
     def _get_shared_toolbar_actions( self ):
         return [
             list_filter.SearchFilter(self),
-            list_action.SetFilters(),
-            application_action.Refresh(),
+            list_action.set_filters,
+            application_action.refresh,
         ]
 
-    @register_list_actions('_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_toolbar_actions')
     def get_list_toolbar_actions( self ):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
@@ -259,7 +259,7 @@ and used as a custom action.
         toolbar_actions = super(EntityAdmin, self).get_list_toolbar_actions()
         return toolbar_actions + self._get_shared_toolbar_actions()
 
-    @register_list_actions('_select_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_select_toolbar_actions')
     def get_select_list_toolbar_actions( self ):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
@@ -268,14 +268,6 @@ and used as a custom action.
         """
         toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions()
         return toolbar_actions + self._get_shared_toolbar_actions()
-
-    @register_list_actions('_select_actions', '_admin_route')
-    def get_select_list_actions( self ):
-        from camelot.view.action_steps.select_object import CancelSelection, ConfirmSelection
-        return [
-            CancelSelection(),
-            ConfirmSelection()
-        ]
 
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
@@ -448,7 +440,7 @@ and used as a custom action.
             return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
-    @register_list_actions('_filter_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_filter_actions')
     def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
