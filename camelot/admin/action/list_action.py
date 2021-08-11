@@ -257,6 +257,8 @@ class RowNumberAction( Action ):
         state.verbose_name = str(model_context.current_row + 1)
         return state
 
+row_number_action = RowNumberAction()
+
 class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
@@ -301,6 +303,8 @@ class CloseList(Action):
         from camelot.view import action_steps
         yield action_steps.CloseView()
 
+close_list = CloseList()
+
 class ListLabel(Action):
     """
     A simple action that displays the name of the table
@@ -314,6 +318,7 @@ class ListLabel(Action):
         state.verbose_name = str(model_context.admin.get_verbose_name_plural())
         return state
 
+list_label = ListLabel()
 
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
@@ -335,6 +340,7 @@ class OpenFormView( ListContextAction ):
         state.verbose_name = str()
         return state
 
+open_form_view = OpenFormView()
 
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
@@ -364,6 +370,8 @@ class DuplicateSelection( EditAction ):
         yield action_steps.CreateObjects(new_objects)
         yield action_steps.UpdateObjects(updated_objects)
         yield action_steps.FlushSession(model_context.session)
+
+duplicate_selection = DuplicateSelection()
             
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
@@ -424,6 +432,8 @@ class DeleteSelection( EditAction ):
         yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete(obj)
 
+delete_selection = DeleteSelection()
+
 class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -456,6 +466,8 @@ class ToPreviousRow( AbstractToPrevious, ListContextAction ):
         #    state.enabled = ( model_context.current_row > 0 )
         return state
 
+to_previous_row = ToPreviousRow()
+
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -471,6 +483,8 @@ class ToFirstRow( AbstractToFirst, ToPreviousRow ):
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
+
+to_first_row = ToFirstRow()
 
 class AbstractToNext(object):
 
@@ -505,6 +519,8 @@ class ToNextRow( AbstractToNext, ListContextAction ):
         #    state.enabled = ( model_context.current_row < max_row )
         return state
 
+to_next_row = ToNextRow()
+
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -521,6 +537,8 @@ class ToLastRow( AbstractToLast, ToNextRow ):
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         item_view.selectRow( item_view.model().rowCount() - 1 )
+
+to_last_row = ToLastRow()
 
 class SaveExportMapping( Action ):
     """
@@ -820,6 +838,8 @@ class ExportSpreadsheet( ListContextAction ):
         workbook.close()
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
+
+export_spreadsheet = ExportSpreadsheet()
     
 class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
@@ -848,6 +868,8 @@ class PrintPreview( ListContextAction ):
         yield action_steps.PrintJinjaTemplate( template = 'list.html',
                                                context = context )
 
+print_preview = PrintPreview()
+
 class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
@@ -858,6 +880,8 @@ class SelectAll( ListContextAction ):
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectAll()
+
+select_all = SelectAll()
         
 class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
@@ -957,6 +981,7 @@ class ImportFromFile( EditAction ):
                 yield action_steps.FlushSession( model_context.session )
             yield action_steps.Refresh()
         
+import_from_file = ImportFromFile()
 
 class ReplaceFieldContents( EditAction ):
     """Select a field an change the content for a whole selection"""
@@ -998,6 +1023,7 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
+replace_field_contents = ReplaceFieldContents()
 
 class FieldFilter(object):
     """
@@ -1094,6 +1120,7 @@ class SetFilters(Action, AbstractModelFilter):
         filter_value = model_context.proxy.get_filter(self) or {}
         return self._get_state(model_context, filter_value)
 
+set_filters = SetFilters()
 
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
@@ -1118,6 +1145,8 @@ class AddExistingObject( EditAction ):
         for obj_to_add in objs_to_add:
             yield action_steps.FlushSession(object_session(obj_to_add))
             break
+
+add_existing_object = AddExistingObject()
         
 class AddNewObject( EditAction ):
     """Add a new object to a collection. Depending on the
@@ -1174,6 +1203,8 @@ class AddNewObject( EditAction ):
         if create_inline is False:
             yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
 
+add_new_object = AddNewObject()
+
 class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""
     
@@ -1188,6 +1219,8 @@ class RemoveSelection(DeleteSelection):
         # no StopIteration, since the supergenerator needs to
         # continue to flush the session
         yield None
+
+remove_selection = RemoveSelection()
 
 class ActionGroup(EditAction):
     """Group a number of actions in a pull down"""

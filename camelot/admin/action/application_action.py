@@ -441,6 +441,8 @@ class Refresh( Action ):
         yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
 
+refresh = Refresh()
+
 class Restore(Refresh):
     """
 Restore the database to disk
