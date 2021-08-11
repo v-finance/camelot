@@ -43,8 +43,6 @@ from camelot.core.exception import UserException
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import FontIcon
 
-from sqlalchemy.orm.base import _entity_descriptor
-
 import xlsxwriter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
