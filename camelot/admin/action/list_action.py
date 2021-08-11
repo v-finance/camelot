@@ -1043,17 +1043,12 @@ class SetFilters(Action, AbstractModelFilter):
         # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
-        entity = query._entity_zero()
         clauses = []
         for name, filter_value in values.items():
-            attribute = _entity_descriptor(entity, name)
             filter_strategy = self.admin.get_field_filters().get(name)
-            if filter_strategy is not None:
-                clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
-                if clause is not None:
-                    clauses.append(clause)
-            else:
-                clauses.append(attribute == filter_value)
+            clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
+            if clause is not None:
+                clauses.append(clause)
         return query.filter(*clauses)
     
     def _get_state(self, model_context, filter_value):
