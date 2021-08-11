@@ -113,6 +113,7 @@ and used as a custom action.
     copy_exclude = []
     validator = EntityValidator
     basic_search = True
+    basic_filters = True
     
     # Temporary hack to allow admins of target entities in one2many/many2many relations to register themselves as editable
     # with a pending owning instance.
@@ -134,6 +135,7 @@ and used as a custom action.
             raise exception
         # caching
         self._search_fields = None
+        self._field_filters = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -711,7 +713,7 @@ and used as a custom action.
                         # In case the attribute is of a related entity,
                         # create a related search using the field search and the encountered joins.
                         if joins:
-                            search_strategy = list_filter.RelatedSearch(search_strategy, joins=joins)
+                            search_strategy = list_filter.RelatedSearch(search_field, search_strategy, joins=joins)
                         arg = search_strategy.get_clause(text, self, query.session)
                         if arg is not None:
                             args.append(arg)
@@ -775,4 +777,16 @@ and used as a custom action.
                          getattr( obj, relationship_property.key ) )
         return new_obj
 
-
+    def _get_field_strategies(self):
+        """
+        Return this admins available field filter strategies.
+        By default, this returns the ´field_filter´ attribute, expanded with the corresponding filter strategies for this admin's entity mapper columns if basic filtering is enabled.
+        """
+        field_strategies = list(self.field_filter)
+        # Only include filter strategies for basic columns if it is set as such (True by default).
+        if self.basic_filters:
+            for field_name, col_property in list(self.mapper.column_attrs.items()):
+                if isinstance(col_property.expression, schema.Column):
+                    field_attributes = self.get_field_attributes(field_name)
+                    field_strategies.append(field_attributes.get('filter_strategy'))
+        return field_strategies

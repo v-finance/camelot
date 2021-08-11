@@ -249,6 +249,7 @@ be specified using the verbose_name attribute.
     fields = []
     form_display = []
     form_close_action = CloseForm()
+    field_filter = []
     list_filter = []
     list_action = OpenFormView()
     list_actions = []
@@ -995,3 +996,17 @@ be specified using the verbose_name attribute.
     def set_discriminator_value(self, obj, discriminator_value):
         """Set the given discriminator value on the provided obj."""
         pass
+    
+    def get_field_filters(self):
+        """
+        Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
+        This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoSearch strategies and concrete field strategies are not applicable for regular objects.
+        The resulting dictionary is cached so that the conversion is not executed needlessly.
+        """
+        if self._field_filters is None:
+            self._field_filters =  {strategy.name: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoSearch)}
+        return self._field_filters
+    
+    def _get_field_strategies(self):
+        """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        return self.field_filter
