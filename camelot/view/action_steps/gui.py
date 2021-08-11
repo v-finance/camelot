@@ -68,7 +68,7 @@ class UpdateEditor(ActionStep):
             gui_context.editor.editingFinished.emit()
 
 @dataclass
-class Refresh( ActionStep ):
+class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
 
