@@ -43,7 +43,7 @@ from .entity_admin import EntityAdmin
 from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
-from ..core.qt import Qt, QtCore
+from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.view import art
 

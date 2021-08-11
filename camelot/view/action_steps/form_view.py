@@ -42,7 +42,7 @@ from ...admin.action.base import ActionStep, Action
 from ...admin.admin_route import AdminRoute
 from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
-from ...core.qt import Qt, is_deleted
+from ...core.qt import is_deleted
 
 
 @dataclass

@@ -36,7 +36,7 @@ import os.path
 import string
 
 
-from ..core.qt import QtCore, Qt
+from ..core.qt import QtCore
 from camelot.view.controls import delegates
 from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action.list_action import delete_selection
