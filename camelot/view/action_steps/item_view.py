@@ -258,7 +258,7 @@ class OpenQmlTableView(OpenTableView):
         UpdateActions().gui_run(list_gui_context)
 
 @dataclass
-class ClearSelection(ActionStep):
+class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
     def gui_run(self, gui_context):
