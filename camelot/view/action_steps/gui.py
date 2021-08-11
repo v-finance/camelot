@@ -132,9 +132,11 @@ class SelectItem(ActionStep):
     items: List[Tuple]
     value: str = None
 
-    autoaccept = True
     title = _('Please select')
     subtitle = _('Make a selection and press the OK button')
+
+    def __post_init__(self):
+        self.autoaccept = True
 
     def render(self):
         dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
@@ -200,6 +202,7 @@ class CloseView( ActionStep ):
         if view != None:
             view.close_view( self.accept )
 
+@dataclass
 class MessageBox( ActionStep ):
     """
     Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
@@ -222,34 +225,31 @@ class MessageBox( ActionStep ):
 
     default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
 
-    def __init__( self,
-                  text,
-                  icon = QtWidgets.QMessageBox.Information,
-                  title = _('Message'),
-                  standard_buttons = default_buttons ):
-        self.icon = icon
-        self.title = str( title )
-        self.text = str( text )
-        self.standard_buttons = standard_buttons
+    text: _
+    icon: QtWidgets = QtWidgets.QMessageBox.Information
+    title: _ = _('Message')
+    standard_buttons: QtWidgets = default_buttons
+
+    def __post_init__(self):
+        self.title = str(self.title)
+        self.text = str(self.text)
         self.informative_text = ''
         self.detailed_text = ''
 
-    def render( self ):
+    def render(self):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box =  QtWidgets.QMessageBox( self.icon,
-                                          self.title,
-                                          self.text,
-                                          self.standard_buttons )
+        message_box = QtWidgets.QMessageBox(self.icon,
+                                            self.title,
+                                            self.text,
+                                            self.standard_buttons)
         message_box.setInformativeText(str(self.informative_text))
         message_box.setDetailedText(str(self.detailed_text))
         return message_box
 
-    def gui_run( self, gui_context ):
+    def gui_run(self, gui_context):
         message_box = self.render()
         result = message_box.exec_()
         if result == QtWidgets.QMessageBox.Cancel:
             raise CancelRequest()
         return result
-
-

@@ -89,9 +89,6 @@ class OpenFormView(ActionStep):
     objects: List[Any] = field(init=False)
     row: int = field(init=False)
 
-    top_level = True
-    title = u' '
-
     def __post_init__(self, obj):
         assert obj is not None
         assert isinstance(self.proxy, AbstractModelProxy)
@@ -106,6 +103,9 @@ class OpenFormView(ActionStep):
         self.objects = [obj]
         self.row = self.proxy.index(obj)
         self.proxy = ProxyRegistry.register(self.proxy)
+
+        self.top_level = True
+        self.title = u' '
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
