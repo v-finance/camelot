@@ -31,6 +31,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
+import json
 from typing import Any, List, Tuple
 
 from dataclasses import dataclass, field
@@ -203,7 +204,7 @@ class CloseView(ActionStep, DataclassSerializable):
             view.close_view( self.accept )
 
 @dataclass
-class MessageBox( ActionStep ):
+class MessageBox( ActionStep, DataclassSerializable ):
     """
     Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
     of this action are the same as those of the :class:`QtWidgets.QMessageBox`
@@ -227,6 +228,8 @@ class MessageBox( ActionStep ):
     icon: QtWidgets = QtWidgets.QMessageBox.Information
     title: _ = _('Message')
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Cancel])
+    informative_text: str = field(init=False)
+    detailed_text: str = field(init=False)
 
     def __post_init__(self):
         self.title = str(self.title)
@@ -234,19 +237,23 @@ class MessageBox( ActionStep ):
         self.informative_text = ''
         self.detailed_text = ''
 
-    def render(self):
+    @classmethod
+    def render(self, step):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box = QtWidgets.QMessageBox(self.icon,
-                                            self.title,
-                                            self.text,
-                                            functools.reduce(lambda a, b: a | b, self.standard_buttons))
-        message_box.setInformativeText(str(self.informative_text))
-        message_box.setDetailedText(str(self.detailed_text))
+        message_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon(step["icon"]),
+                                            step["title"],
+                                            step["text"],
+                                            QtWidgets.QMessageBox.StandardButton(
+                                                functools.reduce(lambda a, b: a | b, step["standard_buttons"])))
+        message_box.setInformativeText(str(step["informative_text"]))
+        message_box.setDetailedText(str(step["detailed_text"]))
         return message_box
 
-    def gui_run(self, gui_context):
-        message_box = self.render()
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        step = json.load(serialized_step)
+        message_box = self.render(step)
         result = message_box.exec_()
         if result == QtWidgets.QMessageBox.Cancel:
             raise CancelRequest()

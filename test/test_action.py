@@ -220,7 +220,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
-        dialog = step.render()
+        serialized_step = step._to_dict()
+        dialog = step.render(serialized_step)
         dialog.show()
         self.grab_widget(dialog)
 
