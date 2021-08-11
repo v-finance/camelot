@@ -96,7 +96,7 @@ class PrintPreview( ActionStep ):
     margin_top = None
     margin_right = None
     margin_bottom = None
-    margin_unit = QtPrintSupport.QPrinter.Millimeter
+    margin_unit = QtPrintSupport.QPrinter.Unit.Millimeter
     page_size = None
     page_orientation = None
     
