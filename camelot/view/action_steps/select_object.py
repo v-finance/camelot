@@ -100,17 +100,14 @@ class SelectObjects( OpenTableView ):
         be made.  If none is given, the default query from the admin is taken.
     """
 
-    admin: InitVar
-    search_text: InitVar = None
     value: InitVar = None
     verbose_name_plural: str = field(init=False)
 
 
-    def __post_init__(self, admin, search_text, value):
+    def __post_init__(self, admin, value):
         if value is None:
             value = admin.get_query()
         super(SelectObjects, self).__post_init__(admin, value)
-        self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         # actions
         self.actions = [

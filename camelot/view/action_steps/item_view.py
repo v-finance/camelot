@@ -103,7 +103,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     action_states: List[Tuple[Route, State]] = field(init=False)
 
     def __post_init__( self, admin, value ):
-        self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
@@ -180,10 +179,7 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
-    admin: InitVar
-    value: InitVar
     new_tab: bool = False
-
     admin_route: Route = field(init=False)
 
     def __post_init__( self, admin, value ):
