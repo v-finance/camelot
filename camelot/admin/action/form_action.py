@@ -189,7 +189,7 @@ class ShowHistory( Action ):
                                                 'choices':memento.memento_types,
                                                 'name':_('Type')} }
     
-            @register_list_actions('_related_toolbar_actions', '_admin_route')
+            @register_list_actions('_admin_route')
             def get_related_toolbar_actions( self, toolbar_area, direction ):
                 return []
             

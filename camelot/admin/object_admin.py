@@ -394,7 +394,7 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         return app_admin.get_select_list_toolbar_actions()
 
-    @register_list_actions('_related_toolbar_actions', '_admin_route')
+    @register_list_actions('_admin_route')
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
@@ -408,7 +408,7 @@ be specified using the verbose_name attribute.
         return self.related_toolbar_actions or \
                app_admin.get_related_toolbar_actions( toolbar_area, direction )
 
-    @register_list_actions('_list_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_list_actions')
     def get_list_actions(self):
         return self.list_actions
 
@@ -820,7 +820,7 @@ be specified using the verbose_name attribute.
         fields.update(self.get_fields())
         return fields
 
-    @register_list_actions('_filter_actions', '_admin_route')
+    @register_list_actions('_admin_route', '_filter_actions')
     def get_filters(self):
         return []
 

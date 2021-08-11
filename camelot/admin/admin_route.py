@@ -156,21 +156,24 @@ class AdminRoute(object):
         return action_route
 
 
-def register_list_actions(attr_cache, attr_admin_route):
+def register_list_actions(attr_admin_route, attr_cache=None):
     """
     Function decorator that registers list actions.
 
-    :param str attr_cache: Name of the attribute to cache the registered actions
     :param str attr_admin_route: Name of the attribute that contains the AdminRoute.
+    :param str attr_cache: Name of the attribute to cache the registered actions.
+                           If this is None, no caching will be done.
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            # check for existing attribute
-            if hasattr(self, attr_cache) and getattr(self, attr_cache) is not None:
-                return getattr(self, attr_cache)
+            # check for existing cahed attribute
+            if attr_cache is not None:
+                if hasattr(self, attr_cache) and getattr(self, attr_cache) is not None:
+                    return getattr(self, attr_cache)
             # register actions
             assert hasattr(self, attr_admin_route)
             admin_route = getattr(self, attr_admin_route)
+            assert isinstance(admin_route, tuple)
             actions = func(self, *args, **kwargs)
             result = []
             for action in actions:
@@ -178,7 +181,8 @@ def register_list_actions(attr_cache, attr_admin_route):
                     result.append(action) # action is already registered
                 else:
                     result.append(RouteWithRenderHint(AdminRoute._register_list_action_route(admin_route, action), action.render_hint))
-            setattr(self, attr_cache, result)
+            if attr_cache is not None:
+                setattr(self, attr_cache, result)
             return result
         return wrapper
     return decorator
