@@ -368,8 +368,7 @@ class ChangeObjects( ActionStep ):
         self.window_title = self.admin.get_verbose_name_plural()
         self.columns = self.admin.get_columns()
         self.action_routes = [
-            AdminRoute._register_list_action_route(self.admin_route, action)
-            for action in self.admin.get_related_toolbar_actions(
+            action.route for action in self.admin.get_related_toolbar_actions(
                 Qt.RightToolBarArea, 'onetomany'
             )
         ]

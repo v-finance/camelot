@@ -34,6 +34,8 @@ import logging
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from camelot.admin.admin_route import AdminRoute
+from camelot.admin.action.base import RenderHint
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
@@ -646,6 +648,17 @@ class TableView(AbstractView):
                     toolbar.addWidget(rendered)
                 elif isinstance(rendered, QtWidgets.QAction):
                     toolbar.addAction( rendered )
+
+    def set_actions(self, actions):
+        """Set all the actions (filters, list actions and toolbar actions).
+        :param actions: A list of serialized :class:`camelot.admin.admin_route.RouteWithRenderHint` objects
+        """
+        self.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
+        self.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
+        self.set_toolbar_actions(
+            Qt.TopToolBarArea,
+            [AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
+        )
 
     @QtCore.qt_slot(bool)
     def action_triggered(self, _checked = False):

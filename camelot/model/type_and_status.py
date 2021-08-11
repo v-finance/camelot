@@ -58,6 +58,7 @@ from sqlalchemy import inspection, orm, schema, sql, types, util
 from sqlalchemy.ext import hybrid
 from sqlalchemy.ext.declarative import declared_attr
 
+from ..admin.admin_route import register_list_actions
 from ..admin.action import Action, list_filter
 from ..admin.entity_admin import EntityAdmin
 from ..core.exception import UserException
@@ -158,6 +159,7 @@ class StatusHistoryAdmin( EntityAdmin ):
         if obj.status_for is not None:
             yield obj.status_for
     
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions(self, toolbar_area, direction):
         return []
 

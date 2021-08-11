@@ -123,17 +123,12 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
-    onetomany_actions = [
-        list_action.AddNewObject(),
-        list_action.DeleteSelection(),
-        list_action.DuplicateSelection(),
-        list_action.ExportSpreadsheet(),
-    ]
+    export_spreadsheet_action = [ list_action.ExportSpreadsheet() ]
+    onetomany_actions = edit_actions + export_spreadsheet_action
     manytomany_actions = [
         list_action.AddExistingObject(),
         list_action.RemoveSelection(),
-        list_action.ExportSpreadsheet(),
-    ]
+    ] + export_spreadsheet_action
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -242,6 +237,7 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
+    @register_list_actions('_related_toolbar_actions', '_admin_route')
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
