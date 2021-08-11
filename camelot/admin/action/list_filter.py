@@ -187,11 +187,16 @@ class AbstractSearchStrategy(object):
     Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
     """
     
-    def __init__(self, where=None):
+    def __init__(self, name, where=None, verbose_name=None):
         """
+        :param name: String that uniquely identifies this search strategy within the context of an admin/entity.
         :param where: an optional additional condition that should be met for the search clause to apply.
+        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's name.
         """
+        assert isinstance(name, str)
+        self._name = name
         self.where = where
+        self._verbose_name = verbose_name
     
     def get_clause(self, text, admin, session):
         """
@@ -206,6 +211,15 @@ class AbstractSearchStrategy(object):
         Turn the given filter value into its corresponding string representation applicable for this search strategy, based on the given admin.
         """
         raise NotImplementedError
+    
+    @property
+    def name(self):
+        return self._name
+    
+    def get_verbose_name(self):
+        if self._verbose_name is not None:
+            return self._verbose_name
+        return ugettext(self.name.replace(u'_', u' ').capitalize())
 
 class FieldSearch(AbstractSearchStrategy):
     """
@@ -214,14 +228,15 @@ class FieldSearch(AbstractSearchStrategy):
     """
     
     attribute = None
-    python_type = None
 
-    def __init__(self, attribute, where=None):
+    def __init__(self, attribute, where=None, name=None, verbose_name=None):
         """
-        :param attribute: a queryable attribute for on which this field search should be applied on.
-        """        
-        super().__init__(where)
+        :param attribute: a queryable attribute for which this field search should be applied. It's key will be used as this field search's name.
+        :param name: Optional string to use as this strategy's name. By default the attribute's key will be used.
+        """
         self.assert_valid_attribute(attribute)
+        name = name or attribute.key
+        super().__init__(name, where, verbose_name)
         self.attribute = attribute
     
     @classmethod
@@ -262,16 +277,18 @@ class RelatedSearch(AbstractSearchStrategy):
     Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
     """
 
-    def __init__(self, *field_searches, joins, where=None):
+    def __init__(self, *field_searches, joins, where=None, name=None, verbose_name=None):
         """
         :param field_searches: field search strategies for the search fields on which this related search should apply.
         :param joins: join definition between the entity on which the search query this related search is part of takes place,
                       and the related entity of the given field searches.
+        :param name: Optional string to use as this strategy's name. By default the name of this related search's first field search will be used.
         """
-        super().__init__(where)
-        assert isinstance(joins, list) and len(joins) > 0   
+        assert isinstance(joins, list) and len(joins) > 0
         for field_search in field_searches:
             assert isinstance(field_search, FieldSearch)
+        name = name or field_searches[0].name
+        super().__init__(name, where, verbose_name)
         self.field_searches = field_searches
         self.joins = joins
 
@@ -310,6 +327,9 @@ class RelatedSearch(AbstractSearchStrategy):
 
 class NoSearch(FieldSearch):
     
+    def __init__(self, attribute):
+        super().__init__(attribute, name=str(attribute))
+        
     @classmethod
     def assert_valid_attribute(cls, attribute):
         pass
@@ -319,6 +339,9 @@ class NoSearch(FieldSearch):
     
     def value_to_string(self, filter_value, admin):
         return filter_value
+    
+    def get_verbose_name(self):
+        return None
 
 class StringSearch(FieldSearch):
     
