@@ -198,10 +198,12 @@ class CloseView(ActionStep, DataclassSerializable):
 
     accept: bool = True
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run( cls, gui_context, serialized_step ):
+        step = json.loads(serialized_step)
         view = gui_context.view
         if view != None:
-            view.close_view( self.accept )
+            view.close_view( step["accept"] )
 
 @dataclass
 class MessageBox( ActionStep, DataclassSerializable ):
@@ -225,7 +227,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
     """
 
     text: _
-    icon: QtWidgets = QtWidgets.QMessageBox.Information
+    icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Information
     title: _ = _('Message')
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Cancel])
     informative_text: str = field(init=False)
@@ -238,7 +240,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
         self.detailed_text = ''
 
     @classmethod
-    def render(self, step):
+    def render(cls, step):
         """create the message box. this method is used to unit test
         the action step."""
         message_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon(step["icon"]),
@@ -251,9 +253,9 @@ class MessageBox( ActionStep, DataclassSerializable ):
         return message_box
 
     @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        step = json.load(serialized_step)
-        message_box = self.render(step)
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        message_box = cls.render(step)
         result = message_box.exec_()
         if result == QtWidgets.QMessageBox.Cancel:
             raise CancelRequest()
