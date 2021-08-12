@@ -162,15 +162,15 @@ class SaveFile( ActionStep, DataclassSerializable ):
                 raise CancelRequest()
 
 @dataclass
-class SelectDirectory(ActionStep):
+class SelectDirectory(ActionStep, DataclassSerializable):
     """Select a single directory
 
     .. attribute:: caption
-    
+
         The text to display to the user
 
     .. attribute:: options
-    
+
         options to pass to :meth:`QtWidgets.QFileDialog.getExistingDirectory`,
         defaults to :const:`QtWidgets.QFileDialog.ShowDirsOnly`
 
@@ -181,19 +181,21 @@ class SelectDirectory(ActionStep):
     def __post_init__(self):
         self.options = QtWidgets.QFileDialog.ShowDirsOnly
         self.directory = None
-        
-    def gui_run(self, gui_context):
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         settings = QtCore.QSettings()
-        if self.directory is not None:
-            directory = self.directory
+        if step["directory"] is not None:
+            directory = step["directory"]
         else:
             directory = str(variant_to_py(settings.value('datasource')))
         get_directory = QtWidgets.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
             selected = get_directory(parent=gui_context.workspace,
-                                     caption=str(self.caption),
+                                     caption=str(cls.caption),
                                      directory=directory,
-                                     options=self.options)
+                                     options=step["options"])
             if selected:
                 settings.setValue('datasource', py_to_variant(selected))
             return str(selected)
