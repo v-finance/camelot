@@ -815,7 +815,7 @@ class ApplicationActionsCase(
         generator = self.gui_run(backup_action, self.gui_context)
         file_saved = False
         for step in generator:
-            if isinstance(step, action_steps.SaveFile):
+            if isinstance(step, tuple) and step[0] == 'SaveFile':
                 generator.send('unittest-backup.db')
                 file_saved = True
         self.assertTrue(file_saved)

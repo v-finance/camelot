@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
+import json
 import os
 
 from dataclasses import dataclass
@@ -39,6 +39,8 @@ from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
+from ...core.serializable import DataclassSerializable
+
 
 @dataclass
 class SelectFile( ActionStep ):
@@ -111,7 +113,7 @@ class SelectFile( ActionStep ):
                 raise CancelRequest()
 
 @dataclass
-class SaveFile( ActionStep ):
+class SaveFile( ActionStep, DataclassSerializable ):
     """Select a file for saving
     
     :param file_name_filter: Filter on the names of the files that can
@@ -136,19 +138,21 @@ class SaveFile( ActionStep ):
     file_name: str = None
 
     caption = _('Save')
-        
-    def gui_run(self, gui_context):
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         settings = QtCore.QSettings()
         directory = str(variant_to_py(settings.value('datasource')))
         directory = os.path.dirname(directory)
-        if self.file_name is not None:
-            directory = os.path.join(directory, self.file_name)
+        if step["file_name"] is not None:
+            directory = os.path.join(directory, step["file_name"])
         get_filename = QtWidgets.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(self.caption),
+                                    caption=str(cls.caption),
                                     directory=directory,
-                                    filter=self.file_name_filter)
+                                    filter=step["file_name_filter"])
             if qt_api == 'PyQt5':
                 selected = selected[0]
             if selected:
