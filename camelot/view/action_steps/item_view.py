@@ -60,7 +60,7 @@ class Sort( ActionStep, DataclassSerializable ):
     order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
 
     @classmethod
-    def gui_run( self, gui_context, serialized_step ):
+    def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
         if gui_context.item_view != None:
             model = gui_context.item_view.model()

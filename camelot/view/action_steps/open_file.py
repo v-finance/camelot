@@ -65,7 +65,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
         return self.path
 
     @classmethod
-    def create_temporary_file( self, suffix ):
+    def create_temporary_file( cls, suffix ):
         """
         Create a temporary filename that can be used to write to, and open
         later on.
@@ -80,8 +80,8 @@ class OpenFile( ActionStep, DataclassSerializable ):
         return file_name
 
     @classmethod
-    def gui_run( self, gui_context, serialized_step ):
-        step = json.load(serialized_step)
+    def gui_run( cls, gui_context, serialized_step ):
+        step = json.loads(serialized_step)
         # support for windows shares
         if not step["path"].startswith(r'\\'):
             url = QtCore.QUrl.fromLocalFile( step["path"] )
