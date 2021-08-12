@@ -330,8 +330,7 @@ class ListActionsCase(
         action = list_action.ExportSpreadsheet()
         for step in self.gui_run(action, self.gui_context):
             if isinstance(step, tuple) and step[0] == 'OpenFile':
-                step = ast.literal_eval(step[1].decode("UTF-8"))
-                filename = step["path"]
+                filename = step[1]["path"]
         self.assertTrue(filename)
         # see if the generated file can be parsed
         openpyxl.load_workbook(filename)
@@ -424,10 +423,11 @@ class ListActionsCase(
         self.assertEqual(utils.bool_from_string(row[6]), False)
 
     def test_import_from_file(self, filename='import_example.csv'):
+        import wingdbstub
         action = list_action.ImportFromFile()
         generator = self.gui_run(action, self.gui_context)
         for step in generator:
-            if isinstance(step, action_steps.SelectFile):
+            if isinstance(step, tuple) and step[0] == 'SelectFile':
                 generator.send([os.path.join(self.example_folder, filename)])
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
@@ -823,7 +823,7 @@ class ApplicationActionsCase(
         generator = self.gui_run(restore_action, self.gui_context)
         file_selected = False
         for step in generator:
-            if isinstance(step, action_steps.SelectFile):
+            if isinstance(step, tuple) and step[0] == 'SelectFile':
                 generator.send(['unittest-backup.db'])
                 file_selected = True
         self.assertTrue(file_selected)

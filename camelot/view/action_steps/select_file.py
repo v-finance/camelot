@@ -43,7 +43,7 @@ from ...core.serializable import DataclassSerializable
 
 
 @dataclass
-class SelectFile( ActionStep ):
+class SelectFile( ActionStep, DataclassSerializable ):
     """Select one or more files to open
     
     :param file_name_filter: Filter on the names of the files that can
@@ -75,7 +75,9 @@ class SelectFile( ActionStep ):
     def __post_init__(self):
         self.single = True
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         settings = QtCore.QSettings()
         datasource = settings.value('datasource')
         # we have no guarantee on what is inside datasource
@@ -84,20 +86,20 @@ class SelectFile( ActionStep ):
             directory = os.path.dirname(directory)
         except TypeError:
             directory = ''
-        if self.single:
+        if step["single"]:
             get_filename = QtWidgets.QFileDialog.getOpenFileName
         else:
             get_filename = QtWidgets.QFileDialog.getOpenFileNames
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(self.caption),
+                                    caption=str(cls.caption),
                                     directory=directory,
-                                    filter=self.file_name_filter)
+                                    filter=step["file_name_filter"])
             if qt_api == 'PyQt5':
                 selected = selected[0]
             # selected is an empty string if cancel is pressed
             if selected:
-                if self.single:
+                if step["single"]:
                     settings.setValue(
                         'datasource',
                         py_to_variant(str(selected))
