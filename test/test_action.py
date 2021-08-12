@@ -1,5 +1,7 @@
+import ast
 import datetime
 import io
+import json
 import logging
 import os
 import unittest
@@ -220,7 +222,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
-        dialog = step.render()
+        serialized_step = step._to_dict()
+        dialog = step.render(serialized_step)
         dialog.show()
         self.grab_widget(dialog)
 
@@ -326,8 +329,9 @@ class ListActionsCase(
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
         for step in self.gui_run(action, self.gui_context):
-            if isinstance(step, action_steps.OpenFile):
-                filename = step.get_path()
+            if isinstance(step, tuple) and step[0] == 'OpenFile':
+                step = ast.literal_eval(step[1].decode("UTF-8"))
+                filename = step["path"]
         self.assertTrue(filename)
         # see if the generated file can be parsed
         openpyxl.load_workbook(filename)

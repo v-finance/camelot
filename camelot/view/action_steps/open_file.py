@@ -26,6 +26,8 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import json
+
 from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtGui
@@ -35,8 +37,10 @@ from camelot.core.templates import environment
 
 from io import BytesIO
 
+from ...core.serializable import DataclassSerializable
+
 @dataclass
-class OpenFile( ActionStep ):
+class OpenFile( ActionStep, DataclassSerializable ):
     """
     Open a file with the preferred application from the user.  The absolute
     path is preferred, as this is most likely to work when running from an
@@ -74,15 +78,15 @@ class OpenFile( ActionStep ):
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         os.close( file_descriptor )
         return file_name
-        
-    def gui_run( self, gui_context ):
-        #
+
+    @classmethod
+    def gui_run( self, gui_context, serialized_step ):
+        step = json.load(serialized_step)
         # support for windows shares
-        #
-        if not self.path.startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile( self.path )
+        if not step["path"].startswith(r'\\'):
+            url = QtCore.QUrl.fromLocalFile( step["path"] )
         else:
-            url = QtCore.QUrl( self.path, QtCore.QUrl.TolerantMode )
+            url = QtCore.QUrl( step["path"], QtCore.QUrl.TolerantMode )
         return QtGui.QDesktopServices.openUrl( url )
     
 class OpenStream( OpenFile ):
