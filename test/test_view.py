@@ -9,6 +9,7 @@ import os
 import sys
 import unittest
 
+from camelot.admin.action.application import Application
 from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -943,14 +944,18 @@ class ControlsTest(
                 if isinstance(widget, QtWidgets.QMainWindow):
                     result += 1
             return result
+        
+        application = Application(app_admin)
 
-        action_step1 = MainWindow(app_admin)
-        action_step1.render(self.gui_context)
-
+        for step in self.gui_run(application, self.gui_context):
+            if isinstance(step, tuple) and step[0] == MainWindow.__name__:
+                MainWindow.render(self.gui_context, step[1])
+                
         num_main_windows1 = count_main_windows()
-
-        action_step2 = MainWindow(app_admin)
-        action_step2.render(self.gui_context)
+        
+        for step in self.gui_run(application, self.gui_context):
+            if isinstance(step, tuple) and step[0] == MainWindow.__name__:
+                MainWindow.render(self.gui_context, step[1])
 
         num_main_windows2 = count_main_windows()
 
