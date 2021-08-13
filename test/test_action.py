@@ -1,16 +1,11 @@
-import ast
 import datetime
 import io
-import json
 import logging
 import os
 import unittest
 
 import openpyxl
 
-from . import app_admin, test_core, test_view
-from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
 from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
 from camelot.admin.action.application import Application
@@ -37,6 +32,9 @@ from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchN
 from camelot.view.workspace import DesktopWorkspace
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
+from . import app_admin, test_core, test_view
+from .test_item_model import QueryQStandardItemModelMixinCase
+from .test_model import ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -423,7 +421,6 @@ class ListActionsCase(
         self.assertEqual(utils.bool_from_string(row[6]), False)
 
     def test_import_from_file(self, filename='import_example.csv'):
-        import wingdbstub
         action = list_action.ImportFromFile()
         generator = self.gui_run(action, self.gui_context)
         for step in generator:
