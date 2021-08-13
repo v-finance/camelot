@@ -734,6 +734,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         super().setUp()
         self.gui_context = ApplicationActionGuiContext()
         self.admin_route = app_admin.get_admin_route()
+        self.gui_context.admin_route = self.admin_route
 
     def tearDown(self):
         super().tearDown()

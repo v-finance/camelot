@@ -246,7 +246,7 @@ class MainMenu(ActionStep, DataclassSerializable):
         menu_bar.setCornerWidget(BusyWidget())
 
 @dataclass
-class InstallTranslator(ActionStep):
+class InstallTranslator(ActionStep, DataclassSerializable):
     """
     Install a translator in the application.  Ownership of the translator will
     be moved to the application.
@@ -256,11 +256,17 @@ class InstallTranslator(ActionStep):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
+    admin_route: AdminRoute = field(init=False)
 
-    def gui_run(self, gui_context):
+    def __post_init__(self, admin):
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         app = QtCore.QCoreApplication.instance()
-        translator = self.admin.get_translator()
+        translator = AdminRoute.admin_for(tuple(step["admin_route"])).get_translator()
         if isinstance(translator, list):
             for t in translator:
                 t.setParent(app)
