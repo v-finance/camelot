@@ -43,7 +43,7 @@ from .entity_admin import EntityAdmin
 from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
-from ..core.qt import Qt, QtCore
+from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.view import art
 
@@ -240,18 +240,17 @@ shortcut confusion and reduce the number of status updates.
         return []
 
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions( self, toolbar_area, direction ):
+    def get_related_toolbar_actions( self, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
 
-        :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
-        if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
+        if direction == 'onetomany':
             return self.onetomany_actions
-        if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
+        if direction == 'manytomany':
             return self.manytomany_actions
 
     def get_form_actions( self ):
@@ -265,26 +264,22 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
-    def get_form_toolbar_actions( self, toolbar_area ):
+    def get_form_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
-            if sys.platform.startswith('darwin'):
-                #
-                # NOTE We remove the CloseForm from the toolbar action list
-                #      on Mac because this regularly causes segfaults.
-                #      The user can still close the form with the
-                #      OS close button (i.e. "X").
-                #
-                return [action for action in self.form_toolbar_actions
-                        if type(action) != form_action.CloseForm]
-            return self.form_toolbar_actions
+        if sys.platform.startswith('darwin'):
+            #
+            # NOTE We remove the CloseForm from the toolbar action list
+            #      on Mac because this regularly causes segfaults.
+            #      The user can still close the form with the
+            #      OS close button (i.e. "X").
+            #
+            return [action for action in self.form_toolbar_actions
+                    if type(action) != form_action.CloseForm]
+        return self.form_toolbar_actions
 
     @register_list_actions('_admin_route', '_toolbar_actions')
     def get_list_toolbar_actions( self ):

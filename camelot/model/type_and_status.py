@@ -160,7 +160,7 @@ class StatusHistoryAdmin( EntityAdmin ):
             yield obj.status_for
     
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions(self, toolbar_area, direction):
+    def get_related_toolbar_actions(self, direction):
         return []
 
 class WithStatus(object):
