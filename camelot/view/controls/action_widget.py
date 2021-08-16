@@ -57,7 +57,6 @@ class AbstractActionWidget( object ):
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
         if isinstance( gui_context, ListActionGuiContext ):
             gui_context.item_view.model().headerDataChanged.connect(self.header_data_changed)
             #gui_context.item_view.model().modelReset.connect(self.model_reset)
@@ -69,6 +68,8 @@ class AbstractActionWidget( object ):
                 selection_model.currentRowChanged.connect(
                     self.current_row_changed, type=Qt.QueuedConnection
                 )
+        else:
+            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
         self.state = state
@@ -80,13 +81,15 @@ class AbstractActionWidget( object ):
         self.setVisible(state['visible'])
 
     def current_row_changed( self, current=None, previous=None ):
-        if isinstance( self.gui_context, FormActionGuiContext ) or isinstance(current, int):
+        assert isinstance(self.gui_context, ListActionGuiContext) or isinstance(self.gui_context, FormActionGuiContext)
+        if isinstance( self.gui_context, ListActionGuiContext ):
+            selection_model = self.gui_context.item_view.selectionModel()
+            current_index = self.gui_context.item_view.currentIndex()
+            self.current_row_changed_signal.emit(selection_model, current_index)
+        else:
             post( self.action.get_state,
                   self.set_state,
                   args = (self.gui_context.create_model_context(),) )
-        elif isinstance( self.gui_context, ListActionGuiContext ):
-            selection_model = self.gui_context.item_view.selectionModel()
-            self.current_row_changed_signal.emit(selection_model, current)
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Horizontal:
