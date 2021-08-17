@@ -1245,7 +1245,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if model_context.current_column is not None:
             model_context.current_field_name = variant_to_py(
                 self.headerData(
-                    model_context.current_column, Qt.Horizontal, Qt.UserRole
+                    model_context.current_column, Qt.Orientations.Horizontal, Qt.ItemDataRole.UserRole
                 )
             )
         if selection_model is not None:
