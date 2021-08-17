@@ -42,7 +42,7 @@ from ...admin.action.base import ActionStep, Action
 from ...admin.admin_route import AdminRoute
 from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
-from ...core.qt import Qt, is_deleted
+from ...core.qt import is_deleted
 
 
 @dataclass
@@ -89,16 +89,13 @@ class OpenFormView(ActionStep):
     objects: List[Any] = field(init=False)
     row: int = field(init=False)
 
-    top_level = True
-    title = u' '
-
     def __post_init__(self, obj):
         assert obj is not None
         assert isinstance(self.proxy, AbstractModelProxy)
         self.admin_name = self.admin.get_name()
         self.actions = self.admin.get_form_actions(None)
         get_form_toolbar_actions = self.admin.get_form_toolbar_actions
-        self.top_toolbar_actions = get_form_toolbar_actions(Qt.ToolBarAreas.TopToolBarArea)
+        self.top_toolbar_actions = get_form_toolbar_actions()
         self._columns = self.admin.get_fields()
         self._form_display = self.admin.get_form_display()
         self.admin_route = self.admin.get_admin_route()
@@ -106,6 +103,9 @@ class OpenFormView(ActionStep):
         self.objects = [obj]
         self.row = self.proxy.index(obj)
         self.proxy = ProxyRegistry.register(self.proxy)
+
+        self.top_level = True
+        self.title = u' '
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests

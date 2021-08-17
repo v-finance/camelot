@@ -361,16 +361,14 @@ class ChangeObjects( ActionStep ):
     title = _('Data Preview')
     subtitle = _('Please review the data below.')
     icon = Icon('file-excel')
-    invalid_rows = set()
 
     def __post_init__(self):
+        self.invalid_rows = set()
         self.admin_route = self.admin.get_admin_route()
         self.window_title = self.admin.get_verbose_name_plural()
         self.columns = self.admin.get_columns()
         self.action_routes = [
-            action.route for action in self.admin.get_related_toolbar_actions(
-                Qt.ToolBarAreas.RightToolBarArea, 'onetomany'
-            )
+            action.route for action in self.admin.get_related_toolbar_actions('onetomany')
         ]
         if self.validate:
             validator = self.admin.get_validator()
@@ -378,7 +376,6 @@ class ChangeObjects( ActionStep ):
                 for message in validator.validate_object(obj):
                     self.invalid_rows.add(row)
                     break
-                
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests

@@ -27,8 +27,8 @@ class ApplicationAdminCase(unittest.TestCase):
     def test_application_admin(self):
         app_admin = ApplicationAdmin()
         self.assertTrue( app_admin.get_navigation_menu() )
-        self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
-        self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'manytomany' ) )
+        self.assertTrue( app_admin.get_related_toolbar_actions( 'onetomany' ) )
+        self.assertTrue( app_admin.get_related_toolbar_actions( 'manytomany' ) )
         self.assertTrue( app_admin.get_version() )
         self.assertTrue( app_admin.get_icon() )
         self.assertTrue( app_admin.get_splashscreen() )

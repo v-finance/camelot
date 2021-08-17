@@ -90,18 +90,17 @@ class PrintPreview( ActionStep ):
         """
 
     document: QtGui.QTextDocument
-
-    printer = None
-    margin_left = None
-    margin_top = None
-    margin_right = None
-    margin_bottom = None
-    margin_unit = QtPrintSupport.QPrinter.Unit.Millimeter
-    page_size = None
-    page_orientation = None
     
     def __post_init__(self):
         self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
+        self.printer = None
+        self.margin_left = None
+        self.margin_top = None
+        self.margin_right = None
+        self.margin_bottom = None
+        self.margin_unit = QtPrintSupport.QPrinter.Unit.Millimeter
+        self.page_size = None
+        self.page_orientation = None
 
     def get_printer(self):
         if self.printer is not None:

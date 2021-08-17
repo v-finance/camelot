@@ -36,7 +36,7 @@ import os.path
 import string
 
 
-from ..core.qt import QtCore, Qt
+from ..core.qt import QtCore
 from camelot.view.controls import delegates
 from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action.list_action import delete_selection
@@ -193,7 +193,7 @@ class ColumnMappingAdmin(ObjectAdmin):
         return fa
     
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions(self, toolbar_area, direction):
+    def get_related_toolbar_actions(self, direction):
         return self.toolbar_actions
 
 class ColumnSelectionAdmin(ColumnMappingAdmin):
@@ -205,7 +205,7 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
     related_toolbar_actions = []
     
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions(self, toolbar_area, direction):
+    def get_related_toolbar_actions(self, direction):
         return self.related_toolbar_actions
 
 # see http://docs.python.org/library/csv.html
@@ -401,9 +401,8 @@ class RowDataAdmin(ObjectAdmin):
         return self.admin.get_related_admin(cls)
 
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions(self, toolbar_area, direction):
-        if toolbar_area==Qt.ToolBarAreas.RightToolBarArea:
-            return self.list_actions
+    def get_related_toolbar_actions(self, direction):
+        return self.list_actions
 
     def get_field_attributes(self, field_name):
         return self._new_field_attributes[field_name]

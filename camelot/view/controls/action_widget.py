@@ -40,6 +40,8 @@ from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
 
+    current_row_changed_signal = QtCore.qt_signal(QtCore.QItemSelectionModel, QtCore.QModelIndex)
+
     def init( self, action, gui_context ):
         """Helper class to construct widget that when triggered run an action.
         This class exists as a base class for custom ActionButton
@@ -66,7 +68,8 @@ class AbstractActionWidget( object ):
                 selection_model.currentRowChanged.connect(
                     self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
                 )
-        post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
+        else:
+            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
         self.state = state
@@ -77,10 +80,16 @@ class AbstractActionWidget( object ):
         self.setEnabled(state['enabled'])
         self.setVisible(state['visible'])
 
-    def current_row_changed( self, index1=None, index2=None ):
-        post( self.action.get_state,
-              self.set_state,
-              args = (self.gui_context.create_model_context(),) )
+    def current_row_changed( self, current=None, previous=None ):
+        assert isinstance(self.gui_context, ListActionGuiContext) or isinstance(self.gui_context, FormActionGuiContext)
+        if isinstance( self.gui_context, ListActionGuiContext ):
+            selection_model = self.gui_context.item_view.selectionModel()
+            current_index = self.gui_context.item_view.currentIndex()
+            self.current_row_changed_signal.emit(selection_model, current_index)
+        else:
+            post( self.action.get_state,
+                  self.set_state,
+                  args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Orientations.Horizontal:
@@ -143,7 +152,10 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                if mode_data['icon'] is not None:
+                    icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                else:
+                    icon = None
                 mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)

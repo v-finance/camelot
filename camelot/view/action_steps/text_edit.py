@@ -71,12 +71,12 @@ class EditTextDocument( ActionStep ):
 
     document: QtGui.QTextDocument
 
-    thread = QtCore.QThread.currentThread()
     window_title = _('Edit text')
     title = _('Edit text')
     subtitle = _('Press OK when finished')
 
     def __post_init__( self ):
+        self.thread = QtCore.QThread.currentThread()
         self.document.moveToThread(QtWidgets.QApplication.instance().thread())
 
     def render( self ):

@@ -115,8 +115,10 @@ class SelectObjects( OpenTableView ):
                                 action.render_hint) for action in [cancel_selection, confirm_selection]
         ]
         self.actions.extend(admin.get_select_list_toolbar_actions())
+        self.action_states = list()
+        self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
         # list_action
-        self.list_action = self.actions[1].route
+        self.list_action = AdminRoute._register_list_action_route(admin.get_admin_route(), confirm_selection)
 
     @classmethod
     def render(cls, gui_context, step):

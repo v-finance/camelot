@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
@@ -68,6 +69,7 @@ from ..utils import get_settings
 from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import object_thread, post
 from camelot.view.art import from_admin_icon
+from camelot.view.controls.action_widget import AbstractActionWidget
 
 
 def strip_data_from_object( obj, columns ):
@@ -712,6 +714,24 @@ class SetHeaderData(object):
         item_model.settings.endGroup()
 
 
+class ChangeSelection:
+
+    def __init__(self, action, model_context):
+        self.action = action
+        self.model_context = model_context
+
+    def model_run(self, model_context):
+        self.state = self.action.get_state(self.model_context)
+        return self
+
+    def gui_run(self, item_model):
+        # TODO: find a better way to get the action route (Add AbstractActionWidget.action_route?)
+        for route, obj in AdminRoute._admin_routes.items():
+            if obj == self.action:
+                item_model.action_state_changed_signal.emit(route, self.state)
+                break
+
+
 class CollectionProxy(QtGui.QStandardItemModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
@@ -724,6 +744,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         model.  each row, even when not yet displayed will consume a certain
         amount of memory, this maximum puts an upper limit on that.
     """
+
+    action_state_changed_signal = QtCore.qt_signal(tuple, State)
 
     max_row_count = 10000000 # display maxium 10M rows
 
@@ -1204,6 +1226,36 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         self.logger.debug('get_admin called')
-        return self.admin
+        return AdminRoute.admin_for(self.admin_route)
 
+    @QtCore.qt_slot(QtCore.QItemSelectionModel, QtCore.QModelIndex)
+    def change_selection(self, selection_model, current_index):
+        self.logger.debug('change_selection called')
+        assert isinstance(self.sender(), AbstractActionWidget)
 
+        # Create model context based on selection
+        # model_conext.field_attributes required???
+        model_context = ListActionModelContext()
+        model_context.proxy = self.get_value()
+        model_context.admin = self.get_admin()
+        if current_index.isValid():
+            model_context.current_row = current_index.row()
+            model_context.current_column = current_index.column()
+        model_context.collection_count = self.rowCount()
+        if model_context.current_column is not None:
+            model_context.current_field_name = variant_to_py(
+                self.headerData(
+                    model_context.current_column, Qt.Horizontal, Qt.UserRole
+                )
+            )
+        if selection_model is not None:
+            selection = selection_model.selection()
+            for i in range( len( selection ) ):
+                selection_range = selection[i]
+                rows_range = ( selection_range.top(), selection_range.bottom() )
+                model_context.selected_rows.append( rows_range )
+                model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+
+        action = self.sender().action
+        request = ChangeSelection(action, model_context)
+        self._append_request(request)

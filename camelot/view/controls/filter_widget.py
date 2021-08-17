@@ -71,7 +71,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         layout.setContentsMargins( 2, 2, 2, 2 )
         self.setLayout( layout )
         self.setFlat(True)
-        self.modes = None
+        self.values = None
         group = QtWidgets.QButtonGroup(self)
         group.setExclusive(action.exclusive)
         # connect to the signal of the group instead of the individual buttons,
@@ -111,7 +111,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
             if button.objectName() != 'all_button':
                 if button.isChecked():
                     button_id = group.id(button)
-                    values.append(self.modes[button_id].name)
+                    values.append(self.values[button_id])
                 else:
                     all_checked = False
         # shortcut, to make sure no actual filtering is done when
@@ -126,13 +126,33 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
-        self.modes = state.modes
+        self.values = [mode.name for mode in state.modes]
 
         for i, mode in enumerate(state.modes):
             button = self.button_type(str(mode.verbose_name), self)
             button_layout.addWidget(button)
             group.addButton(button, i)
             if mode.checked:
+                button.setChecked(True)
+
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+        # run the filter action to apply the initial filter on the list
+        self.run_action()
+
+    def set_state_v2(self, state):
+        AbstractFilterWidget.set_state_v2(self, state)
+        self.setTitle(state['verbose_name'])
+        group = self.findChild(QtWidgets.QButtonGroup)
+        layout = self.layout()
+        button_layout = QtWidgets.QVBoxLayout()
+        self.values = [mode['name'] for mode in state['modes']]
+
+        for i, mode in enumerate(state['modes']):
+            button = self.button_type(str(mode['verbose_name']), self)
+            button_layout.addWidget(button)
+            group.addButton(button, i)
+            if mode['checked']:
                 button.setChecked(True)
 
         layout.addLayout(button_layout)
@@ -166,7 +186,23 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
                     current_index = i
                 combobox.insertItem(i,
                                     str(mode.verbose_name),
-                                    py_to_variant(mode))
+                                    py_to_variant(mode.name))
+            # setting the current index will trigger the run of the action to
+            # apply the initial filter
+            combobox.setCurrentIndex(current_index)
+
+    def set_state_v2(self, state):
+        AbstractFilterWidget.set_state_v2(self, state)
+        self.setTitle(state['verbose_name'])
+        combobox = self.findChild(QtWidgets.QComboBox)
+        if combobox is not None:
+            current_index = 0
+            for i, mode in enumerate(state['modes']):
+                if mode['checked'] == True:
+                    current_index = i
+                combobox.insertItem(i,
+                                    mode['verbose_name'],
+                                    mode['name'])
             # setting the current index will trigger the run of the action to
             # apply the initial filter
             combobox.setCurrentIndex(current_index)
@@ -175,8 +211,8 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
             index = combobox.currentIndex()
-            mode = variant_to_py(combobox.itemData(index))
-            return [mode.name]
+            mode_name = variant_to_py(combobox.itemData(index))
+            return [mode_name]
 
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
@@ -243,6 +279,9 @@ class OperatorFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         self._editor2.hide()
         self._index = default_index
         self.update_editors()
+
+    def set_state_v2(self, state):
+        raise NotImplementedError()
 
     def update_editors(self):
         """Show or hide the editors according to the operator
