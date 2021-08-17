@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import json
 import typing
 
 from dataclasses import InitVar, dataclass, field
@@ -55,6 +56,7 @@ from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+from ...core.serializable import DataclassSerializable
 
 
 class ChangeObjectDialog( StandaloneWizardPage ):
@@ -251,7 +253,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 ))
 
 @dataclass
-class ChangeObject(ActionStep):
+class ChangeObject(ActionStep, DataclassSerializable):
     """
     Pop up a form for the user to change an object
 
@@ -269,7 +271,7 @@ class ChangeObject(ActionStep):
     """
 
     obj: typing.Any
-    admin: ObjectAdmin
+    admin: InitVar[ObjectAdmin]
     form_display: Form = field(init=False)
     columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
     form_actions: List[Action] = field(init=False)
@@ -277,12 +279,12 @@ class ChangeObject(ActionStep):
     accept = _('OK')
     reject = _('Cancel')
 
-    def __post_init__(self):
-        assert self.admin is not None
-        self.form_display = self.admin.get_form_display()
-        self.columns = self.admin.get_fields()
-        self.form_actions = self.admin.get_form_actions(None)
-        self.admin_route = self.admin.get_admin_route()
+    def __post_init__(self, admin):
+        assert admin is not None
+        self.form_display = admin.get_form_display()
+        self.columns = admin.get_fields()
+        self.form_actions = admin.get_form_actions(None)
+        self.admin_route = admin.get_admin_route()
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -291,28 +293,31 @@ class ChangeObject(ActionStep):
         """
         return self.obj
 
-    def render(self, gui_context):
+    @classmethod
+    def render(cls, gui_context, step):
         """create the dialog. this method is used to unit test
         the action step."""
-        super(ChangeObject, self).gui_run(gui_context)
-        dialog = ChangeObjectDialog(self.obj,
-                                    self.admin_route,
-                                    self.admin,
-                                    self.form_display,
-                                    self.columns,
-                                    self.form_actions,
-                                    self.accept,
-                                    self.reject)
+        super(ChangeObject, cls).gui_run(gui_context)
+        dialog = ChangeObjectDialog(step["obj"],
+                                    step["admin_route"],
+                                    AdminRoute.admin_for(tuple(step["admin_route"])),
+                                    step["form_display"],
+                                    step["columns"],
+                                    step["form_actions"],
+                                    step["accept"],
+                                    step["reject"])
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render(gui_context)
-        apply_form_state(dialog, None, self.admin.form_state)
+    @classmethod
+    def gui_run( cls, gui_context, serialized_step ):
+        step = json.loads(serialized_step)
+        dialog = cls.render(gui_context, step)
+        apply_form_state(dialog, None, step["admin"].form_state)
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
-            return self.obj
+            return step["obj"]
 
 
 @dataclass

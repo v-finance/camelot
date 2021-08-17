@@ -159,8 +159,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         options.name = 'Videostore'
         options.module = 'videostore'
         options.domain = 'example.com'
-        change_object = ChangeObject(options, admin)
-        dialog = change_object.render(self.gui_context)
+        change_object_step = yield ChangeObject(options, admin)
+        dialog = ChangeObject.render(self.gui_context, change_object_step[1])
         self.grab_widget( dialog )
 
     def test_select_file( self ):
@@ -356,7 +356,7 @@ class ListActionsCase(
                                    import_utils.ColumnMapping(1, [], 'field_2')]
 
         for step in save_export_mapping.model_run(model_context):
-            if isinstance(step, action_steps.ChangeObject):
+            if isinstance(step, ChangeObject):
                 options = step.get_object()
                 options.name = 'mapping 1'
 
@@ -842,7 +842,7 @@ class ApplicationActionsCase(
     def test_change_logging( self ):
         change_logging_action = application_action.ChangeLogging()
         for step in change_logging_action.model_run(self.context):
-            if isinstance( step, action_steps.ChangeObject ):
+            if isinstance(step, tuple) and step[0] == ChangeObject.__name__:
                 step.get_object().level = logging.INFO
 
     def test_segmentation_fault( self ):
