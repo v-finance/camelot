@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from camelot.bin.meta import CreateNewProject, templates
-from camelot.view.action_steps import ChangeObject
+from camelot.view import action_steps
 
 
 class BinCase(unittest.TestCase):
@@ -13,7 +13,7 @@ class BinCase(unittest.TestCase):
     def test_create_new_project(self):
         new_project_action = CreateNewProject()
         for step in new_project_action.model_run( None ):
-            if isinstance(step, ChangeObject):
+            if isinstance(step, action_steps.ChangeObject):
                 options = step.get_object()
                 options.source = tempfile.mkdtemp('new_project')
         #
