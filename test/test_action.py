@@ -23,7 +23,7 @@ from camelot.test.action import MockListActionGuiContext, MockModelContext
 from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import PrintHtml, SelectItem
-from camelot.view.action_steps.change_object import ChangeObject
+from camelot.view.action_steps.change_object import ChangeObject, ChangeField
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, tableview
 from camelot.view.controls.action_widget import ActionPushButton
@@ -335,6 +335,8 @@ class ListActionsCase(
 
     def test_save_restore_export_mapping(self):
 
+        import wingdbstub
+
         admin = app_admin.get_related_admin(Movie)
 
         settings = utils.get_settings(admin.get_admin_route()[-1])
@@ -440,11 +442,12 @@ class ListActionsCase(
                 self.grab_widget(dialog, suffix='confirmation')
 
     def test_replace_field_contents( self ):
+        import wingdbstub
         action = list_action.ReplaceFieldContents()
         steps = self.gui_run(action, self.gui_context)
         for step in steps:
-            if isinstance(step, action_steps.ChangeField):
-                dialog = step.render()
+            if isinstance(step, tuple) and step[0] == ChangeField.__name__:
+                dialog = ChangeField.render(step[1])
                 field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
                 field_editor.set_value('first_name')
                 dialog.show()
