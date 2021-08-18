@@ -114,13 +114,13 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
         self.action_states = list()
+        self._add_action_states(admin, proxy, self.actions, self.action_states)
+
+    @staticmethod
+    def _add_action_states(admin, proxy, actions, action_states):
         model_context = ListActionModelContext()
         model_context.admin = admin
         model_context.proxy = proxy
-        self._add_action_states(model_context, self.actions, self.action_states)
-
-    @staticmethod
-    def _add_action_states(model_context, actions, action_states):
         for action_route in actions:
             action = AdminRoute.action_for(action_route.route)
             state = action.get_state(model_context)
@@ -148,7 +148,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
 
         table_view.set_value(step['proxy_route'])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
-        table_view.set_actions(step['actions'])
+        table_view.set_actions(step['actions'], step['action_states'])
         if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
             search_control.setText(step['search_text'])
