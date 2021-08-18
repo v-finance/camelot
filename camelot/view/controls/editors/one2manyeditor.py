@@ -108,6 +108,15 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.set_right_toolbar_actions(kw['action_routes'])
         self.set_columns(columns)
 
+        selection_model = table.selectionModel()
+        if selection_model is not None:
+            # a queued connection, since the selection of the selection model
+            # might not be up to date at the time the currentRowChanged
+            # signal is emitted
+            selection_model.currentRowChanged.connect(
+                self.current_row_changed, type=Qt.QueuedConnection
+            )
+
     @classmethod
     def _register_rendered_action(cls, qobject):
         next_rendered_action = cls._rendered_action_counter.__next__()
@@ -159,6 +168,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
+
+    def current_row_changed(self, current=None, previous=None):
+        self.update_action_status()
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
