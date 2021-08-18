@@ -189,8 +189,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.assertTrue(dialog)
 
     def test_edit_profile(self):
-        step = EditProfiles([], '')
-        dialog = step.render(self.gui_context)
+        step = yield EditProfiles([], '')
+        dialog = EditProfiles.render(self.gui_context, step)
         dialog.show()
         self.grab_widget(dialog)
 
