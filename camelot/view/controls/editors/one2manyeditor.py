@@ -31,7 +31,6 @@ import logging
 import itertools
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import post
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint

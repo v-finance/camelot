@@ -69,7 +69,6 @@ from ..utils import get_settings
 from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import object_thread, post
 from camelot.view.art import from_admin_icon
-from camelot.view.controls.action_widget import AbstractActionWidget
 
 
 def strip_data_from_object( obj, columns ):
