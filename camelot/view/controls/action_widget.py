@@ -40,8 +40,6 @@ from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
 
-    current_row_changed_signal = QtCore.qt_signal(QtCore.QItemSelectionModel, QtCore.QModelIndex)
-
     def init( self, action, gui_context ):
         """Helper class to construct widget that when triggered run an action.
         This class exists as a base class for custom ActionButton
@@ -57,18 +55,7 @@ class AbstractActionWidget( object ):
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-        if isinstance( gui_context, ListActionGuiContext ):
-            gui_context.item_view.model().headerDataChanged.connect(self.header_data_changed)
-            #gui_context.item_view.model().modelReset.connect(self.model_reset)
-            selection_model = gui_context.item_view.selectionModel()
-            if selection_model is not None:
-                # a queued connection, since the selection of the selection model
-                # might not be up to date at the time the currentRowChanged
-                # signal is emitted
-                selection_model.currentRowChanged.connect(
-                    self.current_row_changed, type=Qt.QueuedConnection
-                )
-        else:
+        if not isinstance( gui_context, ListActionGuiContext ):
             post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
@@ -81,12 +68,7 @@ class AbstractActionWidget( object ):
         self.setVisible(state['visible'])
 
     def current_row_changed( self, current=None, previous=None ):
-        assert isinstance(self.gui_context, ListActionGuiContext) or isinstance(self.gui_context, FormActionGuiContext)
-        if isinstance( self.gui_context, ListActionGuiContext ):
-            selection_model = self.gui_context.item_view.selectionModel()
-            current_index = self.gui_context.item_view.currentIndex()
-            self.current_row_changed_signal.emit(selection_model, current_index)
-        else:
+        if not isinstance( self.gui_context, ListActionGuiContext ):
             post( self.action.get_state,
                   self.set_state,
                   args = (self.gui_context.create_model_context(),) )
@@ -99,15 +81,6 @@ class AbstractActionWidget( object ):
             # has been deleted
             if not is_deleted(self.gui_context.widget_mapper):
                 self.current_row_changed(first)
-        if isinstance(self.gui_context, ListActionGuiContext):
-            if not is_deleted(self.gui_context.item_view):
-                selection_model = self.gui_context.item_view.selectionModel()
-                if (selection_model is not None) and selection_model.hasSelection():
-                    parent = QtCore.QModelIndex()
-                    for row in range(first, last+1):
-                        if selection_model.rowIntersectsSelection(row, parent):
-                            self.current_row_changed(row)
-                            return
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
