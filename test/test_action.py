@@ -335,6 +335,9 @@ class ListActionsCase(
         openpyxl.load_workbook(filename)
 
     def test_save_restore_export_mapping(self):
+
+        import wingdbstub
+
         admin = app_admin.get_related_admin(Movie)
 
         settings = utils.get_settings(admin.get_admin_route()[-1])
@@ -440,6 +443,7 @@ class ListActionsCase(
                 self.grab_widget(dialog, suffix='confirmation')
 
     def test_replace_field_contents( self ):
+        import wingdbstub
         action = list_action.ReplaceFieldContents()
         steps = self.gui_run(action, self.gui_context)
         for step in steps:

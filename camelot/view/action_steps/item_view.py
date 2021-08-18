@@ -67,7 +67,7 @@ class Sort( ActionStep, DataclassSerializable ):
             model.sort( step["column"], step["order"] )
 
 @dataclass
-class SetFilter( ActionStep, DataclassSerializable ):
+class SetFilter( ActionStep ):
     """Filter the items in the item view
 
             :param list_filter: the `AbstractModelFilter` to apply
@@ -79,12 +79,10 @@ class SetFilter( ActionStep, DataclassSerializable ):
     blocking = False
     cancelable = False
 
-    @classmethod
-    def gui_run( cls, gui_context, serialized_step ):
-        step = json.loads(serialized_step)
+    def gui_run( self, gui_context ):
         if gui_context.item_view is not None:
             model = gui_context.item_view.model()
-            model.set_filter(step["list_filter"], step["value"])
+            model.set_filter(self.list_filter, self.value)
 
 @dataclass
 class UpdateTableView( ActionStep, DataclassSerializable ):
