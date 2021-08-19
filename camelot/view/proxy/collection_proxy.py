@@ -69,7 +69,6 @@ from ..utils import get_settings
 from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import object_thread, post
 from camelot.view.art import from_admin_icon
-from camelot.view.controls.action_widget import AbstractActionWidget
 
 
 def strip_data_from_object( obj, columns ):
@@ -716,20 +715,21 @@ class SetHeaderData(object):
 
 class ChangeSelection:
 
-    def __init__(self, action, model_context):
-        self.action = action
+    def __init__(self, action_routes, model_context):
+        self.action_routes = action_routes
         self.model_context = model_context
+        self.action_states = []
 
     def model_run(self, model_context):
-        self.state = self.action.get_state(self.model_context)
+        for action_route in self.action_routes:
+            action = AdminRoute.action_for(action_route)
+            state = action.get_state(self.model_context)
+            self.action_states.append(state)
         return self
 
     def gui_run(self, item_model):
-        # TODO: find a better way to get the action route (Add AbstractActionWidget.action_route?)
-        for route, obj in AdminRoute._admin_routes.items():
-            if obj == self.action:
-                item_model.action_state_changed_signal.emit(route, self.state)
-                break
+        for i, action_route in enumerate(self.action_routes):
+            item_model.action_state_changed_signal.emit(action_route, self.action_states[i])
 
 
 class CollectionProxy(QtGui.QStandardItemModel):
@@ -774,6 +774,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self._max_number_of_rows = max_number_of_rows
         self._model_context = None
         self._model_thread = get_model_thread()
+        self._action_routes = []
         #
         # The timer reduced the number of times the model thread is
         # triggered, by waiting for the next gui event before triggering
@@ -1225,10 +1226,23 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.logger.debug('get_admin called')
         return AdminRoute.admin_for(self.admin_route)
 
+    def add_action_route(self, action_route):
+        """Add the action route for an action that needs it's state to be updated
+        when the selection changed. See change_selection below
+
+        :param action_route: The action route.
+        """
+        self._action_routes.append(action_route)
+
+    def set_action_routes(self, action_routes):
+        self._action_routes = action_routes.copy()
+
     @QtCore.qt_slot(QtCore.QItemSelectionModel, QtCore.QModelIndex)
     def change_selection(self, selection_model, current_index):
+        """Determine the new state of actions and emit a action_state_changed_signal
+        for each action that was added using add_action_route.
+        """
         self.logger.debug('change_selection called')
-        assert isinstance(self.sender(), AbstractActionWidget)
 
         # Create model context based on selection
         # model_conext.field_attributes required???
@@ -1253,6 +1267,5 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 model_context.selected_rows.append( rows_range )
                 model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
 
-        action = self.sender().action
-        request = ChangeSelection(action, model_context)
+        request = ChangeSelection(self._action_routes, model_context)
         self._append_request(request)

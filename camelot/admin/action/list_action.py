@@ -371,6 +371,13 @@ class DuplicateSelection( EditAction ):
         yield action_steps.UpdateObjects(updated_objects)
         yield action_steps.FlushSession(model_context.session)
 
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        if isinstance(model_context, ListActionModelContext):
+            if model_context.selection_count <= 0:
+                state.enabled = False
+        return state
+
 duplicate_selection = DuplicateSelection()
             
 class DeleteSelection( EditAction ):
@@ -431,6 +438,13 @@ class DeleteSelection( EditAction ):
         model_context.proxy.remove(obj)
         yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete(obj)
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        if isinstance(model_context, ListActionModelContext):
+            if model_context.selection_count <= 0:
+                state.enabled = False
+        return state
 
 delete_selection = DeleteSelection()
 
