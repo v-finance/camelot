@@ -268,12 +268,13 @@ class ClearSelection(ActionStep, DataclassSerializable):
             gui_context.item_view.clearSelection()
 
 @dataclass
-class RefreshItemView(ActionStep):
+class RefreshItemView(ActionStep, DataclassSerializable):
     """
     Refresh only the current item view
     """
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         if gui_context.item_view is not None:
             model = gui_context.item_view.model()
             if model is not None:
