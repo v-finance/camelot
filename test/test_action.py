@@ -10,6 +10,7 @@ from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext
     form_action, list_action, list_filter
 from camelot.admin.action.application import Application
 from camelot.admin.action.base import GuiContext
+from camelot.admin.action.list_action import SetFilters
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ListModelProxy, ObjectRole
@@ -189,8 +190,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.assertTrue(dialog)
 
     def test_edit_profile(self):
-        step = EditProfiles([], '')
-        dialog = step.render(self.gui_context)
+        step = yield EditProfiles([], '')
+        dialog = EditProfiles.render(self.gui_context, step)
         dialog.show()
         self.grab_widget(dialog)
 
@@ -509,13 +510,13 @@ class ListActionsCase(
         list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
 
     def test_set_filters(self):
-        set_filters = list_action.SetFilters()
-        state = self.get_state(set_filters, self.gui_context)
+        set_filters_step = yield SetFilters()
+        state = self.get_state(set_filters_step, self.gui_context)
         self.assertTrue(len(state.modes))
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        set_filters.gui_run(self.gui_context)
+        SetFilters.gui_run(self.gui_context, set_filters_step[1])
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
