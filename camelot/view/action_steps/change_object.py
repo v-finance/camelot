@@ -55,6 +55,7 @@ from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+from ...core.serializable import DataclassSerializable
 
 
 class ChangeObjectDialog( StandaloneWizardPage ):

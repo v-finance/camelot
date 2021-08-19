@@ -46,7 +46,7 @@ from ...core.serializable import DataclassSerializable
 
 
 @dataclass
-class UpdateEditor(ActionStep):
+class UpdateEditor(ActionStep, DataclassSerializable):
     """This step should be used in the context of an editor action.  It
     will update an attribute of the editor.
 
@@ -60,11 +60,13 @@ class UpdateEditor(ActionStep):
     value: Any
     propagate: bool = False
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         if is_deleted(gui_context.editor):
             return
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
+        setattr(gui_context.editor, step["attribute"], step["value"])
+        if step["propagate"]:
             gui_context.editor.editingFinished.emit()
 
 @dataclass
