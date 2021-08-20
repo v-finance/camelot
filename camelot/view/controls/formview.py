@@ -208,6 +208,10 @@ class FormWidget(QtWidgets.QWidget):
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, form_display.render( widgets, self, True) )
+        """
+            Filtermechanisme op basis van classname
+            (Gewoon compatibel maken met dict structuur)
+        """
         ## give focus to the first editor in the form that can receive focus
         # this results in weird behavior on Mac, where the editor get focus
         # from the OS and then immediately gets input

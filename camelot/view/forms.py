@@ -31,8 +31,13 @@
 form_display attribute in Admin classes, but they can be used on their own as
 well.  Form classes can be used recursive.
 """
-
+import json
 import logging
+from typing import Iterable
+
+from dataclasses import dataclass, InitVar
+
+from ..core.serializable import DataclassSerializable, Serializable
 
 logger = logging.getLogger( 'camelot.view.forms' )
 
@@ -40,8 +45,18 @@ from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
 
+class MetaForm(type):
 
-class Form( list ):
+    forms = dict()
+
+    def __new__(cls, clsname, bases, attrs):
+        newclass = super().__new__(cls, clsname, bases, attrs)
+        if issubclass(newclass, (Serializable,)):
+            cls.forms[clsname] = newclass
+        return newclass
+
+@dataclass
+class Form( list, DataclassSerializable, metaclass=MetaForm ):
     """Base Form class to put fields on a form.  The base class of a form is
 a list.  So the form itself is nothing more than a list of field names or
 sub-forms.  A form can thus be manipulated using the list's method such as
@@ -64,10 +79,12 @@ and takes these parameters :
 
 """
 
-    def __init__( self, content, scrollbars = False, columns = 1  ):
-        super(Form, self).__init__( content )
-        self._scrollbars = scrollbars
-        self._columns = columns
+    content: Iterable
+    scrollbars: bool = False
+    columns: int = 1
+
+    def __post_init__( self ):
+        super(Form, self).__init__( self.content )
 
     def get_fields( self ):
         """:return: the fields, visible in this form"""
@@ -78,11 +95,11 @@ and takes these parameters :
             if field is None:
                 continue
             elif isinstance( field, Form ):
-                for nested_field in  field._get_fields_from_form():
+                for nested_field in field._get_fields_from_form():
                     yield nested_field
             else:
-                assert isinstance( field, (str)) or (field is None)
-                yield field;
+                assert isinstance(field, str) or (field is None)
+                yield field
 
 
     def remove_field( self, original_field ):
@@ -122,7 +139,8 @@ and takes these parameters :
     def __str__( self ):
         return 'Form(%s)' % ( u','.join( str( c ) for c in self ) )
 
-    def render( self, widgets, parent = None, toplevel = False):
+    @classmethod
+    def render( cls, widgets, serialized_form, parent = None, toplevel = False):
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
@@ -134,12 +152,14 @@ and takes these parameters :
 
         :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
-        logger.debug( 'rendering %s' % (self.__class__.__name__) )
+        form = json.loads(serialized_form)
+
+        logger.debug( 'rendering %s' % cls.__name__)
         from camelot.view.controls.editors.wideeditor import WideEditor
         form_widget = QtWidgets.QWidget( parent )
         form_layout = QtWidgets.QGridLayout()
         # where 1 column in the form is a label and a field, so two columns in the grid
-        columns = min(self._columns, len(self))
+        columns = min(form["columns"], len(form["content"]))
         # make sure all columns have the same width
         for i in range(columns*2):
             if i%2:
@@ -172,7 +192,7 @@ and takes these parameters :
         c = cursor()
 
         has_vertical_expanding_row = False
-        for field in self:
+        for field in form["content"]:
             size_policy = None
             if field is None:
                 c.next_col()
@@ -236,7 +256,7 @@ and takes these parameters :
                                        QtWidgets.QSizePolicy.Expanding )
         form_widget.setLayout( form_layout )
 
-        if self._scrollbars:
+        if form["scrollbars"]:
             scroll_area = QtWidgets.QScrollArea( parent )
             # we should inherit parent's background color
             scroll_area.setWidget( form_widget )
@@ -244,7 +264,7 @@ and takes these parameters :
             scroll_area.setFrameStyle( QtWidgets.QFrame.NoFrame )
             return scroll_area
 
-        logger.debug( 'end rendering %s' % self.__class__.__name__ )
+        logger.debug( 'end rendering %s' % cls.__name__ )
         
         return form_widget
 
