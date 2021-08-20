@@ -3,6 +3,8 @@ import typing
 
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.field_attributes import _dataclass_to_python_type
+from camelot.view.controls import delegates
+from camelot.core.orm import Entity
 
 class DataclassAdmin(ObjectAdmin):
     """
@@ -28,6 +30,10 @@ class DataclassAdmin(ObjectAdmin):
             return dataclass_attributes
         elif self._is_field_optional(field_type):
             return self._get_dataclass_attributes(field_type.__args__[0])
+        elif issubclass(field_type, Entity):
+            return {'delegate':delegates.Many2OneDelegate,
+                    'target':field_type,
+                    }
         return {}
     
     def _is_field_optional(self, field_type):
