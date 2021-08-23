@@ -353,6 +353,7 @@ class AddNewObject( FieldAction ):
 
 
     def get_state( self, model_context ):
+        assert isinstance(model_context, FieldActionModelContext)
         state = super().get_state( model_context )
         # Check for editability on the level of the field
         if isinstance( model_context, FieldActionModelContext ):

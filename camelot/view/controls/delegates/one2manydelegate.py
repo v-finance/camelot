@@ -69,6 +69,8 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         editor.set_value( model )
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         editor.set_field_attributes(**field_attributes)
+        # update field actions
+        self.update_field_action_states(editor, index)
 
     def setModelData( self, editor, model, index ):
         pass

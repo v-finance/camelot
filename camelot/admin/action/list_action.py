@@ -1217,6 +1217,10 @@ class AddNewObject( EditAction ):
         if create_inline is False:
             yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
 
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        return super().get_state(model_context)
+
 add_new_object = AddNewObject()
 
 class RemoveSelection(DeleteSelection):

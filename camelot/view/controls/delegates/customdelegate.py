@@ -38,6 +38,7 @@ from ....core.serializable import json_encoder
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
+from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -153,14 +154,26 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         :return: a `QStandardItem` object
         """
         routes = model_context.field_attributes.get('action_routes', [])
+        states = []
+        for action in model_context.field_attributes.get('actions', []):
+            if isinstance(action, FieldAction):
+                state = action.get_state(model_context)
+                states.append(dataclasses.asdict(state))
+            else:
+                states.append(None)
+        #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
+        if len(routes) != len(states):
+            LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
 
         # eventually, the whole item will need to be serialized, while this
         # is not yet the case, serialize some roles to make the usable outside
         # python.
         serialized_action_routes = json_encoder.encode(routes)
+        serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(model_context.value), Qt.EditRole)
         item.setData(serialized_action_routes, ActionRoutesRole)
+        item.setData(serialized_action_states, ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
@@ -168,18 +181,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                      Qt.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.BackgroundRole)
-
-        if with_action_states:
-            states = []
-            for action in model_context.field_attributes.get('actions', []):
-                state = action.get_state(model_context)
-                states.append(dataclasses.asdict(state))
-            #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
-            if len(routes) != len(states):
-                LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
-
-            serialized_action_states = json_encoder.encode(states)
-            item.setData(serialized_action_states, ActionStatesRole)
 
         return item
 
@@ -234,6 +235,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_value(value)
 
         # update actions
+        self.update_field_action_states(editor, index)
+
+    def update_field_action_states(self, editor, index):
         action_states = json.loads(index.model().data(index, ActionStatesRole))
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
@@ -249,7 +253,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                     LOGGER.error(route)
                 continue
             state = action_states[action_index]
-            action_widget.set_state_v2(state)
+            if state is not None:
+                action_widget.set_state_v2(state)
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

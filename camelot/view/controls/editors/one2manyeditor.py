@@ -30,7 +30,7 @@
 import logging
 import itertools
 
-from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.admin.action.list_action import ListActionGuiContext, ListContextAction
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint
@@ -141,13 +141,15 @@ class One2ManyEditor(CustomEditor, WideEditor):
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes):
         if action_routes is not None:
-            self.gui_context.item_view.model().set_action_routes(action_routes)
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
+                if isinstance(action, ListContextAction):
+                    self.gui_context.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(action, toolbar)
+                qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
@@ -155,21 +157,21 @@ class One2ManyEditor(CustomEditor, WideEditor):
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
-            self.update_action_status()
+            self.update_list_action_states()
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
         self.gui_context.field_attributes = kwargs
-        self.update_action_status()
+        self.update_list_action_states()
 
-    def update_action_status(self):
+    def update_list_action_states(self):
         table = self.gui_context.item_view
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
 
     def current_row_changed(self, current=None, previous=None):
-        self.update_action_status()
+        self.update_list_action_states()
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
@@ -215,7 +217,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # one, still need to set it, since the content of the collection
             # might have changed.
             model.set_value(ProxyRegistry.register(collection))
-            self.update_action_status()
+            self.update_list_action_states()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
