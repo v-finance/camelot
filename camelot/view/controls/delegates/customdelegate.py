@@ -139,7 +139,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         self._width = self._font_metrics.averageCharWidth() * 20
 
     @classmethod
-    def get_standard_item(cls, locale, model_context):
+    def get_standard_item(cls, locale, model_context, with_action_states=True):
         """
         This method is used by the proxy to convert the value of a field
         to the data for the standard item model.  The result of this call can be
@@ -147,27 +147,20 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
         :param locale: the `QLocale` to be used to display locale dependent values
         :param model_context: a FieldActionModelContext object
-        
+        :param with_action_states: When True, the ActionStatesRole data will be set.
+                                   This can be disabled if a delegate handles it's own action states.
+
         :return: a `QStandardItem` object
         """
         routes = model_context.field_attributes.get('action_routes', [])
-        states = []
-        for action in model_context.field_attributes.get('actions', []):
-            state = action.get_state(model_context)
-            states.append(dataclasses.asdict(state))
-        #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
-        if len(routes) != len(states):
-            LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
 
         # eventually, the whole item will need to be serialized, while this
         # is not yet the case, serialize some roles to make the usable outside
         # python.
         serialized_action_routes = json_encoder.encode(routes)
-        serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(model_context.value), Qt.EditRole)
         item.setData(serialized_action_routes, ActionRoutesRole)
-        item.setData(serialized_action_states, ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
@@ -175,6 +168,19 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                      Qt.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.BackgroundRole)
+
+        if with_action_states:
+            states = []
+            for action in model_context.field_attributes.get('actions', []):
+                state = action.get_state(model_context)
+                states.append(dataclasses.asdict(state))
+            #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
+            if len(routes) != len(states):
+                LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
+
+            serialized_action_states = json_encoder.encode(states)
+            item.setData(serialized_action_states, ActionStatesRole)
+
         return item
 
     def createEditor(self, parent, option, index):
