@@ -6,6 +6,7 @@ from camelot.view.field_attributes import _dataclass_to_python_type
 from camelot.view.controls import delegates
 from camelot.core.orm import Entity
 
+
 class DataclassAdmin(ObjectAdmin):
     """
     specialized object admin for dataclasses that introspects fieldattributes based on the dataclass' fields.
