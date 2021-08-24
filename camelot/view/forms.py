@@ -653,14 +653,13 @@ class WidgetOnlyForm(AbstractForm):
         editor = widgets.create_editor(self.get_fields()[0], parent)
         return editor
 
-
-class Stretch(Form):
+@dataclass
+class Stretch(AbstractForm):
     """A stretchable space with zero minimum size, this is able to fill a gap
     in the form if there are no other items to fill this space.
     """
 
-    def __init__(self):
-        super(Stretch, self).__init__([])
+    content = []
 
     def render(self, widgets, parent=None, toplevel=False):
         return QtWidgets.QSpacerItem(0, 0, vPolicy=QtWidgets.QSizePolicy.Expanding)
