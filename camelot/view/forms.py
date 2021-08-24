@@ -304,7 +304,6 @@ class Label(AbstractForm):
                              QtWidgets.QSizePolicy.Fixed)
         return widget
 
-
 class DelayedTabWidget(QtWidgets.QTabWidget):
     """Helper class for :class:`TabForm` to delay the creation of tabs to
 the moment the tab is shown.
@@ -569,49 +568,50 @@ class ColumnSpan(AbstractForm):
     field: str = None
     num: int = 2
 
+    scrollbars = False
+
     def __post_init__(self ):
         self.content = [field]
 
-class GridForm(Form):
+@dataclass
+class GridForm(AbstractForm):
     """Put different fields into a grid, without a label.  Row or column labels can be added
   using the :class:`Label` form::
 
     GridForm([['title', 'short_description'], ['director','release_date']])
-
+    :param grid: A list for each row in the grid, containing a list with all fields that should be put in that row
   .. image:: /_static/form/grid_form.png
   """
 
-    def __init__(self, grid, nomargins=False):
-        """:param grid: A list for each row in the grid, containing a list with all fields that should be put in that row
-        """
-        assert isinstance(grid, list)
-        self._grid = grid
-        self._nomargins = nomargins
+    grid: list
+    nomargins: bool = False
+
+    def __post_init__(self):
         fields = []
-        for row in grid:
+        for row in self.grid:
             assert isinstance(row, list)
             fields.extend(row)
-        super(GridForm, self).__init__(fields)
+        self.content = fields
 
     def append_row(self, row):
         """:param row: the list of fields that should come in the additional row
         use this method to modify inherited grid forms"""
         assert isinstance(row, list)
         self.extend(row)
-        self._grid.append(row)
+        self.grid.append(row)
 
     def append_column(self, column):
         """:param column: the list of fields that should come in the additional column
         use this method to modify inherited grid forms"""
         assert isinstance(column, list)
         self.extend(column)
-        for row, additional_field in zip(self._grid, column):
+        for row, additional_field in zip(self.grid, column):
             row.append(additional_field)
 
     def render(self, widgets, parent=None, toplevel=False):
         widget = QtWidgets.QWidget(parent)
         grid_layout = QtWidgets.QGridLayout()
-        for i, row in enumerate(self._grid):
+        for i, row in enumerate(self.grid):
             skip = 0
             for j, field in enumerate(row):
                 num = 1
