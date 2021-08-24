@@ -140,7 +140,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         self._width = self._font_metrics.averageCharWidth() * 20
 
     @classmethod
-    def get_standard_item(cls, locale, model_context, with_action_states=True):
+    def get_standard_item(cls, locale, model_context):
         """
         This method is used by the proxy to convert the value of a field
         to the data for the standard item model.  The result of this call can be
