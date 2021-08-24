@@ -373,8 +373,8 @@ the moment the tab is shown.
         if self._vertical_expanding[index] == False and sum(self._vertical_expanding):
             tab_widget.layout().addStretch(1)
 
-
-class TabForm(Form):
+@dataclass
+class TabForm(AbstractForm):
     """
 Render forms within a :class:`QtWidgets.QTabWidget`::
 
@@ -389,19 +389,19 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
     WEST = 'West'
     EAST = 'East'
 
-    def __init__(self, tabs, position=NORTH):
+    tabs: list
+    position: str = NORTH
+
+    def __post_init__(self):
         """
         :param tabs: a list of tuples of (tab_label, tab_form)
         :param position: the position of the tabs with respect to the pages
         """
-        assert isinstance(tabs, list)
-        assert position in [self.NORTH, self.SOUTH, self.WEST, self.EAST]
-        self.position = position
-        for tab in tabs:
+        assert self.position in [self.NORTH, self.SOUTH, self.WEST, self.EAST]
+        for tab in self.tabs:
             assert isinstance(tab, tuple)
-        self.tabs = [(tab_label, structure_to_form(tab_form)) for tab_label, tab_form in tabs]
-        super(TabForm, self).__init__(sum((tab_form.get_fields()
-                                           for tab_label, tab_form in self.tabs), []))
+        self.tabs = [(tab_label, structure_to_form(tab_form)) for tab_label, tab_form in self.tabs]
+        self.content = sum((tab_form.get_fields() for tab_label, tab_form in self.tabs), [])
 
     def __str__(self):
         return 'TabForm { %s\n        }' % (u'\n  '.join('%s : %s' % (label, str(form)) for label, form in self.tabs))
