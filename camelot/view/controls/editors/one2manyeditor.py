@@ -97,10 +97,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
         layout.addWidget(table)
         self.setLayout(layout)
         self._new_message = None
-        self.gui_context = ListActionGuiContext()
-        self.gui_context.view = self
-        self.gui_context.admin_route = self.admin_route
-        self.gui_context.item_view = table
+        self.field_gui_context = self.gui_context # set in CustomEditor constructor
+        self.list_gui_context = ListActionGuiContext()
+        self.list_gui_context.view = self
+        self.list_gui_context.admin_route = self.admin_route
+        self.list_gui_context.item_view = table
         self.set_right_toolbar_actions(kw['action_routes'])
         self.set_columns(columns)
 
@@ -114,14 +115,19 @@ class One2ManyEditor(CustomEditor, WideEditor):
             )
 
     def render_action(self, action, parent):
+        if isinstance(action, ListContextAction):
+            gui_context = self.list_gui_context
+        else:
+            gui_context = self.field_gui_context
+
         if action.render_hint == RenderHint.TOOL_BUTTON:
             # Use tool button, because this one sets the popup mode
             # to instant if there are modes in the state
-            qobject = ActionToolbutton(action, self.gui_context, parent)
+            qobject = ActionToolbutton(action, gui_context, parent)
         elif action.render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, self.gui_context, parent)
+            qobject = ActionPushButton(action, gui_context, parent)
         elif action.render_hint == RenderHint.COMBO_BOX:
-            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
+            qobject = ComboBoxFilterWidget(action, gui_context, parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
         return qobject
@@ -135,7 +141,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
                 if isinstance(action, ListContextAction):
-                    self.gui_context.item_view.model().add_action_route(action_route)
+                    self.list_gui_context.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(action, toolbar)
                 qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
@@ -149,11 +155,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.gui_context.field_attributes = kwargs
+        self.list_gui_context.field_attributes = kwargs
+        self.field_gui_context.field_attributes = kwargs
         self.update_list_action_states()
 
     def update_list_action_states(self):
-        table = self.gui_context.item_view
+        table = self.list_gui_context.item_view
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
@@ -206,6 +213,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
             model.set_value(ProxyRegistry.register(collection))
             self.update_list_action_states()
 
+    def get_value(self):
+        model = self.get_model()
+        if model is not None:
+            return model.get_value()
+
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
         table = self.findChild(QtWidgets.QWidget, 'table')
@@ -213,5 +225,5 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.close_editor()
         admin = AdminRoute.admin_for(self.admin_route)
         if admin.list_action:
-            admin.list_action.gui_run(self.gui_context)
+            admin.list_action.gui_run(self.list_gui_context)
 
