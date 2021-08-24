@@ -28,7 +28,6 @@
 #  ============================================================================
 
 import logging
-import itertools
 
 from camelot.admin.action.list_action import ListActionGuiContext, ListContextAction
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -59,8 +58,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
-
-    _rendered_action_counter = itertools.count()
 
     def __init__(self,
                  admin_route=None,
@@ -116,13 +113,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 self.current_row_changed, type=Qt.QueuedConnection
             )
 
-    @classmethod
-    def _register_rendered_action(cls, qobject):
-        next_rendered_action = cls._rendered_action_counter.__next__()
-        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
-        qobject.setObjectName(rendered_action_name)
-        return rendered_action_name
-
     def render_action(self, action, parent):
         if action.render_hint == RenderHint.TOOL_BUTTON:
             # Use tool button, because this one sets the popup mode
@@ -134,8 +124,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
             qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-        rendered_action_name = self._register_rendered_action(qobject)
-        self.gui_context.action_routes[action] = rendered_action_name
         return qobject
 
     @QtCore.qt_slot(object)
@@ -175,11 +163,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
-        action = AdminRoute.action_for(route)
-        action_name = self.gui_context.action_routes[action]
-        action_widget = self.findChild(AbstractActionWidget, action_name)
-        if isinstance(action_widget, (ActionAction, ActionToolbutton, ActionPushButton)):
-            action_widget.set_state(state)
+        for action_widget in self.findChildren(AbstractActionWidget):
+            if action_widget.action_route == route:
+                if isinstance(action_widget, (ActionAction, ActionToolbutton, ActionPushButton)):
+                    action_widget.set_state(state)
 
     def get_model(self):
         """
