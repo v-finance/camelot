@@ -44,7 +44,6 @@ logger = logging.getLogger('camelot.view.forms')
 from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
-
 class MetaForm(type):
     forms = dict()
 
@@ -463,7 +462,6 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
         widget.setTabPosition(getattr(QtWidgets.QTabWidget, self.position))
         return widget
 
-
 @dataclass
 class HBoxForm(AbstractForm):
     """
@@ -565,14 +563,14 @@ class VBoxForm(AbstractForm):
         widget.setLayout(form_layout)
         return widget
 
+@dataclass
+class ColumnSpan(AbstractForm):
 
-class ColumnSpan(Form):
+    field: str = None
+    num: int = 2
 
-    def __init__(self, field=None, num=2):
-        self.num = num
-        self.field = field
-        super(ColumnSpan, self).__init__([field])
-
+    def __post_init__(self ):
+        self.content = [field]
 
 class GridForm(Form):
     """Put different fields into a grid, without a label.  Row or column labels can be added
