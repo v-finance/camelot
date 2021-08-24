@@ -272,13 +272,12 @@ class Form(AbstractForm):
     scrollbars: bool = False
     columns: int = 1
 
-
-class Break(Form):
+@dataclass
+class Break(AbstractForm):
     """End a line in a multi-column form"""
 
-    def __init__(self):
-        super(Break, self).__init__([])
-
+    content: list = field(default_factory=list)
+    scrollbars: bool = False
 
 class Label(Form):
     """Render a label using a :class:`QtWidgets.QLabel`"""
