@@ -517,8 +517,8 @@ class HBoxForm(AbstractForm):
         widget.setLayout(form_layout)
         return widget
 
-
-class VBoxForm(Form):
+@dataclass
+class VBoxForm(AbstractForm):
     """
   Render different forms or widgets in a vertical box::
 
@@ -527,13 +527,14 @@ class VBoxForm(Form):
   .. image:: /_static/form/vbox_form.png
   """
 
-    def __init__(self, rows):
+    rows: list
+
+    def __post_init__(self):
         """:param rows: a list of forms to display in the different columns
         of the horizontal box
         """
-        assert isinstance(rows, list)
-        self.rows = [structure_to_form(row) for row in rows]
-        super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
+        self.rows = [structure_to_form(row) for row in self.rows]
+        self.content = sum((row_form.get_fields() for row_form in self.rows), [])
 
     def replace_field(self, original_field, new_field):
         for form in self.rows:
