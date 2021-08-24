@@ -44,6 +44,7 @@ import operator
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
+from camelot.core.dataclasses import Note
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -274,6 +275,11 @@ _dataclass_to_python_type = {
         'from_string': string_from_string,
         'operators' : _text_operators,      
     },
+    Note: {
+        'python_type': str,
+        'delegate': delegates.NoteDelegate,
+        'editable': False,
+    },    
 }
 
 #
