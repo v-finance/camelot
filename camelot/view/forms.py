@@ -639,13 +639,14 @@ class GridForm(AbstractForm):
 
         return widget
 
-
-class WidgetOnlyForm(Form):
+@dataclass
+class WidgetOnlyForm(AbstractForm):
     """Renders a single widget without its label, typically a one2many widget"""
 
-    def __init__(self, field):
-        assert isinstance(field, str)
-        super(WidgetOnlyForm, self).__init__([field])
+    field: str
+
+    def __post_init__(self):
+        self.content = [field]
 
     def render(self, widgets, parent=None, toplevel=False):
         logger.debug('rendering %s' % self.__class__.__name__)
