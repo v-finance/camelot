@@ -18,11 +18,20 @@ class DataclassAdmin(ObjectAdmin):
     def get_descriptor_field_attributes(self, field_name):
         attributes = super().get_descriptor_field_attributes(field_name)
         
+        prop = getattr(self.entity, field_name, None)
+        if isinstance(prop, property):
+            prop_type = typing.get_type_hints(prop.fget).get('return')
+            if prop_type is not None:
+                attributes['editable'] = prop.fset is not None
+                attributes['nullable'] = self._is_field_optional(prop_type)
+                attributes.update(self._get_dataclass_attributes(prop_type))  
+                return attributes
+            
         for field in dataclasses.fields(self.entity):
             if field.name == field_name:
                 attributes['editable'] = True
                 attributes['nullable'] = self._is_field_optional(field.type)
-                attributes.update(self._get_dataclass_attributes(field.type))
+                attributes.update(self._get_dataclass_attributes(field.type))            
         return attributes
     
     def _get_dataclass_attributes(self, field_type):
