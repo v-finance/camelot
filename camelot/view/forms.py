@@ -79,8 +79,8 @@ and takes these parameters :
 
 """
 
-    content: Iterable
-    scrollbars: bool
+    content: Iterable = field(default=False, init=False)
+    scrollbars: bool = field(default=False, init=False)
 
     def __post_init__(self):
         super(AbstractForm, self).__init__(self.content)
@@ -276,23 +276,25 @@ class Form(AbstractForm):
 class Break(AbstractForm):
     """End a line in a multi-column form"""
 
-    content: list = field(default_factory=list)
-    scrollbars: bool = False
+    content = []
+    scrollbars = False
 
-class Label(Form):
-    """Render a label using a :class:`QtWidgets.QLabel`"""
+@dataclass
+class Label(AbstractForm):
+    """Render a label using a :class:`QtWidgets.QLabel`
+            :param label : string to be displayed in the label
+            :param alignment : alignment of text in the label. values that make
+                sense 'left', 'right' or 'center'
+            :param style : string of cascading stylesheet instructions
+    """
 
-    def __init__(self, label, alignment='left', style=None):
-        """
-        :param label : string to be displayed in the label
-        :param alignment : alignment of text in the label. values that make 
-            sense 'left', 'right' or 'center'
-        :param style : string of cascading stylesheet instructions
-        """
-        super(Label, self).__init__([])
-        self.label = label
-        self.alignment = alignment
-        self.style = style
+
+    label: str
+    alignment: str = 'left'
+    style: str = None
+
+    content = []
+    scrollbars = False
 
     def render(self, widgets, parent=None, toplevel=False):
         if self.style:
@@ -473,6 +475,7 @@ class HBoxForm(AbstractForm):
 
   """
 
+    content: list
     scrollbars: bool = False
 
     def __post_init__(self):
