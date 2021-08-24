@@ -33,7 +33,7 @@ well.  Form classes can be used recursive.
 """
 import json
 import logging
-from typing import Iterable
+from typing import Iterable, Any
 
 from dataclasses import dataclass, InitVar, field
 
@@ -54,7 +54,6 @@ class MetaForm(type):
         return newclass
 
 
-@dataclass
 class AbstractForm(list, DataclassSerializable, metaclass=MetaForm):
     """Base Form class to put fields on a form.  The base class of a form is
 a list.  So the form itself is nothing more than a list of field names or
@@ -78,11 +77,9 @@ and takes these parameters :
 
 """
 
-    content: Iterable = field(default=False, init=False)
-    scrollbars: bool = field(default=False, init=False)
-
-    def __post_init__(self):
-        super(AbstractForm, self).__init__(self.content)
+    def __init__(self, content, scrollbars=False):
+        super().__init__(content)
+        self.scrollbars = scrollbars
 
     def get_fields(self):
         """:return: the fields, visible in this form"""
@@ -92,7 +89,7 @@ and takes these parameters :
         for field in self:
             if field is None:
                 continue
-            elif isinstance(field, AbstractForm):
+            elif issubclass(type(field), AbstractForm):
                 for nested_field in field._get_fields_from_form():
                     yield nested_field
             else:
@@ -107,7 +104,7 @@ and takes these parameters :
         :return: `True` if the field was found and removed
         """
         for c in self:
-            if isinstance(c, Form):
+            if issubclass(type(c), AbstractForm):
                 c.remove_field(original_field)
             if original_field in self:
                 self.remove(original_field)
@@ -123,7 +120,7 @@ and takes these parameters :
         :return: `True` if the original field was found and replaced
         """
         for i, c in enumerate(self):
-            if isinstance(c, AbstractForm):
+            if issubclass(type(c), AbstractForm):
                 c.replace_field(original_field, new_field)
             elif c == original_field:
                 self[i] = new_field
@@ -193,7 +190,7 @@ and takes these parameters :
             size_policy = None
             if field is None:
                 c.next_col()
-            elif isinstance(field, AbstractForm):
+            elif issubclass(type(field), AbstractForm):
                 c.next_empty_row()
                 col_span = 2 * columns
                 f = field.render(widgets, parent, False)
@@ -271,12 +268,15 @@ class Form(AbstractForm):
     scrollbars: bool = False
     columns: int = 1
 
+    def __post_init__(self):
+        super().__init__(self.content, scrollbars=self.scrollbars)
+
 @dataclass
 class Break(AbstractForm):
     """End a line in a multi-column form"""
 
-    content = []
-    scrollbars = False
+    def __post_init__(self):
+        super().__init__([])
 
 @dataclass
 class Label(AbstractForm):
@@ -287,13 +287,12 @@ class Label(AbstractForm):
             :param style : string of cascading stylesheet instructions
     """
 
-
     label: str
     alignment: str = 'left'
     style: str = None
 
-    content = []
-    scrollbars = False
+    def __post_init__(self):
+        super().__init__([])
 
     def render(self, widgets, parent=None, toplevel=False):
         if self.style:
@@ -400,6 +399,7 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
             assert isinstance(tab, tuple)
         self.tabs = [(tab_label, structure_to_form(tab_form)) for tab_label, tab_form in self.tabs]
         self.content = sum((tab_form.get_fields() for tab_label, tab_form in self.tabs), [])
+        super().__init__(self.content)
 
     def __str__(self):
         return 'TabForm { %s\n        }' % (u'\n  '.join('%s : %s' % (label, str(form)) for label, form in self.tabs))
@@ -479,7 +479,7 @@ class HBoxForm(AbstractForm):
         """:param columns: a list of forms to display in the different columns
         of the horizontal box"""
         self.content = [structure_to_form(col) for col in self.content]
-        # super(HBoxForm, self).__init__(self.content, self.scrollbars)
+        super().__init__(self.content, scrollbars=self.scrollbars)
 
     def __str__(self):
         return 'HBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.columns]))
@@ -532,6 +532,7 @@ class VBoxForm(AbstractForm):
         """
         self.rows = [structure_to_form(row) for row in self.rows]
         self.content = sum((row_form.get_fields() for row_form in self.rows), [])
+        super().__init__(self.content)
 
     def replace_field(self, original_field, new_field):
         for form in self.rows:
@@ -568,10 +569,9 @@ class ColumnSpan(AbstractForm):
     field: str = None
     num: int = 2
 
-    scrollbars = False
-
     def __post_init__(self ):
         self.content = [field]
+        super().__init__(self.content)
 
 @dataclass
 class GridForm(AbstractForm):
@@ -592,6 +592,7 @@ class GridForm(AbstractForm):
             assert isinstance(row, list)
             fields.extend(row)
         self.content = fields
+        super().__init__(self.content)
 
     def append_row(self, row):
         """:param row: the list of fields that should come in the additional row
@@ -619,7 +620,7 @@ class GridForm(AbstractForm):
                 if isinstance(field, ColumnSpan):
                     num = field.num
                     field = field.field
-                if isinstance(field, Form):
+                if issubclass(type(field), AbstractForm):
                     form = field.render(widgets, parent)
                     if isinstance(form, QtWidgets.QWidget):
                         grid_layout.addWidget(form, i, col, 1, num)
@@ -646,7 +647,8 @@ class WidgetOnlyForm(AbstractForm):
     field: str
 
     def __post_init__(self):
-        self.content = [field]
+        self.content = [self.field]
+        super().__init__(self.content)
 
     def render(self, widgets, parent=None, toplevel=False):
         logger.debug('rendering %s' % self.__class__.__name__)
@@ -659,13 +661,14 @@ class Stretch(AbstractForm):
     in the form if there are no other items to fill this space.
     """
 
-    content = []
+    def __post_init__(self):
+        super().__init__([])
 
     def render(self, widgets, parent=None, toplevel=False):
         return QtWidgets.QSpacerItem(0, 0, vPolicy=QtWidgets.QSizePolicy.Expanding)
 
-
-class GroupBoxForm(Form):
+@dataclass
+class GroupBoxForm(AbstractForm):
     """
   Renders a form within a QGroupBox::
 
@@ -675,13 +678,17 @@ class GroupBoxForm(Form):
   .. image:: /_static/form/group_box_form.png
   """
 
-    def __init__(self, title, content, scrollbars=None, min_width=None, min_height=None, columns=1):
-        self.title = title
-        self.min_width = min_width
-        self.min_height = min_height
-        if isinstance(content, Form):
-            content = [content]
-        Form.__init__(self, content, scrollbars, columns=columns)
+    title: str
+    content: Any
+    scrollbars: bool = None
+    min_width: int = None
+    min_height: int = None
+    columns: int = 1
+
+    def __post_init__(self):
+        if issubclass(type(self.content), AbstractForm):
+            self.content = [self.content]
+        super().__init__(self.content, scrollbars=self.scrollbars)
 
     def render(self, widgets, parent=None, toplevel=False):
         widget = QtWidgets.QGroupBox(str(self.title), parent)
@@ -692,7 +699,6 @@ class GroupBoxForm(Form):
         form = Form.render(self, widgets, widget, False)
         layout.addWidget(form)
         return widget
-
 
 def structure_to_form(structure):
     """Convert a python data structure to a form, using the following rules :
