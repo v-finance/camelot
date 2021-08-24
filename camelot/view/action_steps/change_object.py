@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import json
 import typing
 
 from dataclasses import InitVar, dataclass, field
