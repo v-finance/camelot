@@ -30,7 +30,7 @@
 """Default field attributes for various sqlalchemy column types"""
 
 import itertools
-
+from decimal import Decimal
 
 
 import sqlalchemy.types
@@ -258,6 +258,15 @@ _dataclass_to_python_type = {
         'from_string': float_from_string,
         'operators': _numerical_operators,
     },
+    Decimal: {
+        'python_type': float,
+        'minimum': constants.camelot_minfloat,
+        'maximum': constants.camelot_maxfloat,
+        'delegate': delegates.FloatDelegate,
+        'from_string': float_from_string,
+        'operators': _numerical_operators,
+        'decimal':True,
+    },    
     int: {
         'python_type': int,
         'minimum': constants.camelot_minint,
