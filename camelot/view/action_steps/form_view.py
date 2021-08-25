@@ -98,7 +98,7 @@ class OpenFormView(ActionStep):
         get_form_toolbar_actions = self.admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions()
         self._columns = self.admin.get_fields()
-        self._form_display = (self.admin.get_form_display().__class__.__name__, self.admin.get_form_display()._to_dict())
+        self._form_display = (self.admin.get_form_display().__class__.__name__, self.admin.get_form_display()._to_bytes())
         self.admin_route = self.admin.get_admin_route()
 
         self.objects = [obj]

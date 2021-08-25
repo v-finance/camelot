@@ -138,12 +138,12 @@ and takes these parameters :
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
+        :param serialized_form: a dictionary containing all attributes
         :param parent: the :class:`QtWidgets.QWidget` in which the form is placed
         :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
             or a child form of another form.  A toplevel form will be expanding,
             while a non toplevel form is only expanding if it contains other
             expanding elements.
-
         :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
         form = json.loads(serialized_form)
@@ -709,6 +709,6 @@ def structure_to_form(structure):
   This function is mainly used in the Admin class to construct forms out of
   the form_display attribute
     """
-    if isinstance(structure, Form):
+    if issubclass(type(structure), AbstractForm):
         return structure
     return Form(structure)

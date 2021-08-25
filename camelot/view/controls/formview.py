@@ -31,6 +31,8 @@
 
 import logging
 
+from ..forms import AbstractForm
+
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
@@ -207,7 +209,7 @@ class FormWidget(QtWidgets.QWidget):
         widgets = FormEditors(self, columns, admin)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
-        self.layout().insertWidget(0, form_display.render( widgets, self, True) )
+        self.layout().insertWidget(0, AbstractForm.render( widgets, form_display[1], self, True) )
         """
             Filtermechanisme op basis van classname
             (Gewoon compatibel maken met dict structuur)
