@@ -104,8 +104,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.list_gui_context.view = self
         self.list_gui_context.admin_route = self.admin_route
         self.list_gui_context.item_view = table
-        self.has_delegate = 'delegate' in kw
-        self.set_right_toolbar_actions(kw['action_routes'])
+        self.set_right_toolbar_actions(kw['action_routes'], kw.get('action_states', []))
         self.set_columns(columns)
 
         selection_model = table.selectionModel()
@@ -133,16 +132,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
             qobject = ComboBoxFilterWidget(action, gui_context, parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-        # One2ManyEditor in ChangeObjects action step has no delegate which
-        # sets the field and filter action states
-        if not self.has_delegate:
-            if isinstance(action, (FieldAction, Filter)):
-                state = action.get_state(gui_context.create_model_context())
-                qobject.set_state(state)
         return qobject
 
     @QtCore.qt_slot(object)
-    def set_right_toolbar_actions(self, action_routes):
+    def set_right_toolbar_actions(self, action_routes, action_states):
+        route2state = {}
+        for action_state in action_states:
+            route2state[action_state[0]] = action_state[1]
+
         if action_routes is not None:
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
@@ -153,6 +150,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
                     self.list_gui_context.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(action, toolbar)
                 qaction.action_route = action_route
+                state = route2state.get(action_route)
+                if state is not None:
+                    qaction.set_state(state)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
