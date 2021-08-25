@@ -29,19 +29,22 @@
 
 import logging
 import time
-
+from dataclasses import field
 
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
 from ..admin_route import AdminRoute
 from .base import RenderHint
+from camelot.admin.dataclass_admin import DataclassAdmin
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.core.dataclasses import dataclass
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
+from camelot.view.controls import delegates
 
 """ModelContext, GuiContext and Actions that run in the context of an 
 application.
@@ -543,6 +546,25 @@ class Exit( Action ):
 #
 # Some actions to assist the debugging process
 #
+@dataclass
+class ChangeLoggingOptions( object ):
+    
+    level: int = field(default = logging.INFO, init = False)
+    queries: bool = field(default = False, init = False)
+    pool: bool = field(default = False, init = False)
+        
+    class Admin( DataclassAdmin ):
+        list_display = ['level', 'queries', 'pool']
+        field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
+                                       'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
+                                                                                        logging.INFO, 
+                                                                                        logging.WARNING,
+                                                                                        logging.ERROR,
+                                                                                        logging.CRITICAL]]},
+                             'queries':{'tooltip': _('Log and time queries send to the database'),},
+                             'pool':{ 'tooltip': _('Log database connection checkin/checkout'),}
+
+                             }
 
 class ChangeLogging( Action ):
     """Allow the user to change the logging configuration"""
@@ -587,40 +609,14 @@ class ChangeLogging( Action ):
         LOGGER.info('checkin connection {0}'.format(id(dbapi_connection)))
 
     def model_run( self, model_context ):
-        from camelot.view.controls import delegates
         from camelot.view import action_steps
-        from camelot.admin.object_admin import ObjectAdmin
         
         from sqlalchemy import event
         from sqlalchemy.engine import Engine
         from sqlalchemy.pool import Pool
-        
-        class Options( object ):
             
-            def __init__( self ):
-                self.level = logging.INFO
-                self.queries = False
-                self.pool = False
-                
-            class Admin( ObjectAdmin ):
-                list_display = ['level', 'queries', 'pool']
-                field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
-                                               'editable':True,
-                                               'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
-                                                                                                logging.INFO, 
-                                                                                                logging.WARNING,
-                                                                                                logging.ERROR,
-                                                                                                logging.CRITICAL]]},
-                                     'queries':{ 'delegate': delegates.BoolDelegate,
-                                                 'tooltip': _('Log and time queries send to the database'),
-                                                 'editable': True},
-                                     'pool':{ 'delegate': delegates.BoolDelegate,
-                                              'tooltip': _('Log database connection checkin/checkout'),
-                                              'editable': True},
-                                     }
-                
-        options = Options()
-        options_admin = model_context.admin.get_related_admin(Options)
+        options = ChangeLoggingOptions()
+        options_admin = model_context.admin.get_related_admin(ChangeLoggingOptions)
         yield action_steps.ChangeObject(options, options_admin)
         logging.getLogger().setLevel(options.level)
         if options.queries == True:
