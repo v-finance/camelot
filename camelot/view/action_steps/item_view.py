@@ -38,8 +38,9 @@ import json
 
 from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.application_action import UpdateActions
-from ...admin.action.base import ActionStep, RenderHint
-from ...admin.action.list_action import ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.base import ActionStep, RenderHint, State
+from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.list_filter import Filter, All
 from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
@@ -101,9 +102,9 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     list_action: Route = field(init=False)
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(init=False)
 
     def __post_init__( self, admin, value ):
-        self.admin_route = admin.get_admin_route()
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
@@ -114,6 +115,18 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
+        self.action_states = list()
+        self._add_action_states(admin, proxy, self.actions, self.action_states)
+
+    @staticmethod
+    def _add_action_states(admin, proxy, actions, action_states):
+        model_context = ListActionModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        for action_route in actions:
+            action = AdminRoute.action_for(action_route.route)
+            state = action.get_state(model_context)
+            action_states.append((action_route.route, state))
 
     @staticmethod
     def update_table_view(table_view, step):
@@ -123,14 +136,21 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         list(model.add_columns(step['columns']))
         # filters can have default values, so they need to be set before
         # the value is set
-        table_view.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
+        for action_state in step['action_states']:
+            route = tuple(action_state[0])
+            action = AdminRoute.action_for(route)
+            if not isinstance(action, Filter):
+                continue
+            state = action_state[1]
+            values = [mode['name'] for mode in state['modes'] if mode['checked']]
+            # if all modes are checked, replace with [All]
+            if len(values) == len(state['modes']):
+                values = [All]
+            model.set_filter(action, values)
+
         table_view.set_value(step['proxy_route'])
-        table_view.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
-        table_view.set_toolbar_actions(
-            Qt.TopToolBarArea,
-            [AdminRoute.action_for(tuple(action['route'])) for action in step['actions'] if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
-        )
+        table_view.set_actions(step['actions'], step['action_states'])
         if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
             search_control.setText(step['search_text'])
@@ -161,10 +181,7 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
-    admin: InitVar
-    value: InitVar
     new_tab: bool = False
-
     admin_route: Route = field(init=False)
 
     def __post_init__( self, admin, value ):

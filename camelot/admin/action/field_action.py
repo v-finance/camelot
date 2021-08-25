@@ -34,7 +34,7 @@ various actions that are beyond the icons shown in the editors of a form.
 
 import os
 
-from ...core.qt import QtWidgets
+from ...core.qt import QtWidgets, QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
 from .base import Action, RenderHint
@@ -296,3 +296,74 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
+class AddNewObject( FieldAction ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+
+    def get_admin(self, model_context):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.admin
+
+    def create_object(self, model_context, admin, session=None):
+        """
+        Create a new entity instance based on the given model_context as an instance of the given admin's entity.
+        This is done in the given session, or the default session if it is not yet attached to a session.
+        """
+        new_object = admin.entity(_session=session)
+        admin.add(new_object)
+        # defaults might depend on object being part of a collection
+        model_context.proxy.append(new_object)
+        # Give the default fields their value
+        admin.set_defaults(new_object)
+        return new_object
+        yield
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        admin = self.get_admin(model_context)
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
+        create_inline = model_context.field_attributes.get('create_inline', False)
+        new_object = yield from self.create_object(model_context, admin)
+        # if the object is valid, flush it, but in ancy case inform the gui
+        # the object has been created
+        yield action_steps.CreateObjects((new_object,))
+        if not len(admin.get_validator().validate_object(new_object)):
+            yield action_steps.FlushSession(model_context.session)
+        # Even if the object was not flushed, it's now part of a collection,
+        # so it's dependent objects should be updated
+        yield action_steps.UpdateObjects(
+            tuple(admin.get_depending_objects(new_object))
+        )
+        if create_inline is False:
+            yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
+
+
+    def get_state( self, model_context ):
+        state = super().get_state( model_context )
+        # Check for editability on the level of the field
+        if isinstance( model_context, FieldActionModelContext ):
+            editable = model_context.field_attributes.get( 'editable', True )
+            if editable == False:
+                state.enabled = False
+        # Check for editability on the level of the entity
+        admin = model_context.admin
+        if admin and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
+
+add_new_object = AddNewObject()

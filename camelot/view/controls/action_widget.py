@@ -55,18 +55,8 @@ class AbstractActionWidget( object ):
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-        if isinstance( gui_context, ListActionGuiContext ):
-            gui_context.item_view.model().headerDataChanged.connect(self.header_data_changed)
-            #gui_context.item_view.model().modelReset.connect(self.model_reset)
-            selection_model = gui_context.item_view.selectionModel()
-            if selection_model is not None:
-                # a queued connection, since the selection of the selection model
-                # might not be up to date at the time the currentRowChanged
-                # signal is emitted
-                selection_model.currentRowChanged.connect(
-                    self.current_row_changed, type=Qt.QueuedConnection
-                )
-        post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
+        if not isinstance( gui_context, ListActionGuiContext ):
+            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
         self.state = state
@@ -77,10 +67,11 @@ class AbstractActionWidget( object ):
         self.setEnabled(state['enabled'])
         self.setVisible(state['visible'])
 
-    def current_row_changed( self, index1=None, index2=None ):
-        post( self.action.get_state,
-              self.set_state,
-              args = (self.gui_context.create_model_context(),) )
+    def current_row_changed( self, current=None, previous=None ):
+        if not isinstance( self.gui_context, ListActionGuiContext ):
+            post( self.action.get_state,
+                  self.set_state,
+                  args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Horizontal:
@@ -90,15 +81,6 @@ class AbstractActionWidget( object ):
             # has been deleted
             if not is_deleted(self.gui_context.widget_mapper):
                 self.current_row_changed(first)
-        if isinstance(self.gui_context, ListActionGuiContext):
-            if not is_deleted(self.gui_context.item_view):
-                selection_model = self.gui_context.item_view.selectionModel()
-                if (selection_model is not None) and selection_model.hasSelection():
-                    parent = QtCore.QModelIndex()
-                    for row in range(first, last+1):
-                        if selection_model.rowIntersectsSelection(row, parent):
-                            self.current_row_changed(row)
-                            return
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
@@ -143,7 +125,10 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                if mode_data['icon'] is not None:
+                    icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                else:
+                    icon = None
                 mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)

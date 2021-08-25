@@ -32,6 +32,7 @@ import json
 
 from ...core.qt import QtWidgets
 
+from camelot.admin.admin_route import RouteWithRenderHint, AdminRoute
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
@@ -60,6 +61,8 @@ class ConfirmSelection(Action):
     def model_run(self, model_context):
         yield SetSelectedObjects(list(model_context.get_selection()))
 
+confirm_selection = ConfirmSelection()
+
 class CancelSelection(Action):
 
     verbose_name = _('Cancel')
@@ -67,6 +70,8 @@ class CancelSelection(Action):
 
     def gui_run(self, gui_context):
         gui_context.view.parent().reject()
+
+cancel_selection = CancelSelection()
 
 class SelectDialog(QtWidgets.QDialog):
     
@@ -95,25 +100,25 @@ class SelectObjects( OpenTableView ):
         be made.  If none is given, the default query from the admin is taken.
     """
 
-    admin: InitVar
-    search_text: InitVar = None
     value: InitVar = None
     verbose_name_plural: str = field(init=False)
 
-    def __post_init__(self, admin, search_text, value):
+
+    def __post_init__(self, admin, value):
         if value is None:
             value = admin.get_query()
         super(SelectObjects, self).__post_init__(admin, value)
-        self.search_text = search_text
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         # actions
-        self.actions = admin.get_select_list_actions()
+        self.actions = [
+            RouteWithRenderHint(AdminRoute._register_list_action_route(admin.get_admin_route(), action),
+                                action.render_hint) for action in [cancel_selection, confirm_selection]
+        ]
         self.actions.extend(admin.get_select_list_toolbar_actions())
+        self.action_states = list()
+        self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
         # list_action
-        for action in self.actions:
-            if action.route[-1] == ConfirmSelection.name:
-                self.list_action = action.route
-                break
+        self.list_action = AdminRoute._register_list_action_route(admin.get_admin_route(), confirm_selection)
 
     @classmethod
     def render(cls, gui_context, step):

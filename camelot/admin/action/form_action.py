@@ -30,6 +30,7 @@
 
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
+from camelot.admin.admin_route import register_list_actions
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext
 from camelot.core.utils import ugettext as _
@@ -188,7 +189,8 @@ class ShowHistory( Action ):
                                                 'choices':memento.memento_types,
                                                 'name':_('Type')} }
     
-            def get_related_toolbar_actions( self, toolbar_area, direction ):
+            @register_list_actions('_admin_route')
+            def get_related_toolbar_actions( self, direction ):
                 return []
             
         if obj != None:
