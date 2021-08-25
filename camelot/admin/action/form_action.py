@@ -171,6 +171,7 @@ class ShowHistory( Action ):
     icon = Icon('history') # 'tango/16x16/actions/format-justify-fill.png'
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
+    name = 'show_history'
         
     def model_run( self, model_context ):
         from ..object_admin import ObjectAdmin
@@ -206,7 +207,9 @@ class ShowHistory( Action ):
                     step.title = _('Recent changes')
                     step.subtitle = model_context.admin.get_verbose_identifier( obj )
                     yield step
-        
+
+show_history = ShowHistory()
+
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
 
@@ -215,6 +218,7 @@ class CloseForm( Action ):
     icon = Icon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
+    name = 'close_form'
     
     def step_when_valid(self):
         """
@@ -268,34 +272,52 @@ class CloseForm( Action ):
                 # deleted, to avoid yielding action steps after the widget mapper
                 # has been garbage collected
                 yield self.step_when_valid()
-    
+
+close_form = CloseForm()
+
 class ToPreviousForm( list_action.AbstractToPrevious, CloseForm ):
     """Move to the previous form"""
+
+    name = 'to_previous_form'
 
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToPreviousForm()
 
+to_previous_form = ToPreviousForm()
+
 class ToFirstForm( list_action.AbstractToFirst, CloseForm ):
     """Move to the form"""
-    
+
+    name = 'to_first_form'
+
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToFirstForm()
 
+to_first_form = ToFirstForm()
+
 class ToNextForm( list_action.AbstractToNext, CloseForm ):
     """Move to the next form"""
+
+    name = 'to_next_form'
 
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToNextForm()
 
+to_next_form = ToNextForm()
+
 class ToLastForm( list_action.AbstractToLast, CloseForm ):
     """Move to the last form"""
+
+    name = 'to_last_form'
 
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToLastForm()
+
+to_last_form = ToLastForm()
 
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.
