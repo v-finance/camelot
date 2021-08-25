@@ -130,4 +130,6 @@ class Application( Action ):
         yield action_steps.NavigationPanel(
             self.application_admin.get_navigation_menu(), model_context=model_context
         )
-        yield action_steps.MainMenu(self.application_admin.get_main_menu())
+        yield action_steps.MainMenu(
+            self.application_admin.get_main_menu(), model_context=model_context
+        )
