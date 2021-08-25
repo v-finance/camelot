@@ -33,7 +33,7 @@ import datetime
 import logging
 import itertools
 
-
+from sqlalchemy import orm
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
@@ -1181,6 +1181,7 @@ class AddNewObjectMixin:
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = self.get_admin(model_context)
+        assert admin is not None # required by vfinance/test/test_facade/test_asset.py
         if not admin.is_editable():
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)

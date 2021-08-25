@@ -30,6 +30,7 @@
 import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext, ListContextAction
+from camelot.admin.action.field_action import FieldAction
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint
@@ -115,10 +116,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
             )
 
     def render_action(self, action, parent):
-        if isinstance(action, ListContextAction):
-            gui_context = self.list_gui_context
-        else:
+        if isinstance(action, FieldAction):
             gui_context = self.field_gui_context
+        else:
+            gui_context = self.list_gui_context
 
         if action.render_hint == RenderHint.TOOL_BUTTON:
             # Use tool button, because this one sets the popup mode
