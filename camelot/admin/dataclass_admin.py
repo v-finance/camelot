@@ -50,16 +50,18 @@ class DataclassAdmin(ObjectAdmin):
         along relationships.
         """
         for field in dataclasses.fields(self.entity):
-            if field.name == field_name and issubclass(field.type, Entity):
-                all_attributes = self.get_field_attributes(field_name)
-                admin = all_attributes.get('admin')
-                session = self.get_session(obj)
-                if (admin is not None) and (session is not None):
-                    search_filter = list_filter.SearchFilter(admin)
-                    query = admin.get_query(session)
-                    query = search_filter.decorate_query(query, prefix)
-                    return [e for e in query.limit(20).all()]
-                return super().get_completions(obj, field_name, prefix)
+            if field.name == field_name:
+                field_type = field.type.__args__[0] if self._is_field_optional(field.type) else field.type
+                if issubclass(field_type, Entity):
+                    all_attributes = self.get_field_attributes(field_name)
+                    admin = all_attributes.get('admin')
+                    session = self.get_session(obj)
+                    if (admin is not None) and (session is not None):
+                        search_filter = list_filter.SearchFilter(admin)
+                        query = admin.get_query(session)
+                        query = search_filter.decorate_query(query, prefix)
+                        return [e for e in query.limit(20).all()]
+        return super().get_completions(obj, field_name, prefix)
             
     def get_session(self, obj):
         raise NotImplementedError
