@@ -35,7 +35,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
-from .admin_route import Route, AdminRoute, register_list_actions
+from .admin_route import Route, AdminRoute, register_list_actions, register_form_actions
 from .action import field_action
 from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
@@ -350,6 +350,7 @@ be specified using the verbose_name attribute.
     def get_memento( self ):
         return self.app_admin.get_memento()
 
+    @register_form_actions('_admin_route', '_form_actions')
     def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.

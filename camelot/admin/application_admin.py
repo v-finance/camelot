@@ -38,7 +38,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 from .action.base import Action
 from .action.application_action import OpenTableView
-from .admin_route import AdminRoute, register_list_actions
+from .admin_route import AdminRoute, register_list_actions, register_form_actions
 from .entity_admin import EntityAdmin
 from .menu import MenuItem
 from .object_admin import ObjectAdmin
@@ -116,13 +116,13 @@ shortcut confusion and reduce the number of status updates.
     help_actions = []
     export_actions = [ list_action.print_preview,
                        list_action.export_spreadsheet ]
-    form_toolbar_actions = [ form_action.CloseForm(),
-                             form_action.ToFirstForm(),
-                             form_action.ToPreviousForm(),
-                             form_action.ToNextForm(),
-                             form_action.ToLastForm(),
-                             application_action.Refresh(),
-                             form_action.ShowHistory() ]
+    form_toolbar_actions = [ form_action.close_form,
+                             form_action.to_first_form,
+                             form_action.to_previous_form,
+                             form_action.to_next_form,
+                             form_action.to_last_form,
+                             application_action.refresh,
+                             form_action.show_history ]
     onetomany_actions = [ list_action.add_new_object,
                           list_action.delete_selection,
                           list_action.duplicate_selection,
@@ -264,6 +264,7 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
+    @register_form_actions('_admin_route', '_form_toolbar_actions')
     def get_form_toolbar_actions( self ):
         """
         :return: a list of :class:`camelot.admin.action.base.Action` objects
