@@ -29,7 +29,8 @@
 
 import logging
 
-from camelot.admin.action.list_action import ListActionGuiContext, ListContextAction
+from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.admin.action.list_filter import Filter
 from camelot.admin.action.field_action import FieldAction
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
@@ -103,6 +104,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.list_gui_context.view = self
         self.list_gui_context.admin_route = self.admin_route
         self.list_gui_context.item_view = table
+        self.has_delegate = 'delegate' in kw
         self.set_right_toolbar_actions(kw['action_routes'])
         self.set_columns(columns)
 
@@ -131,6 +133,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
             qobject = ComboBoxFilterWidget(action, gui_context, parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+        # One2ManyEditor in ChangeObjects action step has no delegate which
+        # sets the field and filter action states
+        if not self.has_delegate:
+            if isinstance(action, (FieldAction, Filter)):
+                state = action.get_state(gui_context.create_model_context())
+                qobject.set_state(state)
         return qobject
 
     @QtCore.qt_slot(object)
@@ -141,7 +149,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             toolbar.setOrientation(Qt.Vertical)
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
-                if isinstance(action, ListContextAction):
+                if not isinstance(action, (FieldAction, Filter)):
                     self.list_gui_context.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(action, toolbar)
                 qaction.action_route = action_route
