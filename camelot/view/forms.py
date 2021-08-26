@@ -76,9 +76,10 @@ and takes these parameters :
 
 """
 
-    def __init__(self, content, scrollbars=False):
+    def __init__(self, content, scrollbars=False, columns=1):
         super().__init__(content)
         self.scrollbars = scrollbars
+        self.columns = columns
 
     def get_fields(self):
         """:return: the fields, visible in this form"""
@@ -388,6 +389,10 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
     tabs: list
     position: str = NORTH
 
+    content: Iterable = field(init=False)
+    scrollbars: bool = field(init=False)
+    columns: int = field(init=False)
+
     def __post_init__(self):
         """
         :param tabs: a list of tuples of (tab_label, tab_form)
@@ -473,6 +478,7 @@ class HBoxForm(AbstractForm):
 
     content: list
     scrollbars: bool = False
+    columns: int = field(init=False)
 
     def __post_init__(self):
         """:param columns: a list of forms to display in the different columns
@@ -481,20 +487,16 @@ class HBoxForm(AbstractForm):
         super().__init__(self.content, scrollbars=self.scrollbars)
 
     def __str__(self):
-        return 'HBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.columns]))
-
-    @property
-    def columns(self):
-        return self.content
+        return 'HBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.content]))
 
     def replace_field(self, original_field, new_field):
-        for form in self.columns:
+        for form in self.content:
             if form.replace_field(original_field, new_field):
                 return True
         return False
 
     def _get_fields_from_form(self):
-        for form in self.columns:
+        for form in self.content:
             for field in form._get_fields_from_form():
                 yield field
 
@@ -502,7 +504,7 @@ class HBoxForm(AbstractForm):
         logger.debug('rendering %s' % self.__class__.__name__)
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QHBoxLayout()
-        for form in self.columns:
+        for form in form["content"]:
             f = form.render(widgets, widget, False)
             if isinstance(f, QtWidgets.QLayout):
                 form_layout.addLayout(f)
