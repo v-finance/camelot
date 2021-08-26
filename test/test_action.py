@@ -1,4 +1,5 @@
 import datetime
+import gc
 import io
 import logging
 import os
@@ -254,12 +255,14 @@ class ListActionsCase(
         )
         cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
         cls.process()
+        gc.disable()
 
     @classmethod
     def tearDownClass(cls):
         cls.thread.post(cls.tear_down_sample_model)
         cls.process()
         super().tearDownClass()
+        gc.enable()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
