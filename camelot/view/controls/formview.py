@@ -28,8 +28,10 @@
 #  ============================================================================
 
 """form view"""
-
+import json
 import logging
+
+from ..forms import AbstractForm, MetaForm
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
@@ -207,7 +209,17 @@ class FormWidget(QtWidgets.QWidget):
         widgets = FormEditors(self, columns, admin)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
-        self.layout().insertWidget(0, form_display.render( widgets, self, True) )
+        if isinstance(form_display, bytes):
+            form_display = json.loads(form_display)
+        assert isinstance(form_display, (tuple, list))
+        cls = MetaForm.forms.get(form_display[0])
+        self.layout().insertWidget(0, cls.render(widgets, form_display[1], self, True))
+        # else:
+        #     self.layout().insertWidget(0, form_display.render(widgets, form_display._to_bytes(), self, True))
+        """
+            Filtermechanisme op basis van classname
+            (Gewoon compatibel maken met dict structuur)
+        """
         ## give focus to the first editor in the form that can receive focus
         # this results in weird behavior on Mac, where the editor get focus
         # from the OS and then immediately gets input

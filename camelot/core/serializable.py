@@ -1,3 +1,5 @@
+import copy
+
 import dataclasses
 import io
 import json
@@ -64,5 +66,56 @@ class DataclassSerializable(Serializable):
     """
 
     def write_object(self, stream):
-        for chunk in json_encoder.iterencode(dataclasses.asdict(self)):
+        for chunk in json_encoder.iterencode(self.asdict()):
             stream.write(chunk.encode())
+
+    def asdict(self):
+        """Return the fields of a dataclass instance as a new dictionary mapping
+        field names to field values.
+
+        Example usage:
+
+          @dataclass
+          class C:
+              x: int
+              y: int
+
+          c = C(1, 2)
+          assert asdict(c) == {'x': 1, 'y': 2}
+
+        If given, 'dict_factory' will be used instead of built-in dict.
+        The function applies recursively to field values that are
+        dataclass instances. This will also look into built-in containers:
+        tuples, lists, and dicts.
+        """
+        if not dataclasses._is_dataclass_instance(self):
+            raise TypeError("asdict() should be called on dataclass instances")
+        return _asdict_inner(self)
+
+
+def _asdict_inner(obj):
+    if dataclasses._is_dataclass_instance(obj):
+        if isinstance(obj, ObjectDataclassSerializable):
+            return type(obj).__name__, fields_to_dict(obj)
+        else:
+            return fields_to_dict(obj)
+    elif isinstance(obj, (list, tuple)):
+        return type(obj)(_asdict_inner(v) for v in obj)
+    elif isinstance(obj, dict):
+        return type(obj)((_asdict_inner(k), _asdict_inner(v))
+                          for k, v in obj.items())
+    else:
+        return copy.deepcopy(obj)
+
+def fields_to_dict(obj):
+    result = []
+    for f in dataclasses.fields(obj):
+        value = _asdict_inner(getattr(obj, f.name))
+        result.append((f.name, value))
+    return dict(result)
+
+class ObjectDataclassSerializable(DataclassSerializable):
+    """
+    Variation on DataclassSerializable where
+    """
+    pass

@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import json
 import typing
 
 from dataclasses import InitVar, dataclass, field
@@ -55,6 +56,7 @@ from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+from ...core.serializable import DataclassSerializable
 
 
 class ChangeObjectDialog( StandaloneWizardPage ):
@@ -270,7 +272,7 @@ class ChangeObject(ActionStep):
 
     obj: typing.Any
     admin: ObjectAdmin
-    form_display: Form = field(init=False)
+    form_display: bytes = field(init=False)
     columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
     form_actions: List[Action] = field(init=False)
     admin_route: AdminRoute = field(init=False)
@@ -279,7 +281,7 @@ class ChangeObject(ActionStep):
 
     def __post_init__(self):
         assert self.admin is not None
-        self.form_display = self.admin.get_form_display()
+        self.form_display = self.admin.get_form_display()._to_bytes()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
         self.admin_route = self.admin.get_admin_route()
@@ -482,7 +484,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
             self.value = value_editor.get_value()
 
 @dataclass
-class ChangeField( ActionStep ):
+class ChangeField( ActionStep, DataclassSerializable ):
     """
     Pop up a list of fields from an object a user can change.  When the
     user selects a field, an appropriate widget is shown to change the
@@ -513,18 +515,22 @@ class ChangeField( ActionStep ):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
     field_attributes: InitVar = None
     field_name: str = None
     field_value: str = None
+    window_title: str = field(init=False)
+
+    admin_route: AdminRoute = field(init=False)
+
     title = _('Replace field contents')
     subtitle = _('Select the field to update and enter its new value')
 
-    def __post_init__(self, field_attributes):
+    def __post_init__(self, admin, field_attributes):
         super( ChangeField, self ).__init__()
-
+        self.admin_route = admin.get_admin_route()
         if field_attributes is None:
-            field_attributes = dict(self.admin.get_all_fields_and_attributes())
+            field_attributes = dict(admin.get_all_fields_and_attributes())
             not_editable_fields = []
             for key, attributes in field_attributes.items():
                 if not attributes.get('editable', False):
@@ -533,23 +539,25 @@ class ChangeField( ActionStep ):
                     not_editable_fields.append(key)
             for key in not_editable_fields:
                 field_attributes.pop(key)
-        self.field_attributes = field_attributes
+        self.window_title = admin.get_verbose_name_plural()
 
-        self.window_title = self.admin.get_verbose_name_plural()
-
-    def render( self ):
+    @classmethod
+    def render( cls, step ):
         """create the dialog. this method is used to unit test
         the action step."""
+        admin = AdminRoute.admin_for(tuple(step["admin_route"]))
         dialog = ChangeFieldDialog(
-            self.admin, self.field_attributes, self.field_name, self.field_value
+            admin, admin.get_all_fields_and_attributes(), step["field_name"], step["field_value"]
         )
-        dialog.setWindowTitle( str( self.window_title ) )
-        dialog.set_banner_title( str( self.title ) )
-        dialog.set_banner_subtitle( str( self.subtitle ) )
+        dialog.setWindowTitle( str( step["window_title"] ) )
+        dialog.set_banner_title( str( cls.title ) )
+        dialog.set_banner_subtitle( str( cls.subtitle ) )
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render()
+    @classmethod
+    def gui_run( cls, gui_context, serialized_step ):
+        step = json.loads(serialized_step)
+        dialog = cls.render(step)
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtWidgets.QDialog.Rejected:

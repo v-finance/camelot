@@ -63,7 +63,7 @@ class Exit(ActionStep, DataclassSerializable):
         QtCore.QCoreApplication.exit(self.return_code)
 
 @dataclass
-class MainWindow(ActionStep):
+class MainWindow(ActionStep, DataclassSerializable):
     """
     Open a top level application window
     
@@ -77,20 +77,24 @@ class MainWindow(ActionStep):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
     window_title: str = field(init=False)
 
-    def __post_init__(self):
-        self.window_title = self.admin.get_name()
+    admin_route: Route = field(init=False)
 
-    def render(self, gui_context):
+    def __post_init__(self, admin):
+        self.window_title = admin.get_name()
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def render(cls, gui_context, step):
         """create the main window. this method is used to unit test
         the action step."""
         from ..mainwindowproxy import MainWindowProxy
 
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
-        main_window_context.admin = self.admin
+        main_window_context.admin = AdminRoute.admin_for(tuple(step["admin_route"]))
 
         # Check if a QMainWindow already exists
         window = None
@@ -108,11 +112,13 @@ class MainWindow(ActionStep):
         )
 
         gui_context.workspace = main_window_context.workspace
-        main_window_proxy.parent().setWindowTitle(self.window_title)
+        main_window_proxy.parent().setWindowTitle(step["window_title"])
         return main_window_proxy.parent()
 
-    def gui_run(self, gui_context):
-        main_window = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        main_window = cls.render(gui_context, step)
         if main_window.statusBar() is not None:
             main_window.statusBar().hide()
         main_window.show()
@@ -240,7 +246,7 @@ class MainMenu(ActionStep, DataclassSerializable):
         menu_bar.setCornerWidget(BusyWidget())
 
 @dataclass
-class InstallTranslator(ActionStep):
+class InstallTranslator(ActionStep, DataclassSerializable):
     """
     Install a translator in the application.  Ownership of the translator will
     be moved to the application.
@@ -250,11 +256,17 @@ class InstallTranslator(ActionStep):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
+    admin_route: AdminRoute = field(init=False)
 
-    def gui_run(self, gui_context):
+    def __post_init__(self, admin):
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         app = QtCore.QCoreApplication.instance()
-        translator = self.admin.get_translator()
+        translator = AdminRoute.admin_for(tuple(step["admin_route"])).get_translator()
         if isinstance(translator, list):
             for t in translator:
                 t.setParent(app)
@@ -263,7 +275,7 @@ class InstallTranslator(ActionStep):
             app.installTranslator(translator)
 
 @dataclass
-class RemoveTranslators(ActionStep):
+class RemoveTranslators(ActionStep, DataclassSerializable):
     """
     Unregister all previously installed translators from the application.
 
@@ -271,9 +283,14 @@ class RemoveTranslators(ActionStep):
         object
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
+    admin_route: AdminRoute = field(init=False)
 
-    def gui_run(self, gui_context):
+    def __post_init__(self, admin):
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         app = QtCore.QCoreApplication.instance()
         for active_translator in app.findChildren(QtCore.QTranslator):
             app.removeTranslator(active_translator)

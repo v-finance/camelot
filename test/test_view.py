@@ -9,6 +9,7 @@ import os
 import sys
 import unittest
 
+from camelot.admin.action.application import Application
 from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -476,7 +477,7 @@ class FormTest(
         self.gui_context = GuiContext()
 
     def test_form(self):
-        self.grab_widget(Movie.Admin.form_display.render(self.widgets))
+        self.grab_widget(Movie.Admin.form_display.__class__.render(self.widgets, Movie.Admin.form_display._to_bytes()))
         form = forms.Form( ['title', 'short_description',
                             'director', 'releasedate'] )
         form.remove_field( 'releasedate' )
@@ -498,27 +499,27 @@ class FormTest(
 
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
-        self.grab_widget(form.render(self.widgets))
+        self.grab_widget(forms.GroupBoxForm.render(self.widgets, form._to_bytes()))
 
     def test_grid_form(self):
         form = forms.GridForm([['title',                      'short_description'],
                                ['director',                   'releasedate'],
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
-        self.grab_widget(form.render(self.widgets))
+        self.grab_widget(forms.GridForm.render(self.widgets, form._to_bytes()))
         self.assertTrue( str( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
-        self.grab_widget(form.render(self.widgets))
+        self.grab_widget(forms.VBoxForm.render(self.widgets, form._to_bytes()))
         self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
-        self.grab_widget(form.render(self.widgets))
+        self.grab_widget(forms.HBoxForm.render(self.widgets, form._to_bytes()))
         self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
@@ -943,14 +944,18 @@ class ControlsTest(
                 if isinstance(widget, QtWidgets.QMainWindow):
                     result += 1
             return result
+        
+        application = Application(app_admin)
 
-        action_step1 = MainWindow(app_admin)
-        action_step1.render(self.gui_context)
-
+        for step in self.gui_run(application, self.gui_context):
+            if isinstance(step, tuple) and step[0] == MainWindow.__name__:
+                MainWindow.render(self.gui_context, step[1])
+                
         num_main_windows1 = count_main_windows()
-
-        action_step2 = MainWindow(app_admin)
-        action_step2.render(self.gui_context)
+        
+        for step in self.gui_run(application, self.gui_context):
+            if isinstance(step, tuple) and step[0] == MainWindow.__name__:
+                MainWindow.render(self.gui_context, step[1])
 
         num_main_windows2 = count_main_windows()
 
