@@ -1234,9 +1234,6 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """
         self._action_routes.append(action_route)
 
-    def set_action_routes(self, action_routes):
-        self._action_routes = action_routes.copy()
-
     @QtCore.qt_slot(QtCore.QItemSelectionModel, QtCore.QModelIndex)
     def change_selection(self, selection_model, current_index):
         """Determine the new state of actions and emit a action_state_changed_signal

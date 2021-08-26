@@ -28,9 +28,10 @@
 #  ============================================================================
 
 import logging
-import itertools
 
 from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.admin.action.list_filter import Filter
+from camelot.admin.action.field_action import FieldAction
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint
@@ -59,8 +60,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
-
-    _rendered_action_counter = itertools.count()
 
     def __init__(self,
                  admin_route=None,
@@ -100,11 +99,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
         layout.addWidget(table)
         self.setLayout(layout)
         self._new_message = None
-        self.gui_context = ListActionGuiContext()
-        self.gui_context.view = self
-        self.gui_context.admin_route = self.admin_route
-        self.gui_context.item_view = table
-        self.set_right_toolbar_actions(kw['action_routes'])
+        self.field_gui_context = self.gui_context # set in CustomEditor constructor
+        self.list_gui_context = ListActionGuiContext()
+        self.list_gui_context.view = self
+        self.list_gui_context.admin_route = self.admin_route
+        self.list_gui_context.item_view = table
+        self.set_right_toolbar_actions(kw['action_routes'], kw.get('action_states', []))
         self.set_columns(columns)
 
         selection_model = table.selectionModel()
@@ -116,38 +116,43 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 self.current_row_changed, type=Qt.QueuedConnection
             )
 
-    @classmethod
-    def _register_rendered_action(cls, qobject):
-        next_rendered_action = cls._rendered_action_counter.__next__()
-        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
-        qobject.setObjectName(rendered_action_name)
-        return rendered_action_name
-
     def render_action(self, action, parent):
+        if isinstance(action, FieldAction):
+            gui_context = self.field_gui_context
+        else:
+            gui_context = self.list_gui_context
+
         if action.render_hint == RenderHint.TOOL_BUTTON:
             # Use tool button, because this one sets the popup mode
             # to instant if there are modes in the state
-            qobject = ActionToolbutton(action, self.gui_context, parent)
+            qobject = ActionToolbutton(action, gui_context, parent)
         elif action.render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, self.gui_context, parent)
+            qobject = ActionPushButton(action, gui_context, parent)
         elif action.render_hint == RenderHint.COMBO_BOX:
-            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
+            qobject = ComboBoxFilterWidget(action, gui_context, parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-        rendered_action_name = self._register_rendered_action(qobject)
-        self.gui_context.action_routes[action] = rendered_action_name
         return qobject
 
     @QtCore.qt_slot(object)
-    def set_right_toolbar_actions(self, action_routes):
+    def set_right_toolbar_actions(self, action_routes, action_states):
+        route2state = {}
+        for action_state in action_states:
+            route2state[action_state[0]] = action_state[1]
+
         if action_routes is not None:
-            self.gui_context.item_view.model().set_action_routes(action_routes)
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Vertical)
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
+                if not isinstance(action, (FieldAction, Filter)):
+                    self.list_gui_context.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(action, toolbar)
+                qaction.action_route = action_route
+                state = route2state.get(action_route)
+                if state is not None:
+                    qaction.set_state(state)
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
@@ -155,29 +160,29 @@ class One2ManyEditor(CustomEditor, WideEditor):
             self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
-            self.update_action_status()
+            self.update_list_action_states()
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.gui_context.field_attributes = kwargs
-        self.update_action_status()
+        self.list_gui_context.field_attributes = kwargs
+        self.field_gui_context.field_attributes = kwargs
+        self.update_list_action_states()
 
-    def update_action_status(self):
-        table = self.gui_context.item_view
+    def update_list_action_states(self):
+        table = self.list_gui_context.item_view
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
 
     def current_row_changed(self, current=None, previous=None):
-        self.update_action_status()
+        self.update_list_action_states()
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
-        action = AdminRoute.action_for(route)
-        action_name = self.gui_context.action_routes[action]
-        action_widget = self.findChild(AbstractActionWidget, action_name)
-        if isinstance(action_widget, (ActionAction, ActionToolbutton, ActionPushButton)):
-            action_widget.set_state(state)
+        for action_widget in self.findChildren(AbstractActionWidget):
+            if action_widget.action_route == route:
+                if isinstance(action_widget, (ActionAction, ActionToolbutton, ActionPushButton)):
+                    action_widget.set_state(state)
 
     def get_model(self):
         """
@@ -215,7 +220,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # one, still need to set it, since the content of the collection
             # might have changed.
             model.set_value(ProxyRegistry.register(collection))
-            self.update_action_status()
+            self.update_list_action_states()
+
+    def get_value(self):
+        model = self.get_model()
+        if model is not None:
+            return model.get_value()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
@@ -224,5 +234,5 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.close_editor()
         admin = AdminRoute.admin_for(self.admin_route)
         if admin.list_action:
-            admin.list_action.gui_run(self.gui_context)
+            admin.list_action.gui_run(self.list_gui_context)
 
