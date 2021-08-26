@@ -35,9 +35,9 @@ import json
 import logging
 from typing import Iterable, Any
 
-from dataclasses import dataclass, InitVar, field
+from dataclasses import dataclass, field
 
-from ..core.serializable import DataclassSerializable, Serializable
+from ..core.serializable import Serializable, ObjectDataclassSerializable
 
 logger = logging.getLogger('camelot.view.forms')
 
@@ -53,8 +53,7 @@ class MetaForm(type):
             cls.forms[clsname] = newclass
         return newclass
 
-
-class AbstractForm(list, DataclassSerializable, metaclass=MetaForm):
+class AbstractForm(list, ObjectDataclassSerializable, metaclass=MetaForm):
     """Base Form class to put fields on a form.  The base class of a form is
 a list.  So the form itself is nothing more than a list of field names or
 sub-forms.  A form can thus be manipulated using the list's method such as
