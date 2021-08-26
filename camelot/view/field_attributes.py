@@ -44,7 +44,7 @@ import operator
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
-from camelot.core.dataclasses import Note
+from camelot.core.dataclasses import Note, Directory
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -288,7 +288,12 @@ _dataclass_to_python_type = {
         'python_type': str,
         'delegate': delegates.NoteDelegate,
         'editable': False,
-    },    
+    },  
+    Directory:{
+        'python_type': str,
+        'delegate': delegates.LocalFileDelegate,
+        'directory':True ,      
+    },
 }
 
 #
