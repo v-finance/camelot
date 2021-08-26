@@ -4,7 +4,8 @@ from typing import Union, NewType
 from camelot.core.utils import ugettext_lazy
 
 Note = NewType('Note', Union[str, ugettext_lazy])
-Directory = NewType('Note', str)
+Directory = NewType('Directory', str)
+File = NewType('File', str)
 
 def dataclass(cls):
     """
