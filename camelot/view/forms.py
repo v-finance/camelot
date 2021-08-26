@@ -193,26 +193,28 @@ and takes these parameters :
             size_policy = None
             if field is None:
                 c.next_col()
-            elif issubclass(type(field), AbstractForm):
-                c.next_empty_row()
-                col_span = 2 * columns
-                f = field.render(widgets, parent, False)
-                if isinstance(f, QtWidgets.QLayout):
-                    #
-                    # this should maybe be recursive ??
-                    #
-                    for layout_item_index in range(f.count()):
-                        layout_item = f.itemAt(layout_item_index)
-                        layout_item_widget = layout_item.widget()
-                        if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
-                            has_vertical_expanding_row = True
-                    form_layout.addLayout(f, c.row, c.col, row_span, col_span)
-                elif isinstance(f, QtWidgets.QLayoutItem):
-                    form_layout.addItem(f)
-                else:
-                    form_layout.addWidget(f, c.row, c.col, row_span, col_span)
-                    size_policy = f.sizePolicy()
-                c.next_row()
+            elif isinstance(field, list):
+                field_class = MetaForm.forms.get(field[0])
+                if issubclass(field_class, AbstractForm):
+                    c.next_empty_row()
+                    col_span = 2 * columns
+                    f = field_class.render(widgets, field[1], parent, False)
+                    if isinstance(f, QtWidgets.QLayout):
+                        #
+                        # this should maybe be recursive ??
+                        #
+                        for layout_item_index in range(f.count()):
+                            layout_item = f.itemAt(layout_item_index)
+                            layout_item_widget = layout_item.widget()
+                            if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
+                                has_vertical_expanding_row = True
+                        form_layout.addLayout(f, c.row, c.col, row_span, col_span)
+                    elif isinstance(f, QtWidgets.QLayoutItem):
+                        form_layout.addItem(f)
+                    else:
+                        form_layout.addWidget(f, c.row, c.col, row_span, col_span)
+                        size_policy = f.sizePolicy()
+                    c.next_row()
             else:
                 editor = widgets.create_editor(field, form_widget)
                 if editor is not None:
@@ -365,7 +367,8 @@ the moment the tab is shown.
             return
         layout = QtWidgets.QVBoxLayout(tab_widget)
         tab_form = self._forms[index]
-        tab_form_widget = tab_form.render(self._widgets, tab_widget, False)
+        form_class = MetaForm.forms.get(tab_form[0])
+        tab_form_widget = form_class.render(self._widgets, tab_form[1], toplevel=False)
         layout.addWidget(tab_form_widget)
         tab_widget.setLayout(layout)
         size_policy = tab_form_widget.sizePolicy()
@@ -524,7 +527,8 @@ class HBoxForm(AbstractForm):
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QHBoxLayout()
         for form in form["content"]:
-            f = form.render(widgets, widget, False)
+            form_class = MetaForm.forms.get(form[0])
+            f = form_class.render(widgets, form[1], parent=widget, toplevel=False)
             if isinstance(f, QtWidgets.QLayout):
                 form_layout.addLayout(f)
             elif isinstance(f, QtWidgets.QLayoutItem):
@@ -574,7 +578,8 @@ class VBoxForm(AbstractForm):
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QVBoxLayout()
         for form in form["rows"]:
-            f = form.render(widgets, widget, False)
+            form_class = MetaForm.forms.get(form[0])
+            f = form_class.render(widgets, form[1], widget, False)
             if isinstance(f, QtWidgets.QLayout):
                 form_layout.addLayout(f)
             elif isinstance(f, QtWidgets.QLayoutItem):
@@ -644,18 +649,21 @@ class GridForm(AbstractForm):
             for j, field in enumerate(row):
                 num = 1
                 col = j + skip
-                if isinstance(field, ColumnSpan):
-                    num = field.num
-                    field = field.field
-                if issubclass(type(field), AbstractForm):
-                    form = field.render(widgets, parent)
-                    if isinstance(form, QtWidgets.QWidget):
-                        grid_layout.addWidget(form, i, col, 1, num)
-                    elif isinstance(form, QtWidgets.QLayoutItem):
-                        grid_layout.addItem(form, i, col, 1, num)
-                    elif isinstance(form, QtWidgets.QLayout):
-                        grid_layout.addLayout(form, i, col, 1, num)
-                    skip += num - 1
+                if isinstance(field, list):
+                    field_class = MetaForm.forms.get(field[0])
+                    field_content = field[1]
+                    if isinstance(field_class, ColumnSpan):
+                        num = field_content["num"]
+                        field = field_content["field"]
+                    if issubclass(field_class, AbstractForm):
+                        form = field_class.render(widgets, field_content, parent)
+                        if isinstance(form, QtWidgets.QWidget):
+                            grid_layout.addWidget(form, i, col, 1, num)
+                        elif isinstance(form, QtWidgets.QLayoutItem):
+                            grid_layout.addItem(form, i, col, 1, num)
+                        elif isinstance(form, QtWidgets.QLayout):
+                            grid_layout.addLayout(form, i, col, 1, num)
+                        skip += num - 1
                 else:
                     editor = widgets.create_editor(field, widget)
                     grid_layout.addWidget(editor, i, col, 1, num)
