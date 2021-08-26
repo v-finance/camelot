@@ -85,7 +85,7 @@ class OpenFormView(ActionStep):
     actions: List[Action] = field(init=False)
     top_toolbar_actions: List[Action] = field(init=False)
     _columns: List[Tuple[Optional[Any], Dict[str, Union[Type[ComboBoxDelegate]]]]] = field(init=False)
-    _form_display: Tuple[str, dict] = field(init=False)
+    _form_display: bytes = field(init=False)
     admin_route: AdminRoute = field(init=False)
     objects: List[Any] = field(init=False)
     row: int = field(init=False)
@@ -98,7 +98,7 @@ class OpenFormView(ActionStep):
         get_form_toolbar_actions = self.admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions()
         self._columns = self.admin.get_fields()
-        self._form_display = (self.admin.get_form_display().__class__.__name__, self.admin.get_form_display()._to_bytes())
+        self._form_display = self.admin.get_form_display()._to_bytes()
         self.admin_route = self.admin.get_admin_route()
 
         self.objects = [obj]

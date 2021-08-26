@@ -272,7 +272,7 @@ class ChangeObject(ActionStep):
 
     obj: typing.Any
     admin: ObjectAdmin
-    form_display: Form = field(init=False)
+    form_display: bytes = field(init=False)
     columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
     form_actions: List[Action] = field(init=False)
     admin_route: AdminRoute = field(init=False)
@@ -281,7 +281,7 @@ class ChangeObject(ActionStep):
 
     def __post_init__(self):
         assert self.admin is not None
-        self.form_display = self.admin.get_form_display()
+        self.form_display = self.admin.get_form_display()._to_bytes()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
         self.admin_route = self.admin.get_admin_route()
