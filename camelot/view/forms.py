@@ -131,10 +131,10 @@ and takes these parameters :
         self.append(new_field)
 
     def __str__(self):
-        return 'Form(%s)' % (u','.join(str(c) for c in self))
+        return 'AbstractForm(%s)' % (u','.join(str(c) for c in self))
 
     @classmethod
-    def render(cls, widgets, serialized_form, parent=None, toplevel=False):
+    def render(cls, widgets, form, parent=None, toplevel=False):
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
@@ -146,7 +146,10 @@ and takes these parameters :
             expanding elements.
         :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
-        form = json.loads(serialized_form)
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
 
         logger.debug('rendering %s' % cls.__name__)
         from camelot.view.controls.editors.wideeditor import WideEditor
@@ -294,11 +297,17 @@ class Label(AbstractForm):
     def __post_init__(self):
         super().__init__([])
 
-    def render(self, widgets, parent=None, toplevel=False):
-        if self.style:
-            widget = QtWidgets.QLabel('<p align="%s" style="%s">%s</p>' % (self.alignment, self.style, str(self.label)))
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
+
+        if form["style"]:
+            widget = QtWidgets.QLabel('<p align="%s" style="%s">%s</p>' % (form["alignment"], form["style"], str(form["label"])))
         else:
-            widget = QtWidgets.QLabel('<p align="%s">%s</p>' % (self.alignment, str(self.label)))
+            widget = QtWidgets.QLabel('<p align="%s">%s</p>' % (form["alignment"], str(form["label"])))
         widget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                              QtWidgets.QSizePolicy.Fixed)
         return widget
@@ -459,10 +468,15 @@ Render forms within a :class:`QtWidgets.QTabWidget`::
             for field in form._get_fields_from_form():
                 yield field
 
-    def render(self, widgets, parent=None, toplevel=False):
-        logger.debug('rendering %s' % self.__class__.__name__)
-        widget = DelayedTabWidget(widgets, self.tabs, parent)
-        widget.setTabPosition(getattr(QtWidgets.QTabWidget, self.position))
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
+        logger.debug('rendering %s' % cls.__name__)
+        widget = DelayedTabWidget(widgets, form["tabs"], parent)
+        widget.setTabPosition(getattr(QtWidgets.QTabWidget, form["position"]))
         return widget
 
 @dataclass
@@ -500,8 +514,13 @@ class HBoxForm(AbstractForm):
             for field in form._get_fields_from_form():
                 yield field
 
-    def render(self, widgets, parent=None, toplevel=False):
-        logger.debug('rendering %s' % self.__class__.__name__)
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
+        logger.debug('rendering %s' % cls.__name__)
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QHBoxLayout()
         for form in form["content"]:
@@ -549,11 +568,12 @@ class VBoxForm(AbstractForm):
     def __str__(self):
         return 'VBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.rows]))
 
-    def render(self, widgets, parent=None, toplevel=False):
-        logger.debug('rendering %s' % self.__class__.__name__)
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        logger.debug('rendering %s' % cls.__name__)
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QVBoxLayout()
-        for form in self.rows:
+        for form in form["rows"]:
             f = form.render(widgets, widget, False)
             if isinstance(f, QtWidgets.QLayout):
                 form_layout.addLayout(f)
@@ -610,10 +630,16 @@ class GridForm(AbstractForm):
         for row, additional_field in zip(self.grid, column):
             row.append(additional_field)
 
-    def render(self, widgets, parent=None, toplevel=False):
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
+
         widget = QtWidgets.QWidget(parent)
         grid_layout = QtWidgets.QGridLayout()
-        for i, row in enumerate(self.grid):
+        for i, row in enumerate(form["grid"]):
             skip = 0
             for j, field in enumerate(row):
                 num = 1
@@ -651,9 +677,15 @@ class WidgetOnlyForm(AbstractForm):
         self.content = [self.field]
         super().__init__(self.content)
 
-    def render(self, widgets, parent=None, toplevel=False):
-        logger.debug('rendering %s' % self.__class__.__name__)
-        editor = widgets.create_editor(self.get_fields()[0], parent)
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
+
+        logger.debug('rendering %s' % cls.__name__)
+        editor = widgets.create_editor(form["field"], parent)
         return editor
 
 @dataclass
@@ -665,7 +697,8 @@ class Stretch(AbstractForm):
     def __post_init__(self):
         super().__init__([])
 
-    def render(self, widgets, parent=None, toplevel=False):
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
         return QtWidgets.QSpacerItem(0, 0, vPolicy=QtWidgets.QSizePolicy.Expanding)
 
 @dataclass
@@ -691,13 +724,19 @@ class GroupBoxForm(AbstractForm):
             self.content = [self.content]
         super().__init__(self.content, scrollbars=self.scrollbars)
 
-    def render(self, widgets, parent=None, toplevel=False):
-        widget = QtWidgets.QGroupBox(str(self.title), parent)
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]
+
+        widget = QtWidgets.QGroupBox(str(form["title"]), parent)
         layout = QtWidgets.QVBoxLayout()
-        if self.min_width and self.min_height:
-            widget.setMinimumSize(self.min_width, self.min_height)
+        if form["min_width"] and form["min_height"]:
+            widget.setMinimumSize(form["min_width"], form["min_height"])
         widget.setLayout(layout)
-        form = Form.render(self, widgets, widget, False)
+        form = Form.render(form, widgets, widget, False)
         layout.addWidget(form)
         return widget
 
