@@ -81,6 +81,27 @@ and takes these parameters :
         self.scrollbars = scrollbars
         self.columns = columns
 
+    @classmethod
+    def get_content_fields(cls, content):
+        """:return: the fields, visible in this form"""
+        return [field for field in cls._get_fields_from_form(content)]
+
+    @classmethod
+    def _get_content_fields_from_form(cls, content):
+        if isinstance(content, dict):
+            content = content["content"]
+        for field in content:
+            if field is None:
+                continue
+            elif isinstance(field, list):
+                field_class = MetaForm.forms.get(field[0])
+                if issubclass(field_class, AbstractForm):
+                    for nested_field in cls._get_fields_from_form(field[1]):
+                        yield nested_field
+            else:
+                assert isinstance(field, str) or (field is None)
+                yield field
+
     def get_fields(self):
         """:return: the fields, visible in this form"""
         return [field for field in self._get_fields_from_form()]
@@ -138,7 +159,7 @@ and takes these parameters :
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
-        :param serialized_form: a dictionary containing all attributes
+        :param form: a dictionary containing all attributes
         :param parent: the :class:`QtWidgets.QWidget` in which the form is placed
         :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
             or a child form of another form.  A toplevel form will be expanding,
