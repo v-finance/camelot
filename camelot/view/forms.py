@@ -595,6 +595,10 @@ class VBoxForm(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
+        if isinstance(form, bytes):
+            form = json.loads(form)
+        if isinstance(form, list):
+            form = form[1]        
         logger.debug('rendering %s' % cls.__name__)
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QVBoxLayout()
