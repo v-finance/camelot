@@ -54,29 +54,31 @@ class MetaForm(type):
             cls.forms[clsname] = newclass
         return newclass
 
+
 class AbstractForm(list, ObjectDataclassSerializable, metaclass=MetaForm):
-    """Base Form class to put fields on a form.  The base class of a form is
-a list.  So the form itself is nothing more than a list of field names or
-sub-forms.  A form can thus be manipulated using the list's method such as
-append or insert.
+    """
+    Base Form class to put fields on a form.  The base class of a form is
+    a list.  So the form itself is nothing more than a list of field names or
+    sub-forms.  A form can thus be manipulated using the list's method such as
+    append or insert.
+        
+    A form can be converted to a `Qt` widget by calling its `render` method.
     
-A form can be converted to a `Qt` widget by calling its `render` method.
-
-Forms are defined using the `form_display` attribute of an `Admin` class::
-
-    class Admin( EntityAdmin ):
-        form_display = Form( [ 'title', 'short_description', 
-                               'release_date' ] )
-                               
-and takes these parameters :
-
-    :param content: an iterable with field names or sub-forms to render
-    :param columns: the number of columns in which to order the fields.
-
-.. image:: /_static/form/form.png
-
-"""
-
+    Forms are defined using the `form_display` attribute of an `Admin` class::
+    
+        class Admin( EntityAdmin ):
+            form_display = Form( [ 'title', 'short_description', 
+                                   'release_date' ] )
+                                   
+    and takes these parameters :
+    
+        :param content: an iterable with field names or sub-forms to render
+        :param columns: the number of columns in which to order the fields.
+    
+    .. image:: /_static/form/form.png
+    
+    """
+    
     def __init__(self, content, scrollbars=False, columns=1):
         super().__init__(content)
         self.scrollbars = scrollbars
@@ -137,14 +139,14 @@ and takes these parameters :
         self.append(new_field)
 
     def __str__(self):
-        return 'AbstractForm(%s)' % (u','.join(str(c) for c in self))
-
+        return 'AbstractForm(%s)' % (u','.join(str(c) for c in self))  
+    
     @classmethod
-    def render(cls, widgets, form, parent=None, toplevel=False):
+    def render(cls, widgets, serialized_form, parent=None, toplevel=False):
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
             that is able to create the widgets for this form
-        :param form: a dictionary containing all attributes
+        :param serialized_form: the serialized form data
         :param parent: the :class:`QtWidgets.QWidget` in which the form is placed
         :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
             or a child form of another form.  A toplevel form will be expanding,
@@ -152,15 +154,16 @@ and takes these parameters :
             expanding elements.
         :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
-
+        if isinstance(serialized_form, bytes):
+            form = json.loads(serialized_form)
+        if isinstance(serialized_form, list):
+            form = serialized_form[1]
+        
         logger.debug('rendering %s' % cls.__name__)
         from camelot.view.controls.editors.wideeditor import WideEditor
         form_widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QGridLayout()
+        
         # where 1 column in the form is a label and a field, so two columns in the grid
         columns = min(form["columns"], len(form["content"]))
         # make sure all columns have the same width
