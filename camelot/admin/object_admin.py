@@ -338,7 +338,8 @@ be specified using the verbose_name attribute.
         search_identifiers = {} 
 
         search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.UserRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
