@@ -31,6 +31,7 @@
 form_display attribute in Admin classes, but they can be used on their own as
 well.  Form classes can be used recursive.
 """
+import dataclasses
 import json
 import logging
 from typing import Iterable, Any
@@ -619,9 +620,10 @@ class ColumnSpan(AbstractForm):
 
     field: str = None
     columns: int = 2
+    content: Iterable = dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.content = [field]
+        self.content = [self.field]
         super().__init__(self.content, self.columns)
 
 @dataclass
