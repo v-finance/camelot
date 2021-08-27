@@ -240,7 +240,8 @@ and used as a custom action.
         search_identifiers = {}
 
         search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.UserRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
