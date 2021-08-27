@@ -570,8 +570,24 @@ be specified using the verbose_name attribute.
         :return: `None` if the field does not support autocompletion, an empty
             list if there are no possible values for the requested prefix,
             otherwise a list of possible values for the field.
+            If the field is a property which is typing decorated to have an Entity returned, 
+            the get_completions are expanded to have the first 20 query results displayed.
         """
+        field_type = self.get_typing(field_name)
+        field_type = field_type.__args__[0] if is_optional_type(field_type) else field_type
+        if issubclass(field_type, Entity):
+            all_attributes = self.get_field_attributes(field_name)
+            admin = all_attributes.get('admin')
+            session = self.get_session(obj)
+            if (admin is not None) and (session is not None):
+                search_filter = list_filter.SearchFilter(admin)
+                query = admin.get_query(session)
+                query = search_filter.decorate_query(query, prefix)
+                return [e for e in query.limit(20).all()]
         return None
+            
+    def get_session(self, obj):
+        raise NotImplementedError    
 
     def get_descriptor_field_attributes(self, field_name):
         """
@@ -591,16 +607,25 @@ be specified using the verbose_name attribute.
         # See if there is a descriptor
         #
         attributes = dict()
+        field_type = self.get_typing(field_name)
+        if field_type is not None:
+            attributes['editable'] = True
+            attributes['nullable'] = is_optional_type(field_type)
+            attributes.update(self.get_typing_attributes(field_type))             
+        
         descriptor = getattr(self.entity, field_name, None)
         if descriptor is not None:
             if isinstance(descriptor, property):
-                attributes['editable'] = (descriptor.fset is not None)
-                prop_type = typing.get_type_hints(descriptor.fget).get('return')
-                if prop_type is not None:
-                    attributes['nullable'] = is_optional_type(prop_type)
-                    attributes.update(self.get_typing_attributes(prop_type))                     
+                attributes['editable'] = (descriptor.fset is not None)                   
         return attributes
 
+    def get_typing(self, field_name):
+        descriptor = getattr(self.entity, field_name, None)
+        if descriptor is not None:
+            if isinstance(descriptor, property):
+                return typing.get_type_hints(descriptor.fget).get('return')
+        return None
+    
     def get_typing_attributes(self, field_type):
         if field_type in _typing_to_python_type:
             dataclass_attributes = _typing_to_python_type.get(field_type)
