@@ -614,11 +614,11 @@ class VBoxForm(AbstractForm):
 class ColumnSpan(AbstractForm):
 
     field: str = None
-    num: int = 2
+    columns: int = 2
 
-    def __post_init__(self ):
+    def __post_init__(self):
         self.content = [field]
-        super().__init__(self.content)
+        super().__init__(self.content, self.columns)
 
 @dataclass
 class GridForm(AbstractForm):
