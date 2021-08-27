@@ -765,7 +765,7 @@ class GroupBoxForm(AbstractForm):
         if form["min_width"] and form["min_height"]:
             widget.setMinimumSize(form["min_width"], form["min_height"])
         widget.setLayout(layout)
-        form = Form.render(form, widgets, widget, False)
+        form = super(GroupBoxForm, cls).render(widgets, form, widget, toplevel=False)
         layout.addWidget(form)
         return widget
 
