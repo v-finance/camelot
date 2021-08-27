@@ -13,7 +13,6 @@ from camelot.admin.action.application import Application
 from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
-from .snippet.form.custom_layout import Admin as CustomLayoutAdmin
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
@@ -523,20 +522,8 @@ class FormTest(
         self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
-    def test_nested_form(self):
-        person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        person = self.person_entity()
-        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
-        self.grab_widget( open_form_view.render(self.gui_context) )
-
     def test_inherited_form(self):
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-        person = self.person_entity()
-        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
-        self.grab_widget( open_form_view.render(self.gui_context) )
-
-    def test_custom_layout(self):
-        person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
         person = self.person_entity()
         open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
