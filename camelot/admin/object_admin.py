@@ -32,6 +32,7 @@
 import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
+import typing
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
@@ -41,9 +42,13 @@ from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
+from camelot.core.orm import Entity
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.types.typing import is_optional_type
+from camelot.view.field_attributes import _typing_to_python_type
+from camelot.view.controls import delegates
 from .validator.object_validator import ObjectValidator
 
 
@@ -586,14 +591,28 @@ be specified using the verbose_name attribute.
         # See if there is a descriptor
         #
         attributes = dict()
-        for cls in self.entity.__mro__:
-            descriptor = cls.__dict__.get(field_name, None)
-            if descriptor is not None:
-                if isinstance(descriptor, property):
-                    attributes['editable'] = (descriptor.fset is not None)
-                break
+        descriptor = getattr(self.entity, field_name, None)
+        if descriptor is not None:
+            if isinstance(descriptor, property):
+                attributes['editable'] = (descriptor.fset is not None)
+                prop_type = typing.get_type_hints(descriptor.fget).get('return')
+                if prop_type is not None:
+                    attributes['nullable'] = is_optional_type(prop_type)
+                    attributes.update(self.get_typing_attributes(prop_type))                     
         return attributes
 
+    def get_typing_attributes(self, field_type):
+        if field_type in _typing_to_python_type:
+            dataclass_attributes = _typing_to_python_type.get(field_type)
+            return dataclass_attributes
+        elif is_optional_type(field_type):
+            return self.get_typing_attributes(field_type.__args__[0])
+        elif issubclass(field_type, Entity):
+            return {'delegate':delegates.Many2OneDelegate,
+                    'target':field_type,
+                    }
+        return {}
+    
     def get_field_attributes(self, field_name):
         """
         Get the attributes needed to visualize the field field_name.  This
