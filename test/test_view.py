@@ -489,7 +489,7 @@ class FormTest(
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
                               ('Second tab', ['director', 'releasedate'])])
-        self.grab_widget(form.render(self.widgets))
+        self.grab_widget(form.render(self.widgets, form._to_bytes()))
         form.add_tab_at_index( 'Main', forms.Form(['rating']), 0 )
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
