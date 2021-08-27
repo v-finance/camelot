@@ -87,22 +87,6 @@ and takes these parameters :
         """:return: the fields, visible in this form"""
         return [field for field in cls._get_fields_from_form(content)]
 
-    @classmethod
-    def _get_content_fields_from_form(cls, content):
-        if isinstance(content, dict):
-            content = content["content"]
-        for field in content:
-            if field is None:
-                continue
-            elif isinstance(field, list):
-                field_class = MetaForm.forms.get(field[0])
-                if issubclass(field_class, AbstractForm):
-                    for nested_field in cls._get_fields_from_form(field[1]):
-                        yield nested_field
-            else:
-                assert isinstance(field, str) or (field is None)
-                yield field
-
     def get_fields(self):
         """:return: the fields, visible in this form"""
         return [field for field in self._get_fields_from_form()]
