@@ -584,9 +584,11 @@ be specified using the verbose_name attribute.
                 query = admin.get_query(session)
                 query = search_filter.decorate_query(query, prefix)
                 return [e for e in query.limit(20).all()]
-        return None
             
     def get_session(self, obj):
+        """
+        Return the session based on the given object
+        """
         raise NotImplementedError    
 
     def get_descriptor_field_attributes(self, field_name):
@@ -624,7 +626,6 @@ be specified using the verbose_name attribute.
         if descriptor is not None:
             if isinstance(descriptor, property):
                 return typing.get_type_hints(descriptor.fget).get('return')
-        return None
     
     def get_typing_attributes(self, field_type):
         if field_type in _typing_to_python_type:
