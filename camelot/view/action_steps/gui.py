@@ -30,6 +30,9 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+from typing import Any, List, Tuple
+
+from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtWidgets, is_deleted
 
@@ -41,6 +44,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
+@dataclass
 class UpdateEditor(ActionStep):
     """This step should be used in the context of an editor action.  It
     will update an attribute of the editor.
@@ -51,10 +55,9 @@ class UpdateEditor(ActionStep):
        model of it's change, so that the changes can be written to the model
     """
 
-    def __init__(self, attribute, value, propagate=False):
-        self.attribute = attribute
-        self.value = value
-        self.propagate = propagate
+    attribute: str
+    value: Any
+    propagate: bool = False
 
     def gui_run(self, gui_context):
         if is_deleted(gui_context.editor):
@@ -63,7 +66,7 @@ class UpdateEditor(ActionStep):
         if self.propagate:
             gui_context.editor.editingFinished.emit()
 
-
+@dataclass
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
@@ -113,6 +116,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         if combobox != None:
             return combobox.set_value(value)
 
+@dataclass
 class SelectItem(ActionStep):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
@@ -125,12 +129,14 @@ class SelectItem(ActionStep):
        :guilabel:`OK` first.
     """
 
-    def __init__( self, items, value=None ):
-        self.items = items
-        self.value = value
+    items: List[Tuple]
+    value: str = None
+
+    title = _('Please select')
+    subtitle = _('Make a selection and press the OK button')
+
+    def __post_init__(self):
         self.autoaccept = True
-        self.title =  _('Please select')
-        self.subtitle = _('Make a selection and press the OK button')
 
     def render(self):
         dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
@@ -176,6 +182,7 @@ class SelectSubclass(SelectItem):
         return super().gui_run(gui_context)
 
 
+@dataclass
 class CloseView( ActionStep ):
     """
     Close the view that triggered the action, if such a view is available.
@@ -188,14 +195,14 @@ class CloseView( ActionStep ):
         the user.
     """
 
-    def __init__( self, accept = True ):
-        self.accept = accept
+    accept: bool = True
 
     def gui_run( self, gui_context ):
         view = gui_context.view
         if view != None:
             view.close_view( self.accept )
 
+@dataclass
 class MessageBox( ActionStep ):
     """
     Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
@@ -218,34 +225,31 @@ class MessageBox( ActionStep ):
 
     default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
 
-    def __init__( self,
-                  text,
-                  icon = QtWidgets.QMessageBox.Information,
-                  title = _('Message'),
-                  standard_buttons = default_buttons ):
-        self.icon = icon
-        self.title = str( title )
-        self.text = str( text )
-        self.standard_buttons = standard_buttons
+    text: _
+    icon: QtWidgets = QtWidgets.QMessageBox.Information
+    title: _ = _('Message')
+    standard_buttons: QtWidgets = default_buttons
+
+    def __post_init__(self):
+        self.title = str(self.title)
+        self.text = str(self.text)
         self.informative_text = ''
         self.detailed_text = ''
 
-    def render( self ):
+    def render(self):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box =  QtWidgets.QMessageBox( self.icon,
-                                          self.title,
-                                          self.text,
-                                          self.standard_buttons )
+        message_box = QtWidgets.QMessageBox(self.icon,
+                                            self.title,
+                                            self.text,
+                                            self.standard_buttons)
         message_box.setInformativeText(str(self.informative_text))
         message_box.setDetailedText(str(self.detailed_text))
         return message_box
 
-    def gui_run( self, gui_context ):
+    def gui_run(self, gui_context):
         message_box = self.render()
         result = message_box.exec_()
         if result == QtWidgets.QMessageBox.Cancel:
             raise CancelRequest()
         return result
-
-

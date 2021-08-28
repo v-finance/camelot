@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from dataclasses import dataclass
 
 from ...core.qt import QtCore, QtGui, QtPrintSupport
 
@@ -35,7 +36,7 @@ from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
 
-
+@dataclass
 class PrintPreview( ActionStep ):
     """
     Display a print preview dialog box.
@@ -87,9 +88,10 @@ class PrintPreview( ActionStep ):
     
     .. image:: /_static/simple_report.png
         """
+
+    document: QtGui.QTextDocument
     
-    def __init__( self, document ):
-        self.document = document
+    def __post_init__(self):
         self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.margin_left = None

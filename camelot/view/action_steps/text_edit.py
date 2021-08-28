@@ -26,8 +26,9 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from dataclasses import dataclass
 
-from ...core.qt import QtCore, QtWidgets
+from ...core.qt import QtCore, QtWidgets, QtGui
 
 from camelot.admin.action import ActionStep
 from camelot.core.utils import ugettext_lazy as _
@@ -36,6 +37,7 @@ from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.controls.editors import RichTextEditor
 from camelot.view.utils import resize_widget_to_screen
 
+@dataclass
 class EditTextDocument( ActionStep ):
     """
     Display a rich text editor to edit a text document.
@@ -66,15 +68,17 @@ class EditTextDocument( ActionStep ):
     .. image:: /_static/actionsteps/text_document.png
         
     """
-    
-    def __init__( self, document ):
-        self.document = document
+
+    document: QtGui.QTextDocument
+
+    window_title = _('Edit text')
+    title = _('Edit text')
+    subtitle = _('Press OK when finished')
+
+    def __post_init__( self ):
         self.thread = QtCore.QThread.currentThread()
-        self.document.moveToThread( QtWidgets.QApplication.instance().thread() )
-        self.window_title = _('Edit text')
-        self.title = _('Edit text')
-        self.subtitle = _('Press OK when finished')
-        
+        self.document.moveToThread(QtWidgets.QApplication.instance().thread())
+
     def render( self ):
         """create the text edit dialog. this method is used to unit test
         the action step."""

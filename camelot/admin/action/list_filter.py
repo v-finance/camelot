@@ -31,6 +31,7 @@
 Actions to filter table views
 """
 
+from dataclasses import dataclass
 import camelot.types
 import datetime
 import decimal
@@ -42,7 +43,10 @@ from ...core.utils import ugettext
 from ...core.item_model.proxy import AbstractModelFilter
 from .base import Action, Mode, RenderHint
 
+@dataclass
 class FilterMode(Mode):
+
+    checked: bool = False
 
     def __init__(self, value, verbose_name, checked=False):
         super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
@@ -51,8 +55,14 @@ class FilterMode(Mode):
     def decorate_query(self, query, value):
         return self.decorator(query, value)
 
-class All(object):
-    pass
+# This used to be:
+#
+#     class All(object):
+#         pass
+#
+# It has been replaced by All = '__all' to allow serialization
+#
+All = '__all'
 
 class Filter(Action):
     """Base class for filters"""

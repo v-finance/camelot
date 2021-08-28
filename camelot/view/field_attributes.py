@@ -30,7 +30,7 @@
 """Default field attributes for various sqlalchemy column types"""
 
 import itertools
-
+from decimal import Decimal
 
 
 import sqlalchemy.types
@@ -44,6 +44,7 @@ import operator
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
+from camelot.core.dataclasses import Note
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -231,6 +232,63 @@ _sqlalchemy_to_python_type_ = {
             field_action.SaveFile()
         ],
     },
+}
+
+_dataclass_to_python_type = {
+    bool: {
+        'python_type': bool,
+        'delegate': delegates.BoolDelegate,
+        'from_string': bool_from_string,
+        'operators' : (operator.eq,),     
+    },
+    datetime.date: {
+        'python_type': datetime.date,
+        'format': constants.camelot_date_format,
+        'min': None,
+        'max': None,
+        'delegate': delegates.DateDelegate,
+        'from_string': date_from_string,
+        'operators' : _numerical_operators,      
+    },
+    float: {
+        'python_type': float,
+        'minimum': constants.camelot_minfloat,
+        'maximum': constants.camelot_maxfloat,
+        'delegate': delegates.FloatDelegate,
+        'from_string': float_from_string,
+        'operators': _numerical_operators,
+    },
+    Decimal: {
+        'python_type': float,
+        'minimum': constants.camelot_minfloat,
+        'maximum': constants.camelot_maxfloat,
+        'delegate': delegates.FloatDelegate,
+        'from_string': float_from_string,
+        'operators': _numerical_operators,
+        'decimal':True,
+    },    
+    int: {
+        'python_type': int,
+        'minimum': constants.camelot_minint,
+        'maximum': constants.camelot_maxint,
+        'delegate': delegates.IntegerDelegate,
+        'from_string': int_from_string,
+        'to_string': str,
+        'widget': 'int',
+        'operators': _numerical_operators,   
+    },
+    str: {
+        'python_type': str,
+        'delegate': delegates.PlainTextDelegate,
+        'widget': 'str',
+        'from_string': string_from_string,
+        'operators' : _text_operators,      
+    },
+    Note: {
+        'python_type': str,
+        'delegate': delegates.NoteDelegate,
+        'editable': False,
+    },    
 }
 
 #

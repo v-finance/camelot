@@ -26,29 +26,38 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import typing
 
+from dataclasses import InitVar, dataclass, field
+from typing import List, Dict, Tuple
 
-from ...admin.admin_route import AdminRoute
-from ...admin.action import RenderHint
-from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
-from ..workspace import apply_form_state
-from ..controls.action_widget import ActionPushButton
-
-from camelot.admin.action import ActionStep
+from camelot.admin.action import ActionStep, Action, State
+from camelot.admin.action.list_action import ListActionModelContext
+from camelot.admin.action.field_action import FieldActionModelContext, FieldAction
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
-from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
 from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
+from camelot.view.art import from_admin_icon
 from camelot.view.controls import delegates, editors
-from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
+from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from camelot.view.art import from_admin_icon
+from ..controls.action_widget import ActionPushButton
+from ..controls.delegates import ComboBoxDelegate
+from ..forms import Form
+from ..workspace import apply_form_state
+from ...admin.action import RenderHint
+from ...admin.admin_route import AdminRoute, Route
+from ...admin.object_admin import ObjectAdmin
+from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -186,6 +195,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   admin_route,
                   columns,
                   action_routes,
+                  action_states,
                   invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.Window ):
@@ -197,6 +207,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             create_inline = True,
             columns=columns,
             action_routes=action_routes,
+            action_states=action_states,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -243,7 +254,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                     variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
                 ))
 
-
+@dataclass
 class ChangeObject(ActionStep):
     """
     Pop up a form for the user to change an object
@@ -261,16 +272,21 @@ class ChangeObject(ActionStep):
 
     """
 
-    def __init__(self, obj, admin):
-        assert admin is not None
-        self.obj = obj
-        self.admin = admin
-        self.accept = _('OK')
-        self.reject = _('Cancel')
+    obj: typing.Any
+    admin: ObjectAdmin
+    form_display: Form = field(init=False)
+    columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
+    form_actions: List[Action] = field(init=False)
+    admin_route: AdminRoute = field(init=False)
+    accept = _('OK')
+    reject = _('Cancel')
+
+    def __post_init__(self):
+        assert self.admin is not None
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
-        self.admin_route = admin.get_admin_route()
+        self.admin_route = self.admin.get_admin_route()
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -303,6 +319,7 @@ class ChangeObject(ActionStep):
             return self.obj
 
 
+@dataclass
 class ChangeObjects( ActionStep ):
     """
     Pop up a list for the user to change objects
@@ -337,29 +354,50 @@ class ChangeObjects( ActionStep ):
 
     """
 
-    def __init__(self, objects, admin, validate=True):
-        self.objects = objects
-        self.admin = admin
-        self.admin_route = admin.get_admin_route()
-        self.window_title = admin.get_verbose_name_plural()
-        self.title = _('Data Preview')
-        self.subtitle = _('Please review the data below.')
-        self.icon = Icon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
+    objects: list
+    admin: ObjectAdmin
+    validate: bool = True
+    admin_route: AdminRoute = field(init=False)
+    window_title: str = field(init=False)
+    columns: List[str] = field(init=False)
+    action_routes: List[Action] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(init=False)
+
+    title = _('Data Preview')
+    subtitle = _('Please review the data below.')
+    icon = Icon('file-excel')
+
+    def __post_init__(self):
         self.invalid_rows = set()
-        self.columns = admin.get_columns()
+        self.admin_route = self.admin.get_admin_route()
+        self.window_title = self.admin.get_verbose_name_plural()
+        self.columns = self.admin.get_columns()
         self.action_routes = [
-            AdminRoute._register_list_action_route(self.admin_route, action)
-            for action in admin.get_related_toolbar_actions(
-                Qt.RightToolBarArea, 'onetomany'
-            )
+            action.route for action in self.admin.get_related_toolbar_actions('onetomany')
         ]
-        if validate==True:
+        self.action_states = list()
+        self._add_action_states(self.admin, self.admin.get_proxy(self.objects), self.action_routes, self.action_states)
+        if self.validate:
             validator = self.admin.get_validator()
-            for row, obj in enumerate(objects):
+            for row, obj in enumerate(self.objects):
                 for message in validator.validate_object(obj):
                     self.invalid_rows.add(row)
                     break
-                
+
+    @staticmethod
+    def _add_action_states(admin, proxy, action_routes, action_states):
+        field_model_context = FieldActionModelContext()
+        field_model_context.value = proxy
+        list_model_context = ListActionModelContext()
+        list_model_context.admin = admin
+        list_model_context.proxy = proxy
+        for action_route in action_routes:
+            action = AdminRoute.action_for(action_route)
+            if isinstance(action, FieldAction):
+                state = action.get_state(field_model_context)
+            else:
+                state = action.get_state(list_model_context)
+            action_states.append((action_route, state))
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
@@ -375,6 +413,7 @@ class ChangeObjects( ActionStep ):
                                      self.admin_route,
                                      self.columns,
                                      self.action_routes,
+                                     self.action_states,
                                      self.invalid_rows)
         dialog.setWindowTitle( str( self.window_title ) )
         dialog.set_banner_title( str( self.title ) )
@@ -465,6 +504,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
         if value_editor != None:
             self.value = value_editor.get_value()
 
+@dataclass
 class ChangeField( ActionStep ):
     """
     Pop up a list of fields from an object a user can change.  When the
@@ -496,18 +536,18 @@ class ChangeField( ActionStep ):
 
     """
 
-    def __init__(self,
-                 admin,
-                 field_attributes = None,
-                 field_name = None,
-                 field_value = None,
-                 ):
+    admin: ApplicationAdmin
+    field_attributes: InitVar = None
+    field_name: str = None
+    field_value: str = None
+    title = _('Replace field contents')
+    subtitle = _('Select the field to update and enter its new value')
+
+    def __post_init__(self, field_attributes):
         super( ChangeField, self ).__init__()
-        self.admin = admin
-        self.field_name = field_name
-        self.field_value = field_value
+
         if field_attributes is None:
-            field_attributes = dict(admin.get_all_fields_and_attributes())
+            field_attributes = dict(self.admin.get_all_fields_and_attributes())
             not_editable_fields = []
             for key, attributes in field_attributes.items():
                 if not attributes.get('editable', False):
@@ -517,9 +557,8 @@ class ChangeField( ActionStep ):
             for key in not_editable_fields:
                 field_attributes.pop(key)
         self.field_attributes = field_attributes
-        self.window_title = admin.get_verbose_name_plural()
-        self.title = _('Replace field contents')
-        self.subtitle = _('Select the field to update and enter its new value')
+
+        self.window_title = self.admin.get_verbose_name_plural()
 
     def render( self ):
         """create the dialog. this method is used to unit test

@@ -33,7 +33,7 @@ import datetime
 import logging
 import itertools
 
-
+from sqlalchemy import orm
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
@@ -257,6 +257,8 @@ class RowNumberAction( Action ):
         state.verbose_name = str(model_context.current_row + 1)
         return state
 
+row_number_action = RowNumberAction()
+
 class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
@@ -301,6 +303,8 @@ class CloseList(Action):
         from camelot.view import action_steps
         yield action_steps.CloseView()
 
+close_list = CloseList()
+
 class ListLabel(Action):
     """
     A simple action that displays the name of the table
@@ -314,6 +318,7 @@ class ListLabel(Action):
         state.verbose_name = str(model_context.admin.get_verbose_name_plural())
         return state
 
+list_label = ListLabel()
 
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
@@ -335,6 +340,7 @@ class OpenFormView( ListContextAction ):
         state.verbose_name = str()
         return state
 
+open_form_view = OpenFormView()
 
 class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
@@ -364,6 +370,15 @@ class DuplicateSelection( EditAction ):
         yield action_steps.CreateObjects(new_objects)
         yield action_steps.UpdateObjects(updated_objects)
         yield action_steps.FlushSession(model_context.session)
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+        return state
+
+duplicate_selection = DuplicateSelection()
             
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
@@ -424,6 +439,15 @@ class DeleteSelection( EditAction ):
         yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete(obj)
 
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+        return state
+
+delete_selection = DeleteSelection()
+
 class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -456,6 +480,8 @@ class ToPreviousRow( AbstractToPrevious, ListContextAction ):
         #    state.enabled = ( model_context.current_row > 0 )
         return state
 
+to_previous_row = ToPreviousRow()
+
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -471,6 +497,8 @@ class ToFirstRow( AbstractToFirst, ToPreviousRow ):
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
+
+to_first_row = ToFirstRow()
 
 class AbstractToNext(object):
 
@@ -505,6 +533,8 @@ class ToNextRow( AbstractToNext, ListContextAction ):
         #    state.enabled = ( model_context.current_row < max_row )
         return state
 
+to_next_row = ToNextRow()
+
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -521,6 +551,8 @@ class ToLastRow( AbstractToLast, ToNextRow ):
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         item_view.selectRow( item_view.model().rowCount() - 1 )
+
+to_last_row = ToLastRow()
 
 class SaveExportMapping( Action ):
     """
@@ -820,6 +852,8 @@ class ExportSpreadsheet( ListContextAction ):
         workbook.close()
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
+
+export_spreadsheet = ExportSpreadsheet()
     
 class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
@@ -848,6 +882,8 @@ class PrintPreview( ListContextAction ):
         yield action_steps.PrintJinjaTemplate( template = 'list.html',
                                                context = context )
 
+print_preview = PrintPreview()
+
 class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
@@ -858,6 +894,8 @@ class SelectAll( ListContextAction ):
 
     def gui_run( self, gui_context ):
         gui_context.item_view.selectAll()
+
+select_all = SelectAll()
         
 class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
@@ -957,6 +995,7 @@ class ImportFromFile( EditAction ):
                 yield action_steps.FlushSession( model_context.session )
             yield action_steps.Refresh()
         
+import_from_file = ImportFromFile()
 
 class ReplaceFieldContents( EditAction ):
     """Select a field an change the content for a whole selection"""
@@ -998,6 +1037,7 @@ class ReplaceFieldContents( EditAction ):
             yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
+replace_field_contents = ReplaceFieldContents()
 
 class FieldFilter(object):
     """
@@ -1094,6 +1134,7 @@ class SetFilters(Action, AbstractModelFilter):
         filter_value = model_context.proxy.get_filter(self) or {}
         return self._get_state(model_context, filter_value)
 
+set_filters = SetFilters()
 
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
@@ -1118,39 +1159,20 @@ class AddExistingObject( EditAction ):
         for obj_to_add in objs_to_add:
             yield action_steps.FlushSession(object_session(obj_to_add))
             break
-        
-class AddNewObject( EditAction ):
-    """Add a new object to a collection. Depending on the
-    'create_inline' field attribute, a new form is opened or not.
-    
-    This action will also set the default values of the new object, add the
-    object to the session, and flush the object if it is valid.
-    """
 
-    shortcut = QtGui.QKeySequence.New
-    #icon = Icon('plus-square') # 'tango/16x16/actions/document-new.png'
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('New')
-    verbose_name = _('New')
-    name = 'new_object'
-    
-    def get_admin(self, model_context):
-        """
-        Return the admin used for creating and handling the new entity instance with.
-        By default, the given model_context's admin is used.
-        """
-        return model_context.admin
+add_existing_object = AddExistingObject()
 
+class AddNewObjectMixin:
+    
     def create_object(self, model_context, admin, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
         """
         new_object = admin.entity(_session=session)
-        subsystem_object = admin.get_subsystem_object(new_object)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        model_context.proxy.append(subsystem_object)
+        self.get_proxy(model_context, admin).append(new_object)
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
@@ -1158,23 +1180,51 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        super().model_run(model_context)
-        create_inline = model_context.field_attributes.get('create_inline', False)
         admin = self.get_admin(model_context)
+        assert admin is not None # required by vfinance/test/test_facade/test_asset.py
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
+        create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin)
-        subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
-        yield action_steps.CreateObjects((subsystem_object,))
+        yield action_steps.CreateObjects((new_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            yield action_steps.FlushSession(model_context.session)
+            session = orm.object_session(new_object)
+            yield action_steps.FlushSession(session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+            yield action_steps.OpenFormView(new_object, self.get_proxy(model_context, admin), admin)
+
+class AddNewObject( AddNewObjectMixin, EditAction ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+
+    def get_admin(self, model_context):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.admin
+
+    def get_proxy(self, model_context, admin):
+        return model_context.proxy
+
+add_new_object = AddNewObject()
 
 class RemoveSelection(DeleteSelection):
     """Remove the selected objects from a list without deleting them"""
@@ -1190,6 +1240,8 @@ class RemoveSelection(DeleteSelection):
         # no StopIteration, since the supergenerator needs to
         # continue to flush the session
         yield None
+
+remove_selection = RemoveSelection()
 
 class ActionGroup(EditAction):
     """Group a number of actions in a pull down"""

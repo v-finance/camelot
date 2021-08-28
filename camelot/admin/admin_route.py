@@ -74,6 +74,7 @@ class AdminRoute(object):
         # put name of the admin in the last part of the route, so it can
         # be used as a reference to store settings
         admin_route = ('admin', str(next_admin), admin.get_name())
+        LOGGER.debug('Register admin route: {} -> {}'.format(admin_route, admin))
         cls._admin_routes[admin_route] = admin
         return admin_route
 
@@ -128,6 +129,7 @@ class AdminRoute(object):
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
         assert action_route not in cls._admin_routes, cls.verbose_route(action_route) + ' registered before'
+        LOGGER.debug('Register field action route: {} -> {}'.format(action_route, action))
         cls._admin_routes[action_route] = action
         return action_route
 
@@ -138,6 +140,7 @@ class AdminRoute(object):
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'list', 'actions', action.get_name())
         assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
         cls._admin_routes[action_route] = action
         return action_route
 
@@ -148,25 +151,29 @@ class AdminRoute(object):
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'actions', action.get_name())
         assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Register action route: {} -> {}'.format(action_route, action))
         cls._admin_routes[action_route] = action
         return action_route
 
 
-def register_list_actions(attr_cache, attr_admin_route):
+def register_list_actions(attr_admin_route, attr_cache=None):
     """
     Function decorator that registers list actions.
 
-    :param str attr_cache: Name of the attribute to cache the registered actions
     :param str attr_admin_route: Name of the attribute that contains the AdminRoute.
+    :param str attr_cache: Name of the attribute to cache the registered actions.
+                           If this is None, no caching will be done.
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            # check for existing attribute
-            if hasattr(self, attr_cache) and getattr(self, attr_cache) is not None:
-                return getattr(self, attr_cache)
+            # check for existing cahed attribute
+            if attr_cache is not None:
+                if hasattr(self, attr_cache) and getattr(self, attr_cache) is not None:
+                    return getattr(self, attr_cache)
             # register actions
             assert hasattr(self, attr_admin_route)
             admin_route = getattr(self, attr_admin_route)
+            assert isinstance(admin_route, tuple)
             actions = func(self, *args, **kwargs)
             result = []
             for action in actions:
@@ -174,7 +181,8 @@ def register_list_actions(attr_cache, attr_admin_route):
                     result.append(action) # action is already registered
                 else:
                     result.append(RouteWithRenderHint(AdminRoute._register_list_action_route(admin_route, action), action.render_hint))
-            setattr(self, attr_cache, result)
+            if attr_cache is not None:
+                setattr(self, attr_cache, result)
             return result
         return wrapper
     return decorator

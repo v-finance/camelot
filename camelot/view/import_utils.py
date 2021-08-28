@@ -36,9 +36,10 @@ import os.path
 import string
 
 
-from ..core.qt import QtCore, Qt
+from ..core.qt import QtCore
 from camelot.view.controls import delegates
-from camelot.admin.action.list_action import DeleteSelection
+from camelot.admin.admin_route import register_list_actions
+from camelot.admin.action.list_action import delete_selection
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.table import Table
 from camelot.admin.action import Action, RowNumberAction
@@ -191,7 +192,8 @@ class ColumnMappingAdmin(ObjectAdmin):
                         'choices': self.field_choices })
         return fa
     
-    def get_related_toolbar_actions(self, toolbar_area, direction):
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions(self, direction):
         return self.toolbar_actions
 
 class ColumnSelectionAdmin(ColumnMappingAdmin):
@@ -202,7 +204,8 @@ class ColumnSelectionAdmin(ColumnMappingAdmin):
     list_actions = []
     related_toolbar_actions = []
     
-    def get_related_toolbar_actions(self, toolbar_area, direction):
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions(self, direction):
         return self.related_toolbar_actions
 
 # see http://docs.python.org/library/csv.html
@@ -327,7 +330,7 @@ class RowDataAdmin(ObjectAdmin):
     """
 
     list_action = RowNumberAction()
-    list_actions = [DeleteSelection()]
+    list_actions = [delete_selection]
     
     def __init__(self, admin, column_mappings):
         super(RowDataAdmin, self).__init__(admin, RowData)
@@ -397,9 +400,9 @@ class RowDataAdmin(ObjectAdmin):
     def get_related_admin(self, cls):
         return self.admin.get_related_admin(cls)
 
-    def get_related_toolbar_actions(self, toolbar_area, direction):
-        if toolbar_area==Qt.RightToolBarArea:
-            return self.list_actions
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions(self, direction):
+        return self.list_actions
 
     def get_field_attributes(self, field_name):
         return self._new_field_attributes[field_name]

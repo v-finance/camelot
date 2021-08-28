@@ -31,15 +31,22 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
+from typing import List, Any, Tuple, Optional, Dict, Union, Type
+from dataclasses import dataclass, InitVar, field
 
-from ...admin.action.base import ActionStep
-from ...core.qt import Qt, is_deleted
-
-from ...core.item_model import AbstractModelProxy, ProxyRegistry
-from ..workspace import show_top_level
+from ..controls.delegates import ComboBoxDelegate
+from ..forms import Form
 from ..proxy.collection_proxy import CollectionProxy
+from ..workspace import show_top_level
+from ...admin.action.base import ActionStep, Action
+from ...admin.admin_route import AdminRoute
+from ...admin.object_admin import ObjectAdmin
+from ...core.item_model import AbstractModelProxy, ProxyRegistry
+from ...core.qt import is_deleted
 
-class OpenFormView( ActionStep ):
+
+@dataclass
+class OpenFormView(ActionStep):
     """Open the form view for a list of objects, in a non blocking way.
 
     :param object: the object to display in the form view.
@@ -69,26 +76,38 @@ class OpenFormView( ActionStep ):
        defaults to `True`.
 
     """
+    obj: InitVar[Any]
+    proxy: AbstractModelProxy
+    admin: ObjectAdmin
 
-    def __init__( self, obj, proxy, admin ):
+    admin_name: str = field(init=False)
+    actions: List[Action] = field(init=False)
+    top_toolbar_actions: List[Action] = field(init=False)
+    _columns: List[Tuple[Optional[Any], Dict[str, Union[Type[ComboBoxDelegate]]]]] = field(init=False)
+    _form_display: Form = field(init=False)
+    admin_route: AdminRoute = field(init=False)
+    objects: List[Any] = field(init=False)
+    row: int = field(init=False)
+
+    def __post_init__(self, obj):
         assert obj is not None
-        assert isinstance(proxy, AbstractModelProxy)
-        self.admin_name = admin.get_name()
-        self.admin = admin
-        self.actions = admin.get_form_actions(None)
-        self.top_level = True
-        get_form_toolbar_actions = admin.get_form_toolbar_actions
-        self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
-        self.title = u' '
-        self._columns = admin.get_fields()
-        self._form_display = admin.get_form_display()
-        self.admin_route = admin.get_admin_route()
-        
+        assert isinstance(self.proxy, AbstractModelProxy)
+        self.admin_name = self.admin.get_name()
+        self.actions = self.admin.get_form_actions(None)
+        get_form_toolbar_actions = self.admin.get_form_toolbar_actions
+        self.top_toolbar_actions = get_form_toolbar_actions()
+        self._columns = self.admin.get_fields()
+        self._form_display = self.admin.get_form_display()
+        self.admin_route = self.admin.get_admin_route()
+
         self.objects = [obj]
-        self.row = proxy.index(obj)
-        self.proxy = ProxyRegistry.register(proxy)
-        
-    def get_objects( self ):
+        self.row = self.proxy.index(obj)
+        self.proxy = ProxyRegistry.register(self.proxy)
+
+        self.top_level = True
+        self.title = u' '
+
+    def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
 
         :return: the list of objects to display in the form view
@@ -121,6 +140,8 @@ class OpenFormView( ActionStep ):
             else:
                 gui_context.workspace.set_view(formview)
 
+
+@dataclass
 class ChangeFormIndex(ActionStep):
 
     def gui_run( self, gui_context ):

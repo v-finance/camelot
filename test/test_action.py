@@ -9,8 +9,10 @@ import openpyxl
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
+from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
+from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.application import Application
 from camelot.admin.action.base import GuiContext
 from camelot.bin.meta import NewProjectOptions
@@ -549,8 +551,17 @@ class ListActionsCase(
         gui_context.action_routes = {}
         person_admin = Person.Admin(app_admin, Person)
         table_view = TableView(gui_context, person_admin.get_admin_route())
-        table_view.set_filters([self.group_box_filter,
-                                self.combo_box_filter])
+        filters = [self.group_box_filter,
+                   self.combo_box_filter]
+        filter_routes = []
+        filter_states = []
+        for action in filters:
+            action_route = AdminRoute._register_list_action_route(person_admin.get_admin_route(), action)
+            filter_routes.append(action_route)
+            action_state = State()._to_dict() # use default state
+            filter_states.append((action_route, action_state))
+        table_view.set_admin()
+        table_view.set_filters(filter_routes, filter_states)
 
     def test_orm( self ):
 
@@ -838,7 +849,7 @@ class ApplicationActionsCase(
                 generator.send(person_admin)
 
     def test_change_logging( self ):
-        change_logging_action = application_action.ChangeLogging()
+        change_logging_action = ChangeLogging()
         for step in change_logging_action.model_run(self.context):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO

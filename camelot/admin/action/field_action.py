@@ -34,10 +34,11 @@ various actions that are beyond the icons shown in the editors of a form.
 
 import os
 
-from ...core.qt import QtWidgets
+from ...core.qt import QtWidgets, QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
 from .base import Action, RenderHint
+from .list_action import AddNewObjectMixin
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
@@ -296,3 +297,42 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
+class AddNewObject( AddNewObjectMixin, FieldAction ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+
+    def get_admin(self, model_context):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.field_attributes.get('admin')
+
+    def get_proxy(self, model_context, admin):
+        return model_context.value
+
+    def get_state( self, model_context ):
+        assert isinstance(model_context, FieldActionModelContext)
+        state = super().get_state( model_context )
+        # Check for editability on the level of the field
+        editable = model_context.field_attributes.get( 'editable', True )
+        if editable == False:
+            state.enabled = False
+        # Check for editability on the level of the entity
+        admin = self.get_admin(model_context)
+        if admin and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
+
+add_new_object = AddNewObject()
