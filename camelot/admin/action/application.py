@@ -30,7 +30,6 @@ import logging
 
 from ...core.sql import metadata
 from ...core.qt import QtCore
-from ...core.sql import metadata
 from ...core.utils import ugettext as _
 from ..application_admin import ApplicationAdmin
 from .base import Action
