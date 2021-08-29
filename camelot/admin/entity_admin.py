@@ -114,6 +114,7 @@ and used as a custom action.
     copy_exclude = []
     validator = EntityValidator
     basic_search = True
+    basic_filters = True
     
     # Temporary hack to allow admins of target entities in one2many/many2many relations to register themselves as editable
     # with a pending owning instance.
@@ -136,6 +137,7 @@ and used as a custom action.
         # caching
         self._search_fields = None
         self._filter_actions = None
+        self._field_filters = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -708,17 +710,13 @@ and used as a custom action.
                         # Append a search clause for the column using a set search strategy, or the basic strategy by default.
                         fa = related_admin.get_field_attributes(instrumented_attribute.key)
                         search_strategy = fa['search_strategy']
-                        if search_strategy is not None:
-                            # If the search strategy is set, initialize it with the instrumented attribute.
-                            assert issubclass(search_strategy, list_filter.FieldSearch)
-                            field_search = search_strategy(instrumented_attribute)
-                            # In case the attribute is of a related entity,
-                            # create a related search using the field search and the encountered joins.
-                            if joins:
-                                field_search = list_filter.RelatedSearch(field_search, joins=joins)
-                            arg = field_search.get_clause(text, self, query.session)
-                            if arg is not None:
-                                args.append(arg)
+                        # In case the attribute is of a related entity,
+                        # create a related search using the field search and the encountered joins.
+                        if joins:
+                            search_strategy = list_filter.RelatedSearch(search_field, search_strategy, joins=joins)
+                        arg = search_strategy.get_clause(text, self, query.session)
+                        if arg is not None:
+                            args.append(arg)
                                 
             elif isinstance(search_field, list_filter.AbstractSearchStrategy):
                 arg = search_field.get_clause(text, self, query.session)
@@ -788,3 +786,17 @@ and used as a custom action.
         if editable is None:
             return True
         return editable
+
+    def _get_field_strategies(self):
+        """
+        Return this admins available field filter strategies.
+        By default, this returns the ´field_filter´ attribute, expanded with the corresponding filter strategies for this admin's entity mapper columns if basic filtering is enabled.
+        """
+        field_strategies = list(self.field_filter)
+        # Only include filter strategies for basic columns if it is set as such (True by default).
+        if self.basic_filters:
+            for field_name, col_property in list(self.mapper.column_attrs.items()):
+                if isinstance(col_property.expression, schema.Column):
+                    field_attributes = self.get_field_attributes(field_name)
+                    field_strategies.append(field_attributes.get('filter_strategy'))
+        return field_strategies
