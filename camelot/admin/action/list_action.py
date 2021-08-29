@@ -1182,7 +1182,7 @@ class AddExistingObject( EditAction ):
 
 add_existing_object = AddExistingObject()
 
-class AddNewObjectMixin:
+class AddNewObjectMixin(object):
     
     def create_object(self, model_context, admin, session=None):
         """
@@ -1192,7 +1192,7 @@ class AddNewObjectMixin:
         new_object = admin.entity(_session=session)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        self.get_proxy(model_context, admin).append(new_object)
+        self.get_proxy(model_context, admin).append(admin.get_subsystem_object(new_object))
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
@@ -1218,7 +1218,7 @@ class AddNewObjectMixin:
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, self.get_proxy(model_context, admin), admin)
+            yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
 
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the
