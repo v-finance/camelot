@@ -31,7 +31,7 @@
 import json
 import logging
 
-from ..forms import MetaForm
+from ...core.serializable import MetaObjectDataclassSerializable
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
@@ -214,7 +214,7 @@ class FormWidget(QtWidgets.QWidget):
         if isinstance(form_display, bytes):
             form_display = json.loads(form_display)
         assert isinstance(form_display, (tuple, list))
-        cls = MetaForm.forms.get(form_display[0])
+        cls = MetaObjectDataclassSerializable.get_cls_by_name(form_display[0])
         self.layout().insertWidget(0, cls.render(widgets, form_display[1], self, True))
         """
             Filtermechanisme op basis van classname
