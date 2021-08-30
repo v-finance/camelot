@@ -174,7 +174,9 @@ class FormWidget(QtWidgets.QWidget):
                 self.create_widgets(
                     widget_mapper,
                     self.columns,
-                    self.form_display,
+                    # Serialize the admin's form display again when the layout has changed, e.g. to pick up different tab labels with different locales.
+                    #self.form_display,
+                    self.admin.get_form_display()._to_bytes(),
                     self.admin
                 )
             # after a layout change, the row we want to display might be there
