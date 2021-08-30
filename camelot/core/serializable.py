@@ -98,7 +98,7 @@ class DataclassSerializable(Serializable):
             result.append((f.name, value))
         return dict(result)
 
-class MetaObjectDataclassSerializable(type):
+class MetaNamedDataclassSerializable(type):
 
     cls_register = dict()
 
@@ -112,10 +112,10 @@ class MetaObjectDataclassSerializable(type):
     def get_cls_by_name(cls, cls_name):
         return cls.cls_register.get(cls_name)
 
-class ObjectDataclassSerializable(DataclassSerializable, metaclass=MetaObjectDataclassSerializable):
+class NamedDataclassSerializable(DataclassSerializable, metaclass=MetaNamedDataclassSerializable):
     """
-    Extension of DataclassSerializable for object classes that should be able to be deserialized.
-    To do so, the class name of subclassed implementations is registered by the metaclass and included in the serialization.
-    When deserializing, this name can be used on the meta class to lookup the corresponding object class.
+    Extended DataclassSerializable implementation for object classes that should be able to be deserialized.
+    To do so, the name of classes that implement this interface will be registered by its metaclass and will be included in its serialized form.
+    When deserializing, this name can be used on the metaclass to lookup the corresponding class.
     """
     pass
