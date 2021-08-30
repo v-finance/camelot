@@ -18,3 +18,9 @@ class DataclassAdmin(ObjectAdmin):
                 return field.type
         return super().get_typing(field_name)
     
+    def get_descriptor_field_attributes(self, field_name):
+        attributes = super().get_descriptor_field_attributes(field_name)
+        if self.get_typing(field_name) is not None:
+            attributes['editable'] = True
+            
+        return attributes

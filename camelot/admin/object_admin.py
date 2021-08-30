@@ -607,14 +607,13 @@ be specified using the verbose_name attribute.
         attributes = dict()
         field_type = self.get_typing(field_name)
         if field_type is not None:
-            attributes['editable'] = True
             attributes['nullable'] = is_optional_type(field_type)
-            attributes.update(self.get_typing_attributes(field_type))             
-        
+            attributes.update(self.get_typing_attributes(field_type)) 
+            
         descriptor = getattr(self.entity, field_name, None)
         if descriptor is not None:
             if isinstance(descriptor, property):
-                attributes['editable'] = (descriptor.fset is not None)                   
+                attributes['editable'] = (descriptor.fset is not None)         
         return attributes
 
     def get_typing(self, field_name):

@@ -2,7 +2,9 @@
 """
 Tests for the Admin classes
 """
-
+import datetime
+from decimal import Decimal
+from typing import Optional
 import unittest
 
 from sqlalchemy import orm, schema, sql, types
@@ -18,8 +20,9 @@ from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.qt import Qt
 from camelot.core.sql import metadata
 from camelot.model.i18n import Translation
-from camelot.model.party import Person
+from camelot.model.party import Person, Address
 from camelot.view.controls import delegates
+from camelot.types.typing import Note, Directory, File
 
 
 class ApplicationAdminCase(unittest.TestCase):
@@ -185,6 +188,157 @@ class ObjectAdminCase(unittest.TestCase):
         fields = table.get_fields()
         self.assertEqual(fields, ['x', 'y'])
 
+
+    def test_typed_property(self):
+        
+        class TypedPropertyClass(object):
+    
+            def __init__(self):
+                self._test_int = 1
+                self._test_bool = False
+                self._test_date = datetime.date.today()
+                self._test_float = 0.5
+                self._test_decimal = 0.75
+                self._test_str = 'string'
+                self._test_note = 'note'
+                self._test_dir = None
+                self._test_file = None
+                self._test_entity = None
+    
+            @property
+            def test_int(self) -> int:
+                return self._test_int
+    
+            @test_int.setter
+            def test_int(self, value):
+                self._test_int = value 
+                
+            @property
+            def test_bool(self) -> bool:
+                return self._test_bool
+        
+            @test_bool.setter
+            def test_bool(self, value):
+                self._test_bool = value
+                
+            @property
+            def test_date(self) -> datetime.date:
+                return self._test_date
+        
+            @test_date.setter
+            def test_date(self, value):
+                self._test_date = value   
+                
+            @property
+            def test_float(self) -> Optional[float]:
+                return self._test_float
+        
+            @test_float.setter
+            def test_float(self, value):
+                self._test_float = value 
+                
+            @property
+            def test_decimal(self) -> Decimal:
+                return self._test_decimal
+        
+            @test_decimal.setter
+            def test_decimal(self, value):
+                self._test_decimal = value 
+                
+            @property
+            def test_str(self) -> str:
+                return self._test_str
+        
+            @test_str.setter
+            def test_str(self, value):
+                self._test_str = value 
+                
+            @property
+            def test_note(self) -> Note:
+                return self._test_note
+                
+            @property
+            def test_dir(self) -> Optional[Directory]:
+                return self._test_dir
+        
+            @test_dir.setter
+            def test_dir(self, value):
+                self._test_dir = value
+                
+            @property
+            def test_file(self) -> File:
+                return self._test_file
+        
+            @test_file.setter
+            def test_file(self, value):
+                self._test_file = value 
+            
+            @property
+            def test_entity(self) -> Address:
+                return self._test_entity
+        
+            @test_entity.setter
+            def test_entity(self, value):
+                self._test_entity = value  
+                
+        admin = self.app_admin.get_related_admin(TypedPropertyClass)
+        self.assertEqual(type(admin), ObjectAdmin)
+        self.assertEqual(admin.entity, TypedPropertyClass)
+        
+        fa = admin.get_field_attributes('test_int')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.IntegerDelegate,)
+        
+        fa = admin.get_field_attributes('test_bool')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.BoolDelegate,)  
+        
+        fa = admin.get_field_attributes('test_date')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.DateDelegate,)  
+        
+        fa = admin.get_field_attributes('test_float')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], True)
+        self.assertEqual(fa['delegate'], delegates.FloatDelegate,)  
+        
+        fa = admin.get_field_attributes('test_decimal')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.FloatDelegate,) 
+        self.assertEqual(fa['decimal'], True,)  
+        
+        fa = admin.get_field_attributes('test_str')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.PlainTextDelegate,)  
+        
+        fa = admin.get_field_attributes('test_note')
+        self.assertEqual(fa['editable'], False)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.NoteDelegate,)  
+        
+        fa = admin.get_field_attributes('test_dir')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], True)
+        self.assertEqual(fa['delegate'], delegates.LocalFileDelegate,)  
+        self.assertEqual(fa['directory'], True,)  
+        
+        fa = admin.get_field_attributes('test_file')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.LocalFileDelegate,)  
+        
+        fa = admin.get_field_attributes('test_entity')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.Many2OneDelegate,) 
+        self.assertEqual(fa['target'], Address,)
+
+               
 
     def test_set_defaults(self):
 

@@ -16,6 +16,7 @@ from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
+from camelot.admin.action.logging import ChangeLogging
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ListModelProxy, ObjectRole
