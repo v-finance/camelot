@@ -66,7 +66,7 @@ class DataclassSerializable(Serializable):
     """
 
     def write_object(self, stream):
-        for chunk in json_encoder.iterencode(self.asdict()):
+        for chunk in json_encoder.iterencode(self.asdict(self)):
             stream.write(chunk.encode())
     
     @classmethod
@@ -104,9 +104,13 @@ class MetaObjectDataclassSerializable(type):
 
     def __new__(cls, clsname, bases, attrs):
         newclass = super().__new__(cls, clsname, bases, attrs)
-        if issubclass(newclass, (ObjectDataclassSerializable,)):
+        if clsname != 'ObjectDataclassSerializable':
             cls.cls_register[clsname] = newclass
         return newclass
+
+    @classmethod
+    def get_cls_by_name(cls, cls_name):
+        return cls.cls_register.get(cls_name)
 
 class ObjectDataclassSerializable(DataclassSerializable, metaclass=MetaObjectDataclassSerializable):
     """
