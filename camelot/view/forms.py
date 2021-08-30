@@ -416,9 +416,7 @@ class TabForm(AbstractForm):
         for tab in tabs:
             assert isinstance(tab, tuple)
         self.content = [(tab_label, structure_to_form(tab_form)) for tab_label, tab_form in tabs]
-        # TODO: to be validated that this removal is justified.
-        #self.content = sum((tab_form.get_fields() for tab_label, tab_form in self.tabs), [])
-
+    
     @property
     def tabs(self):
         return self.content
@@ -559,8 +557,6 @@ class VBoxForm(AbstractForm):
     def __post_init__(self, rows):
         assert isinstance(rows, list)
         self.content = [structure_to_form(row) for row in rows]
-        # TODO: to be validated that this removal is justified.
-        #self.content = sum((row_form.get_fields() for row_form in self.rows), [])
 
     @property
     def rows(self):
