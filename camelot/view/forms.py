@@ -73,11 +73,6 @@ class AbstractForm(NamedDataclassSerializable):
     content: list = dataclasses.field(init=False)
     scrollbars: bool = dataclasses.field(init=False, default=False)
     columns: int = dataclasses.field(init=False, default=1)
-    
-    @classmethod
-    def get_content_fields(cls, content):
-        """:return: the fields, visible in this form"""
-        return [field for field in cls._get_fields_from_form(content)]
 
     def get_fields(self):
         """:return: the fields, visible in this form"""
