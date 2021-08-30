@@ -52,19 +52,6 @@ class SerializableMixinCase(object):
         stream = io.BytesIO()
         step.write_object(stream)
         stream.seek(0)
-        stream.seek(0)
-        step_type = type(step)
-        deserialized_object = step_type.__new__(step_type)
-        deserialized_object.read_object(stream)
-        return deserialized_object
-
-    def _write_read(self, step):
-        """
-        Serialize and deserialize an object, return the deserialized object
-        """
-        stream = io.BytesIO()
-        step.write_object(stream)
-        stream.seek(0)
         step_type = type(step)
         deserialized_object = step_type.__new__(step_type)
         deserialized_object.read_object(stream)
