@@ -205,7 +205,7 @@ class AbstractForm(AbstractFormElement):
                         form_layout.addLayout(f, c.row, c.col, row_span, col_span)
                     elif isinstance(f, QtWidgets.QLayoutItem):
                         form_layout.addItem(f)
-                    elif f is not None:
+                    else:
                         form_layout.addWidget(f, c.row, c.col, row_span, col_span)
                         size_policy = f.sizePolicy()
                     c.next_row()
@@ -269,11 +269,16 @@ class Form(AbstractForm):
     columns: int = 1
 
 @dataclass
-class Break(AbstractForm):
+class Break(AbstractFormElement):
     """End a line in a multi-column form"""
     
-    title: str = dataclasses.field(init=False, default=None)
-    content: list = dataclasses.field(init=False, default_factory=list)
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        form_widget = QtWidgets.QWidget(parent)
+        form_layout = QtWidgets.QGridLayout()
+        form_layout.setContentsMargins(0, 0, 0, 0)
+        form_widget.setLayout(form_layout)
+        return form_widget
 
 @dataclass
 class Label(AbstractFormElement):
