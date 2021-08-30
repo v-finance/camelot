@@ -4,6 +4,7 @@
 
 import dataclasses
 import datetime
+import json
 import logging
 import os
 import sys
@@ -474,9 +475,19 @@ class FormTest(
         )
         self.person_entity = Person
         self.gui_context = GuiContext()
-
+        
+    def _get_serialized_form_display_data(self, form_display):
+        serialized_form_display = form_display._to_bytes()
+        form_data = json.loads(serialized_form_display)
+        self.assertIsInstance(form_data, list)
+        self.assertEqual(len(form_data), 2)
+        self.assertEqual(form_data[0], form_display.__class__.__name__)
+        self.assertIsInstance(form_data[1], dict)
+        return form_data[1]
+        
     def test_form(self):
-        self.grab_widget(Movie.Admin.form_display.__class__.render(self.widgets, Movie.Admin.form_display._to_bytes()))
+        form_data = self._get_serialized_form_display_data(Movie.Admin.form_display)
+        self.grab_widget(Movie.Admin.form_display.render(self.widgets, form_data))
         form = forms.Form( ['title', 'short_description',
                             'director', 'releasedate'] )
         form.remove_field( 'releasedate' )
@@ -489,7 +500,8 @@ class FormTest(
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
                               ('Second tab', ['director', 'releasedate'])])
-        self.grab_widget(form.render(self.widgets, form._to_bytes()))
+        form_data = self._get_serialized_form_display_data(form)
+        self.grab_widget(form.render(self.widgets, form_data))
         form.add_tab_at_index( 'Main', forms.Form(['rating']), 0 )
         self.assertTrue( form.get_tab( 'Second tab' ) )
         form.replace_field( 'short_description', 'script' )
@@ -498,27 +510,31 @@ class FormTest(
 
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
-        self.grab_widget(forms.GroupBoxForm.render(self.widgets, form._to_bytes()))
+        form_data = self._get_serialized_form_display_data(form)
+        self.grab_widget(forms.GroupBoxForm.render(self.widgets, form_data))
 
     def test_grid_form(self):
         form = forms.GridForm([['title',                      'short_description'],
                                ['director',                   'releasedate'],
                                [forms.ColumnSpan('rating', 2)              ]
                                ])
-        self.grab_widget(forms.GridForm.render(self.widgets, form._to_bytes()))
+        form_data = self._get_serialized_form_display_data(form)
+        self.grab_widget(forms.GridForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
         form.append_row( ['cover', 'script'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
-        self.grab_widget(forms.VBoxForm.render(self.widgets, form._to_bytes()))
+        form_data = self._get_serialized_form_display_data(form)
+        self.grab_widget(forms.VBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
-        self.grab_widget(forms.HBoxForm.render(self.widgets, form._to_bytes()))
+        form_data = self._get_serialized_form_display_data(form)
+        self.grab_widget(forms.HBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
         form.replace_field( 'releasedate', 'rating' )
 
