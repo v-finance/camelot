@@ -12,6 +12,7 @@ from .test_model import ExampleModelMixinCase
 from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
+from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.application import Application
 from camelot.admin.action.base import GuiContext
 from camelot.bin.meta import NewProjectOptions
@@ -848,7 +849,7 @@ class ApplicationActionsCase(
                 generator.send(person_admin)
 
     def test_change_logging( self ):
-        change_logging_action = application_action.ChangeLogging()
+        change_logging_action = ChangeLogging()
         for step in change_logging_action.model_run(self.context):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
