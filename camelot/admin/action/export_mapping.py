@@ -1,8 +1,8 @@
-from dataclasses import field
+import dataclasses
 
 from .base import Action
 from ...core.qt import variant_to_py, py_to_variant
-from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.admin.dataclass_admin import DataclassAdmin
 from camelot.core.dataclasses import dataclass
@@ -10,7 +10,7 @@ from camelot.core.dataclasses import dataclass
 @dataclass
 class ExportMappingOptions(object):
     
-    name: str = field(default = None, init = False)
+    name: str = dataclasses.field(default = None, init = False)
 
     class Admin(DataclassAdmin):
         list_display = ['name']

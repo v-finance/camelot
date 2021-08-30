@@ -12,7 +12,6 @@ from .test_model import ExampleModelMixinCase
 from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
-from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
@@ -45,19 +44,6 @@ test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example',
 LOGGER = logging.getLogger(__name__)
 
 class SerializableMixinCase(object):
-
-    def _write_read(self, step):
-        """
-        Serialize and deserialize an object, return the deserialized object
-        """
-        stream = io.BytesIO()
-        step.write_object(stream)
-        stream.seek(0)
-        stream.seek(0)
-        step_type = type(step)
-        deserialized_object = step_type.__new__(step_type)
-        deserialized_object.read_object(stream)
-        return deserialized_object
 
     def _write_read(self, step):
         """
