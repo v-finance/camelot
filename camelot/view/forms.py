@@ -276,15 +276,13 @@ class Break(AbstractForm):
     content: list = dataclasses.field(init=False, default_factory=list)
 
 @dataclass
-class Label(AbstractForm):
+class Label(AbstractFormElement):
     """Render a label using a :class:`QtWidgets.QLabel`
             :param label : string to be displayed in the label
             :param alignment : alignment of text in the label. values that make
                 sense 'left', 'right' or 'center'
             :param style : string of cascading stylesheet instructions
     """
-    title: str = dataclasses.field(init=False, default=None)
-    content: list = dataclasses.field(init=False, default_factory=list)
     label: str
     alignment: str = 'left'
     style: str = None
