@@ -16,5 +16,5 @@ class DataclassAdmin(ObjectAdmin):
         for field in dataclasses.fields(self.entity):
             if field.name == field_name:
                 return field.type
-        super().get_typing(field_name)
+        return super().get_typing(field_name)
     
