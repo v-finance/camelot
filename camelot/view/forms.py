@@ -38,7 +38,7 @@ from typing import Any, Literal
 
 from dataclasses import dataclass, InitVar
 
-from ..core.serializable import Serializable, ObjectDataclassSerializable, MetaObjectDataclassSerializable
+from ..core.serializable import Serializable, NamedDataclassSerializable, MetaNamedDataclassSerializable
 
 logger = logging.getLogger('camelot.view.forms')
 
@@ -46,7 +46,7 @@ from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
 @dataclass
-class AbstractForm(ObjectDataclassSerializable):
+class AbstractForm(NamedDataclassSerializable):
     """
     Base Form class to put fields on a form.  The base class of a form is
     a list.  So the form itself is nothing more than a list of field names or
@@ -193,7 +193,7 @@ class AbstractForm(ObjectDataclassSerializable):
             if field is None:
                 c.next_col()
             elif isinstance(field, list):
-                field_class = MetaObjectDataclassSerializable.get_cls_by_name(field[0])
+                field_class = MetaNamedDataclassSerializable.get_cls_by_name(field[0])
                 if issubclass(field_class, AbstractForm):
                     c.next_empty_row()
                     col_span = 2 * columns
@@ -363,7 +363,7 @@ the moment the tab is shown.
             return
         layout = QtWidgets.QVBoxLayout(tab_widget)
         tab_form = self._forms[index]
-        form_class = MetaObjectDataclassSerializable.get_cls_by_name(tab_form[0])
+        form_class = MetaNamedDataclassSerializable.get_cls_by_name(tab_form[0])
         tab_form_widget = form_class.render(self._widgets, tab_form[1], toplevel=False)
         layout.addWidget(tab_form_widget)
         tab_widget.setLayout(layout)
@@ -519,7 +519,7 @@ class HBoxForm(AbstractForm):
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QHBoxLayout()
         for form in form["content"]:
-            form_class = MetaObjectDataclassSerializable.get_cls_by_name(form[0])
+            form_class = MetaNamedDataclassSerializable.get_cls_by_name(form[0])
             f = form_class.render(widgets, form[1], parent=widget, toplevel=False)
             if isinstance(f, QtWidgets.QLayout):
                 form_layout.addLayout(f)
@@ -577,7 +577,7 @@ class VBoxForm(AbstractForm):
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QVBoxLayout()
         for form in form["content"]:
-            form_class = MetaObjectDataclassSerializable.get_cls_by_name(form[0])
+            form_class = MetaNamedDataclassSerializable.get_cls_by_name(form[0])
             f = form_class.render(widgets, form[1], widget, False)
             if isinstance(f, QtWidgets.QLayout):
                 form_layout.addLayout(f)
@@ -674,7 +674,7 @@ class GridForm(AbstractForm):
                 num = 1
                 col = j + skip
                 if isinstance(field, list):
-                    field_class = MetaObjectDataclassSerializable.get_cls_by_name(field[0])
+                    field_class = MetaNamedDataclassSerializable.get_cls_by_name(field[0])
                     field_content = field[1]
                     if isinstance(field_class, ColumnSpan):
                         num = field_content["columns"]

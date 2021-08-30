@@ -78,7 +78,7 @@ class DataclassSerializable(Serializable):
     @classmethod
     def _asdict_inner(cls, obj):
         if dataclasses._is_dataclass_instance(obj):
-            if isinstance(obj, ObjectDataclassSerializable):
+            if isinstance(obj, NamedDataclassSerializable):
                 return type(obj).__name__, cls.fields_to_dict(obj)
             else:
                 return cls.fields_to_dict(obj)
@@ -104,7 +104,7 @@ class MetaNamedDataclassSerializable(type):
 
     def __new__(cls, clsname, bases, attrs):
         newclass = super().__new__(cls, clsname, bases, attrs)
-        if clsname != 'ObjectDataclassSerializable':
+        if clsname != 'NamedDataclassSerializable':
             cls.cls_register[clsname] = newclass
         return newclass
 
