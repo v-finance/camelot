@@ -78,10 +78,7 @@ class DataclassSerializable(Serializable):
     @classmethod
     def _asdict_inner(cls, obj):
         if dataclasses._is_dataclass_instance(obj):
-            if isinstance(obj, NamedDataclassSerializable):
-                return type(obj).__name__, cls.fields_to_dict(obj)
-            else:
-                return cls.fields_to_dict(obj)
+            return cls.fields_to_dict(obj)
         elif isinstance(obj, (list, tuple)):
             return type(obj)(cls._asdict_inner(v) for v in obj)
         elif isinstance(obj, dict):
@@ -114,8 +111,16 @@ class MetaNamedDataclassSerializable(type):
 
 class NamedDataclassSerializable(DataclassSerializable, metaclass=MetaNamedDataclassSerializable):
     """
-    Extended DataclassSerializable implementation for object classes that should be able to be deserialized.
-    To do so, the name of classes that implement this interface will be registered by its metaclass and will be included in its serialized form.
-    When deserializing, this name can be used on the metaclass to lookup the corresponding class.
+    Extended DataclassSerializable interface for object classes that should be able to be deserialized.
+    To to do so, this class provides the following strategies:
+    
+      and will be included in its serialized form.
+      
+      * the name of classes that implement this interface will be registered by its metaclass.
+        When deserializing, this name can be used on the metaclass to lookup the corresponding class.
+    
     """
-    pass
+    
+    @classmethod
+    def fields_to_dict(cls, obj):
+        return type(obj).__name__, super(NamedDataclassSerializable, cls).fields_to_dict(obj)
