@@ -31,7 +31,7 @@
 import json
 import logging
 
-from ..forms import AbstractForm, MetaForm
+from ..forms import MetaForm
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 

@@ -34,9 +34,9 @@ well.  Form classes can be used recursive.
 import dataclasses
 import json
 import logging
-from typing import Iterable, Any
+from typing import Any
 
-from dataclasses import dataclass, field, InitVar
+from dataclasses import dataclass, InitVar
 
 from ..core.serializable import Serializable, ObjectDataclassSerializable
 
@@ -78,10 +78,10 @@ class AbstractForm(ObjectDataclassSerializable, metaclass=MetaForm):
     .. image:: /_static/form/form.png
     
     """
-    title: str = field(init=False)
-    content: list = field(init=False)
-    scrollbars: bool = field(init=False, default=False)
-    columns: int = field(init=False, default=1)
+    title: str = dataclasses.field(init=False)
+    content: list = dataclasses.field(init=False)
+    scrollbars: bool = dataclasses.field(init=False, default=False)
+    columns: int = dataclasses.field(init=False, default=1)
     
     @classmethod
     def get_content_fields(cls, content):
@@ -277,7 +277,7 @@ class AbstractForm(ObjectDataclassSerializable, metaclass=MetaForm):
 
 @dataclass
 class Form(AbstractForm):
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     content: list
     scrollbars: bool = False
     columns: int = 1
@@ -286,8 +286,8 @@ class Form(AbstractForm):
 class Break(AbstractForm):
     """End a line in a multi-column form"""
 
-    title: str = field(init=False, default=None)    
-    content: list = field(init=False, default_factory=list)
+    title: str = dataclasses.field(init=False, default=None)    
+    content: list = dataclasses.field(init=False, default_factory=list)
 
 @dataclass
 class Label(AbstractForm):
@@ -298,8 +298,8 @@ class Label(AbstractForm):
             :param style : string of cascading stylesheet instructions
     """
 
-    title: str = field(init=False, default=None)
-    content: list = field(init=False, default_factory=list)
+    title: str = dataclasses.field(init=False, default=None)
+    content: list = dataclasses.field(init=False, default_factory=list)
     label: str
     alignment: str = 'left'
     style: str = None
@@ -406,7 +406,7 @@ class TabForm(AbstractForm):
     WEST = 'West'
     EAST = 'East'
 
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     tabs: InitVar[list]
     position: str = NORTH
 
@@ -498,7 +498,7 @@ class HBoxForm(AbstractForm):
   :param columns: a list of forms to display in the different columns of the horizontal box
   """
 
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     content: list
     scrollbars: bool = False
 
@@ -553,7 +553,7 @@ class VBoxForm(AbstractForm):
   :param rows: a list of forms to display in the different rows of the vertical box
   """
 
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     rows: InitVar[list]
 
     def __post_init__(self, rows):
@@ -604,7 +604,7 @@ class VBoxForm(AbstractForm):
 @dataclass
 class ColumnSpan(AbstractForm):
 
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     field: InitVar[str] = None
     num: InitVar[int] = 2
     
@@ -631,7 +631,7 @@ class GridForm(AbstractForm):
   .. image:: /_static/form/grid_form.png
   """
 
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     grid: InitVar[list]
     nomargins: bool = False
 
@@ -716,7 +716,7 @@ class GridForm(AbstractForm):
 class WidgetOnlyForm(AbstractForm):
     """Renders a single widget without its label, typically a one2many widget"""
 
-    title: str = field(init=False, default=None)
+    title: str = dataclasses.field(init=False, default=None)
     field: InitVar[str]
 
     def __post_init__(self, field):
@@ -745,8 +745,8 @@ class Stretch(AbstractForm):
     in the form if there are no other items to fill this space.
     """
 
-    title: str = field(init=False, default=None)
-    content: list = field(init=False, default_factory=list)
+    title: str = dataclasses.field(init=False, default=None)
+    content: list = dataclasses.field(init=False, default_factory=list)
     
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):

@@ -36,7 +36,6 @@ from dataclasses import dataclass, InitVar, field
 
 from camelot.core.serializable import DataclassSerializable
 from ..controls.delegates import ComboBoxDelegate
-from ..forms import Form
 from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, Action

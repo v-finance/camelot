@@ -31,7 +31,7 @@ import logging
 import pkgutil
 from typing import List
 
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 
 from ...core.profile import Profile
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt

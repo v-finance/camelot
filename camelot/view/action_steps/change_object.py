@@ -52,7 +52,6 @@ from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ..controls.action_widget import ActionPushButton
 from ..controls.delegates import ComboBoxDelegate
-from ..forms import Form
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute, Route
