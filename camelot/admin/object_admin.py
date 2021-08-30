@@ -367,19 +367,16 @@ be specified using the verbose_name attribute.
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
 
-    def get_form_toolbar_actions( self, toolbar_area ):
+    def get_form_toolbar_actions( self ):
         """
         By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
-
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
 
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
         """        
         app_admin = self.get_application_admin()
-        return app_admin.get_form_toolbar_actions( toolbar_area )
+        return app_admin.get_form_toolbar_actions()
 
     def get_list_toolbar_actions( self ):
         """
@@ -400,10 +397,9 @@ be specified using the verbose_name attribute.
         return app_admin.get_select_list_toolbar_actions()
 
     @register_list_actions('_admin_route')
-    def get_related_toolbar_actions( self, toolbar_area, direction ):
+    def get_related_toolbar_actions( self, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
-        :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
 
@@ -411,7 +407,7 @@ be specified using the verbose_name attribute.
         """
         app_admin = self.get_application_admin()
         return self.related_toolbar_actions or \
-               app_admin.get_related_toolbar_actions( toolbar_area, direction )
+               app_admin.get_related_toolbar_actions( direction )
 
     @register_list_actions('_admin_route', '_list_actions')
     def get_list_actions(self):
@@ -737,9 +733,7 @@ be specified using the verbose_name attribute.
                 field_attributes['columns'] = related_admin.get_columns()
                 if field_attributes.get('actions') is None:
                     field_attributes['actions'] = [
-                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(
-                            Qt.RightToolBarArea, direction
-                        )
+                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(direction)
                     ]
                 if column_width is None:
                     table = related_admin.get_table()

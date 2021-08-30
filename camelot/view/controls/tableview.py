@@ -35,12 +35,14 @@ import logging
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from camelot.admin.admin_route import AdminRoute
-from camelot.admin.action.base import RenderHint
+from camelot.admin.action.base import State, RenderHint
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.view import AbstractView
+from camelot.view.controls.action_widget import AbstractActionWidget
+from camelot.view.controls.filter_widget import AbstractFilterWidget
 from camelot.view.model_thread import object_thread
-from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
+from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py, is_deleted
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
@@ -560,6 +562,7 @@ class TableView(AbstractView):
         self.table.setItemDelegate(delegate)
         self.table.setObjectName('AdminTableWidget')
         new_model = CollectionProxy(self.admin_route)
+        new_model.action_state_changed_signal.connect(self.action_state_changed)
         self.table.setModel(new_model)
         self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
         self.table.keyboard_selection_signal.connect(
@@ -577,6 +580,16 @@ class TableView(AbstractView):
         header.setObjectName('header_widget')
         self.widget_layout.insertWidget(0, header)
         self.setFocusProxy(header)
+
+        self.table.model().headerDataChanged.connect(self.header_data_changed)
+        selection_model = self.table.selectionModel()
+        if selection_model is not None:
+            # a queued connection, since the selection of the selection model
+            # might not be up to date at the time the currentRowChanged
+            # signal is emitted
+            selection_model.currentRowChanged.connect(
+                self.current_row_changed, type=Qt.QueuedConnection
+            )
 
     @QtCore.qt_slot()
     def on_keyboard_selection_signal(self):
@@ -597,7 +610,12 @@ class TableView(AbstractView):
         if model is not None:
             model.refresh()
 
-    def set_filters(self, filters):
+    def _get_action_state(self, action_route, action_sates):
+        for item in action_sates:
+            if item[0] == action_route:
+                return item[1]
+
+    def set_filters(self, filter_routes, action_states):
         logger.debug('setting filters for tableview')
         filters_widget = self.findChild(ActionsBox, 'filters')
         while True:
@@ -607,30 +625,35 @@ class TableView(AbstractView):
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
-        if filters:
+        if filter_routes:
             filters_widget = ActionsBox(parent=self)
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget(filters_widget)
-            for action in filters:
+            for action_route in filter_routes:
+                action = AdminRoute.action_for(tuple(action_route))
                 action_widget = self.render_action(action, filters_widget)
+                self.get_model().add_action_route(tuple(action_route))
+                action_widget.set_state_v2(self._get_action_state(action_route, action_states))
                 filters_widget.layout().addWidget(action_widget)
         self.filters_layout.addStretch(1)
 
-    def set_list_actions(self, actions):
+    def set_list_actions(self, action_routes, action_states):
         """sets filters for the tableview"""
         assert object_thread(self)
         actions_widget = self.findChild(ActionsBox, 'actions')
-        if actions:
+        if action_routes:
             actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            for action in actions:
-                actions_widget.layout().addWidget(
-                    self.render_action(action, actions_widget)
-                )
+            for action_route in action_routes:
+                action = AdminRoute.action_for(tuple(action_route))
+                action_widget = self.render_action(action, actions_widget)
+                self.get_model().add_action_route(tuple(action_route))
+                action_widget.set_state_v2(self._get_action_state(action_route, action_states))
+                actions_widget.layout().addWidget(action_widget)
             self.filters_layout.addWidget(actions_widget)
 
     @QtCore.qt_slot( object, object )
-    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
+    def set_toolbar_actions( self, toolbar_area, action_routes, action_states ):
         """Set the toolbar for a specific area
         :param toolbar_area: the area on which to put the toolbar, from
             :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
@@ -638,26 +661,30 @@ class TableView(AbstractView):
             as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
             method.
         """
-        if toolbar_actions != None:
+        if action_routes != None:
             toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
             assert toolbar
-            for action in toolbar_actions:
+            for action_route in action_routes:
+                action = AdminRoute.action_for(tuple(action_route))
                 rendered = self.render_action(action, toolbar)
+                self.get_model().add_action_route(tuple(action_route))
+                rendered.set_state_v2(self._get_action_state(action_route, action_states))
                 # both QWidgets and QActions can be put in a toolbar
                 if isinstance(rendered, QtWidgets.QWidget):
                     toolbar.addWidget(rendered)
                 elif isinstance(rendered, QtWidgets.QAction):
                     toolbar.addAction( rendered )
 
-    def set_actions(self, actions):
+    def set_actions(self, actions, action_states):
         """Set all the actions (filters, list actions and toolbar actions).
         :param actions: A list of serialized :class:`camelot.admin.admin_route.RouteWithRenderHint` objects
         """
-        self.set_filters([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]])
-        self.set_list_actions([AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value])
+        self.set_filters([action['route'] for action in actions if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]], action_states)
+        self.set_list_actions([action['route'] for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value], action_states)
         self.set_toolbar_actions(
             Qt.TopToolBarArea,
-            [AdminRoute.action_for(tuple(action['route'])) for action in actions if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]]
+            [action['route'] for action in actions if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]],
+            action_states
         )
 
     @QtCore.qt_slot(bool)
@@ -673,3 +700,28 @@ class TableView(AbstractView):
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
+
+    @QtCore.qt_slot(tuple, State)
+    def action_state_changed(self, route, state):
+        action = AdminRoute.action_for(route)
+        action_name = self.gui_context.action_routes[action]
+        action_widget = self.findChild(AbstractActionWidget, action_name)
+        if not isinstance(action_widget, AbstractFilterWidget):
+            action_widget.set_state(state)
+
+    def current_row_changed( self, current=None, previous=None ):
+        selection_model = self.table.selectionModel()
+        current_index = self.table.currentIndex()
+        self.table.model().change_selection(selection_model, current_index)
+
+    def header_data_changed(self, orientation, first, last):
+        if orientation==Qt.Horizontal:
+            return
+        if not is_deleted(self.table):
+            selection_model = self.table.selectionModel()
+            if (selection_model is not None) and selection_model.hasSelection():
+                parent = QtCore.QModelIndex()
+                for row in range(first, last+1):
+                    if selection_model.rowIntersectsSelection(row, parent):
+                        self.current_row_changed(row)
+                        return

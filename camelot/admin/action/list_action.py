@@ -33,7 +33,7 @@ import datetime
 import logging
 import itertools
 
-
+from sqlalchemy import orm
 
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
@@ -371,6 +371,13 @@ class DuplicateSelection( EditAction ):
         yield action_steps.UpdateObjects(updated_objects)
         yield action_steps.FlushSession(model_context.session)
 
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+        return state
+
 duplicate_selection = DuplicateSelection()
             
 class DeleteSelection( EditAction ):
@@ -431,6 +438,13 @@ class DeleteSelection( EditAction ):
         model_context.proxy.remove(obj)
         yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete(obj)
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+        return state
 
 delete_selection = DeleteSelection()
 
@@ -1032,29 +1046,9 @@ class AddExistingObject( EditAction ):
             break
 
 add_existing_object = AddExistingObject()
-        
-class AddNewObject( EditAction ):
-    """Add a new object to a collection. Depending on the
-    'create_inline' field attribute, a new form is opened or not.
-    
-    This action will also set the default values of the new object, add the
-    object to the session, and flush the object if it is valid.
-    """
 
-    shortcut = QtGui.QKeySequence.New
-    #icon = Icon('plus-square') # 'tango/16x16/actions/document-new.png'
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('New')
-    verbose_name = _('New')
-    name = 'new_object'
+class AddNewObjectMixin:
     
-    def get_admin(self, model_context):
-        """
-        Return the admin used for creating and handling the new entity instance with.
-        By default, the given model_context's admin is used.
-        """
-        return model_context.admin
-
     def create_object(self, model_context, admin, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
@@ -1063,7 +1057,7 @@ class AddNewObject( EditAction ):
         new_object = admin.entity(_session=session)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        model_context.proxy.append(new_object)
+        self.get_proxy(model_context, admin).append(new_object)
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
@@ -1071,22 +1065,49 @@ class AddNewObject( EditAction ):
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        super().model_run(model_context)
         admin = self.get_admin(model_context)
+        assert admin is not None # required by vfinance/test/test_facade/test_asset.py
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((new_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            yield action_steps.FlushSession(model_context.session)
+            session = orm.object_session(new_object)
+            yield action_steps.FlushSession(session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
+            yield action_steps.OpenFormView(new_object, self.get_proxy(model_context, admin), admin)
+
+class AddNewObject( AddNewObjectMixin, EditAction ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+
+    def get_admin(self, model_context):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.admin
+
+    def get_proxy(self, model_context, admin):
+        return model_context.proxy
 
 add_new_object = AddNewObject()
 

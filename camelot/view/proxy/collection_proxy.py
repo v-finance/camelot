@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
@@ -712,6 +713,25 @@ class SetHeaderData(object):
         item_model.settings.endGroup()
 
 
+class ChangeSelection:
+
+    def __init__(self, action_routes, model_context):
+        self.action_routes = action_routes
+        self.model_context = model_context
+        self.action_states = []
+
+    def model_run(self, model_context):
+        for action_route in self.action_routes:
+            action = AdminRoute.action_for(action_route)
+            state = action.get_state(self.model_context)
+            self.action_states.append(state)
+        return self
+
+    def gui_run(self, item_model):
+        for i, action_route in enumerate(self.action_routes):
+            item_model.action_state_changed_signal.emit(action_route, self.action_states[i])
+
+
 class CollectionProxy(QtGui.QStandardItemModel):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
@@ -724,6 +744,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         model.  each row, even when not yet displayed will consume a certain
         amount of memory, this maximum puts an upper limit on that.
     """
+
+    action_state_changed_signal = QtCore.qt_signal(tuple, State)
 
     max_row_count = 10000000 # display maxium 10M rows
 
@@ -752,6 +774,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self._max_number_of_rows = max_number_of_rows
         self._model_context = None
         self._model_thread = get_model_thread()
+        self._action_routes = []
         #
         # The timer reduced the number of times the model thread is
         # triggered, by waiting for the next gui event before triggering
@@ -1201,6 +1224,45 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         self.logger.debug('get_admin called')
-        return self.admin
+        return AdminRoute.admin_for(self.admin_route)
 
+    def add_action_route(self, action_route):
+        """Add the action route for an action that needs it's state to be updated
+        when the selection changed. See change_selection below
 
+        :param action_route: The action route.
+        """
+        self._action_routes.append(action_route)
+
+    @QtCore.qt_slot(QtCore.QItemSelectionModel, QtCore.QModelIndex)
+    def change_selection(self, selection_model, current_index):
+        """Determine the new state of actions and emit a action_state_changed_signal
+        for each action that was added using add_action_route.
+        """
+        self.logger.debug('change_selection called')
+
+        # Create model context based on selection
+        # model_conext.field_attributes required???
+        model_context = ListActionModelContext()
+        model_context.proxy = self.get_value()
+        model_context.admin = self.get_admin()
+        if current_index.isValid():
+            model_context.current_row = current_index.row()
+            model_context.current_column = current_index.column()
+        model_context.collection_count = self.rowCount()
+        if model_context.current_column is not None:
+            model_context.current_field_name = variant_to_py(
+                self.headerData(
+                    model_context.current_column, Qt.Horizontal, Qt.UserRole
+                )
+            )
+        if selection_model is not None:
+            selection = selection_model.selection()
+            for i in range( len( selection ) ):
+                selection_range = selection[i]
+                rows_range = ( selection_range.top(), selection_range.bottom() )
+                model_context.selected_rows.append( rows_range )
+                model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+
+        request = ChangeSelection(self._action_routes, model_context)
+        self._append_request(request)

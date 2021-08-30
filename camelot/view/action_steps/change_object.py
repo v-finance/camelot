@@ -29,9 +29,11 @@
 import typing
 
 from dataclasses import InitVar, dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
-from camelot.admin.action import ActionStep, Action
+from camelot.admin.action import ActionStep, Action, State
+from camelot.admin.action.list_action import ListActionModelContext
+from camelot.admin.action.field_action import FieldActionModelContext, FieldAction
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
@@ -52,7 +54,7 @@ from ..controls.delegates import ComboBoxDelegate
 from ..forms import Form
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
-from ...admin.admin_route import AdminRoute
+from ...admin.admin_route import AdminRoute, Route
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 
@@ -193,6 +195,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   admin_route,
                   columns,
                   action_routes,
+                  action_states,
                   invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.Window ):
@@ -204,6 +207,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             create_inline = True,
             columns=columns,
             action_routes=action_routes,
+            action_states=action_states,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -357,6 +361,7 @@ class ChangeObjects( ActionStep ):
     window_title: str = field(init=False)
     columns: List[str] = field(init=False)
     action_routes: List[Action] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(init=False)
 
     title = _('Data Preview')
     subtitle = _('Please review the data below.')
@@ -368,16 +373,31 @@ class ChangeObjects( ActionStep ):
         self.window_title = self.admin.get_verbose_name_plural()
         self.columns = self.admin.get_columns()
         self.action_routes = [
-            action.route for action in self.admin.get_related_toolbar_actions(
-                Qt.RightToolBarArea, 'onetomany'
-            )
+            action.route for action in self.admin.get_related_toolbar_actions('onetomany')
         ]
+        self.action_states = list()
+        self._add_action_states(self.admin, self.admin.get_proxy(self.objects), self.action_routes, self.action_states)
         if self.validate:
             validator = self.admin.get_validator()
             for row, obj in enumerate(self.objects):
                 for message in validator.validate_object(obj):
                     self.invalid_rows.add(row)
                     break
+
+    @staticmethod
+    def _add_action_states(admin, proxy, action_routes, action_states):
+        field_model_context = FieldActionModelContext()
+        field_model_context.value = proxy
+        list_model_context = ListActionModelContext()
+        list_model_context.admin = admin
+        list_model_context.proxy = proxy
+        for action_route in action_routes:
+            action = AdminRoute.action_for(action_route)
+            if isinstance(action, FieldAction):
+                state = action.get_state(field_model_context)
+            else:
+                state = action.get_state(list_model_context)
+            action_states.append((action_route, state))
 
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
@@ -393,6 +413,7 @@ class ChangeObjects( ActionStep ):
                                      self.admin_route,
                                      self.columns,
                                      self.action_routes,
+                                     self.action_states,
                                      self.invalid_rows)
         dialog.setWindowTitle( str( self.window_title ) )
         dialog.set_banner_title( str( self.title ) )
