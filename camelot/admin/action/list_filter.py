@@ -32,7 +32,6 @@ Actions to filter table views
 """
 
 from dataclasses import dataclass
-import camelot.types
 import datetime
 import decimal
 
@@ -40,7 +39,10 @@ from camelot.view import utils
 from sqlalchemy import orm, sql
 
 from ...core.utils import ugettext
+from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
+from ...core.qt import Qt
+from ...view.utils import locale
 from .base import Action, Mode, RenderHint
 
 @dataclass
@@ -202,11 +204,16 @@ class AbstractSearchStrategy(object):
     Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
     """
     
-    def __init__(self, where=None):
+    def __init__(self, name, where=None, verbose_name=None):
         """
+        :param name: String that uniquely identifies this search strategy within the context of an admin/entity.
         :param where: an optional additional condition that should be met for the search clause to apply.
+        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's name.
         """
+        assert isinstance(name, str)
+        self._name = name
         self.where = where
+        self._verbose_name = verbose_name
     
     def get_clause(self, text, admin, session):
         """
@@ -215,6 +222,21 @@ class AbstractSearchStrategy(object):
         :param session: The session in which the search query takes place.
         """
         raise NotImplementedError
+    
+    def value_to_string(self, filter_value, admin):
+        """
+        Turn the given filter value into its corresponding string representation applicable for this search strategy, based on the given admin.
+        """
+        raise NotImplementedError
+    
+    @property
+    def name(self):
+        return self._name
+    
+    def get_verbose_name(self):
+        if self._verbose_name is not None:
+            return self._verbose_name
+        return ugettext(self.name.replace(u'_', u' ').capitalize())
 
 class FieldSearch(AbstractSearchStrategy):
     """
@@ -223,20 +245,28 @@ class FieldSearch(AbstractSearchStrategy):
     """
     
     attribute = None
-    python_type = None
 
-    def __init__(self, attribute, where=None):
+    def __init__(self, attribute, where=None, name=None, verbose_name=None):
         """
-        :param attribute: a queryable attribute for on which this field search should be applied on.
-        """        
-        super().__init__(where)
+        :param attribute: a queryable attribute for which this field search should be applied. It's key will be used as this field search's name.
+        :param name: Optional string to use as this strategy's name. By default the attribute's key will be used.
+        """
         self.assert_valid_attribute(attribute)
+        name = name or attribute.key
+        super().__init__(name, where, verbose_name)
         self.attribute = attribute
     
     @classmethod
     def assert_valid_attribute(cls, attribute):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
-        assert issubclass(attribute.type.python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
+        if isinstance(attribute, orm.attributes.InstrumentedAttribute):
+            python_type = attribute.type.python_type
+        else:
+            expression =  attribute.expression
+            if isinstance(expression, sql.selectable.Select):
+                expression = expression.as_scalar()
+            python_type = expression.type.python_type
+        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
     
     def get_clause(self, text, admin, session):
         """
@@ -264,16 +294,18 @@ class RelatedSearch(AbstractSearchStrategy):
     Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
     """
 
-    def __init__(self, *field_searches, joins, where=None):
+    def __init__(self, *field_searches, joins, where=None, name=None, verbose_name=None):
         """
         :param field_searches: field search strategies for the search fields on which this related search should apply.
         :param joins: join definition between the entity on which the search query this related search is part of takes place,
                       and the related entity of the given field searches.
+        :param name: Optional string to use as this strategy's name. By default the name of this related search's first field search will be used.
         """
-        super().__init__(where)
-        assert isinstance(joins, list) and len(joins) > 0   
+        assert isinstance(joins, list) and len(joins) > 0
         for field_search in field_searches:
             assert isinstance(field_search, FieldSearch)
+        name = name or field_searches[0].name
+        super().__init__(name, where, verbose_name)
         self.field_searches = field_searches
         self.joins = joins
 
@@ -304,14 +336,28 @@ class RelatedSearch(AbstractSearchStrategy):
             related_search_query = related_search_query.subquery()
             search_clause = admin.entity.id.in_(related_search_query)
             return search_clause
+    
+    def value_to_string(self, filter_value, admin):
+        for field_search in self.field_searches:
+            related_admin = admin.get_related_admin(field_search.attribute.class_)
+            return field_search.value_to_string(filter_value, related_admin)
 
 class NoSearch(FieldSearch):
     
+    def __init__(self, attribute):
+        super().__init__(attribute, name=str(attribute))
+        
     @classmethod
     def assert_valid_attribute(cls, attribute):
         pass
     
     def get_clause(self, text, admin, session):
+        return None
+    
+    def value_to_string(self, filter_value, admin):
+        return filter_value
+    
+    def get_verbose_name(self):
         return None
 
 class StringSearch(FieldSearch):
@@ -321,13 +367,16 @@ class StringSearch(FieldSearch):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
     
-    def __init__(self, attribute, allow_digits=True):
-        super().__init__(attribute)
+    def __init__(self, attribute, allow_digits=True, where=None, name=None, verbose_name=None):
+        super().__init__(attribute, where, name, verbose_name)
         self.allow_digits = allow_digits
         
     def get_type_clause(self, text, field_attributes):
         if not text.isdigit() or self.allow_digits:
             return sql.operators.ilike_op(self.attribute, '%'+text+'%')
+    
+    def value_to_string(self, filter_value, admin):
+        return filter_value
     
 class DecimalSearch(FieldSearch):
     
@@ -342,18 +391,15 @@ class DecimalSearch(FieldSearch):
             delta = 0.1**( precision or 0 )
             return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
         except utils.ParsingError:
-            pass       
-        
-class TimeDeltaSearch(FieldSearch):
-    
-    python_type = datetime.timedelta
-    
-    def get_type_clause(self, text, field_attributes):
-        try:
-            days = field_attributes.get('from_string', utils.int_from_string)(text)
-            return (self.attribute==datetime.timedelta(days=days))
-        except utils.ParsingError:
             pass
+    
+    def value_to_string(self, value, admin):
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        delegate = field_attributes.get('delegate')
+        suffix = ' ' + field_attributes.get('suffix', '')
+        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        value_str = standard_item.data(PreviewRole)
+        return value_str.replace(suffix, '')
         
 class TimeSearch(FieldSearch):
     
@@ -364,6 +410,12 @@ class TimeSearch(FieldSearch):
             return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
         except utils.ParsingError:
             pass
+    
+    def value_to_string(self, value, admin):
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        delegate = field_attributes.get('delegate')
+        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        return standard_item.data(PreviewRole)
 
 class DateSearch(FieldSearch):
     
@@ -374,7 +426,13 @@ class DateSearch(FieldSearch):
             return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
         except utils.ParsingError:
             pass
-        
+    
+    def value_to_string(self, value, admin):
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        delegate = field_attributes.get('delegate')
+        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        return standard_item.data(PreviewRole)
+    
 class IntSearch(FieldSearch):
     
     python_type = int
@@ -383,7 +441,14 @@ class IntSearch(FieldSearch):
         try:
             return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
         except utils.ParsingError:
-            pass  
+            pass
+
+    def value_to_string(self, value, admin):
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        delegate = field_attributes.get('delegate')
+        to_string = field_attributes.get('to_string')
+        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        return to_string(standard_item.data(Qt.EditRole))
 
 class BoolSearch(FieldSearch):
     
@@ -395,12 +460,12 @@ class BoolSearch(FieldSearch):
         except utils.ParsingError:
             pass
 
-class VirtualAddressSearch(FieldSearch):
-    
-    python_type = camelot.types.virtual_address
-    
-    def get_type_clause(self, text, field_attributes):
-        return self.attribute.like(camelot.types.virtual_address('%', '%'+text+'%'))
+    def value_to_string(self, value, admin):
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        delegate = field_attributes.get('delegate')
+        to_string = field_attributes.get('to_string')
+        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        return to_string(standard_item.data(Qt.EditRole))
     
 class SearchFilter(Action, AbstractModelFilter):
 
