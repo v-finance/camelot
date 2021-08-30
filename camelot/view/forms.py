@@ -44,8 +44,14 @@ logger = logging.getLogger('camelot.view.forms')
 from ..core.qt import QtCore, QtWidgets, variant_to_py
 from ..core.exception import log_programming_error
 
+class AbstractFormElement(NamedDataclassSerializable):
+    
+    @classmethod
+    def render(cls, widgets, form, parent=None, toplevel=False):
+        raise NotImplementedError
+
 @dataclass
-class AbstractForm(NamedDataclassSerializable):
+class AbstractForm(AbstractFormElement):
     """
     Base Form class to put fields on a form.  The base class of a form is
     a list.  So the form itself is nothing more than a list of field names or
@@ -84,7 +90,7 @@ class AbstractForm(NamedDataclassSerializable):
             elif issubclass(type(field), AbstractForm):
                 for nested_field in field._get_fields_from_form():
                     yield nested_field
-            else:
+            elif not isinstance(field, AbstractFormElement):
                 assert isinstance(field, str) or (field is None)
                 yield field
 
@@ -183,7 +189,7 @@ class AbstractForm(NamedDataclassSerializable):
                 c.next_col()
             elif isinstance(field, list):
                 field_class = NamedDataclassSerializable.get_cls_by_name(field[0])
-                if issubclass(field_class, AbstractForm):
+                if issubclass(field_class, AbstractFormElement):
                     c.next_empty_row()
                     col_span = 2 * columns
                     f = field_class.render(widgets, field[1], parent, False)
@@ -199,7 +205,7 @@ class AbstractForm(NamedDataclassSerializable):
                         form_layout.addLayout(f, c.row, c.col, row_span, col_span)
                     elif isinstance(f, QtWidgets.QLayoutItem):
                         form_layout.addItem(f)
-                    else:
+                    elif f is not None:
                         form_layout.addWidget(f, c.row, c.col, row_span, col_span)
                         size_policy = f.sizePolicy()
                     c.next_row()
@@ -265,8 +271,8 @@ class Form(AbstractForm):
 @dataclass
 class Break(AbstractForm):
     """End a line in a multi-column form"""
-
-    title: str = dataclasses.field(init=False, default=None)    
+    
+    title: str = dataclasses.field(init=False, default=None)
     content: list = dataclasses.field(init=False, default_factory=list)
 
 @dataclass
@@ -277,7 +283,6 @@ class Label(AbstractForm):
                 sense 'left', 'right' or 'center'
             :param style : string of cascading stylesheet instructions
     """
-
     title: str = dataclasses.field(init=False, default=None)
     content: list = dataclasses.field(init=False, default_factory=list)
     label: str
@@ -614,7 +619,7 @@ class GridForm(AbstractForm):
                 elif issubclass(type(field), AbstractForm):
                     for nested_field in field._get_fields_from_form():
                         yield nested_field
-                else:
+                elif not isinstance(field, AbstractFormElement):
                     assert isinstance(field, str) or (field is None)
                     yield field
     
@@ -646,7 +651,7 @@ class GridForm(AbstractForm):
                     if isinstance(field_class, ColumnSpan):
                         num = field_content["columns"]
                         field = field_content["content"][0]
-                    if issubclass(field_class, AbstractForm):
+                    if issubclass(field_class, AbstractFormElement):
                         form = field_class.render(widgets, field_content, parent)
                         if isinstance(form, QtWidgets.QWidget):
                             grid_layout.addWidget(form, i, col, 1, num)
@@ -693,7 +698,6 @@ class Stretch(AbstractForm):
     """A stretchable space with zero minimum size, this is able to fill a gap
     in the form if there are no other items to fill this space.
     """
-
     title: str = dataclasses.field(init=False, default=None)
     content: list = dataclasses.field(init=False, default_factory=list)
     
@@ -720,7 +724,7 @@ class GroupBoxForm(AbstractForm):
     columns: int = 1
 
     def __post_init__(self):
-        if issubclass(type(self.content), AbstractForm):
+        if issubclass(type(self.content), AbstractFormElement):
             self.content = [self.content]
 
     @classmethod
@@ -743,6 +747,6 @@ def structure_to_form(structure):
   This function is mainly used in the Admin class to construct forms out of
   the form_display attribute
     """
-    if issubclass(type(structure), AbstractForm):
+    if issubclass(type(structure), AbstractFormElement):
         return structure
     return Form(structure)
