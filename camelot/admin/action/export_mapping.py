@@ -2,6 +2,7 @@ from dataclasses import field
 
 from .base import Action
 from ...core.qt import variant_to_py, py_to_variant
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.admin.dataclass_admin import DataclassAdmin
 from camelot.core.dataclasses import dataclass

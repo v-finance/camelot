@@ -13,6 +13,7 @@ from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext
     form_action, list_action, list_filter
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.application import Application
+from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.exception import CancelRequest
@@ -342,8 +343,8 @@ class ListActionsCase(
         # make sure there are no previous settings
         settings.remove('')
 
-        save_export_mapping = list_action.SaveExportMapping(settings)
-        restore_export_mapping = list_action.RestoreExportMapping(settings)
+        save_export_mapping = export_mapping.SaveExportMapping(settings)
+        restore_export_mapping = export_mapping.RestoreExportMapping(settings)
 
         model_context = MockModelContext()
         

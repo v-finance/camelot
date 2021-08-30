@@ -581,6 +581,7 @@ class ExportSpreadsheet( ListContextAction ):
             local_time_format
         )
         from camelot.view import action_steps
+        from camelot.admin.action.export_mapping import SaveExportMapping, RestoreExportMapping, RemoveExportMapping
         #
         # Select the columns that need to be exported
         # 
