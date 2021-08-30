@@ -255,6 +255,7 @@ be specified using the verbose_name attribute.
     fields = []
     form_display = []
     form_close_action = CloseForm()
+    field_filter = []
     list_filter = []
     list_action = OpenFormView()
     list_actions = []
@@ -681,6 +682,7 @@ be specified using the verbose_name attribute.
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
                 search_strategy=list_filter.NoSearch,
+                filter_strategy=list_filter.NoSearch,
                 action_routes=[],
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
@@ -777,7 +779,20 @@ be specified using the verbose_name attribute.
                 action,
             ) for action in field_attributes.get('actions', [])
         ]
-
+        
+        # Initialize search & filter strategies with the retrieved corresponding attribute.
+        # We take the field_name as the default, to handle properties that do not exist on the admin's entity class.
+        # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
+        # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
+        # which is enforced by the strategy constructor.
+        attribute = getattr(self.entity, field_name, field_name)
+        filter_strategy = field_attributes['filter_strategy']
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
+            field_attributes['filter_strategy'] = filter_strategy(attribute)
+        search_strategy = field_attributes['search_strategy']
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldSearch):
+            field_attributes['search_strategy'] = search_strategy(attribute)
+        
     def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
@@ -1025,3 +1040,24 @@ be specified using the verbose_name attribute.
     def is_editable(self):
         """Default implementation always returns True"""
         return True
+
+    def get_subsystem_object(self, obj):
+        """Return the given object's applicable subsystem object."""
+        return obj
+    
+    def set_discriminator_value(self, obj, discriminator_value):
+        """Set the given discriminator value on the provided obj."""
+        pass
+    
+    def get_field_filters(self):
+        """
+        Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
+        This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoSearch strategies and concrete field strategies are not applicable for regular objects.
+        The resulting dictionary is cached so that the conversion is not executed needlessly.
+        """
+        if self._field_filters is None:
+            self._field_filters =  {strategy.name: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoSearch)}
+        return self._field_filters
+    def _get_field_strategies(self):
+        """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        return self.field_filter

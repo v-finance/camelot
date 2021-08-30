@@ -116,15 +116,6 @@ class ListModelProxy(AbstractModelProxy, dict):
             self._objects.append(obj)
             self._length = None
 
-    def swap(self, obj, new_obj):
-        assert not isinstance(obj, assert_value_objects)
-        assert not isinstance(new_obj, assert_value_objects)
-        assert obj in self._objects
-        i = self.index(obj)
-        self._objects[i] = new_obj
-        self._indexed_objects.pop(obj)
-        self._indexed_objects.update({i: new_obj, new_obj: i})
-
     def remove(self, obj):
         assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
@@ -140,9 +131,15 @@ class ListModelProxy(AbstractModelProxy, dict):
             return self._indexed_objects[obj]
         except KeyError:
             i = self._objects.index(obj)
-            # the object is in _objects, but has not been indexed yet,
-            # so index it
+            
+            # The object is present in _objects, but has not been indexed yet, so index it.
+            if i in self._indexed_objects:
+                # If the object's index, despite the object itself not being in the indexed objects, is present in the indexed_objects,
+                # this might indicate that another old object was removed from _objects outside the proxy's interface, which did not remove it from the indexed objects.
+                # So in this case we reassign the new object a new index at the end:
+                i = len(self._indexed_objects) // 2
             self._indexed_objects[i] = obj
+            
             # now the length is outdated
             self._length = None
             return i
@@ -228,6 +225,11 @@ class ListModelProxy(AbstractModelProxy, dict):
                             for model_filter, filter_value in self._filters.items():
                                 obj_iterator = model_filter.filter(obj_iterator, filter_value)
                             for obj in obj_iterator:
+                                if i in self._indexed_objects:
+                                    # If the object's index, despite the object itself not being in the indexed objects, is present in the indexed_objects,
+                                    # this might indicate that another old object was removed from _objects outside the proxy's interface, which did not remove it from the indexed objects.
+                                    # So in this case we reassign the new object a new index at the end:
+                                    i = len(self._indexed_objects) // 2
                                 self._indexed_objects[i] = obj
                                 object_found = True
                                 break
