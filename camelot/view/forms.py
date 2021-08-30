@@ -139,11 +139,6 @@ class AbstractForm(NamedDataclassSerializable):
             expanding elements.
         :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
-        
         logger.debug('rendering %s' % cls.__name__)
         from camelot.view.controls.editors.wideeditor import WideEditor
         form_widget = QtWidgets.QWidget(parent)
@@ -292,11 +287,6 @@ class Label(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
-
         if form["style"]:
             widget = QtWidgets.QLabel('<p align="%s" style="%s">%s</p>' % (form["alignment"], form["style"], str(form["label"])))
         else:
@@ -461,10 +451,6 @@ class TabForm(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
         logger.debug('rendering %s' % cls.__name__)
         widget = DelayedTabWidget(widgets, form["content"], parent)
         widget.setTabPosition(getattr(QtWidgets.QTabWidget, form["position"]))
@@ -506,10 +492,6 @@ class HBoxForm(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
         logger.debug('rendering %s' % cls.__name__)
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QHBoxLayout()
@@ -564,10 +546,6 @@ class VBoxForm(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]        
         logger.debug('rendering %s' % cls.__name__)
         widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QVBoxLayout()
@@ -656,11 +634,6 @@ class GridForm(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
-
         widget = QtWidgets.QWidget(parent)
         grid_layout = QtWidgets.QGridLayout()
         for i, row in enumerate(form["content"]):
@@ -712,11 +685,6 @@ class WidgetOnlyForm(AbstractForm):
         
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
-
         logger.debug('rendering %s' % cls.__name__)
         editor = widgets.create_editor(form["content"][0], parent)
         return editor
@@ -758,11 +726,6 @@ class GroupBoxForm(AbstractForm):
 
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        if isinstance(form, bytes):
-            form = json.loads(form)
-        if isinstance(form, list):
-            form = form[1]
-
         widget = QtWidgets.QGroupBox(str(form["title"]), parent)
         layout = QtWidgets.QVBoxLayout()
         if form["min_width"] and form["min_height"]:
