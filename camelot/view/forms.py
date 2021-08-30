@@ -692,12 +692,10 @@ class WidgetOnlyForm(AbstractForm):
         return editor
 
 @dataclass
-class Stretch(AbstractForm):
+class Stretch(AbstractFormElement):
     """A stretchable space with zero minimum size, this is able to fill a gap
     in the form if there are no other items to fill this space.
     """
-    title: str = dataclasses.field(init=False, default=None)
-    content: list = dataclasses.field(init=False, default_factory=list)
     
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
