@@ -7,9 +7,6 @@ import unittest
 
 import openpyxl
 
-from . import app_admin, test_core, test_view
-from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
 from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
@@ -38,6 +35,7 @@ from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchN
 from camelot.view.workspace import DesktopWorkspace
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
+
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
