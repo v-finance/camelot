@@ -34,7 +34,7 @@ well.  Form classes can be used recursive.
 import dataclasses
 import json
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from dataclasses import dataclass, InitVar
 
@@ -408,7 +408,7 @@ class TabForm(AbstractForm):
 
     title: str = dataclasses.field(init=False, default=None)
     tabs: InitVar[list]
-    position: str = NORTH
+    position: Literal[NORTH, SOUTH, WEST, EAST] = NORTH
 
     def __post_init__(self, tabs):
         assert isinstance(tabs, list)
