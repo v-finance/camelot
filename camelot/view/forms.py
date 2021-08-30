@@ -136,7 +136,7 @@ class AbstractForm(ObjectDataclassSerializable, metaclass=MetaForm):
 
     def add_field(self, new_field):
         self.content.append(new_field)
-
+    
     def __str__(self):
         return 'AbstractForm(%s)' % (u','.join(str(c) for c in self.content))  
     
@@ -646,6 +646,18 @@ class GridForm(AbstractForm):
     @property
     def grid(self):
         return self.content
+    
+    def _get_fields_from_form(self):
+        for row in self.grid:
+            for field in row:
+                if field is None:
+                    continue
+                elif issubclass(type(field), AbstractForm):
+                    for nested_field in field._get_fields_from_form():
+                        yield nested_field
+                else:
+                    assert isinstance(field, str) or (field is None)
+                    yield field
     
     def append_row(self, row):
         """:param row: the list of fields that should come in the additional row
