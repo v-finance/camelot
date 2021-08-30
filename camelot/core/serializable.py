@@ -71,6 +71,10 @@ class DataclassSerializable(Serializable):
     
     @classmethod
     def asdict(cls, obj):
+        """
+        Custom implementation of dataclasses asdict that allows customizing the serialization of dataclasses' fields,
+        which the default dataclass implementation does not allow.
+        """
         if not dataclasses._is_dataclass_instance(obj):
             raise TypeError("asdict() should be called on dataclass instances")
         return cls._asdict_inner(obj)
@@ -89,6 +93,10 @@ class DataclassSerializable(Serializable):
     
     @classmethod
     def serialize_fields(cls, obj):
+        """
+        Serialize the given dataclass object's fields.
+        By default this will return a dictionary with each field turned into a key-value pair of its name and its value.
+        """
         result = []
         for f in dataclasses.fields(obj):
             value = cls._asdict_inner(getattr(obj, f.name))
@@ -120,5 +128,5 @@ class NamedDataclassSerializable(DataclassSerializable, metaclass=MetaNamedDatac
     """
     
     @classmethod
-    def serialize_fields(cls, obj):
+    def serialize_fields(cls, obj): 
         return type(obj).__name__, super(NamedDataclassSerializable, cls).serialize_fields(obj)
