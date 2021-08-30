@@ -32,7 +32,6 @@ form_display attribute in Admin classes, but they can be used on their own as
 well.  Form classes can be used recursive.
 """
 import dataclasses
-import json
 import logging
 from typing import Any, Literal
 
