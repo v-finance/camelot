@@ -205,9 +205,27 @@ class MainMenu(ActionStep, DataclassSerializable):
 
     blocking = False
     menu: MenuItem
+    action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
+    model_context: InitVar(ModelContext) = None
+
+    def __post_init__(self, model_context):
+        self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
-    def render(cls, gui_context, items, parent_menu):
+    def _add_action_states(self, model_context, items, action_states):
+        """
+        Recurse through a menu and get the state for all actions in the menu
+        """
+        for item in items:
+            self._add_action_states(model_context, item.items, action_states)
+            action_route = item.action_route
+            if action_route is not None:
+                action = AdminRoute.action_for(action_route)
+                state = action.get_state(model_context)
+                action_states.append((action_route, state))
+
+    @classmethod
+    def render(cls, gui_context, items, parent_menu, action_states):
         """
         :return: a :class:`QtWidgets.QMenu` object
         """
@@ -218,10 +236,17 @@ class MainMenu(ActionStep, DataclassSerializable):
             elif item["verbose_name"] is not None:
                 menu = QtWidgets.QMenu(item["verbose_name"], parent_menu)
                 parent_menu.addMenu(menu)
-                cls.render(gui_context, item["items"], menu)
+                cls.render(gui_context, item["items"], menu, action_states)
             elif item["action_route"] is not None:
                 action = AdminRoute.action_for(tuple(item["action_route"]))
                 qaction = ActionAction(action, gui_context, parent_menu)
+                state = None
+                for action_state in action_states:
+                    if action_state[0] == item["action_route"]:
+                        state = action_state[1]
+                        break
+                if state is not None:
+                    qaction.set_state_v2(state)
                 parent_menu.addAction(qaction)
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
@@ -236,7 +261,7 @@ class MainMenu(ActionStep, DataclassSerializable):
             return
         step = json.loads(serialized_step)
         menu_bar = main_window.menuBar()
-        self.render(gui_context, step["menu"]["items"], menu_bar)
+        self.render(gui_context, step["menu"]["items"], menu_bar, step["action_states"])
         menu_bar.setCornerWidget(BusyWidget())
 
 @dataclass

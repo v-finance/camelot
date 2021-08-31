@@ -53,6 +53,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
+from ...admin.action.form_action import FormActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
@@ -1252,28 +1253,36 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """
         self.logger.debug('change_selection called')
 
-        # Create model context based on selection
-        # model_conext.field_attributes required???
-        model_context = ListActionModelContext()
-        model_context.proxy = self.get_value()
-        model_context.admin = self.get_admin()
-        if current_index.isValid():
-            model_context.current_row = current_index.row()
-            model_context.current_column = current_index.column()
-        model_context.collection_count = self.rowCount()
-        if model_context.current_column is not None:
-            model_context.current_field_name = variant_to_py(
-                self.headerData(
-                    model_context.current_column, Qt.Horizontal, Qt.UserRole
-                )
-            )
         if selection_model is not None:
-            selection = selection_model.selection()
-            for i in range( len( selection ) ):
-                selection_range = selection[i]
-                rows_range = ( selection_range.top(), selection_range.bottom() )
-                model_context.selected_rows.append( rows_range )
-                model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+            # Create model context based on selection
+            # model_conext.field_attributes required???
+            model_context = ListActionModelContext()
+            model_context.proxy = self.get_value()
+            model_context.admin = self.get_admin()
+            if current_index.isValid():
+                model_context.current_row = current_index.row()
+                model_context.current_column = current_index.column()
+            model_context.collection_count = self.rowCount()
+            if model_context.current_column is not None:
+                model_context.current_field_name = variant_to_py(
+                    self.headerData(
+                        model_context.current_column, Qt.Horizontal, Qt.UserRole
+                    )
+                )
+            if selection_model is not None:
+                selection = selection_model.selection()
+                for i in range( len( selection ) ):
+                    selection_range = selection[i]
+                    rows_range = ( selection_range.top(), selection_range.bottom() )
+                    model_context.selected_rows.append( rows_range )
+                    model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+        else:
+            model_context = FormActionModelContext()
+            model_context.proxy = self.get_value()
+            model_context.admin = self.get_admin()
+            if current_index >= 0:
+                model_context.current_row = current_index
+                model_context.selection_count = 1
 
         request = ChangeSelection(self._action_routes, model_context)
         self._append_request(request)
