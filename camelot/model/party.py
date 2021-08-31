@@ -286,6 +286,7 @@ class Address( Entity ):
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
+
     city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
                                                schema.ForeignKey(City.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
                                                nullable=False, index=True)
@@ -388,7 +389,7 @@ class WithAddresses(object):
         return self._get_address_field( u'street2' )
 
     @street2.expression
-    def street2_expression(cls):
+    def street2(cls):
         return sql.select([Address.street2],
                           whereclause=cls.first_address_filter(),
                           limit=1).as_scalar()
