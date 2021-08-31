@@ -1,16 +1,21 @@
 import dataclasses
+from enum import Enum
 
 from camelot.admin.object_admin import ObjectAdmin
-
 
 
 class DataclassAdmin(ObjectAdmin):
     """
     specialized object admin for dataclasses that introspects fieldattributes based on the dataclass' fields.
     """
+    
+    class AssertionMessage(Enum):
+        
+        no_dataclass = 'The given entity class is not a dataclass'
+    
     def __init__(self, app_admin, entity):
         super().__init__(app_admin, entity)
-        assert dataclasses.is_dataclass(entity), 'The given entity class is not a dataclass'
+        assert dataclasses.is_dataclass(entity), self.AssertionMessage.no_dataclass.value
     
     def get_typing(self, field_name):
         for field in dataclasses.fields(self.entity):

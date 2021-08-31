@@ -505,13 +505,15 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
         test2 = TestDataClass(test_initvar = 10)
         self.assertEqual(test2.test_int, 10)
         
-    def dataclass_validation(self):
+    def test_dataclass_validation(self):
         class TestClass(object):
             
             class Admin(DataclassAdmin):
                 pass
             
-        test = TestClass
+        with self.assertRaises(AssertionError) as exc:
+            self.app_admin.get_related_admin(TestClass)
+        self.assertEqual(str(exc.exception), DataclassAdmin.AssertionMessage.no_dataclass.value)
                            
 class EntityAdminCase(TestMetaData):
     """Test the EntityAdmin
