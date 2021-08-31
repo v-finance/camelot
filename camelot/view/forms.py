@@ -545,9 +545,10 @@ class VBoxForm(AbstractForm):
 
     def _get_fields_from_form(self):
         for form in self.rows:
-            for field in form._get_fields_from_form():
-                yield field
-
+            if isinstance(form, AbstractForm):
+                for field in form._get_fields_from_form():
+                    yield field
+    
     def __str__(self):
         return 'VBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.rows]))
 
