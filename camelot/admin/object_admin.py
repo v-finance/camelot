@@ -630,9 +630,13 @@ be specified using the verbose_name attribute.
             return dataclass_attributes
         elif is_optional_type(field_type):
             return self.get_typing_attributes(field_type.__args__[0])
-        elif issubclass(field_type, Entity):
+        elif issubclass(field_type.__class__, Entity):
             return {'delegate':delegates.Many2OneDelegate,
                     'target':field_type,
+                    }
+        elif isinstance(field_type, typing._GenericAlias) and field_type.__origin__ == list and issubclass(field_type.__args__[0], Entity):
+            return {'delegate':delegates.One2ManyDelegate,
+                    'target':field_type.__args__[0],
                     }
         return {}
     
