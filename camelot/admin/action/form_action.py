@@ -180,6 +180,7 @@ class ShowHistory( Action ):
             
         obj = model_context.get_object()
         memento = model_context.admin.get_memento()
+        subsystem_obj = model_context.admin.get_subsystem_object(obj)
         
         class ChangeAdmin( ObjectAdmin ):
             verbose_name = _('Change')
@@ -198,7 +199,7 @@ class ShowHistory( Action ):
             primary_key = model_context.admin.primary_key( obj )
             if primary_key is not None:
                 if None not in primary_key:
-                    changes = list( memento.get_changes( model = str( model_context.admin.entity.__name__ ),
+                    changes = list( memento.get_changes( model = str( subsystem_obj.__class__.__name__ ),
                                                          primary_key = primary_key,
                                                          current_attributes = {} ) )
                     admin = ChangeAdmin( model_context.admin, object )
@@ -238,6 +239,7 @@ class CloseForm( Action ):
         validator = model_context.admin.get_validator()
         obj = model_context.get_object()
         admin  = model_context.admin
+        subsystem_obj = admin.get_subsystem_object(obj)
         if obj is None:
             yield self.step_when_valid()
             return
@@ -261,11 +263,11 @@ class CloseForm( Action ):
             if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
-                    yield action_steps.UpdateObjects((obj,))
+                    yield action_steps.UpdateObjects((subsystem_obj,))
                 else:
                     depending_objects = list(admin.get_depending_objects(obj))
                     model_context.proxy.remove(obj)
-                    yield action_steps.DeleteObjects((obj,))
+                    yield action_steps.DeleteObjects((subsystem_obj,))
                     admin.expunge(obj)
                     yield action_steps.UpdateObjects(depending_objects)
                 # only close the form after the object has been discarded or
