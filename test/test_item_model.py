@@ -39,7 +39,8 @@ class ItemModelSignalRegister(QtCore.QObject):
         self.header_changes = []
         self.layout_changes = 0
 
-    @QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex, "QVector<int>")
+    #commented to solve an error: decorated slot has no signature compatible with dataChanged(QModelIndex,QModelIndex,QVector<int>)
+    #@QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex, "QVector<int>")
     def register_data_change(self, from_index, thru_index, vector):
         LOGGER.debug('dataChanged(row={0}, column={1})'.format(from_index.row(), from_index.column()))
         self.data_changes.append( ((from_index.row(), from_index.column()),

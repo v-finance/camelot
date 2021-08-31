@@ -32,6 +32,7 @@
 import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
+import typing
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
@@ -41,9 +42,13 @@ from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
+from camelot.core.orm import Entity
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.types.typing import is_optional_type
+from camelot.view.field_attributes import _typing_to_python_type
+from camelot.view.controls import delegates
 from .validator.object_validator import ObjectValidator
 
 
@@ -562,8 +567,26 @@ be specified using the verbose_name attribute.
         :return: `None` if the field does not support autocompletion, an empty
             list if there are no possible values for the requested prefix,
             otherwise a list of possible values for the field.
+            If the field is a property which is typing decorated to have an Entity returned, 
+            the get_completions are expanded to have the first 20 query results displayed.
         """
-        return None
+        field_type = self.get_typing(field_name)
+        field_type = field_type.__args__[0] if is_optional_type(field_type) else field_type
+        if issubclass(field_type, Entity):
+            all_attributes = self.get_field_attributes(field_name)
+            admin = all_attributes.get('admin')
+            session = self.get_session(obj)
+            if (admin is not None) and (session is not None):
+                search_filter = list_filter.SearchFilter(admin)
+                query = admin.get_query(session)
+                query = search_filter.decorate_query(query, prefix)
+                return [e for e in query.limit(20).all()]
+            
+    def get_session(self, obj):
+        """
+        Return the session based on the given object
+        """
+        raise NotImplementedError    
 
     def get_descriptor_field_attributes(self, field_name):
         """
@@ -583,14 +606,37 @@ be specified using the verbose_name attribute.
         # See if there is a descriptor
         #
         attributes = dict()
-        for cls in self.entity.__mro__:
-            descriptor = cls.__dict__.get(field_name, None)
-            if descriptor is not None:
-                if isinstance(descriptor, property):
-                    attributes['editable'] = (descriptor.fset is not None)
-                break
+        field_type = self.get_typing(field_name)
+        if field_type is not None:
+            attributes['editable'] = True
+            attributes['nullable'] = is_optional_type(field_type)
+            attributes.update(self.get_typing_attributes(field_type)) 
+            
+        descriptor = self._get_entity_descriptor(field_name)
+
+        if descriptor is not None:
+            if isinstance(descriptor, property):
+                attributes['editable'] = (descriptor.fset is not None)                   
         return attributes
 
+    def get_typing(self, field_name):
+        descriptor = self._get_entity_descriptor(field_name)
+        if descriptor is not None:
+            if isinstance(descriptor, property):
+                return typing.get_type_hints(descriptor.fget).get('return')
+    
+    def get_typing_attributes(self, field_type):
+        if field_type in _typing_to_python_type:
+            dataclass_attributes = _typing_to_python_type.get(field_type)
+            return dataclass_attributes
+        elif is_optional_type(field_type):
+            return self.get_typing_attributes(field_type.__args__[0])
+        elif issubclass(field_type, Entity):
+            return {'delegate':delegates.Many2OneDelegate,
+                    'target':field_type,
+                    }
+        return {}
+    
     def get_field_attributes(self, field_name):
         """
         Get the attributes needed to visualize the field field_name.  This
@@ -740,14 +786,18 @@ be specified using the verbose_name attribute.
         # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
         # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
         # which is enforced by the strategy constructor.
-        attribute = getattr(self.entity, field_name, field_name)
+        descriptor = self._get_entity_descriptor(field_name)
+        attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
         if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
             field_attributes['filter_strategy'] = filter_strategy(attribute)
         search_strategy = field_attributes['search_strategy']
         if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldSearch):
             field_attributes['search_strategy'] = search_strategy(attribute)
-        
+    
+    def _get_entity_descriptor(self, field_name):
+        return getattr(self.entity, field_name, None)
+    
     def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method

@@ -15,7 +15,6 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.core.qt import Qt
 from camelot.core.sql import metadata
 from camelot.model.i18n import Translation
 from camelot.model.party import Person
