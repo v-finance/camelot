@@ -42,7 +42,7 @@ from camelot.admin.action import list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
-from camelot.core.orm import Entity
+from camelot.core.orm import Entity, EntityMeta
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -609,7 +609,6 @@ be specified using the verbose_name attribute.
         attributes = dict()
         field_type = self.get_typing(field_name)
         if field_type is not None:
-            attributes['editable'] = True
             attributes['nullable'] = is_optional_type(field_type)
             attributes.update(self.get_typing_attributes(field_type)) 
             
@@ -617,7 +616,7 @@ be specified using the verbose_name attribute.
 
         if descriptor is not None:
             if isinstance(descriptor, property):
-                attributes['editable'] = (descriptor.fset is not None)                   
+                attributes['editable'] = (descriptor.fset is not None)         
         return attributes
 
     def get_typing(self, field_name):
@@ -632,9 +631,13 @@ be specified using the verbose_name attribute.
             return dataclass_attributes
         elif is_optional_type(field_type):
             return self.get_typing_attributes(field_type.__args__[0])
-        elif issubclass(field_type, Entity):
+        elif issubclass(field_type.__class__, EntityMeta):
             return {'delegate':delegates.Many2OneDelegate,
                     'target':field_type,
+                    }
+        elif isinstance(field_type, typing._GenericAlias) and field_type.__origin__ == list and issubclass(field_type.__args__[0].__class__, EntityMeta):
+            return {'delegate':delegates.One2ManyDelegate,
+                    'target':field_type.__args__[0],
                     }
         return {}
     

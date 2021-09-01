@@ -7,7 +7,6 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action
 from camelot.core.dataclasses import dataclass
-from camelot.view.controls import delegates
 
 LOGGER = logging.getLogger( 'camelot.admin.action.logging' )
 
@@ -23,8 +22,7 @@ class ChangeLoggingOptions( object ):
         
     class Admin( DataclassAdmin ):
         list_display = ['level', 'queries', 'pool']
-        field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
-                                       'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
+        field_attributes = { 'level':{ 'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
                                                                                         logging.INFO, 
                                                                                         logging.WARNING,
                                                                                         logging.ERROR,
