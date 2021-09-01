@@ -126,14 +126,8 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             action_states.append((action_route.route, state))
 
     @staticmethod
-    def update_table_view(table_view, step):
-        from camelot.view.controls.search import SimpleSearchControl
-        table_view.set_admin()
-        model = table_view.get_model()
-        list(model.add_columns(step['columns']))
-        # filters can have default values, so they need to be set before
-        # the value is set
-        for action_state in step['action_states']:
+    def set_filters(action_states, model):
+        for action_state in action_states:
             route = tuple(action_state[0])
             action = AdminRoute.action_for(route)
             if not isinstance(action, Filter):
@@ -144,6 +138,16 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             if len(values) == len(state['modes']):
                 values = [All]
             model.set_filter(action, values)
+
+    @classmethod
+    def update_table_view(cls, table_view, step):
+        from camelot.view.controls.search import SimpleSearchControl
+        table_view.set_admin()
+        model = table_view.get_model()
+        list(model.add_columns(step['columns']))
+        # filters can have default values, so they need to be set before
+        # the value is set
+        cls.set_filters(step['action_states'], model)
 
         table_view.set_value(step['proxy_route'])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
@@ -239,6 +243,11 @@ class OpenQmlTableView(OpenTableView):
         header_model.setStringList(step['columns'])
         header_model.setParent(quick_view)
         new_model = CollectionProxy(tuple(step['admin_route']))
+
+        # filters can have default values, so they need to be set before
+        # the value is set
+        cls.set_filters(step['action_states'], new_model)
+
         new_model.setParent(quick_view)
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
@@ -254,21 +263,25 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
         list_gui_context.admin_route = tuple(step['admin_route'])
-        list_gui_context.view = table
+        list_gui_context.view = view
 
         list_action = AdminRoute.action_for(tuple(step['list_action']))
         qt_action = ActionAction(list_action, list_gui_context, quick_view)
         table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
         for i, action_route in enumerate(step['actions']):
             action = AdminRoute.action_for(tuple(action_route['route']))
-            icon_name = None
-            if action.icon is not None:
-                icon_name = action.icon.name
             qt_action = ActionAction(action, list_gui_context, table)
+            state = None
+            for action_state in step['action_states']:
+                if action_state[0] == action_route['route']:
+                    state = action_state[1]
+                    break
+            assert state is not None
+
             rendered_action = item_view._qml_item.addAction(
-                action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name,
-                qt_action,
+                action.render_hint.value, state, qt_action
             )
+            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
             rendered_action.setObjectName('action_{}'.format(i))
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
