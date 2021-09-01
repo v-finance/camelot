@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ...admin.action.base import State
+from ...admin.action.base import Action, State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
 from ...admin.admin_route import AdminRoute
@@ -900,7 +900,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
-                post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
+                if isinstance(request, Action):
+                    self._crud_update(request)
+                else:
+                    post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
 
     def _start_timer(self):
         """
