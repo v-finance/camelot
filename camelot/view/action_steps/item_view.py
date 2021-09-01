@@ -102,7 +102,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     list_action: Route = field(init=False)
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
 
     def __post_init__( self, admin, value ):
         self.value = value
@@ -115,7 +115,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
-        self.action_states = list()
         self._add_action_states(admin, proxy, self.actions, self.action_states)
 
     @staticmethod

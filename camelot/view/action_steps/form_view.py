@@ -38,8 +38,9 @@ from camelot.core.serializable import DataclassSerializable
 from ..controls.delegates import ComboBoxDelegate
 from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
-from ...admin.action.base import ActionStep, Action
-from ...admin.admin_route import AdminRoute
+from ...admin.action.base import ActionStep, Action, State
+from ...admin.action.form_action import FormActionModelContext
+from ...admin.admin_route import AdminRoute, Route
 from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
 from ...core.qt import is_deleted
@@ -82,6 +83,7 @@ class OpenFormView(ActionStep):
 
     admin_name: str = field(init=False)
     actions: List[Action] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
     top_toolbar_actions: List[Action] = field(init=False)
     _columns: List[Tuple[Optional[Any], Dict[str, Union[Type[ComboBoxDelegate]]]]] = field(init=False)
     _form_display: bytes = field(init=False)
@@ -99,6 +101,7 @@ class OpenFormView(ActionStep):
         self._columns = self.admin.get_fields()
         self._form_display = self.admin.get_form_display()._to_bytes()
         self.admin_route = self.admin.get_admin_route()
+        self._add_action_states(self.admin, self.proxy, self.actions + self.top_toolbar_actions, self.action_states)
 
         self.objects = [obj]
         self.row = self.proxy.index(obj)
@@ -106,6 +109,16 @@ class OpenFormView(ActionStep):
 
         self.top_level = True
         self.title = u' '
+
+    @staticmethod
+    def _add_action_states(admin, proxy, actions, action_states):
+        model_context = FormActionModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        for action_route in actions:
+            action = AdminRoute.action_for(action_route.route)
+            state = action.get_state(model_context)
+            action_states.append((action_route.route, state))
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
@@ -116,7 +129,7 @@ class OpenFormView(ActionStep):
 
     def render(self, gui_context):
         from camelot.view.controls.formview import FormView
-            
+
         model = CollectionProxy(self.admin_route)
         list(model.add_columns((fn for fn, fa in self._columns)))
         model.set_value(self.proxy)
@@ -124,8 +137,8 @@ class OpenFormView(ActionStep):
         form = FormView(title=self.title, admin=self.admin, model=model,
                         columns=self._columns, form_display=self._form_display,
                         index=self.row)
-        form.set_actions(self.actions)
-        form.set_toolbar_actions(self.top_toolbar_actions)
+        form.set_actions([action.route for action in self.actions], self.action_states)
+        form.set_toolbar_actions([action.route for action in self.top_toolbar_actions], self.action_states)
         return form
 
     def gui_run( self, gui_context ):

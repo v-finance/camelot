@@ -407,6 +407,10 @@ and used as a custom action.
                 raise Exception('No mapped class found for target %s'%target)
         super()._expand_field_attributes(field_attributes, field_name)
 
+    def get_session(self, obj):
+        if obj is not None:
+            return orm.object_session(obj)
+
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
         get_dynamic_field_attributes and make relational fields not editable

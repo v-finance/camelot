@@ -1,9 +1,4 @@
 import dataclasses
-from typing import Union, NewType
-
-from camelot.core.utils import ugettext_lazy
-
-Note = NewType('Note', Union[str, ugettext_lazy])
 
 def dataclass(cls):
     """

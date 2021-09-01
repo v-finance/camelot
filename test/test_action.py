@@ -12,6 +12,7 @@ from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext
     form_action, list_action, list_filter
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.application import Application
+from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.list_action import SetFilters
 from camelot.bin.meta import NewProjectOptions
@@ -46,7 +47,7 @@ test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example',
 LOGGER = logging.getLogger(__name__)
 
 class SerializableMixinCase(object):
-    
+
     def _write_read(self, step):
         """
         Serialize and deserialize an object, return the deserialized object
@@ -348,8 +349,8 @@ class ListActionsCase(
         # make sure there are no previous settings
         settings.remove('')
 
-        save_export_mapping = list_action.SaveExportMapping(settings)
-        restore_export_mapping = list_action.RestoreExportMapping(settings)
+        save_export_mapping = export_mapping.SaveExportMapping(settings)
+        restore_export_mapping = export_mapping.RestoreExportMapping(settings)
 
         model_context = MockModelContext()
         

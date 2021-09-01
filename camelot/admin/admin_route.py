@@ -145,6 +145,17 @@ class AdminRoute(object):
         return action_route
 
     @classmethod
+    def _register_form_action_route(cls, admin_route, action) -> Route:
+        assert cls._validate_action_name(action)
+        assert isinstance(admin_route, tuple)
+        assert admin_route in cls._admin_routes
+        action_route = (*admin_route, 'form', 'actions', action.get_name())
+        assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
+        cls._admin_routes[action_route] = action
+        return action_route
+
+    @classmethod
     def _register_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
@@ -155,15 +166,7 @@ class AdminRoute(object):
         cls._admin_routes[action_route] = action
         return action_route
 
-
-def register_list_actions(attr_admin_route, attr_cache=None):
-    """
-    Function decorator that registers list actions.
-
-    :param str attr_admin_route: Name of the attribute that contains the AdminRoute.
-    :param str attr_cache: Name of the attribute to cache the registered actions.
-                           If this is None, no caching will be done.
-    """
+def _register_actions_decorator(register_func, attr_admin_route, attr_cache):
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             # check for existing cahed attribute
@@ -180,9 +183,30 @@ def register_list_actions(attr_admin_route, attr_cache=None):
                 if isinstance(action, RouteWithRenderHint):
                     result.append(action) # action is already registered
                 else:
-                    result.append(RouteWithRenderHint(AdminRoute._register_list_action_route(admin_route, action), action.render_hint))
+                    result.append(RouteWithRenderHint(register_func(admin_route, action), action.render_hint))
             if attr_cache is not None:
                 setattr(self, attr_cache, result)
             return result
         return wrapper
     return decorator
+
+
+def register_list_actions(attr_admin_route, attr_cache=None):
+    """
+    Function decorator that registers list actions.
+
+    :param str attr_admin_route: Name of the attribute that contains the AdminRoute.
+    :param str attr_cache: Name of the attribute to cache the registered actions.
+                           If this is None, no caching will be done.
+    """
+    return _register_actions_decorator(AdminRoute._register_list_action_route, attr_admin_route, attr_cache)
+
+def register_form_actions(attr_admin_route, attr_cache=None):
+    """
+    Function decorator that registers form actions.
+
+    :param str attr_admin_route: Name of the attribute that contains the AdminRoute.
+    :param str attr_cache: Name of the attribute to cache the registered actions.
+                           If this is None, no caching will be done.
+    """
+    return _register_actions_decorator(AdminRoute._register_form_action_route, attr_admin_route, attr_cache)
