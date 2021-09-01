@@ -48,6 +48,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
+from camelot.types.typing import Note
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
@@ -583,7 +584,7 @@ class Organization( Party ):
         return self.name or ''
 
     @property
-    def note(self):
+    def note(self) -> Note:
         session = orm.object_session(self)
         if session is not None:
             cls = self.__class__
@@ -615,7 +616,7 @@ class Person( Party ):
     comment = schema.Column( camelot.types.RichText() )
 
     @property
-    def note(self):
+    def note(self) -> Note:
         for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
             if person != self:
                 return _('A person with the same name already exists')
@@ -1097,7 +1098,6 @@ class PartyAdmin( EntityAdmin ):
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )], name=_('Gender')),
                             name = dict( minimal_column_width = 50, name=_('Name')),
-                            note = dict( delegate = delegates.NoteDelegate ),
                             first_name = {'name': _('First name')},
                             last_name = {'name': _('Last name')},
                             social_security_number = {'name': _('Social security number')},
