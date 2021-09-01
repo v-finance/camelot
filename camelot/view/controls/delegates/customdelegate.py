@@ -148,9 +148,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
         :param locale: the `QLocale` to be used to display locale dependent values
         :param model_context: a FieldActionModelContext object
-        :param with_action_states: When True, the ActionStatesRole data will be set.
-                                   This can be disabled if a delegate handles it's own action states.
-
         :return: a `QStandardItem` object
         """
         routes = model_context.field_attributes.get('action_routes', [])

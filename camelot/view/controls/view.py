@@ -90,7 +90,7 @@ class AbstractView(QtWidgets.QWidget):
             qobject = ActionToolbutton(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.COMBO_BOX:
             qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.GROUP_BOX:
+        elif action.render_hint in [RenderHint.EXCLUSIVE_GROUP_BOX, RenderHint.NON_EXCLUSIVE_GROUP_BOX]:
             qobject = GroupBoxFilterWidget(action, self.gui_context, parent)
         elif action.render_hint == RenderHint.SEARCH_BUTTON:
             qobject = SimpleSearchControl(action, self.gui_context, parent)

@@ -324,7 +324,8 @@ class RenderHint(Enum):
     PUSH_BUTTON = 'push_button'
     TOOL_BUTTON = 'tool_button'
     SEARCH_BUTTON = 'search_button'
-    GROUP_BOX = 'group_box'
+    EXCLUSIVE_GROUP_BOX = 'exclusive_group_box'
+    NON_EXCLUSIVE_GROUP_BOX = 'non_exclusive_group_box'
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
 

@@ -28,7 +28,7 @@
 #  ============================================================================
 
 #from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
-from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, variant_to_py
+from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, QtQml, variant_to_py
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
@@ -89,8 +89,12 @@ class AbstractActionWidget( object ):
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
-        gui_context.mode_name = mode
-        self.action.gui_run( gui_context )
+        if isinstance(mode, list):
+            self.action.gui_run( gui_context, mode )
+        else:
+            gui_context.mode_name = mode
+            self.action.gui_run( gui_context )
+
 
     def set_menu(self, state, parent):
         """This method creates a menu for an object with as its menu items
@@ -147,8 +151,13 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance(sender, (QtWidgets.QAction, QtQuick.QQuickItem)):
+        if isinstance(sender, QtWidgets.QAction):
             mode = str(variant_to_py(sender.data()))
+        elif isinstance(sender, QtQuick.QQuickItem):
+            data = sender.data()
+            if isinstance(data, QtQml.QJSValue):
+                data = data.toVariant()
+            mode = variant_to_py(data)
         self.run_action( mode )
 
 

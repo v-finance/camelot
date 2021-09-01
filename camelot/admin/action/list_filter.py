@@ -44,6 +44,7 @@ from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt
 from ...view.utils import locale
 from .base import Action, Mode, RenderHint
+from .field_action import FieldActionModelContext
 
 @dataclass
 class FilterMode(Mode):
@@ -185,13 +186,13 @@ class Filter(Action):
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
 
-    render_hint = RenderHint.GROUP_BOX
+    render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
     name = 'group_box_filter'
 
     def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
-        super(GroupBoxFilter, self).__init__(attribute, default, verbose_name)
+        super().__init__(attribute, default, verbose_name)
         self.exclusive = exclusive
-
+        self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
 
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
@@ -397,7 +398,11 @@ class DecimalSearch(FieldSearch):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         suffix = ' ' + field_attributes.get('suffix', '')
-        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        model_context = FieldActionModelContext()
+        model_context.admin = admin
+        model_context.value = value
+        model_context.field_attributes = field_attributes
+        standard_item = delegate.get_standard_item(locale(), model_context)
         value_str = standard_item.data(PreviewRole)
         return value_str.replace(suffix, '')
         
@@ -414,7 +419,11 @@ class TimeSearch(FieldSearch):
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
-        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        model_context = FieldActionModelContext()
+        model_context.admin = admin
+        model_context.value = value
+        model_context.field_attributes = field_attributes
+        standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
 
 class DateSearch(FieldSearch):
@@ -430,7 +439,11 @@ class DateSearch(FieldSearch):
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
-        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        model_context = FieldActionModelContext()
+        model_context.admin = admin
+        model_context.value = value
+        model_context.field_attributes = field_attributes
+        standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
 class IntSearch(FieldSearch):
@@ -447,7 +460,11 @@ class IntSearch(FieldSearch):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         to_string = field_attributes.get('to_string')
-        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        model_context = FieldActionModelContext()
+        model_context.admin = admin
+        model_context.value = value
+        model_context.field_attributes = field_attributes
+        standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.EditRole))
 
 class BoolSearch(FieldSearch):
@@ -464,7 +481,11 @@ class BoolSearch(FieldSearch):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         to_string = field_attributes.get('to_string')
-        standard_item = delegate.get_standard_item(locale(), value, field_attributes)
+        model_context = FieldActionModelContext()
+        model_context.admin = admin
+        model_context.value = value
+        model_context.field_attributes = field_attributes
+        standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.EditRole))
     
 class SearchFilter(Action, AbstractModelFilter):
