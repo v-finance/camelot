@@ -7,7 +7,6 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action
 from camelot.core.dataclasses import dataclass
-from camelot.view.controls import delegates
 
 LOGGER = logging.getLogger( 'camelot.admin.action.logging' )
 
