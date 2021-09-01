@@ -26,12 +26,12 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
+import json
 import logging
 import pkgutil
 from typing import List
 
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 
 from ...core.profile import Profile
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
@@ -42,6 +42,7 @@ from camelot.core.utils import ugettext as _
 from camelot.view import art
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
+from ...core.serializable import DataclassSerializable
 
 logger = logging.getLogger('camelot.view.action_steps.profile')
 
@@ -367,7 +368,7 @@ allow all languages
 
 
 @dataclass
-class EditProfiles(ActionStep):
+class EditProfiles(ActionStep, DataclassSerializable):
     """Allows the user to change or create his current database and media
     settings.
 
@@ -382,21 +383,22 @@ class EditProfiles(ActionStep):
 
     profiles: List[Profile]
     current_profile: str = ''
-    dialog_class: InitVar(QtWidgets.QDialog) = None
+    dialog_class: QtWidgets.QDialog = None
 
-    def __post_init__(self, dialog_class):
-        if dialog_class is None:
+    def __post_init__(self):
+        if self.dialog_class is None:
             self.dialog_class = ProfileWizard
-        else:
-            self.dialog_class = dialog_class
 
-    def render(self, gui_context):
-        dialog = self.dialog_class(self.profiles)
-        dialog.set_current_profile(self.current_profile)
+    @classmethod
+    def render(cls, gui_context, step):
+        dialog = step["dialog_class"](step["profiles"])
+        dialog.set_current_profile(step["current_profile"])
         return dialog
 
-    def gui_run(self, gui_context):
-        dialog = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = cls.render(gui_context, step)
         result = dialog.exec_()
         if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()

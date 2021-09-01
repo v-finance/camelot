@@ -243,7 +243,7 @@ class SelectProfile( Action ):
                         except Exception as e:
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
-                                                                     standard_buttons = QtWidgets.QMessageBox.Ok )
+                                                                     standard_buttons = [QtWidgets.QMessageBox.Ok] )
                             exception_box.informative_text = str(e)
                             yield exception_box
                             edit_profile_name = profile.name
@@ -361,7 +361,7 @@ class ShowAbout(Action):
         yield MessageBox(
             text = about,
             title = ugettext('About'),
-            standard_buttons=QtWidgets.QMessageBox.Ok,
+            standard_buttons=[QtWidgets.QMessageBox.Ok],
         )
 
 class Backup( Action ):
@@ -548,8 +548,8 @@ class SegmentationFault( Action ):
     
     def model_run( self, model_context ):
         from camelot.view import action_steps
-        ok = yield action_steps.MessageBox( text =  'Are you sure you want to segfault the application',
-                                            standard_buttons = QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Yes )
+        ok = yield action_steps.MessageBox( text= 'Are you sure you want to segfault the application',
+                                            standard_buttons=[QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes])
         if ok == QtWidgets.QMessageBox.Yes:
             import faulthandler
             faulthandler._read_null()        

@@ -27,15 +27,14 @@
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
-
-
+#from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
+from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, variant_to_py
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
-from ...admin.action.form_action import FormActionGuiContext
-from ...admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import post
+#from ...admin.action.form_action import FormActionGuiContext
+#from ...admin.action.list_action import ListActionGuiContext
+#from camelot.view.model_thread import post
 from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
@@ -52,11 +51,12 @@ class AbstractActionWidget( object ):
         self.action = action
         self.gui_context = gui_context
         self.state = State()
+        # REMOVE THIS...
+        """
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-        if not isinstance( gui_context, ListActionGuiContext ):
-            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
+        """
 
     def set_state(self, state):
         self.state = state
@@ -67,8 +67,12 @@ class AbstractActionWidget( object ):
         self.setEnabled(state['enabled'])
         self.setVisible(state['visible'])
 
+    # REMOVE THIS...
+    """
     def current_row_changed( self, current=None, previous=None ):
-        if not isinstance( self.gui_context, ListActionGuiContext ):
+        #if not isinstance( self.gui_context, ListActionGuiContext ):
+        if not isinstance( self.gui_context, (ListActionGuiContext, FormActionGuiContext) ):
+            print('Update state:', self.action, ',', self.gui_context)
             post( self.action.get_state,
                   self.set_state,
                   args = (self.gui_context.create_model_context(),) )
@@ -81,6 +85,7 @@ class AbstractActionWidget( object ):
             # has been deleted
             if not is_deleted(self.gui_context.widget_mapper):
                 self.current_row_changed(first)
+    """
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
@@ -212,9 +217,12 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         AbstractActionWidget.init( self, action, gui_context )
         self.clicked.connect(self.action_triggered)
 
+    # REMOVE THIS...
+    """
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         AbstractActionWidget.header_data_changed(self, orientation, first, last)
+    """
 
     def set_state( self, state ):
         super( ActionPushButton, self ).set_state( state )

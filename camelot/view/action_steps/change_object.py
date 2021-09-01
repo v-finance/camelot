@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import json
 import typing
 
 from dataclasses import InitVar, dataclass, field
@@ -34,7 +35,7 @@ from typing import List, Dict, Tuple
 from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.list_action import ListActionModelContext
 from camelot.admin.action.field_action import FieldActionModelContext, FieldAction
-from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.action.form_action import FormActionGuiContext, FormActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
@@ -51,12 +52,12 @@ from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ..controls.action_widget import ActionPushButton
 from ..controls.delegates import ComboBoxDelegate
-from ..forms import Form
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+from ...core.serializable import DataclassSerializable
 
 
 class ChangeObjectDialog( StandaloneWizardPage ):
@@ -77,6 +78,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   form_display,
                   columns,
                   form_actions,
+                  action_states,
                   accept,
                   reject,
                   title =  _('Please complete'),
@@ -133,7 +135,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         # set the actions in the actions panel
-        self.set_actions(form_actions)
+        self.set_actions([action.route for action in form_actions], action_states)
         # set the value last, so the validity can be updated
         proxy = admin.get_proxy([obj])
         model.set_value(ProxyRegistry.register(proxy))
@@ -144,15 +146,23 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             return ActionPushButton(action, self.gui_context, parent)
         raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
 
-    @QtCore.qt_slot(list)
-    def set_actions(self, actions):
+    @QtCore.qt_slot(list, list)
+    def set_actions(self, action_routes, action_states):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
-        if actions and layout:
+        if action_routes and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
             actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
-            for action in actions:
+            for action_route in action_routes:
+                action = AdminRoute.action_for(tuple(action_route))
                 action_widget = self.render_action(action, actions_widget)
+                state = None
+                for action_state in action_states:
+                    if action_state[0] == action_route:
+                        state = action_state[1]
+                        break
+                if state is not None:
+                    action_widget.set_state(state)
                 actions_widget.layout().addWidget(action_widget)
             side_panel_layout.addWidget( actions_widget )
             side_panel_layout.addStretch()
@@ -274,19 +284,31 @@ class ChangeObject(ActionStep):
 
     obj: typing.Any
     admin: ObjectAdmin
-    form_display: Form = field(init=False)
+    form_display: bytes = field(init=False)
     columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
     form_actions: List[Action] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
     admin_route: AdminRoute = field(init=False)
     accept = _('OK')
     reject = _('Cancel')
 
     def __post_init__(self):
         assert self.admin is not None
-        self.form_display = self.admin.get_form_display()
+        self.form_display = self.admin.get_form_display()._to_bytes()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
         self.admin_route = self.admin.get_admin_route()
+        self._add_action_states(self.admin, self.admin.get_proxy([self.obj]), self.form_actions, self.action_states)
+
+    @staticmethod
+    def _add_action_states(admin, proxy, actions, action_states):
+        model_context = FormActionModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        for action_route in actions:
+            action = AdminRoute.action_for(action_route.route)
+            state = action.get_state(model_context)
+            action_states.append((action_route.route, state))
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -305,6 +327,7 @@ class ChangeObject(ActionStep):
                                     self.form_display,
                                     self.columns,
                                     self.form_actions,
+                                    self.action_states,
                                     self.accept,
                                     self.reject)
         return dialog
@@ -505,7 +528,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
             self.value = value_editor.get_value()
 
 @dataclass
-class ChangeField( ActionStep ):
+class ChangeField( ActionStep, DataclassSerializable ):
     """
     Pop up a list of fields from an object a user can change.  When the
     user selects a field, an appropriate widget is shown to change the
@@ -536,18 +559,22 @@ class ChangeField( ActionStep ):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
     field_attributes: InitVar = None
     field_name: str = None
     field_value: str = None
+    window_title: str = field(init=False)
+
+    admin_route: AdminRoute = field(init=False)
+
     title = _('Replace field contents')
     subtitle = _('Select the field to update and enter its new value')
 
-    def __post_init__(self, field_attributes):
+    def __post_init__(self, admin, field_attributes):
         super( ChangeField, self ).__init__()
-
+        self.admin_route = admin.get_admin_route()
         if field_attributes is None:
-            field_attributes = dict(self.admin.get_all_fields_and_attributes())
+            field_attributes = dict(admin.get_all_fields_and_attributes())
             not_editable_fields = []
             for key, attributes in field_attributes.items():
                 if not attributes.get('editable', False):
@@ -556,23 +583,25 @@ class ChangeField( ActionStep ):
                     not_editable_fields.append(key)
             for key in not_editable_fields:
                 field_attributes.pop(key)
-        self.field_attributes = field_attributes
+        self.window_title = admin.get_verbose_name_plural()
 
-        self.window_title = self.admin.get_verbose_name_plural()
-
-    def render( self ):
+    @classmethod
+    def render( cls, step ):
         """create the dialog. this method is used to unit test
         the action step."""
+        admin = AdminRoute.admin_for(tuple(step["admin_route"]))
         dialog = ChangeFieldDialog(
-            self.admin, self.field_attributes, self.field_name, self.field_value
+            admin, admin.get_all_fields_and_attributes(), step["field_name"], step["field_value"]
         )
-        dialog.setWindowTitle( str( self.window_title ) )
-        dialog.set_banner_title( str( self.title ) )
-        dialog.set_banner_subtitle( str( self.subtitle ) )
+        dialog.setWindowTitle( str( step["window_title"] ) )
+        dialog.set_banner_title( str( cls.title ) )
+        dialog.set_banner_subtitle( str( cls.subtitle ) )
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render()
+    @classmethod
+    def gui_run( cls, gui_context, serialized_step ):
+        step = json.loads(serialized_step)
+        dialog = cls.render(step)
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtWidgets.QDialog.Rejected:

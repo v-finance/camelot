@@ -8,13 +8,13 @@ build_dir = 'build'
 default_test_env = os.path.join(build_dir, 'env')
 
 @task()
-def test(ctx):
+def test(ctx, tests="test"):
     """
     Run unittests
     """
     env_dir = default_test_env
     ctx.run(
-        '{}/bin/python -m nose.core -v -s test'.format(env_dir),
+        '{}/bin/python -m nose.core -v -s {}'.format(env_dir, tests),
         env = {'QT_QPA_PLATFORM': 'offscreen'}
     )
 

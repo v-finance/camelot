@@ -51,19 +51,21 @@ from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
 
 @dataclass
-class Sort( ActionStep ):
+class Sort( ActionStep, DataclassSerializable ):
     """Sort the items in the item view ( list, table or tree )
 
             :param column: the index of the column on which to sort
             :param order: a :class:`Qt.SortOrder`
     """
     column: int
-    order: Qt = Qt.SortOrder
+    order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         if gui_context.item_view != None:
             model = gui_context.item_view.model()
-            model.sort( self.column, self.order )
+            model.sort( step["column"], step["order"] )
 
 @dataclass
 class SetFilter( ActionStep ):
@@ -100,7 +102,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     list_action: Route = field(init=False)
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
 
     def __post_init__( self, admin, value ):
         self.value = value
@@ -113,7 +115,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
-        self.action_states = list()
         self._add_action_states(admin, proxy, self.actions, self.action_states)
 
     @staticmethod
@@ -275,7 +276,7 @@ class OpenQmlTableView(OpenTableView):
         UpdateActions().gui_run(list_gui_context)
 
 @dataclass
-class ClearSelection(ActionStep):
+class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
     def gui_run(self, gui_context):
@@ -283,12 +284,13 @@ class ClearSelection(ActionStep):
             gui_context.item_view.clearSelection()
 
 @dataclass
-class RefreshItemView(ActionStep):
+class RefreshItemView(ActionStep, DataclassSerializable):
     """
     Refresh only the current item view
     """
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         if gui_context.item_view is not None:
             model = gui_context.item_view.model()
             if model is not None:
