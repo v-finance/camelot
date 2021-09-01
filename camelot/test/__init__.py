@@ -36,6 +36,7 @@ import logging
 import unittest
 import sys
 import os
+import json
 
 
 
@@ -167,11 +168,16 @@ class ActionMixinCase(object):
                 cls.process()
                 step = self.return_queue.pop()
                 while isinstance(step, (ActionStep, tuple)):
-                    if isinstance(step, AbstractCrudSignal):
-                        LOGGER.debug('crud step, update view')
-                        step.gui_run(gui_context)
+                    if isinstance(step, tuple):
+                        serialized_step = json.loads(step[1])
+                        gui_result = yield tuple([step[0], serialized_step])                    
+                    else:
+                        if isinstance(step, AbstractCrudSignal):
+                            LOGGER.debug('crud step, update view')
+                            step.gui_run(gui_context)
+                        gui_result = yield step
+                                            
                     LOGGER.debug('yield step {}'.format(step))
-                    gui_result = yield step
                     LOGGER.debug('post result {}'.format(gui_result))
                     cls.thread.post(
                         self._iterate_until_blocking,

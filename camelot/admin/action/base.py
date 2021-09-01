@@ -227,6 +227,8 @@ updated state for the widget.
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
 
+# TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
+#       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
 class MetaActionStep(type):
 
     action_steps = dict()
