@@ -4,7 +4,7 @@ Tests for the Admin classes
 """
 import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
 import unittest
 from dataclasses import field, InitVar
 
@@ -216,6 +216,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
                 self._test_dir = None
                 self._test_file = None
                 self._test_entity = None
+                self._test_entitylist = list()
     
             @property
             def test_int(self) -> int:
@@ -293,6 +294,14 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
             def test_entity(self, value):
                 self._test_entity = value  
                 
+            @property
+            def test_entitylist(self) -> List[Address]:
+                return self._test_entitylist
+        
+            @test_entitylist.setter
+            def test_entitylist(self, value):
+                self._test_entitylist = value              
+                
             class Admin(ObjectAdmin):
                 
                 def get_session(self, obj):
@@ -347,7 +356,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.LocalFileDelegate)  
-        
+
         fa = admin.get_field_attributes('test_entity')
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
@@ -356,7 +365,12 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         
         completions = admin.get_completions(TypedPropertyClass(), 'test_entity', '')
         self.assertEqual(completions, [e for e in Session().query(Address).limit(20).all()])
-               
+        
+        fa = admin.get_field_attributes('test_entitylist')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
+        self.assertEqual(fa['target'], Address)               
 
     def test_set_defaults(self):
 
@@ -418,6 +432,7 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
             test_file: Optional[File] = field(default = None, init = False)
             test_entity: Address = field(default = None, init = False)
             test_initvar: InitVar[int] = None
+            test_entitylist: List[Address] = field(default_factory = list, init = False)
             
             def __post_init__(self, test_initvar):
                 self.test_int = test_initvar
@@ -499,6 +514,12 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], False)
         self.assertEqual(fa['nullable'], True)
         self.assertEqual(fa['delegate'], delegates.PlainTextDelegate)  
+        
+        fa = admin.get_field_attributes('test_entitylist')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
+        self.assertEqual(fa['target'], Address)        
         
         test1 = TestDataClass()
         self.assertEqual(test1.test_int, None)

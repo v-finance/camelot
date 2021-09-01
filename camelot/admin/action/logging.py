@@ -23,8 +23,7 @@ class ChangeLoggingOptions( object ):
         
     class Admin( DataclassAdmin ):
         list_display = ['level', 'queries', 'pool']
-        field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
-                                       'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
+        field_attributes = { 'level':{ 'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
                                                                                         logging.INFO, 
                                                                                         logging.WARNING,
                                                                                         logging.ERROR,
