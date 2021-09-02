@@ -116,4 +116,40 @@ class Created(ActionStep, UpdateMixin):
     def gui_run(self, item_model):
         # appending new items to the model will increase the rowcount, so
         # there is no need to set the rowcount explicitly
-        self.update_item_model(item_model)    
+        self.update_item_model(item_model) 
+        
+        
+class Update(ActionStep, UpdateMixin):
+    
+    def __init__(self, changed_ranges):
+        self.changed_ranges = changed_ranges
+        
+    def gui_run(self, item_model):
+        self.update_item_model(item_model)     
+        
+        
+class Deleted(RowCount, UpdateMixin):
+    
+    def __init__(self, rows, changed_ranges):
+        super(Deleted, self).__init__(rows)
+        self.changed_ranges = changed_ranges
+        
+    def gui_run(self, item_model):
+        self.update_item_model(item_model)
+        RowCount.gui_run(self, item_model)    
+
+
+class SetData(Update): 
+    
+    def __init__(self, changed_ranges, created_objects, updated_objects, deleted_objects):
+        super(SetData, self).__init__(changed_ranges)
+        self.created_objects = created_objects
+        self.updated_objects = updated_objects
+        self.deleted_objects = deleted_objects
+        
+    def gui_run(self, item_model):
+        super(SetData, self).gui_run(item_model)
+        signal_handler = item_model._crud_signal_handler
+        signal_handler.send_objects_created(item_model, self.created_objects)
+        signal_handler.send_objects_updated(item_model, self.updated_objects)
+        signal_handler.send_objects_deleted(item_model, self.deleted_objects)     
