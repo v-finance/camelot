@@ -37,7 +37,7 @@ from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
-from ...core.qt import QtCore, Qt, QtWidgets
+from ...core.qt import QtCore, Qt, QtWidgets, QtQuick
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
 
@@ -342,4 +342,7 @@ class UpdateActionsState(ActionStep):
             if qobject is None:
                 LOGGER.warn('Cannot update rendered action, QObject child {} not found'.format(rendered_action_route))
                 continue
-            qobject.set_state(action_state)
+            if isinstance(qobject, QtQuick.QQuickItem):
+                qobject.setProperty('state', action_state._to_dict())
+            else:
+                qobject.set_state(action_state)

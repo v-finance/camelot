@@ -679,7 +679,8 @@ class TableView(AbstractView):
         """Set all the actions (filters, list actions and toolbar actions).
         :param actions: A list of serialized :class:`camelot.admin.admin_route.RouteWithRenderHint` objects
         """
-        self.set_filters([action['route'] for action in actions if action['render_hint'] in [RenderHint.COMBO_BOX.value, RenderHint.GROUP_BOX.value]], action_states)
+        filter_render_hints = [RenderHint.COMBO_BOX.value, RenderHint.EXCLUSIVE_GROUP_BOX.value, RenderHint.NON_EXCLUSIVE_GROUP_BOX.value]
+        self.set_filters([action['route'] for action in actions if action['render_hint'] in filter_render_hints], action_states)
         self.set_list_actions([action['route'] for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value], action_states)
         self.set_toolbar_actions(
             Qt.TopToolBarArea,
