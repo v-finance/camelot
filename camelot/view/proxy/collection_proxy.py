@@ -292,7 +292,7 @@ class RowCount(object):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
 
-class Deleted(RowCount, UpdateMixin):
+class Deleted(RowCount, Action, UpdateMixin):
 
     def __init__(self, objects, rows_in_view):
         """
@@ -304,6 +304,7 @@ class Deleted(RowCount, UpdateMixin):
         self.rows_in_view = rows_in_view
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         row = None
         objects_to_remove = set()
         #
@@ -338,13 +339,9 @@ class Deleted(RowCount, UpdateMixin):
         if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
             super(Deleted, self).model_run(model_context)
-        return self
+        yield action_steps.Deleted(self.rows, self.changed_ranges)
 
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
-        RowCount.gui_run(self, item_model)
-
-
+    
 class Filter(RowCount):
 
     def __init__(self, action, old_value, new_value):
