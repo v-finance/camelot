@@ -62,7 +62,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         self.gui_context.workspace = self
 
         self.setObjectName('workspace_tab_widget')
-        self.setTabPosition(QtWidgets.QTabWidget.East)
+        self.setTabPosition(QtWidgets.QTabWidget.North)
         self.setDocumentMode(True)
         self.currentChanged.connect(self._tab_changed)
 
