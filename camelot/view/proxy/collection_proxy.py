@@ -535,7 +535,7 @@ class SetData(Update):
         signal_handler.send_objects_updated(item_model, self.updated_objects)
         signal_handler.send_objects_deleted(item_model, self.deleted_objects)        
 
-class Created(UpdateMixin):
+class Created(Action, UpdateMixin):
     """
     Does not subclass RowCount, because row count will reset the whole edit
     cache.
@@ -554,6 +554,7 @@ class Created(UpdateMixin):
         )
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
         for obj in self.objects:
@@ -563,12 +564,7 @@ class Created(UpdateMixin):
                 continue
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        return self
-        
-    def gui_run(self, item_model):
-        # appending new items to the model will increase the rowcount, so
-        # there is no need to set the rowcount explicitly
-        self.update_item_model(item_model)    
+        yield action_steps.Created(self.changed_ranges) 
 
     
 class Sort(RowCount):
