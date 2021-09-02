@@ -412,7 +412,7 @@ class RowData(Update):
         return '{0.__class__.__name__}(rows={1}, cols={2})'.format(
             self, repr(self.rows), repr(self.cols))
 
-class SetData(Update):
+class SetData(Update, Action):
 
     def __init__(self, updates):
         super(SetData, self).__init__(None)
@@ -428,6 +428,7 @@ class SetData(Update):
         )
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj, column, value in self.updates:
@@ -526,15 +527,9 @@ class SetData(Update):
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
         self.deleted_objects = tuple(deleted_objects)
-        return self
+        yield action_steps.SetData(self.changed_ranges, self.created_objects, self.updated_objects, self.deleted_objects)
 
-    def gui_run(self, item_model):
-        super(SetData, self).gui_run(item_model)
-        signal_handler = item_model._crud_signal_handler
-        signal_handler.send_objects_created(item_model, self.created_objects)
-        signal_handler.send_objects_updated(item_model, self.updated_objects)
-        signal_handler.send_objects_deleted(item_model, self.deleted_objects)        
-
+   
 class Created(Action, UpdateMixin):
     """
     Does not subclass RowCount, because row count will reset the whole edit
