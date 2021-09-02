@@ -590,15 +590,15 @@ class Sort(RowCount):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
 
 
-class Completion(object):
-
+class Completion(Action):
+      
     def __init__(self, row, column, prefix):
         self.row = row
         self.column = column
         self.prefix = prefix
-        self.completions = None
 
     def model_run(self, model_context):
+        from camelot.view import action_steps  
         field_name = model_context.static_field_attributes[self.column]['field_name']
         admin = model_context.static_field_attributes[self.column]['admin']
         object_slice = list(model_context.proxy[self.row:self.row+1])
@@ -611,36 +611,21 @@ class Completion(object):
             field_name,
             self.prefix,
         )
-        if completions is None:
-            # the field does not support autocompletions
-            self.completions = []
-        else:
-            self.completions = [admin.get_search_identifiers(e) for e in completions]
-        return self
-
-    def gui_run(self, item_model):
-        root_item = item_model.invisibleRootItem()
-        if is_deleted(root_item):
-            return
-        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
-        child = root_item.child(self.row, self.column)
-        if child is not None:
-            child.setData(self.prefix, CompletionPrefixRole)
-            child.setData(self.completions, CompletionsRole)
-        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+        # Empty if the field does not support autocompletions
+        completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
+        yield action_steps.Completion(self.row, self.column, self.prefix, completions)
 
     def __repr__(self):
         return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
 
 
-class SetColumns(object):
+class SetColumns(Action):
 
     def __init__(self, columns):
         """
         :param columns: a list with field names
         """
         self.columns = list(columns)
-        self.static_field_attributes = None
 
     def __repr__(self):
         return '{0.__class__.__name__}(columns=[{1}...])'.format(
@@ -649,80 +634,20 @@ class SetColumns(object):
         )
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         model_context.static_field_attributes = list(
             model_context.admin.get_static_field_attributes(self.columns)
         )
         # creating the header items should be done here instead of in the gui
         # run
-        self.static_field_attributes = model_context.static_field_attributes
-        return self
+        #static_field_attributes = list()
+        #future code
+        #for fa in model_context.static_field_attributes:
+            #included_attrs = ['name', 'field_name', 'editable', 'nullable', 'colmn_width']
+            #static_field_attributes.append({attr: fa[attr] for attr in included_attrs})
+        yield action_steps.SetColumns(model_context.static_field_attributes)
 
-    def gui_run(self, item_model):
-        item_model.beginResetModel()
-        item_model.settings.beginGroup( 'column_width' )
-        item_model.settings.beginGroup( '0' )
-        #
-        # this loop can take a while to complete
-        #
-        font_metrics = QtGui.QFontMetrics(item_model._header_font_required)
-        char_width = font_metrics.averageCharWidth()
-        #
-        # increase the number of columns at once, since this is slow, and
-        # setHorizontalHeaderItem will increase the number of columns one by one
-        #
-        item_model.setColumnCount(len(self.static_field_attributes))
-        for i, fa in enumerate(self.static_field_attributes):
-            verbose_name = str(fa['name'])
-            field_name = fa['field_name']
-            header_item = QtGui.QStandardItem()
-            set_header_data = header_item.setData
-            #
-            # Set the header data
-            #
-            fa_copy = fa.copy()
-            fa_copy.setdefault('editable', True)
-            set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
-            set_header_data(fa_copy, FieldAttributesRole)
-            if fa.get( 'nullable', True ) == False:
-                set_header_data(item_model._header_font_required, Qt.FontRole)
-            else:
-                set_header_data(item_model._header_font, Qt.FontRole)
-
-            settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
-            if settings_width > 0:
-                width = settings_width
-            else:
-                width = fa['column_width'] * char_width
-            header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
-            item_model.setHorizontalHeaderItem( i, header_item )
-        item_model.settings.endGroup()
-        item_model.settings.endGroup()
-        item_model.endResetModel()
-
-class SetHeaderData(object):
-
-    def __init__(self, column, width):
-        self.column = column
-        self.width = width
-        self.field_name = None
-
-    def __repr__(self):
-        return '{0.__class__.__name__}({0.column}, {0.width})'.format(self)
-
-    def model_run(self, model_context):
-        self.field_name = model_context.static_field_attributes[self.column]['field_name']
-        return self
-
-    def gui_run(self, item_model):
-        item_model.settings.beginGroup('column_width')
-        item_model.settings.beginGroup('0')
-        item_model.settings.setValue(self.field_name, self.width)
-        item_model.settings.endGroup()
-        item_model.settings.endGroup()
-
-
+    
 class ChangeSelection:
 
     def __init__(self, action_routes, model_context):
@@ -901,7 +826,9 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
                 if isinstance(request, Action):
-                    self._crud_update(request)
+                    from camelot.view.action_runner import ActionRunner
+                    runner = ActionRunner( request.model_run, self)
+                    runner.exec_()
                 else:
                     post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
 
@@ -963,8 +890,14 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.error('exception during update {0}'.format(crud_request),
                               exc_info=e
                               )
-        
-
+    # Methods to behave like a GuiContext.
+    def create_model_context(self):
+        return self._model_context
+    
+    def get_progress_dialog(self):
+        pass
+    # End of methods to behave like a GuiContext.  
+    
     def refresh(self):
         self.logger.debug('refresh called')
         self._reset()
@@ -1105,10 +1038,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
-        if orientation == Qt.Horizontal:
-            if role == Qt.SizeHintRole:
-                width = value.width()
-                self._append_request(SetHeaderData(section, width))
+        if orientation == Qt.Horizontal and role == Qt.SizeHintRole:
+            item = self.verticalHeaderItem(section)
+            if item is not None:
+                item.setData(value.width(), role)
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):

@@ -49,6 +49,7 @@ from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
+from .crud import SetColumns, Completion
 
 __all__ = [
     ChangeField.__name__,
@@ -56,6 +57,7 @@ __all__ = [
     ChangeObjects.__name__,
     ClearSelection.__name__,
     CloseView.__name__,
+    Completion.__name__,
     CreateObjects.__name__,
     DeleteObjects.__name__,
     EditTextDocument.__name__,
@@ -86,6 +88,7 @@ __all__ = [
     SelectObjects.__name__,
     SelectSubclass.__name__,
     SetFilter.__name__,
+    SetColumns.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
