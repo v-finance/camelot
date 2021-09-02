@@ -6,6 +6,38 @@ from ...admin.action.base import ActionStep
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
 from ...core.item_model import FieldAttributesRole, CompletionPrefixRole, CompletionsRole
 
+class UpdateMixin(object):
+    
+    def update_item_model(self, item_model):
+        root_item = item_model.invisibleRootItem()
+        if is_deleted(root_item):
+            return
+        logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
+        row_range = (item_model.rowCount(), -1)
+        column_range = (item_model.columnCount(), -1)
+        for row, header_item, items in self.changed_ranges:
+            row_range = (min(row, row_range[0]), max(row, row_range[1]))
+            # Setting the vertical header item causes the table to scroll
+            # back to its open editor.  However setting the header item every
+            # time data has changed is needed to signal other parts of the
+            # gui that the object itself has changed.
+            item_model.setVerticalHeaderItem(row, header_item)
+            for column, item in items:
+                column_range = (min(column, column_range[0]), max(column, column_range[1]))
+                root_item.setChild(row, column, item)
+        
+        logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
+
+
+class RowCount(ActionStep):
+    
+    def __init__(self, rows):
+        self.rows = rows   
+    
+    def gui_run(self, item_model):
+        if self.rows is not None:
+            item_model._refresh_content(self.rows)    
+
 class SetColumns(ActionStep):
     
     def __init__(self, static_field_attributes):
@@ -74,4 +106,14 @@ class Completion(ActionStep):
             child.setData(self.prefix, CompletionPrefixRole)
             child.setData(self.completions, CompletionsRole)
         logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+
+
+class Created(ActionStep, UpdateMixin):
     
+    def __init__(self, changed_ranges):
+        self.changed_ranges = changed_ranges
+        
+    def gui_run(self, item_model):
+        # appending new items to the model will increase the rowcount, so
+        # there is no need to set the rowcount explicitly
+        self.update_item_model(item_model)    

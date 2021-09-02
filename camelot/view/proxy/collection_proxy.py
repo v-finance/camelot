@@ -220,25 +220,6 @@ class UpdateMixin(object):
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
-    def update_item_model(self, item_model):
-        root_item = item_model.invisibleRootItem()
-        if is_deleted(root_item):
-            return
-        logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
-        row_range = (item_model.rowCount(), -1)
-        column_range = (item_model.columnCount(), -1)
-        for row, header_item, items in self.changed_ranges:
-            row_range = (min(row, row_range[0]), max(row, row_range[1]))
-            # Setting the vertical header item causes the table to scroll
-            # back to its open editor.  However setting the header item every
-            # time data has changed is needed to signal other parts of the
-            # gui that the object itself has changed.
-            item_model.setVerticalHeaderItem(row, header_item)
-            for column, item in items:
-                column_range = (min(column, column_range[0]), max(column, column_range[1]))
-                root_item.setChild(row, column, item)
-        
-        logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))
 
 class Update(UpdateMixin):
 
@@ -271,22 +252,19 @@ class Update(UpdateMixin):
     def __repr__(self):
         return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
 
-class RowCount(object):
+class RowCount(Action):
 
     def __init__(self):
         self.rows = None
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         self.rows = len(model_context.proxy)
         # clear the whole cache, there might be more efficient means to 
         # do this
         model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
-        return self
-
-    def gui_run(self, item_model):
-        if self.rows is not None:
-            item_model._refresh_content(self.rows)
+        yield action_steps.RowCount(self.rows)
 
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
@@ -538,7 +516,7 @@ class SetData(Update):
         signal_handler.send_objects_updated(item_model, self.updated_objects)
         signal_handler.send_objects_deleted(item_model, self.deleted_objects)        
 
-class Created(UpdateMixin):
+class Created(Action, UpdateMixin):
     """
     Does not subclass RowCount, because row count will reset the whole edit
     cache.
@@ -557,6 +535,7 @@ class Created(UpdateMixin):
         )
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
         for obj in self.objects:
@@ -566,13 +545,9 @@ class Created(UpdateMixin):
                 continue
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        return self
+        yield action_steps.Created(self.changed_ranges)
 
-    def gui_run(self, item_model):
-        # appending new items to the model will increase the rowcount, so
-        # there is no need to set the rowcount explicitly
-        self.update_item_model(item_model)
-
+    
 class Sort(RowCount):
 
     def __init__(self, column, order):

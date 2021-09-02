@@ -49,7 +49,7 @@ from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
-from .crud import SetColumns, Completion
+from .crud import SetColumns, Completion, Created, RowCount
 
 __all__ = [
     ChangeField.__name__,
@@ -58,6 +58,7 @@ __all__ = [
     ClearSelection.__name__,
     CloseView.__name__,
     Completion.__name__,
+    Created.__name__,
     CreateObjects.__name__,
     DeleteObjects.__name__,
     EditTextDocument.__name__,
@@ -81,6 +82,7 @@ __all__ = [
     Refresh.__name__,
     RefreshItemView.__name__,
     RemoveTranslators.__name__,
+    RowCount.__name__,
     SaveFile.__name__,
     SelectDirectory.__name__,
     SelectFile.__name__,
