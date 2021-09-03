@@ -232,7 +232,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         #main_menu = self._write_read(main_menu)
         #main_menu.gui_run(self.gui_context)
 
-
+import gc
 class ListActionsCase(
     RunningThreadCase,
     GrabMixinCase, ExampleModelMixinCase, QueryQStandardItemModelMixinCase):
@@ -251,12 +251,14 @@ class ListActionsCase(
         )
         cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
         cls.process()
+        gc.disable()
 
     @classmethod
     def tearDownClass(cls):
         cls.thread.post(cls.tear_down_sample_model)
         cls.process()
         super().tearDownClass()
+        gc.enable()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
@@ -336,7 +338,6 @@ class ListActionsCase(
         openpyxl.load_workbook(filename)
 
     def test_save_restore_export_mapping(self):
-
         admin = app_admin.get_related_admin(Movie)
 
         settings = utils.get_settings(admin.get_admin_route()[-1])
@@ -443,7 +444,7 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = self.gui_run(action, self.gui_context)
+        steps = action.model_run(self.gui_context.create_model_context())
         for step in steps:
             if isinstance(step, action_steps.ChangeField):
                 dialog = step.render()
@@ -589,6 +590,7 @@ class ListActionsCase(
                     cm = party.ContactMechanism( mechanism = m )
                     pcm = party.PartyContactMechanism( party = person,
                                                        contact_mechanism = cm )
+                    
                     # immediately update the GUI
                     yield action_steps.CreateObjects((cm,))
                     yield action_steps.CreateObjects((pcm,))
@@ -621,15 +623,15 @@ class ListActionsCase(
                                                            int(soc_number[4:6]),
                                                            int(soc_number[6:8])
                                                            )
-                        # delete the email of the person
-                        for contact_mechanism in person.contact_mechanisms:
-                            model_context.session.delete( contact_mechanism )
-                        # add a new email
-                        m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                            person.last_name ) )
-                        cm = party.ContactMechanism( mechanism = m )
-                        party.PartyContactMechanism( party = person,
-                                                    contact_mechanism = cm )
+                    # delete the email of the person
+                    for contact_mechanism in person.contact_mechanisms:
+                        model_context.session.delete( contact_mechanism )
+                    # add a new email
+                    m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                        person.last_name ) )
+                    cm = party.ContactMechanism( mechanism = m )
+                    party.PartyContactMechanism( party = person,
+                                                contact_mechanism = cm )
                 # flush the session on finish and update the GUI
                 yield action_steps.FlushSession( model_context.session )
 
