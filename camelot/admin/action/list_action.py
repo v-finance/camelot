@@ -283,7 +283,7 @@ class EditAction( ListContextAction ):
             state.enabled = False
         return state
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         admin = model_context.admin
         if not admin.is_editable():
             raise RuntimeError("Action's model_run() called on noneditable entity")
@@ -299,7 +299,7 @@ class CloseList(Action):
     tooltip = _('Close')
     name = 'close'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.CloseView()
 
@@ -331,7 +331,7 @@ class OpenFormView( ListContextAction ):
     verbose_name = None
     name = 'open_form_view'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(model_context.get_object(), model_context.proxy, admin=model_context.admin)
 
@@ -353,9 +353,9 @@ class DuplicateSelection( EditAction ):
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         admin = model_context.admin
         new_objects = list()
         updated_objects = set()
@@ -402,9 +402,9 @@ class DeleteSelection( EditAction ):
         gui_context.item_view.model().refresh()
         gui_context.item_view.clearSelection()
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         admin = model_context.admin
         if model_context.selection_count <= 0:
             return
@@ -562,7 +562,7 @@ class ClearMapping(Action):
     verbose_name = _('Clear')
     name = 'clear_mapping'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
 
         cleared_mappings = list()
@@ -585,7 +585,7 @@ class ExportSpreadsheet( ListContextAction ):
     max_width = 40
     font_name = 'Calibri'
     
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from decimal import Decimal
         from camelot.view.import_utils import (
             ColumnMapping, ColumnSelectionAdmin
@@ -753,7 +753,7 @@ class PrintPreview( ListContextAction ):
     verbose_name = _('Print Preview')
     name = 'print'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         admin = model_context.admin
         columns = admin.get_columns()
@@ -795,7 +795,7 @@ class ImportFromFile( EditAction ):
     tooltip = _('Import from file')
     name = 'import'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         import os.path
         import chardet
         from camelot.view import action_steps
@@ -805,7 +805,7 @@ class ImportFromFile( EditAction ):
                                                 XlsReader,
                                                 ColumnMapping,
                                                 ColumnMappingAdmin )
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         admin = model_context.admin
         file_names = yield action_steps.SelectFile()
         for file_name in file_names:
@@ -906,9 +906,9 @@ class ReplaceFieldContents( EditAction ):
         gui_context.item_view.close_editor()
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
             field_name = model_context.current_field_name
@@ -961,17 +961,17 @@ class SetFilters(Action, AbstractModelFilter):
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
 
-        if model_context.mode_name == '__clear':
+        if mode == '__clear':
             new_filter_value = {}
-        elif model_context.mode_name is None:
+        elif mode is None:
             new_filter_value = {}
         else:
             filter_value = model_context.proxy.get_filter(self) or {}
-            filter_field_name = model_context.mode_name
+            filter_field_name = mode
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
@@ -1050,10 +1050,10 @@ class AddExistingObject( EditAction ):
     icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     name = 'add_object'
     
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
@@ -1083,7 +1083,7 @@ class AddNewObjectMixin(object):
         return new_object
         yield
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         admin = self.get_admin(model_context)
         assert admin is not None # required by vfinance/test/test_facade/test_asset.py
@@ -1147,24 +1147,3 @@ class RemoveSelection(DeleteSelection):
         yield None
 
 remove_selection = RemoveSelection()
-
-class ActionGroup(EditAction):
-    """Group a number of actions in a pull down"""
-
-    tooltip = _('More')
-    icon = Icon('cog') # 'tango/16x16/emblems/emblem-system.png'
-    actions = (ImportFromFile(), ReplaceFieldContents())
-    name = 'import_replace'
-    
-    def get_state(self, model_context):
-        state = super(ActionGroup, self).get_state(model_context)
-        state.modes = [
-            Mode(str(i), a.verbose_name, a.icon) for i, a in enumerate(self.actions)
-        ]
-        return state
-    
-    def model_run(self, model_context):
-        super().model_run(model_context)
-        if model_context.mode_name is not None:
-            action = self.actions[int(model_context.mode_name)]
-            yield from action.model_run(model_context)

@@ -74,7 +74,7 @@ class ChangeLogging( Action ):
     def connection_checkin(cls, dbapi_connection, connection_record):
         LOGGER.info('checkin connection {0}'.format(id(dbapi_connection)))
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         
         from sqlalchemy import event
