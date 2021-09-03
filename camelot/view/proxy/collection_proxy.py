@@ -240,13 +240,14 @@ class UpdateMixin(object):
         
         logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
 
-class Update(UpdateMixin):
+class Update(Action, UpdateMixin):
 
     def __init__(self, objects):
         self.objects = objects
         self.changed_ranges = []
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         for obj in self.objects:
             try:
                 row = model_context.proxy.index(obj)
@@ -263,10 +264,8 @@ class Update(UpdateMixin):
             else:
                 logger.debug('evaluate changes in row {0}'.format(row))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        return self
+        yield action_steps.Update(self.changed_ranges)
 
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
 
     def __repr__(self):
         return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
@@ -399,20 +398,19 @@ class RowData(Update):
         return (offset, limit)
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         offset, limit = self.offset_and_limit_rows_to_get()
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
             self.changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
-        return self
+        yield action_steps.Update(self.changed_ranges)
 
-    def gui_run(self, item_model):
-        super(RowData, self).gui_run(item_model)
             
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1}, cols={2})'.format(
             self, repr(self.rows), repr(self.cols))
 
-class SetData(Update, Action):
+class SetData(Update):
 
     def __init__(self, updates):
         super(SetData, self).__init__(None)

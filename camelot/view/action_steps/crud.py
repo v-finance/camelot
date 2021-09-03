@@ -31,6 +31,8 @@ class UpdateMixin(object):
 
 class RowCount(ActionStep):
     
+    blocking = False
+    
     def __init__(self, rows):
         self.rows = rows   
     
@@ -39,6 +41,8 @@ class RowCount(ActionStep):
             item_model._refresh_content(self.rows)    
 
 class SetColumns(ActionStep):
+    
+    blocking = False
     
     def __init__(self, static_field_attributes):
         self.static_field_attributes = static_field_attributes
@@ -90,6 +94,8 @@ class SetColumns(ActionStep):
 
 class Completion(ActionStep):
     
+    blocking = False
+    
     def __init__(self, row, column, prefix, completion):
         self.row = row
         self.column = column
@@ -110,6 +116,8 @@ class Completion(ActionStep):
 
 class Created(ActionStep, UpdateMixin):
     
+    blocking = False
+    
     def __init__(self, changed_ranges):
         self.changed_ranges = changed_ranges
         
@@ -120,6 +128,8 @@ class Created(ActionStep, UpdateMixin):
         
         
 class Update(ActionStep, UpdateMixin):
+    
+    blocking = False
     
     def __init__(self, changed_ranges):
         self.changed_ranges = changed_ranges
