@@ -588,8 +588,14 @@ class QueryQStandardItemModelCase(
         cls.thread.post(cls.load_example_data)
         cls.process()
 
+    @classmethod
+    def tearDownClass(cls):
+        super(QueryQStandardItemModelCase, cls).tearDownClass()
+        cls.tear_down_sample_model()
+        
     def setUp(self):
         super(QueryQStandardItemModelCase, self).setUp()
+        self.session.expunge_all()
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
