@@ -37,7 +37,7 @@ from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
-from ...core.qt import QtCore, Qt, QtWidgets
+from ...core.qt import QtCore, Qt, QtWidgets, QtQuick
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
 
@@ -63,7 +63,7 @@ class Exit(ActionStep, DataclassSerializable):
         QtCore.QCoreApplication.exit(self.return_code)
 
 @dataclass
-class MainWindow(ActionStep):
+class MainWindow(ActionStep, DataclassSerializable):
     """
     Open a top level application window
     
@@ -77,20 +77,24 @@ class MainWindow(ActionStep):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
     window_title: str = field(init=False)
 
-    def __post_init__(self):
-        self.window_title = self.admin.get_name()
+    admin_route: Route = field(init=False)
 
-    def render(self, gui_context):
+    def __post_init__(self, admin):
+        self.window_title = admin.get_name()
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def render(cls, gui_context, step):
         """create the main window. this method is used to unit test
         the action step."""
         from ..mainwindowproxy import MainWindowProxy
 
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
-        main_window_context.admin = self.admin
+        main_window_context.admin = AdminRoute.admin_for(tuple(step["admin_route"]))
 
         # Check if a QMainWindow already exists
         window = None
@@ -108,11 +112,13 @@ class MainWindow(ActionStep):
         )
 
         gui_context.workspace = main_window_context.workspace
-        main_window_proxy.parent().setWindowTitle(self.window_title)
+        main_window_proxy.parent().setWindowTitle(step["window_title"])
         return main_window_proxy.parent()
 
-    def gui_run(self, gui_context):
-        main_window = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        main_window = cls.render(gui_context, step)
         if main_window.statusBar() is not None:
             main_window.statusBar().hide()
         main_window.show()
@@ -205,9 +211,27 @@ class MainMenu(ActionStep, DataclassSerializable):
 
     blocking = False
     menu: MenuItem
+    action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
+    model_context: InitVar(ModelContext) = None
+
+    def __post_init__(self, model_context):
+        self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
-    def render(cls, gui_context, items, parent_menu):
+    def _add_action_states(self, model_context, items, action_states):
+        """
+        Recurse through a menu and get the state for all actions in the menu
+        """
+        for item in items:
+            self._add_action_states(model_context, item.items, action_states)
+            action_route = item.action_route
+            if action_route is not None:
+                action = AdminRoute.action_for(action_route)
+                state = action.get_state(model_context)
+                action_states.append((action_route, state))
+
+    @classmethod
+    def render(cls, gui_context, items, parent_menu, action_states):
         """
         :return: a :class:`QtWidgets.QMenu` object
         """
@@ -218,10 +242,17 @@ class MainMenu(ActionStep, DataclassSerializable):
             elif item["verbose_name"] is not None:
                 menu = QtWidgets.QMenu(item["verbose_name"], parent_menu)
                 parent_menu.addMenu(menu)
-                cls.render(gui_context, item["items"], menu)
+                cls.render(gui_context, item["items"], menu, action_states)
             elif item["action_route"] is not None:
                 action = AdminRoute.action_for(tuple(item["action_route"]))
                 qaction = ActionAction(action, gui_context, parent_menu)
+                state = None
+                for action_state in action_states:
+                    if action_state[0] == item["action_route"]:
+                        state = action_state[1]
+                        break
+                if state is not None:
+                    qaction.set_state_v2(state)
                 parent_menu.addAction(qaction)
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
@@ -236,11 +267,11 @@ class MainMenu(ActionStep, DataclassSerializable):
             return
         step = json.loads(serialized_step)
         menu_bar = main_window.menuBar()
-        self.render(gui_context, step["menu"]["items"], menu_bar)
+        self.render(gui_context, step["menu"]["items"], menu_bar, step["action_states"])
         menu_bar.setCornerWidget(BusyWidget())
 
 @dataclass
-class InstallTranslator(ActionStep):
+class InstallTranslator(ActionStep, DataclassSerializable):
     """
     Install a translator in the application.  Ownership of the translator will
     be moved to the application.
@@ -250,11 +281,17 @@ class InstallTranslator(ActionStep):
 
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
+    admin_route: AdminRoute = field(init=False)
 
-    def gui_run(self, gui_context):
+    def __post_init__(self, admin):
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         app = QtCore.QCoreApplication.instance()
-        translator = self.admin.get_translator()
+        translator = AdminRoute.admin_for(tuple(step["admin_route"])).get_translator()
         if isinstance(translator, list):
             for t in translator:
                 t.setParent(app)
@@ -263,7 +300,7 @@ class InstallTranslator(ActionStep):
             app.installTranslator(translator)
 
 @dataclass
-class RemoveTranslators(ActionStep):
+class RemoveTranslators(ActionStep, DataclassSerializable):
     """
     Unregister all previously installed translators from the application.
 
@@ -271,9 +308,14 @@ class RemoveTranslators(ActionStep):
         object
     """
 
-    admin: ApplicationAdmin
+    admin: InitVar[ApplicationAdmin]
+    admin_route: AdminRoute = field(init=False)
 
-    def gui_run(self, gui_context):
+    def __post_init__(self, admin):
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         app = QtCore.QCoreApplication.instance()
         for active_translator in app.findChildren(QtCore.QTranslator):
             app.removeTranslator(active_translator)
@@ -300,4 +342,7 @@ class UpdateActionsState(ActionStep):
             if qobject is None:
                 LOGGER.warn('Cannot update rendered action, QObject child {} not found'.format(rendered_action_route))
                 continue
-            qobject.set_state(action_state)
+            if isinstance(qobject, QtQuick.QQuickItem):
+                qobject.setProperty('state', action_state._to_dict())
+            else:
+                qobject.set_state(action_state)

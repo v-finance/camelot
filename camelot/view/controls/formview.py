@@ -28,18 +28,23 @@
 #  ============================================================================
 
 """form view"""
-
+import json
 import logging
+
+from ...core.serializable import NamedDataclassSerializable
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
 
+from camelot.admin.admin_route import AdminRoute
+from camelot.admin.action.base import State
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
+from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager
 
@@ -176,7 +181,9 @@ class FormWidget(QtWidgets.QWidget):
                 self.create_widgets(
                     widget_mapper,
                     self.columns,
-                    self.form_display,
+                    # Serialize the admin's form display again when the layout has changed, e.g. to pick up different tab labels with different locales.
+                    #self.form_display,
+                    self.admin.get_form_display()._to_bytes(),
                     self.admin
                 )
             # after a layout change, the row we want to display might be there
@@ -211,7 +218,15 @@ class FormWidget(QtWidgets.QWidget):
         widgets = FormEditors(self, columns, admin)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
-        self.layout().insertWidget(0, form_display.render( widgets, self, True) )
+        if isinstance(form_display, bytes):
+            form_display = json.loads(form_display)
+        assert isinstance(form_display, (tuple, list))
+        cls = NamedDataclassSerializable.get_cls_by_name(form_display[0])
+        self.layout().insertWidget(0, cls.render(widgets, form_display[1], self, True))
+        """
+            Filtermechanisme op basis van classname
+            (Gewoon compatibel maken met dict structuur)
+        """
         ## give focus to the first editor in the form that can receive focus
         # this results in weird behavior on Mac, where the editor get focus
         # from the OS and then immediately gets input
@@ -266,6 +281,10 @@ class FormView(AbstractView):
         self.setLayout( layout )
         self.change_title(title)
 
+        model.action_state_changed_signal.connect(self.action_state_changed)
+        self.gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
+        self.gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+
         if hasattr(admin, 'form_size') and admin.form_size:
             self.setMinimumSize(admin.form_size[0], admin.form_size[1])
 
@@ -287,31 +306,47 @@ class FormView(AbstractView):
             self.change_title(u'')
 
     @QtCore.qt_slot(list)
-    def set_actions(self, actions):
+    def set_actions(self, action_routes, action_states):
         form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
-        if actions and form and layout:
+        if action_routes and form and layout:
+            route2state = {}
+            for action_state in action_states:
+                route2state[tuple(action_state[0])] = action_state[1]
             side_panel_layout = QtWidgets.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
             actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            for action in actions:
-                actions_widget.layout().addWidget(
-                    self.render_action(action, actions_widget)
-                )
+            for action_route in action_routes:
+                action = AdminRoute.action_for(tuple(action_route))
+                action_widget = self.render_action(action, actions_widget)
+                self.model.add_action_route(tuple(action_route))
+                state = route2state.get(tuple(action_route))
+                if state is not None:
+                    action_widget.set_state(state)
+                actions_widget.layout().addWidget(action_widget)
             side_panel_layout.addWidget(actions_widget)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(list)
-    def set_toolbar_actions(self, actions):
+    def set_toolbar_actions(self, action_routes, action_states):
         layout = self.findChild( QtWidgets.QLayout, 'layout' )
-        if layout and actions:
+        if layout and action_routes:
+            route2state = {}
+            for action_state in action_states:
+                route2state[tuple(action_state[0])] = action_state[1]
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
-            for action in actions:
-                toolbar.addWidget(self.render_action(action, toolbar))
+            for action_route in action_routes:
+                action = AdminRoute.action_for(tuple(action_route))
+                action_widget = self.render_action(action, toolbar)
+                self.model.add_action_route(tuple(action_route))
+                state = route2state.get(tuple(action_route))
+                if state is not None:
+                    action_widget.set_state(state)
+                toolbar.addWidget(action_widget)
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
             # @todo : this show is needed on OSX or the form window
@@ -319,6 +354,25 @@ class FormView(AbstractView):
             # be solved using windowflags, since this causes some
             # flicker
             self.show()
+
+    @QtCore.qt_slot(tuple, State)
+    def action_state_changed(self, route, state):
+        action = AdminRoute.action_for(route)
+        action_name = self.gui_context.action_routes[action]
+        action_widget = self.findChild(AbstractActionWidget, action_name)
+        action_widget.set_state(state)
+
+    def current_row_changed( self, current=None, previous=None ):
+        current_index = self.gui_context.widget_mapper.currentIndex()
+        self.model.change_selection(None, current_index)
+
+    def header_data_changed(self, orientation, first, last):
+        if orientation==Qt.Horizontal:
+            return
+        # the model might emit a dataChanged signal, while the widget mapper
+        # has been deleted
+        if not is_deleted(self.gui_context.widget_mapper):
+            self.current_row_changed(first)
 
     @QtCore.qt_slot()
     def validate_close( self ):

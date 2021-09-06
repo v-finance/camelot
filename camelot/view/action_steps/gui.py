@@ -30,22 +30,23 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+import functools
+import json
 from typing import Any, List, Tuple
 
-from dataclasses import dataclass
-
-from ...core.qt import QtCore, QtWidgets, is_deleted
-
-
+from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from ...core.qt import QtCore, QtWidgets, is_deleted
+from ...core.serializable import DataclassSerializable
+
 
 @dataclass
-class UpdateEditor(ActionStep):
+class UpdateEditor(ActionStep, DataclassSerializable):
     """This step should be used in the context of an editor action.  It
     will update an attribute of the editor.
 
@@ -59,15 +60,17 @@ class UpdateEditor(ActionStep):
     value: Any
     propagate: bool = False
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         if is_deleted(gui_context.editor):
             return
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
+        setattr(gui_context.editor, step["attribute"], step["value"])
+        if step["propagate"]:
             gui_context.editor.editingFinished.emit()
 
 @dataclass
-class Refresh( ActionStep ):
+class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
 
@@ -183,7 +186,7 @@ class SelectSubclass(SelectItem):
 
 
 @dataclass
-class CloseView( ActionStep ):
+class CloseView(ActionStep, DataclassSerializable):
     """
     Close the view that triggered the action, if such a view is available.
 
@@ -197,13 +200,15 @@ class CloseView( ActionStep ):
 
     accept: bool = True
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run( cls, gui_context, serialized_step ):
+        step = json.loads(serialized_step)
         view = gui_context.view
         if view != None:
-            view.close_view( self.accept )
+            view.close_view( step["accept"] )
 
 @dataclass
-class MessageBox( ActionStep ):
+class MessageBox( ActionStep, DataclassSerializable ):
     """
     Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
     of this action are the same as those of the :class:`QtWidgets.QMessageBox`
@@ -223,12 +228,12 @@ class MessageBox( ActionStep ):
 
     """
 
-    default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
-
     text: _
-    icon: QtWidgets = QtWidgets.QMessageBox.Information
+    icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Information
     title: _ = _('Message')
-    standard_buttons: QtWidgets = default_buttons
+    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Cancel])
+    informative_text: str = field(init=False)
+    detailed_text: str = field(init=False)
 
     def __post_init__(self):
         self.title = str(self.title)
@@ -236,19 +241,23 @@ class MessageBox( ActionStep ):
         self.informative_text = ''
         self.detailed_text = ''
 
-    def render(self):
+    @classmethod
+    def render(cls, step):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box = QtWidgets.QMessageBox(self.icon,
-                                            self.title,
-                                            self.text,
-                                            self.standard_buttons)
-        message_box.setInformativeText(str(self.informative_text))
-        message_box.setDetailedText(str(self.detailed_text))
+        message_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon(step["icon"]),
+                                            step["title"],
+                                            step["text"],
+                                            QtWidgets.QMessageBox.StandardButton(
+                                                functools.reduce(lambda a, b: a | b, step["standard_buttons"])))
+        message_box.setInformativeText(str(step["informative_text"]))
+        message_box.setDetailedText(str(step["detailed_text"]))
         return message_box
 
-    def gui_run(self, gui_context):
-        message_box = self.render()
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        message_box = cls.render(step)
         result = message_box.exec_()
         if result == QtWidgets.QMessageBox.Cancel:
             raise CancelRequest()

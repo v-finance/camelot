@@ -216,7 +216,7 @@ class UploadFile(FieldAction):
                     text = _('Do you want to remove the original file?'),
                     icon = QtWidgets.QMessageBox.Warning,
                     title = _('The file will be stored.'),
-                    standard_buttons = QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Yes
+                    standard_buttons = [QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes]
                     )
                 if reply == QtWidgets.QMessageBox.Yes:
                     remove = True
@@ -245,7 +245,7 @@ class DetachFile(FieldAction):
 
     def model_run(self, model_context):
         from camelot.view import action_steps
-        buttons = QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No
+        buttons = [QtWidgets.QMessageBox.Yes,QtWidgets.QMessageBox.No]
         answer = yield action_steps.MessageBox(title=self.message_title,
                                                text=self.message_text,
                                                standard_buttons=buttons)
