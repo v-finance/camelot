@@ -489,11 +489,10 @@ class FormTest(
         form_data = self._get_serialized_form_display_data(Movie.Admin.form_display)
         self.grab_widget(Movie.Admin.form_display.render(self.widgets, form_data))
         form = forms.Form( ['title', 'short_description',
-                            'director', 'releasedate'] )
+                            'director', 'releasedate',
+                            'tags', forms.Break(),
+                             forms.Label('End')] )
         form.remove_field( 'releasedate' )
-        form.add_field( 'tags' )
-        form.add_field( forms.Break() )
-        form.add_field( forms.Label('End') )
         self.assertTrue( str( form ) )
 
     def test_tab_form(self):

@@ -108,9 +108,6 @@ class AbstractForm(AbstractFormElement):
                 self.content.remove(original_field)
                 return True
         return False
-
-    def add_field(self, new_field):
-        self.content.append(new_field)
     
     def __str__(self):
         return 'AbstractForm(%s)' % (u','.join(str(c) for c in self.content))  
