@@ -109,22 +109,6 @@ class AbstractForm(AbstractFormElement):
                 return True
         return False
 
-    def replace_field(self, original_field, new_field):
-        """Replace a field on this form with another field.  This function can be used to
-        modify inherited forms.
-
-        :param original_field : the name of the field to be replace
-        :param new_field : the name of the new field
-        :return: `True` if the original field was found and replaced
-        """
-        for i, c in enumerate(self.content):
-            if issubclass(type(c), AbstractForm):
-                c.replace_field(original_field, new_field)
-            elif c == original_field:
-                self.content[i] = new_field
-                return True
-        return False
-
     def add_field(self, new_field):
         self.content.append(new_field)
     
@@ -437,13 +421,6 @@ class TabForm(AbstractForm):
             if label == tab_label:
                 return form
 
-    def replace_field(self, original_field, new_field):
-        super(TabForm, self).replace_field(original_field, new_field)
-        for _label, form in self.tabs:
-            if form.replace_field(original_field, new_field):
-                return True
-        return False
-
     def remove_field(self, original_field):
         super(TabForm, self).remove_field(original_field)
         for _label, form in self.tabs:
@@ -485,12 +462,6 @@ class HBoxForm(AbstractForm):
     
     def __str__(self):
         return 'HBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.content]))
-
-    def replace_field(self, original_field, new_field):
-        for form in self.content:
-            if form.replace_field(original_field, new_field):
-                return True
-        return False
 
     def _get_fields_from_form(self):
         for form in self.content:
@@ -536,12 +507,6 @@ class VBoxForm(AbstractForm):
     @property
     def rows(self):
         return self.content
-    
-    def replace_field(self, original_field, new_field):
-        for form in self.rows:
-            if form.replace_field(original_field, new_field):
-                return True
-        return False
 
     def _get_fields_from_form(self):
         for form in self.rows:

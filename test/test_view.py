@@ -491,7 +491,6 @@ class FormTest(
         form = forms.Form( ['title', 'short_description',
                             'director', 'releasedate'] )
         form.remove_field( 'releasedate' )
-        form.replace_field( 'director', 'rating' )
         form.add_field( 'tags' )
         form.add_field( forms.Break() )
         form.add_field( forms.Label('End') )
@@ -504,7 +503,6 @@ class FormTest(
         self.grab_widget(form.render(self.widgets, form_data))
         form.add_tab_at_index( 'Main', forms.Form(['rating']), 0 )
         self.assertTrue( form.get_tab( 'Second tab' ) )
-        form.replace_field( 'short_description', 'script' )
         form.remove_field( 'director' )
         self.assertTrue( str( form ) )
 
@@ -529,14 +527,12 @@ class FormTest(
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.VBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
-        form.replace_field( 'releasedate', 'rating' )
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.HBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
-        form.replace_field( 'releasedate', 'rating' )
 
     def test_inherited_form(self):
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
