@@ -93,21 +93,6 @@ class AbstractForm(AbstractFormElement):
             elif not isinstance(field, AbstractFormElement):
                 assert isinstance(field, str) or (field is None)
                 yield field
-
-    def remove_field(self, original_field):
-        """Remove a field from the form, This function can be used to modify
-        inherited forms.
-
-        :param original_field: the name of the field to be removed
-        :return: `True` if the field was found and removed
-        """
-        for c in self.content:
-            if issubclass(type(c), AbstractForm):
-                c.remove_field(original_field)
-            if original_field in self.content:
-                self.content.remove(original_field)
-                return True
-        return False
     
     def __str__(self):
         return 'AbstractForm(%s)' % (u','.join(str(c) for c in self.content))  
@@ -417,13 +402,6 @@ class TabForm(AbstractForm):
         for label, form in self.tabs:
             if label == tab_label:
                 return form
-
-    def remove_field(self, original_field):
-        super(TabForm, self).remove_field(original_field)
-        for _label, form in self.tabs:
-            if form.remove_field(original_field):
-                return True
-        return False
 
     def _get_fields_from_form(self):
         for _label, form in self.tabs:

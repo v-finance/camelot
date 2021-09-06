@@ -492,7 +492,6 @@ class FormTest(
                             'director', 'releasedate',
                             'tags', forms.Break(),
                              forms.Label('End')] )
-        form.remove_field( 'releasedate' )
         self.assertTrue( str( form ) )
 
     def test_tab_form(self):
@@ -502,7 +501,6 @@ class FormTest(
         self.grab_widget(form.render(self.widgets, form_data))
         form.add_tab_at_index( 'Main', forms.Form(['rating']), 0 )
         self.assertTrue( form.get_tab( 'Second tab' ) )
-        form.remove_field( 'director' )
         self.assertTrue( str( form ) )
 
     def test_group_box_form(self):
