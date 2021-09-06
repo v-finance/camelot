@@ -26,7 +26,6 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import json
 import typing
 
 from dataclasses import InitVar, dataclass, field
@@ -57,7 +56,6 @@ from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
-from ...core.serializable import DataclassSerializable
 
 
 class ChangeObjectDialog( StandaloneWizardPage ):
