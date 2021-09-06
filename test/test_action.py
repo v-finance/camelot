@@ -450,8 +450,8 @@ class ListActionsCase(
         action = list_action.ReplaceFieldContents()
         steps = self.gui_run(action, self.gui_context)
         for step in steps:
-            if isinstance(step, tuple) and step[0] == ChangeField.__name__:
-                dialog = ChangeField.render(step[1])
+            if isinstance(step, ChangeField):
+                dialog = step.render()
                 field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
                 field_editor.set_value('first_name')
                 dialog.show()
