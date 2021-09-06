@@ -49,12 +49,13 @@ from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .text_edit import EditTextDocument
 from .update_progress import UpdateProgress
-from .crud import SetColumns, Completion, Created, RowCount, Deleted, Update, SetData
+from .crud import SetColumns, Completion, Created, RowCount, Deleted, Update, SetData, ChangeSelection
 
 __all__ = [
     ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
+    ChangeSelection.__name__,
     ClearSelection.__name__,
     CloseView.__name__,
     Completion.__name__,

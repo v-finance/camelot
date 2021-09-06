@@ -69,6 +69,7 @@ from ..utils import get_settings
 from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import object_thread, post
 from camelot.view.art import from_admin_icon
+from camelot.view.action_runner import ActionRunner
 
 
 def strip_data_from_object( obj, columns ):
@@ -220,26 +221,7 @@ class UpdateMixin(object):
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
-    def update_item_model(self, item_model):
-        root_item = item_model.invisibleRootItem()
-        if is_deleted(root_item):
-            return
-        logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
-        row_range = (item_model.rowCount(), -1)
-        column_range = (item_model.columnCount(), -1)
-        for row, header_item, items in self.changed_ranges:
-            row_range = (min(row, row_range[0]), max(row, row_range[1]))
-            # Setting the vertical header item causes the table to scroll
-            # back to its open editor.  However setting the header item every
-            # time data has changed is needed to signal other parts of the
-            # gui that the object itself has changed.
-            item_model.setVerticalHeaderItem(row, header_item)
-            for column, item in items:
-                column_range = (min(column, column_range[0]), max(column, column_range[1]))
-                root_item.setChild(row, column, item)
-        
-        logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
-
+    
 class Update(Action, UpdateMixin):
 
     def __init__(self, objects):
@@ -630,7 +612,7 @@ class SetColumns(Action):
         yield action_steps.SetColumns(model_context.static_field_attributes)
 
     
-class ChangeSelection:
+class ChangeSelection(Action):
 
     def __init__(self, action_routes, model_context):
         self.action_routes = action_routes
@@ -638,15 +620,12 @@ class ChangeSelection:
         self.action_states = []
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         for action_route in self.action_routes:
             action = AdminRoute.action_for(action_route)
             state = action.get_state(self.model_context)
             self.action_states.append(state)
-        return self
-
-    def gui_run(self, item_model):
-        for i, action_route in enumerate(self.action_routes):
-            item_model.action_state_changed_signal.emit(action_route, self.action_states[i])
+        yield action_steps.ChangeSelection(self.action_routes, self.action_states)
 
 
 class CollectionProxy(QtGui.QStandardItemModel):
@@ -807,12 +786,9 @@ class CollectionProxy(QtGui.QStandardItemModel):
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
-                if isinstance(request, Action):
-                    from camelot.view.action_runner import ActionRunner
-                    runner = ActionRunner( request.model_run, self)
-                    runner.exec_()
-                else:
-                    post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
+                runner = ActionRunner( request.model_run, self)
+                runner.exec_()
+
 
     def _start_timer(self):
         """

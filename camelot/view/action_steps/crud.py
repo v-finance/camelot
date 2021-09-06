@@ -161,4 +161,15 @@ class SetData(Update):
         signal_handler = item_model._crud_signal_handler
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
-        signal_handler.send_objects_deleted(item_model, self.deleted_objects)     
+        signal_handler.send_objects_deleted(item_model, self.deleted_objects)  
+        
+        
+class ChangeSelection(ActionStep):
+    
+    def __init__(self, action_routes, action_states):
+        self.action_routes = action_routes
+        self.action_states = action_states
+        
+    def gui_run(self, item_model):
+        for i, action_route in enumerate(self.action_routes):
+            item_model.action_state_changed_signal.emit(action_route, self.action_states[i])    
