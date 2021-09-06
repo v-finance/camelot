@@ -864,6 +864,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         role_names = super().roleNames()
         role_names[ActionRoutesRole] = b'action_routes'
         role_names[ActionStatesRole] = b'action_states'
+        role_names[Qt.BackgroundRole] = b'background'
+        role_names[Qt.TextAlignmentRole] = b'text_alignment'
         return role_names
     #
     # end or reimplementation
