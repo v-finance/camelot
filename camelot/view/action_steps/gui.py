@@ -74,7 +74,8 @@ class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
         if gui_context.workspace:
             gui_context.workspace.refresh()
 
