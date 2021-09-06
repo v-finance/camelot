@@ -255,10 +255,11 @@ class CloseForm( Action ):
             #
             # if the object is not valid, request the user what to do
             #
-            message = action_steps.MessageBox( '\n'.join( messages ),
-                                               QtWidgets.QMessageBox.Warning,
-                                               _('Invalid form'),
-                                               QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Discard )
+            message = action_steps.MessageBox(
+                '\n'.join( messages ),
+                QtWidgets.QMessageBox.Warning,
+                _('Invalid form'),
+                [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Discard] )
             reply = yield message
             if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
