@@ -373,8 +373,6 @@ class EditProfiles(ActionStep, DataclassSerializable):
     settings.
 
     :param profiles: a list of :class:`camelot.core.profile.Profile` objects
-    :param dialog_class: a :class:`QtWidgets.QDialog` to display the needed
-        fields to store in a profile
     :param current_profile`: the name of the current profile, or an empty string
         if there is no current profile.
 
@@ -383,15 +381,10 @@ class EditProfiles(ActionStep, DataclassSerializable):
 
     profiles: List[Profile]
     current_profile: str = ''
-    dialog_class: QtWidgets.QDialog = None
-
-    def __post_init__(self):
-        if self.dialog_class is None:
-            self.dialog_class = ProfileWizard
 
     @classmethod
     def render(cls, gui_context, step):
-        dialog = step["dialog_class"](step["profiles"])
+        dialog = ProfileWizard(step["profiles"])
         dialog.set_current_profile(step["current_profile"])
         return dialog
 
