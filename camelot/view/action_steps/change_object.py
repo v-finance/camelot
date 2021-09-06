@@ -30,7 +30,7 @@ import json
 import typing
 
 from dataclasses import InitVar, dataclass, field
-from typing import List, Dict, Tuple
+from typing import Any, List, Dict, Tuple
 
 from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.list_action import ListActionModelContext
@@ -528,7 +528,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
             self.value = value_editor.get_value()
 
 @dataclass
-class ChangeField( ActionStep, DataclassSerializable ):
+class ChangeField( ActionStep ):
     """
     Pop up a list of fields from an object a user can change.  When the
     user selects a field, an appropriate widget is shown to change the
@@ -562,7 +562,7 @@ class ChangeField( ActionStep, DataclassSerializable ):
     admin: InitVar[ApplicationAdmin]
     field_attributes: InitVar = None
     field_name: str = None
-    field_value: str = None
+    field_value: Any = None
     window_title: str = field(init=False)
 
     admin_route: AdminRoute = field(init=False)
@@ -584,28 +584,23 @@ class ChangeField( ActionStep, DataclassSerializable ):
             for key in not_editable_fields:
                 field_attributes.pop(key)
         self.window_title = admin.get_verbose_name_plural()
-
-    @classmethod
-    def render( cls, step ):
+    
+    def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        admin = AdminRoute.admin_for(tuple(step["admin_route"]))
+        admin = AdminRoute.admin_for(tuple(self.admin_route))
         dialog = ChangeFieldDialog(
-            admin, admin.get_all_fields_and_attributes(), step["field_name"], step["field_value"]
+            admin, admin.get_all_fields_and_attributes(), self.field_name, self.field_value
         )
-        dialog.setWindowTitle( str( step["window_title"] ) )
-        dialog.set_banner_title( str( cls.title ) )
-        dialog.set_banner_subtitle( str( cls.subtitle ) )
+        dialog.setWindowTitle( str( self.window_title ) )
+        dialog.set_banner_title( str( self.title ) )
+        dialog.set_banner_subtitle( str( self.subtitle ) )
         return dialog
-
-    @classmethod
-    def gui_run( cls, gui_context, serialized_step ):
-        step = json.loads(serialized_step)
-        dialog = cls.render(step)
+    
+    def gui_run( self, gui_context ):
+        dialog = self.render()
         with hide_progress_dialog( gui_context ):
             result = dialog.exec_()
             if result == QtWidgets.QDialog.Rejected:
                 raise CancelRequest()
             return (dialog.field, dialog.value)
-
-
