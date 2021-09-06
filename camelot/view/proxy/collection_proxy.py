@@ -270,28 +270,25 @@ class Update(Action, UpdateMixin):
     def __repr__(self):
         return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
 
-class RowCount(object):
+class RowCount(Action):
 
     def __init__(self):
         self.rows = None
 
     def model_run(self, model_context):
+        from camelot.view import action_steps
         self.rows = len(model_context.proxy)
         # clear the whole cache, there might be more efficient means to 
         # do this
         model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
-        return self
+        yield action_steps.RowCount(self.rows)
         
-    def gui_run(self, item_model):
-        if self.rows is not None:
-            item_model._refresh_content(self.rows)    
-
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
 
-class Deleted(RowCount, Action, UpdateMixin):
+class Deleted(RowCount, UpdateMixin):
 
     def __init__(self, objects, rows_in_view):
         """
@@ -337,7 +334,7 @@ class Deleted(RowCount, Action, UpdateMixin):
         #
         if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
-            super(Deleted, self).model_run(model_context)
+            yield from super(Deleted, self).model_run(model_context)
         yield action_steps.Deleted(self.rows, self.changed_ranges)
 
     
@@ -353,8 +350,7 @@ class Filter(RowCount):
         # comparison of old and new value can only happen in the model thread
         if self.old_value != self.new_value:
             model_context.proxy.filter(self.action, self.new_value)
-        super(Filter, self).model_run(model_context)
-        return self
+        yield from super(Filter, self).model_run(model_context)
 
     def __repr__(self):
         return '{0.__class__.__name__}(action={1})'.format(
@@ -570,8 +566,7 @@ class Sort(RowCount):
     def model_run(self, model_context):
         field_name = model_context.static_field_attributes[self.column]['field_name']
         model_context.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
-        super(Sort, self).model_run(model_context)
-        return self
+        yield from super(Sort, self).model_run(model_context)
 
     def __repr__(self):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)

@@ -146,7 +146,6 @@ class Deleted(RowCount, UpdateMixin):
         
     def gui_run(self, item_model):
         self.update_item_model(item_model)
-        RowCount.gui_run(self, item_model)    
 
 
 class SetData(Update): 
