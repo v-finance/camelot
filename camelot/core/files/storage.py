@@ -177,16 +177,20 @@ class Storage( object ):
         return a StoredFile
         
         :param local_path: the path to the local file that needs to be checked in
-        :param filename: ignored
-        
+        :param filename: a hint for the filename to be given to the checked in file, if None
+        is given, the filename from the local path will be taken.
+
+        The stored file is not guaranteed to have the filename asked, since the
+        storage might not support this filename, or another file might be named
+        like that.  In each case the storage will choose the filename.
         """
         self.available()
         import shutil
         import os
-        if len(os.path.basename( local_path )) > 100:
+        if filename is None and len(os.path.basename( local_path )) > 100:
             raise UserException( text = ugettext('The filename of the selected file is too long'),
                                      resolution = ugettext( 'Please rename the file' ) )
-        root, extension = os.path.splitext( os.path.basename( local_path ) )
+        root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
         ( handle, to_path ) = self._create_tempfile( extension, root )
         os.close( handle )
         logger.debug( u'copy file from %s to %s', local_path, to_path )
