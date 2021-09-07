@@ -713,7 +713,7 @@ and used as a custom action.
                         # In case the attribute is of a related entity,
                         # create a related search using the field search and the encountered joins.
                         if joins:
-                            search_strategy = list_filter.RelatedSearch(search_field, search_strategy, joins=joins)
+                            search_strategy = list_filter.RelatedSearch(search_strategy, joins=joins)
                         arg = search_strategy.get_clause(text, self, query.session)
                         if arg is not None:
                             args.append(arg)
