@@ -36,7 +36,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from .admin_route import AdminRoute
-from camelot.admin.action import list_filter
+from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
