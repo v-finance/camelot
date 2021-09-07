@@ -694,7 +694,8 @@ be specified using the verbose_name attribute.
             # constructed
             #
             direction = field_attributes.get('direction', 'onetomany')
-            if direction.endswith('many') and related_admin:
+            python_type = field_attributes.get('python_type')
+            if direction.endswith('many') and python_type == list and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
                 field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
                     Qt.RightToolBarArea, direction
@@ -707,6 +708,13 @@ be specified using the verbose_name attribute.
                         related_field_attributes(field).get('column_width', 0) for 
                         field in fields)
                     column_width = sum(related_column_widths, 0)
+            elif (direction.startswith('many') or direction.endswith('many') and python_type != list) and (field_attributes.get('actions') is None):
+                field_attributes['actions'] = [
+                    field_action.ClearObject(),
+                    field_action.SelectObject(),
+                    field_action.NewObject(),
+                    field_action.OpenObject()
+                ]
             field_attributes['admin'] = related_admin
             field_attributes['admin_route'] = related_admin.get_admin_route()
             field_attributes['admin_name'] = related_admin.get_name()
