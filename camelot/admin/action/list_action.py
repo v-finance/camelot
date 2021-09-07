@@ -1069,7 +1069,7 @@ add_existing_object = AddExistingObject()
 
 class AddNewObjectMixin(object):
     
-    def create_object(self, model_context, admin, session=None):
+    def create_object(self, model_context, admin, type_=None, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
@@ -1085,12 +1085,12 @@ class AddNewObjectMixin(object):
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        admin = self.get_admin(model_context)
+        admin = self.get_admin(model_context, mode)
         assert admin is not None # required by vfinance/test/test_facade/test_asset.py
         if not admin.is_editable():
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
-        new_object = yield from self.create_object(model_context, admin)
+        new_object = yield from self.create_object(model_context, admin, mode)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((new_object,))
