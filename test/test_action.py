@@ -236,7 +236,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         #main_menu = self._write_read(main_menu)
         #main_menu.gui_run(self.gui_context)
 
-import gc
+
 class ListActionsCase(
     RunningThreadCase,
     GrabMixinCase, ExampleModelMixinCase, QueryQStandardItemModelMixinCase):
