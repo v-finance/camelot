@@ -330,7 +330,7 @@ class ChangeStatus( Action ):
         """
         yield action_steps.UpdateProgress(text=_('Changed status'))
 
-    def model_run(self, model_context, new_status=None):
+    def model_run(self, model_context, mode, new_status=None):
         """
         :param new_status: overrule the new_status defined at the class level,
             this can be used when overwwriting the `model_run` method in a

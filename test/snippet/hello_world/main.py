@@ -7,7 +7,7 @@ from camelot.view.main import main_action
 # begin application definition
 class HelloWorld(Action):
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         yield action_steps.MessageBox(u'Hello World')
 # end application definition
 
