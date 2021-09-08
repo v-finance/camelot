@@ -27,7 +27,7 @@ class DatabaseAdministrator(Application):
     in a database"""
 
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         yield action_steps.UpdateProgress('Start Database Administrator')
 # end app definition
 # begin profile selection

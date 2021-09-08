@@ -289,7 +289,7 @@ class CreateNewProject( Action ):
     """Action to create a new project, based on a form with
     options the user fills in."""
             
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         # begin change object
         from camelot.view import action_steps
         app_admin = MetaCamelotAdmin()

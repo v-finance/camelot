@@ -515,9 +515,9 @@ class SearchFilter(Action, AbstractModelFilter):
         # popping up while searching
         super(SearchFilter, self).gui_run(gui_context)
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        value = model_context.mode_name
+        value = mode
         if (value is not None) and len(value) == 0:
             value = None
         yield action_steps.SetFilter(self, value)

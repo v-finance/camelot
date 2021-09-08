@@ -5,7 +5,7 @@ class HelloWorldCase(unittest.TestCase):
     def test_hello_world(self):
         from .main import HelloWorld
         hello_world = HelloWorld()
-        for step in hello_world.model_run(None):
+        for step in hello_world.model_run(None, None):
             self.assertTrue(step)
 
 if __name__=='__main__':
