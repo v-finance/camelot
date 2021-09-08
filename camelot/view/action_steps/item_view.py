@@ -238,9 +238,10 @@ class OpenQmlTableView(OpenTableView):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
-        view = gui_context.workspace.active_view()
-        quick_view = view.quick_view
-        views = quick_view.findChild(QtCore.QObject, "qml_views")
+        quick_view = gui_context.workspace.quick_view
+        tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
+        assert tab_view
+
         header_model = QtCore.QStringListModel(parent=quick_view)
         header_model.setStringList(step['columns'])
         header_model.setParent(quick_view)
@@ -253,7 +254,11 @@ class OpenQmlTableView(OpenTableView):
         new_model.setParent(quick_view)
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
-        view = views.addView(new_model, header_model)
+        view = tab_view.addTabFromUrl(
+            step['title'],
+            QtCore.QUrl("qrc:/qml/common/TablePage.qml"),
+            { 'model': new_model, 'headerModel': header_model }
+        )
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
 
