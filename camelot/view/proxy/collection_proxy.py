@@ -669,6 +669,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             16 + 10, self._vertical_header_height
         )
         self._max_number_of_rows = max_number_of_rows
+        self._mode_name = None
         self._model_context = None
         self._model_thread = get_model_thread()
         self._action_routes = []
@@ -857,7 +858,11 @@ class CollectionProxy(QtGui.QStandardItemModel):
     
     def get_progress_dialog(self):
         pass
-    # End of methods to behave like a GuiContext.  
+    
+    @property
+    def mode_name(self):
+        return self._mode_name
+    # End of methods to behave like a GuiContext. 
     
     def refresh(self):
         self.logger.debug('refresh called')
