@@ -48,7 +48,7 @@ from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import CollectionProxy
+from ..proxy.collection_proxy import CollectionProxy, RowCount
 
 @dataclass
 class Sort( ActionStep, DataclassSerializable ):
@@ -85,6 +85,23 @@ class SetFilter( ActionStep ):
             model = gui_context.item_view.model()
             model.set_filter(self.list_filter, self.value)
 
+row_count_instance = RowCount()
+
+@dataclass
+class CrudActions(DataclassSerializable):
+    """
+    A data class which contains the routes to crud actions available
+    to the gui to invoke.
+    """
+
+    admin: InitVar
+    row_count: Route = field(init=False)
+
+    def __post_init__(self, admin):
+        self.row_count = admin._register_action_route(
+            admin.get_admin_route(), row_count_instance
+        )
+
 @dataclass
 class UpdateTableView( ActionStep, DataclassSerializable ):
     """Change the admin and or value of an existing table view
@@ -103,6 +120,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
+    crud_actions: CrudActions = field(init=False)
 
     def __post_init__( self, admin, value ):
         self.value = value
@@ -116,6 +134,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
         self._add_action_states(admin, proxy, self.actions, self.action_states)
+        self.crud_actions = CrudActions(admin)
 
     @staticmethod
     def _add_action_states(admin, proxy, actions, action_states):
