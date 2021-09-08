@@ -229,7 +229,7 @@ class Update(Action, UpdateMixin):
         self.objects = objects
         self.changed_ranges = []
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         for obj in self.objects:
             try:
@@ -258,7 +258,7 @@ class RowCount(Action):
     def __init__(self):
         self.rows = None
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         self.rows = len(model_context.proxy)
         # clear the whole cache, there might be more efficient means to 
@@ -282,7 +282,7 @@ class Deleted(RowCount, UpdateMixin):
         self.changed_ranges = []
         self.rows_in_view = rows_in_view
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         row = None
         objects_to_remove = set()
@@ -317,7 +317,7 @@ class Deleted(RowCount, UpdateMixin):
         #
         if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
-            yield from super(Deleted, self).model_run(model_context)
+            yield from super(Deleted, self).model_run(model_context, mode)
         yield action_steps.Deleted(self.rows, self.changed_ranges)
 
     
@@ -329,11 +329,11 @@ class Filter(RowCount):
         self.old_value = old_value
         self.new_value = new_value
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         # comparison of old and new value can only happen in the model thread
         if self.old_value != self.new_value:
             model_context.proxy.filter(self.action, self.new_value)
-        yield from super(Filter, self).model_run(model_context)
+        yield from super(Filter, self).model_run(model_context, mode)
 
     def __repr__(self):
         return '{0.__class__.__name__}(action={1})'.format(
@@ -376,7 +376,7 @@ class RowData(Update):
             raise e
         return (offset, limit)
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         offset, limit = self.offset_and_limit_rows_to_get()
         for obj in list(model_context.proxy[offset:offset+limit]):
@@ -404,7 +404,7 @@ class SetData(Update):
             ', '.join(['(row={0}, column={1})'.format(row, column) for row, _o, column, _v in self.updates])
         )
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
@@ -525,7 +525,7 @@ class Created(Action, UpdateMixin):
             self, len(self.objects)
         )
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
@@ -546,10 +546,10 @@ class Sort(RowCount):
         self.column = column
         self.order = order
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         field_name = model_context.static_field_attributes[self.column]['field_name']
         model_context.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
-        yield from super(Sort, self).model_run(model_context)
+        yield from super(Sort, self).model_run(model_context, mode)
 
     def __repr__(self):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
@@ -562,7 +562,7 @@ class Completion(Action):
         self.column = column
         self.prefix = prefix
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps  
         field_name = model_context.static_field_attributes[self.column]['field_name']
         admin = model_context.static_field_attributes[self.column]['admin']
@@ -598,7 +598,7 @@ class SetColumns(Action):
             ', '.join([col for col, _i in zip(self.columns, (1,2,))])
         )
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         model_context.static_field_attributes = list(
             model_context.admin.get_static_field_attributes(self.columns)
@@ -620,7 +620,7 @@ class ChangeSelection(Action):
         self.model_context = model_context
         self.action_states = []
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         for action_route in self.action_routes:
             action = AdminRoute.action_for(action_route)
