@@ -58,7 +58,9 @@ class AbstractCrudSignal(ActionStep):
     objects_created: tuple = field(default_factory=tuple)
 
     def gui_run(self, gui_context):
-        super(AbstractCrudSignal, self).gui_run(gui_context)
+        # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
+        # which results in a unwanted round-trip to the model thread / server.
+        #super(AbstractCrudSignal, self).gui_run(gui_context)
         crud_signal_handler = CrudSignalHandler()
         if len(self.objects_deleted):
             crud_signal_handler.send_objects_deleted(self, self.objects_deleted)

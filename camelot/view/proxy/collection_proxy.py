@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ...admin.action.base import State
+from ...admin.action.base import Action, State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.form_action import FormActionModelContext
 from ...admin.action.field_action import FieldActionModelContext
@@ -68,8 +68,9 @@ from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
 from camelot.core.exception import log_programming_error
-from camelot.view.model_thread import object_thread, post
+from camelot.view.model_thread import object_thread
 from camelot.view.art import from_admin_icon
+from camelot.view.action_runner import ActionRunner
 
 
 def strip_data_from_object( obj, columns ):
@@ -221,33 +222,15 @@ class UpdateMixin(object):
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
-    def update_item_model(self, item_model):
-        root_item = item_model.invisibleRootItem()
-        if is_deleted(root_item):
-            return
-        logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
-        row_range = (item_model.rowCount(), -1)
-        column_range = (item_model.columnCount(), -1)
-        for row, header_item, items in self.changed_ranges:
-            row_range = (min(row, row_range[0]), max(row, row_range[1]))
-            # Setting the vertical header item causes the table to scroll
-            # back to its open editor.  However setting the header item every
-            # time data has changed is needed to signal other parts of the
-            # gui that the object itself has changed.
-            item_model.setVerticalHeaderItem(row, header_item)
-            for column, item in items:
-                column_range = (min(column, column_range[0]), max(column, column_range[1]))
-                root_item.setChild(row, column, item)
-        
-        logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))
-
-class Update(UpdateMixin):
+    
+class Update(Action, UpdateMixin):
 
     def __init__(self, objects):
         self.objects = objects
         self.changed_ranges = []
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         for obj in self.objects:
             try:
                 row = model_context.proxy.index(obj)
@@ -264,31 +247,26 @@ class Update(UpdateMixin):
             else:
                 logger.debug('evaluate changes in row {0}'.format(row))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        return self
+        yield action_steps.Update(self.changed_ranges)
 
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
 
     def __repr__(self):
         return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
 
-class RowCount(object):
+class RowCount(Action):
 
     def __init__(self):
         self.rows = None
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         self.rows = len(model_context.proxy)
         # clear the whole cache, there might be more efficient means to 
         # do this
         model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
-        return self
-
-    def gui_run(self, item_model):
-        if self.rows is not None:
-            item_model._refresh_content(self.rows)
-
+        yield action_steps.RowCount(self.rows)
+        
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
 
@@ -304,7 +282,8 @@ class Deleted(RowCount, UpdateMixin):
         self.changed_ranges = []
         self.rows_in_view = rows_in_view
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         row = None
         objects_to_remove = set()
         #
@@ -338,14 +317,10 @@ class Deleted(RowCount, UpdateMixin):
         #
         if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
-            super(Deleted, self).model_run(model_context)
-        return self
+            yield from super(Deleted, self).model_run(model_context, mode)
+        yield action_steps.Deleted(self.rows, self.changed_ranges)
 
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
-        RowCount.gui_run(self, item_model)
-
-
+    
 class Filter(RowCount):
 
     def __init__(self, action, old_value, new_value):
@@ -354,12 +329,11 @@ class Filter(RowCount):
         self.old_value = old_value
         self.new_value = new_value
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         # comparison of old and new value can only happen in the model thread
         if self.old_value != self.new_value:
             model_context.proxy.filter(self.action, self.new_value)
-        super(Filter, self).model_run(model_context)
-        return self
+        yield from super(Filter, self).model_run(model_context, mode)
 
     def __repr__(self):
         return '{0.__class__.__name__}(action={1})'.format(
@@ -402,15 +376,14 @@ class RowData(Update):
             raise e
         return (offset, limit)
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         offset, limit = self.offset_and_limit_rows_to_get()
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
             self.changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
-        return self
+        yield action_steps.Update(self.changed_ranges)
 
-    def gui_run(self, item_model):
-        super(RowData, self).gui_run(item_model)
             
     def __repr__(self):
         return '{0.__class__.__name__}(rows={1}, cols={2})'.format(
@@ -431,7 +404,8 @@ class SetData(Update):
             ', '.join(['(row={0}, column={1})'.format(row, column) for row, _o, column, _v in self.updates])
         )
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj, column, value in self.updates:
@@ -530,16 +504,10 @@ class SetData(Update):
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
         self.deleted_objects = tuple(deleted_objects)
-        return self
+        yield action_steps.SetData(self.changed_ranges, self.created_objects, self.updated_objects, self.deleted_objects)
 
-    def gui_run(self, item_model):
-        super(SetData, self).gui_run(item_model)
-        signal_handler = item_model._crud_signal_handler
-        signal_handler.send_objects_created(item_model, self.created_objects)
-        signal_handler.send_objects_updated(item_model, self.updated_objects)
-        signal_handler.send_objects_deleted(item_model, self.deleted_objects)        
-
-class Created(UpdateMixin):
+   
+class Created(Action, UpdateMixin):
     """
     Does not subclass RowCount, because row count will reset the whole edit
     cache.
@@ -557,7 +525,8 @@ class Created(UpdateMixin):
             self, len(self.objects)
         )
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
         for obj in self.objects:
@@ -567,13 +536,9 @@ class Created(UpdateMixin):
                 continue
             columns = tuple(range(len(model_context.static_field_attributes)))
             self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        return self
+        yield action_steps.Created(self.changed_ranges) 
 
-    def gui_run(self, item_model):
-        # appending new items to the model will increase the rowcount, so
-        # there is no need to set the rowcount explicitly
-        self.update_item_model(item_model)
-
+    
 class Sort(RowCount):
 
     def __init__(self, column, order):
@@ -581,25 +546,24 @@ class Sort(RowCount):
         self.column = column
         self.order = order
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         field_name = model_context.static_field_attributes[self.column]['field_name']
         model_context.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
-        super(Sort, self).model_run(model_context)
-        return self
+        yield from super(Sort, self).model_run(model_context, mode)
 
     def __repr__(self):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
 
 
-class Completion(object):
-
+class Completion(Action):
+      
     def __init__(self, row, column, prefix):
         self.row = row
         self.column = column
         self.prefix = prefix
-        self.completions = None
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps  
         field_name = model_context.static_field_attributes[self.column]['field_name']
         admin = model_context.static_field_attributes[self.column]['admin']
         object_slice = list(model_context.proxy[self.row:self.row+1])
@@ -612,36 +576,21 @@ class Completion(object):
             field_name,
             self.prefix,
         )
-        if completions is None:
-            # the field does not support autocompletions
-            self.completions = []
-        else:
-            self.completions = [admin.get_search_identifiers(e) for e in completions]
-        return self
-
-    def gui_run(self, item_model):
-        root_item = item_model.invisibleRootItem()
-        if is_deleted(root_item):
-            return
-        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
-        child = root_item.child(self.row, self.column)
-        if child is not None:
-            child.setData(self.prefix, CompletionPrefixRole)
-            child.setData(self.completions, CompletionsRole)
-        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+        # Empty if the field does not support autocompletions
+        completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
+        yield action_steps.Completion(self.row, self.column, self.prefix, completions)
 
     def __repr__(self):
         return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
 
 
-class SetColumns(object):
+class SetColumns(Action):
 
     def __init__(self, columns):
         """
         :param columns: a list with field names
         """
         self.columns = list(columns)
-        self.static_field_attributes = None
 
     def __repr__(self):
         return '{0.__class__.__name__}(columns=[{1}...])'.format(
@@ -649,98 +598,35 @@ class SetColumns(object):
             ', '.join([col for col, _i in zip(self.columns, (1,2,))])
         )
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         model_context.static_field_attributes = list(
             model_context.admin.get_static_field_attributes(self.columns)
         )
         # creating the header items should be done here instead of in the gui
         # run
-        self.static_field_attributes = model_context.static_field_attributes
-        return self
+        #static_field_attributes = list()
+        #future code
+        #for fa in model_context.static_field_attributes:
+            #included_attrs = ['name', 'field_name', 'editable', 'nullable', 'colmn_width']
+            #static_field_attributes.append({attr: fa[attr] for attr in included_attrs})
+        yield action_steps.SetColumns(model_context.static_field_attributes)
 
-    def gui_run(self, item_model):
-        item_model.beginResetModel()
-        item_model.settings.beginGroup( 'column_width' )
-        item_model.settings.beginGroup( '0' )
-        #
-        # this loop can take a while to complete
-        #
-        font_metrics = QtGui.QFontMetrics(item_model._header_font_required)
-        char_width = font_metrics.averageCharWidth()
-        #
-        # increase the number of columns at once, since this is slow, and
-        # setHorizontalHeaderItem will increase the number of columns one by one
-        #
-        item_model.setColumnCount(len(self.static_field_attributes))
-        for i, fa in enumerate(self.static_field_attributes):
-            verbose_name = str(fa['name'])
-            field_name = fa['field_name']
-            header_item = QtGui.QStandardItem()
-            set_header_data = header_item.setData
-            #
-            # Set the header data
-            #
-            fa_copy = fa.copy()
-            fa_copy.setdefault('editable', True)
-            set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
-            set_header_data(fa_copy, FieldAttributesRole)
-            if fa.get( 'nullable', True ) == False:
-                set_header_data(item_model._header_font_required, Qt.FontRole)
-            else:
-                set_header_data(item_model._header_font, Qt.FontRole)
-
-            settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
-            if settings_width > 0:
-                width = settings_width
-            else:
-                width = fa['column_width'] * char_width
-            header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
-            item_model.setHorizontalHeaderItem( i, header_item )
-        item_model.settings.endGroup()
-        item_model.settings.endGroup()
-        item_model.endResetModel()
-
-class SetHeaderData(object):
-
-    def __init__(self, column, width):
-        self.column = column
-        self.width = width
-        self.field_name = None
-
-    def __repr__(self):
-        return '{0.__class__.__name__}({0.column}, {0.width})'.format(self)
-
-    def model_run(self, model_context):
-        self.field_name = model_context.static_field_attributes[self.column]['field_name']
-        return self
-
-    def gui_run(self, item_model):
-        item_model.settings.beginGroup('column_width')
-        item_model.settings.beginGroup('0')
-        item_model.settings.setValue(self.field_name, self.width)
-        item_model.settings.endGroup()
-        item_model.settings.endGroup()
-
-
-class ChangeSelection:
+    
+class ChangeSelection(Action):
 
     def __init__(self, action_routes, model_context):
         self.action_routes = action_routes
         self.model_context = model_context
         self.action_states = []
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
         for action_route in self.action_routes:
             action = AdminRoute.action_for(action_route)
             state = action.get_state(self.model_context)
             self.action_states.append(state)
-        return self
-
-    def gui_run(self, item_model):
-        for i, action_route in enumerate(self.action_routes):
-            item_model.action_state_changed_signal.emit(action_route, self.action_states[i])
+        yield action_steps.ChangeSelection(self.action_routes, self.action_states)
 
 
 class CollectionProxy(QtGui.QStandardItemModel):
@@ -783,6 +669,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             16 + 10, self._vertical_header_height
         )
         self._max_number_of_rows = max_number_of_rows
+        self._mode_name = None
         self._model_context = None
         self._model_thread = get_model_thread()
         self._action_routes = []
@@ -903,7 +790,9 @@ class CollectionProxy(QtGui.QStandardItemModel):
             while len(self.__crud_requests):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
-                post(request.model_run, self._crud_update, args=(model_context,), exception=self._crud_exception)
+                runner = ActionRunner( request.model_run, self)
+                runner.exec_()
+
 
     def _start_timer(self):
         """
@@ -963,8 +852,18 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.error('exception during update {0}'.format(crud_request),
                               exc_info=e
                               )
-        
-
+    # Methods to behave like a GuiContext.
+    def create_model_context(self):
+        return self._model_context
+    
+    def get_progress_dialog(self):
+        pass
+    
+    @property
+    def mode_name(self):
+        return self._mode_name
+    # End of methods to behave like a GuiContext. 
+    
     def refresh(self):
         self.logger.debug('refresh called')
         self._reset()
@@ -1105,10 +1004,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
-        if orientation == Qt.Horizontal:
-            if role == Qt.SizeHintRole:
-                width = value.width()
-                self._append_request(SetHeaderData(section, width))
+        if orientation == Qt.Horizontal and role == Qt.SizeHintRole:
+            item = self.verticalHeaderItem(section)
+            if item is not None:
+                item.setData(value.width(), role)
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):

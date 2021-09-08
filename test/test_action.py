@@ -448,7 +448,7 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = self.gui_run(action, self.gui_context)
+        steps = action.model_run(self.gui_context.create_model_context())
         for step in steps:
             if isinstance(step, ChangeField):
                 dialog = step.render()
@@ -594,6 +594,7 @@ class ListActionsCase(
                     cm = party.ContactMechanism( mechanism = m )
                     pcm = party.PartyContactMechanism( party = person,
                                                        contact_mechanism = cm )
+                    
                     # immediately update the GUI
                     yield action_steps.CreateObjects((cm,))
                     yield action_steps.CreateObjects((pcm,))
@@ -626,15 +627,15 @@ class ListActionsCase(
                                                            int(soc_number[4:6]),
                                                            int(soc_number[6:8])
                                                            )
-                        # delete the email of the person
-                        for contact_mechanism in person.contact_mechanisms:
-                            model_context.session.delete( contact_mechanism )
-                        # add a new email
-                        m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                            person.last_name ) )
-                        cm = party.ContactMechanism( mechanism = m )
-                        party.PartyContactMechanism( party = person,
-                                                    contact_mechanism = cm )
+                    # delete the email of the person
+                    for contact_mechanism in person.contact_mechanisms:
+                        model_context.session.delete( contact_mechanism )
+                    # add a new email
+                    m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                        person.last_name ) )
+                    cm = party.ContactMechanism( mechanism = m )
+                    party.PartyContactMechanism( party = person,
+                                                contact_mechanism = cm )
                 # flush the session on finish and update the GUI
                 yield action_steps.FlushSession( model_context.session )
 
