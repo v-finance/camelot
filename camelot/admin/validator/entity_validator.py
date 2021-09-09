@@ -42,10 +42,9 @@ class EntityValidator(ObjectValidator):
         """:return: list of messages explaining invalid data
         empty list if object is valid
         """
-        session = orm.object_session( obj )
+        subsystem_obj = self.admin.get_subsystem_object(obj)
+        session = orm.object_session(subsystem_obj)
         if session is not None:
-            if obj in session.deleted:
+            if subsystem_obj in session.deleted:
                 return []
-        return super( EntityValidator, self ).validate_object( obj )
-
-
+        return super( EntityValidator, self ).validate_object(obj)
