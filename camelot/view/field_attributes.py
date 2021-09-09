@@ -44,7 +44,7 @@ import operator
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
-from camelot.types.typing import Note, Directory, File, Month
+from camelot.types.typing import Note, Directory, File, Months
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -311,7 +311,7 @@ _typing_to_python_type = {
         'python_type': str,
         'delegate': delegates.LocalFileDelegate,     
     }, 
-    Month:{
+    Months:{
         'python_type': int,
         'delegate': delegates.MonthsDelegate,         
     },

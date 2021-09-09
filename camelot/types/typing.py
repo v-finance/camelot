@@ -5,7 +5,7 @@ from camelot.core.utils import ugettext_lazy
 Note = NewType('Note', Union[str, ugettext_lazy])
 Directory = NewType('Directory', str)
 File = NewType('File', str)
-Month = NewType('Month', int)
+Months = NewType('Months', int)
 
 def is_optional_type(field_type):
     return isinstance(field_type, _GenericAlias) and \
