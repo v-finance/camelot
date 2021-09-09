@@ -448,7 +448,7 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = action.model_run(self.gui_context.create_model_context())
+        steps = action.model_run(self.gui_context.create_model_context(), None)
         for step in steps:
             if isinstance(step, ChangeField):
                 dialog = step.render()
