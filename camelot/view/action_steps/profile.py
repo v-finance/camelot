@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import json
+
 import logging
 import pkgutil
 from typing import List
@@ -368,7 +368,7 @@ allow all languages
 
 
 @dataclass
-class EditProfiles(ActionStep, DataclassSerializable):
+class EditProfiles(ActionStep):
     """Allows the user to change or create his current database and media
     settings.
 
@@ -381,17 +381,14 @@ class EditProfiles(ActionStep, DataclassSerializable):
 
     profiles: List[Profile]
     current_profile: str = ''
-
-    @classmethod
-    def render(cls, gui_context, step):
-        dialog = ProfileWizard(step["profiles"])
-        dialog.set_current_profile(step["current_profile"])
+    
+    def render(self, gui_context):
+        dialog = ProfileWizard(self.profiles)
+        dialog.set_current_profile(self.current_profile)
         return dialog
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        dialog = cls.render(gui_context, step)
+    
+    def gui_run(self, gui_context):
+        dialog = self.render(gui_context)
         result = dialog.exec_()
         if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()
