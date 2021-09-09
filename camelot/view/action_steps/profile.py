@@ -42,7 +42,6 @@ from camelot.core.utils import ugettext as _
 from camelot.view import art
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
-from ...core.serializable import DataclassSerializable
 
 logger = logging.getLogger('camelot.view.action_steps.profile')
 
