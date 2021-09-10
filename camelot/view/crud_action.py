@@ -170,10 +170,7 @@ class RowCount(Action):
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
         yield action_steps.RowCount(rows)
         
-    def __repr__(self):
-        return '{0.__class__.__name__}(rows={0.rows})'.format(self)
-    
-    
+   
 class Update(Action, UpdateMixin):
 
     def __init__(self, objects):
