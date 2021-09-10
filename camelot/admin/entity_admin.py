@@ -690,42 +690,11 @@ and used as a custom action.
         # arguments for the where clause
         args = []
         
-        for search_field in self._get_search_fields(text):
-            # Deprecated old style of defining search fields as a string with dot notation for related fields.
-            # This style will be phased out gradually by the use of search field strategies entirely.
-            # Untill then, they are turned in to field searches or related searches here.
-            if isinstance(search_field, str):
-                # list of join entities
-                joins = []
-                column_name = search_field
-                path = column_name.split('.')
-                target = self.entity
-                related_admin = self
-                for path_segment in path:
-                    # use the field attributes for the introspection, as these
-                    # have detected hybrid properties
-                    fa = related_admin.get_descriptor_field_attributes(path_segment)
-                    instrumented_attribute = getattr(target, path_segment)
-                    if fa.get('target', False):
-                        joins.append(instrumented_attribute)
-                        target = fa['target']
-                        related_admin = related_admin.get_related_admin(target)
-                    else:
-                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
-                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                        search_strategy = fa['search_strategy']
-                        # In case the attribute is of a related entity,
-                        # create a related search using the field search and the encountered joins.
-                        if joins:
-                            search_strategy = list_filter.RelatedSearch(search_strategy, joins=joins)
-                        arg = search_strategy.get_clause(text, self, query.session)
-                        if arg is not None:
-                            args.append(arg)
-                                
-            elif isinstance(search_field, list_filter.AbstractSearchStrategy):
-                arg = search_field.get_clause(text, self, query.session)
-                if arg is not None:
-                    args.append(arg)
+        for search_field in self._get_search_fields(text):                    
+            assert isinstance(search_field, list_filter.AbstractSearchStrategy)
+            arg = search_field.get_clause(text, self, query.session)
+            if arg is not None:
+                args.append(arg)
             
         query = query.filter(sql.or_(*args))
     
