@@ -240,7 +240,8 @@ and used as a custom action.
         search_identifiers = {}
 
         search_identifiers[Qt.DisplayRole] = u'%s' % (six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.UserRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
@@ -713,7 +714,7 @@ and used as a custom action.
                         # In case the attribute is of a related entity,
                         # create a related search using the field search and the encountered joins.
                         if joins:
-                            search_strategy = list_filter.RelatedSearch(search_field, search_strategy, joins=joins)
+                            search_strategy = list_filter.RelatedSearch(search_strategy, joins=joins)
                         arg = search_strategy.get_clause(text, self, query.session)
                         if arg is not None:
                             args.append(arg)
