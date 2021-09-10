@@ -676,7 +676,8 @@ and used as a custom action.
             if self.basic_search:
                 for field_name, col_property in list(self.mapper.column_attrs.items()):
                     if isinstance(col_property.expression, schema.Column):
-                        self._search_fields.append(field_name)
+                        search_strategy = self.get_field_attributes(field_name).get('search_strategy')
+                        self._search_fields.append(search_strategy)
         return self._search_fields
 
     def decorate_search_query(self, query, text):
@@ -690,7 +691,7 @@ and used as a custom action.
         # arguments for the where clause
         args = []
         
-        for search_field in self._get_search_fields(text):                    
+        for search_field in self._get_search_fields(text):
             assert isinstance(search_field, list_filter.AbstractSearchStrategy)
             arg = search_field.get_clause(text, self, query.session)
             if arg is not None:
