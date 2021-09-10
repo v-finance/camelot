@@ -37,8 +37,7 @@ import typing
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from .admin_route import Route, AdminRoute, register_list_actions, register_form_actions
-from .action import field_action
-from camelot.admin.action import list_filter
+from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -341,10 +340,10 @@ be specified using the verbose_name attribute.
     def get_search_identifiers(self, obj):
         """Create a dict of identifiers to be used in search boxes.
         The keys are Qt roles."""
-        search_identifiers = {} 
-
+        search_identifiers = {}
         search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
-        search_identifiers[Qt.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.UserRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
