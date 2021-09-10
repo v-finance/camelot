@@ -227,9 +227,9 @@ class Update(Action, UpdateMixin):
 
     def __init__(self, objects):
         self.objects = objects
-        self.changed_ranges = []
 
     def model_run(self, model_context, mode):
+        changed_ranges = []
         from camelot.view import action_steps
         for obj in self.objects:
             try:
@@ -246,8 +246,8 @@ class Update(Action, UpdateMixin):
                 logger.debug('evaluate changes in row {0}, column {1} to {2}'.format(row, min(columns), max(columns)))
             else:
                 logger.debug('evaluate changes in row {0}'.format(row))
-            self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        yield action_steps.Update(self.changed_ranges)
+            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
+        yield action_steps.Update(changed_ranges)
 
 
     def __repr__(self):
@@ -255,17 +255,14 @@ class Update(Action, UpdateMixin):
 
 class RowCount(Action):
 
-    def __init__(self):
-        self.rows = None
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        self.rows = len(model_context.proxy)
+        rows = len(model_context.proxy)
         # clear the whole cache, there might be more efficient means to 
         # do this
         model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
-        yield action_steps.RowCount(self.rows)
+        yield action_steps.RowCount(rows)
         
     def __repr__(self):
         return '{0.__class__.__name__}(rows={0.rows})'.format(self)
@@ -279,13 +276,13 @@ class Deleted(RowCount, UpdateMixin):
         """
         super(Deleted, self).__init__()
         self.objects = objects
-        self.changed_ranges = []
         self.rows_in_view = rows_in_view
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         row = None
         objects_to_remove = set()
+        changed_ranges = []
         #
         # the object might or might not be in the proxy when the
         # deletion is handled
@@ -304,7 +301,7 @@ class Deleted(RowCount, UpdateMixin):
             header_item.setData(py_to_variant(None), ObjectRole)
             header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
             header_item.setData(py_to_variant(True), ValidRole)
-            self.changed_ranges.append((row, header_item, tuple()))
+            changed_ranges.append((row, header_item, tuple()))
         #
         # if the object that is going to be deleted is in the proxy, the
         # proxy might be unaware of the deleting, so remove the object from
@@ -318,7 +315,7 @@ class Deleted(RowCount, UpdateMixin):
         if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
             # but updating the view is only needed if the rows changed
             yield from super(Deleted, self).model_run(model_context, mode)
-        yield action_steps.Deleted(self.rows, self.changed_ranges)
+        yield action_steps.Deleted(None, changed_ranges)
 
     
 class Filter(RowCount):
@@ -347,14 +344,13 @@ class RowData(Update):
         super(RowData, self).__init__(None)
         self.rows = rows.copy()
         self.cols = cols.copy()
-        self.difference = None
-        self.changed_ranges = []
 
     def offset_and_limit_rows_to_get(self):
         """From the current set of rows to get, find the first
         continuous range of rows that should be fetched.
         :return: (offset, limit)
         """
+        changed_ranges = []
         offset, limit, i = 0, 0, 0
         rows_to_get = list(self.rows)
         #
@@ -381,8 +377,8 @@ class RowData(Update):
         offset, limit = self.offset_and_limit_rows_to_get()
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            self.changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
-        yield action_steps.Update(self.changed_ranges)
+            changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
+        yield action_steps.Update(changed_ranges)
 
             
     def __repr__(self):
@@ -395,8 +391,6 @@ class SetData(Update):
         super(SetData, self).__init__(None)
         # Copy the update requests and clear the list of requests
         self.updates = [u for u in updates]
-        self.created_objects = None
-        self.updated_objects = None
 
     def __repr__(self):
         return '{0.__class__.__name__}([{1}])'.format(
@@ -406,6 +400,9 @@ class SetData(Update):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        created_objects = None
+        updated_objects = None  
+        changed_ranges = []
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj, column, value in self.updates:
@@ -492,7 +489,7 @@ class SetData(Update):
                         created_objects.add(subsystem_obj)
                 # update the cache
                 columns = tuple(range(len(model_context.static_field_attributes)))
-                self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
+                changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
                 updated_objects.add(subsystem_obj)
                 depending_objects = depending_objects_before_set.union(set(admin.get_depending_objects(obj)))
                 for depending_object in depending_objects:
@@ -501,10 +498,10 @@ class SetData(Update):
                         deleted_objects.update({depending_object})
                     else:
                         updated_objects.update({depending_object})
-        self.created_objects = tuple(created_objects)
-        self.updated_objects = tuple(updated_objects)
-        self.deleted_objects = tuple(deleted_objects)
-        yield action_steps.SetData(self.changed_ranges, self.created_objects, self.updated_objects, self.deleted_objects)
+        created_objects = tuple(created_objects)
+        updated_objects = tuple(updated_objects)
+        deleted_objects = tuple(deleted_objects)
+        yield action_steps.SetData(changed_ranges, created_objects, updated_objects, deleted_objects)
 
    
 class Created(Action, UpdateMixin):
@@ -518,7 +515,6 @@ class Created(Action, UpdateMixin):
 
     def __init__(self, objects):
         self.objects = objects
-        self.changed_ranges = []
 
     def __repr__(self):
         return '{0.__class__.__name__}({1} objects)'.format(
@@ -529,14 +525,15 @@ class Created(Action, UpdateMixin):
         from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
+        changed_ranges = []
         for obj in self.objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
                 continue
             columns = tuple(range(len(model_context.static_field_attributes)))
-            self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        yield action_steps.Created(self.changed_ranges) 
+            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
+        yield action_steps.Created(changed_ranges) 
 
     
 class Sort(RowCount):
@@ -618,15 +615,14 @@ class ChangeSelection(Action):
     def __init__(self, action_routes, model_context):
         self.action_routes = action_routes
         self.model_context = model_context
-        self.action_states = []
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         for action_route in self.action_routes:
             action = AdminRoute.action_for(action_route)
             state = action.get_state(self.model_context)
-            self.action_states.append(state)
-        yield action_steps.ChangeSelection(self.action_routes, self.action_states)
+            action_states.append(state)
+        yield action_steps.ChangeSelection(self.action_routes, action_states)
 
 
 class CollectionProxy(QtGui.QStandardItemModel):
