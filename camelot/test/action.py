@@ -29,8 +29,6 @@
 
 """Helper classes to create unit tests for Actions."""
 
-from sqlalchemy import orm
-
 from ..core.qt import QtWidgets
 from ..admin.action.list_action import ListActionGuiContext
 
