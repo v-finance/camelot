@@ -109,7 +109,7 @@ class Application( Action ):
             #from camelot.view.database_selection import select_database
             #select_database(self.application_admin)
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         """
         Overwrite this generator method to customize the startup process of
         your application.

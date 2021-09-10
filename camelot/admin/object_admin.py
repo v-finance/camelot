@@ -37,8 +37,7 @@ import typing
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from .admin_route import Route, AdminRoute, register_list_actions, register_form_actions
-from .action import field_action
-from camelot.admin.action import list_filter
+from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -341,10 +340,10 @@ be specified using the verbose_name attribute.
     def get_search_identifiers(self, obj):
         """Create a dict of identifiers to be used in search boxes.
         The keys are Qt roles."""
-        search_identifiers = {} 
-
+        search_identifiers = {}
         search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
-        search_identifiers[Qt.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.UserRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
@@ -613,7 +612,6 @@ be specified using the verbose_name attribute.
             attributes.update(self.get_typing_attributes(field_type)) 
             
         descriptor = self._get_entity_descriptor(field_name)
-
         if descriptor is not None:
             if isinstance(descriptor, property):
                 attributes['editable'] = (descriptor.fset is not None)         
@@ -791,6 +789,7 @@ be specified using the verbose_name attribute.
         # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
         # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
         # which is enforced by the strategy constructor.
+
         descriptor = self._get_entity_descriptor(field_name)
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']

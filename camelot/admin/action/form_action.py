@@ -173,7 +173,7 @@ class ShowHistory( Action ):
     tooltip = _('Show recent changes on this form')
     name = 'show_history'
         
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from ..object_admin import ObjectAdmin
         from ...view import action_steps
         from ...view.controls import delegates
@@ -233,7 +233,7 @@ class CloseForm( Action ):
             gui_context.widget_mapper.submit()
         super( CloseForm, self ).gui_run( gui_context )
         
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress( text = _('Closing form') )
         validator = model_context.admin.get_validator()
@@ -255,10 +255,11 @@ class CloseForm( Action ):
             #
             # if the object is not valid, request the user what to do
             #
-            message = action_steps.MessageBox( '\n'.join( messages ),
-                                               QtWidgets.QMessageBox.Warning,
-                                               _('Invalid form'),
-                                               QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Discard )
+            message = action_steps.MessageBox(
+                '\n'.join( messages ),
+                QtWidgets.QMessageBox.Warning,
+                _('Invalid form'),
+                [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Discard] )
             reply = yield message
             if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):

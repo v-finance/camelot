@@ -143,7 +143,7 @@ class ApplicationActionGuiContext( GuiContext ):
 
 class UpdateActions(Action):
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         actions_state = dict()
         for action in model_context.actions:
@@ -177,7 +177,7 @@ class SelectProfile( Action ):
         super(SelectProfile, self).gui_run(gui_context)
         return self.selected_profile
         
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
 
@@ -301,7 +301,7 @@ class OpenTableView( EntityAction ):
         state.verbose_name = self.verbose_name or self._entity_admin.get_verbose_name_plural()
         return state
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
         # swith comments here to turn on proof-of-concept qml table view
@@ -309,7 +309,7 @@ class OpenTableView( EntityAction ):
         step = action_steps.OpenTableView(
             self._entity_admin, self._entity_admin.get_query()
         )
-        step.new_tab = (model_context.mode_name == 'new_tab')
+        step.new_tab = (mode == 'new_tab')
         yield step
 
 class OpenNewView( EntityAction ):
@@ -332,7 +332,7 @@ class OpenNewView( EntityAction ):
         state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
         return state
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         admin = yield action_steps.SelectSubclass(self._entity_admin)
         new_object = admin.entity()
@@ -352,7 +352,7 @@ class ShowAbout(Action):
     icon = Icon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
     tooltip = _("Show the application's About box")
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view.action_steps import MessageBox
         about = str(model_context.admin.get_application_admin().get_about())
         yield MessageBox(
@@ -377,7 +377,7 @@ Backup the database to disk
     icon = Icon('save') # 'tango/16x16/actions/document-save.png'
     backup_mechanism = BackupMechanism
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view.action_steps import SaveFile, UpdateProgress
         destination = yield SaveFile()
         yield UpdateProgress(text = _('Backup in progress'))
@@ -399,7 +399,7 @@ class Refresh( Action ):
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
     icon = Icon('sync') # 'tango/16x16/actions/view-refresh.png'
     
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         import sqlalchemy.exc as sa_exc
         from camelot.core.orm import Session
         from camelot.view import action_steps
@@ -454,7 +454,7 @@ Restore the database to disk
     backup_mechanism = BackupMechanism
     shortcut = None
             
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view.action_steps import UpdateProgress, SelectFile
         backups = yield SelectFile()
         yield UpdateProgress( text = _('Restore in progress') )
@@ -465,7 +465,7 @@ Restore the database to disk
                 yield UpdateProgress(completed,
                                      total,
                                      text = description)
-            for step in super(Restore, self).model_run(model_context):
+            for step in super(Restore, self).model_run(model_context, mode):
                 yield step
 
 class Profiler( Action ):
@@ -489,7 +489,7 @@ class Profiler( Action ):
             self.gui_profile.disable()
         super(Profiler, self).gui_run(gui_context)
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from ...view import action_steps
         from io import StringIO
         import cProfile
@@ -530,7 +530,7 @@ class Exit( Action ):
     icon = Icon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view.action_steps.application import Exit
         yield Exit()
        
@@ -543,7 +543,7 @@ class SegmentationFault( Action ):
     verbose_name = _('Segmentation Fault')
     shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 )
     
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         ok = yield action_steps.MessageBox( text= 'Are you sure you want to segfault the application',
                                             standard_buttons=[QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes])

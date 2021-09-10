@@ -177,7 +177,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         # begin select item
         class SendDocumentAction( Action ):
 
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 methods = [ ('email', 'By E-mail'),
                             ('fax',   'By Fax'),
                             ('post',  'By postal mail') ]
@@ -362,7 +362,7 @@ class ListActionsCase(
         model_context.selection = [import_utils.ColumnMapping(0, [], 'field_1'),
                                    import_utils.ColumnMapping(1, [], 'field_2')]
 
-        for step in save_export_mapping.model_run(model_context):
+        for step in save_export_mapping.model_run(model_context, None):
             if isinstance(step, action_steps.ChangeObject):
                 options = step.get_object()
                 options.name = 'mapping 1'
@@ -378,7 +378,7 @@ class ListActionsCase(
         model_context.selection =  [import_utils.ColumnMapping(0, [], 'field_3'),
                                    import_utils.ColumnMapping(1, [], 'field_4')]
 
-        generator = restore_export_mapping.model_run(model_context)
+        generator = restore_export_mapping.model_run(model_context, None)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send('mapping 1')
@@ -401,7 +401,7 @@ class ListActionsCase(
             self.admin,
             field_choices=[(f,f) for f in fields]
         )
-        list(match_names.model_run(model_context))
+        list(match_names.model_run(model_context, None))
         self.assertEqual(mapping.field, 'first_name')
 
     def test_import_from_xls_file( self ):
@@ -448,7 +448,7 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = self.gui_run(action, self.gui_context)
+        steps = action.model_run(self.gui_context.create_model_context(), None)
         for step in steps:
             if isinstance(step, ChangeField):
                 dialog = step.render()
@@ -472,7 +472,7 @@ class ListActionsCase(
         self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))
         model_context = self.gui_context.create_model_context()
         open_form_view_action = list_action.OpenFormView()
-        for step in open_form_view_action.model_run(model_context):
+        for step in open_form_view_action.model_run(model_context, None):
             form = step.render(self.gui_context)
             form_value = form.model.get_value()
         self.assertTrue(isinstance(form_value, ListModelProxy))
@@ -510,7 +510,7 @@ class ListActionsCase(
 
     def test_remove_selection(self):
         remove_selection_action = list_action.RemoveSelection()
-        list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
+        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
@@ -575,7 +575,7 @@ class ListActionsCase(
 
             verbose_name = _('Update person')
 
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 for person in model_context.get_selection():
                     soc_number = person.social_security_number
                     if soc_number:
@@ -594,6 +594,7 @@ class ListActionsCase(
                     cm = party.ContactMechanism( mechanism = m )
                     pcm = party.PartyContactMechanism( party = person,
                                                        contact_mechanism = cm )
+                    
                     # immediately update the GUI
                     yield action_steps.CreateObjects((cm,))
                     yield action_steps.CreateObjects((pcm,))
@@ -617,7 +618,7 @@ class ListActionsCase(
 
             verbose_name = _('Update person')
 
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 for person in model_context.get_selection():
                     soc_number = person.social_security_number
                     if soc_number:
@@ -626,15 +627,15 @@ class ListActionsCase(
                                                            int(soc_number[4:6]),
                                                            int(soc_number[6:8])
                                                            )
-                        # delete the email of the person
-                        for contact_mechanism in person.contact_mechanisms:
-                            model_context.session.delete( contact_mechanism )
-                        # add a new email
-                        m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                            person.last_name ) )
-                        cm = party.ContactMechanism( mechanism = m )
-                        party.PartyContactMechanism( party = person,
-                                                    contact_mechanism = cm )
+                    # delete the email of the person
+                    for contact_mechanism in person.contact_mechanisms:
+                        model_context.session.delete( contact_mechanism )
+                    # add a new email
+                    m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                        person.last_name ) )
+                    cm = party.ContactMechanism( mechanism = m )
+                    party.PartyContactMechanism( party = person,
+                                                contact_mechanism = cm )
                 # flush the session on finish and update the GUI
                 yield action_steps.FlushSession( model_context.session )
 
@@ -655,7 +656,7 @@ class ListActionsCase(
 
             verbose_name = _('Summary')
 
-            def model_run(self, model_context):
+            def model_run(self, model_context, mode):
                 person = model_context.get_object()
                 yield PrintHtml("<h1>This will become the personal report of {}!</h1>".format(person))
         # end html print
@@ -761,7 +762,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         # begin custom application
         class CustomApplication(Application):
         
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 from camelot.view import action_steps
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
@@ -857,7 +858,7 @@ class ApplicationActionsCase(
 
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()
-        for step in change_logging_action.model_run(self.context):
+        for step in change_logging_action.model_run(self.context, None):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
 

@@ -59,7 +59,7 @@ class SaveExportMapping( Action ):
         self.settings.endArray()
         self.settings.sync()
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         if model_context.collection_count:
             mappings = self.read_mappings()
             options = ExportMappingOptions()
@@ -79,7 +79,7 @@ class RestoreExportMapping( SaveExportMapping ):
     tooltip = _('Restore the previously stored order of the columns')
     name = 'restore_mapping'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         mappings = self.read_mappings()
         mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)
@@ -105,7 +105,7 @@ class RemoveExportMapping( SaveExportMapping ):
     tooltip = _('Remove the previously stored order of the columns')
     name = 'remove_mapping'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         mappings = self.read_mappings()
         mapping_names = [(k,k) for k in mappings.keys()]
         mapping_name = yield action_steps.SelectItem(mapping_names)

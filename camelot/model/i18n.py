@@ -57,7 +57,7 @@ class ExportAsPO( Action ):
     name = 'export_as_po'
     icon = Icon('save') # 'tango/16x16/actions/document-save.png'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view.action_steps import SaveFile
         filename = yield SaveFile()
         file = open(filename, 'w')
