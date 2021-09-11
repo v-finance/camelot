@@ -613,7 +613,6 @@ be specified using the verbose_name attribute.
             attributes.update(self.get_typing_attributes(field_type)) 
             
         descriptor = self._get_entity_descriptor(field_name)
-
         if descriptor is not None:
             if isinstance(descriptor, property):
                 attributes['editable'] = (descriptor.fset is not None)         
@@ -791,6 +790,7 @@ be specified using the verbose_name attribute.
         # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
         # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
         # which is enforced by the strategy constructor.
+
         descriptor = self._get_entity_descriptor(field_name)
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']

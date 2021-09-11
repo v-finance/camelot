@@ -1119,7 +1119,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     verbose_name = _('New')
     name = 'new_object'
 
-    def get_admin(self, model_context):
+    def get_admin(self, model_context, mode):
         """
         Return the admin used for creating and handling the new entity instance with.
         By default, the given model_context's admin is used.
