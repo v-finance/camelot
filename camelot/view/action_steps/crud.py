@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
 from ...core.serializable import DataclassSerializable
-from ...core.item_model import FieldAttributesRole, CompletionPrefixRole, CompletionsRole
+from ...core.item_model import FieldAttributesRole, CompletionsRole
 
 class UpdateMixin(object):
     
@@ -114,10 +114,11 @@ class Completion(ActionStep):
         logger.debug('begin gui update {0} completions'.format(len(self.completions)))
         child = root_item.child(self.row, self.column)
         if child is not None:
-            child.setData(self.prefix, CompletionPrefixRole)
+            # calling setData twice triggers dataChanged twice, resulting in
+            # the editors state being updated twice
+            #child.setData(self.prefix, CompletionPrefixRole)
             child.setData(self.completions, CompletionsRole)
         logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
-
 
 class Created(ActionStep, UpdateMixin):
     
