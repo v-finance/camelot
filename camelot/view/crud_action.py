@@ -116,6 +116,8 @@ class UpdateMixin(object):
 
 class ChangeSelection(Action):
 
+    name = 'change_selection'
+
     def __init__(self, action_routes, model_context):
         self.action_routes = action_routes
         self.model_context = model_context
@@ -131,7 +133,9 @@ class ChangeSelection(Action):
         
         
 class Completion(Action):
-      
+
+    name = 'completion'
+
     def __init__(self, row, column, prefix):
         self.row = row
         self.column = column
@@ -161,6 +165,8 @@ class Completion(Action):
     
 class RowCount(Action):
 
+    name = 'row_count'
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         rows = len(model_context.proxy)
@@ -172,6 +178,8 @@ class RowCount(Action):
         
    
 class Update(Action, UpdateMixin):
+
+    name = 'update'
 
     def __init__(self, objects):
         self.objects = objects
@@ -211,6 +219,8 @@ class Created(Action, UpdateMixin):
     assuming other objects have not been changed position.
     """
 
+    name = 'created'
+
     def __init__(self, objects):
         self.objects = objects
 
@@ -235,6 +245,8 @@ class Created(Action, UpdateMixin):
         
         
 class Deleted(RowCount, UpdateMixin):
+
+    name = 'deleted'
 
     def __init__(self, objects, rows_in_view):
         """
@@ -286,6 +298,8 @@ class Deleted(RowCount, UpdateMixin):
         
 class Filter(RowCount):
 
+    name = 'filter'
+
     def __init__(self, action, old_value, new_value):
         super(Filter, self).__init__()
         self.action = action
@@ -307,18 +321,18 @@ class Filter(RowCount):
     
 class RowData(Update):
 
-    def __init__(self, rows, cols):
-        super(RowData, self).__init__(None)
-        self.rows = rows.copy()
-        self.cols = cols.copy()
+    name = 'row_data'
 
-    def offset_and_limit_rows_to_get(self):
+    def __init__(self):
+        super(RowData, self).__init__(None)
+
+    def offset_and_limit_rows_to_get(self, rows):
         """From the current set of rows to get, find the first
         continuous range of rows that should be fetched.
         :return: (offset, limit)
         """
         offset, limit, i = 0, 0, 0
-        rows_to_get = list(self.rows)
+        rows_to_get = list(rows)
         #
         # see if there is anything left to do
         #
@@ -340,37 +354,32 @@ class RowData(Update):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        rows = mode["rows"]
+        columns = mode["columns"]
         changed_ranges = []
-        offset, limit = self.offset_and_limit_rows_to_get()
+        offset, limit = self.offset_and_limit_rows_to_get(rows)
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
+            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         yield action_steps.Update(changed_ranges)
 
             
     def __repr__(self):
-        return '{0.__class__.__name__}(rows={1}, cols={2})'.format(
-            self, repr(self.rows), repr(self.cols))
-    
+        return '{0.__class__.__name__}'.format(self)
+
     
 class SetColumns(Action):
 
-    def __init__(self, columns):
-        """
-        :param columns: a list with field names
-        """
-        self.columns = list(columns)
+    name = 'set_columns'
 
     def __repr__(self):
-        return '{0.__class__.__name__}(columns=[{1}...])'.format(
-            self,
-            ', '.join([col for col, _i in zip(self.columns, (1,2,))])
-        )
+        return '{0.__class__.__name__}'.format(self)
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        columns = list(mode)
         model_context.static_field_attributes = list(
-            model_context.admin.get_static_field_attributes(self.columns)
+            model_context.admin.get_static_field_attributes(columns)
         )
         # creating the header items should be done here instead of in the gui
         # run
@@ -383,6 +392,8 @@ class SetColumns(Action):
         
         
 class SetData(Update):
+
+    name = 'set_data'
 
     def __init__(self, updates):
         super(SetData, self).__init__(None)
@@ -502,6 +513,8 @@ class SetData(Update):
 
 
 class Sort(RowCount):
+
+    name = 'sort'
 
     def __init__(self, column, order):
         super(Sort, self).__init__()

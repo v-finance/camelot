@@ -48,7 +48,9 @@ from ...core.serializable import DataclassSerializable
 from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import CollectionProxy, RowCount
+from ..proxy.collection_proxy import (
+    CollectionProxy, RowCount, RowData, SetColumns
+)
 
 @dataclass
 class Sort( ActionStep, DataclassSerializable ):
@@ -86,6 +88,8 @@ class SetFilter( ActionStep ):
             model.set_filter(self.list_filter, self.value)
 
 row_count_instance = RowCount()
+set_columns_instance = SetColumns()
+row_data_instance = RowData()
 
 @dataclass
 class CrudActions(DataclassSerializable):
@@ -96,10 +100,18 @@ class CrudActions(DataclassSerializable):
 
     admin: InitVar
     row_count: Route = field(init=False)
+    set_columns: Route = field(init=False)
+    row_data: Route = field(init=False)
 
     def __post_init__(self, admin):
         self.row_count = admin._register_action_route(
             admin.get_admin_route(), row_count_instance
+        )
+        self.row_data = admin._register_action_route(
+            admin.get_admin_route(), row_data_instance
+        )
+        self.set_columns = admin._register_action_route(
+            admin.get_admin_route(), set_columns_instance
         )
 
 @dataclass
@@ -185,6 +197,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         gui_context.view.change_title(step['title'])
 
         gui_context.view.findChild(Qt)
+
 
 @dataclass
 class OpenTableView( UpdateTableView ):

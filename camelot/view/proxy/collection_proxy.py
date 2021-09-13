@@ -229,7 +229,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
                 if not isinstance(self._last_request(), RowCount):
-                    self._append_request(RowCount())
+                    self._append_request(RowCount(), None)
             return 0
         return rows
 
@@ -264,11 +264,17 @@ class CollectionProxy(QtGui.QStandardItemModel):
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             if self._update_requests:
-                self._append_request(SetData(self._update_requests))
+                self._append_request(SetData(self._update_requests), None)
                 self._update_requests = list()
             if self._rows_under_request:
                 self._append_request(
-                    RowData(self._rows_under_request, self._cols_under_request)
+                    RowData(),
+                    {
+                        # take a copy, since the collection might be cleared
+                        # before it is processed
+                        "rows": self._rows_under_request.copy(),
+                        "columns": self._cols_under_request.copy(),
+                    }
                 )
                 self._rows_under_request.clear()
                 self._cols_under_request.clear()
@@ -281,9 +287,13 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 # convert interval to int in case a long is returned
                 timer.setInterval(min(maximum_delay, int(timer.interval()) * 2))
             while len(self.__crud_requests):
-                model_context, request_id, request = self.__crud_requests.popleft()
+                model_context, request_id, request, mode = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
-                runner = ActionRunner( request.model_run, self)
+                # dirty hack to get mode to the action runner
+                self._mode_name = mode
+                runner = ActionRunner(request.model_run, self)
+                self._mode_name = None
+                # end of dirty hack
                 runner.exec_()
 
 
@@ -305,7 +315,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if len(self.__crud_requests):
             return self.__crud_requests[-1][-1]
 
-    def _append_request(self, request):
+    def _append_request(self, request, mode):
         """
         Always use this method to add CRUD requests to the queue, since it
         will make sure :
@@ -316,7 +326,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """
         request_id = next(self.__crud_request_counter)
         self.logger.debug('append request {0} {1}'.format(request_id, request))
-        self.__crud_requests.append((self._model_context, request_id, request))
+        self.__crud_requests.append((self._model_context, request_id, request, mode))
         self._start_timer()
 
     #
@@ -409,11 +419,11 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self._reset()
         # filters might be applied before the value is set
         for list_filter, value in self._filters.items():
-            self._append_request(Filter(list_filter, None, value))
+            self._append_request(Filter(list_filter, None, value), None)
         # the columns might be set before the value, but they might be running
         # in the model thread for a different model context as well, so
         # resubmit the set columns task for this model context
-        self._append_request(SetColumns(self._columns))
+        self._append_request(SetColumns(), self._columns)
         self.layoutChanged.emit()
     
     def get_value(self):
@@ -432,7 +442,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         old_value = self._filters.get(list_filter)
         self._filters[list_filter] = value
         if (self._model_context is not None):
-            self._append_request(Filter(list_filter, old_value, value))
+            self._append_request(Filter(list_filter, old_value, value), None)
 
     @QtCore.qt_slot(object, tuple)
     def objects_updated(self, sender, objects):
@@ -445,7 +455,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._append_request(Update(objects))
+            self._append_request(Update(objects), None)
 
     @QtCore.qt_slot(object, tuple)
     def objects_deleted(self, sender, objects):
@@ -456,7 +466,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
-            self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()))
+            self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()), None)
 
     @QtCore.qt_slot(object, tuple)
     def objects_created(self, sender, objects):
@@ -467,7 +477,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(objects))
+            self._append_request(Created(objects), None)
 
 
     def add_columns(self, field_names):
@@ -490,7 +500,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self._columns.append(field_name)
             yield i
         if len(self._columns) and (self._model_context is not None):
-            self._append_request(SetColumns(self._columns))
+            self._append_request(SetColumns(), self._columns)
 
     # decorate method as a slot, to make it accessible in QML
     @QtCore.qt_slot(int, int, QtCore.QVariant, int)
@@ -537,7 +547,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         self.logger.debug('sort called')
         assert object_thread( self )
-        self._append_request(Sort(column, order))
+        self._append_request(Sort(column, order), None)
 
     def data(self, index, role = Qt.DisplayRole):
         """:return: the data at index for the specified role
@@ -624,7 +634,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             # by the time the timout happens
             self.timeout_slot()
         elif role == CompletionPrefixRole:
-            self._append_request(Completion(index.row(), index.column(), value))
+            self._append_request(Completion(index.row(), index.column(), value), None)
         return True
 
     def get_admin( self ):
@@ -679,4 +689,4 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 model_context.selection_count = 1
 
         request = ChangeSelection(self._action_routes, model_context)
-        self._append_request(request)
+        self._append_request(request, None)
