@@ -28,6 +28,8 @@
 #  ============================================================================
 
 import logging
+import os
+
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
 from ...core.sql import metadata
@@ -108,7 +110,7 @@ class ApplicationActionGuiContext( GuiContext ):
         if self.workspace is not None and not is_deleted(self.workspace):
             view = self.workspace.active_view()
             if view is not None:
-                if view.objectName() == 'dashboard':
+                if view.objectName() == 'qml_view':
                     quick_view = view.quick_view
                     if not is_deleted(quick_view):
                         # try to return the C++ QML progress dialog
@@ -307,9 +309,12 @@ class OpenTableView( EntityAction ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
-        # swith comments here to turn on proof-of-concept qml table view
-        #step = action_steps.OpenQmlTableView(
-        step = action_steps.OpenTableView(
+        # set environment variable to turn on old Qt table view (QML table view is now the default)
+        if os.environ.get('VFINANCE_OLD_TABLE'):
+            Step = action_steps.OpenTableView
+        else:
+            Step = action_steps.OpenQmlTableView
+        step = Step(
             self._entity_admin, self._entity_admin.get_query()
         )
         step.new_tab = (model_context.mode_name == 'new_tab')
