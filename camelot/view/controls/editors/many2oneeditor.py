@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets, variant_to_py
 
 from ...crud_signals import CrudSignalHandler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -42,25 +42,6 @@ class Many2OneEditor(CustomEditor):
     """Widget for editing many 2 one relations"""
 
     arrow_down_key_pressed = QtCore.qt_signal()
-
-    class CompletionsModel(QtCore.QAbstractListModel):
-
-        def __init__(self, parent):
-            QtCore.QAbstractListModel.__init__(self, parent)
-            self._completions = []
-
-        def setCompletions(self, completions):
-            self._completions = completions
-            self.layoutChanged.emit()
-
-        def data(self, index, role):
-            return py_to_variant(self._completions[index.row()].get(role))
-
-        def rowCount(self, index=None):
-            return len(self._completions)
-
-        def columnCount(self, index=None):
-            return 1
 
     def __init__(self,
                  admin=None,
@@ -114,8 +95,7 @@ class Many2OneEditor(CustomEditor):
 
         # Search Completer
         self.completer = QtWidgets.QCompleter()
-        completions_model = self.CompletionsModel(self.completer)
-        self.completer.setModel(completions_model)
+        self.completer.setModel(QtGui.QStandardItemModel(self.completer))
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setCompletionMode(
             QtWidgets.QCompleter.UnfilteredPopupCompletion
@@ -156,21 +136,26 @@ class Many2OneEditor(CustomEditor):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
+        self.completer.setCompletionPrefix(text)
         self.completionPrefixChanged.emit(str(text))
 
-    def display_search_completions(self, prefix, completions):
+    def display_search_completions(self, completions):
         # this might interrupt with the user typing
-        # self.search_input.setText(prefix)
-        self.completer.model().setCompletions(completions)
-        self.completer.setCompletionPrefix(prefix)
+        model = self.completer.model()
+        model.setColumnCount(1)
+        model.setRowCount(len(completions))
+        for row, completion in enumerate(completions):
+            index = model.index(row, 0)
+            for role, data in completion.items():
+                model.setData(index, data, role)
         self.completer.complete()
 
     def completionActivated(self, index):
-        obj = index.data(Qt.EditRole)
+        obj = index.data(Qt.UserRole)
         self.set_object(variant_to_py(obj))
 
     def completion_highlighted(self, index ):
-        obj = index.data(Qt.EditRole)
+        obj = index.data(Qt.UserRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
     @QtCore.qt_slot(object, tuple)

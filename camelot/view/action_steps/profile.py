@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import json
+
 import logging
 import pkgutil
 from typing import List
@@ -42,7 +42,6 @@ from camelot.core.utils import ugettext as _
 from camelot.view import art
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
-from ...core.serializable import DataclassSerializable
 
 logger = logging.getLogger('camelot.view.action_steps.profile')
 
@@ -368,13 +367,11 @@ allow all languages
 
 
 @dataclass
-class EditProfiles(ActionStep, DataclassSerializable):
+class EditProfiles(ActionStep):
     """Allows the user to change or create his current database and media
     settings.
 
     :param profiles: a list of :class:`camelot.core.profile.Profile` objects
-    :param dialog_class: a :class:`QtWidgets.QDialog` to display the needed
-        fields to store in a profile
     :param current_profile`: the name of the current profile, or an empty string
         if there is no current profile.
 
@@ -383,22 +380,14 @@ class EditProfiles(ActionStep, DataclassSerializable):
 
     profiles: List[Profile]
     current_profile: str = ''
-    dialog_class: QtWidgets.QDialog = None
-
-    def __post_init__(self):
-        if self.dialog_class is None:
-            self.dialog_class = ProfileWizard
-
-    @classmethod
-    def render(cls, gui_context, step):
-        dialog = step["dialog_class"](step["profiles"])
-        dialog.set_current_profile(step["current_profile"])
+    
+    def render(self, gui_context):
+        dialog = ProfileWizard(self.profiles)
+        dialog.set_current_profile(self.current_profile)
         return dialog
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        dialog = cls.render(gui_context, step)
+    
+    def gui_run(self, gui_context):
+        dialog = self.render(gui_context)
         result = dialog.exec_()
         if result == QtWidgets.QDialog.Rejected:
             raise CancelRequest()

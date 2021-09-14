@@ -128,7 +128,7 @@ class ShowNext(Action):
     verbose_name = _('Show next')
     name = 'show_next'
     
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         for mapping in model_context.get_collection():
             mapping.set_preview_row(mapping.get_preview_row()+1)
         yield action_steps.UpdateObjects(model_context.get_collection())
@@ -138,7 +138,7 @@ class ShowPrevious(Action):
     verbose_name = _('Show previous')
     name = 'show_previous'
     
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         for mapping in model_context.get_collection():
             mapping.set_preview_row(mapping.get_preview_row()-1)
         yield action_steps.UpdateObjects(model_context.get_collection())
@@ -149,7 +149,7 @@ class MatchNames(Action):
     verbose_name = _('Match names')
     name = 'match_names'
     
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         field_choices = model_context.admin.field_choices
         # create a dict that  will be used to search field names
         matches = dict( (str(verbose_name).lower(), fn)

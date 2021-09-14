@@ -12,7 +12,7 @@ class BinCase(unittest.TestCase):
             
     def test_create_new_project(self):
         new_project_action = CreateNewProject()
-        for step in new_project_action.model_run( None ):
+        for step in new_project_action.model_run( None, None ):
             if isinstance(step, action_steps.ChangeObject):
                 options = step.get_object()
                 options.source = tempfile.mkdtemp('new_project')

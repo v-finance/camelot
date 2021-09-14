@@ -89,10 +89,10 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             return
         # either an update signal is received because there are search
         # completions, or because the value of the editor needs to change
-        prefix = variant_to_py(index.model().data(index, CompletionPrefixRole))
+        #prefix = variant_to_py(index.model().data(index, CompletionPrefixRole))
         completions = variant_to_py(index.model().data(index, CompletionsRole))
-        if (prefix is not None) and (completions is not None):
-            editor.display_search_completions(prefix, completions)
+        if completions is not None:
+            editor.display_search_completions(completions)
             return
         super(Many2OneDelegate, self).setEditorData(editor, index)
         verbose_name = variant_to_py(index.model().data(index, PreviewRole))

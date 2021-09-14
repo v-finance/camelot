@@ -42,7 +42,7 @@ from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action.base import State
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
+from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.busy_widget import BusyWidget
