@@ -42,7 +42,7 @@ from camelot.view.controls.view import AbstractView
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.filter_widget import AbstractFilterWidget
 from camelot.view.model_thread import object_thread
-from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py, is_deleted
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py, is_deleted
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
