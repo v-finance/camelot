@@ -42,7 +42,7 @@ from camelot.view.controls.view import AbstractView
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.filter_widget import AbstractFilterWidget
 from camelot.view.model_thread import object_thread
-from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py, is_deleted
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py, is_deleted
 from ..proxy.collection_proxy import CollectionProxy
 from .actionsbox import ActionsBox
 from .delegates.delegatemanager import DelegateManager
@@ -379,7 +379,8 @@ class RowsWidget(QtWidgets.QLabel):
 
     # Using QtModel because QItemSelection resides in QtGui in Qt4 and in
     # QtCore in Qt5
-    @QtCore.qt_slot(QtModel.QItemSelection, QtModel.QItemSelection)
+    # TODO: commented out decorated slot to make tests pass untill item selection model is implemented with the new Qml Tableview.
+    #@QtCore.qt_slot(QtModel.QItemSelection, QtModel.QItemSelection)
     def selection_changed(self, selected, deselected):
         def count(selection):
             selection_count = 0
