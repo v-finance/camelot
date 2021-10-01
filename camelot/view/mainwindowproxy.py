@@ -30,11 +30,12 @@
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
-from ..core.qt import QtWidgets, QtCore, py_to_variant, variant_to_py
+from ..core.qt import (
+    QtWidgets, QtCore, py_to_variant, variant_to_py, transferto
+)
 
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view.register import register
-import sip
+
 
 class MainWindowProxy(QtCore.QObject):
     """Proxy for a main window of a Desktop Camelot application
@@ -51,26 +52,21 @@ class MainWindowProxy(QtCore.QObject):
         from .workspace import DesktopWorkspace
         logger.debug('initializing main window')
         QtCore.QObject.__init__(self)
+        assert isinstance(gui_context.admin_route, tuple)
 
         if window is None:
             window = QtWidgets.QMainWindow()
-        else:
-            # transfer ownership to python if this window was created in C++
-            if not sip.ispycreated(window):
-                sip.transferback(window)
 
         # make the QMainWindow the parent of this QObject
         self.setParent(window)
-        # register QMainWindow to keep it alive
-        register( window, window )
+        # prevent garbage collection of the mainwindow, by keeping it
+        # out of the garbage collection cyle
+        transferto(window, window)
         # install event filter to capture close event
         window.installEventFilter(self)
-
-        self.app_admin = gui_context.admin.get_application_admin()
-        
         logger.debug('setting up workspace')
         self.gui_context = gui_context
-        self.workspace = DesktopWorkspace( self.app_admin, window )
+        self.workspace = DesktopWorkspace(gui_context.admin_route, window )
         self.gui_context.workspace = self.workspace
 
         logger.debug('setting child windows dictionary')
@@ -103,15 +99,12 @@ class MainWindowProxy(QtCore.QObject):
             as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_main_menu`
             method.
         """
-        from camelot.view.controls.action_widget import ActionAction
         if main_menu == None:
             return
         menu_bar = self.parent().menuBar()
         for menu in main_menu:
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
         menu_bar.setCornerWidget( BusyWidget() )
-        for qaction in menu_bar.findChildren( ActionAction ):
-            qaction.triggered.connect( self.action_triggered )
 
     def get_gui_context( self ):
         """Get the :class:`GuiContext` of the active view in the mainwindow,
@@ -127,14 +120,6 @@ class MainWindowProxy(QtCore.QObject):
     @QtCore.qt_slot()
     def view_activated( self ):
         pass
-
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        """Execute an action that was triggered somewhere in the main window,
-        such as the toolbar or the main menu"""
-        action_action = self.sender()
-        gui_context = self.get_gui_context()
-        action_action.action.gui_run( gui_context )
 
     def eventFilter(self, qobject, event):
         if event.type() == QtCore.QEvent.Close:

@@ -30,13 +30,14 @@
 import six
 
 from ...core.qt import QtGui, QtWidgets, is_deleted
-from camelot.admin.action.base import Action
+from camelot.admin.action.base import Action, GuiContext
 from camelot.core.utils import ugettext as _
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from . import list_action
+from .base import RenderHint
 
 class FormActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -129,18 +130,25 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         
     model_context = FormActionModelContext
     
-    def __init__( self ):
+    def __init__(self):
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
         self.view = None
+        # temporary admin, so be able to do a cleanup context by context
+        self.admin = None
+
+    def get_progress_dialog(self):
+        return GuiContext.get_progress_dialog(self)
 
     def get_window(self):
-        if self.view is not None:
+        if self.view is not None and not is_deleted(self.view):
             return self.view.window()
         return super(FormActionGuiContext, self).get_window()
 
-    def create_model_context( self ):
+    def create_model_context(self):
         context = super( FormActionGuiContext, self ).create_model_context()
+        # temporary admin, so be able to do a cleanup context by context
+        context.admin = self.admin
         context.proxy = self.widget_mapper.model().get_value()
         current_index = self.widget_mapper.currentIndex()
         if current_index >= 0:
@@ -148,15 +156,18 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
             context.selection_count = 1
         return context
         
-    def copy( self, base_class = None ):
+    def copy(self, base_class = None):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
         new_context.view = self.view
+        # temporary admin, so be able to do a cleanup context by context
+        new_context.admin = self.admin
         return new_context
 
 class ShowHistory( Action ):
-    
-    icon = Icon('tango/16x16/actions/format-justify-fill.png')
+
+    render_hint = RenderHint.TOOL_BUTTON
+    icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
         
@@ -167,6 +178,7 @@ class ShowHistory( Action ):
             
         obj = model_context.get_object()
         memento = model_context.admin.get_memento()
+        subsystem_obj = model_context.admin.get_subsystem_object(obj)
         
         class ChangeAdmin( ObjectAdmin ):
             verbose_name = _('Change')
@@ -184,21 +196,22 @@ class ShowHistory( Action ):
             primary_key = model_context.admin.primary_key( obj )
             if primary_key is not None:
                 if None not in primary_key:
-                    changes = list( memento.get_changes( model = six.text_type( model_context.admin.entity.__name__ ),
+                    changes = list( memento.get_changes( model = six.text_type( subsystem_obj.__class__.__name__ ),
                                                          primary_key = primary_key,
                                                          current_attributes = {} ) )
                     admin = ChangeAdmin( model_context.admin, object )
                     step = action_steps.ChangeObjects( changes, admin )
-                    step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
+                    step.icon = FontIcon('history') # 'tango/16x16/actions/format-justify-fill.png'
                     step.title = _('Recent changes')
                     step.subtitle = model_context.admin.get_verbose_identifier( obj )
                     yield step
         
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
-    
+
+    render_hint = RenderHint.TOOL_BUTTON
     shortcut = QtGui.QKeySequence.Close
-    icon = Icon('tango/16x16/actions/system-log-out.png')
+    icon = FontIcon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
     
@@ -220,6 +233,7 @@ class CloseForm( Action ):
         validator = model_context.admin.get_validator()
         obj = model_context.get_object()
         admin  = model_context.admin
+        subsystem_obj = admin.get_subsystem_object(obj)
         if obj is None:
             yield self.step_when_valid()
             return
@@ -243,10 +257,13 @@ class CloseForm( Action ):
             if reply == QtWidgets.QMessageBox.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
-                    yield action_steps.UpdateObjects((obj,))
+                    yield action_steps.UpdateObjects((subsystem_obj,))
                 else:
-                    yield action_steps.DeleteObjects((obj,))
-                    admin.expunge( obj )
+                    depending_objects = list(admin.get_depending_objects(obj))
+                    model_context.proxy.remove(obj)
+                    yield action_steps.DeleteObjects((subsystem_obj,))
+                    admin.expunge(obj)
+                    yield action_steps.UpdateObjects(depending_objects)
                 # only close the form after the object has been discarded or
                 # deleted, to avoid yielding action steps after the widget mapper
                 # has been garbage collected

@@ -27,10 +27,12 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py
+from ....admin.action.base import RenderHint
+from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
+
 from ...model_thread import post
 from ..action_widget import ActionToolbutton
 
@@ -121,6 +123,14 @@ class AbstractCustomEditor(object):
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            button = ActionToolbutton(action, self.gui_context, parent)
+            button.setAutoRaise(True)
+            button.setFocusPolicy(Qt.ClickFocus)
+            return button
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
 
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
@@ -142,6 +152,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         AbstractCustomEditor.__init__(self)
         self.gui_context = FieldActionGuiContext()
         self.gui_context.editor = self
+        self.gui_context.admin_route = None
 
         if CustomEditor._font_width is None:
             font_metrics = QtGui.QFontMetrics(self.font())
@@ -161,13 +172,16 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     def add_actions(self, actions, layout):
         for action in actions:
-            action_widget = action.render(self.gui_context, self)
+            action_widget = self.render_action(action, self)
             action_widget.setFixedHeight(self.get_height())
             layout.addWidget(action_widget)
 
     def update_actions(self):
-        model_context = self.gui_context.create_model_context()
+        model_context = None
         for action_action in self.findChildren(ActionToolbutton):
+            # only create the model context, when there is an action
+            if model_context is None:
+                model_context = self.gui_context.create_model_context()
             post(action_action.action.get_state, action_action.set_state,
                  args=(model_context,))
 

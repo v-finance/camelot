@@ -35,17 +35,20 @@ These classes can be reused if a custom base class is needed.
 """
 
 import bisect
-
+import logging
 import six
 
-from sqlalchemy import orm, schema, sql
+from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
+from ...types import Enumeration
 from . statements import MUTATORS
 from . properties import EntityBuilder, PrimaryKeyProperty
 from . import Session, options
+
+LOGGER = logging.getLogger('camelot.core.orm.entity')
 
 class EntityDescriptor(object):
     """
@@ -232,10 +235,70 @@ class EntityDescriptor(object):
         return order        
 
 class EntityMeta( DeclarativeMeta ):
-    """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
-    metaclass processes the Property and ClassMutator objects.
     """
-
+    Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
+    This metaclass processes the Property and ClassMutator objects.
+    
+    Facade class registration
+    -------------------------
+    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
+    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
+    To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
+    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
+    In order to register a facade class: see documentation on EntityFacadeMeta.
+    
+    :example: | class SomeClass(Entity):
+              |     __tablename__ = 'some_tablename'
+              |     ...
+              |     described_by = Column(IntEnum(some_class_types), ...)
+              |     ...
+              |     __facade_args__ = {
+              |         'discriminator': described_by
+              |     }
+              |     ...
+              |
+              | class SomeFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
+              |         'type': some_class_types.certain_type.name
+              |     }
+              |     ...
+              |
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
+              |     }
+              |     ...
+              |
+              | class SomeGroupFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'group': allowed_type_groups.certain_type_group.name
+              |     }
+              |     ...
+              |
+              | class DefaultFacadeClass(EntityFacade)
+              |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
+              |         'default': True
+              |     }
+              |     ...
+    
+    This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
+    This will return the registered class for a specific given type or type group, if any are registered on the class (or its Base). See its documentation for more details.
+    
+    :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
+              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
+              | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
+    
+    Notes on metaclasses
+    --------------------
+    Metaclasses are not part of objects' class hierarchy whereas base classes are.
+    So when a method is called on an object it will not look on the metaclass for this method, however the metaclass may have created it during the class' or object's creation.
+    They are generally used for use cases outside of the default rules of object-oriented programming.
+    In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
+    which is an OOP anti-pattern as classes should not know about their subclasses.
+    """
+    
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -268,9 +331,95 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 dict_.setdefault('__mapper_args__', dict())
-
+            
+            for base in bases:
+                if hasattr(base, '__facade_args__'):
+                    break
+            else:
+                dict_.setdefault('__facade_args__', dict())
+            
+            for base in bases:
+                if hasattr(base, '__types__'):
+                    break
+            else:
+                dict_.setdefault('__types__', None)
+            
+            for base in bases:
+                if hasattr(base, '__type_groups__'):
+                    break
+            else:
+                dict_.setdefault('__type_groups__', None)
+            
+            for base in bases:
+                if hasattr(base, '__cls_for_type__'):
+                    break
+            else:
+                dict_.setdefault('__cls_for_type__', dict())
+        
+            facade_args = dict_.get('__facade_args__')
+            if facade_args is not None:
+                discriminator = facade_args.get('discriminator')
+                if discriminator is not None:
+                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
+                    discriminator_col = discriminator
+                    if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
+                        discriminator_col = discriminator.prop.columns[0]
+                    assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
+                    assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
+                    dict_['__types__'] = discriminator_col.type.enum
+                    if hasattr(discriminator_col.type.enum, 'get_groups'):
+                        dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
+                    dict_['__cls_for_type__'] = dict()
+            
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
-
+                
+    def get_cls_by_type(cls, _type):
+        """
+        Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
+        This can be the class that is specifically registered for the given type or type group, or a possible registered default class otherwise.
+        Providing no type will also return the default registered class if present.
+        
+        :param _type:  either None which will lookup a possible registered default class, or a member of a sqlalchemy.util.OrderedProperties instance.
+                       If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
+                       __type_groups__, that get auto-set in case the set types are grouped.
+        :return:       the class that is registered for the given type, which inherits from the class where the allowed types are registered on, or the class itself if not.
+                       In case the given type is:
+                        * None; the registered default class will be returned, if present.
+                        * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
+                        * a member of the allowed __types__; a possible registered class for the type will be returned,
+                          otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
+                       Examples:
+                       | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
+                       | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
+                       | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
+        :raises :      an AttributeException when the given argument is not a valid type
+        """
+        if cls.__types__ is not None:
+            groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
+            types = cls.__types__
+            if _type is None or _type in types.__members__ or _type in groups:
+                group = _type
+                if groups and _type in types.__members__ and types[_type].grouped_by is not None:
+                    group = types[_type].grouped_by.name
+                
+                return cls.__cls_for_type__.get(_type) or \
+                       cls.__cls_for_type__.get(group) or \
+                       cls.__cls_for_type__.get(None)
+            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+            raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+    
+    def _get_facade_arg(cls, key):
+        for cls_ in (cls,) + cls.__mro__:
+            if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
+                return cls_.__facade_args__[key]
+    
+    def get_cls_discriminator(cls):
+        discriminator = cls._get_facade_arg('discriminator')
+        if discriminator is not None:
+            if isinstance(discriminator, sql.schema.Column):
+                return getattr(cls, discriminator.key)
+            return discriminator
+    
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
@@ -487,4 +636,3 @@ class EntityBase( object ):
         session.query(MyClass).get(...)
         """
         return Session().query( cls ).get(*args, **kwargs)
-

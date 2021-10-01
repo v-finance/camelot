@@ -175,7 +175,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         self.collection = [A(0), A(1), A(2)]
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
-        self.item_model = CollectionProxy(self.admin)
+        self.admin_route = self.admin.get_admin_route()
+        self.item_model = CollectionProxy(self.admin_route)
         self.item_model.set_value(self.admin.get_proxy(self.collection))
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
@@ -290,7 +291,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests)
         # after the timeout, the data is available
         for row in range(row_count):
             self.assertIn('Open', self._header_data(row, Qt.Vertical, Qt.ToolTipRole, self.item_model))
-            self.assertEqual(self._header_data(row, Qt.Vertical, Qt.DisplayRole, self.item_model), str(row+1))
+            # dont display any data if there is a decoration, otherwise
+            # both are displayed mixed
+            self.assertEqual(self._header_data(row, Qt.Vertical, Qt.DisplayRole, self.item_model), '')
             self.assertTrue(self._header_data(row, Qt.Vertical, Qt.DecorationRole, self.item_model))
             self.assertEqual(self._header_data(row, Qt.Vertical, ObjectRole, self.item_model), self.collection[row])
             self.assertEqual(self._header_data(row, Qt.Vertical, VerboseIdentifierRole, self.item_model), 'A : {0}'.format(row))
@@ -547,8 +550,8 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
         cls.proxy = QueryModelProxy(cls.session.query(Person))
 
     @classmethod
-    def setup_item_model(cls, admin):
-        cls.item_model = CollectionProxy(admin)
+    def setup_item_model(cls, admin_route, admin_name):
+        cls.item_model = CollectionProxy(admin_route)
         cls.item_model.set_value(cls.proxy)
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
@@ -575,7 +578,8 @@ class QueryQStandardItemModelCase(
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
-        self.setup_item_model(self.app_admin.get_related_admin(Person))
+        self.admin_route = self.person_admin.get_admin_route()
+        self.setup_item_model(self.admin_route, self.person_admin.get_name())
         self.process()
         self.query_counter = 0
         event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
@@ -658,7 +662,7 @@ class QueryQStandardItemModelCase(
                 return query.filter_by(id=values)
 
         start = self.query_counter
-        item_model = CollectionProxy(self.person_admin)
+        item_model = CollectionProxy(self.admin_route)
         item_model.set_value(self.proxy)
         item_model.set_filter(SingleItemFilter('id'), self.first_person_id)
         list(item_model.add_columns(self.columns))

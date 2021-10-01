@@ -27,11 +27,11 @@
 #
 #  ============================================================================
 
+from .action import Action
 from ..core.qt import QtWidgets
 
-import six
 
-class Menu( object ):
+class Menu(object):
     """A menu is a part of the main menu shown on the main window.  Each Menu
 contains a list of items the user select.  Such a menu item is either a Menu
 itself, an Action object or None to insert a separator.
@@ -58,18 +58,19 @@ itself, an Action object or None to insert a separator.
         """
         :return: a :class:`QtWidgets.QMenu` object
         """
-        menu = QtWidgets.QMenu( six.text_type( self.get_verbose_name() ), parent )
+        from ..view.controls.action_widget import ActionAction
+        menu = QtWidgets.QMenu(str(self.get_verbose_name()), parent)
         for item in self.get_items():
-            if item == None:
+            if item is None:
                 menu.addSeparator()
                 continue
-            rendered_item = item.render( gui_context, menu )
-            if isinstance( rendered_item, QtWidgets.QMenu ):
-                menu.addMenu( rendered_item )
-            elif isinstance( rendered_item, QtWidgets.QAction ):
-                menu.addAction( rendered_item )
+            if isinstance(item, Menu):
+                menu.addMenu(item.render(gui_context, menu))
+            elif isinstance(item, Action):
+                action = ActionAction(item, gui_context, menu)
+                menu.addAction(action)
             else:
-                raise Exception( 'Cannot handle menu items of type %s'%type( rendered_item ) )
+                raise Exception('Cannot handle menu items of type %s'%type(item))
         return menu
 
 

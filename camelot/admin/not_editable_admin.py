@@ -30,23 +30,25 @@
 from copy import copy
 from itertools import tee
 
-class AdminDecorator(object):
-    """Generic decorator for an instance of an Admin class"""
+from .admin_route import AdminRoute
 
-    def __init__(self, original_admin):
-        self._original_admin = original_admin
 
-    def __getattr__(self, name):
-        return getattr( self._original_admin, name)
-
-class ReadOnlyAdminDecorator(AdminDecorator):
+class ReadOnlyAdminDecorator(AdminRoute):
     """Decorator to make an instance of an Admin class read only"""
 
     def __init__(self, original_admin, editable_fields=[]):
-        super(ReadOnlyAdminDecorator, self).__init__(original_admin)
+        super().__init__()
+        self._original_admin = original_admin
         self._editable_fields = editable_fields
         self._field_attributes = dict()
-        
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
+
+    def __getattr__(self, name):
+        return getattr(self._original_admin, name)
+
     def _process_field_attributes(self, field, attributes):
         if not 'editable' in attributes:
             return attributes

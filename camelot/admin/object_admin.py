@@ -35,10 +35,11 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
+from .admin_route import AdminRoute
+from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
-from camelot.view.controls.tableview import TableView
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -76,7 +77,7 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'maximum'])
 
 
-class ObjectAdmin(object):
+class ObjectAdmin(AdminRoute):
     """The ObjectAdmin class describes the interface that will be used
 to interact with objects of a certain class.  The behaviour of this class
 and the resulting interface can be tuned by specifying specific class
@@ -248,6 +249,7 @@ be specified using the verbose_name attribute.
     fields = []
     form_display = []
     form_close_action = CloseForm()
+    field_filter = []
     list_filter = []
     list_action = OpenFormView()
     list_actions = []
@@ -260,12 +262,6 @@ be specified using the verbose_name attribute.
     field_attributes = {}
     form_state = None
     icon = None # Default
-    #
-    # Behavioral attributes
-    # 
-    drop_action = None
-
-    TableView = TableView
 
     def __init__( self, app_admin, entity ):
         """
@@ -280,6 +276,10 @@ be specified using the verbose_name attribute.
         #
         self._field_attributes = dict()
         self._subclasses = None
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
 
     def __str__(self):
         return 'Admin %s' % str(self.entity.__name__)
@@ -338,7 +338,8 @@ be specified using the verbose_name attribute.
         search_identifiers = {} 
 
         search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.UserRole] = obj
         search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
@@ -346,16 +347,6 @@ be specified using the verbose_name attribute.
     def get_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
-
-    def get_settings( self ):
-        """A settings object in which settings related to this admin can be
-        stored.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = self.app_admin.get_settings()
-        settings.beginGroup( self.get_name()[:255] )
-        return settings
 
     def get_memento( self ):
         return self.app_admin.get_memento()
@@ -397,6 +388,19 @@ be specified using the verbose_name attribute.
         """
         app_admin = self.get_application_admin()
         return app_admin.get_list_toolbar_actions(toolbar_area)
+
+    def get_select_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned when selecting objects 
+            from a table.
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_select_list_toolbar_actions(toolbar_area)
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
@@ -640,7 +644,9 @@ be specified using the verbose_name attribute.
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
-                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
+                search_strategy=list_filter.NoSearch,
+                filter_strategy=list_filter.NoSearch,
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
@@ -688,7 +694,8 @@ be specified using the verbose_name attribute.
             # constructed
             #
             direction = field_attributes.get('direction', 'onetomany')
-            if direction.endswith('many') and related_admin:
+            python_type = field_attributes.get('python_type')
+            if direction.endswith('many') and python_type == list and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
                 field_attributes['toolbar_actions'] = related_admin.get_related_toolbar_actions(
                     Qt.RightToolBarArea, direction
@@ -701,7 +708,16 @@ be specified using the verbose_name attribute.
                         related_field_attributes(field).get('column_width', 0) for 
                         field in fields)
                     column_width = sum(related_column_widths, 0)
+            elif (direction.startswith('many') or direction.endswith('many') and python_type != list) and (field_attributes.get('actions') is None):
+                field_attributes['actions'] = [
+                    field_action.ClearObject(),
+                    field_action.SelectObject(),
+                    field_action.NewObject(),
+                    field_action.OpenObject()
+                ]
             field_attributes['admin'] = related_admin
+            field_attributes['admin_route'] = related_admin.get_admin_route()
+            field_attributes['admin_name'] = related_admin.get_name()
         #
         # If no column_width is specified, try to derive one
         #
@@ -716,8 +732,21 @@ be specified using the verbose_name attribute.
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
-
-    def get_search_fields(self, substring):
+        
+        # Initialize search & filter strategies with the retrieved corresponding attribute.
+        # We take the field_name as the default, to handle properties that do not exist on the admin's entity class.
+        # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
+        # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
+        # which is enforced by the strategy constructor.
+        attribute = getattr(self.entity, field_name, field_name)
+        filter_strategy = field_attributes['filter_strategy']
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
+            field_attributes['filter_strategy'] = filter_strategy(attribute)
+        search_strategy = field_attributes['search_strategy']
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldSearch):
+            field_attributes['search_strategy'] = search_strategy(attribute)
+        
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the `list_search` attribute.
@@ -969,3 +998,24 @@ be specified using the verbose_name attribute.
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
 
+    def get_subsystem_object(self, obj):
+        """Return the given object's applicable subsystem object."""
+        return obj
+    
+    def set_discriminator_value(self, obj, discriminator_value):
+        """Set the given discriminator value on the provided obj."""
+        pass
+    
+    def get_field_filters(self):
+        """
+        Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
+        This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoSearch strategies and concrete field strategies are not applicable for regular objects.
+        The resulting dictionary is cached so that the conversion is not executed needlessly.
+        """
+        if self._field_filters is None:
+            self._field_filters =  {strategy.name: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoSearch)}
+        return self._field_filters
+    
+    def _get_field_strategies(self):
+        """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        return self.field_filter

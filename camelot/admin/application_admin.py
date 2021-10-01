@@ -36,6 +36,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 
 import six
 
+from .admin_route import AdminRoute
 from .entity_admin import EntityAdmin
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
@@ -50,7 +51,7 @@ from camelot.view import art
 #
 _translations_data_ = []
 
-class ApplicationAdmin(object):
+class ApplicationAdmin(AdminRoute):
     """The ApplicationAdmin class defines how the application should look
 like, it also ties Python classes to their associated 
 :class:`camelot.admin.object_admin.ObjectAdmin` class or subclass.  It's
@@ -133,6 +134,10 @@ shortcut confusion and reduce the number of status updates.
             self.author = author
         if domain is not None:
             self.domain = domain
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
 
     def register(self, entity, admin_class):
         """Associate a certain ObjectAdmin class with another class.  This
@@ -157,17 +162,6 @@ shortcut confusion and reduce the number of status updates.
         return [ Section( _('Relations'), self ),
                  Section( _('Configuration'), self ),
                  ]
-
-    def get_settings( self ):
-        """A :class:`QtCore.QSettings` object in which Camelot related settings
-        can be stored.  This object is intended for Camelot internal use.  If an
-        application specific settings object is needed, simply construct one.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = QtCore.QSettings()
-        settings.beginGroup( 'Camelot' )
-        return settings
 
     def get_memento( self ):
         """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
@@ -296,7 +290,25 @@ shortcut confusion and reduce the number of status updates.
             None if no toolbar should be created.
         """
         if toolbar_area == Qt.TopToolBarArea:
-            return self.edit_actions + self.change_row_actions + self.export_actions
+            return [
+                list_action.CloseList(), list_action.ListLabel()
+                ] + self.edit_actions + self.change_row_actions + self.export_actions
+        return []
+
+    def get_select_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned when selecting objects 
+            from a table.
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
+            return [
+                list_action.CloseList(), list_action.ListLabel()
+                ] + self.change_row_actions
         return []
 
     def get_main_menu( self ):
@@ -331,9 +343,9 @@ shortcut confusion and reduce the number of status updates.
         return self.version
 
     def get_icon(self):
-        """:return: the :class:`camelot.view.art.Icon` that should be used for the application"""
-        from camelot.view.art import Icon
-        return Icon('tango/32x32/apps/system-users.png').getQIcon()
+        """:return: the :class:`camelot.view.art.FontIcon` that should be used for the application"""
+        from camelot.view.art import FontIcon
+        return FontIcon('users').getQIcon() # 'tango/32x32/apps/system-users.png'
 
     def get_splashscreen(self):
         """:return: a :class:`QtGui.QPixmap` to be used as splash screen"""

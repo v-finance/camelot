@@ -38,7 +38,7 @@ from camelot.core.orm import Entity, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.utils import default_language
 import camelot.types
 
@@ -54,7 +54,7 @@ logger = logging.getLogger( 'camelot.model.i18n' )
 class ExportAsPO( Action ):
 
     verbose_name = _('PO Export')
-    icon = Icon('tango/16x16/actions/document-save.png')
+    icon = FontIcon('save') # 'tango/16x16/actions/document-save.png'
 
     def model_run( self, model_context ):
         from camelot.view.action_steps import SaveFile

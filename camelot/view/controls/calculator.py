@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from ...core.qt import QtCore, QtWidgets, q_string_type
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 class Calculator(QtWidgets.QDialog):
@@ -68,7 +68,7 @@ class Calculator(QtWidgets.QDialog):
         self.clear = QtWidgets.QPushButton('&Clear', self)
 
         self.backspace = QtWidgets.QToolButton()
-        icon = Icon('tango/16x16/actions/go-previous.png').getQIcon()
+        icon = FontIcon('backspace').getQIcon() # 'tango/16x16/actions/go-previous.png'
         self.backspace.setIcon(icon)
         self.backspace.setAutoRaise(True)
 

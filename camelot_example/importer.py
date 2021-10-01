@@ -30,11 +30,11 @@ import six
 
 from camelot.admin.action import Action
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 
 class ImportCovers( Action ):
     verbose_name = _('Import cover images')
-    icon = Icon('tango/22x22/mimetypes/image-x-generic.png')
+    icon = FontIcon('image')
     
 # begin select files
     def model_run( self, model_context ):

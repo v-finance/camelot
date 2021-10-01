@@ -99,7 +99,7 @@ class QueryModelProxy(ListModelProxy):
             # The object is in the query, but might not yet be in the length
             self._length = None
             return
-        self._objects.append(obj)
+        self._objects.append(obj)     
 
     def index(self, obj):
         assert not isinstance(obj, assert_value_objects)
@@ -141,6 +141,8 @@ class QueryModelProxy(ListModelProxy):
         query = self.get_query().offset(query_offset)
         if query_limit is not None:
             query = query.limit(query_limit)
+        else:
+            LOGGER.warn('Query executed without limit because it can not be used safely in combination with left outer joins:\n{}'.format(str(query)))
         free_index = offset
         indexed_object_count = 0
         for obj in query.all():
