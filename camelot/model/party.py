@@ -274,6 +274,7 @@ class City( GeographicBoundary ):
              GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
+             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
              'alternative_names'],
             columns=2)
         field_attributes = {k:copy.copy(v) for k,v in six.iteritems(GeographicBoundary.Admin.field_attributes)}
