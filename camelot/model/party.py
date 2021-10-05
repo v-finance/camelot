@@ -58,7 +58,7 @@ from .authentication import end_of_times
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
-    
+
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
@@ -290,7 +290,7 @@ class City( GeographicBoundary ):
         verbose_name_plural = _('Cities')
         list_display = ['code', 'name', 'administrative_name', 'country']
         form_display = Form(
-            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+            [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
              GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
