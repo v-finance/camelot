@@ -59,8 +59,6 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
     
-    id = schema.Column("id", sqlalchemy.types.Integer, schema.Sequence('geographic_boundary_id_seq', start=1000000), autoincrement=True, primary_key=True),
-    
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
@@ -227,39 +225,52 @@ class City( GeographicBoundary ):
                                    primary_key = True,
                                    autoincrement = False )
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
-    
-    __mapper_args__ = {'polymorphic_identity': 'city'}
-    
-    def main_municipality_name(self, language=None):
-        main_municipality = self.main_municipality_alternative_names\
-           .order_by(GeographicBoundaryMainMunicipality.language==language,
-                     GeographicBoundaryMainMunicipality.language==None).first()
-        if main_municipality is not None:
-            return main_municipality.name
-    
-    def administrative_translation(self, language):
-        translated_name = self.translation(language)
-        main_municipality = self.main_municipality_name(language)
-        main_municipality_suffix = ''
-        if main_municipality is not None:
-            main_municipality_suffix = ' ({})'.format(main_municipality)
-        return translated_name + main_municipality_suffix        
-    
-    @property
-    def main_municipality(self):
-        return self.main_municipality_name(None)
-    
-    @property
-    def administrative_name(self):
-       return self.administrative_translation(language=None)
 
-    @property
-    def administrative_name_NL(self):
-        return self.administrative_translation(language='nl_BE')
-    
-    @property    
-    def administrative_name_FR(self):
-        return self.administrative_translation(language='fr_BE')
+    __mapper_args__ = {'polymorphic_identity': 'city'}
+
+    @hybrid.hybrid_method
+    def main_municipality_name(self, language=None):
+        matched_mm = default_mm = None
+        for main_municipality in self.main_municipality_alternative_names:
+            if main_municipality.language == language:
+                matched_mm = main_municipality.name
+            elif main_municipality.language is None:
+                default_mm = main_municipality.name
+        return matched_mm or default_mm
+
+    @main_municipality_name.expression
+    def main_municipality_name(cls, language=None):
+        return sql.select([GeographicBoundaryMainMunicipality.name])\
+               .where(GeographicBoundaryMainMunicipality.alternative_name_for_id == cls.id)\
+               .order_by(GeographicBoundaryMainMunicipality.language==language,
+                         GeographicBoundaryMainMunicipality.language==None)\
+               .label('main_municipality_name')
+
+    @hybrid.hybrid_method
+    def administrative_translation(cls, language):
+        translated_name = cls.translation(language)
+        if translated_name is not None:
+            main_municipality = cls.main_municipality_name(language)
+            main_municipality_suffix = ''
+            if main_municipality is not None:
+                main_municipality_suffix = ' ({})'.format(main_municipality)
+            return translated_name + main_municipality_suffix        
+
+    @hybrid.hybrid_property
+    def main_municipality(cls):
+        return cls.main_municipality_name(None)
+
+    @hybrid.hybrid_property
+    def administrative_name(cls):
+       return cls.administrative_translation(language=None)
+
+    @hybrid.hybrid_property
+    def administrative_name_NL(cls):
+        return cls.administrative_translation(language='nl_BE')
+
+    @hybrid.hybrid_property
+    def administrative_name_FR(cls):
+        return cls.administrative_translation(language='fr_BE')
     
     def __str__(self):
         if None not in (self.code, self.name, self.country):
