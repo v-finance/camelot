@@ -59,25 +59,34 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
     
+    id = schema.Column("id", sqlalchemy.types.Integer, schema.Sequence('geographic_boundary_id_seq', start=1000000), autoincrement=True, primary_key=True),
+    
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
-    
+
+    @hybrid.hybrid_method
     def translation(self, language='nl_BE'):
-       translation = self.translations.filter(GeographicBoundaryTranslation.language==language).one_or_none()
-       if translation is not None:
-           return translation.name
-       return self.name
-    
-    @property
-    def name_NL(self):
-        return self.translation(language='nl_BE')
-    
-    @property
-    def name_FR(self):
-        return self.translation(language='fr_BE')
-    
+        for translation in self.translations:
+            if translation.language == language:
+                return translation.name
+        return self.name
+
+    @translation.expression
+    def translation(cls, language='nl_BE'):
+        return sql.select([GeographicBoundaryTranslation.name])\
+               .where(GeographicBoundaryTranslation.alternative_name_for_id == cls.id)\
+               .where(GeographicBoundaryTranslation.language == language).label('translation')
+
+    @hybrid.hybrid_property
+    def name_NL(cls):
+        return cls.translation(language='nl_BE')
+
+    @hybrid.hybrid_property
+    def name_FR(cls):
+        return cls.translation(language='fr_BE')
+
     __mapper_args__ = { 'polymorphic_on' : row_type }
     
     __table_args__ = (
