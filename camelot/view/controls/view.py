@@ -1,35 +1,43 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Functionality common to TableViews and FormViews"""
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+import itertools
 
-from camelot.view.model_thread import post
+from ...admin.action import RenderHint
+from ...core.qt import QtCore, QtGui, QtWidgets
+from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
+from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
+from .search import SimpleSearchControl
 
-class AbstractView(QtGui.QWidget):
+class AbstractView(QtWidgets.QWidget):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
 
@@ -40,62 +48,60 @@ class AbstractView(QtGui.QWidget):
     header_widget = None
     """
 
+    _rendered_action_counter = itertools.count()
+
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.pyqtSignal(QtCore.QString)
-    icon_changed_signal = QtCore.pyqtSignal(QtGui.QIcon)
+    title_changed_signal = QtCore.qt_signal(str)
+    icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
+    close_clicked_signal = QtCore.qt_signal()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
+    def validate_close(self):
+        return True
+
+    @QtCore.qt_slot()
     def refresh(self):
         """Refresh the data in the current view"""
         pass
 
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
         #import sip
         #if not sip.isdeleted(self):
-        self.title_changed_signal.emit( unicode(new_title) )
+        self.title_changed_signal.emit(str(new_title))
         
-    @QtCore.pyqtSlot(object)
+    @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
 
-class TabView(AbstractView):
-    """Class to combine multiple views in Tabs and let them behave as one view.
-    This class can be used when defining custom create_table_view methods on an
-    ObjectAdmin class to group multiple table views together in one view."""
 
-    def __init__(self, parent, views=[], admin=None):
-        """:param views: a list of the views to combine"""
-        AbstractView.__init__(self, parent)
-        layout = QtGui.QVBoxLayout()
-        if self.header_widget:
-            self.header = self.header_widget(self, admin)
+    @classmethod
+    def _register_rendered_action(cls, qobject):
+        next_rendered_action = cls._rendered_action_counter.__next__()
+        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
+        qobject.setObjectName(rendered_action_name)
+        return rendered_action_name
+
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.TOOL_BUTTON:
+            qobject = ActionToolbutton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.COMBO_BOX:
+            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.GROUP_BOX:
+            qobject = GroupBoxFilterWidget(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.SEARCH_BUTTON:
+            qobject = SimpleSearchControl(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.PUSH_BUTTON:
+            qobject = ActionPushButton(action, self.gui_context, parent)
+        elif action.render_hint == RenderHint.LABEL:
+            qobject = ActionLabel(action, self.gui_context, parent)
         else:
-            self.header = None
-        layout.addWidget(self.header)
-        self._tab_widget = QtGui.QTabWidget(self)
-        self._tab_widget.setObjectName( 'tab_widget' )
-        layout.addWidget(self._tab_widget)
-        self.setLayout(layout)
-
-        def get_views_and_titles():
-            return [(view, view.get_title()) for view in views]
-
-        post(get_views_and_titles, self.set_views_and_titles)
-        post(lambda:self.title_format, self.change_title)
-
-    @QtCore.pyqtSlot()
-    def refresh(self):
-        """Refresh the data in the current view"""
-        for i in range(self._tab_widget.count()):
-            view = self._tab_widget.widget(i)
-            view.refresh()
-
-    def set_views_and_titles(self, views_and_titles):
-        for view, title in views_and_titles:
-            self._tab_widget.addTab(view, title)
-
-
+            raise Exception('Unhandled render hint {} for {}'.format(
+                action.render_hint, type(action)
+            ))
+        rendered_action_name = self._register_rendered_action(qobject)
+        self.gui_context.action_routes[action] = rendered_action_name
+        return qobject

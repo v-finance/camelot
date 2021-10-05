@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -48,10 +53,6 @@ with sphinx.
 """),
     ('license_update', """Change the license header of a project,
 use license_update project_directory license_file"""),
-    ('to_pyside', """Takes a folder with PyQt4 source code and translates it to
-PySide source code.  Usage ::
-   
-   to_pyside source destination"""),
 ]
 
 #
@@ -77,8 +78,6 @@ The available commands are :
 """
         command_help += '\n\n'.join(['%s\n%s\n%s'%(command,'-'*len(command), desc) for command,desc in command_description])
         command_help += """
-        
-For the management of deployed Camelot applications, see camelot_manage
 
 """
         return OptionParser.format_help(self) + ''.join(command_help)
@@ -107,7 +106,7 @@ def apidoc(source, destination):
             if dirname == source:
                 title = '%s API'%(dirname.capitalize())
             ifn = os.path.join( targetdir, 'index.rst' )
-            module_name = dirname.replace('/', '.')
+            module_name = dirname.replace(os.path.sep, '.')
             with open( ifn, 'w' ) as index:
                lines = [ '=' * len(title),
                          title,
@@ -173,49 +172,6 @@ def license_update(project, license_file):
             
     os.path.walk(project, translate_directory, None)
     
-def to_pyside( source, destination ):
-    import os.path
-    import shutil
-    # first take a copy
-    if os.path.exists( destination ):
-        shutil.rmtree( destination )
-    shutil.copytree( source, destination )
-   
-    def replace_word(original_str, old_word, new_word):
-        return new_word.join((t for t in original_str.split(old_word)))
-
-    def translate_file( dirname, name ):
-        """translate a single file"""
-        filename = os.path.join(dirname, name)
-        LOGGER.info( 'converting %s'%filename )
-        source = open(filename).read()
-        output = open(filename, 'w')
-        source = replace_word( source, 'PyQt4', 'PySide' )
-        source = replace_word( source, 'pyqtSlot', 'Slot' )
-        source = replace_word( source, 'pyqtSignal', 'Signal' )
-        source = replace_word( source, 'pyqtProperty', 'Property' )
-        source = replace_word( source, 'QtCore.QString', 'str' )
-        source = replace_word( source, 'QtCore.QVariant.', 'QtCore.Q')
-        source = replace_word( source, 'QtCore.QVariant(', '(' )
-        source = replace_word( source, 'QVariant', '()' )
-        source = replace_word( source, '.toByteArray()', '' )
-        source = replace_word( source, '.toString()', '' )
-        source = replace_word( source, '.toBool()', '' )
-        source = replace_word( source, '.toSize()', '' )
-        source = replace_word( source, '.toLongLong()', ', True' )
-        source = replace_word( source, ').isValid()', ')' )
-        output.write( source )
-        
-    def translate_directory( dirname, names ):
-        """recursively translate a directory"""
-        for name in names:
-            if name.endswith('.py'):
-                translate_file(dirname, name)
-            
-    for ( dirpath, _dirnames, filenames ) in os.walk( destination ):
-        translate_directory( dirpath, filenames )
-    
-    
 def startproject(module):
     import os
     from camelot.bin.meta import CreateNewProject, NewProjectOptions
@@ -253,5 +209,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 

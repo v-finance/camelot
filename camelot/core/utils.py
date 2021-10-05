@@ -1,68 +1,49 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Utility functions"""
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
-import datetime
 import logging
+
+import six
+
+from .qt import QtCore, qtranslate
 
 logger = logging.getLogger('camelot.core.utils')
 
-def is_deleted_pyqt( qobj ):
-    """
-    :param qobj: a :class:`QtCore.QObject`
-    :return: :const:`True` if the qobj was deleted, :const:`False`
-        otherwise
-    """
-    import sip
-    return sip.isdeleted( qobj )
-
-
-def is_deleted_pyside( qobj ):
-    """
-    :param qobj: a :class:`QtCore.QObject`
-    :return: :const:`True` if the qobj was deleted, :const:`False`
-        otherwise
-    """
-    return False
-
-if hasattr(QtCore, 'PYQT_VERSION_STR'):
-    pyqt = True
-    is_deleted = is_deleted_pyqt 
-else:
-    pyqt = False
-    is_deleted = is_deleted_pyside
-    # try to activate the PySide backend of matplotlib
-    # http://www.scipy.org/Cookbook/Matplotlib/PySide
-    try:
-        import matplotlib
-        matplotlib.rcParams['backend.qt4'] = 'PySide'
-    except:
-        pass
+    ## try to activate the PySide backend of matplotlib
+    ## http://www.scipy.org/Cookbook/Matplotlib/PySide
+    #try:
+        #import matplotlib
+        #matplotlib.rcParams['backend.qt4'] = 'PySide'
+    #except:
+        #pass
     
 def create_constant_function(constant):
     return lambda:constant
@@ -85,100 +66,11 @@ class CollectionGetterFromObjectGetter(object):
             self._collection = [self._object_getter()]
         return self._collection
 
-
-"""
-A Note on GUI Types
-
-Because QVariant is part of the QtCore library, it cannot provide conversion
-functions to data types defined in QtGui, such as QColor, QImage, and QPixmap.
-In other words, there is no toColor() function. Instead, you can use the
-QVariant.value() or the qVariantValue() template function. For example:
-
- QVariant variant;
- ...
- QColor color = variant.value<QColor>();
-
-The inverse conversion (e.g., from QColor to QVariant) is automatic for all
-data types supported by QVariant, including GUI-related types:
-
- QColor color = palette().background().color();
- QVariant variant = color;
-"""
-
-def variant_to_pyobject_1(qvariant=None):
-    """Try to convert a QVariant to a python object as good as possible"""
-    if not qvariant:
-        return None
-    if qvariant.isNull():
-        return None
-    type = qvariant.type()
-    if type == QtCore.QVariant.String:
-        value = unicode(qvariant.toString())
-    elif type == QtCore.QVariant.Date:
-        value = qvariant.toDate()
-        value = datetime.date( year=value.year(),
-                               month=value.month(),
-                               day=value.day() )
-    elif type == QtCore.QVariant.Int:
-        value = int(qvariant.toInt()[0])
-    elif type == QtCore.QVariant.LongLong:
-        value = int(qvariant.toLongLong()[0])
-    elif type == QtCore.QVariant.Double:
-        value = float(qvariant.toDouble()[0])
-    elif type == QtCore.QVariant.Bool:
-        value = bool(qvariant.toBool())
-    elif type == QtCore.QVariant.Time:
-        value = qvariant.toTime()
-        value = datetime.time( hour = value.hour(),
-                               minute = value.minute(),
-                               second = value.second() )        
-    elif type == QtCore.QVariant.DateTime:
-        value = qvariant.toDateTime()
-        value = value.toPyDateTime()
-    elif type == QtCore.QVariant.Color:
-        value = QtGui.QColor(qvariant)
-    else:
-        value = qvariant.toPyObject()
-
-    return value
-
-def variant_to_pyobject_2( value ):
-    if isinstance( value, QtCore.QDate ):
-        value = datetime.date( year = value.year(),
-                               month = value.month(),
-                               day = value.day() )
-    elif isinstance( value, QtCore.QTime ):
-        value = datetime.time( hour = value.hour(),
-                               minute = value.minute(),
-                               second = value.second() )        
-    elif isinstance( value, QtCore.QDateTime ):
-        date = value.date()
-        time = value.time()
-        value = datetime.datetime( year = date.year(),
-                                   month = date.month(),
-                                   day = date.day(),
-                                   hour = time.hour(),
-                                   minute = time.minute(),
-                                   second = time.second()                                   
-                                   )
-    return value
-
-if pyqt:
-    variant_to_pyobject = variant_to_pyobject_1
-else:
-    variant_to_pyobject = variant_to_pyobject_2
-
 #
 # Global dictionary containing all user defined translations in the
 # current locale
 #
 _translations_ = {}
-
-#
-# Encoding used when transferring translation strings from
-# python to qt
-#
-_encoding=QtCore.QCoreApplication.UnicodeUTF8
 
 def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
@@ -187,7 +79,7 @@ def set_translation(source, value):
 def load_translations():
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
-    language = unicode(QtCore.QLocale().name())
+    language = six.text_type(QtCore.QLocale().name())
     from sqlalchemy import sql
     from camelot.model.i18n import Translation
     # only load translations when the camelot model is active
@@ -200,29 +92,20 @@ def load_translations():
     for source, value in Translation.query.session.execute(query):
         _translations_[source] = value
 
-def _qtranslate(string_to_translate):
-    """Translate a string using the QCoreApplication translation framework
-    :param string_to_translate: a unicode string
-    :return: the translated unicode string if it was possible to translate
-    """
-    return unicode(QtCore.QCoreApplication.translate('', 
-                                                     string_to_translate.encode('utf-8'), 
-                                                     encoding=_encoding))
-    
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
     tries to get the translation from the .qm files)"""
-    assert isinstance(string_to_translate, basestring)
+    assert isinstance(string_to_translate, six.string_types)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = _qtranslate( string_to_translate )
+        result = qtranslate( string_to_translate )
         #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
-            result2 = _qtranslate( string_to_translate.capitalize() )
+            result2 = qtranslate( string_to_translate.capitalize() )
             if result2 is not string_to_translate.capitalize():
                 result = result2
 
@@ -232,7 +115,7 @@ def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
     """
-    assert isinstance(message, basestring)
+    assert isinstance(message, six.string_types)
     from camelot.model.i18n import Translation
     from sqlalchemy import sql
     query = sql.select( [Translation.value],
@@ -249,7 +132,7 @@ class ugettext_lazy(object):
     """
 
     def __init__(self, string_to_translate):
-        assert isinstance(string_to_translate, basestring)
+        assert isinstance(string_to_translate, six.string_types)
         self._string_to_translate = string_to_translate
 
     def __str__(self):
@@ -259,7 +142,7 @@ class ugettext_lazy(object):
         return ugettext(self._string_to_translate)
     
     def __eq__(self, other_string):
-        if isinstance(other_string, basestring):
+        if isinstance(other_string, six.string_types):
             return other_string == self._string_to_translate
         if isinstance(other_string, ugettext_lazy):
             return other_string._string_to_translate == self._string_to_translate
@@ -273,5 +156,4 @@ class ugettext_lazy(object):
 
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
-
 

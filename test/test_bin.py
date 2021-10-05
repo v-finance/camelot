@@ -2,6 +2,8 @@ import tempfile
 import unittest
 import os
 
+from camelot.view import action_steps
+
 class BinCase(unittest.TestCase):
     """test functions from camelot.bin
     """
@@ -10,10 +12,9 @@ class BinCase(unittest.TestCase):
         from camelot.bin.meta import CreateNewProject, templates, NewProjectOptions
         new_project_action = CreateNewProject()
         for step in new_project_action.model_run( None ):
-            pass
-        options = NewProjectOptions()
-        options.source = 'new_project' 
-        new_project_action.start_project( options )
+            if isinstance(step, action_steps.ChangeObject):
+                options = step.get_object()
+                options.source = tempfile.mkdtemp('new_project')
         #
         # validate the generated files
         #

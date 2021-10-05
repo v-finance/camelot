@@ -1,44 +1,106 @@
 import datetime
 import os
+import unittest
 
-from sqlalchemy import orm
-from sqlalchemy import schema, types
+import six
 
+from sqlalchemy import orm, schema, types, create_engine
+
+from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session
-from camelot.core.sql import metadata
+from camelot.core.orm import Session, process_deferred_properties
 from camelot.core.conf import settings
-from camelot.model import party
-from camelot.test import ModelThreadTestCase
+from camelot.core.sql import metadata
+
+from camelot.model import party, memento, authentication
+from camelot.model.party import Person
+from camelot.model.authentication import (
+    update_last_login, get_current_authentication
+)
+from camelot.model.batch_job import BatchJob, BatchJobType
+from camelot.model.fixture import Fixture, FixtureVersion
+from camelot.model.i18n import Translation, ExportAsPO
+
 from camelot.test.action import MockModelContext
+
+from camelot_example.fixtures import load_movie_fixtures
+from camelot_example import model
+from camelot_example.view import setup_views
+
 from .test_orm import TestMetaData
 
-class ExampleModelCase( ModelThreadTestCase ):
-    """
-    Test case that makes sure the example tables are available in
-    the Camelot metadata
-    """
-    
-    def setUp( self ):
-        super( ExampleModelCase, self ).setUp()
-        from camelot.model import ( authentication, batch_job, fixture,
-                                    party, i18n, memento )
-        self.engine = settings.ENGINE()
-        metadata.bind = self.engine
-        metadata.create_all()
-        self.session = Session()
-        self.session.expunge_all()
-        
-    def tearDown( self ):
-        metadata.drop_all()
-        self.session.expunge_all()
-        
-class ModelCase( ExampleModelCase ):
+app_admin = ApplicationAdmin()
+
+#
+# This creates an in memory database per thread
+#
+model_engine = create_engine('sqlite://')
+
+class ExampleModelMixinCase(object):
+
+    @classmethod
+    def setup_sample_model(cls):
+        process_deferred_properties()
+        setup_views()
+        metadata.bind = model_engine
+        metadata.create_all(model_engine)
+        cls.session = Session()
+        cls.session.expunge_all()
+        update_last_login()
+
+    @classmethod
+    def tear_down_sample_model(cls):
+        cls.session.expunge_all()
+        metadata.bind = None
+
+    @classmethod
+    def load_example_data(cls):
+        """
+        set cls.first_person_id, to have the id of a person available in the gui
+        """
+        load_movie_fixtures()
+        cls.first_person_id = cls.session.query(Person).first().id
+
+    @classmethod
+    def dirty_session(cls):
+        """
+        Create objects in various states to make the session dirty
+        """
+        cls.session.expunge_all()
+        # create objects in various states
+        #
+        p1 = Person(first_name = u'p1', last_name = u'persistent' )
+        p2 = Person(first_name = u'p2', last_name = u'dirty' )
+        p3 = Person(first_name = u'p3', last_name = u'deleted' )
+        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
+        p5 = Person(first_name = u'p5', last_name = u'detached' )
+        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
+        cls.session.flush()
+        p3.delete()
+        cls.session.flush()
+        p4.delete()
+        p2.last_name = u'clean'
+        #
+        # delete p6 without the session being aware
+        #
+        person_table = Person.table
+        cls.session.execute(
+            person_table.delete().where( person_table.c.party_id == p6.id )
+        )
+
+
+class ModelCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model"""
-        
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def test_memento( self ):
-        from camelot.model import memento
-        from camelot.model.authentication import get_current_authentication
         m = memento.Memento( primary_key = 1,
                              model = 'TestCase',
                              authentication = get_current_authentication(),
@@ -47,7 +109,6 @@ class ModelCase( ExampleModelCase ):
         self.assertTrue( m.previous )
         
     def test_i18n( self ):
-        from camelot.model.i18n import Translation, ExportAsPO
         session = Session()
         session.execute( Translation.__table__.delete() )
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), None )
@@ -61,7 +122,7 @@ class ModelCase( ExampleModelCase ):
         Translation._cache.clear()
         # fill the cache again
         translation = Translation( language = 'nl_BE', source = 'bucket',
-                                   value = 'emmer', uid=1 )
+                                   value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
         export_action = ExportAsPO()
@@ -69,14 +130,13 @@ class ModelCase( ExampleModelCase ):
         model_context.obj = translation
         try:
             generator = export_action.model_run( model_context )
-            file_step = generator.next()
-            generator.send( ['/tmp/test.po'] )
+            file_step = six.advance_iterator( generator )
+            generator.send('/tmp/test.po')
         except StopIteration:
             pass
         
     def test_batch_job_example( self ):
         # begin batch job example
-        from camelot.model.batch_job import BatchJob, BatchJobType
         synchronize = BatchJobType.get_or_create( u'Synchronize' )
         with BatchJob.create( synchronize ) as batch_job:
             batch_job.add_strings_to_message( [ u'Synchronize part A',
@@ -85,9 +145,8 @@ class ModelCase( ExampleModelCase ):
         # end batch job example
             
     def test_batch_job( self ):
-        from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( unicode( batch_job_type ) )
+        self.assertTrue( six.text_type( batch_job_type ) )
         batch_job = BatchJob.create( batch_job_type )
         self.assertTrue( orm.object_session( batch_job ) )
         self.assertFalse( batch_job.is_canceled() )
@@ -106,19 +165,19 @@ class ModelCase( ExampleModelCase ):
         self.assertEqual( batch_job.current_status, 'errors' )
     
     def test_current_authentication( self ):
-        from camelot.model.authentication import get_current_authentication
-        authentication = get_current_authentication()
+        authentication.clear_current_authentication()
+        mechanism = authentication.get_current_authentication()
         # current authentication cache should survive 
         # a session expire + expunge
-        orm.object_session( authentication ).expire_all()
-        orm.object_session( authentication ).expunge_all()
-        authentication = get_current_authentication()
-        self.assertTrue( authentication.username )
-        self.assertTrue( unicode( authentication ) )
+        orm.object_session( mechanism ).expire_all()
+        orm.object_session( mechanism ).expunge_all()
+        mechanism = authentication.get_current_authentication()
+        self.assertTrue( mechanism.username )
+        self.assertTrue( six.text_type( mechanism ) )
         
     def test_authentication_group( self ):
         # begin roles definition
-        from camelot.model import authentication
+        authentication.clear_current_authentication()
         authentication.roles.extend( [ (1, 'administrator'),
                                        (2, 'movie_editor') ] )
         # end roles definition
@@ -130,28 +189,33 @@ class ModelCase( ExampleModelCase ):
         self.assertTrue( auth.has_role( 'administrator' ) )
         self.assertFalse( auth.has_role( 'movie_editor' ) )
 
-class PartyCase( ExampleModelCase ):
+class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in party - address - contact mechanism model"""
-  
+
+    @classmethod
+    def setUpClass(cls):
+        super(PartyCase, cls).setUpClass()
+        cls.setup_sample_model()
+        cls.app_admin = ApplicationAdmin()
+        cls.person_admin = cls.app_admin.get_related_admin(party.Person)
+        cls.organization_admin = cls.app_admin.get_related_admin(party.Organization)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def setUp(self):
-        super( PartyCase, self ).setUp()
-        from camelot.admin.application_admin import ApplicationAdmin
         self.session = Session()
-        self.app_admin = ApplicationAdmin()
-        self.person_admin = self.app_admin.get_related_admin( party.Person )
-        self.organization_admin = self.app_admin.get_related_admin( party.Organization )
-        
-    def tearDown(self):
-        self.session.expunge_all()
-       
+        self.session.close()
+
     def test_party( self ):
         p = party.Party()
-        self.assertFalse( p.name )
+        self.assertFalse(p.name)
         
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )
-        self.assertTrue( unicode( belgium ) )
+        self.assertTrue( six.text_type( belgium ) )
         city = party.City.get_or_create( country = belgium,
                                          code = '1000',
                                          name = 'Brussels' )
@@ -162,9 +226,9 @@ class PartyCase( ExampleModelCase ):
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
                                                city = city )
-        self.assertTrue( unicode( address ) )
+        self.assertTrue( six.text_type( address ) )
         return address
-    
+
     def test_party_address( self ):
         city = self.test_geographic_boundary()
         org = party.Organization( name = 'PSF' )
@@ -173,23 +237,28 @@ class PartyCase( ExampleModelCase ):
         party_address.street2 = 'Boite 4'
         party_address.city = city
         party_address_admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
+        self.assertEqual(len(org.addresses), 1)
         self.assertTrue( party_address.address in party_address_admin.get_compounding_objects( party_address ) )
         self.assertTrue( party_address.address in self.session.new )
         # everything should be flushed through the party admin
         org_admin = self.app_admin.get_related_admin( party.Organization )
         org_validator = org_admin.get_validator()
         self.assertTrue( party_address in org_admin.get_compounding_objects( org ) )
-        org_admin.flush( org )
-        self.assertFalse( party_address.address in self.session.new )
-        party_address_admin.refresh( party_address )
+        org_admin.flush(org)
+        self.assertFalse(party_address.address in self.session.new)
+        self.assertFalse(party_address in self.session.new)
+        self.assertFalse(org in self.session.new)
+        self.assertEqual(len(org.addresses), 1)
+        party_address_admin.refresh(party_address)
         # test hybrid property getters on Party and PartyAddress
+        self.assertEqual(len(org.addresses), 1)
         self.assertEqual( party_address.street1, 'Avenue Louise 5' )
         self.assertEqual( party_address.street2, 'Boite 4' )
         self.assertEqual( party_address.city, city )
         self.assertEqual( org.street1, 'Avenue Louise 5' )
         self.assertEqual( org.street2, 'Boite 4' )
         self.assertEqual( org.city, city )        
-        self.assertTrue( unicode( party_address ) )
+        self.assertTrue( six.text_type( party_address ) )
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
         self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
@@ -261,7 +330,7 @@ class PartyCase( ExampleModelCase ):
         
     def test_contact_mechanism( self ):
         contact_mechanism = party.ContactMechanism( mechanism = (u'email', u'info@test.be') )
-        self.assertTrue( unicode( contact_mechanism ) )
+        self.assertTrue( six.text_type( contact_mechanism ) )
         
     def test_person_contact_mechanism( self ):
         # create a new person
@@ -318,20 +387,12 @@ class PartyCase( ExampleModelCase ):
         org.phone = ('phone', '1234')
         org.fax = ('fax', '4567')
         self.organization_admin.flush( org )
-        self.assertTrue( unicode( org ) )
-        self.assertEqual( org.number_of_shares_issued, 0 )
+        self.assertTrue( six.text_type( org ) )
         query = orm.object_session( org ).query( party.Organization )
         self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
         self.assertTrue( query.filter( party.Organization.phone == ('phone', '1234') ).first() )
         self.assertTrue( query.filter( party.Organization.fax == ('fax', '4567') ).first() )
         return org
-    
-    def test_party_relationship( self ):
-        person = self.test_person()
-        org = self.test_organization()
-        employee = party.EmployerEmployee( established_from = org,
-                                           established_to = person )
-        self.assertTrue( unicode( employee ) )
         
     def test_party_contact_mechanism( self ):
         person = self.test_person()
@@ -344,7 +405,7 @@ class PartyCase( ExampleModelCase ):
         self.person_admin.flush( person )
         self.assertFalse( party_contact_mechanism in self.session.new )
         self.assertFalse( party_contact_mechanism.contact_mechanism in self.session.new )        
-        self.assertTrue( unicode( party_contact_mechanism ) )
+        self.assertTrue( six.text_type( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
         # party contact mechanism is only valid when contact mechanism is
@@ -368,20 +429,26 @@ class PartyCase( ExampleModelCase ):
         category.parties.append( org )
         self.session.flush()
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
-        self.assertTrue( unicode( category ) )
+        self.assertTrue( six.text_type( category ) )
 
-class FixtureCase( ExampleModelCase ):
+class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model for fixtures"""
-      
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
     def test_fixture( self ):
-        from camelot.model.party import Person
-        from camelot.model.fixture import Fixture
         session = Session()
         self.assertEqual( Fixture.find_fixture_key( Person, -1 ), None )
         p1 = Person()
         self.assertEqual( Fixture.find_fixture_key_and_class( p1 ), 
                           (None, None) )
-        session.expunge( p1 )
+        session.expunge(p1)
         # insert a new Fixture
         p2 = Fixture.insert_or_update_fixture( Person, 'test',
                                                {'first_name':'Peter',
@@ -394,7 +461,7 @@ class FixtureCase( ExampleModelCase ):
         self.assertEqual( Fixture.find_fixture_keys_and_classes( Person )[p2.id],
                           ('test', 'test') )
         # delete the person, and insert it back in the same fixture
-        session.delete( p2 )
+        session.delete(p2)
         session.flush()
         p3 = Fixture.insert_or_update_fixture( Person, 'test',
                                                {'first_name':'Peter',
@@ -405,35 +472,36 @@ class FixtureCase( ExampleModelCase ):
         Fixture.remove_all_fixtures( Person )
         
     def test_fixture_version( self ):
-        from camelot.model.party import Person
-        from camelot.model.fixture import FixtureVersion
-        session = self.session
         self.assertEqual( FixtureVersion.get_current_version( u'unexisting' ),
                           0 )        
         FixtureVersion.set_current_version( u'demo_data', 0 )
-        session.flush()
+        self.session.flush()
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           0 )
         example_file = os.path.join( os.path.dirname(__file__), 
                                      '..', 
                                      'camelot_example',
-                                     'import_example.csv' )
+                                     'import_example.xlsx' )
         person_count_before_import = Person.query.count()
         # begin load csv if fixture version
-        import csv
+        from camelot.view.import_utils import XlsReader
         if FixtureVersion.get_current_version( u'demo_data' ) == 0:
-            reader = csv.reader( open( example_file ) )
+            reader = XlsReader(example_file)
             for line in reader:
                 Person( first_name = line[0], last_name = line[1] )
             FixtureVersion.set_current_version( u'demo_data', 1 )
-            session.flush()
+            self.session.flush()
         # end load csv if fixture version
         self.assertTrue( Person.query.count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           1 )
         
-class CustomizationCase( ExampleModelCase ):
-    
+class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setup_sample_model()
+
     def test_add_field( self ):
         metadata.drop_all()
         session = Session()
@@ -461,14 +529,14 @@ class StatusCase( TestMetaData ):
             
         #end status type definition
         self.create_all()
-        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusType ) )
+        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusTypeMixin ) )
         self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
         #begin status types definition
         draft = Invoice._status_type( code = 'DRAFT' )
         ready = Invoice._status_type( code = 'READY' )
         session.flush()
         #end status types definition
-        self.assertTrue( unicode( ready ) )
+        self.assertTrue( six.text_type( ready ) )
         #begin status type use
         invoice = Invoice( book_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, None )
@@ -478,7 +546,7 @@ class StatusCase( TestMetaData ):
         self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
         self.assertTrue( len( invoice.status ) )
         for history in invoice.status:
-            self.assertTrue( unicode( history ) )
+            self.assertTrue( six.text_type( history ) )
         
     def test_status_enumeration( self ):
         Entity, session = self.Entity, self.session
@@ -489,7 +557,8 @@ class StatusCase( TestMetaData ):
         class Invoice( Entity, type_and_status.StatusMixin ):
             book_date = schema.Column( types.Date(), nullable = False )
             status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
-                                                             (2, 'READY') ] )
+                                                             (2, 'READY'),
+                                                             (3, 'BLOCKED')] )
             
             class Admin( EntityAdmin ):
                 list_display = ['book_date', 'current_status']
@@ -503,16 +572,32 @@ class StatusCase( TestMetaData ):
         #begin status enumeration use
         invoice = Invoice( book_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, None )
-        invoice.change_status( 'DRAFT', status_from_date = datetime.date.today() )
+        invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1) )
+        session.flush()
         self.assertEqual( invoice.current_status, 'DRAFT' )
-        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date.today() )
+        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
         draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
-        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()        
+        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
         #end status enumeration use
         self.assertEqual( draft_invoices, 1 )
         self.assertEqual( ready_invoices, 0 )
         ready_action = Invoice.Admin.list_actions[-1]
         model_context = MockModelContext()
         model_context.obj = invoice
+        model_context.admin = app_admin.get_related_admin(Invoice)
         list( ready_action.model_run( model_context ) )
         self.assertTrue( invoice.current_status, 'READY' )
+        # changing the status should work without flushing
+        invoice.status.append(Invoice._status_history(
+            status_from_date=datetime.date.today(),
+            status_thru_date=party.end_of_times(),
+            classified_by='DRAFT'))
+        session.flush()
+        self.assertTrue( invoice.current_status, 'DRAFT')
+        invoice.status.append(Invoice._status_history(
+            status_from_date=datetime.date.today(),
+            status_thru_date=party.end_of_times(),
+            classified_by='BLOCKED'))
+        self.assertTrue( invoice.current_status, 'BLOCKED')
+        session.flush()
+        self.assertTrue( invoice.current_status, 'BLOCKED')

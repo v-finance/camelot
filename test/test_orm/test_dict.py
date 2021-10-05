@@ -2,6 +2,7 @@
     test the deep-set functionality
 """
 
+from sqlalchemy import schema
 from sqlalchemy.types import Integer, String
 
 from camelot.core.orm import Field, ManyToOne, OneToMany, OneToOne
@@ -14,26 +15,64 @@ class TestDeepSet( TestMetaData ):
         super( TestDeepSet, self ).setUp()
 
         class Table1( self.Entity ):
+
+            __tablename__ = 'table_1'
+
             t1id = Field(Integer, primary_key=True)
             name = Field(String(30))
             tbl2s = OneToMany('Table2')
             tbl3 = OneToOne('Table3')
-        
+
+            row_type = schema.Column( String(40), nullable = False )
+            __mapper_args__ = {'polymorphic_on' : row_type,
+                               'polymorphic_identity': u'table1'}
+
         class Table2( self.Entity ):
+
+            __tablename__ = 'table_2'
+
             t2id = Field(Integer, primary_key=True)
             name = Field(String(30))
             tbl1 = ManyToOne(Table1)
         
         class Table3( self.Entity ):
+
+            __tablename__ = 'table_3'
+
             t3id = Field(Integer, primary_key=True)
             name = Field(String(30))
             tbl1 = ManyToOne(Table1)  
-    
+
+        class Table4( Table1 ):
+
+            __tablename__ = 'table_4'
+
+            second_name = Field(String(30))
+            t1id = schema.Column(Integer,
+                                 schema.ForeignKey(Table1.t1id), 
+                                 primary_key=True)
+
+            __mapper_args__ = {'polymorphic_identity': u'table4'}
+
         self.create_all()
         
         self.Table1 = Table1
         self.Table2 = Table2
         self.Table3 = Table3
+        self.Table4 = Table4
+
+    def test_inheritance(self):
+        with self.session.begin():
+            t3 = self.Table3(name='test3')
+            t3.tbl1 = self.Table4(name='test1', second_name='test4')
+            dict_ = t3.to_dict(deep={'tbl1':{}})
+        self.assertTrue(dict_['tbl1'])
+        with self.session.begin():
+            t3 = self.Table3()
+            t3.from_dict(dict_)
+        t1 = t3.tbl1
+        self.assertTrue(isinstance(t1, self.Table4))
+        self.assertEqual(t1.second_name, 'test4')
 
     def test_set_attr(self):
         with self.session.begin():
@@ -77,7 +116,7 @@ class TestDeepSet( TestMetaData ):
     def test_truncate_list(self):
         with self.session.begin():
             t1 = self.Table1()
-            t2 = self.Table2()            
+            t2 = self.Table2()
             t1.tbl2s.append(t2)
             t1.from_dict(dict(tbl2s=[]))
         assert len(t1.tbl2s) == 0
@@ -105,7 +144,7 @@ class TestDeepSet( TestMetaData ):
     def test_to(self):
         with self.session.begin():
             t1 = self.Table1(t1id=50, name='test1')
-        assert t1.to_dict() == {'t1id': 50, 'name': 'test1'}
+        self.assertEqual(t1.to_dict(), {'t1id': 50, 'name': 'test1', 'row_type': 'table1'})
 
     def test_to_deep_m2o(self):
         with self.session.begin():
@@ -114,7 +153,16 @@ class TestDeepSet( TestMetaData ):
 
         self.assertEqual( t2.to_dict(deep={'tbl1': {}}),
                           {'t2id': 1, 'name': 'test2', 'tbl1_t1id': 1,
-                           'tbl1': {'name': 'test1'}} )
+                           'tbl1': {'name': 'test1', 'row_type': 'table1'}} )
+        
+    def test_to_deep_primary_key_m2o(self):
+        with self.session.begin():
+            t1 = self.Table1(t1id=1, name='test1')
+            t2 = self.Table2(t2id=1, name='test2', tbl1=t1)
+
+        self.assertEqual( t2.to_dict(deep={'tbl1': {}}, deep_primary_key=True),
+                          {'t2id': 1, 'name': 'test2', 'tbl1_t1id': 1,
+                           'tbl1': {'name': 'test1', 't1id': 1, 'row_type': 'table1'}} )
 
     def test_to_deep_m2o_none(self):
         with self.session.begin():
@@ -127,7 +175,7 @@ class TestDeepSet( TestMetaData ):
         with self.session.begin():
             t1 = self.Table1(t1id=51, name='test2')
         assert t1.to_dict(deep={'tbl2s': {}}) == \
-                {'t1id': 51, 'name': 'test2', 'tbl2s': []}
+                {'t1id': 51, 'row_type': 'table1', 'name': 'test2', 'tbl2s': []}
 
     def test_to_deep_o2m(self):
         with self.session.begin():
@@ -137,6 +185,7 @@ class TestDeepSet( TestMetaData ):
         assert t1.to_dict(deep={'tbl2s':{}}) == \
                 {'t1id': 52,
                  'name': 'test3',
+                 'row_type': 'table1',
                  'tbl2s': [{'t2id': 50, 'name': 'test4'}]}
 
     def test_to_deep_o2o(self):
@@ -146,6 +195,7 @@ class TestDeepSet( TestMetaData ):
         assert t1.to_dict(deep={'tbl3': {}}) == \
                 {'t1id': 53,
                  'name': 'test2',
+                 'row_type': 'table1',
                  'tbl3': {'t3id': 50, 'name': 'wobble'}}
 
     def test_to_deep_nested(self):
@@ -159,6 +209,7 @@ class TestDeepSet( TestMetaData ):
                 'name': 'test2',
                 'tbl1_t1id': 1,
                 'tbl1': {'name': 'test1',
+                         'row_type': 'table1',
                          'tbl3': {'t3id': 1,
                                   'name': 'test3'}}}
 

@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
@@ -52,11 +57,29 @@ Here is a quick example of how to use ``has_property``.
                      lambda c: column_property(
                          (c.quantity * c.unit_price).label('price')))
 """
-from sqlalchemy import orm
+from sqlalchemy import orm, schema
+
+import six
 
 from . statements import ClassMutator
+from . import options
 
-class EntityBuilder( object ):
+class CounterMeta(type):
+    '''
+    A simple meta class which adds a ``_counter`` attribute to the instances of
+    the classes it is used on. This counter is simply incremented for each new
+    instance.
+    '''
+    counter = 0
+
+    def __call__(self, *args, **kwargs):
+        instance = type.__call__(self, *args, **kwargs)
+        instance.counter = CounterMeta.counter
+        CounterMeta.counter += 1
+        return instance
+
+@six.add_metaclass(CounterMeta)
+class EntityBuilder(object):
     """
     Abstract base class for all entity builders. An Entity builder is a class
     of objects which can be added to an Entity (usually by using special
@@ -67,6 +90,24 @@ class EntityBuilder( object ):
     in the correct order (for example, that the table is fully created before
     the mapper that use it is defined).
     """
+
+    def __init__(self, *args, **kwargs):
+        self.entity = None
+        self.name = None
+
+    def __lt__(self, builder):
+        return self.counter < builder.counter
+    
+    def attach( self, entity, name ):
+        """Attach this property to its entity, using 'name' as name.
+
+        Properties will be attached in the order they were declared.
+        """
+        self.entity = entity
+        self.name = name
+
+    def __repr__(self):
+        return "EntityBuilder(%s, %s)" % (self.name, self.entity)
     
     def create_pk_cols(self):
         pass
@@ -99,46 +140,17 @@ class EntityBuilder( object ):
 
     def finalize(self):
         pass
-        
-class CounterMeta(type):
-    '''
-    A simple meta class which adds a ``_counter`` attribute to the instances of
-    the classes it is used on. This counter is simply incremented for each new
-    instance.
-    '''
-    counter = 0
-
-    def __call__(self, *args, **kwargs):
-        instance = type.__call__(self, *args, **kwargs)
-        instance.counter = CounterMeta.counter
-        CounterMeta.counter += 1
-        return instance
     
-class Property( EntityBuilder ):
-    """
-    Abstract base class for all properties of an Entity that are not handled
-    by Declarative but should be handled by EntityMeta before a new Entity
-    subclass is constructed
-    """
-
-    __metaclass__ = CounterMeta
-
-    def __init__(self, *args, **kwargs):
-        self.entity = None
-        self.name = None
-
-    def attach( self, entity, name ):
-        """Attach this property to its entity, using 'name' as name.
-
-        Properties will be attached in the order they were declared.
-        """
-        self.entity = entity
-        self.name = name
-
-    def __repr__(self):
-        return "Property(%s, %s)" % (self.name, self.entity)
-
-class DeferredProperty( Property ):
+class PrimaryKeyProperty( EntityBuilder ):
+    
+    def create_pk_cols(self):
+        from camelot.types import PrimaryKey
+        setattr( self.entity,
+                 self.name,
+                 schema.Column( self.name, PrimaryKey(), 
+                                **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS) )
+    
+class DeferredProperty( EntityBuilder ):
     """Abstract base class for all properties of an Entity that are not 
     handled by Declarative but should be handled after a mapper was
     configured"""
@@ -232,4 +244,5 @@ class has_property( ClassMutator ):
     
     def process( self, entity_dict, name, prop, *args, **kwargs ):
         entity_dict[ name ] = GenericProperty( prop, *args, **kwargs )
+
 

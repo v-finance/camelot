@@ -1,65 +1,57 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
-Camelot unittest framework.  This module contains helper classes and functions
+Camelot unittest helpers.  This module contains helper classes and functions
 to write unittests for Camelot applications.  These are not the unittests for
-Camelot itself.  Those can be found in the /test folder, at the same position 
-as /camelot.
+Camelot itself. 
 """
 
+import logging
 import unittest
+import sys
+import os
+
+from ..admin.action.base import ActionStep
+from ..core.qt import Qt, QtCore, QtGui, QtWidgets
+from ..view.action_steps.orm import AbstractCrudSignal
+from ..view.action_runner import ActionRunner
+from ..view.model_process import ModelProcess
+from ..view import model_thread
+from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
 has_programming_error = False
 
-_application_ = []
+LOGGER = logging.getLogger('camelot.test')
 
-def get_application():
-    """Get the singleton QApplication"""
-    from PyQt4.QtGui import QApplication
-    if not len(_application_):
-        #
-        # Uniform style for screenshot generation
-        #
-        application = QApplication.instance()
-        if not application:
-            import sys
-            from camelot.view import art
-            QApplication.setStyle('cleanlooks')
-            application = QApplication(sys.argv)
-            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
-            from PyQt4 import QtCore
-            QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
-            #try:
-            #    from PyTitan import QtnOfficeStyle
-            #    QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
-            #except:
-            #    pass 
-        _application_.append( application )
-    return _application_[0]
-
-class ModelThreadTestCase(unittest.TestCase):
-    """Base class for implementing test cases that need a running model_thread.
+class GrabMixinCase(object):
+    """
+    Methods to grab views to pixmaps during unittests
     """
 
     images_path = ''
@@ -69,14 +61,10 @@ class ModelThreadTestCase(unittest.TestCase):
     :param widget: the widget to take a screenshot of
     :param suffix: string to add to the default filename of the image
     :param subdir: subdirectory of images_path in which to put the image file, defaults to
-    the name of the test class
+        the name of the test class
     - the name of the png file is the name of the test case, without 'test_'
     - it is stored in the directory with the same name as the class, without 'test'
         """
-        import sys
-        import os
-        from PyQt4 import QtGui
-        from PyQt4.QtGui import QPixmap
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
         else:
@@ -95,147 +83,151 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        self.process()
-        QtGui.QApplication.flush()
-        inner_pixmap = QPixmap.grabWidget(widget)        
-        #
-        # we'll create a label that contains a screenshot of our widget and
-        # take a screenshot of that label, for the sole purpose of adding a border
-        #
-        parent_widget = QtGui.QLabel()
-        parent_widget.setPixmap(inner_pixmap)
-        parent_widget.setFrameStyle(QtGui.QFrame.Panel | QtGui.QFrame.Plain)
-        parent_widget.setObjectName('grab_widget_parent')
-        parent_widget.setLineWidth(2)
-        parent_widget.setStyleSheet("""
-        #grab_widget_parent {
-        border: 2px solid gray;
-        }""")
-        parent_widget.adjustSize()
-        outer_pixmap = QPixmap.grabWidget(parent_widget)
-        outer_pixmap.save(os.path.join(images_path, image_name), 'PNG')
+        QtWidgets.QApplication.flush()
+        widget.repaint()
+        inner_pixmap = QtWidgets.QWidget.grab(widget)
+        # add a border to the image
+        border = 4
+        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
+        outer_image.fill(Qt.gray)
+        painter = QtGui.QPainter()
+        painter.begin(outer_image)
+        painter.drawPixmap(QtCore.QRectF(border, border, inner_pixmap.width(), inner_pixmap.height()), 
+                          inner_pixmap,
+                          QtCore.QRectF(0, 0, inner_pixmap.width(), inner_pixmap.height()))
+        painter.end()
+        outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
-    def process(self):
-        """Wait until all events are processed and the queues of the model thread are empty"""
-        self.mt.wait_on_work()
-
-    def setUp(self):
-        self.app = get_application()
-        from camelot.view import model_thread
-        from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
-        from camelot.view.model_thread import get_model_thread, has_model_thread
-        from camelot.view.remote_signals import construct_signal_handler, has_signal_handler
-        if not has_model_thread():
-            #
-            # Run the tests without real threading, to avoid timing problems with screenshots etc.
-            #
-            model_thread._model_thread_.insert( 0, NoThreadModelThread() )
-        if not has_signal_handler():
-            construct_signal_handler()
-        self.mt = get_model_thread()
-        if not self.mt.isRunning():
-            self.mt.start()
-        # make sure the startup sequence has passed
-        self.process()
-
-    def tearDown(self):
-        self.process()
-        #self.mt.exit(0)
-        #self.mt.wait()
-
-class ApplicationViewsTest(ModelThreadTestCase):
-    """Test various application level views, like the main window, the
-    sidepanel"""
-        
-    def get_application_admin(self):
-        """Overwrite this method to make use of a custom application admin"""
-        from camelot.admin.application_admin import ApplicationAdmin
-        return ApplicationAdmin()
-        
-    def test_navigation_pane(self):
-        from camelot.view.controls import navpane2
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)         
-        app_admin = self.get_application_admin()
-        nav_pane = navpane2.NavigationPane(app_admin, None, None)
-        self.grab_widget(nav_pane, subdir='applicationviews')
-        for i, section in enumerate(nav_pane.get_sections()):
-            nav_pane.change_current((i, unicode(section.get_verbose_name())))
-            self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
-      
-    def test_main_window(self):
-        from camelot.view.mainwindow import MainWindow
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)          
-        app_admin = self.get_application_admin()        
-        widget = MainWindow(app_admin)
-        self.grab_widget(widget, subdir='applicationviews')
-        
-    def test_tool_bar(self):
-        from camelot.view.mainwindow import MainWindow
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
-        app_admin = self.get_application_admin()        
-        main_window = MainWindow(app_admin)
-        self.grab_widget(main_window.get_tool_bar(), subdir='applicationviews')
-    
-class EntityViewsTest(ModelThreadTestCase):
-    """Test the views of all the Entity subclasses, subclass this class to test all views
-    in your application.  This is done by calling the create_table_view and create_new_view
-    on a set of admin objects.  To tell the test case which admin objects should be tested,
-    overwrite the get_admins method.
+class ActionMixinCase(object):
+    """
+    Helper methods to simulate running actions in a different thread
     """
 
-    def setUp(self):
-        super(EntityViewsTest, self).setUp()
-        from PyQt4 import QtCore
-        global has_programming_error
-        translators = self.get_application_admin().get_translator()
-        for translator in translators:
-            QtCore.QCoreApplication.installTranslator(translator)
-        has_programming_error = False
+    @classmethod
+    def get_state(cls, action, gui_context):
+        """
+        Get the state of an action in the model thread and return
+        the result.
+        """
+        model_context = gui_context.create_model_context()
 
-    def get_application_admin(self):
-        """Overwrite this method to make use of a custom application admin"""
-        from camelot.admin.application_admin import ApplicationAdmin
-        return ApplicationAdmin()
-            
-    def get_admins(self):
-        """Should return all admin for which a table and a form view should be displayed,
-        by default, returns for all entities their default admin"""
-        from sqlalchemy.orm.mapper import _mapper_registry
-         
-        classes = []
-        for mapper in _mapper_registry.keys():
-            if hasattr(mapper, 'class_'):
-                classes.append( mapper.class_ )
-            else:
-                raise Exception()
-            
-        app_admin = self.get_application_admin()
-        return [app_admin.get_entity_admin(c) for c in classes if app_admin.get_entity_admin(c)]
+        class StateRegister(QtCore.QObject):
 
-    def test_select_view(self):
-        for admin in self.get_admins():
-            widget = admin.create_select_view()
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
-            
-    def test_table_view(self):
-        from camelot.admin.action.base import GuiContext
-        gui_context = GuiContext()
-        for admin in self.get_admins():
-            widget = admin.create_table_view( gui_context )
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
+            def __init__(self):
+                super(StateRegister, self).__init__()
+                self.state = None
 
-    def test_new_view(self):
-        for admin in self.get_admins():
-            widget = admin.create_new_view()
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
+            @QtCore.qt_slot(object)
+            def set_state(self, state):
+                self.state = state
+
+        state_register = StateRegister()
+        cls.thread.post(
+            action.get_state, state_register.set_state, args=(model_context,)
+        )
+        cls.process()
+        return state_register.state
+
+    @classmethod
+    def gui_run(cls, action, gui_context):
+        """
+        Simulates the gui_run of an action, but instead of blocking,
+        yields progress each time a message is received from the model.
+        """
+
+        class IteratingActionRunner(ActionRunner):
+
+            def __init__(self, generator_function, gui_context):
+                super(IteratingActionRunner, self).__init__(
+                    generator_function, gui_context
+                )
+                self.return_queue = []
+                self.exception_queue = []
+                cls.process()
+
+            @QtCore.qt_slot( object )
+            def generator(self, generator):
+                LOGGER.debug('got generator')
+                self._generator = generator
+
+            @QtCore.qt_slot( object )
+            def exception(self, exception_info):
+                LOGGER.debug('got exception {}'.format(exception_info))
+                self.exception_queue.append(exception_info)
+
+            @QtCore.qt_slot( object )
+            def __next__(self, yielded):
+                LOGGER.debug('got step {}'.format(yielded))
+                self.return_queue.append(yielded)
+
+            def run(self):
+                super(IteratingActionRunner, self).generator(self._generator)
+                cls.process()
+                step = self.return_queue.pop()
+                while isinstance(step, ActionStep):
+                    if isinstance(step, AbstractCrudSignal):
+                        LOGGER.debug('crud step, update view')
+                        step.gui_run(gui_context)
+                    LOGGER.debug('yield step {}'.format(step))
+                    gui_result = yield step
+                    LOGGER.debug('post result {}'.format(gui_result))
+                    cls.thread.post(
+                        self._iterate_until_blocking,
+                        self.__next__,
+                        self.exception,
+                        args = (self._generator.send, gui_result,)
+                    )
+                    cls.process()
+                    if len(self.exception_queue):
+                        raise Exception(self.exception_queue.pop().text)
+                    step = self.return_queue.pop()
+                LOGGER.debug("iteration finished")
+                yield None
+
+        runner = IteratingActionRunner(action.model_run, gui_context)
+        yield from runner.run()
 
 
+class RunningThreadCase(unittest.TestCase, ActionMixinCase):
+    """
+    Test case that starts a model thread when setting up the case class
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.thread = SignalSlotModelThread()
+        model_thread._model_thread_.insert(0, cls.thread)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        model_thread._model_thread_.remove(cls.thread)
+        cls.thread.stop()
+
+    @classmethod
+    def process(cls):
+        """Wait until all events are processed and the queues of the model thread are empty"""
+        cls.thread.wait_on_work()
+        QtCore.QCoreApplication.instance().processEvents()
+
+class RunningProcessCase(unittest.TestCase, ActionMixinCase):
+    """
+    Test case that starts a model thread when setting up the case class
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.thread = ModelProcess()
+        model_thread._model_thread_.insert(0, cls.thread)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        model_thread._model_thread_.remove(cls.thread)
+        cls.thread.stop()
+
+    @classmethod
+    def process(cls):
+        """Wait until all events are processed and the queues of the model thread are empty"""
+        cls.thread.wait_on_work()
+        QtCore.QCoreApplication.instance().processEvents()

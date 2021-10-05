@@ -86,4 +86,3 @@ class TestOrderBy( TestMetaData ):
         assert records[2].title >= records[5].title
         assert records[3].title >= records[4].title
         assert records[-1].year == 1995
-

@@ -2,11 +2,11 @@ All in one Windows installer
 ============================
 
 When working on Windows, the easiest way to get up and running is through
-the `Conceptive Python SDK <http://www.conceptive.be/python-sdk.htm>`_.
+the `Conceptive Python SDK <http://www.conceptive.be/python-sdk.html>`_.
 
 .. image:: ../_static/cpd_installer.png
 
-This SDK is a Python distribution targeted at the development and deployment of QT
+This SDK is a Python distribution targeted at the development and deployment of Qt
 based applications.  This all in one installation of Camelot with all its
 dependencies is available in the `shop <http://www.conceptive.be/shop.html>`_.
 

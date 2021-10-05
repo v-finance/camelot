@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
@@ -26,10 +31,11 @@ import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
+import six
+
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
-from camelot.view.model_thread import model_function
 
 class StoredFile( object ):
     """Helper class for the File field type.
@@ -55,53 +61,8 @@ class StoredFile( object ):
         object"""
         return dict( name = self.name )
     
-    def __unicode__( self ):
+    def __str__( self ):
         return self.verbose_name
-
-class StoredImage( StoredFile ):
-    """Helper class for the Image field type Class linking an image and the
-    location and filename where the image is stored"""
-
-    def __init__( self, storage, name ):
-        super(StoredImage, self).__init__( storage, name )
-        self._thumbnails = dict()
-        
-    @model_function
-    def checkout_image( self ):
-        """Checkout the image from the storage, this function is only to be
-        used in the model thread.
-        
-        :return: a QImage
-        """
-        from PyQt4.QtGui import QImage
-        p = self.storage.checkout( self )
-        image = QImage(p)
-        
-        if image.isNull():
-            return QImage(':/image_not_found.png')
-        else:
-            return image
-
-    @model_function
-    def checkout_thumbnail( self, width, height ):
-        """Checkout a thumbnail for this image from the storage, this function
-        is only to be used in the model thread
-        :param width: the requested width of the thumbnail
-
-        
-        :return: a QImage
-        """
-        key = (width, height)
-        try:
-            thumbnail_image = self._thumbnails[key]
-            return thumbnail_image
-        except KeyError:
-            pass
-        from PyQt4.QtCore import Qt
-        original_image = self.checkout_image()
-        thumbnail_image = original_image.scaled( width, height, Qt.KeepAspectRatio )
-        self._thumbnails[key] = thumbnail_image
-        return thumbnail_image
 
 class Storage( object ):
     """Helper class that opens and saves StoredFile objects
@@ -142,7 +103,7 @@ class Storage( object ):
         if self._upload_to == None:
             root = self._root or settings.CAMELOT_MEDIA_ROOT
             import os
-            if callable( root ):
+            if six.callable( root ):
                 root = root()
             self._upload_to = os.path.join( root, self._subfolder )
         return self._upload_to
@@ -157,7 +118,7 @@ class Storage( object ):
             if not os.path.exists( self.upload_to ):
                 os.makedirs( self.upload_to )
             return True
-        except Exception, e:
+        except Exception as e:
             logger.warn( 'Could not access or create path %s, files will be unreachable' % self.upload_to, exc_info = e )
 
     def writeable(self):
@@ -196,7 +157,7 @@ class Storage( object ):
         #       able to get directory separators in here or something related
         try:
             return tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if not self.available():
                 raise UserException( text = ugettext('The directory %s does not exist')%(self.upload_to),
                                      resolution = ugettext( 'Contact your system administrator' ) )
@@ -218,7 +179,7 @@ class Storage( object ):
         :param local_path: the path to the local file that needs to be checked in
         :param filename: a hint for the filename to be given to the checked in file, if None
         is given, the filename from the local path will be taken.
-        
+
         The stored file is not guaranteed to have the filename asked, since the
         storage might not support this filename, or another file might be named
         like that.  In each case the storage will choose the filename.
@@ -226,12 +187,12 @@ class Storage( object ):
         self.available()
         import shutil
         import os
-        to_path = os.path.join( self.upload_to, filename or os.path.basename( local_path ) )
-        if os.path.exists(to_path):
-            # only if the default to_path exists, we'll give it a new name
-            root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
-            ( handle, to_path ) = self._create_tempfile( extension, root )
-            os.close( handle )
+        if filename is None and len(os.path.basename( local_path )) > 100:
+            raise UserException( text = ugettext('The filename of the selected file is too long'),
+                                     resolution = ugettext( 'Please rename the file' ) )
+        root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
+        ( handle, to_path ) = self._create_tempfile( extension, root )
+        os.close( handle )
         logger.debug( u'copy file from %s to %s', local_path, to_path )
         shutil.copy( local_path, to_path )
         return self.stored_file_implementation( self, os.path.basename( to_path ) )
@@ -283,4 +244,5 @@ class Storage( object ):
 
     def delete( self, name ):
         pass
+
 

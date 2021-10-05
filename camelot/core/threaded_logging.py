@@ -1,24 +1,29 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 """
@@ -48,11 +53,12 @@ The logging url could include a part indentifying the user and as such assisting
 first line support.
 """
 
-from PyQt4 import QtCore
+from .qt import QtCore
 
 import getpass
+import json
 import logging
-from logging import handlers
+import six
 import sys
 
 LOGGER = logging.getLogger('camelot.core.logging')
@@ -73,21 +79,25 @@ class ThreadedTimer( QtCore.QThread ):
         self._timer.start(self._interval)
         self.exec_()
 
-class ThreadedHttpHandler(handlers.HTTPHandler):
-    """An Http Logging handler that does the logging itself in a different 
-    thread, to prevent slow down of the main thread"""
+class ThreadedHandler(logging.Handler):
+    """A threaded Logging handler that does the logging itself in a different 
+    thread, to prevent slow down of the main thread.
+    
+    :param handler: the handler to send the logs to
+    """
 
-    def __init__(self, host, url, method='GET'):
-        handlers.HTTPHandler.__init__(self, host, url, method)
+    def __init__(self, handler):
+        super(ThreadedHandler, self).__init__()
+        self.handler = handler
         self._records_to_emit = []
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
 
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def timeout(self):
         while len(self._records_to_emit):
             record = self._records_to_emit.pop()
-            handlers.HTTPHandler.emit(self, record)
+            self.handler.emit(record)
 
     def emit(self, record):
         self._records_to_emit.append(record)
@@ -121,7 +131,9 @@ class ThreadedAwsHandler(logging.Handler):
                 # getfilesystemencoding() still returns 'mbcs', as this is the encoding that applications 
                 # should use when they explicitly want to convert Unicode strings 
                 # to byte strings that are equivalent when used as file names.
-                self._user = getpass.getuser().decode('mbcs')
+                self._user = getpass.getuser()
+                if six.PY2:
+                    self._user = self._user.decode('mbcs')
             else:
                 self._user = getpass.getuser()
         except Exception:
@@ -130,7 +142,6 @@ class ThreadedAwsHandler(logging.Handler):
         
     def emit(self, record):
         # inspired by the code in logging.handlers.SocketHandler
-        import json
         if len( self._records_to_emit ) >= self._max_cache:
             return
         ei = record.exc_info
@@ -145,11 +156,15 @@ class ThreadedAwsHandler(logging.Handler):
             record.exc_info = None
         record_dict = dict( user=self._user, revision=self._revision )
         record_dict.update( record.__dict__ )
-        self._records_to_emit.append( json.dumps( record_dict ) )
+        try:
+            self._records_to_emit.append( json.dumps( record_dict ) )
+        except Exception:
+            # not all data structures can be JSON serialized
+            pass
         if ei:
             record.exc_info = ei  # for next handler
         
-    @QtCore.pyqtSlot()
+    @QtCore.qt_slot()
     def timeout(self):
         from boto.sqs.message import Message
         if not self._queue and self._connected:
@@ -158,10 +173,11 @@ class ThreadedAwsHandler(logging.Handler):
                 sqs_connection = SQSConnection(self._access_key, 
                                                self._secret_access_key,
                                                **self._connection_kwargs)
-                self._queue = sqs_connection.get_queue( self._queue_name )
-                if self._queue == None:
+                queues = sqs_connection.get_all_queues(prefix=self._queue_name)
+                if len(queues) == 0:
                     raise Exception( 'Queue %s does not exist'%self._queue_name )
-            except Exception, e:
+                self._queue = queues[0]
+            except Exception as e:
                 LOGGER.error('Could not connect to logging queue %s'%self._queue_name, exc_info=e)
                 self._connected = False
         while len(self._records_to_emit) and self._connected:
@@ -187,5 +203,6 @@ class CloudLaunchHandler(ThreadedAwsHandler):
                                     queue_name,
                                     revision = cloud_record.revision,
                                     connection_kwargs = connection_kwargs)
+
 
 

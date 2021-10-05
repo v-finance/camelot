@@ -4,42 +4,42 @@
 import unittest
 import gc
 
-from PyQt4 import QtGui, QtCore
+from camelot.core.qt import variant_to_py, QtWidgets, QtCore, QtGui
 
 #
 # some helper classes to create all kinds of weird object structures
 #
 
-class ReferenceHoldingBox(QtGui.QGroupBox):
+class ReferenceHoldingBox(QtWidgets.QGroupBox):
     """A group box holding references to the table
     view and the table model"""
 
     def __init__(self, model, table):
-        QtGui.QGroupBox.__init__(self)
+        QtWidgets.QGroupBox.__init__(self)
         self.model = model
         self.table = table
                  
-class TableView( QtGui.QWidget  ):
+class TableView( QtWidgets.QWidget  ):
     """A widget containg both a table and a groupbox that
     holds a reference to both the table and the model of the
     table"""
 
     def __init__( self, table_model ):
         super(TableView, self).__init__()
-        widget_layout = QtGui.QVBoxLayout()
-        table = QtGui.QTableView( self )
+        widget_layout = QtWidgets.QVBoxLayout()
+        table = QtWidgets.QTableView( self )
         table.setModel( table_model )
         widget_layout.addWidget( table )
         widget_layout.addWidget( ReferenceHoldingBox( table_model, self ) )
         self.setLayout( widget_layout )
 
-class CyclicChildWidget(QtGui.QWidget):
+class CyclicChildWidget(QtWidgets.QWidget):
     
     def __init__( self, parent ):
         super( CyclicChildWidget, self ).__init__( parent )
         self._parent = parent
         
-class CyclicWidget(QtGui.QWidget):
+class CyclicWidget(QtWidgets.QWidget):
     
     def __init__( self ):
         super( CyclicWidget, self ).__init__()
@@ -63,15 +63,11 @@ class ModelViewRegister(QtCore.QObject):
         
     @QtCore.pyqtSlot(QtCore.QObject)
     def _registered_object_destroyed(self, qobject):
-        key, _success = qobject.property('registered_key').toLongLong()
+        key = variant_to_py( qobject.property('registered_key') )
         del self.model_by_view[key]
 
 class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
-
-    def setUp(self):
-        from camelot.test import get_application
-        self.app = get_application()
 
     def test_table_view_garbage_collection(self):
         """Create a table view and force its garbage collection, while
@@ -84,7 +80,7 @@ class TableViewCases(unittest.TestCase):
         
         for _i in range(100):
             
-            class TableModelSubclass(QtGui.QStringListModel):
+            class TableModelSubclass(QtCore.QStringListModel):
                 pass
     
             model = TableModelSubclass()
@@ -108,13 +104,7 @@ class SignalReceiver(QtCore.QObject):
         self.sender()
 
 class GarbageCollectionCase( unittest.TestCase ):
-    
-    def setUp(self):
-        self.application = QtGui.QApplication.instance()
-        if not self.application:
-            import sys
-            self.application = QtGui.QApplication(sys.argv)
-        
+
     def test_cyclic_dependency( self ):
         """Create 2 widgets with a cyclic dependency, so that they can
         only be removed by the garbage collector, and then invoke the
@@ -162,9 +152,9 @@ class GarbageCollectionCase( unittest.TestCase ):
 class SignalSlotCase( unittest.TestCase ):
     
     def setUp(self):
-        self.app = QtGui.QApplication.instance()
+        self.app = QtWidgets.QApplication.instance()
         if self.app == None:
-            self.app = QtGui.QApplication([])
+            self.app = QtWidgets.QApplication([])
         #from camelot.test import get_application
         #self.app = get_application()
 
@@ -239,19 +229,18 @@ class SignalSlotCase( unittest.TestCase ):
         """See what happens when an object that has
         been deleted receives signals"""
 
-        class SignalReceiver(QtGui.QWidget):
+        class SignalReceiver(QtWidgets.QWidget):
     
             def __init__(self, parent):
                 super(SignalReceiver, self).__init__(parent)
-                receiver_child = QtGui.QWidget(self)
+                receiver_child = QtWidgets.QWidget(self)
                 receiver_child.setObjectName('child')
                 
             @QtCore.pyqtSlot(object)
             def my_slot(self, obj):
                 child = self.findChild(QtCore.QObject, 'child')
-                print child.objectName()
         
-        class ReceiverParent(QtGui.QTabWidget):
+        class ReceiverParent(QtWidgets.QTabWidget):
             
             def __init__(self):
                 super(ReceiverParent, self).__init__()

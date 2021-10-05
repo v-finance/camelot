@@ -1,3 +1,82 @@
+Development
+-----------
+
+ * A single source base for both Python 2.7 and Python 3.3
+
+ * A single source base for both PyQt4 and PySide, see :ref:`faq-pyside`
+ 
+ * The application itself is an action, :class:`camelot.admin.action.application.Application`.
+   This makes it easy to customize the startup process by overwritting its `model_run` method.
+  
+ * Modified progress dialog to add and clear details while the action runs.
+ 
+   .. image:: /_static/controls/progress_dialog_detail.png
+ 
+ * Default sizes for forms are calculated, avoiding the need of setting the `form_size` attribute on the `Admin` class.
+ 
+ * The `OneToMany` editor can display query attributes, created with `lazy='dynamic'`.
+ 
+ * The `count` query no longer uses subselects, reducing the time needed to build
+   up an initial table view on databases that are slow when handling subselects,
+   such as MySQL.
+
+ * New available actions :
+ 
+   * Start and stop a profiler : :class:`camelot.admin.action.application_action.Profiler`.
+   * Change authentication picture : :class:`camelot.admin.action.application_action.Authentication`.
+ 
+ * New action steps :
+ 
+   * :class:`camelot.view.action_steps.item_view.OpenTableView`
+   * :class:`camelot.view.action_steps.select_file.SaveFile`
+   * :class:`camelot.view.action_steps.select_file.SelectDirectory`
+   * :class:`camelot.view.action_steps.select_object.SelectObjects`
+   * :class:`camelot.view.action_steps.gui.SelectItem`
+   * :class:`camelot.view.action_steps.gui.SelectSubclass`
+   * :class:`camelot.view.action_steps.application.MainWindow`
+   * :class:`camelot.view.action_steps.form_view.ToFirstForm`
+   * :class:`camelot.view.action_steps.form_view.ToLastForm`
+   * :class:`camelot.view.action_steps.form_view.ToNextForm`
+   * :class:`camelot.view.action_steps.form_view.ToPreviousForm`
+ 
+ * Reworked import/export action to handle tables with many columns and allow the
+   user to customize the imported and exported columns.
+
+ * Importing spreadsheets now uses openpyxl instead of xlrd
+
+ * New database profiles api in :class:`camelot.core.profile.ProfileStore`
+ 
+ * Integer and float editors display `None` as an empty string
+ 
+ * The `list_action` state is used to determine the icon in a table view
+ 
+ * Delayed primary key type definition in default models, so the default models
+   can be used with other types of primary keys, such as UUID.
+
+ * See :ref:`migrate-latest` for documentation on how to upgrade an 
+   existing Camelot project to the latest version.
+ 
+ * Tested with SQLAlchemy 1.0.8
+ 
+ * Removed the `ColoredFloatDelegate` as it is not a basic type of editor
+ 
+ * `nullable`, `visible`, `validator` are dynamic field attributes
+
+ * `ObjectAdmin` does introspeciton on properties to see if they have a setter defined
+
+ * `EntityAdmin` does introspection on hybrid attributes to look for default field attributes
+
+ * `camelot.view.filters` module has been moved to :mod:`camelot.admin.action.list_filter`
+
+ * Remove 'delete_mode' and 'save_mode' Admin attributes, as this behavour is customizable with actions.
+
+ * Remove the 'search_all_fields' Admin attribute, as this behavour can is customizable with the `get_search_fields` method.
+
+ * Add the `get_search_fields` method to the `EntityAdmin` for fine grained customization of the fields to search.
+ 
+ * The tableview shows the number of selected rows.
+ 
+
 Release 13.04.13
 ----------------
 
@@ -42,8 +121,8 @@ Release 13.04.13
  
  * Unittests cover 80% of the code
  
- * See :ref:`migrate-latest` for documentation on how to upgrade an 
-   existing Camelot project to the latest version. 
+ * See :ref:`migrate-13.04.13` for documentation on how to upgrade an 
+   existing Camelot project to 13.04.13. 
 
 Release 12.06.29
 ----------------

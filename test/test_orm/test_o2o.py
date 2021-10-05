@@ -26,5 +26,3 @@ class TestOneToOne( TestMetaData ):
         a = b.a
 
         assert b == a.b
-
-

@@ -44,7 +44,47 @@ class TestSQLAlchemyToCamelot( TestMetaData ):
         self.session.expire_all()
         b = self.session.query(B).one()
         assert b.a.name == 'a1'
-
+        
+    def test_existing_table( self ):
+        
+        a_table = schema.Table('a', self.metadata,
+            schema.Column('id', Integer, primary_key=True),
+            schema.Column('name', String(60)),
+        )
+        a_table.create()
+        
+        class A( self.Entity ):
+            __table__ = a_table
+            
+        with self.session.begin():
+            a = A(name='a1')
+        
+    def test_single_table_inheritance( self ):
+        
+        class A( self.Entity ):
+            
+            __tablename__ = 'a'
+            
+            name = schema.Column( String(50) )
+            discriminator = schema.Column( 'type', String(50) )
+            __mapper_args__ = {'polymorphic_on': discriminator,
+                               'polymorphic_identity': 'A'}  
+            
+        class B( A ):    
+            
+            __tablename__ = None
+            
+            language = schema.Column( String(50) )  
+            __mapper_args__ = {'polymorphic_identity': 'B'}
+            
+        self.create_all()
+        
+        self.assertEqual( A.__table__, B.__table__ )
+        b = B( name = 'b', language = 'English' )
+        self.session.flush()
+        a = A.get( b.id )
+        self.assertEqual( b, a )
+        
 class TestCamelotToSQLAlchemy( TestMetaData ):
 
     def test_m2o( self ):

@@ -1,43 +1,49 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 import itertools
 import logging
 import os
+import sys
 
 logger = logging.getLogger('camelot.admin.application_admin')
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtCore
+import six
 
+from .admin_route import AdminRoute
+from .entity_admin import EntityAdmin
+from .object_admin import ObjectAdmin
+from ..core.orm import Entity
+from ..core.qt import Qt, QtCore
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
-from camelot.view import database_selection
-from camelot.view.model_thread import model_function
-
-_application_admin_ = []
 
 #
 # The translations data needs to be kept alive during the
@@ -45,12 +51,7 @@ _application_admin_ = []
 #
 _translations_data_ = []
 
-def get_application_admin():
-    if not len(_application_admin_):
-        raise Exception('No application admin class has been constructed yet')
-    return _application_admin_[0]
-
-class ApplicationAdmin(QtCore.QObject):
+class ApplicationAdmin(AdminRoute):
     """The ApplicationAdmin class defines how the application should look
 like, it also ties Python classes to their associated 
 :class:`camelot.admin.object_admin.ObjectAdmin` class or subclass.  It's
@@ -75,32 +76,20 @@ methods :
 .. attribute:: author
 
     The name of the author of the application
-    
+
 .. attribute:: domain
 
     The domain name of the author of the application, eg 'mydomain.com', this
     domain will be used to store settings of the application.
-    
-.. attribute:: version
-    
-    A string with the version of the application
-    
-.. attribute:: database_profile_wizard
-    
-    The wizard that should be used to create new database profiles. Defaults
-    to :class:`camelot.view.database_selection.ProfileWizard`
-    
-.. attribute:: database_selection
 
-    if this is set to True, present the user with a database selection
-    wizard prior to starting the application.  Defaults to :const:`False`.
-    
+.. attribute:: version
+
+    A string with the version of the application
+
 When the same action is returned in the :meth:`get_toolbar_actions` and 
 :meth:`get_main_menu` method, it should be exactly the same object, to avoid
 shortcut confusion and reduce the number of status updates.
     """
-
-    database_profile_wizard = database_selection.ProfileWizard
 
     name = 'Camelot'
     application_url = None
@@ -109,30 +98,16 @@ shortcut confusion and reduce the number of status updates.
     domain = 'python-camelot.com'
 
     version = '1.0'
-    admins = {}
-
-    # This signal is emitted whenever the sections are changed, and the views
-    # should be updated
-    sections_changed_signal = QtCore.pyqtSignal()
-    # This signal is emitted whenever the tile of the main window needs to
-    # be changed.
-    title_changed_signal = QtCore.pyqtSignal(str)
-    # Emitted whenever the application actions need to be changed
-    actions_changed_signal = QtCore.pyqtSignal()
-
-    database_selection = False
 
     #
     # actions that will be shared between the toolbar and the main menu
     #
     change_row_actions = [ list_action.ToFirstRow(),
-                           list_action.ToPreviousRow(),
-                           list_action.ToNextRow(),
                            list_action.ToLastRow(), ]
-    edit_actions = [ list_action.OpenNewView(),
+    edit_actions = [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),]
-    help_actions = [ application_action.ShowHelp(), ]
+    help_actions = []
     export_actions = [ list_action.PrintPreview(),
                        list_action.ExportSpreadsheet() ]
     form_toolbar_actions = [ form_action.CloseForm(),
@@ -142,25 +117,33 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
-    hidden_actions = [ application_action.DumpState(),
-                       application_action.RuntimeInfo() ]
-    
-    def __init__(self):
-        """Construct an ApplicationAdmin object and register it as the 
-        prefered ApplicationAdmin to use througout the application"""
-        QtCore.QObject.__init__(self)
-        _application_admin_.append(self)
+
+    def __init__(self, name=None, author=None, domain=None):
         #
         # Cache created ObjectAdmin objects
         #
         self._object_admin_cache = {}
         self._memento = None
+        self.admins = {
+            object: ObjectAdmin,
+            Entity: EntityAdmin,
+        }
+        if name is not None:
+            self.name = name
+        if author is not None:
+            self.author = author
+        if domain is not None:
+            self.domain = domain
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
 
     def register(self, entity, admin_class):
         """Associate a certain ObjectAdmin class with another class.  This
         ObjectAdmin will be used as default to render object the specified
         type.
-        
+
         :param entity: :class:`class`
         :param admin_class: a subclass of 
             :class:`camelot.admin.object_admin.ObjectAdmin` or
@@ -168,51 +151,39 @@ shortcut confusion and reduce the number of status updates.
         """
         self.admins[entity] = admin_class
 
-    @model_function
     def get_sections( self ):
         """A list of :class:`camelot.admin.section.Section` objects,
         these are the sections to be displayed in the left panel.
-        
+
         .. image:: /_static/picture2.png
         """
         from camelot.admin.section import Section
-        
+
         return [ Section( _('Relations'), self ),
                  Section( _('Configuration'), self ),
                  ]
-    
-    def get_settings( self ):
-        """A :class:`QtCore.QSettings` object in which Camelot related settings
-        can be stored.  This object is intended for Camelot internal use.  If an
-        application specific settings object is needed, simply construct one.
-        
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = QtCore.QSettings()
-        settings.beginGroup( 'Camelot' )
-        return settings
-    
+
     def get_memento( self ):
         """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
         can be used to store changes made to objects.  Overwrite this method to
         make it return `None` if no changes should be stored to the database, or
         to return another instance if the changes should be stored elsewhere.
-        
+
         :return: `None` or an :class:`camelot.core.memento.SqlMemento` instance
         """
         from camelot.core.memento import SqlMemento
         if self._memento == None:
             self._memento = SqlMemento()
         return self._memento
-        
+
     def get_application_admin( self ):
         """Get the :class:`ApplicationAdmin` class of this application, this
         method is here for compatibility with the :class:`ObjectAdmin`
-        
+
         :return: this object itself
         """
         return self
-    
+
     def get_related_admin(self, cls):
         """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
         for a specific class, return None, if not known.  The ObjectAdmin
@@ -220,10 +191,10 @@ shortcut confusion and reduce the number of status updates.
         defined as an inner class with name :keyword:`Admin` of the entity.
 
         :param entity: a :class:`class`
-        
+
         """
         return self.get_entity_admin( cls )
-    
+
     def get_entity_admin(self, entity):
         """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
         for a specific entity, return None, if not known.  The ObjectAdmin
@@ -231,38 +202,25 @@ shortcut confusion and reduce the number of status updates.
         defined as an inner class with name :keyword:`Admin` of the entity.
 
         :param entity: a :class:`class`
-        
+
         deprecated : use get_related_admin instead
         """
-
-        admin_class = None
         try:
-            admin_class = self.admins[entity]
+            return self._object_admin_cache[entity]
         except KeyError:
-            pass
-        if not admin_class and hasattr(entity, 'Admin'):
-            admin_class = entity.Admin
-        if admin_class:
-            try:
-                return self._object_admin_cache[admin_class]
-            except KeyError:
-                admin = admin_class(self, entity)
-                self._object_admin_cache[admin_class] = admin
-                return admin
-
-    def create_main_window(self):
-        """Create the main window that will be shown when the application
-        starts up.  By default, returns an instance of 
-         :class:`camelot.view.mainwindow.MainWindow`
-         
-        :return: a :class:`PyQt4.QtGui.QWidget`
-        """
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
-        from camelot.view.mainwindow import MainWindow
-        gui_context = ApplicationActionGuiContext()
-        gui_context.admin = self
-        mainwindow = MainWindow( gui_context )
-        return mainwindow
+            for cls in entity.__mro__:
+                admin_class = self.admins.get(cls, None)
+                if admin_class is None:
+                    if hasattr(cls, 'Admin'):
+                        admin_class = cls.Admin
+                        break
+                else:
+                    break
+            else:
+                raise Exception('Could not construct a default admin class')
+            admin = admin_class(self, entity)
+            self._object_admin_cache[entity] = admin
+            return admin
 
     def get_actions(self):
         """
@@ -270,19 +228,11 @@ shortcut confusion and reduce the number of status updates.
             that should be displayed on the desktop of the user.
         """
         return []
-    
-    def get_hidden_actions( self ):
-        """
-        :return: a list of :class:`camelot.admin.action.base.Action` objects
-            that can only be triggered using shortcuts and are not visibile in
-            the UI.
-        """
-        return self.hidden_actions
-    
+
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
-        
+
         :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
@@ -297,30 +247,70 @@ shortcut confusion and reduce the number of status updates.
             return [ list_action.AddExistingObject(),
                      list_action.RemoveSelection(),
                      list_action.ExportSpreadsheet(), ]
-        
+
     def get_form_actions( self ):
         """Specify the action buttons that should appear on each form in the
         application.  
         The :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions`
         method will call this method and prepend the result to the actions
         of that specific form.
-        
+
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         return []
-    
+
     def get_form_toolbar_actions( self, toolbar_area ):
         """
         :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
             where the toolbar actions will be positioned
-            
+
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
         """
         if toolbar_area == Qt.TopToolBarArea:
+            if sys.platform.startswith('darwin'):
+                #
+                # NOTE We remove the CloseForm from the toolbar action list
+                #      on Mac because this regularly causes segfaults.
+                #      The user can still close the form with the
+                #      OS close button (i.e. "X").
+                #
+                return [action for action in self.form_toolbar_actions
+                        if type(action) != form_action.CloseForm]
             return self.form_toolbar_actions
-        
+
+    def get_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
+            return [
+                list_action.CloseList(), list_action.ListLabel()
+                ] + self.edit_actions + self.change_row_actions + self.export_actions
+        return []
+
+    def get_select_list_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned when selecting objects 
+            from a table.
+
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
+            return [
+                list_action.CloseList(), list_action.ListLabel()
+                ] + self.change_row_actions
+        return []
+
     def get_main_menu( self ):
         """
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
@@ -332,46 +322,20 @@ shortcut confusion and reduce the number of status updates.
                        [ application_action.Backup(),
                          application_action.Restore(),
                          None,
-                         Menu( _('Export To'),
-                               self.export_actions ),
-                         Menu( _('Import From'),
-                               [list_action.ImportFromFile()] ),
-                         None,
                          application_action.Exit(),
                          ] ),
-                 Menu( _('&Edit'),
-                       self.edit_actions + [
-                        None,
-                        list_action.SelectAll(),
-                        None,
-                        list_action.ReplaceFieldContents(),   
-                        ]),
                  Menu( _('View'),
-                       [ application_action.Refresh(),
-                         Menu( _('Go To'), self.change_row_actions) ] ),
+                       [ application_action.Refresh(),] ),
                  Menu( _('&Help'),
                        self.help_actions + [
-                         application_action.ShowAbout() ] )
+                           application_action.ShowAbout() ] )
                  ]
-    
-    def get_toolbar_actions( self, toolbar_area ):
-        """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-            
-        :return: a list of :class:`camelot.admin.action.base.Action` objects
-            that should be displayed on the toolbar of the application.  return
-            None if no toolbar should be created.
-        """
-        if toolbar_area == Qt.TopToolBarArea:
-            return self.edit_actions + self.change_row_actions + \
-                   self.export_actions + self.help_actions
-    
+
     def get_name(self):
         """
         :return: the name of the application, by default this is the class
             attribute name"""
-        return unicode( self.name )
+        return six.text_type( self.name )
 
     def get_version(self):
         """:return: string representing version of the application, by default this
@@ -379,12 +343,12 @@ shortcut confusion and reduce the number of status updates.
         return self.version
 
     def get_icon(self):
-        """:return: the :class:`camelot.view.art.Icon` that should be used for the application"""
-        from camelot.view.art import Icon
-        return Icon('tango/32x32/apps/system-users.png').getQIcon()
+        """:return: the :class:`camelot.view.art.FontIcon` that should be used for the application"""
+        from camelot.view.art import FontIcon
+        return FontIcon('users').getQIcon() # 'tango/32x32/apps/system-users.png'
 
     def get_splashscreen(self):
-        """:return: a :class:`PyQt4.QtGui.QPixmap` to be used as splash screen"""
+        """:return: a :class:`QtGui.QPixmap` to be used as splash screen"""
         from camelot.view.art import Pixmap
         qpm = Pixmap('splashscreen.png').getQPixmap()
         img = qpm.toImage()
@@ -412,10 +376,9 @@ shortcut confusion and reduce the number of status updates.
         return self.domain
 
     def get_help_url(self):
-        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to the index page for help"""
-        from PyQt4.QtCore import QUrl
+        """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
         if self.help_url:
-            return QUrl( self.help_url )
+            return QtCore.QUrl( self.help_url )
 
     def get_stylesheet(self):
         """
@@ -439,9 +402,11 @@ shortcut confusion and reduce the number of status updates.
             QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
         except:
             pass
-        return art.read('stylesheet/office2007_blue.qss')
+        return art.read('stylesheet/office2007_blue.qss').decode('utf-8')
 
-    def _load_translator_from_file( self, 
+
+    @classmethod
+    def _load_translator_from_file( cls, 
                                     module_name, 
                                     file_name, 
                                     directory = '', 
@@ -453,7 +418,7 @@ shortcut confusion and reduce the number of status updates.
         within a Python egg.  This method tries to mimic the behavior of
         :meth:`QtCore.QTranslator.load` while looking for an appropriate
         translation file.
-        
+
         :param module_name: the name of the module in which to look for
             the translation file with pkg_resources.
         :param file_name: the filename of the the tranlations file, without 
@@ -465,7 +430,7 @@ shortcut confusion and reduce the number of status updates.
             name to search for variations of the file name
         :return: :keyword:None if unable to load the file, otherwise a
             :obj:`QtCore.QTranslator` object.
-            
+
         This method tries to load all file names with or without suffix, and
         with or without the part after the search delimiter.
         """
@@ -520,7 +485,7 @@ shortcut confusion and reduce the number of status updates.
             if translator.loadFromData( translations ):
                 logger.info("add translation %s" % (directory + file_name))
                 return translator
-        
+
     def get_translator(self):
         """Reimplement this method to add application specific translations
         to your application.  The default method returns a list with the
@@ -537,14 +502,16 @@ shortcut confusion and reduce the number of status updates.
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
                                QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
-            translators.append( qt_translator )
-        camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
-                                                              'art/translations/' )
+            translators.append(qt_translator)
+        logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
+        camelot_translator = self._load_translator_from_file(
+            'camelot', 
+            os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
+            'art/translations/'
+        )
+        logger.debug("Camelot translator found for {} : {}".format(locale_name, camelot_translator is not None))
         if camelot_translator:
             translators.append( camelot_translator )
-        else:
-            logger.debug( 'no camelot translations found for %s'%locale_name )
         return translators
 
     def get_about(self):

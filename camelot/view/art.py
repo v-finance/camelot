@@ -1,34 +1,40 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
 
 """Manages icons and artworks"""
 
 import os
+import json
 import logging
 logger = logging.getLogger('camelot.view.art')
 
-from PyQt4 import QtGui
+from ..core.qt import QtCore, QtGui, QtWidgets
 
 def file_(name):
     from camelot.core.resources import resource_filename
@@ -59,7 +65,7 @@ class Pixmap(object):
         else:
             self._module_name = module.__name__
 
-    def __unicode__(self):
+    def __str__(self):
         return self._path
 
     def __repr__(self):
@@ -81,8 +87,7 @@ class Pixmap(object):
         if self._cached_pixmap:
             return self._cached_pixmap
         from camelot.core.resources import resource_string
-        from PyQt4.QtGui import QPixmap
-        qpm = QPixmap()
+        qpm = QtGui.QPixmap()
         p = os.path.join('art', self._path)
         try:
             # For some reason this throws a unicode error if the path contains an accent (cf windows username)
@@ -90,7 +95,7 @@ class Pixmap(object):
             #  so they see no splash screen, tant pis
             r = resource_string(self._module_name, p)
             qpm.loadFromData(r)
-        except Exception, e:
+        except Exception as e:
             logger.warn(u'Could not load pixmap "%s" from module: %s, encountered exception' % (p, self._module_name), exc_info=e)
         self._cached_pixmap = qpm
         return qpm
@@ -100,8 +105,118 @@ class Icon(Pixmap):
 
     def getQIcon(self):
         """QPixmaps can only be used in the gui thread"""
-        from PyQt4.QtGui import QIcon
-        return QIcon(self.getQPixmap())
+        return QtGui.QIcon(self.getQPixmap())
+
+
+class IconFromImage(object):
+    """:class:`QtGui.QImage` based icon
+    
+    :param image: a :class:`QtGui.QImage` object
+    """
+    
+    def __init__(self, image):
+        self.image = image
+        
+    def getQIcon(self):
+        return QtGui.QIcon(QtGui.QPixmap.fromImage(self.image))
+
+
+class FontIconEngine(QtGui.QIconEngine):
+
+    def __init__(self):
+        super().__init__()
+        self.font_family = 'Font Awesome 5 Free'
+        self.code = 'X'
+        self.color = QtGui.QColor()
+
+    def paint(self, painter, rect, mode, state):
+        """
+        :param painter: a :class:`QtGui.QPainter` object
+        :param rect: a :class:`QtCore.QRect` object
+        :param mode: a :class:`QtGui.QIcon.Mode` object
+        :param state: a :class:`QtGui.QIcon.State` object
+        """
+        font = QtGui.QFont(self.font_family)
+        font.setStyleStrategy(QtGui.QFont.NoFontMerging)
+        drawSize = QtCore.qRound(rect.height() * 0.8)
+        font.setPixelSize(drawSize)
+
+        penColor = QtGui.QColor()
+        if not self.color.isValid():
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Normal, QtGui.QPalette.ButtonText)
+        else:
+            penColor = self.color
+
+        if mode == QtGui.QIcon.Disabled:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText)
+
+        if mode == QtGui.QIcon.Selected:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Active, QtGui.QPalette.ButtonText)
+
+        painter.save()
+        painter.setPen(QtGui.QPen(penColor))
+        painter.setFont(font)
+        painter.drawText(rect, QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, self.code)
+        painter.restore()
+
+    def pixmap(self, size, mode, state):
+        """
+        :param size: a :class:`QtCore.QSize` object
+        :param mode: a :class:`QtGui.QIcon.Mode` object
+        :param state: a :class:`QtGui.QIcon.State` object
+        """
+        pix = QtGui.QPixmap(size)
+        pix.fill(QtCore.Qt.transparent)
+
+        painter = QtGui.QPainter(pix)
+        self.paint(painter, QtCore.QRect(QtCore.QPoint(0, 0), size), mode, state)
+        painter.end()
+
+        return pix
+
+
+class FontIcon:
+
+    _name_to_code = None
+    _color = QtGui.QColor('#009999')
+
+    def __init__(self, name, pixmap_size=32):
+        """
+        The pixmap size is only used when calling getQPixmap().
+        """
+        self._name = name
+        self._pixmap_size = pixmap_size
+
+        if FontIcon._name_to_code is None:
+            FontIcon._load_name_to_code()
+
+        if self._name not in FontIcon._name_to_code:
+            raise Exception("Unknown font awesome icon: {}".format(self._name))
+
+    @staticmethod
+    def _load_name_to_code():
+        content = read('awesome/name_to_code.json')
+        FontIcon._name_to_code = json.loads(content)
+
+    def getQIcon(self):
+        # this method should not raise an exception, as it is used in slots
+        engine = FontIconEngine()
+        engine.font_family = 'Font Awesome 5 Free'
+        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
+        engine.color = self._color
+
+        icon = QtGui.QIcon(engine)
+        return icon
+
+    def getQPixmap(self):
+        # this method should not raise an exception, as it is used in slots
+        engine = FontIconEngine()
+        engine.font_family = 'Font Awesome 5 Free'
+        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
+        engine.color = self._color
+
+        return engine.pixmap(QtCore.QSize(self._pixmap_size, self._pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
 
 class ColorScheme(object):
     """The default color scheme for camelot, based on the Tango icon set
@@ -172,4 +287,5 @@ class ColorScheme(object):
     Qt::color0	0	0 pixel value (for bitmaps)
     Qt::color1	1	1 pixel value (for bitmaps)
     """
+
 

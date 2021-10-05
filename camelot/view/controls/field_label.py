@@ -1,110 +1,105 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2013 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
 #  www.conceptive.be / info@conceptive.be
 #
-#  This file is part of the Camelot Library.
-#
-#  This file may be used under the terms of the GNU General Public
-#  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file license.txt included in the packaging of
-#  this file.  Please review this information to ensure GNU
-#  General Public Licensing requirements will be met.
-#
-#  If you are unsure which license is appropriate for your use, please
-#  visit www.python-camelot.com or contact info@conceptive.be
-#
-#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  For use of this library in commercial applications, please contact
-#  info@conceptive.be
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 
+
+import six
+
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 from camelot.core.utils import ugettext as _
-from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from user_translatable_label import UserTranslatableLabel
+from camelot.admin.action.field_action import (ShowFieldAttributes,
+                                               FieldActionGuiContext)
 
-class Attribute(object):
-    """Helper class representing a field attribute's name and its value"""
-    def __init__(self, name, value):
-        self.name = unicode(name)
-        self.value = unicode(value)
-                
-    class Admin(ObjectAdmin):
-        list_display = ['name', 'value']
-        field_attributes = {'name':{'minimal_column_width':25},
-                            'value':{'minimal_column_width':25}}
-                        
-class FieldLabel(UserTranslatableLabel):
+
+class FieldLabel(QtWidgets.QLabel):
     """A Label widget used to display the name of a field on a form.
     This label provides the user with the possibility to change the translation
     of the label and review its field attributes.
     """
     
     font_width = None
+    font = None
+    bold_font = None
     
-    def __init__(self, field_name, text, field_attributes, admin, parent=None):
+    def __init__(self, field_name, text, admin, parent):
         """
         :param field_name: the name of the field
         :param text: user translatable string to be used as field label
-        :param field_attributes: the field attributes associated with the field for which
-        this is a label
         :param admin: the admin of the object of the field
+        :param parent: the parent widget
+        
+        Field labels should be created with a parent since setting the
+        field attributes might 'visualize' them, so they could appear as
+        'ghost' windows when they have no parent
         """
-        super(FieldLabel, self).__init__(text, parent)
+        super(FieldLabel, self).__init__(six.text_type(text), parent)
         if FieldLabel.font_width == None:
-            FieldLabel.font_width = QtGui.QFontMetrics( QtGui.QApplication.font() ).size( Qt.TextSingleLine, 'A' ).width()
-        show_field_attributes_action = QtGui.QAction(_('View attributes'), self)
+            FieldLabel.font = QtWidgets.QApplication.font()
+            FieldLabel.bold_font = QtWidgets.QApplication.font()
+            FieldLabel.bold_font.setBold(True)
+            FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextSingleLine, 'A' ).width()
+        show_field_attributes_action = QtWidgets.QAction(_('View attributes'), self)
         show_field_attributes_action.triggered.connect( self.show_field_attributes )
         self.addAction(show_field_attributes_action)
         self._field_name = field_name
         self._admin = admin
-        self._field_attributes = field_attributes
+        self._field_attributes = dict()
         
-    def sizeHint( self ):
-        size_hint = super(FieldLabel, self).sizeHint()
-        size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
-        return size_hint
+    #def sizeHint( self ):
+        #size_hint = super(FieldLabel, self).sizeHint()
+        #size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
+        #return size_hint
     
-    def get_attributes(self):
-        import inspect
-        
-        def attribute_value_to_string(key, value):
-            if inspect.isclass(value):
-                return value.__name__
-            return unicode(value)
-        
-        return [Attribute(key,attribute_value_to_string(key, value)) for key,value in self._field_attributes.items()]
+    def get_value(self):
+        return None
     
-    @QtCore.pyqtSlot()
+    def get_field_attributes(self):
+        return self._field_attributes
+    
+    def set_field_attributes(self, **kwargs):
+        self._field_attributes = kwargs
+        # required fields font is bold
+        nullable = kwargs.get('nullable', True)
+        self.setVisible(kwargs.get('visible', True))
+        if not nullable:
+            self.setFont(self.bold_font)
+        else:
+            self.setFont(self.font)
+
+    @QtCore.qt_slot()
     def show_field_attributes(self):
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-                    
-        admin = self._admin.get_related_admin( Attribute )
-        attributes_collection = CollectionProxy(admin=admin, 
-                                                collection_getter=self.get_attributes,
-                                                columns_getter=admin.get_columns)
-        
-        class FieldAttributesDialog(QtGui.QDialog):
-            
-            def __init__(self, field_name, parent=None):
-                super(FieldAttributesDialog, self).__init__(parent)
-                self.setWindowTitle(_('Field Attributes'))
-                layout = QtGui.QVBoxLayout()
-                layout.addWidget( QtGui.QLabel(field_name) )
-                editor = One2ManyEditor(admin=admin, editable=False, parent=self)
-                editor.set_value(attributes_collection)
-                editor.setMinimumSize(600, 400)
-                layout.addWidget(editor)
-                self.setLayout(layout)
-        
-        dialog = FieldAttributesDialog(self._field_name, self)
-        dialog.exec_()
+        action = ShowFieldAttributes()
+        gui_context = FieldActionGuiContext()
+        gui_context.editor = self
+        gui_context.admin = self._admin
+        action.gui_run(gui_context)
+
+
 
 
 
