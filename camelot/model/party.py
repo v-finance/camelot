@@ -173,7 +173,6 @@ class GeographicBoundaryAlternativeName(Entity):
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
-                #'editable': False,
                 'choices': [('translation', _('Translation')),
                             ('main_municipality', _('Main municipality'))]
             },
