@@ -99,7 +99,7 @@ class ActionRunner( QtCore.QEventLoop ):
         self._return_code = return_code
         return super( ActionRunner, self ).exit( return_code )
     
-    def exec( self, flags = QtCore.QEventLoop.ProcessEventFlags.AllEvents ):
+    def exec( self, flags = QtCore.QEventLoop.ProcessEventsFlag.AllEvents ):
         """Reimplementation of exec to prevent the event loop being started
         when exit has been called prior to calling exec.
         

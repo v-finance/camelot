@@ -1114,7 +1114,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     object to the session, and flush the object if it is valid.
     """
 
-    shortcut = QtGui.QKeySequence.New
+    shortcut = QtGui.QKeySequence.StandardKey.New
     icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')

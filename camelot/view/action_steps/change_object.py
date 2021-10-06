@@ -83,7 +83,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
-                  flags=QtCore.Qt.WindowFlags.Dialog ):
+                  flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
@@ -166,9 +166,9 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
-    @QtCore.qt_slot(Qt.Orientations, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Orientations.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             model = self.sender()
             valid = variant_to_py(model.headerData(0, orientation, ValidRole))
             self._change_complete(model, valid or False)
@@ -183,7 +183,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             if complete:
                 note.set_value(None)
             else:
-                note.set_value(variant_to_py(model.headerData(0, Qt.Orientations.Vertical, ValidMessageRole))) 
+                note.set_value(variant_to_py(model.headerData(0, Qt.Orientation.Vertical, ValidMessageRole)))
         if cancel_button is not None:
             ok_button.setDefault( not complete )
 
@@ -206,7 +206,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   action_states,
                   invalid_rows,
                   parent = None,
-                  flags = QtCore.Qt.WindowFlags.Window ):
+                  flags = QtCore.Qt.WindowType.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
@@ -232,9 +232,9 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.set_default_buttons()
         self.update_complete(model)
 
-    @QtCore.qt_slot(Qt.Orientations, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Orientations.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             model = self.sender()
             for row in range(first, last+1):
                 valid = variant_to_py(model.headerData(row, orientation, ValidRole))
@@ -259,7 +259,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 row = min(self.invalid_rows)
                 note.set_value(u'{0}<br/>{1}'.format(
                     ugettext(u'Please correct row {0} before proceeding.').format(row+1),
-                    variant_to_py(model.headerData(row, Qt.Orientations.Vertical, ValidMessageRole))
+                    variant_to_py(model.headerData(row, Qt.Orientation.Vertical, ValidMessageRole))
                 ))
 
 @dataclass
@@ -467,7 +467,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
                   field_name,
                   field_value = None,
                   parent = None,
-                  flags=QtCore.Qt.WindowFlags.Dialog ):
+                  flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeFieldDialog, self).__init__( '', parent, flags )
         from camelot.view.controls.editors import ChoicesEditor
         self.field_attributes = field_attributes

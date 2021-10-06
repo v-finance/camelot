@@ -196,7 +196,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
         step = json.loads(serialized_step)
         navigation_panel = self.render(gui_context, step)
         gui_context.workspace.parent().addDockWidget(
-            Qt.DockWidgetAreas.LeftDockWidgetArea, navigation_panel
+            Qt.DockWidgetArea.LeftDockWidgetArea, navigation_panel
         )
 
 

@@ -163,7 +163,7 @@ class NavigationPane(QtWidgets.QDockWidget):
         # hack for removing the dock title bar
         self.setTitleBarWidget(QtWidgets.QWidget())
         self.setWidget(tb)
-        self.setFeatures(QtWidgets.QDockWidget.DockWidgetFeatures.NoDockWidgetFeatures)
+        self.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
 
     def wheelEvent(self, wheel_event):
         steps = -1 * wheel_event.angleDelta().y() / (8 * 15)

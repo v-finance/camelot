@@ -39,7 +39,7 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for float values"""
 
     editor = editors.FloatEditor
-    horizontal_align = Qt.Alignment.AlignRight | Qt.Alignment.AlignVCenter
+    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
     def __init__( self,
                  parent=None,

@@ -14,7 +14,7 @@ def check_qml_errors(obj, url):
     :param obj: a `QtQml.QQmlComponent` or `QtQuick.QQuickView` instance.
     :param url: The component QML source url.
     """
-    Error = QtQml.QQmlComponent.Error if isinstance(obj, QtQml.QQmlComponent) else QtQuick.QQuickView.Error
+    Error = QtQml.QQmlComponent.Status.Error if isinstance(obj, QtQml.QQmlComponent) else QtQuick.QQuickView.Status.Error
     if obj.status() == Error:
         errors = []
         for error in obj.errors():
@@ -67,9 +67,9 @@ class QmlView(AbstractView):
         self.quick_view.setInitialProperties(initial_properties)
         self.quick_view.setSource(url)
         check_qml_errors(self.quick_view, url)
-        self.quick_view.setResizeMode(QtQuick.QQuickView.SizeRootObjectToView)
+        self.quick_view.setResizeMode(QtQuick.QQuickView.ResizeMode.SizeRootObjectToView)
         container = QtWidgets.QWidget.createWindowContainer(self.quick_view)
-        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.BottomToTop)
+        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop)
         layout.addWidget(container)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)

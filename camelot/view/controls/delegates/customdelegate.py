@@ -124,7 +124,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
-    horizontal_align = Qt.Alignment.AlignLeft | Qt.Alignment.AlignVCenter
+    horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate

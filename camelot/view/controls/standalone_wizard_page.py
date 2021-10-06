@@ -44,7 +44,7 @@ class HSeparator(QtWidgets.QFrame):
 class StandaloneWizardPage(QtWidgets.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
-    def __init__(self, window_title=None, parent=None, flags=Qt.WindowFlags.Dialog):
+    def __init__(self, window_title=None, parent=None, flags=Qt.WindowType.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
         self.setWindowTitle( str(window_title or ' ') )
         self.set_layouts()
@@ -63,7 +63,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
 
         banner_layout = QtWidgets.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
-        banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.Alignment.AlignRight)
+        banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignmentFlag.AlignRight)
         banner_layout.addLayout(QtWidgets.QVBoxLayout(), 0, 0)
 
         # TODO: allow banner widget to be supplied

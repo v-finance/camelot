@@ -157,7 +157,7 @@ class FontIconEngine(QtGui.QIconEngine):
         painter.save()
         painter.setPen(QtGui.QPen(penColor))
         painter.setFont(font)
-        painter.drawText(rect, QtCore.Qt.Alignment.AlignCenter | QtCore.Qt.Alignment.AlignVCenter, self.code)
+        painter.drawText(rect, QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignVCenter, self.code)
         painter.restore()
 
     def pixmap(self, size, mode, state):

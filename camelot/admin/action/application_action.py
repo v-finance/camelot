@@ -546,7 +546,7 @@ class SegmentationFault( Action ):
 
     name = 'segfault'
     verbose_name = _('Segmentation Fault')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifiers.CTRL.value + QtCore.Qt.Modifiers.ALT.value + QtCore.Qt.Key.Key_0.value )
+    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL.value + QtCore.Qt.Modifier.ALT.value + QtCore.Qt.Key.Key_0.value )
     
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps

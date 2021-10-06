@@ -79,7 +79,7 @@ invalid_field_attributes_data = py_to_variant(ProxyDict(
     focus_policy=Qt.FocusPolicy.NoFocus,
 ))
 invalid_item = QtGui.QStandardItem()
-invalid_item.setFlags(Qt.ItemFlags.NoItemFlags)
+invalid_item.setFlags(Qt.ItemFlag.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
@@ -388,7 +388,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # easier to replace the source model all at once
         self.setRowCount(0)
         root_item = self.invisibleRootItem()
-        root_item.setFlags(Qt.ItemFlags.NoItemFlags)
+        root_item.setFlags(Qt.ItemFlag.NoItemFlags)
         root_item.setEnabled(row_count is not None)
         self.setRowCount(min(row_count or 0, self.max_row_count))
         self.logger.debug('_reset end')
@@ -536,7 +536,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
     # decorate method as a slot, to make it accessible in QML
     @QtCore.qt_slot(int, int)
     @QtCore.qt_slot(int, int)
-    def sort(self, column, order=Qt.AscendingOrder):
+    def sort(self, column, order=Qt.SortOrder.AscendingOrder):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         self.logger.debug('sort called')
         assert object_thread( self )
