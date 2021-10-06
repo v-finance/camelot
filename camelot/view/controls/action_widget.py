@@ -151,10 +151,10 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance(sender, QtWidgets.QAction):
+        if isinstance(sender, QtGui.QAction):
             mode = str(variant_to_py(sender.data()))
         elif isinstance(sender, QtQuick.QQuickItem):
-            data = sender.data()
+            data = sender.mode()
             if isinstance(data, QtQml.QJSValue):
                 data = data.toVariant()
             mode = variant_to_py(data)

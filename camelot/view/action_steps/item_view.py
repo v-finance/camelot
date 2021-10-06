@@ -287,7 +287,7 @@ class OpenQmlTableView(OpenTableView):
             rendered_action = item_view._qml_item.addAction(
                 action.render_hint.value, state, qt_action
             )
-            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
             rendered_action.setObjectName('action_{}'.format(i))
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
@@ -301,7 +301,7 @@ class OpenQmlTableView(OpenTableView):
         quick_view = gui_context.workspace.quick_view
         view = cls.render(gui_context, step, quick_view.engine())
         # tabs will be destroyed by javascript code
-        quick_view.engine().setObjectOwnership(view, QtQml.QQmlEngine.JavaScriptOwnership)
+        quick_view.engine().setObjectOwnership(view, QtQml.QQmlEngine.ObjectOwnership.JavaScriptOwnership)
         tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
         assert tab_view
         tab_view.addTab(step['title'], view)

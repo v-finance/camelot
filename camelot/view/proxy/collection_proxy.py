@@ -243,8 +243,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         role_names = super().roleNames()
         role_names[ActionRoutesRole] = b'action_routes'
         role_names[ActionStatesRole] = b'action_states'
-        role_names[Qt.BackgroundRole] = b'background'
-        role_names[Qt.TextAlignmentRole] = b'text_alignment'
+        role_names[Qt.ItemDataRole.BackgroundRole] = b'background'
+        role_names[Qt.ItemDataRole.TextAlignmentRole] = b'text_alignment'
         return role_names
     #
     # end or reimplementation
@@ -286,7 +286,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 model_context, request_id, request = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1}'.format(request_id, request))
                 runner = ActionRunner( request.model_run, self)
-                runner.exec_()
+                runner.exec()
 
 
     def _start_timer(self):
@@ -500,7 +500,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
-        if orientation == Qt.Orientations.Horizontal and role == Qt.ItemDataRole.SizeHintRole:
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.SizeHintRole:
             item = self.verticalHeaderItem(section)
             if item is not None:
                 item.setData(value.width(), role)
@@ -511,7 +511,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         information out of them
         """
         assert object_thread( self )
-        if (orientation == Qt.Orientations.Vertical) and (section >= 0):
+        if (orientation == Qt.Orientation.Vertical) and (section >= 0):
             if role == Qt.ItemDataRole.SizeHintRole:
                 #
                 # sizehint role is requested, for every row, so we have to
@@ -579,7 +579,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             return invalid_item.data(role)
 
         if role == ObjectRole:
-            return self.headerData(row, Qt.Orientations.Vertical, role)
+            return self.headerData(row, Qt.Orientation.Vertical, role)
 
         return child_item.data(role)
 
@@ -612,12 +612,12 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if role == Qt.ItemDataRole.EditRole:
             column = index.column()
             # if the field is not editable, don't waste any time and get out of here
-            field_attributes = variant_to_py(self.headerData(column, Qt.Orientations.Horizontal, FieldAttributesRole))
+            field_attributes = variant_to_py(self.headerData(column, Qt.Orientation.Horizontal, FieldAttributesRole))
             if field_attributes.get('editable', True) != True:
                 self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
                 return False
             row = index.row()
-            obj = variant_to_py(self.headerData(row, Qt.Orientations.Vertical, ObjectRole))
+            obj = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
             if obj is None:
                 logger.debug('set data called on row without object')
                 return False
@@ -663,7 +663,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             if model_context.current_column is not None:
                 model_context.current_field_name = variant_to_py(
                     self.headerData(
-                        model_context.current_column, Qt.Orientations.Horizontal, Qt.ItemDataRole.UserRole
+                        model_context.current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                     )
                 )
             if selection_model is not None:
