@@ -34,10 +34,11 @@ various actions that are beyond the icons shown in the editors of a form.
 
 import os
 
-from ...core.qt import QtWidgets
+from ...core.qt import QtWidgets, QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
 from .base import Action, RenderHint
+from .list_action import AddNewObjectMixin
 from .application_action import (ApplicationActionModelContext,
                                  ApplicationActionGuiContext)
 
@@ -122,7 +123,7 @@ class SelectObject(FieldAction):
     tooltip = _('select existing')
     name = 'select_object'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         admin = model_context.field_attributes.get('admin')
         if admin is not None:
@@ -145,7 +146,7 @@ class NewObject(SelectObject):
     tooltip = _('create new')
     name = 'new_object'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         admin = model_context.field_attributes['admin']
         admin = yield action_steps.SelectSubclass(admin)
@@ -163,7 +164,7 @@ class OpenObject(SelectObject):
     tooltip = _('open')
     name = 'open_object'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         obj = model_context.value
         if obj is not None:
@@ -184,7 +185,7 @@ class ClearObject(OpenObject):
     tooltip = _('clear')
     name = 'clear_object'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.UpdateEditor('selected_object', None)
 
@@ -201,7 +202,7 @@ class UploadFile(FieldAction):
     file_name_filter = 'All files (*)'
     name = 'attach_file'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         filenames = yield action_steps.SelectFile(self.file_name_filter)
         storage = model_context.field_attributes['storage']
@@ -215,7 +216,7 @@ class UploadFile(FieldAction):
                     text = _('Do you want to remove the original file?'),
                     icon = QtWidgets.QMessageBox.Icon.Warning,
                     title = _('The file will be stored.'),
-                    standard_buttons = QtWidgets.QMessageBox.StandardButtons.No | QtWidgets.QMessageBox.StandardButtons.Yes
+                    standard_buttons = [QtWidgets.QMessageBox.StandardButtons.No, QtWidgets.QMessageBox.StandardButtons.Yes]
                     )
                 if reply == QtWidgets.QMessageBox.StandardButtons.Yes:
                     remove = True
@@ -242,9 +243,9 @@ class DetachFile(FieldAction):
     message_text = _('If you continue, you will no longer be able to open this file.')
     name = 'detach_file'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        buttons = QtWidgets.QMessageBox.StandardButtons.Yes|QtWidgets.QMessageBox.StandardButtons.No
+        buttons = [QtWidgets.QMessageBox.StandardButtons.Yes, QtWidgets.QMessageBox.StandardButtons.No]
         answer = yield action_steps.MessageBox(title=self.message_title,
                                                text=self.message_text,
                                                standard_buttons=buttons)
@@ -265,7 +266,7 @@ class OpenFile(FieldAction):
     tooltip = _('Open file')
     name = 'open_file'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Checkout file'))
         storage = model_context.field_attributes['storage']
@@ -286,7 +287,7 @@ class SaveFile(OpenFile):
     tooltip = _('Save as')
     name = 'file_save_as'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         stored_file = model_context.value
         storage = model_context.field_attributes['storage']
@@ -296,3 +297,42 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
+class AddNewObject( AddNewObjectMixin, FieldAction ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+
+    def get_admin(self, model_context, mode):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.field_attributes.get('admin')
+
+    def get_proxy(self, model_context, admin):
+        return model_context.value
+
+    def get_state( self, model_context ):
+        assert isinstance(model_context, FieldActionModelContext)
+        state = super().get_state( model_context )
+        # Check for editability on the level of the field
+        editable = model_context.field_attributes.get( 'editable', True )
+        if editable == False:
+            state.enabled = False
+        # Check for editability on the level of the entity
+        admin = self.get_admin(model_context)
+        if admin and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
+
+add_new_object = AddNewObject()

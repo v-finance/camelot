@@ -46,15 +46,12 @@ class ModelContext( object ):
 The Model context in which an action is running.  The model context can contain
 reference to database sessions or other model related data. This object can not 
 contain references to widgets as those belong strictly to the :class:`GuiContext`.
-
-.. attribute:: mode_name
-
-    the name of the mode in which the action was triggered
     """
-          
+
     def __init__( self ):
-        self.mode_name = None
-        
+        pass
+
+
 class GuiContext( object ):
     """
 The GUI context in which an action is running.  This object can contain
@@ -113,7 +110,6 @@ strictly to the :class:`ModelContext`
         :return: a :class:`ModelContext`
         """
         context = self.model_context()
-        context.mode_name = self.mode_name
         return context
         
     def copy( self, base_class = None ):
@@ -227,6 +223,8 @@ updated state for the widget.
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
 
+# TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
+#       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
 class MetaActionStep(type):
 
     action_steps = dict()
@@ -285,7 +283,7 @@ return immediately and the :meth:`model_run` will not be blocked.
         runner = ActionRunner( self.model_run, gui_context )
         runner.exec()
         
-    def model_run( self, model_context = None ):
+    def model_run( self, model_context, mode ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`
         objects.  This generator can be called in the *model thread*.
         
@@ -324,7 +322,8 @@ class RenderHint(Enum):
     PUSH_BUTTON = 'push_button'
     TOOL_BUTTON = 'tool_button'
     SEARCH_BUTTON = 'search_button'
-    GROUP_BOX = 'group_box'
+    EXCLUSIVE_GROUP_BOX = 'exclusive_group_box'
+    NON_EXCLUSIVE_GROUP_BOX = 'non_exclusive_group_box'
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
 

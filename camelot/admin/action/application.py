@@ -109,7 +109,7 @@ class Application( Action ):
             #from camelot.view.database_selection import select_database
             #select_database(self.application_admin)
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         """
         Overwrite this generator method to customize the startup process of
         your application.
@@ -123,11 +123,14 @@ class Application( Action ):
         yield action_steps.UpdateProgress( 1, 5, _('Setup database') )
         settings.setup_model()
         yield action_steps.UpdateProgress( 2, 5, _('Load translations') )
-        load_translations(metadata.bind)
+        connection = metadata.bind.connect()
+        load_translations(connection)
         yield action_steps.UpdateProgress( 3, 5, _('Install translator') )
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
         yield action_steps.NavigationPanel(
             self.application_admin.get_navigation_menu(), model_context=model_context
         )
-        yield action_steps.MainMenu(self.application_admin.get_main_menu())
+        yield action_steps.MainMenu(
+            self.application_admin.get_main_menu(), model_context=model_context
+        )

@@ -92,7 +92,7 @@ class ActionRunner( QtCore.QEventLoop ):
         self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
-        post(self._initiate_generator, self.generator, self.exception)
+        post(self._initiate_generator, self.generator, self.exception, args=(gui_context.mode_name,))
     
     def exit( self, return_code = 0 ):
         """Reimplementation of exit to store the return code"""
@@ -109,9 +109,9 @@ class ActionRunner( QtCore.QEventLoop ):
             return super( ActionRunner, self ).exec( flags )
         return self._return_code
         
-    def _initiate_generator( self ):
+    def _initiate_generator( self, mode ):
         """Create the model context and start the generator"""
-        return self._generator_function( self._model_context )
+        return self._generator_function( self._model_context, mode )
 
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates

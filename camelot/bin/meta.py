@@ -289,7 +289,7 @@ class CreateNewProject( Action ):
     """Action to create a new project, based on a form with
     options the user fills in."""
             
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         # begin change object
         from camelot.view import action_steps
         app_admin = MetaCamelotAdmin()
@@ -325,11 +325,11 @@ class CreateNewProject( Action ):
                     if command == 'wininst_cloud':
                         yield action_steps.MessageBox( 'Use Inno Setup to process the file<br/>' \
                                                        '<b>%s</b><br/> to build the installer executable'% os.path.join( project_path, filename ),
-                                                       standard_buttons = QtWidgets.QMessageBox.StandardButtons.Ok )
+                                                       standard_buttons = [QtWidgets.QMessageBox.StandardButtons.Ok] )
 
         yield action_steps.MessageBox( 'All files for the new project<br/>' \
                                        'were created in <b>%s</b>'%project_path,
-                                       standard_buttons = QtWidgets.QMessageBox.StandardButtons.Ok )
+                                       standard_buttons = [QtWidgets.QMessageBox.StandardButtons.Ok] )
         yield action_steps.OpenFile( project_path )
         
     def start_project( self, options ):

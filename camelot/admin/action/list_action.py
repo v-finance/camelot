@@ -33,10 +33,10 @@ import datetime
 import logging
 import itertools
 
-
+from sqlalchemy import orm
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, py_to_variant, is_deleted
+from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -283,7 +283,7 @@ class EditAction( ListContextAction ):
             state.enabled = False
         return state
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         admin = model_context.admin
         if not admin.is_editable():
             raise RuntimeError("Action's model_run() called on noneditable entity")
@@ -299,7 +299,7 @@ class CloseList(Action):
     tooltip = _('Close')
     name = 'close'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.CloseView()
 
@@ -331,7 +331,7 @@ class OpenFormView( ListContextAction ):
     verbose_name = None
     name = 'open_form_view'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(model_context.get_object(), model_context.proxy, admin=model_context.admin)
 
@@ -353,9 +353,9 @@ class DuplicateSelection( EditAction ):
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         admin = model_context.admin
         new_objects = list()
         updated_objects = set()
@@ -370,6 +370,13 @@ class DuplicateSelection( EditAction ):
         yield action_steps.CreateObjects(new_objects)
         yield action_steps.UpdateObjects(updated_objects)
         yield action_steps.FlushSession(model_context.session)
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+        return state
 
 duplicate_selection = DuplicateSelection()
             
@@ -395,9 +402,9 @@ class DeleteSelection( EditAction ):
         gui_context.item_view.model().refresh()
         gui_context.item_view.clearSelection()
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         admin = model_context.admin
         if model_context.selection_count <= 0:
             return
@@ -431,6 +438,13 @@ class DeleteSelection( EditAction ):
         model_context.proxy.remove(obj)
         yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete(obj)
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+        return state
 
 delete_selection = DeleteSelection()
 
@@ -540,122 +554,6 @@ class ToLastRow( AbstractToLast, ToNextRow ):
 
 to_last_row = ToLastRow()
 
-class SaveExportMapping( Action ):
-    """
-    Save the user defined order of columns to export
-    """
-
-    verbose_name = _('Save')
-    tooltip = _('Save the order of the columns for future use')
-    name = 'save_mapping'
-
-    def __init__(self, settings):
-        self.settings = settings
-
-    def read_mappings(self):
-        self.settings.sync()
-        mappings = dict()
-        number_of_mappings = self.settings.beginReadArray('mappings')
-        for i in range(number_of_mappings):
-            self.settings.setArrayIndex(i)
-            name = variant_to_py(self.settings.value('name', py_to_variant(b'')))
-            number_of_columns = self.settings.beginReadArray('columns')
-            columns = list()
-            for j in range(number_of_columns):
-                self.settings.setArrayIndex(j)
-                field = variant_to_py(self.settings.value('field',
-                                                          py_to_variant(b'')))
-                columns.append(field)
-            self.settings.endArray()
-            mappings[name] = columns
-        self.settings.endArray()
-        return mappings
-
-    def write_mappings(self, mappings):
-        self.settings.beginWriteArray('mappings')
-        for i, (name, columns) in enumerate(mappings.items()):
-            self.settings.setArrayIndex(i)
-            self.settings.setValue('name', name)
-            self.settings.beginWriteArray('columns')
-            for j, column in enumerate(columns):
-                self.settings.setArrayIndex(j)
-                self.settings.setValue('field', column)
-            self.settings.endArray()
-        self.settings.endArray()
-        self.settings.sync()
-
-    def model_run(self, model_context):
-        from ..object_admin import ObjectAdmin
-        from camelot.view import action_steps
-
-        class ExportMappingOptions(object):
-
-            def __init__(self):
-                self.name = None
-
-            class Admin(ObjectAdmin):
-                list_display = ['name']
-                field_attributes = {'name': {'editable': True,
-                                             'nullable': False}}
-
-        if model_context.collection_count:
-            mappings = self.read_mappings()
-            options = ExportMappingOptions()
-            app_admin = model_context.admin.get_application_admin()
-            options_admin = app_admin.get_related_admin(ExportMappingOptions)
-            yield action_steps.ChangeObject(options, options_admin)
-            columns = [column_mapping.field for column_mapping in model_context.get_collection() if column_mapping.field]
-            mappings[options.name] = columns
-            self.write_mappings(mappings)
-
-class RestoreExportMapping( SaveExportMapping ):
-    """
-    Restore the user defined order of columns to export
-    """
-
-    verbose_name = _('Restore')
-    tooltip = _('Restore the previously stored order of the columns')
-    name = 'restore_mapping'
-
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-
-        mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in mappings.keys()]
-        mapping_name = yield action_steps.SelectItem(mapping_names)
-        if mapping_name is not None:
-            fields = mappings[mapping_name]
-            for i, column_mapping in enumerate(model_context.get_collection()):
-                if i<len(fields):
-                    # the stored field might no longer exist
-                    for field, _name in model_context.admin.field_choices:
-                        if field==fields[i]:
-                            column_mapping.field = fields[i]
-                            break
-                else:
-                    column_mapping.field = None
-            yield action_steps.UpdateObjects(model_context.get_collection())
-
-class RemoveExportMapping( SaveExportMapping ):
-    """
-    Remove a user defined order of columns to export
-    """
-
-    verbose_name = _('Remove')
-    tooltip = _('Remove the previously stored order of the columns')
-    name = 'remove_mapping'
-
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-    
-        mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in mappings.keys()]
-        mapping_name = yield action_steps.SelectItem(mapping_names)
-        if mapping_name is not None:
-            mappings.pop(mapping_name)
-            self.write_mappings(mappings)
-
-
 class ClearMapping(Action):
     """
     Clear a selection of mappings
@@ -664,7 +562,7 @@ class ClearMapping(Action):
     verbose_name = _('Clear')
     name = 'clear_mapping'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
 
         cleared_mappings = list()
@@ -687,7 +585,7 @@ class ExportSpreadsheet( ListContextAction ):
     max_width = 40
     font_name = 'Calibri'
     
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from decimal import Decimal
         from camelot.view.import_utils import (
             ColumnMapping, ColumnSelectionAdmin
@@ -697,6 +595,7 @@ class ExportSpreadsheet( ListContextAction ):
             local_time_format
         )
         from camelot.view import action_steps
+        from camelot.admin.action.export_mapping import SaveExportMapping, RestoreExportMapping, RemoveExportMapping
         #
         # Select the columns that need to be exported
         # 
@@ -814,7 +713,11 @@ class ExportSpreadsheet( ListContextAction ):
                         separator = attributes.get('separator', ', ')
                         value = separator.join([str(el) for el in value])
                     elif isinstance( value, float ):
-                        precision = attributes.get('precision', 2)
+                        precision = attributes.get('precision')
+                        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+                        # as that only handles the precision key not being present, not it being explicitly set to None.
+                        if precision is None:
+                            precision = 2
                         style = numeric_style[precision]
                     elif isinstance( value, int ):
                         style = int_format
@@ -850,7 +753,7 @@ class PrintPreview( ListContextAction ):
     verbose_name = _('Print Preview')
     name = 'print'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         admin = model_context.admin
         columns = admin.get_columns()
@@ -892,7 +795,7 @@ class ImportFromFile( EditAction ):
     tooltip = _('Import from file')
     name = 'import'
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         import os.path
         import chardet
         from camelot.view import action_steps
@@ -902,7 +805,7 @@ class ImportFromFile( EditAction ):
                                                 XlsReader,
                                                 ColumnMapping,
                                                 ColumnMappingAdmin )
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         admin = model_context.admin
         file_names = yield action_steps.SelectFile()
         for file_name in file_names:
@@ -1003,9 +906,9 @@ class ReplaceFieldContents( EditAction ):
         gui_context.item_view.close_editor()
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         field_name, value = yield action_steps.ChangeField(
             model_context.admin,
             field_name = model_context.current_field_name
@@ -1030,11 +933,10 @@ class FieldFilter(object):
     Helper class for the `SetFilters` action that allows the user to
     configure a filter on an individual field.
     """
-
+    
     def __init__(self, value=None):
         self.value = value
-
-
+    
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -1054,22 +956,24 @@ class SetFilters(Action, AbstractModelFilter):
         :return: a list of choices with the fields the user can select to
            filter upon.
         """
-        field_attributes = model_context.admin.get_all_fields_and_attributes()
-        field_choices = [(f, str(fa['name'])) for f, fa in field_attributes.items() if fa.get('operators')]
+        filter_strategies = model_context.admin.get_field_filters()
+        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
         field_choices.sort(key=lambda choice:choice[1])
         return field_choices
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
 
-        if model_context.mode_name == '__clear':
+        if mode == '__clear':
             new_filter_value = {}
-        elif model_context.mode_name is None:
+        elif mode is None:
             new_filter_value = {}
         else:
             filter_value = model_context.proxy.get_filter(self) or {}
-            filter_field_name = model_context.mode_name
+            filter_field_name = mode
+            filter_strategies = model_context.admin.get_field_filters()
+            filter_strategy = filter_strategies.get(filter_field_name)
             filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
             filter_value_attributes = {
                 'name': filter_field_attributes['name'],
@@ -1080,6 +984,8 @@ class SetFilters(Action, AbstractModelFilter):
             # can be reused
             if isinstance(filter_field_attributes.get('choices'), list):
                 filter_value_attributes['choices'] = filter_field_attributes['choices']
+            if 'precision' in filter_field_attributes:
+                filter_value_attributes['precision'] = filter_field_attributes['precision']
     
             class FieldFilterAdmin(ObjectAdmin):
                 verbose_name = _('Filter')
@@ -1088,19 +994,31 @@ class SetFilters(Action, AbstractModelFilter):
                     'value': filter_value_attributes
                 }
     
-            field_filter = FieldFilter(filter_value.get(filter_field_name))
+            field_filter = FieldFilter(value=None)
             filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
             change_filter = action_steps.ChangeObject(field_filter, filter_admin)
             yield change_filter
-            new_filter_value = {filter_field_name: field_filter.value}
+            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
+            new_filter_value = {k:v for k,v in filter_value.items()}
+            new_filter_value[filter_field_name] = filter_text
 
         yield action_steps.SetFilter(self, new_filter_value)
         new_state = self._get_state(model_context, new_filter_value)
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
-        return query.filter_by(**values)
-
+        # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
+        # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
+        # This caused filters in some cases being tried to applied to the wrong entity.
+        # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
+        clauses = []
+        for name, filter_value in values.items():
+            filter_strategy = self.admin.get_field_filters().get(name)
+            clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
+            if clause is not None:
+                clauses.append(clause)
+        return query.filter(*clauses)
+    
     def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
@@ -1114,6 +1032,7 @@ class SetFilters(Action, AbstractModelFilter):
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
+        self.admin = model_context.admin
         return state
 
     def get_state(self, model_context):
@@ -1131,10 +1050,10 @@ class AddExistingObject( EditAction ):
     icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     name = 'add_object'
     
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
-        super().model_run(model_context)
+        super().model_run(model_context, mode)
         objs_to_add = yield action_steps.SelectObjects(model_context.admin)
         for obj_to_add in objs_to_add:
             for obj in model_context.get_collection():
@@ -1147,30 +1066,10 @@ class AddExistingObject( EditAction ):
             break
 
 add_existing_object = AddExistingObject()
-        
-class AddNewObject( EditAction ):
-    """Add a new object to a collection. Depending on the
-    'create_inline' field attribute, a new form is opened or not.
-    
-    This action will also set the default values of the new object, add the
-    object to the session, and flush the object if it is valid.
-    """
 
-    shortcut = QtGui.QKeySequence.StandardKey.New
-    #icon = Icon('plus-square') # 'tango/16x16/actions/document-new.png'
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('New')
-    verbose_name = _('New')
-    name = 'new_object'
+class AddNewObjectMixin(object):
     
-    def get_admin(self, model_context):
-        """
-        Return the admin used for creating and handling the new entity instance with.
-        By default, the given model_context's admin is used.
-        """
-        return model_context.admin
-
-    def create_object(self, model_context, admin, session=None):
+    def create_object(self, model_context, admin, type_=None, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
@@ -1178,30 +1077,58 @@ class AddNewObject( EditAction ):
         new_object = admin.entity(_session=session)
         admin.add(new_object)
         # defaults might depend on object being part of a collection
-        model_context.proxy.append(new_object)
+        self.get_proxy(model_context, admin).append(admin.get_subsystem_object(new_object))
         # Give the default fields their value
         admin.set_defaults(new_object)
         return new_object
         yield
 
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context)
-        admin = self.get_admin(model_context)
+        admin = self.get_admin(model_context, mode)
+        assert admin is not None # required by vfinance/test/test_facade/test_asset.py
+        if not admin.is_editable():
+            raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
-        new_object = yield from self.create_object(model_context, admin)
+        new_object = yield from self.create_object(model_context, admin, mode)
+        subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
-        yield action_steps.CreateObjects((new_object,))
+        yield action_steps.CreateObjects((subsystem_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            yield action_steps.FlushSession(model_context.session)
+            session = orm.object_session(subsystem_object)
+            yield action_steps.FlushSession(session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, model_context.proxy, admin)
+            yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+
+class AddNewObject( AddNewObjectMixin, EditAction ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+
+    def get_admin(self, model_context, mode):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        By default, the given model_context's admin is used.
+        """
+        return model_context.admin
+
+    def get_proxy(self, model_context, admin):
+        return model_context.proxy
 
 add_new_object = AddNewObject()
 
@@ -1221,24 +1148,3 @@ class RemoveSelection(DeleteSelection):
         yield None
 
 remove_selection = RemoveSelection()
-
-class ActionGroup(EditAction):
-    """Group a number of actions in a pull down"""
-
-    tooltip = _('More')
-    icon = Icon('cog') # 'tango/16x16/emblems/emblem-system.png'
-    actions = (ImportFromFile(), ReplaceFieldContents())
-    name = 'import_replace'
-    
-    def get_state(self, model_context):
-        state = super(ActionGroup, self).get_state(model_context)
-        state.modes = [
-            Mode(str(i), a.verbose_name, a.icon) for i, a in enumerate(self.actions)
-        ]
-        return state
-    
-    def model_run(self, model_context):
-        super().model_run(model_context)
-        if model_context.mode_name is not None:
-            action = self.actions[int(model_context.mode_name)]
-            yield from action.model_run(model_context)

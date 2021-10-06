@@ -38,6 +38,7 @@ from ....core.serializable import json_encoder
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
+from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -147,14 +148,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
         :param locale: the `QLocale` to be used to display locale dependent values
         :param model_context: a FieldActionModelContext object
-        
         :return: a `QStandardItem` object
         """
         routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
-            state = action.get_state(model_context)
-            states.append(dataclasses.asdict(state))
+            if isinstance(action, FieldAction):
+                state = action.get_state(model_context)
+                states.append(dataclasses.asdict(state))
+            else:
+                states.append(None)
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
@@ -228,6 +231,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         editor.set_value(value)
 
         # update actions
+        self.update_field_action_states(editor, index)
+
+    def update_field_action_states(self, editor, index):
         action_states = json.loads(index.model().data(index, ActionStatesRole))
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
@@ -243,7 +249,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                     LOGGER.error(route)
                 continue
             state = action_states[action_index]
-            action_widget.set_state_v2(state)
+            if state is not None:
+                action_widget.set_state_v2(state)
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

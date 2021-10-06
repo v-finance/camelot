@@ -171,14 +171,16 @@ class ShowHistory( Action ):
     icon = Icon('history') # 'tango/16x16/actions/format-justify-fill.png'
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
+    name = 'show_history'
         
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from ..object_admin import ObjectAdmin
         from ...view import action_steps
         from ...view.controls import delegates
             
         obj = model_context.get_object()
         memento = model_context.admin.get_memento()
+        subsystem_obj = model_context.admin.get_subsystem_object(obj)
         
         class ChangeAdmin( ObjectAdmin ):
             verbose_name = _('Change')
@@ -197,7 +199,7 @@ class ShowHistory( Action ):
             primary_key = model_context.admin.primary_key( obj )
             if primary_key is not None:
                 if None not in primary_key:
-                    changes = list( memento.get_changes( model = str( model_context.admin.entity.__name__ ),
+                    changes = list( memento.get_changes( model = str( subsystem_obj.__class__.__name__ ),
                                                          primary_key = primary_key,
                                                          current_attributes = {} ) )
                     admin = ChangeAdmin( model_context.admin, object )
@@ -206,7 +208,9 @@ class ShowHistory( Action ):
                     step.title = _('Recent changes')
                     step.subtitle = model_context.admin.get_verbose_identifier( obj )
                     yield step
-        
+
+show_history = ShowHistory()
+
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
 
@@ -215,6 +219,7 @@ class CloseForm( Action ):
     icon = Icon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
+    name = 'close_form'
     
     def step_when_valid(self):
         """
@@ -228,12 +233,13 @@ class CloseForm( Action ):
             gui_context.widget_mapper.submit()
         super( CloseForm, self ).gui_run( gui_context )
         
-    def model_run( self, model_context ):
+    def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress( text = _('Closing form') )
         validator = model_context.admin.get_validator()
         obj = model_context.get_object()
         admin  = model_context.admin
+        subsystem_obj = admin.get_subsystem_object(obj)
         if obj is None:
             yield self.step_when_valid()
             return
@@ -249,53 +255,72 @@ class CloseForm( Action ):
             #
             # if the object is not valid, request the user what to do
             #
-            message = action_steps.MessageBox( '\n'.join( messages ),
-                                               QtWidgets.QMessageBox.Icon.Warning,
-                                               _('Invalid form'),
-                                               QtWidgets.QMessageBox.StandardButtons.Ok | QtWidgets.QMessageBox.StandardButtons.Discard )
+            message = action_steps.MessageBox(
+                '\n'.join( messages ),
+                QtWidgets.QMessageBox.Icon.Warning,
+                _('Invalid form'),
+                [QtWidgets.QMessageBox.StandardButtons.Ok, QtWidgets.QMessageBox.StandardButtons.Discard] )
             reply = yield message
             if reply == QtWidgets.QMessageBox.StandardButtons.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
-                    yield action_steps.UpdateObjects((obj,))
+                    yield action_steps.UpdateObjects((subsystem_obj,))
                 else:
                     depending_objects = list(admin.get_depending_objects(obj))
                     model_context.proxy.remove(obj)
-                    yield action_steps.DeleteObjects((obj,))
+                    yield action_steps.DeleteObjects((subsystem_obj,))
                     admin.expunge(obj)
                     yield action_steps.UpdateObjects(depending_objects)
                 # only close the form after the object has been discarded or
                 # deleted, to avoid yielding action steps after the widget mapper
                 # has been garbage collected
                 yield self.step_when_valid()
-    
+
+close_form = CloseForm()
+
 class ToPreviousForm( list_action.AbstractToPrevious, CloseForm ):
     """Move to the previous form"""
+
+    name = 'to_previous_form'
 
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToPreviousForm()
 
+to_previous_form = ToPreviousForm()
+
 class ToFirstForm( list_action.AbstractToFirst, CloseForm ):
     """Move to the form"""
-    
+
+    name = 'to_first_form'
+
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToFirstForm()
 
+to_first_form = ToFirstForm()
+
 class ToNextForm( list_action.AbstractToNext, CloseForm ):
     """Move to the next form"""
+
+    name = 'to_next_form'
 
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToNextForm()
 
+to_next_form = ToNextForm()
+
 class ToLastForm( list_action.AbstractToLast, CloseForm ):
     """Move to the last form"""
+
+    name = 'to_last_form'
 
     def step_when_valid(self):
         from camelot.view import action_steps
         return action_steps.ToLastForm()
+
+to_last_form = ToLastForm()
 
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.

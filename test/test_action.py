@@ -1,4 +1,5 @@
 import datetime
+import gc
 import io
 import logging
 import os
@@ -6,14 +7,14 @@ import unittest
 
 import openpyxl
 
-from . import app_admin, test_core, test_view
-from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
 from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action import Action, ActionStep, ApplicationActionGuiContext, Mode, State, application_action, \
     form_action, list_action, list_filter
 from camelot.admin.action.application import Application
+from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
+from camelot.admin.action.logging import ChangeLogging
+from camelot.admin.action.list_action import SetFilters
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ListModelProxy, ObjectRole
@@ -27,7 +28,7 @@ from camelot.test.action import MockListActionGuiContext, MockModelContext
 from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import PrintHtml, SelectItem
-from camelot.view.action_steps.change_object import ChangeObject
+from camelot.view.action_steps.change_object import ChangeObject, ChangeField
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, tableview
 from camelot.view.controls.action_widget import ActionPushButton
@@ -36,6 +37,10 @@ from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchN
 from camelot.view.workspace import DesktopWorkspace
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
+
+from . import app_admin, test_core, test_view
+from .test_item_model import QueryQStandardItemModelMixinCase
+from .test_model import ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -172,7 +177,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         # begin select item
         class SendDocumentAction( Action ):
 
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 methods = [ ('email', 'By E-mail'),
                             ('fax',   'By Fax'),
                             ('post',  'By postal mail') ]
@@ -190,8 +195,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.assertTrue(dialog)
 
     def test_edit_profile(self):
-        step = EditProfiles([], '')
-        dialog = step.render(self.gui_context)
+        step = yield EditProfiles([], '')
+        dialog = EditProfiles.render(self.gui_context, step)
         dialog.show()
         self.grab_widget(dialog)
 
@@ -221,7 +226,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
-        dialog = step.render()
+        serialized_step = step._to_dict()
+        dialog = step.render(serialized_step)
         dialog.show()
         self.grab_widget(dialog)
 
@@ -249,12 +255,14 @@ class ListActionsCase(
         )
         cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
         cls.process()
+        gc.disable()
 
     @classmethod
     def tearDownClass(cls):
         cls.thread.post(cls.tear_down_sample_model)
         cls.process()
         super().tearDownClass()
+        gc.enable()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
@@ -327,14 +335,13 @@ class ListActionsCase(
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
         for step in self.gui_run(action, self.gui_context):
-            if isinstance(step, action_steps.OpenFile):
-                filename = step.get_path()
+            if isinstance(step, tuple) and step[0] == 'OpenFile':
+                filename = step[1]["path"]
         self.assertTrue(filename)
         # see if the generated file can be parsed
         openpyxl.load_workbook(filename)
 
     def test_save_restore_export_mapping(self):
-
         admin = app_admin.get_related_admin(Movie)
 
         settings = utils.get_settings(admin.get_admin_route()[-1])
@@ -342,8 +349,8 @@ class ListActionsCase(
         # make sure there are no previous settings
         settings.remove('')
 
-        save_export_mapping = list_action.SaveExportMapping(settings)
-        restore_export_mapping = list_action.RestoreExportMapping(settings)
+        save_export_mapping = export_mapping.SaveExportMapping(settings)
+        restore_export_mapping = export_mapping.RestoreExportMapping(settings)
 
         model_context = MockModelContext()
         
@@ -355,7 +362,7 @@ class ListActionsCase(
         model_context.selection = [import_utils.ColumnMapping(0, [], 'field_1'),
                                    import_utils.ColumnMapping(1, [], 'field_2')]
 
-        for step in save_export_mapping.model_run(model_context):
+        for step in save_export_mapping.model_run(model_context, None):
             if isinstance(step, action_steps.ChangeObject):
                 options = step.get_object()
                 options.name = 'mapping 1'
@@ -371,7 +378,7 @@ class ListActionsCase(
         model_context.selection =  [import_utils.ColumnMapping(0, [], 'field_3'),
                                    import_utils.ColumnMapping(1, [], 'field_4')]
 
-        generator = restore_export_mapping.model_run(model_context)
+        generator = restore_export_mapping.model_run(model_context, None)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send('mapping 1')
@@ -394,7 +401,7 @@ class ListActionsCase(
             self.admin,
             field_choices=[(f,f) for f in fields]
         )
-        list(match_names.model_run(model_context))
+        list(match_names.model_run(model_context, None))
         self.assertEqual(mapping.field, 'first_name')
 
     def test_import_from_xls_file( self ):
@@ -424,7 +431,7 @@ class ListActionsCase(
         action = list_action.ImportFromFile()
         generator = self.gui_run(action, self.gui_context)
         for step in generator:
-            if isinstance(step, action_steps.SelectFile):
+            if isinstance(step, tuple) and step[0] == 'SelectFile':
                 generator.send([os.path.join(self.example_folder, filename)])
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
@@ -441,9 +448,9 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = self.gui_run(action, self.gui_context)
+        steps = action.model_run(self.gui_context.create_model_context(), None)
         for step in steps:
-            if isinstance(step, action_steps.ChangeField):
+            if isinstance(step, ChangeField):
                 dialog = step.render()
                 field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
                 field_editor.set_value('first_name')
@@ -465,7 +472,7 @@ class ListActionsCase(
         self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))
         model_context = self.gui_context.create_model_context()
         open_form_view_action = list_action.OpenFormView()
-        for step in open_form_view_action.model_run(model_context):
+        for step in open_form_view_action.model_run(model_context, None):
             form = step.render(self.gui_context)
             form_value = form.model.get_value()
         self.assertTrue(isinstance(form_value, ListModelProxy))
@@ -503,16 +510,16 @@ class ListActionsCase(
 
     def test_remove_selection(self):
         remove_selection_action = list_action.RemoveSelection()
-        list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
+        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
 
     def test_set_filters(self):
-        set_filters = list_action.SetFilters()
-        state = self.get_state(set_filters, self.gui_context)
+        set_filters_step = yield SetFilters()
+        state = self.get_state(set_filters_step, self.gui_context)
         self.assertTrue(len(state.modes))
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        set_filters.gui_run(self.gui_context)
+        SetFilters.gui_run(self.gui_context, set_filters_step[1])
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
@@ -568,7 +575,7 @@ class ListActionsCase(
 
             verbose_name = _('Update person')
 
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 for person in model_context.get_selection():
                     soc_number = person.social_security_number
                     if soc_number:
@@ -587,6 +594,7 @@ class ListActionsCase(
                     cm = party.ContactMechanism( mechanism = m )
                     pcm = party.PartyContactMechanism( party = person,
                                                        contact_mechanism = cm )
+                    
                     # immediately update the GUI
                     yield action_steps.CreateObjects((cm,))
                     yield action_steps.CreateObjects((pcm,))
@@ -610,7 +618,7 @@ class ListActionsCase(
 
             verbose_name = _('Update person')
 
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 for person in model_context.get_selection():
                     soc_number = person.social_security_number
                     if soc_number:
@@ -619,15 +627,15 @@ class ListActionsCase(
                                                            int(soc_number[4:6]),
                                                            int(soc_number[6:8])
                                                            )
-                        # delete the email of the person
-                        for contact_mechanism in person.contact_mechanisms:
-                            model_context.session.delete( contact_mechanism )
-                        # add a new email
-                        m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                            person.last_name ) )
-                        cm = party.ContactMechanism( mechanism = m )
-                        party.PartyContactMechanism( party = person,
-                                                    contact_mechanism = cm )
+                    # delete the email of the person
+                    for contact_mechanism in person.contact_mechanisms:
+                        model_context.session.delete( contact_mechanism )
+                    # add a new email
+                    m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                        person.last_name ) )
+                    cm = party.ContactMechanism( mechanism = m )
+                    party.PartyContactMechanism( party = person,
+                                                contact_mechanism = cm )
                 # flush the session on finish and update the GUI
                 yield action_steps.FlushSession( model_context.session )
 
@@ -648,7 +656,7 @@ class ListActionsCase(
 
             verbose_name = _('Summary')
 
-            def model_run(self, model_context):
+            def model_run(self, model_context, mode):
                 person = model_context.get_object()
                 yield PrintHtml("<h1>This will become the personal report of {}!</h1>".format(person))
         # end html print
@@ -740,6 +748,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         super().setUp()
         self.gui_context = ApplicationActionGuiContext()
         self.admin_route = app_admin.get_admin_route()
+        self.gui_context.admin_route = self.admin_route
 
     def tearDown(self):
         super().tearDown()
@@ -753,7 +762,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         # begin custom application
         class CustomApplication(Application):
         
-            def model_run( self, model_context ):
+            def model_run( self, model_context, mode ):
                 from camelot.view import action_steps
                 yield action_steps.UpdateProgress(text='Starting up')
         # end custom application
@@ -821,7 +830,7 @@ class ApplicationActionsCase(
         generator = self.gui_run(backup_action, self.gui_context)
         file_saved = False
         for step in generator:
-            if isinstance(step, action_steps.SaveFile):
+            if isinstance(step, tuple) and step[0] == 'SaveFile':
                 generator.send('unittest-backup.db')
                 file_saved = True
         self.assertTrue(file_saved)
@@ -829,7 +838,7 @@ class ApplicationActionsCase(
         generator = self.gui_run(restore_action, self.gui_context)
         file_selected = False
         for step in generator:
-            if isinstance(step, action_steps.SelectFile):
+            if isinstance(step, tuple) and step[0] == 'SelectFile':
                 generator.send(['unittest-backup.db'])
                 file_selected = True
         self.assertTrue(file_selected)
@@ -848,8 +857,8 @@ class ApplicationActionsCase(
                 generator.send(person_admin)
 
     def test_change_logging( self ):
-        change_logging_action = application_action.ChangeLogging()
-        for step in change_logging_action.model_run(self.context):
+        change_logging_action = ChangeLogging()
+        for step in change_logging_action.model_run(self.context, None):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
 

@@ -55,17 +55,11 @@ class EntityMeta( DeclarativeMeta ):
     
     Facade class registration
     -------------------------
-    This metaclass also provides type-based entity classes with a means to register facade classes for specific types, type groups or a default one for unregistered types,
-    on one of its base classes, to allow type-specific facade and related Admin behaviour.
-    To use this behaviour, the '__facade_args__' property is used on both the base Entity class for which specific facade classes are needed,
-    as on the specific facade classes.
-    This property is a dictionary that contains all the necessary facade arguments.
-    On the base class, it should contain the 'discriminator' argument, which should reference the type column of the base class that is used to discriminate facade classes.
+    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
+    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
+    To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
     This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
-    In order to register a facade class for a specific type, the 'type' argument should be defined as a specific type of the base Entity class' '__types__'.
-    To register a class as the default class for types that do not have a specific class registered, the 'default' argument can be provided and set to True.
-    In case the registered types are grouped, it is also possible to register a facade class for one of those type groups and thereby registering if as the default class
-    for all types in that group if they do not have a specific class registered.
+    In order to register a facade class: see documentation on EntityFacadeMeta.
     
     :example: | class SomeClass(Entity):
               |     __tablename__ = 'some_tablename'
@@ -77,20 +71,22 @@ class EntityMeta( DeclarativeMeta ):
               |     }
               |     ...
               |
-              | class SomeFacadeClass(SomeClass)
+              | class SomeFacadeClass(EntityFacade)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
               |         'type': some_class_types.certain_type.name
               |     }
               |     ...
               |
-              | class SomeGroupFacadeClass(SomeClass)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass, 
               |         'group': allowed_type_groups.certain_type_group.name
               |     }
               |     ...
               |
-              | class DefaultFacadeClass(SomeClass)
+              | class DefaultFacadeClass(EntityFacade)
               |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass,
               |         'default': True
               |     }
               |     ...
@@ -187,10 +183,10 @@ class EntityMeta( DeclarativeMeta ):
                 table = dict_.get('__table__', None)
                 if table is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
-                
+
         cls.register_class(cls, _class, dict_)
         return _class
-    
+
     def register_class(cls, _class, dict_):
         facade_args = dict_.get('__facade_args__')
         if facade_args is not None:
@@ -214,7 +210,7 @@ class EntityMeta( DeclarativeMeta ):
                 assert _group in _class.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
                 assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
                 _class.__cls_for_type__[_group] = _class
-                
+
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
@@ -460,4 +456,3 @@ class EntityBase( object ):
         session.query(MyClass).get(...)
         """
         return Session().query( cls ).get(*args, **kwargs)
-

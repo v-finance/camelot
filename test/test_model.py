@@ -118,7 +118,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         model_context = MockModelContext()
         model_context.obj = translation
         try:
-            generator = export_action.model_run( model_context )
+            generator = export_action.model_run(model_context, None)
             next( generator )
             generator.send('/tmp/test.po')
         except StopIteration:
@@ -214,8 +214,8 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         city = self.test_geographic_boundary()
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
-                                               zip_code = None,
-                                               city = city )
+                                               city = city,
+                                               zip_code='1000')
         self.assertTrue( str( address ) )
         return address
 
@@ -543,7 +543,7 @@ class StatusCase( TestMetaData ):
             model_context = MockModelContext()
             model_context.obj = invoice
             model_context.admin = app_admin.get_related_admin(Invoice)
-            list( ready_action.model_run( model_context ) )
+            list( ready_action.model_run( model_context, None ) )
             self.assertTrue( invoice.current_status, 'READY' )
             # changing the status should work without flushing
             invoice.status.append(Invoice._status_history(

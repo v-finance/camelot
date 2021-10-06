@@ -114,6 +114,7 @@ and used as a custom action.
     copy_exclude = []
     validator = EntityValidator
     basic_search = True
+    basic_filters = True
     
     # Temporary hack to allow admins of target entities in one2many/many2many relations to register themselves as editable
     # with a pending owning instance.
@@ -136,6 +137,7 @@ and used as a custom action.
         # caching
         self._search_fields = None
         self._filter_actions = None
+        self._field_filters = None
 
     @classmethod
     def get_sql_field_attributes( cls, columns ):
@@ -183,6 +185,10 @@ and used as a custom action.
             break
         return sql_attributes
 
+    def get_mapper(self):
+        """Returns this entity admin's mapper."""
+        return self.mapper
+
     def get_query(self, session=None):
         """
         Overwrite this method to configure eager loading strategies
@@ -210,7 +216,7 @@ and used as a custom action.
 
     def get_verbose_identifier(self, obj):
         if obj is not None:
-            primary_key = self.mapper.primary_key_from_instance(obj)
+            primary_key = self.primary_key(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([str(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
@@ -234,9 +240,9 @@ and used as a custom action.
 
     def get_search_identifiers(self, obj):
         search_identifiers = {}
-
         search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (str(obj))
-        search_identifiers[Qt.ItemDataRole.EditRole] = obj
+        # Use user role for object to avoid display role / edit role confusion
+        search_identifiers[Qt.ItemDataRole.UserRole] = obj
         search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
@@ -325,9 +331,8 @@ and used as a custom action.
         # @todo : investigate if the property can be fetched from the descriptor
         #         instead of going through the mapper
         try:
-            property = self.mapper.get_property(
-                field_name
-            )
+            mapper = self.get_mapper()
+            property = mapper.get_property(field_name) if mapper else None
             if isinstance(property, orm.properties.ColumnProperty):
                 columns = property.columns
                 sql_attributes = self.get_sql_field_attributes( columns )
@@ -402,6 +407,10 @@ and used as a custom action.
                 raise Exception('No mapped class found for target %s'%target)
         super()._expand_field_attributes(field_attributes, field_name)
 
+    def get_session(self, obj):
+        if obj is not None:
+            return orm.object_session(obj)
+
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
         get_dynamic_field_attributes and make relational fields not editable
@@ -462,7 +471,7 @@ and used as a custom action.
             if the object has no primary key yet or any more.
         """
         if not self.is_persistent( obj ):
-            return None
+            return []
         # this function is called on compound objects as well, so the
         # mapper might be different from the mapper related to this admin
         mapper = orm.object_mapper(obj)
@@ -667,7 +676,8 @@ and used as a custom action.
             if self.basic_search:
                 for field_name, col_property in list(self.mapper.column_attrs.items()):
                     if isinstance(col_property.expression, schema.Column):
-                        self._search_fields.append(field_name)
+                        search_strategy = self.get_field_attributes(field_name).get('search_strategy')
+                        self._search_fields.append(search_strategy)
         return self._search_fields
 
     def decorate_search_query(self, query, text):
@@ -682,45 +692,10 @@ and used as a custom action.
         args = []
         
         for search_field in self._get_search_fields(text):
-            # Deprecated old style of defining search fields as a string with dot notation for related fields.
-            # This style will be phased out gradually by the use of search field strategies entirely.
-            # Untill then, they are turned in to field searches or related searches here.
-            if isinstance(search_field, str):
-                # list of join entities
-                joins = []
-                column_name = search_field
-                path = column_name.split('.')
-                target = self.entity
-                related_admin = self
-                for path_segment in path:
-                    # use the field attributes for the introspection, as these
-                    # have detected hybrid properties
-                    fa = related_admin.get_descriptor_field_attributes(path_segment)
-                    instrumented_attribute = getattr(target, path_segment)
-                    if fa.get('target', False):
-                        joins.append(instrumented_attribute)
-                        target = fa['target']
-                        related_admin = related_admin.get_related_admin(target)
-                    else:
-                        # Append a search clause for the column using a set search strategy, or the basic strategy by default.
-                        fa = related_admin.get_field_attributes(instrumented_attribute.key)
-                        search_strategy = fa['search_strategy']
-                        if search_strategy is not None:
-                            # If the search strategy is set, initialize it with the instrumented attribute.
-                            assert issubclass(search_strategy, list_filter.FieldSearch)
-                            field_search = search_strategy(instrumented_attribute)
-                            # In case the attribute is of a related entity,
-                            # create a related search using the field search and the encountered joins.
-                            if joins:
-                                field_search = list_filter.RelatedSearch(field_search, joins=joins)
-                            arg = field_search.get_clause(text, self, query.session)
-                            if arg is not None:
-                                args.append(arg)
-                                
-            elif isinstance(search_field, list_filter.AbstractSearchStrategy):
-                arg = search_field.get_clause(text, self, query.session)
-                if arg is not None:
-                    args.append(arg)
+            assert isinstance(search_field, list_filter.AbstractSearchStrategy)
+            arg = search_field.get_clause(text, self, query.session)
+            if arg is not None:
+                args.append(arg)
             
         query = query.filter(sql.or_(*args))
     
@@ -785,3 +760,17 @@ and used as a custom action.
         if editable is None:
             return True
         return editable
+
+    def _get_field_strategies(self):
+        """
+        Return this admins available field filter strategies.
+        By default, this returns the ´field_filter´ attribute, expanded with the corresponding filter strategies for this admin's entity mapper columns if basic filtering is enabled.
+        """
+        field_strategies = list(self.field_filter)
+        # Only include filter strategies for basic columns if it is set as such (True by default).
+        if self.basic_filters:
+            for field_name, col_property in list(self.mapper.column_attrs.items()):
+                if isinstance(col_property.expression, schema.Column):
+                    field_attributes = self.get_field_attributes(field_name)
+                    field_strategies.append(field_attributes.get('filter_strategy'))
+        return field_strategies

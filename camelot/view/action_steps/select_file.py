@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
+import json
 import os
 
 from dataclasses import dataclass
@@ -39,9 +39,11 @@ from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
+from ...core.serializable import DataclassSerializable
+
 
 @dataclass
-class SelectFile( ActionStep ):
+class SelectFile( ActionStep, DataclassSerializable ):
     """Select one or more files to open
     
     :param file_name_filter: Filter on the names of the files that can
@@ -73,7 +75,9 @@ class SelectFile( ActionStep ):
     def __post_init__(self):
         self.single = True
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         settings = QtCore.QSettings()
         datasource = settings.value('datasource')
         # we have no guarantee on what is inside datasource
@@ -82,19 +86,19 @@ class SelectFile( ActionStep ):
             directory = os.path.dirname(directory)
         except TypeError:
             directory = ''
-        if self.single:
+        if step["single"]:
             get_filename = QtWidgets.QFileDialog.getOpenFileName
         else:
             get_filename = QtWidgets.QFileDialog.getOpenFileNames
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(self.caption),
+                                    caption=str(cls.caption),
                                     directory=directory,
-                                    filter=self.file_name_filter)
+                                    filter=step["file_name_filter"])
             selected = selected[0]
             # selected is an empty string if cancel is pressed
             if selected:
-                if self.single:
+                if step["single"]:
                     settings.setValue(
                         'datasource',
                         py_to_variant(str(selected))
@@ -110,7 +114,7 @@ class SelectFile( ActionStep ):
                 raise CancelRequest()
 
 @dataclass
-class SaveFile( ActionStep ):
+class SaveFile( ActionStep, DataclassSerializable ):
     """Select a file for saving
     
     :param file_name_filter: Filter on the names of the files that can
@@ -135,19 +139,21 @@ class SaveFile( ActionStep ):
     file_name: str = None
 
     caption = _('Save')
-        
-    def gui_run(self, gui_context):
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         settings = QtCore.QSettings()
         directory = str(variant_to_py(settings.value('datasource')))
         directory = os.path.dirname(directory)
-        if self.file_name is not None:
-            directory = os.path.join(directory, self.file_name)
+        if step["file_name"] is not None:
+            directory = os.path.join(directory, step["file_name"])
         get_filename = QtWidgets.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
             selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(self.caption),
+                                    caption=str(cls.caption),
                                     directory=directory,
-                                    filter=self.file_name_filter)
+                                    filter=step["file_name_filter"])
             selected = selected[0]
             if selected:
                 settings.setValue('datasource', py_to_variant(selected))
@@ -156,15 +162,15 @@ class SaveFile( ActionStep ):
                 raise CancelRequest()
 
 @dataclass
-class SelectDirectory(ActionStep):
+class SelectDirectory(ActionStep, DataclassSerializable):
     """Select a single directory
 
     .. attribute:: caption
-    
+
         The text to display to the user
 
     .. attribute:: options
-    
+
         options to pass to :meth:`QtWidgets.QFileDialog.getExistingDirectory`,
         defaults to :const:`QtWidgets.QFileDialog.Options.ShowDirsOnly`
 
@@ -175,19 +181,21 @@ class SelectDirectory(ActionStep):
     def __post_init__(self):
         self.options = QtWidgets.QFileDialog.Options.ShowDirsOnly
         self.directory = None
-        
-    def gui_run(self, gui_context):
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         settings = QtCore.QSettings()
-        if self.directory is not None:
-            directory = self.directory
+        if step["directory"] is not None:
+            directory = step["directory"]
         else:
             directory = str(variant_to_py(settings.value('datasource')))
         get_directory = QtWidgets.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
             selected = get_directory(parent=gui_context.workspace,
-                                     caption=str(self.caption),
+                                     caption=str(cls.caption),
                                      directory=directory,
-                                     options=self.options)
+                                     options=step["options"])
             if selected:
                 settings.setValue('datasource', py_to_variant(selected))
             return str(selected)

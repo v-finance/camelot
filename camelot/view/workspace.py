@@ -38,6 +38,7 @@ from ..core import constants
 from ..core.qt import QtCore, QtGui, QtWidgets, transferto
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.view.model_thread import object_thread
+from camelot.view.qml_view import QmlView
 
 
 class DesktopWorkspace(QtWidgets.QTabWidget):
@@ -62,9 +63,14 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         self.gui_context.workspace = self
 
         self.setObjectName('workspace_tab_widget')
-        self.setTabPosition(QtWidgets.QTabWidget.TabPosition.East)
+        self.setTabPosition(QtWidgets.QTabWidget.TabPosition.North)
         self.setDocumentMode(True)
         self.currentChanged.connect(self._tab_changed)
+
+        qml_view = QmlView(self.gui_context, QtCore.QUrl("qrc:/qml/common/TabView.qml"))
+        self.quick_view = qml_view.quick_view
+        self.set_view(qml_view, title='QML View')
+
 
     @QtCore.qt_slot(int)
     def _tab_close_request(self, index):
@@ -180,6 +186,10 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
 top_level_windows = []
 
 def apply_form_state(view, parent, state):
+    # make sure all window events are processed before starting to move,
+    # and resize the window, in a possibly futile attempt to have consistent
+    # application of the form state.
+    QtCore.QCoreApplication.instance().processEvents()
     #
     # position the new window in the center of the same screen
     # as the parent.
@@ -267,4 +277,5 @@ def show_top_level(view, parent, state=None):
     #
     view.show()
     apply_form_state(view, parent, state)
+
 

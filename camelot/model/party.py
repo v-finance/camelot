@@ -45,9 +45,11 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.action.list_filter import StringSearch
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
+from camelot.types.typing import Note
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
@@ -286,6 +288,7 @@ class Address( Entity ):
     __tablename__ = 'address'
     street1 = schema.Column( Unicode( 128 ), nullable = False )
     street2 = schema.Column( Unicode( 128 ) )
+
     city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
                                                schema.ForeignKey(City.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
                                                nullable=False, index=True)
@@ -343,7 +346,6 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
     verbose_name = _('Contact mechanism')
     verbose_name_plural = _('Contact mechanisms')
-    list_search = ['party_name', 'mechanism']
     list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
     form_display = Form( ['mechanism', 'comment', 'from_date', 'thru_date', ] )
     field_attributes = {'party_name':{'minimal_column_width':25, 'editable':False},
@@ -364,7 +366,6 @@ class PartyContactMechanismAdmin( EntityAdmin ):
             yield contact_mechanism.contact_mechanism
 
 class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
-    list_search = ['party_name', 'mechanism']
     list_display = ['mechanism', 'comment', 'from_date', ]
 
 class WithAddresses(object):
@@ -388,7 +389,7 @@ class WithAddresses(object):
         return self._get_address_field( u'street2' )
 
     @street2.expression
-    def street2_expression(cls):
+    def street2(cls):
         return sql.select([Address.street2],
                           whereclause=cls.first_address_filter(),
                           limit=1).as_scalar()
@@ -582,7 +583,7 @@ class Organization( Party ):
         return self.name or ''
 
     @property
-    def note(self):
+    def note(self) -> Note:
         session = orm.object_session(self)
         if session is not None:
             cls = self.__class__
@@ -614,7 +615,7 @@ class Person( Party ):
     comment = schema.Column( camelot.types.RichText() )
 
     @property
-    def note(self):
+    def note(self) -> Note:
         for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
             if person != self:
                 return _('A person with the same name already exists')
@@ -870,7 +871,8 @@ class Addressable(object):
                             minimal_column_width = 50 ),
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
-                         target = City ),
+                         target = City,
+                         actions = []),
             zip_code = dict( editable = lambda o: o.city is not None and o.city.code == ''),
             email = dict( editable = True, 
                           minimal_column_width = 20,
@@ -926,7 +928,6 @@ class PartyAddress( Entity, Addressable ):
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
-        list_search = ['party_name', 'street1', 'street2',]
         list_display = ['party_name', 'street1', 'street2', 'zip_code', 'city', 'comment']
         form_display = [ 'party', 'street1', 'street2', 'zip_code', 'city', 'comment', 
                          'from_date', 'thru_date']
@@ -1089,14 +1090,12 @@ class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')
     verbose_name_plural = _('Parties')
     list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
-    list_search = ['full_name']
     form_display = ['addresses', 'contact_mechanisms']
     form_size = (700, 700)
     field_attributes = dict(addresses = {'admin':AddressAdmin},
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )], name=_('Gender')),
                             name = dict( minimal_column_width = 50, name=_('Name')),
-                            note = dict( delegate = delegates.NoteDelegate ),
                             first_name = {'name': _('First name')},
                             last_name = {'name': _('Last name')},
                             social_security_number = {'name': _('Social security number')},
@@ -1136,7 +1135,7 @@ Party.Admin = PartyAdmin
 class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
-    list_search = ['name', 'tax_id']
+    list_search = [StringSearch(Organization.name), StringSearch(Organization.tax_id)]
     list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
     form_display = TabForm( [( _('Basic'), Form( [ WidgetOnlyForm('note'), 'name', 'email', 
                                                    'phone', 
@@ -1154,7 +1153,7 @@ Organization.Admin = OrganizationAdmin
 class PersonAdmin( Party.Admin ):
     verbose_name = _( 'Person' )
     verbose_name_plural = _( 'Persons' )
-    list_search = ['first_name', 'last_name']
+    list_search = [StringSearch(Person.first_name), StringSearch(Person.last_name)]
     list_display = ['first_name', 'last_name', 'email', 'phone']
     form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
                                                               'first_name', 
@@ -1195,3 +1194,6 @@ PartyAddress.party_name = orm.column_property(
                 whereclause = (Party.id==PartyAddress.party_id)),
     deferred = True 
 )
+
+PartyAddress.Admin.list_search = [StringSearch(PartyAddress.party_name), StringSearch(PartyAddress.street1), StringSearch(PartyAddress.street2)]
+PartyAdmin.list_search = [StringSearch(Party.full_name)]

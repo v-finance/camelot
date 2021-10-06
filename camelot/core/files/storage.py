@@ -179,7 +179,7 @@ class Storage( object ):
         :param local_path: the path to the local file that needs to be checked in
         :param filename: a hint for the filename to be given to the checked in file, if None
         is given, the filename from the local path will be taken.
-        
+
         The stored file is not guaranteed to have the filename asked, since the
         storage might not support this filename, or another file might be named
         like that.  In each case the storage will choose the filename.
@@ -190,12 +190,9 @@ class Storage( object ):
         if filename is None and len(os.path.basename( local_path )) > 100:
             raise UserException( text = ugettext('The filename of the selected file is too long'),
                                      resolution = ugettext( 'Please rename the file' ) )
-        to_path = os.path.join( self.upload_to, filename or os.path.basename( local_path ) )
-        if os.path.exists(to_path):
-            # only if the default to_path exists, we'll give it a new name
-            root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
-            ( handle, to_path ) = self._create_tempfile( extension, root )
-            os.close( handle )
+        root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
+        ( handle, to_path ) = self._create_tempfile( extension, root )
+        os.close( handle )
         logger.debug( u'copy file from %s to %s', local_path, to_path )
         shutil.copy( local_path, to_path )
         return self.stored_file_implementation( self, os.path.basename( to_path ) )

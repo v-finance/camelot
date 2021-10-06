@@ -56,9 +56,14 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         })
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
         precision = model_context.field_attributes.get('precision', 2)
+        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+        # as that only handles the precision key not being present, not it being explicitly set to None.
+        if precision is None:
+            precision = 2
         if model_context.value is not None:
             value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
+
             )
             if model_context.field_attributes.get('suffix') is not None:
                 value_str = value_str + ' ' + model_context.field_attributes.get('suffix')

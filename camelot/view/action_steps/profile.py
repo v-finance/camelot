@@ -31,7 +31,7 @@ import logging
 import pkgutil
 from typing import List
 
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 
 from ...core.profile import Profile
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
@@ -372,8 +372,6 @@ class EditProfiles(ActionStep):
     settings.
 
     :param profiles: a list of :class:`camelot.core.profile.Profile` objects
-    :param dialog_class: a :class:`QtWidgets.QDialog` to display the needed
-        fields to store in a profile
     :param current_profile`: the name of the current profile, or an empty string
         if there is no current profile.
 
@@ -382,19 +380,12 @@ class EditProfiles(ActionStep):
 
     profiles: List[Profile]
     current_profile: str = ''
-    dialog_class: InitVar(QtWidgets.QDialog) = None
-
-    def __post_init__(self, dialog_class):
-        if dialog_class is None:
-            self.dialog_class = ProfileWizard
-        else:
-            self.dialog_class = dialog_class
-
+    
     def render(self, gui_context):
-        dialog = self.dialog_class(self.profiles)
+        dialog = ProfileWizard(self.profiles)
         dialog.set_current_profile(self.current_profile)
         return dialog
-
+    
     def gui_run(self, gui_context):
         dialog = self.render(gui_context)
         result = dialog.exec()

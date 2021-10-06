@@ -41,7 +41,7 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore
+from ...core.qt import Qt, QtCore, QtQml
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
@@ -49,9 +49,10 @@ from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
+from ..qml_view import create_qml_item
 
 @dataclass
-class Sort( ActionStep ):
+class Sort( ActionStep, DataclassSerializable ):
     """Sort the items in the item view ( list, table or tree )
 
             :param column: the index of the column on which to sort
@@ -60,10 +61,12 @@ class Sort( ActionStep ):
     column: int
     order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         if gui_context.item_view != None:
             model = gui_context.item_view.model()
-            model.sort( self.column, self.order )
+            model.sort( step["column"], step["order"] )
 
 @dataclass
 class SetFilter( ActionStep ):
@@ -100,7 +103,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     list_action: Route = field(init=False)
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(init=False)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
 
     def __post_init__( self, admin, value ):
         self.value = value
@@ -113,7 +116,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
-        self.action_states = list()
         self._add_action_states(admin, proxy, self.actions, self.action_states)
 
     @staticmethod
@@ -127,14 +129,8 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             action_states.append((action_route.route, state))
 
     @staticmethod
-    def update_table_view(table_view, step):
-        from camelot.view.controls.search import SimpleSearchControl
-        table_view.set_admin()
-        model = table_view.get_model()
-        list(model.add_columns(step['columns']))
-        # filters can have default values, so they need to be set before
-        # the value is set
-        for action_state in step['action_states']:
+    def set_filters(action_states, model):
+        for action_state in action_states:
             route = tuple(action_state[0])
             action = AdminRoute.action_for(route)
             if not isinstance(action, Filter):
@@ -145,6 +141,16 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             if len(values) == len(state['modes']):
                 values = [All]
             model.set_filter(action, values)
+
+    @classmethod
+    def update_table_view(cls, table_view, step):
+        from camelot.view.controls.search import SimpleSearchControl
+        table_view.set_admin()
+        model = table_view.get_model()
+        list(model.add_columns(step['columns']))
+        # filters can have default values, so they need to be set before
+        # the value is set
+        cls.set_filters(step['action_states'], model)
 
         table_view.set_value(step['proxy_route'])
         table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
@@ -231,19 +237,27 @@ class OpenQmlTableView(OpenTableView):
         self.list_action = admin.get_list_action()
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        view = gui_context.workspace.active_view()
-        quick_view = view.quick_view
-        views = quick_view.findChild(QtCore.QObject, "qml_views")
-        header_model = QtCore.QStringListModel(parent=quick_view)
+    def render(cls, gui_context, step, engine):
+        # create header model & model
+        header_model = QtCore.QStringListModel()
         header_model.setStringList(step['columns'])
-        header_model.setParent(quick_view)
+
         new_model = CollectionProxy(tuple(step['admin_route']))
-        new_model.setParent(quick_view)
+        # filters can have default values, so they need to be set before
+        # the value is set
+        cls.set_filters(step['action_states'], new_model)
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
-        view = views.addView(new_model, header_model)
+
+        # create QML item
+        view = create_qml_item(
+            QtCore.QUrl("qrc:/qml/common/TablePage.qml"),
+            { 'model': new_model, 'headerModel': header_model },
+            engine
+        )
+        new_model.setParent(view)
+        header_model.setParent(view)
+
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
 
@@ -255,27 +269,45 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
         list_gui_context.admin_route = tuple(step['admin_route'])
-        list_gui_context.view = table
+        list_gui_context.view = view
 
         list_action = AdminRoute.action_for(tuple(step['list_action']))
-        qt_action = ActionAction(list_action, list_gui_context, quick_view)
+        qt_action = ActionAction(list_action, list_gui_context, view)
         table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
         for i, action_route in enumerate(step['actions']):
             action = AdminRoute.action_for(tuple(action_route['route']))
-            icon_name = None
-            if action.icon is not None:
-                icon_name = action.icon.name
             qt_action = ActionAction(action, list_gui_context, table)
+            state = None
+            for action_state in step['action_states']:
+                if action_state[0] == action_route['route']:
+                    state = action_state[1]
+                    break
+            assert state is not None
+
             rendered_action = item_view._qml_item.addAction(
-                action.render_hint.value, str(action.verbose_name or 'Unknown'), icon_name,
-                qt_action,
+                action.render_hint.value, state, qt_action
             )
+            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
             rendered_action.setObjectName('action_{}'.format(i))
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
 
+        return view
+
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        quick_view = gui_context.workspace.quick_view
+        view = cls.render(gui_context, step, quick_view.engine())
+        # tabs will be destroyed by javascript code
+        quick_view.engine().setObjectOwnership(view, QtQml.QQmlEngine.JavaScriptOwnership)
+        tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
+        assert tab_view
+        tab_view.addTab(step['title'], view)
+
 @dataclass
-class ClearSelection(ActionStep):
+class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
     def gui_run(self, gui_context):
@@ -283,12 +315,13 @@ class ClearSelection(ActionStep):
             gui_context.item_view.clearSelection()
 
 @dataclass
-class RefreshItemView(ActionStep):
+class RefreshItemView(ActionStep, DataclassSerializable):
     """
     Refresh only the current item view
     """
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         if gui_context.item_view is not None:
             model = gui_context.item_view.model()
             if model is not None:

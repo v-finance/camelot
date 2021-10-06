@@ -330,7 +330,7 @@ class ChangeStatus( Action ):
         """
         yield action_steps.UpdateProgress(text=_('Changed status'))
 
-    def model_run(self, model_context, new_status=None):
+    def model_run(self, model_context, mode, new_status=None):
         """
         :param new_status: overrule the new_status defined at the class level,
             this can be used when overwwriting the `model_run` method in a
@@ -343,27 +343,28 @@ class ChangeStatus( Action ):
                 raise UserException(message)
         with model_context.session.begin():
             for obj in model_context.get_selection():
+                subsystem_obj = model_context.admin.get_subsystem_object(obj)
                 # the number of status changes as seen in the UI
-                number_of_statuses = len(obj.status)
-                history_type = obj._status_history
+                number_of_statuses = len(subsystem_obj.status)
+                history_type = subsystem_obj._status_history
                 history = model_context.session.query(history_type)
-                history = history.filter(history_type.status_for==obj)
+                history = history.filter(history_type.status_for==subsystem_obj)
                 history = history.with_for_update(nowait=True)
                 history_count = sum(1 for _h in history.yield_per(10))
                 if number_of_statuses != history_count:
-                    if obj not in model_context.session.new:
-                        model_context.session.expire(obj)
-                    yield action_steps.UpdateObjects([obj])
+                    if subsystem_obj not in model_context.session.new:
+                        model_context.session.expire(subsystem_obj)
+                    yield action_steps.UpdateObjects([subsystem_obj])
                     raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
-                if obj.current_status != new_status:
+                if subsystem_obj.current_status != new_status:
                     for step in self.before_status_change(model_context, obj):
                         yield step
-                    obj.change_status(new_status)
+                    subsystem_obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObjects([obj])
+                    yield action_steps.UpdateObjects([subsystem_obj])
             yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):

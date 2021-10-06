@@ -58,7 +58,7 @@ class ConfirmSelection(Action):
     name = 'confirm_selection'
     icon = Icon('check') # 'tango/16x16/emblems/emblem-symbolic-link.png'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         yield SetSelectedObjects(list(model_context.get_selection()))
 
 confirm_selection = ConfirmSelection()

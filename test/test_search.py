@@ -87,7 +87,8 @@ class SearchCase( test_orm.TestMetaData ):
         admin = self.TAdmin(self.app_admin, self.T)
         search_fields = admin._get_search_fields(u'foo')
         for (_i,name) in types_to_test.keys():
-            self.assertTrue(name in search_fields)
+            search_strategy = admin.get_field_attributes(name).get('search_strategy')
+            self.assertTrue(search_strategy in search_fields)
         #
         # test if selects are skipped
         #

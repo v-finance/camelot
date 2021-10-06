@@ -39,7 +39,8 @@ class ItemModelSignalRegister(QtCore.QObject):
         self.header_changes = []
         self.layout_changes = 0
 
-    @QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex, "QVector<int>")
+    #commented to solve an error: decorated slot has no signature compatible with dataChanged(QModelIndex,QModelIndex,QVector<int>)
+    #@QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex, "QVector<int>")
     def register_data_change(self, from_index, thru_index, vector):
         LOGGER.debug('dataChanged(row={0}, column={1})'.format(from_index.row(), from_index.column()))
         self.data_changes.append( ((from_index.row(), from_index.column()),
@@ -165,9 +166,16 @@ class ItemModelTests(object):
 class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
     pass
 
-
-class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests):
-
+class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests, ExampleModelMixinCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        super(ItemModelThreadCase, cls).setUpClass()
+        cls.first_person_id = None
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.process()
+        
     def setUp( self ):
         super(ItemModelThreadCase, self).setUp()
         self.A = A
@@ -580,8 +588,14 @@ class QueryQStandardItemModelCase(
         cls.thread.post(cls.load_example_data)
         cls.process()
 
+    @classmethod
+    def tearDownClass(cls):
+        super(QueryQStandardItemModelCase, cls).tearDownClass()
+        cls.tear_down_sample_model()
+        
     def setUp(self):
         super(QueryQStandardItemModelCase, self).setUp()
+        self.session.expunge_all()
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
@@ -594,7 +608,6 @@ class QueryQStandardItemModelCase(
 
     def tearDown(self):
         event.remove(Engine, 'after_cursor_execute', self.increase_query_counter)
-        #self.tear_down_sample_model()
 
     def increase_query_counter(self, conn, cursor, statement, parameters, context, executemany):
         self.query_counter += 1
@@ -663,12 +676,12 @@ class QueryQStandardItemModelCase(
         # - contact mechanism select in load
         # - address select in load
         # those last 2 are needed for the validation of the compounding objects
-
+        
         class SingleItemFilter(Filter):
 
             def decorate_query(self, query, values):
                 return query.filter_by(id=values)
-
+        
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
         item_model.set_value(ProxyRegistry.register(self.proxy))
