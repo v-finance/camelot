@@ -593,7 +593,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         child_item = root_item.child(index.row(), index.column())
         if child_item is None:
-            return Qt.ItemFlags.NoItemFlags
+            return Qt.ItemFlag.NoItemFlags
         return child_item.flags()
 
     def setData( self, index, value, role = Qt.ItemDataRole.EditRole ):

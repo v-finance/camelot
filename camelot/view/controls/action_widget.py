@@ -78,7 +78,7 @@ class AbstractActionWidget( object ):
                   args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Orientations.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             return
         if isinstance(self.gui_context, FormActionGuiContext):
             # the model might emit a dataChanged signal, while the widget mapper
@@ -228,7 +228,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
     # REMOVE THIS...
     """
-    @QtCore.qt_slot(Qt.Orientations, int, int)
+    @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
         AbstractActionWidget.header_data_changed(self, orientation, first, last)
     """

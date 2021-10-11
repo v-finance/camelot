@@ -203,7 +203,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 if current_column is not None:
                     current_field_name = variant_to_py(
                         model.headerData(
-                            current_column, Qt.Orientations.Horizontal, Qt.ItemDataRole.UserRole
+                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                         )
                     )
             if self.item_view.selectionModel() is not None:

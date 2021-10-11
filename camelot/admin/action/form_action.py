@@ -259,9 +259,9 @@ class CloseForm( Action ):
                 '\n'.join( messages ),
                 QtWidgets.QMessageBox.Icon.Warning,
                 _('Invalid form'),
-                [QtWidgets.QMessageBox.StandardButtons.Ok, QtWidgets.QMessageBox.StandardButtons.Discard] )
+                [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Discard] )
             reply = yield message
-            if reply == QtWidgets.QMessageBox.StandardButtons.Discard:
+            if reply == QtWidgets.QMessageBox.StandardButton.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObjects((subsystem_obj,))

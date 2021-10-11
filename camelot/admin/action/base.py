@@ -84,7 +84,7 @@ strictly to the :class:`ModelContext`
         if window is not None:
             progress_dialog = window.findChild(
                 QtWidgets.QProgressDialog, 'application_progress',
-                Qt.FindChildOptions.FindDirectChildrenOnly
+                Qt.FindChildOption.FindDirectChildrenOnly
             )
             if progress_dialog is None:
                 progress_dialog = ProgressDialog(parent=window)

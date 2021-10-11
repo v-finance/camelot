@@ -65,7 +65,7 @@ class IntegerEditor(CustomEditor):
         spin_box = CustomDoubleSpinBox(option, parent)
         spin_box.setRange(minimum-1, maximum)
         spin_box.setDecimals(0)
-        spin_box.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
+        spin_box.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         spin_box.addAction(action)
         spin_box.setObjectName('spin_box')
         

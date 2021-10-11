@@ -130,7 +130,7 @@ class RichTextEditor(CustomEditor, WideEditor):
     def initToolbar(self):
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setObjectName( 'toolbar' )
-        toolbar.setOrientation(Qt.Orientations.Horizontal)
+        toolbar.setOrientation(Qt.Orientation.Horizontal)
         toolbar.setContentsMargins(0, 0, 0, 0)
 
         bold_button = QtWidgets.QToolButton(self)
@@ -264,13 +264,13 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.zoomOut()
 
     def set_alignleft(self, bool):
-        self.textedit.setAlignment(Qt.Alignment.AlignLeft)
+        self.textedit.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
     def set_aligncenter(self, bool):
-        self.textedit.setAlignment(Qt.Alignment.AlignCenter)
+        self.textedit.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def set_alignright(self, bool):
-        self.textedit.setAlignment(Qt.Alignment.AlignRight)
+        self.textedit.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     def set_color(self):
         color = QtWidgets.QColorDialog.getColor(self.textedit.textColor())

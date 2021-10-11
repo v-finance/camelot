@@ -113,7 +113,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # might not be up to date at the time the currentRowChanged
             # signal is emitted
             selection_model.currentRowChanged.connect(
-                self.current_row_changed, type=Qt.QueuedConnection
+                self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
     def render_action(self, action, parent):
@@ -143,7 +143,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if action_routes is not None:
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
-            toolbar.setOrientation(Qt.Orientations.Vertical)
+            toolbar.setOrientation(Qt.Orientation.Vertical)
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
                 if not isinstance(action, (FieldAction, Filter)):
@@ -206,7 +206,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
                     txtwidth = variant_to_py(
-                        model.headerData(i, Qt.Orientations.Horizontal, Qt.ItemDataRole.SizeHintRole)
+                        model.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
                     ).width()
                     table.setColumnWidth(i, txtwidth)
 

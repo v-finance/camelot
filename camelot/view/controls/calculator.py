@@ -178,11 +178,11 @@ class Calculator(QtWidgets.QDialog):
                 self,
                 'Message',
                 'Do you want to Save and Quit?',
-                QtWidgets.QMessageBox.StandardButtons.Yes,
-                QtWidgets.QMessageBox.StandardButtons.No
+                QtWidgets.QMessageBox.StandardButton.Yes,
+                QtWidgets.QMessageBox.StandardButton.No
             )
 
-            if reply == QtWidgets.QMessageBox.StandardButtons.Yes:
+            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                 self.SaveValue()
 
         try:

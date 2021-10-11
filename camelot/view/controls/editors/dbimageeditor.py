@@ -34,7 +34,7 @@ class DbImageEditor(CustomEditor):
         #
         self.label = QtWidgets.QLabel(self)
         self.label.installEventFilter(self)
-        self.label.setAlignment( Qt.Alignment.AlignHCenter|Qt.Alignment.AlignVCenter )
+        self.label.setAlignment( Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter )
         layout.addWidget(self.label) 
                 
         # Setup buttons
@@ -128,7 +128,7 @@ class DbImageEditor(CustomEditor):
             image = QtGui.QImage( mime_data.imageData())
             ba = QtCore.QByteArray()
             buffer = QtCore.QBuffer(ba)
-            buffer.open(QtCore.QIODevice.OpenMode.WriteOnly)
+            buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
             image.save(buffer, 'PNG')
             image_data = ba.toBase64().data().decode()
             self.set_value(image_data)
@@ -167,7 +167,7 @@ class DbImageEditor(CustomEditor):
                 if not image.isNull():
                     ba = QtCore.QByteArray()
                     buffer = QtCore.QBuffer(ba)
-                    buffer.open(QtCore.QIODevice.OpenMode.WriteOnly)
+                    buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
                     image.save(buffer, 'PNG')
                     image_data = ba.toBase64().data().decode()
                     self.set_value(image_data)
@@ -205,6 +205,6 @@ class DbImageEditor(CustomEditor):
             return False
         if event.type() != QtCore.QEvent.Type.MouseButtonPress:
             return False
-        if event.modifiers() != QtCore.Qt.KeyboardModifiers.NoModifier:
+        if event.modifiers() != QtCore.Qt.KeyboardModifier.NoModifier:
             return False
         return False    

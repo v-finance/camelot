@@ -150,7 +150,7 @@ class FloatEditor(CustomEditor):
         spinBox.setObjectName('spinbox')
         
         spinBox.setDecimals(2)
-        spinBox.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
+        spinBox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
 
         spinBox.addAction(action)
         self.calculatorButton = QtWidgets.QToolButton()

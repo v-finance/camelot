@@ -54,11 +54,11 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setSuffix(_(' months'))
         
         self.years_spinbox.setDecimals(0)
-        self.years_spinbox.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
+        self.years_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.years_spinbox.setSingleStep(1)
         
         self.months_spinbox.setDecimals(0)
-        self.months_spinbox.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
+        self.months_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.months_spinbox.setSingleStep(1)
 
         self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )

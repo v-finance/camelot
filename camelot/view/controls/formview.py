@@ -111,7 +111,7 @@ class FormEditors(QtCore.QObject):
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):
-                widget_label.setAlignment(Qt.Alignment.AlignVCenter | Qt.Alignment.AlignRight)
+                widget_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
             editor.set_label(widget_label)
         return widget_label
 
@@ -162,7 +162,7 @@ class FormWidget(QtWidgets.QWidget):
 
     # @QtCore.qt_slot(int, int, int)
     def _header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Orientations.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper' )
             if widget_mapper is not None:
                 current_index = widget_mapper.currentIndex()
@@ -298,7 +298,7 @@ class FormView(AbstractView):
     @QtCore.qt_slot( int )
     def update_title(self, current_index ):
         verbose_identifier = variant_to_py(self.model.headerData(
-            current_index, Qt.Orientations.Vertical, VerboseIdentifierRole
+            current_index, Qt.Orientation.Vertical, VerboseIdentifierRole
         ))
         if verbose_identifier is not None:
             self.change_title(u'%s %s'%(self.title_prefix,verbose_identifier))
@@ -348,7 +348,7 @@ class FormView(AbstractView):
                     action_widget.set_state(state)
                 toolbar.addWidget(action_widget)
             toolbar.addWidget( BusyWidget() )
-            layout.insertWidget( 0, toolbar, 0, Qt.Alignment.AlignTop )
+            layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
             # @todo : this show is needed on OSX or the form window
             # is hidden after the toolbar is added, maybe this can
             # be solved using windowflags, since this causes some
@@ -367,7 +367,7 @@ class FormView(AbstractView):
         self.model.change_selection(None, current_index)
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             return
         # the model might emit a dataChanged signal, while the widget mapper
         # has been deleted

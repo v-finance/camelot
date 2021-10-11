@@ -127,9 +127,9 @@ class TableWidget(QtWidgets.QTableView):
         assert object_thread(self)
         self._columns_changed = dict()
         self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
-        self.setEditTriggers(QtWidgets.QAbstractItemView.EditTriggers.SelectedClicked |
-                             QtWidgets.QAbstractItemView.EditTriggers.DoubleClicked |
-                             QtWidgets.QAbstractItemView.EditTriggers.CurrentChanged)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.SelectedClicked |
+                             QtWidgets.QAbstractItemView.EditTrigger.DoubleClicked |
+                             QtWidgets.QAbstractItemView.EditTrigger.CurrentChanged)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
                            QtWidgets.QSizePolicy.Policy.Expanding)
         try:
@@ -174,14 +174,14 @@ class TableWidget(QtWidgets.QTableView):
                 # result in setting the width to 0
                 continue
             old_size = variant_to_py(self.model().headerData(logical_index,
-                                                             Qt.Orientations.Horizontal,
+                                                             Qt.Orientation.Horizontal,
                                                              Qt.ItemDataRole.SizeHintRole))
             # when the size is different from the one from the model, the
             # user changed it
             if (old_size is not None) and (old_size.width() != new_width):
                 new_size = QtCore.QSize(new_width, old_size.height())
                 self.model().setHeaderData(logical_index,
-                                           Qt.Orientations.Horizontal,
+                                           Qt.Orientation.Horizontal,
                                            new_size,
                                            Qt.ItemDataRole.SizeHintRole)
         self._columns_changed = dict()
@@ -267,7 +267,7 @@ class TableWidget(QtWidgets.QTableView):
         model = self.model()
         for i in range(model.columnCount()):
             size_hint = variant_to_py(model.headerData(i,
-                                                       Qt.Orientations.Horizontal,
+                                                       Qt.Orientation.Horizontal,
                                                        Qt.ItemDataRole.SizeHintRole))
             if size_hint is not None:
                 self.setColumnWidth(i, size_hint.width())
@@ -283,10 +283,10 @@ class TableWidget(QtWidgets.QTableView):
         # row width to the size hint of the editor
         if editor is not None:
             column_size_hint = variant_to_py(header_data(current.column(),
-                                                         Qt.Orientations.Horizontal,
+                                                         Qt.Orientation.Horizontal,
                                                          Qt.ItemDataRole.SizeHintRole))
             row_size_hint = variant_to_py(header_data(current.row(),
-                                                      Qt.Orientations.Vertical,
+                                                      Qt.Orientation.Vertical,
                                                       Qt.ItemDataRole.SizeHintRole))
             editor_size_hint = editor.sizeHint()
             self.setRowHeight(current.row(), max(row_size_hint.height(),
@@ -297,13 +297,13 @@ class TableWidget(QtWidgets.QTableView):
         if current.row() != previous.row():
             if previous.row() >= 0:
                 row_size_hint = variant_to_py(header_data(previous.row(),
-                                                          Qt.Orientations.Vertical,
+                                                          Qt.Orientation.Vertical,
                                                           Qt.ItemDataRole.SizeHintRole))
                 self.setRowHeight(previous.row(), row_size_hint.height())
         if current.column() != previous.column():
             if previous.column() >= 0:
                 column_size_hint = variant_to_py(header_data(previous.column(),
-                                                             Qt.Orientations.Horizontal,
+                                                             Qt.Orientation.Horizontal,
                                                              Qt.ItemDataRole.SizeHintRole))
                 self.setColumnWidth(previous.column(),
                                     column_size_hint.width())
@@ -589,7 +589,7 @@ class TableView(AbstractView):
             # might not be up to date at the time the currentRowChanged
             # signal is emitted
             selection_model.currentRowChanged.connect(
-                self.current_row_changed, type=Qt.QueuedConnection
+                self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
     @QtCore.qt_slot()
@@ -684,7 +684,7 @@ class TableView(AbstractView):
         self.set_filters([action['route'] for action in actions if action['render_hint'] in filter_render_hints], action_states)
         self.set_list_actions([action['route'] for action in actions if action['render_hint'] == RenderHint.PUSH_BUTTON.value], action_states)
         self.set_toolbar_actions(
-            Qt.ToolBarAreas.TopToolBarArea,
+            Qt.ToolBarArea.TopToolBarArea,
             [action['route'] for action in actions if action['render_hint'] in [RenderHint.TOOL_BUTTON.value, RenderHint.SEARCH_BUTTON.value, RenderHint.LABEL.value]],
             action_states
         )
@@ -717,7 +717,7 @@ class TableView(AbstractView):
         self.table.model().change_selection(selection_model, current_index)
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             return
         if not is_deleted(self.table):
             selection_model = self.table.selectionModel()

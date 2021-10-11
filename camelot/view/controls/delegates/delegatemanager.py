@@ -51,7 +51,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
         delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
             field_attributes = index.model().headerData(
-                column, Qt.Orientations.Horizontal, FieldAttributesRole
+                column, Qt.Orientation.Horizontal, FieldAttributesRole
             )
             delegate = field_attributes['delegate'](parent=self, **field_attributes)
             self.insert_column_delegate(column, delegate)
