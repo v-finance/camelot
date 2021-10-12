@@ -43,20 +43,24 @@ class FloatDelegate(CustomDelegate):
     horizontal_align = Qt.AlignRight | Qt.AlignVCenter
 
     def __init__( self,
-                 minimum=constants.camelot_minfloat,
-                 maximum=constants.camelot_maxfloat,
                  parent=None,
                  **kwargs ):
         super(FloatDelegate, self).__init__(parent=parent,
-                                            minimum=minimum, maximum=maximum,
                                             **kwargs )
-        self.minimum = minimum
-        self.maximum = maximum
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
+        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
+        fa_values.update({
+            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
+            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+        })
         item = super(FloatDelegate, cls).get_standard_item(locale, value, fa_values)
         precision = fa_values.get('precision', 2)
+        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+        # as that only handles the precision key not being present, not it being explicitly set to None.
+        if precision is None:
+            precision = 2
         if value is not None:
             value_str = six.text_type(
                 locale.toString(float(value), 'f', precision)

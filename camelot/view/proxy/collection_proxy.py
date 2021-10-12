@@ -45,7 +45,6 @@ returned and an update signal is emitted when the correct data is available.
 import collections
 import itertools
 import logging
-import weakref
 
 logger = logging.getLogger(__name__)
 
@@ -55,14 +54,17 @@ from six import moves
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.list_action import ListActionModelContext
+from ...admin.admin_route import AdminRoute
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     VerboseIdentifierRole, ObjectRole, FieldAttributesRole, PreviewRole, 
-    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy
+    ValidRole, ValidMessageRole, ProxyDict, AbstractModelProxy,
+    CompletionsRole, CompletionPrefixRole
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
+from ..utils import get_settings
 from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import object_thread, post
 
@@ -102,6 +104,7 @@ invalid_item.setData(invalid_data, Qt.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
 invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
+invalid_item.setData(invalid_data, CompletionsRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -421,7 +424,7 @@ class SetData(Update):
 
     def model_run(self, model_context):
         grouped_requests = collections.defaultdict( list )
-        updated_objects, created_objects = set(), set()
+        updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj, column, value in self.updates:
             grouped_requests[(row, obj)].append((column, value))
         admin = model_context.admin
@@ -441,6 +444,7 @@ class SetData(Update):
                 continue
             changed = False
             for column, value in request_group:
+
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
 
@@ -449,6 +453,7 @@ class SetData(Update):
                 logger.debug( 'set data for row %s;col %s' % ( row, column ) )
 
                 old_value = getattr(obj, field_name )
+                depending_objects_before_set = set(admin.get_depending_objects(obj))
                 value_changed = ( new_value != old_value )
                 #
                 # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
@@ -489,6 +494,7 @@ class SetData(Update):
                     pass
                 changed = value_changed or changed
             if changed:
+                subsystem_obj = admin.get_subsystem_object(obj)
                 for message in model_context.validator.validate_object(obj):
                     break
                 else:
@@ -500,14 +506,21 @@ class SetData(Update):
                         #@todo: when flushing fails ??
                         logger.error( 'Programming Error, could not flush object', exc_info = e )
                     if was_persistent is False:
-                        created_objects.add(obj)
+                        created_objects.add(subsystem_obj)
                 # update the cache
                 columns = tuple(moves.xrange(len(model_context.static_field_attributes)))
                 self.changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-                updated_objects.add(obj)
-                updated_objects.update(set(admin.get_depending_objects(obj)))
+                updated_objects.add(subsystem_obj)
+                depending_objects = depending_objects_before_set.union(set(admin.get_depending_objects(obj)))
+                for depending_object in depending_objects:
+                    related_admin = admin.get_related_admin(type(depending_object))
+                    if related_admin.is_deleted(depending_object):
+                        deleted_objects.update({depending_object})
+                    else:
+                        updated_objects.update({depending_object})
         self.created_objects = tuple(created_objects)
         self.updated_objects = tuple(updated_objects)
+        self.deleted_objects = tuple(deleted_objects)
         return self
 
     def gui_run(self, item_model):
@@ -515,6 +528,7 @@ class SetData(Update):
         signal_handler = item_model._crud_signal_handler
         signal_handler.send_objects_created(item_model, self.created_objects)
         signal_handler.send_objects_updated(item_model, self.updated_objects)
+        signal_handler.send_objects_deleted(item_model, self.deleted_objects)        
 
 class Created(UpdateMixin):
     """
@@ -567,6 +581,52 @@ class Sort(RowCount):
     def __repr__(self):
         return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
 
+
+class Completion(object):
+
+    def __init__(self, row, column, prefix):
+        self.row = row
+        self.column = column
+        self.prefix = prefix
+        self.completions = None
+
+    def model_run(self, model_context):
+        field_name = model_context.static_field_attributes[self.column]['field_name']
+        admin = model_context.static_field_attributes[self.column]['admin']
+        object_slice = list(model_context.proxy[self.row:self.row+1])
+        if not len(object_slice):
+            logger.error('Cannot generate completions : no object in row {0}'.format(self.row))
+            return
+        obj = object_slice[0]
+        completions = model_context.admin.get_completions(
+            obj,
+            field_name,
+            self.prefix,
+        )
+        if completions is None:
+            # the field does not support autocompletions
+            self.completions = []
+        else:
+            self.completions = [admin.get_search_identifiers(e) for e in completions]
+        return self
+
+    def gui_run(self, item_model):
+        root_item = item_model.invisibleRootItem()
+        if is_deleted(root_item):
+            return
+        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
+        child = root_item.child(self.row, self.column)
+        if child is not None:
+            # calling setData twice triggers dataChanged twice, resulting in
+            # the editors state being updated twice
+            #child.setData(self.prefix, CompletionPrefixRole)
+            child.setData(self.completions, CompletionsRole)
+        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+
+    def __repr__(self):
+        return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
+
+
 class SetColumns(object):
 
     def __init__(self, columns):
@@ -613,9 +673,9 @@ class SetColumns(object):
             #
             # Set the header data
             #
-            
             set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant( verbose_name ), Qt.DisplayRole)
+            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
+            set_header_data(py_to_variant({'editable': fa.get('editable', True)}), FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.FontRole)
             else:
@@ -662,32 +722,35 @@ class CollectionProxy(QtGui.QStandardItemModel):
     The behavior of the :class:`QtWidgets.QTableView`, such as what happens when the
     user clicks on a row is defined in the :class:`ObjectAdmin` class.
 
-    :attr instances: the set of `CollectionProxy` instances.  To be used
-        during unit testing to fire the timer events of all models without
-        waiting
+    :attr max_row_count: the maximum number of rows that can be loaded in the
+        model.  each row, even when not yet displayed will consume a certain
+        amount of memory, this maximum puts an upper limit on that.
     """
 
-    instances = weakref.WeakSet()
+    max_row_count = 10000000 # display maxium 10M rows
 
-    def __init__(self, admin, max_number_of_rows=10):
+    def __init__(self, admin_route, max_number_of_rows=10):
         """
-        :param admin: the admin interface for the items in the collection
+        :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
-        assert object_thread( self )
+        assert object_thread(self)
+        assert isinstance(max_number_of_rows, int)
+        assert isinstance(admin_route, tuple)
+        assert len(admin_route)
         from camelot.view.model_thread import get_model_thread
-
-        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin.entity.__name__))
-        self.logger.debug('initialize proxy for %s' % (admin.get_verbose_name()))
-        self.admin = admin
-        self._list_action = admin.list_action
-        self.settings = self.admin.get_settings()
+        admin_name = admin_route[-1]
+        self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
+        self.logger.debug('initialize proxy for %s' % (admin_name))
+        self.admin_route = admin_route
+        self.settings = get_settings(admin_name)
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
-        self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
-        self.vertical_header_size =  QtCore.QSize( 16 + 10,
-                                                   self._vertical_header_height )
+        self._vertical_header_height = vertical_header_font_height + 10
+        self.vertical_header_size =  QtCore.QSize(
+            16 + 10, self._vertical_header_height
+        )
         self._max_number_of_rows = max_number_of_rows
         self._model_context = None
         self._model_thread = get_model_thread()
@@ -714,7 +777,6 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self._reset()
         self._crud_signal_handler = CrudSignalHandler()
         self._crud_signal_handler.connect_signals( self )
-        self.instances.add(self)
         self.logger.debug( 'initialization finished' )
 
     
@@ -778,6 +840,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
     @QtCore.qt_slot()
     def timeout_slot(self):
         self.logger.debug('timout slot')
+        if is_deleted(self):
+            return
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             if self._update_requests:
@@ -891,8 +955,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.setRowCount(0)
         root_item = self.invisibleRootItem()
         root_item.setFlags(Qt.NoItemFlags)
-        root_item.setEnabled(row_count != None)
-        self.setRowCount(row_count or 0)
+        root_item.setEnabled(row_count is not None)
+        self.setRowCount(min(row_count or 0, self.max_row_count))
         self.logger.debug('_reset end')
 
     def set_value(self, value):
@@ -902,10 +966,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.logger.debug('set_value called')
         assert isinstance(value, AbstractModelProxy)
         model_context = RowModelContext()
-        model_context.admin = self.admin
+        model_context.admin = AdminRoute.admin_for(self.admin_route)
         model_context.proxy = value
         # todo : remove the concept of a validator
-        model_context.validator = self.admin.get_validator()
+        model_context.validator = model_context.admin.get_validator()
         self._model_context = model_context
         #self._filters = dict()
         self._reset()
@@ -943,7 +1007,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         date
         """
         assert object_thread(self)
-        if sender != self:
+        if (sender != self) and (self._model_context is not None):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
@@ -954,7 +1018,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if sender != self:
+        if (sender != self) and (self._model_context is not None):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
@@ -965,7 +1029,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if sender != self:
+        if (sender != self) and (self._model_context is not None):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
@@ -1104,22 +1168,27 @@ class CollectionProxy(QtGui.QStandardItemModel):
         # prevent data of being set in rows not actually in this model
         #
         if (not index.isValid()) or (index.model()!=self):
+            self.logger.debug('set data index is invalid')
             return False
         if role == Qt.EditRole:
-            # if the field is not editable, don't waste any time and get out of here
-            field_attributes = variant_to_py(self.data(index, FieldAttributesRole))
-            if field_attributes.get('editable') != True:
-                return
-            row = index.row()
             column = index.column()
+            # if the field is not editable, don't waste any time and get out of here
+            field_attributes = variant_to_py(self.headerData(column, Qt.Horizontal, FieldAttributesRole))
+            if field_attributes.get('editable', True) != True:
+                self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
+                return False
+            row = index.row()
             obj = variant_to_py(self.headerData(row, Qt.Vertical, ObjectRole))
             if obj is None:
-                return
+                logger.debug('set data called on row without object')
+                return False
             self.logger.debug('set data ({0},{1})'.format(row, column))
             self._update_requests.append((row, obj, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()
+        elif role == CompletionPrefixRole:
+            self._append_request(Completion(index.row(), index.column(), value))
         return True
 
     def get_admin( self ):

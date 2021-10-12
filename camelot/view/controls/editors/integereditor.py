@@ -32,7 +32,7 @@ from math import floor
 import six
 
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
@@ -43,7 +43,7 @@ class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator
     """
 
-    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent = None,
                        minimum = camelot_minint,

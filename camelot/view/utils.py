@@ -39,7 +39,7 @@ import string
 import logging
 import operator
 
-from ..core.qt import QtCore, QtWidgets
+from ..core.qt import QtCore
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
@@ -278,16 +278,28 @@ def richtext_to_string(value):
         return u''
     return u'\n'.join([line for line in text_from_richtext(value)])
 
-def resize_widget_to_screen( widget, fraction = 0.75 ):
+def resize_widget_to_screen( widget_or_window, fraction = 0.75 ):
     """Resize a widget to fill a certain fraction of the screen
 
     :param widget: the widget to resize
     :param fraction: the fraction of the screen to fill after the resize
     """
-    desktop = QtWidgets.QApplication.desktop()
-    available_geometry = desktop.availableGeometry( widget )
+    screen = widget_or_window.screen()
+    available_geometry = screen.availableGeometry()
     # use the size of the screen instead to set the dialog size
-    widget.resize(
+    widget_or_window.resize(
         available_geometry.width() * fraction, 
         available_geometry.height() * fraction
-    )    
+    )
+
+def get_settings(group):
+    """A :class:`QtCore.QSettings` object in which Camelot related settings
+    can be stored.  This object is intended for Camelot internal use.  If an
+    application specific settings object is needed, simply construct one.
+
+    :return: a :class:`QtCore.QSettings` object
+    """
+    settings = QtCore.QSettings()
+    settings.beginGroup('Camelot')
+    settings.beginGroup(group[:255])
+    return settings

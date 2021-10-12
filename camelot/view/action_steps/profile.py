@@ -65,7 +65,7 @@ allow all languages
         self.profiles = dict((profile.name,profile) for profile in profiles)
 
         self.setWindowTitle(_('Profile Wizard'))
-        self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
+        self.set_banner_logo_pixmap(art.FontIcon('cog').getQPixmap()) # 'tango/22x22/categories/preferences-system.png'
         self.set_banner_title(_('Create New/Edit Profile'))
         self.set_banner_subtitle(_('Please enter the database settings'))
         self.banner_widget().setStyleSheet('background-color: white;')

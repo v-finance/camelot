@@ -41,7 +41,6 @@ from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.proxy.collection_proxy import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
-from camelot.view import register
 from .delegates.delegatemanager import DelegateManager
 
 class FormEditors(QtCore.QObject):
@@ -140,9 +139,9 @@ class FormWidget(QtWidgets.QWidget):
             model.modelReset.connect(self._layout_changed)
             model.rowsInserted.connect(self._layout_changed)
             model.rowsRemoved.connect(self._layout_changed)
+            model.setParent(self)
             if widget_mapper is not None:
-                widget_mapper.setModel( model )
-                register.register( model, widget_mapper )
+                widget_mapper.setModel(model)
 
     def get_model(self):
         widget_mapper = self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
@@ -284,23 +283,24 @@ class FormView(AbstractView):
             side_panel_layout = QtWidgets.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox( parent = self,
-                                         gui_context = self.gui_context )
+            actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions( actions )
-            side_panel_layout.addWidget( actions_widget )
+            for action in actions:
+                actions_widget.layout().addWidget(
+                    self.render_action(action, actions_widget)
+                )
+            side_panel_layout.addWidget(actions_widget)
             side_panel_layout.addStretch()
-            layout.addLayout( side_panel_layout )
+            layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(list)
     def set_toolbar_actions(self, actions):
         layout = self.findChild( QtWidgets.QLayout, 'layout' )
         if layout and actions:
             toolbar = QtWidgets.QToolBar()
+            toolbar.setIconSize(QtCore.QSize(16,16))
             for action in actions:
-                qaction = action.render( self.gui_context, toolbar )
-                qaction.triggered.connect( self.action_triggered )
-                toolbar.addAction( qaction )
+                toolbar.addWidget(self.render_action(action, toolbar))
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
             # @todo : this show is needed on OSX or the form window
@@ -308,11 +308,6 @@ class FormView(AbstractView):
             # be solved using windowflags, since this causes some
             # flicker
             self.show()
-
-    @QtCore.qt_slot( bool )
-    def action_triggered( self, _checked = False ):
-        action_action = self.sender()
-        action_action.action.gui_run( self.gui_context )
 
     @QtCore.qt_slot()
     def validate_close( self ):

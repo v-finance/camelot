@@ -190,7 +190,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         if index.model() is None:
             return
         value = variant_to_py(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_py(index.data(Qt.UserRole)) or dict()
+        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ToolTipRole
         # but i wonder if we should make the detour by Qt.ToolTipRole or just
@@ -231,7 +231,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         if rect.height() > 2 * self._height:
             vertical_align = Qt.AlignTop
 
-        field_attributes = variant_to_py(index.data(Qt.UserRole))
+        field_attributes = variant_to_py(index.data(FieldAttributesRole))
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
             background_color = field_attributes.get( 'background_color', None )

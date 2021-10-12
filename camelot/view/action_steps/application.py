@@ -27,8 +27,13 @@
 #
 #  ============================================================================
 
+import logging
+
 from ...admin.action.base import ActionStep
-from ...core.qt import QtCore, Qt
+from ...core.qt import QtCore, Qt, QtWidgets
+
+LOGGER = logging.getLogger(__name__)
+
 
 class Exit( ActionStep ):
     """
@@ -40,7 +45,7 @@ class Exit( ActionStep ):
         
     def gui_run( self, gui_context ):
         QtCore.QCoreApplication.exit(self.return_code)
-        
+
 class MainWindow( ActionStep ):
     """
     Open a top level application window
@@ -62,19 +67,33 @@ class MainWindow( ActionStep ):
     def render( self, gui_context ):
         """create the main window. this method is used to unit test
         the action step."""
-        from ..mainwindow import MainWindow
+        from ..mainwindowproxy import MainWindowProxy
+
         main_window_context = gui_context.copy()
         main_window_context.progress_dialog = None
         main_window_context.admin = self.admin
-        main_window = MainWindow( gui_context=main_window_context )
+
+        # Check if a QMainWindow already exists
+        window = None
+        app = QtWidgets.QApplication.instance()
+        for widget in app.allWidgets():
+            if isinstance(widget, QtWidgets.QMainWindow):
+                # Make sure a QMainWindow is reused only once
+                if not hasattr(widget, '_reused_by_view_action_steps_application'):
+                    widget._reused_by_view_action_steps_application = True
+                    window = widget
+                    break
+
+        main_window_proxy = MainWindowProxy( gui_context=main_window_context, window=window )
+
         gui_context.workspace = main_window_context.workspace
-        main_window.setWindowTitle( self.window_title )
-        return main_window
+        main_window_proxy.parent().setWindowTitle( self.window_title )
+        return main_window_proxy.parent()
         
     def gui_run( self, gui_context ):
-        from camelot.view.register import register
         main_window = self.render( gui_context )
-        register( main_window, main_window )
+        if main_window.statusBar() is not None:
+            main_window.statusBar().hide()
         main_window.show()
 
 class NavigationPanel(ActionStep):
@@ -122,7 +141,13 @@ class MainMenu(ActionStep):
         self.menu = menu
 
     def gui_run( self, gui_context ):
-        gui_context.workspace.parent().set_main_menu(self.menu)
+        from ..mainwindowproxy import MainWindowProxy
+        main_window = gui_context.workspace.parent()
+        if main_window is None:
+            return
+        main_window_proxy = main_window.findChild(MainWindowProxy)
+        if main_window_proxy is not None:
+            main_window_proxy.set_main_menu(self.menu)
 
 
 class InstallTranslator(ActionStep):
@@ -165,3 +190,27 @@ class RemoveTranslators(ActionStep):
         for active_translator in app.findChildren(QtCore.QTranslator):
             app.removeTranslator(active_translator)
 
+
+class UpdateActionsState(ActionStep):
+    """
+    Update the the state of a list of `Actions`
+
+    :param action_states: a `dict` mapping the action_routes to their
+        updated state.
+
+    """
+
+    def __init__(self, actions_state):
+        self.actions_state = actions_state
+
+    def gui_run(self, gui_context):
+        for action_route, action_state in self.actions_state.items():
+            rendered_action_route = gui_context.action_routes.get(action_route)
+            if rendered_action_route is None:
+                LOGGER.warn('Cannot update rendered action, rendered_action_route is unknown')
+                continue
+            qobject = gui_context.view.findChild(QtCore.QObject, rendered_action_route)
+            if qobject is None:
+                LOGGER.warn('Cannot update rendered action, QObject child {} not found'.format(rendered_action_route))
+                continue
+            qobject.set_state(action_state)

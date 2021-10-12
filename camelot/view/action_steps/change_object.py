@@ -30,8 +30,10 @@
 import six
 from six import moves
 
+from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 from ..workspace import apply_form_state
+from ..controls.action_widget import ActionPushButton
 
 from camelot.admin.action import ActionStep
 from camelot.admin.action.form_action import FormActionGuiContext
@@ -40,7 +42,7 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.actionsbox import ActionsBox
@@ -61,6 +63,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   obj,
+                  admin_route,
                   admin,
                   form_display,
                   columns,
@@ -69,7 +72,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   reject,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
-                  icon = Icon('tango/22x22/categories/preferences-system.png'),
+                  icon = FontIcon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
@@ -79,7 +82,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.set_banner_subtitle( six.text_type(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin)
+        model = CollectionProxy(admin_route)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -126,15 +129,21 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         model.set_value(admin.get_proxy([obj]))
         list(model.add_columns((fn for fn, _fa in columns)))
 
+    def render_action(self, action, parent):
+        if action.render_hint == RenderHint.PUSH_BUTTON:
+            return ActionPushButton(action, self.gui_context, parent)
+        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
-            actions_widget = ActionsBox( parent = self,
-                                         gui_context = self.gui_context )
+            actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
-            actions_widget.set_actions( actions )
+            for action in actions:
+                action_widget = self.render_action(action, actions_widget)
+                actions_widget.layout().addWidget(action_widget)
             side_panel_layout.addWidget( actions_widget )
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
@@ -173,16 +182,20 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
 
     def __init__( self,
                   objects,
-                  admin,
+                  admin_route,
+                  columns,
+                  toolbar_actions,
                   invalid_rows,
                   parent = None,
                   flags = QtCore.Qt.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
-            admin = admin,
+            admin_route = admin_route,
             parent = self,
             create_inline = True,
+            columns=columns,
+            toolbar_actions=toolbar_actions,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -229,13 +242,13 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                     variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
                 ))
 
-class ChangeObject( ActionStep ):
+
+class ChangeObject(ActionStep):
     """
     Pop up a form for the user to change an object
 
     :param obj: the object to change
-    :param admin: an instance of an admin class to use to edit the
-        object, None if the default is to be taken
+    :param admin: an instance of an admin class to use to edit the object
 
     .. attribute:: accept
 
@@ -247,11 +260,16 @@ class ChangeObject( ActionStep ):
 
     """
 
-    def __init__( self, obj, admin=None ):
+    def __init__(self, obj, admin):
+        assert admin is not None
         self.obj = obj
         self.admin = admin
         self.accept = _('OK')
         self.reject = _('Cancel')
+        self.form_display = self.admin.get_form_display()
+        self.columns = self.admin.get_fields()
+        self.form_actions = self.admin.get_form_actions(None)
+        self.admin_route = admin.get_admin_route()
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
@@ -260,11 +278,12 @@ class ChangeObject( ActionStep ):
         """
         return self.obj
 
-    def render( self, gui_context ):
+    def render(self, gui_context):
         """create the dialog. this method is used to unit test
         the action step."""
         super(ChangeObject, self).gui_run(gui_context)
         dialog = ChangeObjectDialog(self.obj,
+                                    self.admin_route,
                                     self.admin,
                                     self.form_display,
                                     self.columns,
@@ -282,17 +301,7 @@ class ChangeObject( ActionStep ):
                 raise CancelRequest()
             return self.obj
 
-    def model_run(self, model_context):
-        cls = self.obj.__class__
-        if self.admin is None:
-            # the model_context admin might be deep-readonly, which is not
-            # what we want in the case of a ChangeObject, therefor revert
-            app_admin = model_context.admin.get_application_admin()
-            self.admin = app_admin.get_related_admin(cls)
-        self.form_display = self.admin.get_form_display()
-        self.columns = self.admin.get_fields()
-        self.form_actions = self.admin.get_form_actions(None)
-        
+
 class ChangeObjects( ActionStep ):
     """
     Pop up a list for the user to change objects
@@ -322,7 +331,7 @@ class ChangeObjects( ActionStep ):
 
     .. attribute:: icon
 
-        the :class:`camelot.view.art.Icon` in the top right corner of
+        the :class:`camelot.view.art.FontIcon` in the top right corner of
         the dialog
 
     """
@@ -330,11 +339,16 @@ class ChangeObjects( ActionStep ):
     def __init__(self, objects, admin, validate=True):
         self.objects = objects
         self.admin = admin
+        self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         self.title = _('Data Preview')
         self.subtitle = _('Please review the data below.')
-        self.icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
+        self.icon = FontIcon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.invalid_rows = set()
+        self.columns = admin.get_columns()
+        self.toolbar_actions = admin.get_related_toolbar_actions(
+            Qt.RightToolBarArea, 'onetomany'
+        )
         if validate==True:
             validator = self.admin.get_validator()
             for row, obj in enumerate(objects):
@@ -354,7 +368,9 @@ class ChangeObjects( ActionStep ):
         """create the dialog. this method is used to unit test
         the action step."""
         dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
-                                     self.admin,
+                                     self.admin_route,
+                                     self.columns,
+                                     self.toolbar_actions,
                                      self.invalid_rows)
         dialog.setWindowTitle( six.text_type( self.window_title ) )
         dialog.set_banner_title( six.text_type( self.title ) )

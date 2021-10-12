@@ -32,8 +32,7 @@ import six
 from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
                          q_string_size, q_string_startswith, q_string_endswith)
 from .customeditor import CustomEditor, set_background_color_palette
-from ...art import Icon
-from ....core import constants
+from ...art import FontIcon
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -135,11 +134,9 @@ class FloatEditor(CustomEditor):
     attribute.
     """
 
-    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent,
-                       minimum = constants.camelot_minfloat,
-                       maximum = constants.camelot_maxfloat,
                        calculator = True,
                        decimal = False, 
                        option = None,
@@ -158,8 +155,6 @@ class FloatEditor(CustomEditor):
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
         
-
-        spinBox.setRange(minimum-1, maximum)
         spinBox.setDecimals(2)
         spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
@@ -204,9 +199,16 @@ class FloatEditor(CustomEditor):
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
         spinBox.setReadOnly(not editable)
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
-        precision = kwargs.get('precision', 2)
+        precision = kwargs.get('precision')
+        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+        # as that only handles the precision key not being present, not it being explicitly set to None.
+        if precision is None:
+            precision = 2
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
+        minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
+        if None not in (minimum, maximum):
+            spinBox.setRange(minimum-1, maximum)
         self.update_actions()
 
     def set_value(self, value):

@@ -10,17 +10,17 @@ import unittest
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.list_filter import SearchFilter
+from camelot.model.party import Person
 
 from camelot.admin.action import GuiContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-from camelot.core.item_model import PreviewRole
+from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.orm import entities
 from camelot.core.qt import Qt, QtGui, QtWidgets, QtCore, variant_to_py, q_string
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, Storage
-from camelot import test
-from camelot.test import GrabMixinCase
+from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import action_steps
 from camelot.view.action_steps import OpenFormView
 from camelot.view.art import ColorScheme
@@ -30,16 +30,16 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls import editors
 from camelot.view.controls.editors.datetimeeditor import TimeValidator
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from camelot.view.mainwindow import MainWindow
+from camelot.view.mainwindowproxy import MainWindowProxy
 from camelot.view import forms
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.controls.delegates import DelegateManager
-from camelot.model.party import Person
+from camelot.view.controls.progress_dialog import ProgressDialog
 
 from .import app_admin
 
-from .test_proxy import A, ProxyCase
+from .test_item_model import A, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -283,8 +283,13 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
+        # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
+        delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
+        item = delegate.get_standard_item(QtCore.QLocale(), 3, {})
+        field_attributes = item.data(FieldAttributesRole)
+        
         editor = editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix', editable=True)
+        editor.set_field_attributes(prefix='prefix', editable=True, **field_attributes)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
@@ -293,7 +298,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
         editor = editors.FloatEditor(parent=None, option=self.option)
-        editor.set_field_attributes(suffix=' suffix', editable=True)
+        editor.set_field_attributes(suffix=' suffix', editable=True, **field_attributes)
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -310,7 +315,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
         editor = editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True)
+        editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True, **field_attributes)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
@@ -319,7 +324,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(parent=None,
                                           calculator=False)
-        editor.set_field_attributes( editable=True )
+        editor.set_field_attributes( editable=True, **field_attributes )
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
@@ -429,8 +434,8 @@ class FormTest(unittest.TestCase, GrabMixinCase):
         self.entities = [e for e in entities]
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
-
-        self.movie_model = QueryTableProxy( self.movie_admin)
+        self.admin_route = self.movie_admin.get_admin_route()
+        self.movie_model = CollectionProxy(self.admin_route)
         self.movie_model.set_value(self.movie_admin.get_proxy(self.movie_admin.get_query()))
         list(self.movie_model.add_columns(
             [fn for fn,fa in self.movie_admin.get_fields()]
@@ -504,17 +509,20 @@ class FormTest(unittest.TestCase, GrabMixinCase):
 
     def test_nested_form(self):
         person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_inherited_form(self):
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
     def test_custom_layout(self):
         person_admin = CustomLayoutAdmin(self.app_admin, self.person_entity)
-        open_form_view = OpenFormView([self.person_entity()], person_admin)
+        person = self.person_entity()
+        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
         self.grab_widget( open_form_view.render(self.gui_context) )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
@@ -768,66 +776,71 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, 12, 'disabled')
 
 
-class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
+class ControlsTest(
+    RunningThreadCase,
+    QueryQStandardItemModelMixinCase, ExampleModelMixinCase, GrabMixinCase
+    ):
     """Test some basic controls"""
 
     images_path = static_images_path
 
     @classmethod
     def setUpClass(cls):
-        cls.setup_sample_model()
+        super(ControlsTest, cls).setUpClass()
+        cls.thread.post(cls.setup_sample_model)
         cls.app_admin = MyApplicationAdmin()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.tear_down_sample_model()
+        cls.process()
 
     def setUp(self):
+        self.thread.post(self.setup_proxy)
+        self.process()
+        self.admin = self.app_admin.get_entity_admin(Person)
+        self.admin_route = admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin = self.app_admin
-        
+        self.gui_context.admin_route = self.admin_route
+
+    def tearDown(self):
+        super().tearDown()
+
     def test_table_view(self):
         gui_context = GuiContext()
-        widget = TableView( gui_context,
-                            self.app_admin.get_entity_admin(Person) )
+        widget = TableView(gui_context, self.admin_route)
         self.grab_widget(widget)
 
     def test_rows_widget(self):
         from camelot.view.controls.tableview import RowsWidget
         from camelot.model.party import City
         city_admin = self.app_admin.get_entity_admin(City)
-        
-        table = TableView(self.gui_context, city_admin)
-        table.set_admin(city_admin)
+        table = TableView(self.gui_context, city_admin.get_admin_route())
+        table.set_admin()
         RowsWidget(table.gui_context)
-        
+
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
-        from camelot.view.controls.tableview import TableView
-        from camelot.model.party import Person
 
         class SmallColumnsAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
 
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin)
-        widget.set_admin(admin)
+        widget = TableView(self.gui_context, admin.get_admin_route())
+        widget.set_admin()
         model = widget.get_model()
-        model.set_value(admin.get_proxy(self.session.query(Person)))
+        model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
+        model.timeout_slot()
+        self.process()
         self.grab_widget( widget )
         model.timeout_slot()
+        self.process()
         widget.table.horizontalHeader()
 
-        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
-        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
 
-        self.assertTrue( first_name_width > suffix_width )
+        self.assertTrue(first_name_width > suffix_width)
 
     def test_column_width( self ):
         #create a table view for an Admin interface with small columns
-        from camelot.view.controls.tableview import TableView
-        from camelot.model.party import Person
 
         class ColumnWidthAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
@@ -837,20 +850,23 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin)
-        widget.set_admin(admin)
+        widget = TableView(self.gui_context, admin.get_admin_route())
+        widget.set_admin()
         model = widget.get_model()
-        model.set_value(admin.get_proxy(self.session.query(Person)))
+        model.set_value(self.proxy)
         list(model.add_columns((fn for fn, fa in admin.get_columns())))
-        self.grab_widget( widget )
+        model.timeout_slot()
+        self.process()
+        self.grab_widget(widget)
         model = widget.get_model()
         model.timeout_slot()
+        self.process()
         widget.table.horizontalHeader()
 
-        first_name_width = variant_to_py( model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ) ).width()
-        suffix_width = variant_to_py( model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ) ).width()
+        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
 
-        self.assertEqual( first_name_width, suffix_width )
+        self.assertEqual(first_name_width, suffix_width)
 
     def test_column_group( self ):
         from camelot.admin.table import ColumnGroup
@@ -864,8 +880,7 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
             #end column group
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView( self.gui_context,
-                            admin )
+        widget = TableView(self.gui_context, admin.get_admin_route())
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
@@ -877,20 +892,46 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
         self.grab_widget(widget)
 
     def test_main_window(self):
-        widget = MainWindow( self.gui_context )
-        self.grab_widget(widget)
+        proxy = MainWindowProxy( self.gui_context )
+        self.grab_widget(proxy.parent())
 
     def test_reduced_main_window(self):
-        from camelot.view.mainwindow import MainWindow
         from camelot_example.application_admin import MiniApplicationAdmin
-        from camelot.admin.action.application_action import ApplicationActionGuiContext
         app_admin = MiniApplicationAdmin()
-        gui_context = ApplicationActionGuiContext()
-        gui_context.admin = app_admin
-        widget = MainWindow( gui_context )
-        widget.setStyleSheet( app_admin.get_stylesheet() )
-        widget.show()
-        self.grab_widget( widget )
+        proxy = MainWindowProxy(self.gui_context)
+        proxy.parent().setStyleSheet( app_admin.get_stylesheet() )
+        proxy.parent().show()
+        self.grab_widget( proxy.parent() )
+
+    def test_multiple_main_windows(self):
+        """Make sure we can still create multiple QMainWindows"""
+        from camelot.view.action_steps.application import MainWindow
+        from camelot_example.application_admin import MiniApplicationAdmin
+
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication([])
+
+        def count_main_windows():
+            result = 0
+            for widget in app.allWidgets():
+                if isinstance(widget, QtWidgets.QMainWindow):
+                    result += 1
+            return result
+
+        app_admin1 = MiniApplicationAdmin()
+        action_step1 = MainWindow(app_admin1)
+        main_window1 = action_step1.render(self.gui_context)
+
+        num_main_windows1 = count_main_windows()
+
+        app_admin2 = MiniApplicationAdmin()
+        action_step2 = MainWindow(app_admin2)
+        main_window2 = action_step2.render(self.gui_context)
+
+        num_main_windows2 = count_main_windows()
+
+        self.assertEqual( num_main_windows1 + 1, num_main_windows2 )
 
     def test_busy_widget(self):
         from camelot.view.controls.busy_widget import BusyWidget
@@ -908,10 +949,9 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
         from camelot.model.party import City
         from camelot.view.controls.tableview import HeaderWidget
         city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin)
-        table.set_admin(city_admin)
+        table = TableView(self.gui_context, city_admin.get_admin_route())
+        table.set_admin()
         header = HeaderWidget(gui_context=table.gui_context, parent=None)
-        header.switch_expanded_search([])
         self.grab_widget(header)
 
     def test_column_groups_widget(self):
@@ -943,12 +983,12 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
 
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        workspace = DesktopWorkspace(self.app_admin, None)
+        workspace = DesktopWorkspace(self.gui_context.admin_route, None)
         self.grab_widget(workspace)
 
     def test_progress_dialog( self ):
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        dialog = ProgressDialog( 'Import cover images' )
+        dialog = ProgressDialog(None)
+        dialog.title = 'Import cover images'
         self.grab_widget(dialog)
         dialog.add_detail('toy_story.png imported')
         dialog.add_detail('matrix.png imported')
@@ -971,56 +1011,47 @@ class ControlsTest(unittest.TestCase, ExampleModelMixinCase, GrabMixinCase):
         dialog = ExceptionDialog( exc_info )
         self.grab_widget( dialog )
 
-class CamelotEntityViewsTest(
-    test.EntityViewsTest,
-    ExampleModelMixinCase):
-    """Test the views of all the Entity subclasses"""
+
+class SnippetsTest(RunningThreadCase,
+    ExampleModelMixinCase, QueryQStandardItemModelMixinCase, GrabMixinCase
+    ):
 
     images_path = static_images_path
 
-    def setUp(self):
-        super(CamelotEntityViewsTest, self).setUp()
-        self.setup_sample_model()
-
-    def tearDown(self):
-        self.tear_down_sample_model()
-        super(CamelotEntityViewsTest, self).tearDown()
-
-    def get_admins(self):
-        for admin in super(CamelotEntityViewsTest, self).get_admins():
-            if admin.entity.__module__.startswith('camelot.model'):
-                yield admin
-
-class SnippetsTest(ProxyCase, GrabMixinCase):
-
-    images_path = static_images_path
-
-    def setUp(self):
-        super(SnippetsTest, self).setUp()
-        self.app_admin = ApplicationAdmin()
-        self.gui_context = GuiContext()
+    @classmethod
+    def setUpClass(cls):
+        super(SnippetsTest, cls).setUpClass()
+        cls.thread.post(cls.setup_sample_model)
+        cls.thread.post(cls.load_example_data)
+        cls.thread.post(cls.setup_proxy)
+        cls.app_admin = ApplicationAdmin()
+        cls.gui_context = GuiContext()
+        cls.process()
 
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView([coordinate], admin)
+        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
         form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView([coordinate], admin)
+        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
         form = open_form_view.render(self.gui_context)
         self.grab_widget(form)
 
     def test_background_color(self):
         person_admin = BackgroundColorAdmin(self.app_admin, Person)
-        editor = One2ManyEditor(admin=person_admin)
-        proxy = person_admin.get_proxy([
-            Person(first_name='John', last_name='Cleese'),
-            Person(first_name='eric', last_name='Idle')
-        ])
-        editor.set_value(proxy)
-        self._load_data(editor.get_model())
+        person_columns = list(person_admin.get_columns())
+        editor = One2ManyEditor(
+            admin_route=person_admin.get_admin_route(),
+            columns=person_columns,
+        )
+        editor.set_value(self.proxy)
+        self.process()
+        editor_model = editor.get_model()
+        self.assertTrue(editor_model)
+        self._load_data(editor_model)
         self.grab_widget(editor)
