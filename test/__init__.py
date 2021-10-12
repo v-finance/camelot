@@ -24,6 +24,7 @@ _application_ = []
 if QtWidgets.QApplication.instance() is None:
     # set up a test application
     _application_.append(QtWidgets.QApplication([a for a in sys.argv if a]))
+    QtWidgets.QApplication.setApplicationName('camelot-tests')
     # set up a specific locale to test import of files
     QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
     # to generate consistent screenshots
