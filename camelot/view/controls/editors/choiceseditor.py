@@ -60,6 +60,7 @@ class ChoicesEditor(CustomEditor):
         layout.setSpacing(0)
         combobox = QtWidgets.QComboBox()
         combobox.setObjectName('combobox')
+        combobox.setToolTip(str(kwargs.get('tooltip') or ''))
         combobox.activated.connect(self._activated)
         layout.addWidget(combobox)
         self.setContentsMargins(0, 0, 0, 0)
