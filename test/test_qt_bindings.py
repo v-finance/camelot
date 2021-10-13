@@ -179,7 +179,7 @@ class SignalSlotCase( unittest.TestCase ):
                     self.emitter = SignalEmitter()
                     
                 def connect( self, receiver ):
-                    self.emitter.my_signal[object].connect( receiver.my_slot, QtCore.Qt.QueuedConnection )
+                    self.emitter.my_signal[object].connect( receiver.my_slot, QtCore.Qt.ConnectionType.QueuedConnection )
                     
                 def run(self): 
                     self.emitter.start_emitting( 1 )
@@ -267,7 +267,7 @@ class SignalSlotCase( unittest.TestCase ):
                         pass
                                     
         thread = EmittingThread()
-        thread.my_signal.connect( receiver_parent.get_receiver().my_slot, QtCore.Qt.QueuedConnection )
+        thread.my_signal.connect( receiver_parent.get_receiver().my_slot, QtCore.Qt.ConnectionType.QueuedConnection )
         #del receiver_parent
         thread.start()
         while thread.started == False:
