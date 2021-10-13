@@ -119,7 +119,7 @@ class PrintPreview( ActionStep ):
             printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
 
     def paint_on_printer( self, printer ):
-        self.document.print_(printer)
+        self.document.print(printer)
 
     def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
