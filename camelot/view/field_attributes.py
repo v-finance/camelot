@@ -211,6 +211,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'widget': 'combobox',
         'operators' : _numerical_operators,
+        'to_string': enumeration_to_string,
         'search_strategy': list_filter.NoSearch,
         'filter_strategy': list_filter.NoSearch,
     },

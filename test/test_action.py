@@ -1,5 +1,4 @@
 import datetime
-import json
 import io
 import logging
 import os
@@ -44,8 +43,23 @@ test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example',
 
 LOGGER = logging.getLogger(__name__)
 
+class SerializableMixinCase(object):
 
-class ActionBaseCase(RunningThreadCase):
+    def _write_read(self, step):
+        """
+        Serialize and deserialize an object, return the deserialized object
+        """
+        stream = io.BytesIO()
+        step.write_object(stream)
+        stream.seek(0)
+        stream.seek(0)
+        step_type = type(step)
+        deserialized_object = step_type.__new__(step_type)
+        deserialized_object.read_object(stream)
+        return deserialized_object
+
+
+class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
 
     def setUp(self):
         super().setUp()
@@ -112,7 +126,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
-class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
+class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -198,11 +212,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
             20, 100, _('Importing data')
         )
         self.assertTrue( six.text_type( update_progress ) )
-        stream = io.BytesIO()
-        update_progress.write_object(stream)
-        stream.seek(0)
-        update_progress = action_steps.UpdateProgress.__new__(action_steps.UpdateProgress)
-        update_progress.read_object(stream)
         # give the gui context a progress dialog, so it can be updated
         progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run( self.gui_context )

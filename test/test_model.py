@@ -225,7 +225,8 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         city = self.test_geographic_boundary()
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
-                                               city = city )
+                                               city = city,
+                                               zip_code='1000')
         self.assertTrue( six.text_type( address ) )
         return address
 
