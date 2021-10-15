@@ -84,12 +84,14 @@ class ProfileCase(unittest.TestCase):
         self.assertEqual( new_profile.name, name )
         self.assertEqual( new_profile.host, host )
         self.assertEqual( new_profile.password, password )
-        
-    def test_profile_store( self ):
+
+    def test_registry_settings(self):
         # construct a profile store from application settings
         store = ProfileStore()
         store.read_profiles()
         # continue test with a profile store from file, to avoid test inference
+
+    def test_profile_store( self ):
         handle, filename = tempfile.mkstemp()
         os.close(handle)
         store = ProfileStore(filename)
