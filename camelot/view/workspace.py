@@ -211,9 +211,9 @@ def apply_form_state(view, parent, state):
 
     geometry = screen.availableGeometry()
     if state == constants.MAXIMIZED:
-        view.setWindowState(QtCore.Qt.WindowStates.WindowMaximized)
+        view.setWindowState(QtCore.Qt.WindowState.WindowMaximized)
     elif state == constants.MINIMIZED:
-        view.setWindowState(QtCore.Qt.WindowStates.WindowMinimized)
+        view.setWindowState(QtCore.Qt.WindowState.WindowMinimized)
     elif state == constants.RIGHT:
         geometry.setLeft(geometry.center().x())
         view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
