@@ -44,9 +44,6 @@ class ChoicesEditor(CustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
     keys and values"""
 
-    editingFinished = QtCore.qt_signal()
-    valueChanged = QtCore.qt_signal()
-
     def __init__( self,
                   parent = None,
                   nullable = True,
