@@ -57,7 +57,6 @@ class ChoicesEditor(CustomEditor):
         layout.setSpacing(0)
         combobox = QtWidgets.QComboBox()
         combobox.setObjectName('combobox')
-        combobox.setToolTip(str(kwargs.get('tooltip') or ''))
         combobox.activated.connect(self._activated)
         layout.addWidget(combobox)
         self.setContentsMargins(0, 0, 0, 0)
@@ -177,6 +176,7 @@ class ChoicesEditor(CustomEditor):
         if fa.get('choices') is not None:
             self.set_choices(fa['choices'])
         combobox.setEnabled(fa.get('editable', True))
+        combobox.setToolTip(str(fa.get('tooltip') or ''))
 
     def get_choices(self):
         """
