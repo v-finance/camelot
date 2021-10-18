@@ -29,7 +29,7 @@
 import json
 import os
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant, qt_api
 
@@ -69,6 +69,7 @@ class SelectFile( ActionStep, DataclassSerializable ):
     """
 
     file_name_filter: str = ''
+    single: bool = field(init=False)
 
     caption = _('Open')
 
