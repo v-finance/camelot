@@ -1091,11 +1091,12 @@ class AddNewObjectMixin(object):
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
+        subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
-        yield action_steps.CreateObjects((new_object,))
+        yield action_steps.CreateObjects((subsystem_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            session = orm.object_session(new_object)
+            session = orm.object_session(subsystem_object)
             yield action_steps.FlushSession(session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
