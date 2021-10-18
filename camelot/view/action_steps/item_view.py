@@ -285,7 +285,7 @@ class OpenQmlTableView(OpenTableView):
             assert state is not None
 
             rendered_action = item_view._qml_item.addAction(
-                action.render_hint.value, state, qt_action
+                action.render_hint.value, state
             )
             rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
             rendered_action.setObjectName('action_{}'.format(i))
