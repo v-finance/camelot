@@ -135,7 +135,7 @@ class SelectObjects( OpenTableView ):
             # strange things happen on windows 7 and later with maximizing
             # this dialog, maximizing it here appears to work
             dialog.showMaximized()
-            if dialog.exec_() == QtWidgets.QDialog.Rejected:
+            if dialog.exec() == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return dialog.objects
 

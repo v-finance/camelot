@@ -29,7 +29,7 @@
 
 
 
-from ...core.qt import QtCore, QtWidgets, QtGui
+from ...core.qt import QtCore, QtGui
 from camelot.core.utils import ugettext as _
 from .decorated_line_edit import DecoratedLineEdit
 from .action_widget import AbstractActionWidget
@@ -57,14 +57,14 @@ class SimpleSearchControl(DecoratedLineEdit, AbstractActionWidget):
         self.setPlaceholderText(_('Search...'))
         self.returnPressed.connect(self.start_search)
         self.textEdited.connect(self._start_search_timer)
-        shortcut = QtWidgets.QShortcut(
-            QtGui.QKeySequence(QtGui.QKeySequence.Find), self
+        shortcut = QtGui.QShortcut(
+            QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find), self
         )
         shortcut.activated.connect(self.activate_search)
 
     @QtCore.qt_slot()
     def activate_search(self):
-        self.setFocus(QtCore.Qt.ShortcutFocusReason)
+        self.setFocus(QtCore.Qt.FocusReason.ShortcutFocusReason)
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)

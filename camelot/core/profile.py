@@ -210,7 +210,7 @@ class ProfileStore(object):
             return QtCore.QSettings()
         else:
             return QtCore.QSettings(self.filename, 
-                                    QtCore.QSettings.IniFormat)
+                                    QtCore.QSettings.Format.IniFormat)
     
     def write_to_file(self, filename):
         file_store = ProfileStore(filename, cipher_key=self.cipher_key)

@@ -41,7 +41,7 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore
+from ...core.qt import Qt, QtCore, QtQml
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
@@ -49,6 +49,7 @@ from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import CollectionProxy
+from ..qml_view import create_qml_item
 
 @dataclass
 class Sort( ActionStep, DataclassSerializable ):
@@ -213,7 +214,7 @@ class OpenTableView( UpdateTableView ):
             ))
             show_top_level(table_view, None)
         table_view.change_title(step['title'])
-        table_view.setFocus(Qt.PopupFocusReason)
+        table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
 @dataclass
@@ -236,29 +237,27 @@ class OpenQmlTableView(OpenTableView):
         self.list_action = admin.get_list_action()
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        quick_view = gui_context.workspace.quick_view
-        tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
-        assert tab_view
-
-        header_model = QtCore.QStringListModel(parent=quick_view)
+    def render(cls, gui_context, step, engine):
+        # create header model & model
+        header_model = QtCore.QStringListModel()
         header_model.setStringList(step['columns'])
-        header_model.setParent(quick_view)
-        new_model = CollectionProxy(tuple(step['admin_route']))
 
+        new_model = CollectionProxy(tuple(step['admin_route']))
         # filters can have default values, so they need to be set before
         # the value is set
         cls.set_filters(step['action_states'], new_model)
-
-        new_model.setParent(quick_view)
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
-        view = tab_view.addTabFromUrl(
-            step['title'],
+
+        # create QML item
+        view = create_qml_item(
             QtCore.QUrl("qrc:/qml/common/TablePage.qml"),
-            { 'model': new_model, 'headerModel': header_model }
+            { 'model': new_model, 'headerModel': header_model },
+            engine
         )
+        new_model.setParent(view)
+        header_model.setParent(view)
+
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
 
@@ -273,8 +272,8 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context.view = view
 
         list_action = AdminRoute.action_for(tuple(step['list_action']))
-        qt_action = ActionAction(list_action, list_gui_context, quick_view)
-        table.activated.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+        qt_action = ActionAction(list_action, list_gui_context, view)
+        table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
         for i, action_route in enumerate(step['actions']):
             action = AdminRoute.action_for(tuple(action_route['route']))
             qt_action = ActionAction(action, list_gui_context, table)
@@ -286,12 +285,26 @@ class OpenQmlTableView(OpenTableView):
             assert state is not None
 
             rendered_action = item_view._qml_item.addAction(
-                action.render_hint.value, state, qt_action
+                action.render_hint.value, state
             )
-            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.QueuedConnection)
+            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
             rendered_action.setObjectName('action_{}'.format(i))
             list_gui_context.action_routes[action] = rendered_action.objectName()
         UpdateActions().gui_run(list_gui_context)
+
+        return view
+
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        quick_view = gui_context.workspace.quick_view
+        view = cls.render(gui_context, step, quick_view.engine())
+        # tabs will be destroyed by javascript code
+        quick_view.engine().setObjectOwnership(view, QtQml.QQmlEngine.ObjectOwnership.JavaScriptOwnership)
+        tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
+        assert tab_view
+        tab_view.addTab(step['title'], view)
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
@@ -317,4 +330,4 @@ class RefreshItemView(ActionStep, DataclassSerializable):
                 # new row to appear, and so the proxy needs to be reindexed
                 # this sorting of reset is not implemented, therefor, we simply
                 # sort on the first column to force reindexing
-                model.sort(0, Qt.AscendingOrder)
+                model.sort(0, Qt.SortOrder.AscendingOrder)

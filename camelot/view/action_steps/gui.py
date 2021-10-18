@@ -150,8 +150,8 @@ class SelectItem(ActionStep):
 
     def gui_run(self, gui_context):
         dialog = self.render()
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
 
@@ -228,9 +228,9 @@ class MessageBox( ActionStep, DataclassSerializable ):
     """
 
     text: _
-    icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Information
+    icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Icon.Information
     title: _ = _('Message')
-    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Cancel])
+    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
 
@@ -257,7 +257,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
         message_box = cls.render(step)
-        result = message_box.exec_()
-        if result == QtWidgets.QMessageBox.Cancel:
+        result = message_box.exec()
+        if result == QtWidgets.QMessageBox.StandardButton.Cancel:
             raise CancelRequest()
         return result

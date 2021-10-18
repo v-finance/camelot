@@ -66,7 +66,7 @@ def local_date_format():
     global _local_date_format
     if not _local_date_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', str(locale.dateFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', str(locale.dateFormat(locale.FormatType.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
         _local_date_format = str(u''.join(format_sequence))
@@ -78,7 +78,7 @@ def local_datetime_format():
     if not _local_datetime_format:
         locale = QtCore.QLocale()
         # make sure a year always has 4 numbers
-        _local_datetime_format = re.sub('y+', 'yyyy', str(locale.dateTimeFormat(locale.ShortFormat)))
+        _local_datetime_format = re.sub('y+', 'yyyy', str(locale.dateTimeFormat(locale.FormatType.ShortFormat)))
     return _local_datetime_format
 
 def local_time_format():
@@ -86,7 +86,7 @@ def local_time_format():
     global _local_time_format
     if not _local_time_format:
         locale = QtCore.QLocale()
-        _local_time_format = str(locale.timeFormat(locale.ShortFormat) )
+        _local_time_format = str(locale.timeFormat(locale.FormatType.ShortFormat) )
     return _local_time_format
 
 def default_language(*args):

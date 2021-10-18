@@ -138,26 +138,26 @@ class FontIconEngine(QtGui.QIconEngine):
         :param state: a :class:`QtGui.QIcon.State` object
         """
         font = QtGui.QFont(self.font_family)
-        font.setStyleStrategy(QtGui.QFont.NoFontMerging)
+        font.setStyleStrategy(QtGui.QFont.StyleStrategy.NoFontMerging)
         drawSize = QtCore.qRound(rect.height() * 0.8)
         font.setPixelSize(drawSize)
 
         penColor = QtGui.QColor()
         if not self.color.isValid():
-            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Normal, QtGui.QPalette.ButtonText)
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Normal, QtGui.QPalette.ColorRole.ButtonText)
         else:
             penColor = self.color
 
-        if mode == QtGui.QIcon.Disabled:
-            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText)
+        if mode == QtGui.QIcon.Mode.Disabled:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText)
 
-        if mode == QtGui.QIcon.Selected:
-            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Active, QtGui.QPalette.ButtonText)
+        if mode == QtGui.QIcon.Mode.Selected:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.ButtonText)
 
         painter.save()
         painter.setPen(QtGui.QPen(penColor))
         painter.setFont(font)
-        painter.drawText(rect, QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, self.code)
+        painter.drawText(rect, QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignVCenter, self.code)
         painter.restore()
 
     def pixmap(self, size, mode, state):
@@ -167,7 +167,7 @@ class FontIconEngine(QtGui.QIconEngine):
         :param state: a :class:`QtGui.QIcon.State` object
         """
         pix = QtGui.QPixmap(size)
-        pix.fill(QtCore.Qt.transparent)
+        pix.fill(QtCore.Qt.GlobalColor.transparent)
 
         painter = QtGui.QPainter(pix)
         self.paint(painter, QtCore.QRect(QtCore.QPoint(0, 0), size), mode, state)
@@ -216,7 +216,7 @@ class FontIcon:
         engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
         engine.color = QtGui.QColor(self.color)
 
-        return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
 
 
 class QrcIcon:

@@ -43,7 +43,7 @@ class TimeDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if model_context.value is not None:
             value = model_context.value
             time = QtCore.QTime(value.hour, value.minute, value.second)
-            value_str = time.toString(locale.timeFormat(locale.ShortFormat))
+            value_str = time.toString(locale.timeFormat(locale.FormatType.ShortFormat))
             item.setData(value_str, PreviewRole)
         return item
 

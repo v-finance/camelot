@@ -45,8 +45,8 @@ class TextLineEditor(CustomEditor):
                  column_width=None,
                  **kwargs):
         CustomEditor.__init__(self, parent, column_width=column_width)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                           QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                           QtWidgets.QSizePolicy.Policy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -54,7 +54,7 @@ class TextLineEditor(CustomEditor):
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
-        text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.Normal)
+        text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.EchoMode.Normal)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)

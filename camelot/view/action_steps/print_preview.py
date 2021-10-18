@@ -69,11 +69,11 @@ class PrintPreview( ActionStep ):
 
     .. attribute:: page_size
     
-        the page size, by default :class:`QtPrintSupport.QPrinter.A4` is used
+        the page size, by default :class:`QtGui.QPageSize(QtGui.QPageSize.PageSizeId.A4)` is used
     
     .. attribute:: page_orientation
     
-        the page orientation, by default :class:`QtPrintSupport.QPrinter.Portrait`
+        the page orientation, by default :class:`QtPrintSupport.QPrinter.Orientation.Portrait`
         is used.
         
     .. attribute:: document
@@ -98,7 +98,7 @@ class PrintPreview( ActionStep ):
         self.margin_top = None
         self.margin_right = None
         self.margin_bottom = None
-        self.margin_unit = QtPrintSupport.QPrinter.Millimeter
+        self.margin_unit = QtPrintSupport.QPrinter.Unit.Millimeter
         self.page_size = None
         self.page_orientation = None
 
@@ -107,7 +107,7 @@ class PrintPreview( ActionStep ):
             return self.printer
         printer = QtPrintSupport.QPrinter()
         if not printer.isValid():
-            printer.setOutputFormat( QtPrintSupport.QPrinter.PdfFormat )
+            printer.setOutputFormat( QtPrintSupport.QPrinter.OutputFormat.PdfFormat )
         return printer
 
     def config_printer(self, printer):
@@ -119,7 +119,7 @@ class PrintPreview( ActionStep ):
             printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
 
     def paint_on_printer( self, printer ):
-        self.document.print_(printer)
+        self.document.print(printer)
 
     def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
@@ -127,7 +127,7 @@ class PrintPreview( ActionStep ):
         printer = self.get_printer()
         self.config_printer(printer)
         dialog = QtPrintSupport.QPrintPreviewDialog(
-            printer, flags = QtCore.Qt.Window
+            printer, flags = QtCore.Qt.WindowType.Window
         )
         dialog.printer = printer
         dialog.paintRequested.connect( self.paint_on_printer )
@@ -139,11 +139,11 @@ class PrintPreview( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render( gui_context )
         with hide_progress_dialog( gui_context ):
-            dialog.exec_()
+            dialog.exec()
         
     def get_pdf(self, filename=None):
         printer = QtPrintSupport.QPrinter()
-        printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
+        printer.setOutputFormat(QtPrintSupport.QPrinter.OutputFormat.PdfFormat)
         self.config_printer(printer)
         if filename is None:
             filename = OpenFile.create_temporary_file('.pdf')

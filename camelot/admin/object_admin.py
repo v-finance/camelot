@@ -341,10 +341,10 @@ be specified using the verbose_name attribute.
         """Create a dict of identifiers to be used in search boxes.
         The keys are Qt roles."""
         search_identifiers = {}
-        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
+        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
         # Use user role for object to avoid display role / edit role confusion
-        search_identifiers[Qt.UserRole] = obj
-        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+        search_identifiers[Qt.ItemDataRole.UserRole] = obj
+        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
 
@@ -678,7 +678,7 @@ be specified using the verbose_name attribute.
                 background_color=None,
                 editable=False,
                 nullable=True,
-                focus_policy=Qt.StrongFocus,
+                focus_policy=Qt.FocusPolicy.StrongFocus,
                 widget='str',
                 blank=True,
                 delegate=delegates.PlainTextDelegate,

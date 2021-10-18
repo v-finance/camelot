@@ -40,8 +40,8 @@ class ColorEditor(CustomEditor):
     def __init__(self, parent=None, editable=True, field_name='color', **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy(
-            QtWidgets.QSizePolicy.Preferred,
-            QtWidgets.QSizePolicy.Fixed
+            QtWidgets.QSizePolicy.Policy.Preferred,
+            QtWidgets.QSizePolicy.Policy.Fixed
         )
         self.setObjectName(field_name)
         layout = QtWidgets.QVBoxLayout(self)
@@ -68,7 +68,7 @@ class ColorEditor(CustomEditor):
         if value != self._color:
             self._color = value
             pixmap = QtGui.QPixmap(16, 16)
-            color = self.to_qcolor(value, Qt.transparent)
+            color = self.to_qcolor(value, Qt.GlobalColor.transparent)
             pixmap.fill(color)
             color_button = self.findChild(QtWidgets.QPushButton, 'color_button')
             if color_button is not None:
@@ -76,7 +76,7 @@ class ColorEditor(CustomEditor):
 
     @QtCore.qt_slot(bool)
     def buttonClicked(self, raised):
-        options = QtWidgets.QColorDialog.ShowAlphaChannel
+        options = QtWidgets.QColorDialog.ColorDialogOptions.ShowAlphaChannel
         qcolor = self.to_qcolor(self.get_value(), 'white')
         qcolor = QtWidgets.QColorDialog.getColor(
             qcolor, self.parent(), ugettext('Select Color'), options,

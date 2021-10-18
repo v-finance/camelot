@@ -51,7 +51,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
         delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
             field_attributes = index.model().headerData(
-                column, Qt.Horizontal, FieldAttributesRole
+                column, Qt.Orientation.Horizontal, FieldAttributesRole
             )
             delegate = field_attributes['delegate'](parent=self, **field_attributes)
             self.insert_column_delegate(column, delegate)
@@ -92,7 +92,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
                 delegate.setEditorData(editor, index)
             except Exception as e:
                 logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
-                logger.error('value that could not be set : %s'%str(variant_to_py(index.model().data(index, Qt.EditRole))))
+                logger.error('value that could not be set : %s'%str(variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))))
                 logger.error('editor that failed %s %s'%(type(editor).__name__, editor.objectName()))
 
     def setModelData(self, editor, model, index):

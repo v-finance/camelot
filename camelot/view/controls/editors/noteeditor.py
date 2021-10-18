@@ -51,16 +51,16 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         QtWidgets.QLabel.__init__( self, parent )
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
-        self.setTextFormat( QtCore.Qt.RichText )
-        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding,
-                            QtWidgets.QSizePolicy.Minimum )
+        self.setTextFormat( QtCore.Qt.TextFormat.RichText )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding,
+                            QtWidgets.QSizePolicy.Policy.Minimum )
         self.setContentsMargins(0, 0, 0, 0)
-        self.setFrameStyle(QtWidgets.QFrame.Box)
+        self.setFrameStyle(QtWidgets.QFrame.Shape.Box)
         self.setLineWidth(2)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), color)
-        palette.setColor(QtGui.QPalette.Shadow, QtGui.QColor('black'))
-        palette.setColor(QtGui.QPalette.Dark, QtGui.QColor('black'))
+        palette.setColor(QtGui.QPalette.ColorRole.Shadow, QtGui.QColor('black'))
+        palette.setColor(QtGui.QPalette.ColorRole.Dark, QtGui.QColor('black'))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 

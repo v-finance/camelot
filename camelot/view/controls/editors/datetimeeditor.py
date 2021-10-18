@@ -49,29 +49,29 @@ class TimeValidator(QtGui.QValidator):
         input = str(input).strip()
         # allow None
         if len(input)==0:
-            return (QtGui.QValidator.Acceptable, input, pos)
+            return (QtGui.QValidator.State.Acceptable, input, pos)
         parts = input.split(':')
         if len(parts)>2:
-            return (QtGui.QValidator.Invalid, input, pos)
+            return (QtGui.QValidator.State.Invalid, input, pos)
         # validate individual parts
         for i, part in enumerate(parts):
             if len(part)==0:
-                return (QtGui.QValidator.Intermediate, input, pos)
+                return (QtGui.QValidator.State.Intermediate, input, pos)
             if len(part)<1:
-                return (QtGui.QValidator.Intermediate, input, pos)
+                return (QtGui.QValidator.State.Intermediate, input, pos)
             if len(part)>2:
-                return (QtGui.QValidator.Invalid, input, pos)
+                return (QtGui.QValidator.State.Invalid, input, pos)
             if not part.isdigit():
-                return (QtGui.QValidator.Invalid, input, pos)
+                return (QtGui.QValidator.State.Invalid, input, pos)
             if i==1 or (i==0 and len(parts)==1):
                 if int(part) > 59:
-                    return (QtGui.QValidator.Invalid, input, pos)
+                    return (QtGui.QValidator.State.Invalid, input, pos)
             elif int(part) > 23:
-                return (QtGui.QValidator.Invalid, input, pos)
+                return (QtGui.QValidator.State.Invalid, input, pos)
         # validate the number of parts
         if len(parts)<2:
-            return (QtGui.QValidator.Intermediate, input, pos)
-        return (QtGui.QValidator.Acceptable, input, pos)
+            return (QtGui.QValidator.State.Intermediate, input, pos)
+        return (QtGui.QValidator.State.Acceptable, input, pos)
     
 class DateTimeEditor(CustomEditor):
     """Widget for editing date and time separated and with popups"""
@@ -83,8 +83,8 @@ class DateTimeEditor(CustomEditor):
                  field_name = 'datetime',
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )        
         self.setObjectName( field_name )
         import itertools
         self.nullable = nullable
@@ -107,7 +107,7 @@ class DateTimeEditor(CustomEditor):
         self.timeedit.activated.connect( self.editing_finished )
         self.timeedit.lineEdit().editingFinished.connect( self.editing_finished )
         self.timeedit.lineEdit().setPlaceholderText('--:--')
-        self.timeedit.setFocusPolicy( Qt.StrongFocus )
+        self.timeedit.setFocusPolicy( Qt.FocusPolicy.StrongFocus )
 
         layout.addWidget(self.timeedit, 1)
         # focus proxy is needed to activate the editor with a single click

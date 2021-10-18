@@ -119,7 +119,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def assert_vertical_size( self, editor ):
         self.assertEqual( editor.sizePolicy().verticalPolicy(),
-                          QtWidgets.QSizePolicy.Fixed )
+                          QtWidgets.QSizePolicy.Policy.Fixed )
 
     def test_DateEditor(self):
         editor = editors.DateEditor()
@@ -265,16 +265,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_DateTimeEditor(self):
         validator = TimeValidator()
-        self.assertEqual(validator._validate('22', 0), (QtGui.QValidator.Intermediate, '22', 0))
-        self.assertEqual(validator._validate('59', 0), (QtGui.QValidator.Intermediate, '59', 0))
-        self.assertEqual(validator._validate('22:', 0), (QtGui.QValidator.Intermediate,'22:',  0))
-        self.assertEqual(validator._validate(':17', 0), (QtGui.QValidator.Intermediate, ':17', 0))
-        self.assertEqual(validator._validate('22:7', 0), (QtGui.QValidator.Acceptable, '22:7', 0))
-        self.assertEqual(validator._validate('22:17', 0), (QtGui.QValidator.Acceptable, '22:17', 0))
-        self.assertEqual(validator._validate('1:17', 0), (QtGui.QValidator.Acceptable, '1:17', 0))
-        self.assertEqual(validator._validate('22:7:', 0), (QtGui.QValidator.Invalid, '22:7:', 0))
-        self.assertEqual(validator._validate('61', 0), (QtGui.QValidator.Invalid, '61', 0))
-        self.assertEqual(validator._validate('611', 0), (QtGui.QValidator.Invalid, '611', 0))
+        self.assertEqual(validator._validate('22', 0), (QtGui.QValidator.State.Intermediate, '22', 0))
+        self.assertEqual(validator._validate('59', 0), (QtGui.QValidator.State.Intermediate, '59', 0))
+        self.assertEqual(validator._validate('22:', 0), (QtGui.QValidator.State.Intermediate,'22:',  0))
+        self.assertEqual(validator._validate(':17', 0), (QtGui.QValidator.State.Intermediate, ':17', 0))
+        self.assertEqual(validator._validate('22:7', 0), (QtGui.QValidator.State.Acceptable, '22:7', 0))
+        self.assertEqual(validator._validate('22:17', 0), (QtGui.QValidator.State.Acceptable, '22:17', 0))
+        self.assertEqual(validator._validate('1:17', 0), (QtGui.QValidator.State.Acceptable, '1:17', 0))
+        self.assertEqual(validator._validate('22:7:', 0), (QtGui.QValidator.State.Invalid, '22:7:', 0))
+        self.assertEqual(validator._validate('61', 0), (QtGui.QValidator.State.Invalid, '61', 0))
+        self.assertEqual(validator._validate('611', 0), (QtGui.QValidator.State.Invalid, '611', 0))
         editor = editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
@@ -313,7 +313,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( 5.45 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
-        up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
+        up = QtGui.QKeyEvent(QtCore.QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         self.assertEqual(spinbox.minimum(), camelot_minfloat-1)
         self.assertEqual(spinbox.maximum(), camelot_maxfloat)
@@ -325,8 +325,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
-        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(
             parent=None, calculator=False, **self.editable_kwargs
@@ -567,7 +567,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         )
         # make sure a DisplayRole is available in the item, the standard
         # model otherwise returns the EditRole as a DisplayRole
-        item.setData(item.data(PreviewRole), Qt.DisplayRole)
+        item.setData(item.data(PreviewRole), Qt.ItemDataRole.DisplayRole)
         model.setItem(0, 0, item)
         index = model.index(0, 0, QtCore.QModelIndex())
 
@@ -583,22 +583,22 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         test_case_name = sys._getframe(1).f_code.co_name[5:]
 
         for state_name, state in zip(('selected', 'unselected'),
-                                     (QtWidgets.QStyle.State_Selected, 
-                                      QtWidgets.QStyle.State_None)):
+                                     (QtWidgets.QStyle.StateFlag.State_Selected,
+                                      QtWidgets.QStyle.StateFlag.State_None)):
             tableview.adjustSize()
 
-            if state == QtWidgets.QStyle.State_Selected:
-                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.Select)
+            if state == QtWidgets.QStyle.StateFlag.State_Selected:
+                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.SelectionFlag.Select)
             else:
-                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.Clear)
+                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.SelectionFlag.Clear)
 
             cell_size = tableview.visualRect(index).size()
 
             headers_size = QtCore.QSize(tableview.verticalHeader().width(),
                                         tableview.horizontalHeader().height())
 
-            tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
-            tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
+            tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarPolicy.ScrollBarAlwaysOff )
+            tableview.setVerticalScrollBarPolicy( Qt.ScrollBarPolicy.ScrollBarAlwaysOff )
 
             tableview.resize(cell_size + headers_size)
 
@@ -861,8 +861,8 @@ class ControlsTest(
         self.process()
         widget.table.horizontalHeader()
 
-        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
-        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
 
         self.assertTrue(first_name_width > suffix_width)
 
@@ -890,8 +890,8 @@ class ControlsTest(
         self.process()
         widget.table.horizontalHeader()
 
-        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
-        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
 
         self.assertEqual(first_name_width, suffix_width)
 
