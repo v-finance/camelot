@@ -251,7 +251,7 @@ class OpenQmlTableView(OpenTableView):
 
         # create QML item
         view = create_qml_item(
-            QtCore.QUrl("qrc:/qml/common/TablePage.qml"),
+            QtCore.QUrl("qrc:/vortex/qml/common/TablePage.qml"),
             { 'model': new_model, 'headerModel': header_model },
             engine
         )
