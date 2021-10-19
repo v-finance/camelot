@@ -194,18 +194,20 @@ the default mode.
     The icon of the mode
     """
     
-    def __init__( self, name, verbose_name=None, icon=None):
+    def __init__( self, name, verbose_name=None, icon=None, modes=[]):
         """
         :param name: the name of the mode, as it will be passed to the
             gui_run and model_run method
         :param verbose_name: the name shown to the user
         :param icon: the icon of the mode
+        :param modes: optionally, a list of sub modes.
         """
         self.name = name
         if verbose_name is None:
             verbose_name = name.capitalize()
         self.verbose_name = verbose_name
         self.icon = icon
+        self.modes = modes
         
     def render( self, parent ):
         """Create a :class:`QtWidgets.QAction` that can be used to enable widget
@@ -214,15 +216,22 @@ the default mode.
         
         :return: a :class:`QtWidgets.QAction` class to use this mode
         """
-        action = QtWidgets.QAction( parent )
-        action.setData( self.name )
-        action.setText( six.text_type(self.verbose_name) )
-        if self.icon is None:
-            action.setIconVisibleInMenu(False)
+        if self.modes:
+            menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
+            if self.icon is not None:
+                menu.setIcon(from_admin_icon(self.icon).getQIcon())
+            parent.addMenu(menu)
+            return menu
         else:
-            action.setIcon(self.icon.getQIcon())
-            action.setIconVisibleInMenu(True)
-        return action
+            action = QtWidgets.QAction( parent )
+            action.setData( self.name )
+            action.setText( six.text_type(self.verbose_name) )
+            if self.icon is None:
+                action.setIconVisibleInMenu(False)
+            else:
+                action.setIcon(self.icon.getQIcon())
+                action.setIconVisibleInMenu(True)
+            return action
         
 class ActionStep( object ):
     """A reusable part of an action.  Action step object can be yielded inside
