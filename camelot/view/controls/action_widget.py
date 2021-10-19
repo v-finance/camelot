@@ -106,16 +106,22 @@ class AbstractActionWidget( object ):
         :param state: a `camelot.admin.action.State` object
         :param parent: a parent for the menu
         """
-        if state.modes:
-            # self is not always a QWidget, so QMenu is created without
-            # parent
-            menu = self.menu()
-            if menu is None:
-                menu = QtWidgets.QMenu(parent=parent)
-                # setMenu does not transfer ownership
-                self.setMenu(menu)
-            menu.clear()
-            for mode in state.modes:
+        # self is not always a QWidget, so QMenu is created without
+        # parent
+        menu = self.menu()
+        if menu is None:
+            menu = QtWidgets.QMenu(parent=parent)
+            # setMenu does not transfer ownership
+            self.setMenu(menu)
+        menu.clear()
+        for mode in state.modes:
+            if mode.modes:
+                mode_menu = mode.render(menu)
+                for submode in mode.modes:
+                    submode_action = submode.render(mode_menu)
+                    submode_action.triggered.connect(self.action_triggered)
+                    mode_menu.addAction(submode_action)
+            else:
                 mode_action = mode.render(menu)
                 mode_action.triggered.connect(self.action_triggered)
                 menu.addAction(mode_action)
