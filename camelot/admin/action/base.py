@@ -200,7 +200,7 @@ the default mode.
             gui_run and model_run method
         :param verbose_name: the name shown to the user
         :param icon: the icon of the mode
-        :param modes: optionally, a list of sub modes.
+        :param modes: optionally, a list of sub modes. If defined, this mode will be rendered as a sub menu.
         """
         self.name = name
         if verbose_name is None:
@@ -210,11 +210,14 @@ the default mode.
         self.modes = modes
         
     def render( self, parent ):
-        """Create a :class:`QtWidgets.QAction` that can be used to enable widget
-        to trigger the action in a specific mode.  The data attribute of the
-        action will contain the name of the mode.
-        
-        :return: a :class:`QtWidgets.QAction` class to use this mode
+        """
+        In case this mode is a leaf (no containing sub modes), a :class:`QtWidgets.QAction`
+        will be created (or `QtWidgets.QMenu` in case this modes has sub modes defined)
+        that can be used to enable the widget to trigger the action in a specific mode.
+        The data attribute of the action will contain the name of the mode.
+        In case has underlying sub modes, a `QtWidgets.QMenu` will be created to which
+        the rendered sub modes can be attached.
+        :return: a :class:`QtWidgets.QAction` or :class:`QtWidgets.QMenu` to use this mode
         """
         if self.modes:
             menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
