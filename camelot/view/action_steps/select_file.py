@@ -37,7 +37,7 @@ from camelot.core.utils import ugettext as _
 from dataclasses import dataclass, field
 
 from ...core.serializable import DataclassSerializable
-from ...core.qt import QtWidgets, variant_to_py, py_to_variant, qt_api
+from ...core.qt import QtWidgets, variant_to_py, py_to_variant, QtCore
 
 @dataclass
 class SelectFile( ActionStep, DataclassSerializable ):
