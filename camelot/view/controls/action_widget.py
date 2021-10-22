@@ -113,9 +113,16 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode in state.modes:
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                if mode.modes:
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        submode_action.triggered.connect(self.action_triggered)
+                        mode_menu.addAction(submode_action)
+                else:
+                    mode_action = mode.render(menu)
+                    mode_action.triggered.connect(self.action_triggered)
+                    menu.addAction(mode_action)
 
     def set_menu_v2(self, state, parent):
         """This method creates a menu for an object with as its menu items
@@ -134,14 +141,22 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                if mode_data['icon'] is not None:
-                    icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color']) if mode_data['icon'] is not None else None
+                if mode_data['modes']:
+                    submodes = []
+                    for submode_data in mode_data['modes']:
+                        submode_icon = Icon(submode_data['icon']['name'], submode_data['icon']['pixmap_size'], submode_data['icon']['color']) if submode_data['icon'] is not None else None
+                        submodes.append(Mode(submode_data['name'], submode_data['verbose_name'], submode_icon))
+                    mode_menu = Mode(mode_data['name'], mode_data['verbose_name'], submode_icon, submodes)
+                    for submode in mode_menu.modes:
+                        submode_action = submode.render(mode_menu)
+                        submode_action.triggered.connect(self.action_triggered)
+                        mode_menu.addAction(submode_action)
                 else:
-                    icon = None
-                mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                    mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
+                    mode_action = mode.render(menu)
+                    mode_action.triggered.connect(self.action_triggered)
+                    menu.addAction(mode_action)
 
     # not named triggered to avoid confusion with standard Qt slot
     def action_triggered_by(self, sender):
