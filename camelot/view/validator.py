@@ -44,10 +44,10 @@ class DateValidator(QtGui.QValidator):
             date_from_string(str(input_))
         except ParsingError:
             if variant_api == 1:
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.State.Intermediate, pos)
             else:
-                return (QtGui.QValidator.Intermediate, input_, pos)
+                return (QtGui.QValidator.State.Intermediate, input_, pos)
         if variant_api == 1:
-            return (QtGui.QValidator.Acceptable, pos)
+            return (QtGui.QValidator.State.Acceptable, pos)
         else:
-            return (QtGui.QValidator.Acceptable, input_, pos)
+            return (QtGui.QValidator.State.Acceptable, input_, pos)

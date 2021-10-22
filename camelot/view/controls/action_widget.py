@@ -78,7 +78,7 @@ class AbstractActionWidget( object ):
                   args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             return
         if isinstance(self.gui_context, FormActionGuiContext):
             # the model might emit a dataChanged signal, while the widget mapper
@@ -167,20 +167,20 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance(sender, QtWidgets.QAction):
+        if isinstance(sender, QtGui.QAction):
             mode = str(variant_to_py(sender.data()))
         elif isinstance(sender, QtQuick.QQuickItem):
-            data = sender.data()
+            data = sender.mode()
             if isinstance(data, QtQml.QJSValue):
                 data = data.toVariant()
             mode = variant_to_py(data)
         self.run_action( mode )
 
 
-class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
+class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
-        QtWidgets.QAction.__init__( self, parent )
+        QtGui.QAction.__init__( self, parent )
         AbstractActionWidget.init( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
@@ -305,7 +305,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu(state, self)
         if state.modes:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
     def set_state_v2( self, state ):
         AbstractActionWidget.set_state_v2(self, state)
@@ -322,7 +322,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu_v2(state, self)
         if state['modes']:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
 
     @QtCore.qt_slot()

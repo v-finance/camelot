@@ -40,7 +40,7 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
     editor = editors.DateEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
@@ -51,7 +51,7 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     def get_standard_item(cls, locale, model_context):
         item = super(DateDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
-            value_str = str(locale.toString(model_context.value, QtCore.QLocale.ShortFormat))
+            value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
             item.setData(py_to_variant(value_str), PreviewRole)
         else:
             item.setData(py_to_variant(str()), PreviewRole)

@@ -84,7 +84,7 @@ strictly to the :class:`ModelContext`
         if window is not None:
             progress_dialog = window.findChild(
                 QtWidgets.QProgressDialog, 'application_progress',
-                Qt.FindDirectChildrenOnly
+                Qt.FindChildOption.FindDirectChildrenOnly
             )
             if progress_dialog is None:
                 progress_dialog = ProgressDialog(parent=window)
@@ -297,7 +297,7 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         from camelot.view.action_runner import ActionRunner
         runner = ActionRunner( self.model_run, gui_context )
-        runner.exec_()
+        runner.exec()
         
     def model_run( self, model_context, mode ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`
@@ -443,10 +443,10 @@ with a view.
             tooltip = str(self.tooltip)
 
         if isinstance(self.shortcut, QtGui.QKeySequence):
-            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
         elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
             for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
-                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
                 break
         elif self.shortcut is not None:
             tooltip = (tooltip or u'') + '\n' + str(self.shortcut)

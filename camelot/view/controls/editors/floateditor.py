@@ -58,7 +58,7 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         # inside the spinbox. This custom behaviour is only applicable
         # when being displayed inside a table view, hence the version check.
         # By ignoring key_event, the table view itself is scrolled instead.
-        if key_event.key() in (Qt.Key_Up, Qt.Key_Down):
+        if key_event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
             if self._option and self._option.version != 5:
                 key_event.ignore()
                 return
@@ -69,7 +69,7 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         decimal_point_in_unicode = ord(decimal_point)
         decimal_point_string = decimal_point
 
-        if key_event.key() == Qt.Key_Period and decimal_point_in_unicode != Qt.Key_Period:
+        if key_event.key() == Qt.Key.Key_Period and decimal_point_in_unicode != Qt.Key.Key_Period:
             # Dynamically build a 'new' event that holds this locales decimal separator
             new_key_event = QtGui.QKeyEvent(
                 key_event.type(),
@@ -111,10 +111,10 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         """
         result = super(CustomDoubleSpinBox, self).validate(qinput, pos)
         valid, qinput, new_pos = result
-        if valid!=QtGui.QValidator.Acceptable:
+        if valid!=QtGui.QValidator.State.Acceptable:
             # this code is based on QSpinBoxPrivate::validateAndInterpret
             if len(self.stripped(qinput))==0:
-                valid = QtGui.QValidator.Acceptable
+                valid = QtGui.QValidator.State.Acceptable
         return valid, qinput, new_pos
     
     def valueFromText(self, text):
@@ -139,18 +139,18 @@ class FloatEditor(CustomEditor):
                        **kwargs):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )        
         self._decimal = decimal
         self._calculator = calculator
-        action = QtWidgets.QAction(self)
-        action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
-        self.setFocusPolicy(Qt.StrongFocus)
+        action = QtGui.QAction(self)
+        action.setShortcut( QtGui.QKeySequence( Qt.Key.Key_F4.value ) )
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
         
         spinBox.setDecimals(2)
-        spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        spinBox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
 
         spinBox.addAction(action)
         self.calculatorButton = QtWidgets.QToolButton()
@@ -158,7 +158,7 @@ class FloatEditor(CustomEditor):
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
         self.calculatorButton.setToolTip('Calculator F4')
-        self.calculatorButton.setFocusPolicy(Qt.ClickFocus)
+        self.calculatorButton.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
         self.calculatorButton.clicked.connect(
             lambda:self.popupCalculator(spinBox.value())
@@ -192,7 +192,7 @@ class FloatEditor(CustomEditor):
         spinBox.setSuffix(str(kwargs.get('suffix', '')))
         spinBox.setSingleStep(kwargs.get('single_step', 1.0))
         spinBox.setReadOnly(not editable)
-        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.NoButtons)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
         precision = kwargs.get('precision')
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
@@ -233,7 +233,7 @@ class FloatEditor(CustomEditor):
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
-        calculator.exec_()
+        calculator.exec()
 
     @QtCore.qt_slot(str)
     def calculation_finished(self, value):

@@ -47,8 +47,8 @@ class FileEditor(CustomEditor):
                  remove_original=False,
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.storage = storage
         self.filename = None # the widget containing the filename
@@ -68,7 +68,7 @@ class FileEditor(CustomEditor):
         # Filename
         self.filename = DecoratedLineEdit( self )
         self.filename.set_minimum_width( 20 )
-        self.filename.setFocusPolicy( Qt.ClickFocus )
+        self.filename.setFocusPolicy( Qt.FocusPolicy.ClickFocus )
 
         # Setup layout
         self.document_label = QtWidgets.QLabel(self)

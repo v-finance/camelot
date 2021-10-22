@@ -63,7 +63,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         self.gui_context.workspace = self
 
         self.setObjectName('workspace_tab_widget')
-        self.setTabPosition(QtWidgets.QTabWidget.North)
+        self.setTabPosition(QtWidgets.QTabWidget.TabPosition.North)
         self.setDocumentMode(True)
         self.currentChanged.connect(self._tab_changed)
 
@@ -93,7 +93,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         """
         The active tab has changed, emit the view_activated signal.
         """
-        self.view_activated_signal.emit(self.active_view())
+        #self.view_activated_signal.emit(self.active_view())
 
     def active_view(self):
         """
@@ -194,13 +194,9 @@ def apply_form_state(view, parent, state):
     # position the new window in the center of the same screen
     # as the parent.
     # That parent might be a QWidget or a QWindow
-    if isinstance(parent, QtWidgets.QWidget):
-        screen = QtWidgets.QApplication.desktop().screenNumber(parent)
-    else:
-        screen = 0
-    geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
     decoration_width, decoration_height = 0, 0
     if parent is not None:
+        screen = parent.screen()
         # here we use the incorrect assumption that we can use the size of
         # the decorations of the parent window to know the size of the
         # decorations of the new window
@@ -210,10 +206,14 @@ def apply_form_state(view, parent, state):
         parent_frame = parent.frameGeometry()
         decoration_width = parent_frame.width() - parent_geometry.width()
         decoration_height = parent_frame.height() - parent_geometry.height()
+    else:
+        screen = QtCore.QCoreApplication.instance().primaryScreen()
+
+    geometry = screen.availableGeometry()
     if state == constants.MAXIMIZED:
-        view.setWindowState(QtCore.Qt.WindowMaximized)
+        view.setWindowState(QtCore.Qt.WindowState.WindowMaximized)
     elif state == constants.MINIMIZED:
-        view.setWindowState(QtCore.Qt.WindowMinimized)
+        view.setWindowState(QtCore.Qt.WindowState.WindowMinimized)
     elif state == constants.RIGHT:
         geometry.setLeft(geometry.center().x())
         view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
@@ -265,7 +265,7 @@ def show_top_level(view, parent, state=None):
     view.setWindowTitle(' ')
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
-    view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    view.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
     # parent might be a QWidget or a QWindow
     # the modality should be set before showing the window
     if isinstance(parent, QtWidgets.QWidget):

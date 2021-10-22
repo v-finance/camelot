@@ -66,6 +66,6 @@ def main_action(action):
     gui_context = ApplicationActionGuiContext()
     QtCore.QTimer.singleShot(0, functools.partial(action.gui_run, 
                                                    gui_context))
-    result = app.exec_()
+    result = app.exec()
     sys.exit( result )
 

@@ -106,7 +106,7 @@ class MainWindowProxy(QtCore.QObject):
         pass
 
     def eventFilter(self, qobject, event):
-        if event.type() == QtCore.QEvent.Close:
+        if event.type() == QtCore.QEvent.Type.Close:
             from camelot.view.model_thread import get_model_thread
             model_thread = get_model_thread()
             self.workspace.close_all_views()

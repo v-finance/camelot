@@ -100,7 +100,7 @@ class EditTextDocument( ActionStep ):
         try:
             dialog = self.render()
             with hide_progress_dialog( gui_context ):
-                dialog.exec_()
+                dialog.exec()
         finally:
             self.document.moveToThread( self.thread )
 

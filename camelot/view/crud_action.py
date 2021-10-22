@@ -107,9 +107,9 @@ class UpdateMixin(object):
             header_item.setData(py_to_variant(valid), ValidRole)
             header_item.setData(py_to_variant(message), ValidMessageRole)
             if action_state is not None:
-                header_item.setData(py_to_variant(action_state.tooltip), Qt.ToolTipRole)
-                header_item.setData(py_to_variant(str(action_state.verbose_name)), Qt.DisplayRole)
-                header_item.setData(py_to_variant(action_state.icon), Qt.DecorationRole)
+                header_item.setData(py_to_variant(action_state.tooltip), Qt.ItemDataRole.ToolTipRole)
+                header_item.setData(py_to_variant(str(action_state.verbose_name)), Qt.ItemDataRole.DisplayRole)
+                header_item.setData(py_to_variant(action_state.icon), Qt.ItemDataRole.DecorationRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
@@ -510,7 +510,7 @@ class Sort(RowCount):
 
     def model_run(self, model_context, mode):
         field_name = model_context.static_field_attributes[self.column]['field_name']
-        model_context.proxy.sort(field_name, self.order!=Qt.AscendingOrder)
+        model_context.proxy.sort(field_name, self.order!=Qt.SortOrder.AscendingOrder)
         yield from super(Sort, self).model_run(model_context, mode)
 
     def __repr__(self):

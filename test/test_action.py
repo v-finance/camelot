@@ -77,7 +77,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
 
         class CustomAction( Action ):
             verbose_name = 'Custom Action'
-            shortcut = QtGui.QKeySequence.New
+            shortcut = QtGui.QKeySequence.StandardKey.New
             modes = [
                 Mode('mode_1', _('First mode')),
                 Mode('mode_2', _('Second mode')),
@@ -462,11 +462,11 @@ class ListActionsCase(
         # sort and filter the original model
         item_view = self.gui_context.item_view
         list_model = item_view.model()
-        list_model.sort(1, Qt.DescendingOrder)
+        list_model.sort(1, Qt.SortOrder.DescendingOrder)
         list_model.timeout_slot()
         self.process()
-        list_model.headerData(0, Qt.Vertical, ObjectRole)
-        list_model.data(list_model.index(0, 0), Qt.DisplayRole)
+        list_model.headerData(0, Qt.Orientation.Vertical, ObjectRole)
+        list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
         list_model.timeout_slot()
         self.process()
         self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))

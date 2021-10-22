@@ -544,7 +544,7 @@ shortcut confusion and reduce the number of status updates.
         locale_name = QtCore.QLocale().name()
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
-                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
+                               QtCore.QLibraryInfo.path( QtCore.QLibraryInfo.LibraryPath.TranslationsPath ) ):
             translators.append(qt_translator)
         logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
         camelot_translator = self._load_translator_from_file(

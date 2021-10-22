@@ -17,7 +17,7 @@ class ItemViewProxy(QtCore.QObject):
     def _update_current_index(self):
         selection_model = self.selectionModel()
         selection_model.setCurrentIndex(
-            self.currentIndex(), QtCore.QItemSelectionModel.SelectCurrent
+            self.currentIndex(), QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
         )
 
     def model(self):

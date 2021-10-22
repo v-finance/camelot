@@ -83,7 +83,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         layout.addWidget( label )
         layout.addWidget( progress_bar )
         button_layout = QtWidgets.QHBoxLayout()
-        button_layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
+        button_layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
         button_layout.addWidget( copy_button )
@@ -172,8 +172,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             index = model.index(model.rowCount()-1, 0)
             model.setData(index,
                           py_to_variant(text),
-                          Qt.DisplayRole)
-            details.scrollTo(index, QtWidgets.QListView.PositionAtBottom)
+                          Qt.ItemDataRole.DisplayRole)
+            details.scrollTo(index, QtWidgets.QListView.ScrollHint.PositionAtBottom)
 
     def clear_details( self ):
         """Clear the detail text"""
@@ -186,8 +186,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def enlarge(self):
         """ Increase the size of the dialog window """
-        desktop = QtWidgets.QApplication.desktop()
-        geo = desktop.availableGeometry(self)
+        screen = self.screen()
+        geo = screen.availableGeometry()
         self.resize(geo.width() * 0.75, geo.height() * 0.75)
         frame = self.frameGeometry()
         frame.moveCenter(geo.center())

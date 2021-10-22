@@ -60,7 +60,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return item
 
     def setEditorData(self, editor, index):
-        value = variant_to_py(index.data(Qt.EditRole))
+        value = variant_to_py(index.data(Qt.ItemDataRole.EditRole))
         field_attributes = variant_to_py(index.data(FieldAttributesRole))
         editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)

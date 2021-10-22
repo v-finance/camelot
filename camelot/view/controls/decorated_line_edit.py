@@ -63,7 +63,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
             editor or a string that should fit in the editor
         """
         if isinstance( width, str ):
-            self.setMinimumWidth( self._font_metrics.width( width ) )
+            self.setMinimumWidth( self._font_metrics.horizontalAdvance( width ) )
         else:
             self.setMinimumWidth( self._font_metrics.averageCharWidth() )
 
@@ -88,7 +88,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
         self.setPalette(palette)
         
     def keyPressEvent(self, e):
-        if e.key() == QtCore.Qt.Key_Down:
+        if e.key() == QtCore.Qt.Key.Key_Down:
             self.arrow_down_key_pressed.emit()
         
         QtWidgets.QLineEdit.keyPressEvent(self, e)

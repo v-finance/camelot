@@ -166,7 +166,7 @@ class AbstractForm(AbstractFormElement):
                         for layout_item_index in range(f.count()):
                             layout_item = f.itemAt(layout_item_index)
                             layout_item_widget = layout_item.widget()
-                            if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
+                            if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtWidgets.QSizePolicy.Policy.Expanding:
                                 has_vertical_expanding_row = True
                         form_layout.addLayout(f, c.row, c.col, row_span, col_span)
                     elif isinstance(f, QtWidgets.QLayoutItem):
@@ -200,7 +200,7 @@ class AbstractForm(AbstractFormElement):
                     size_policy = editor.sizePolicy()
                 else:
                     log_programming_error(logger, 'widgets should contain a widget for field %s' % str(field))
-            if size_policy and size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
+            if size_policy and size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Policy.Expanding:
                 has_vertical_expanding_row = True
 
         if (not has_vertical_expanding_row) and toplevel and form_layout.rowCount():
@@ -211,8 +211,8 @@ class AbstractForm(AbstractFormElement):
             form_layout.setContentsMargins(0, 0, 0, 0)
 
         if toplevel or has_vertical_expanding_row:
-            form_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                      QtWidgets.QSizePolicy.Expanding)
+            form_widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                      QtWidgets.QSizePolicy.Policy.Expanding)
         form_widget.setLayout(form_layout)
 
         if form["scrollbars"]:
@@ -220,7 +220,7 @@ class AbstractForm(AbstractFormElement):
             # we should inherit parent's background color
             scroll_area.setWidget(form_widget)
             scroll_area.setWidgetResizable(True)
-            scroll_area.setFrameStyle(QtWidgets.QFrame.NoFrame)
+            scroll_area.setFrameStyle(QtWidgets.QFrame.Shape.NoFrame)
             return scroll_area
 
         logger.debug('end rendering %s' % cls.__name__)
@@ -264,8 +264,8 @@ class Label(AbstractFormElement):
             widget = QtWidgets.QLabel('<p align="%s" style="%s">%s</p>' % (form["alignment"], form["style"], str(form["label"])))
         else:
             widget = QtWidgets.QLabel('<p align="%s">%s</p>' % (form["alignment"], str(form["label"])))
-        widget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                             QtWidgets.QSizePolicy.Fixed)
+        widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                             QtWidgets.QSizePolicy.Policy.Fixed)
         return widget
 
 class DelayedTabWidget(QtWidgets.QTabWidget):
@@ -297,7 +297,7 @@ the moment the tab is shown.
         for i in range(len(tabs)):
             self.render_tab(i)
             if sum(self._vertical_expanding):
-                self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+                self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
                 #
                 # if one of the tabs is expanding, the others should have spacer
                 # items to stretch
@@ -326,7 +326,7 @@ the moment the tab is shown.
         layout.addWidget(tab_form_widget)
         tab_widget.setLayout(layout)
         size_policy = tab_form_widget.sizePolicy()
-        if size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Expanding:
+        if size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Policy.Expanding:
             self._vertical_expanding[index] = True
         else:
             self._vertical_expanding[index] = False
@@ -412,7 +412,7 @@ class TabForm(AbstractForm):
     def render(cls, widgets, form, parent=None, toplevel=False):
         logger.debug('rendering %s' % cls.__name__)
         widget = DelayedTabWidget(widgets, form["content"], parent)
-        widget.setTabPosition(getattr(QtWidgets.QTabWidget, form["position"]))
+        widget.setTabPosition(getattr(QtWidgets.QTabWidget.TabPosition, form["position"]))
         return widget
 
 @dataclass
@@ -645,7 +645,7 @@ class Stretch(AbstractFormElement):
     
     @classmethod
     def render(cls, widgets, form, parent=None, toplevel=False):
-        return QtWidgets.QSpacerItem(0, 0, vPolicy=QtWidgets.QSizePolicy.Expanding)
+        return QtWidgets.QSpacerItem(0, 0, vPolicy=QtWidgets.QSizePolicy.Policy.Expanding)
 
 @dataclass
 class GroupBoxForm(AbstractForm):

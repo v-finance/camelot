@@ -203,7 +203,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 if current_column is not None:
                     current_field_name = variant_to_py(
                         model.headerData(
-                            current_column, Qt.Horizontal, Qt.UserRole
+                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                         )
                     )
             if self.item_view.selectionModel() is not None:
@@ -323,7 +323,7 @@ list_label = ListLabel()
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
-    shortcut = QtGui.QKeySequence.Open
+    shortcut = QtGui.QKeySequence.StandardKey.Open
     icon = Icon('folder') # 'tango/16x16/places/folder.png'
     tooltip = _('Open')
     # verbose name is set to None to avoid displaying it in the vertical
@@ -383,7 +383,7 @@ duplicate_selection = DuplicateSelection()
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
-    shortcut = QtGui.QKeySequence.Delete
+    shortcut = QtGui.QKeySequence.StandardKey.Delete
     name = 'delete_selection'
     icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
@@ -451,7 +451,7 @@ delete_selection = DeleteSelection()
 class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToPreviousPage
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToPreviousPage
     icon = Icon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
     verbose_name = _('Previous')
@@ -485,7 +485,7 @@ to_previous_row = ToPreviousRow()
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToStartOfDocument
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToStartOfDocument
     icon = Icon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
     verbose_name = _('First')
@@ -503,7 +503,7 @@ to_first_row = ToFirstRow()
 class AbstractToNext(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToNextPage
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToNextPage
     icon = Icon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
     verbose_name = _('Next')
@@ -538,7 +538,7 @@ to_next_row = ToNextRow()
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToEndOfDocument
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToEndOfDocument
     icon = Icon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
     verbose_name = _('Last')
@@ -777,7 +777,7 @@ class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
     verbose_name = _('Select &All')
-    shortcut = QtGui.QKeySequence.SelectAll
+    shortcut = QtGui.QKeySequence.StandardKey.SelectAll
     tooltip = _('Select all rows in the table')
     name = 'select_all'
 
@@ -858,7 +858,7 @@ class ImportFromFile( EditAction ):
             #
             # Ask confirmation
             #
-            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Warning, 
+            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Icon.Warning, 
                                            title = _('Proceed with import'), 
                                            text = _('Importing data cannot be undone,\n'
                                                     'are you sure you want to continue') )
@@ -894,7 +894,7 @@ class ReplaceFieldContents( EditAction ):
     icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
-    shortcut = QtGui.QKeySequence.Replace
+    shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
 
     def gui_run( self, gui_context ):
@@ -1114,7 +1114,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     object to the session, and flush the object if it is valid.
     """
 
-    shortcut = QtGui.QKeySequence.New
+    shortcut = QtGui.QKeySequence.StandardKey.New
     icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')

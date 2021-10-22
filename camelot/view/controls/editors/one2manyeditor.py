@@ -82,9 +82,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         # parent set by layout manager
         table = AdminTableWidget(self)
         table.setObjectName('table')
-        layout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
+        layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                           QtWidgets.QSizePolicy.Policy.Expanding)
         self.setMinimumHeight((self._font_height + 5) * rows)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
@@ -113,7 +113,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             # might not be up to date at the time the currentRowChanged
             # signal is emitted
             selection_model.currentRowChanged.connect(
-                self.current_row_changed, type=Qt.QueuedConnection
+                self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
     def render_action(self, action, parent):
@@ -143,7 +143,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if action_routes is not None:
             toolbar = QtWidgets.QToolBar(self)
             toolbar.setIconSize(QtCore.QSize(16, 16))
-            toolbar.setOrientation(Qt.Vertical)
+            toolbar.setOrientation(Qt.Orientation.Vertical)
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
                 if not isinstance(action, (FieldAction, Filter)):
@@ -206,7 +206,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
                     txtwidth = variant_to_py(
-                        model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
+                        model.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
                     ).width()
                     table.setColumnWidth(i, txtwidth)
 

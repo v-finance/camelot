@@ -45,16 +45,13 @@ class ChoicesEditor(CustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
     keys and values"""
 
-    editingFinished = QtCore.qt_signal()
-    valueChanged = QtCore.qt_signal()
-
     def __init__( self,
                   parent = None,
                   nullable = True,
                   field_name = 'choices',
                   **kwargs ):
         super(ChoicesEditor, self).__init__(parent)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -81,7 +78,7 @@ class ChoicesEditor(CustomEditor):
         """Append an item in a combobox model
         :param data: a dictionary mapping roles to values
         """
-        item = QtGui.QStandardItem(data[Qt.DisplayRole])
+        item = QtGui.QStandardItem(data[Qt.ItemDataRole.DisplayRole])
         for role, value in data.items():
             if isinstance(value, Icon):
                 value = from_admin_icon(value).getQIcon()
@@ -97,21 +94,21 @@ class ChoicesEditor(CustomEditor):
         for choice in choices:
             if not isinstance(choice, dict):
                 (value, name) = choice
-                choice = {Qt.DisplayRole: str(name),
-                          Qt.UserRole: value}
+                choice = {Qt.ItemDataRole.DisplayRole: str(name),
+                          Qt.ItemDataRole.UserRole: value}
             else:
-                value = choice[Qt.UserRole]
+                value = choice[Qt.ItemDataRole.UserRole]
             cls.append_item(model, choice)
             if value is None:
                 none_available = True
         if not none_available:
-            cls.append_item(model, {Qt.DisplayRole: ' ',
-                                    Qt.UserRole: None})        
+            cls.append_item(model, {Qt.ItemDataRole.DisplayRole: ' ',
+                                    Qt.ItemDataRole.UserRole: None})        
         
     @classmethod
     def value_at_row(cls, model, row):
         if row >= 0:
-            value = variant_to_py(model.data(model.index(row, 0), Qt.UserRole))
+            value = variant_to_py(model.data(model.index(row, 0), Qt.ItemDataRole.UserRole))
         else:
             value = ValueLoading
         return value
@@ -120,11 +117,11 @@ class ChoicesEditor(CustomEditor):
     def row_with_value(cls, model, value, display_role):
         rows = model.rowCount()
         # remove the last item if it was an invalid one
-        if variant_to_py(model.data(model.index(rows-1, 0), Qt.UserRole+1))==True:
+        if variant_to_py(model.data(model.index(rows-1, 0), Qt.ItemDataRole.UserRole+1))==True:
             model.removeRow(rows-1)
             rows -= 1
         for i in range(rows):
-            if value == variant_to_py(model.data(model.index(i, 0), Qt.UserRole)):
+            if value == variant_to_py(model.data(model.index(i, 0), Qt.ItemDataRole.UserRole)):
                 return i
         # it might happen, that when we set the editor data, the set_choices
         # method has not happened yet or the choices don't contain the value
@@ -132,10 +129,10 @@ class ChoicesEditor(CustomEditor):
         if display_role is None:
             display_role = str(value)
         cls.append_item(model,
-                        {Qt.DisplayRole: display_role,
-                         Qt.BackgroundRole: QtGui.QBrush(ColorScheme.VALIDATION_ERROR),
-                         Qt.UserRole: value,
-                         Qt.UserRole+1: True})
+                        {Qt.ItemDataRole.DisplayRole: display_role,
+                         Qt.ItemDataRole.BackgroundRole: QtGui.QBrush(ColorScheme.VALIDATION_ERROR),
+                         Qt.ItemDataRole.UserRole: value,
+                         Qt.ItemDataRole.UserRole+1: True})
         return rows
             
     def set_choices( self, choices ):
@@ -146,9 +143,9 @@ class ChoicesEditor(CustomEditor):
         while value will be used within :meth:`get_value` and :meth:`set_value`.
 
         In case a list of dicts is used, the keys of the dict are used as the
-        roles, and the values as the value for that role, where `Qt.UserRole`
+        roles, and the values as the value for that role, where `Qt.ItemDataRole.UserRole`
         is the value that is passed through :meth:`get_value`,
-        eg : `{Qt.DisplayRole: "Hello", Qt.UserRole: 1}`
+        eg : `{Qt.ItemDataRole.DisplayRole: "Hello", Qt.ItemDataRole.UserRole: 1}`
 
         This method changes the items in the combo box while preserving the
         current value, even if this value is not in the new list of choices.

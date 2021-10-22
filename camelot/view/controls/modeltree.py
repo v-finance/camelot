@@ -65,7 +65,7 @@ class ModelTree(QtWidgets.QTreeWidget):
         logger.debug('creating new modeltree')
         super(ModelTree, self).__init__(parent)
         # we don't select entire rows
-        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectItems)
         
         # we track mouse movement when no button is pressed
         self.setMouseTracking(True)
@@ -74,8 +74,8 @@ class ModelTree(QtWidgets.QTreeWidget):
         self.setColumnCount(2)
         self.setColumnWidth(0, 160)
         self.setColumnWidth(1, 18)
-        self.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
-        self.setSelectionBehavior( self.SelectRows )
+        self.setHorizontalScrollBarPolicy( Qt.ScrollBarPolicy.ScrollBarAlwaysOff )
+        self.setSelectionBehavior( self.SelectionBehavior.SelectRows )
         
         self.clear_model_items()
         self.clear_section_items()
@@ -95,7 +95,7 @@ class ModelTree(QtWidgets.QTreeWidget):
 
     def mousePressEvent(self, event):
         """Custom context menu"""
-        if event.button() == Qt.RightButton:
+        if event.button() == Qt.MouseButton.RightButton:
             self.customContextMenuRequested.emit( event.pos() )
             event.accept()
         else:
