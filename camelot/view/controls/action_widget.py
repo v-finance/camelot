@@ -147,8 +147,9 @@ class AbstractActionWidget( object ):
                     for submode_data in mode_data['modes']:
                         submode_icon = Icon(submode_data['icon']['name'], submode_data['icon']['pixmap_size'], submode_data['icon']['color']) if submode_data['icon'] is not None else None
                         submodes.append(Mode(submode_data['name'], submode_data['verbose_name'], submode_icon))
-                    mode_menu = Mode(mode_data['name'], mode_data['verbose_name'], submode_icon, submodes)
-                    for submode in mode_menu.modes:
+                    mode = Mode(mode_data['name'], mode_data['verbose_name'], submode_icon, submodes)
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
                         submode_action = submode.render(mode_menu)
                         submode_action.triggered.connect(self.action_triggered)
                         mode_menu.addAction(submode_action)
