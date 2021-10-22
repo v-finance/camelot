@@ -177,7 +177,7 @@ the default mode.
             parent.addMenu(menu)
             return menu
         else:
-            action = QtWidgets.QAction( parent )
+            action = QtGui.QAction( parent )
             action.setData( self.name )
             action.setText( str(self.verbose_name) )
             if self.icon is None:
