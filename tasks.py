@@ -93,3 +93,14 @@ def source_check(ctx):
     """
     ctx.run('{}/bin/python -m pyflakes camelot camelot_example test'.format(default_test_env))
     ctx.run('echo Done')
+
+@task(positional=['ticket_nr', 'msg'], optional=['paths'])
+def commit(ctx, ticket_nr, msg, paths=None):
+    if not re.match('VFIN-[1-9][0-9]*', ticket_nr):
+        print('ERROR: the given JIRA ticket number is not valid. It should be in the form of VFIN-xxxx.')
+    else:
+        message = '{} #comment {}'.format(ticket_nr, msg)
+        if paths is None:
+            ctx.run('git commit -am "{}"'.format(message))
+        else:
+            ctx.run('git commit -m "{}" {}'.format(message, ' '.join(paths.split(','))))
