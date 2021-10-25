@@ -7,6 +7,9 @@ python_interpreter = '/vortex/x86_64-redhat-linux/default/bin/python3'
 build_dir = 'build'
 default_test_env = os.path.join(build_dir, 'env')
 
+JIRA_project_keys = ['VFIN', 'POLAPP', 'WP']
+JIRA_ticket_nr_regex = '('+ '|'.join(JIRA_project_keys) +')-[1-9][0-9]*'
+
 @task()
 def test(ctx, tests="test"):
     """
@@ -96,7 +99,7 @@ def source_check(ctx):
 
 @task(positional=['ticket_nr', 'msg'], optional=['paths'])
 def commit(ctx, ticket_nr, msg, paths=None):
-    if not re.match('VFIN-[1-9][0-9]*', ticket_nr):
+    if not re.match(JIRA_ticket_nr_regex, ticket_nr):
         print('ERROR: the given JIRA ticket number is not valid. It should be in the form of VFIN-xxxx.')
     else:
         message = '{} #comment {}'.format(ticket_nr, msg)
