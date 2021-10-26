@@ -446,7 +446,7 @@ class DateSearch(FieldFilter):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
-class IntSearch(FieldFilter):
+class IntFilter(FieldFilter):
     
     python_type = int
     
