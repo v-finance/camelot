@@ -74,7 +74,6 @@ class ProfileCase(unittest.TestCase):
     def setUp( self ):
         # Tests executed by the launcher should not use the vfinance QSettings
         QtCore.QCoreApplication.setApplicationName('camelot-tests')
-        QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
 
     def test_profile_state( self ):
         name, host, password = u'profile_tést', u'192.168.1.1', u'top-sécrèt'
