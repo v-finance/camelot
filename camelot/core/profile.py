@@ -238,7 +238,7 @@ class ProfileStore(object):
             for key in state.keys():
                 value = variant_to_py(qsettings.value(key, empty))
                 if (key != 'profilename') and (encrypted==1):
-                    value = self._decode(value or '')
+                    value = self._decode(value or b'')
                 else:
                     value = value
                 state[key] = value
