@@ -13,6 +13,7 @@ class ViewUtilsCase(unittest.TestCase):
     def setUp(self):
         # clear the date and time format cache to prevent different
         # locales to be used
+        utils._locale = None
         utils._local_date_format = None
         utils._local_datetime_format = None
         utils._local_time_format = None

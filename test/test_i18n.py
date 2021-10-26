@@ -17,6 +17,6 @@ class I18NTest(unittest.TestCase):
     def test_load_translators( self ):
         app_admin = ApplicationAdmin()
         QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
-        self.assertEqual(len( app_admin.get_translator() ), 1)
+        self.assertEqual(len( app_admin.get_translator() ), 2)
         QtCore.QLocale.setDefault(QtCore.QLocale('pt_BR'))
-        self.assertEqual(len( app_admin.get_translator() ), 2 )
+        self.assertEqual(len( app_admin.get_translator() ), 2)
