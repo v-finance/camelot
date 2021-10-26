@@ -76,8 +76,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.BoolDelegate,
         'from_string': bool_from_string,
         'operators' : (operator.eq,),
-        'search_strategy': list_filter.BoolSearch,
-        'filter_strategy': list_filter.BoolSearch,
+        'search_strategy': list_filter.BoolFilter,
+        'filter_strategy': list_filter.BoolFilter,
     },
 
     sqlalchemy.types.Date: lambda f: {
@@ -90,8 +90,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.DateDelegate,
         'from_string': date_from_string,
         'operators' : _numerical_operators,
-        'search_strategy': list_filter.DateSearch,
-        'filter_strategy': list_filter.DateSearch,
+        'search_strategy': list_filter.DateFilter,
+        'filter_strategy': list_filter.DateFilter,
     },
 
     sqlalchemy.types.Time : lambda f: {
@@ -104,8 +104,8 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'from_string': time_from_string,
         'operators': _numerical_operators,
-        'search_strategy': list_filter.TimeSearch,
-        'filter_strategy': list_filter.TimeSearch,
+        'search_strategy': list_filter.TimeFilter,
+        'filter_strategy': list_filter.TimeFilter,
     },
 
     sqlalchemy.types.DateTime : lambda f: {
@@ -118,8 +118,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.DateTimeDelegate,
         'from_string': datetime_from_string,
         'operators': _numerical_operators,
-        'search_strategy': list_filter.DateSearch,
-        'filter_strategy': list_filter.DateSearch,
+        'search_strategy': list_filter.DateFilter,
+        'filter_strategy': list_filter.DateFilter,
     },
 
     sqlalchemy.types.Float: lambda f: {
@@ -132,8 +132,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.FloatDelegate,
         'from_string': float_from_string,
         'operators': _numerical_operators,
-        'search_strategy': list_filter.DecimalSearch,
-        'filter_strategy': list_filter.DecimalSearch,
+        'search_strategy': list_filter.DecimalFilter,
+        'filter_strategy': list_filter.DecimalFilter,
     },
 
     sqlalchemy.types.Numeric: lambda f: {
@@ -147,8 +147,8 @@ _sqlalchemy_to_python_type_ = {
         'from_string': float_from_string,
         'operators': _numerical_operators,
         'decimal':True,
-        'search_strategy': list_filter.DecimalSearch,
-        'filter_strategy': list_filter.DecimalSearch,
+        'search_strategy': list_filter.DecimalFilter,
+        'filter_strategy': list_filter.DecimalFilter,
     },
 
     sqlalchemy.types.Integer: lambda f: {

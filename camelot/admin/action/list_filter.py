@@ -379,7 +379,7 @@ class StringFilter(FieldFilter):
     def value_to_string(self, filter_value, admin):
         return filter_value
     
-class DecimalSearch(FieldFilter):
+class DecimalFilter(FieldFilter):
     
     python_type = (float, decimal.Decimal)
     
@@ -406,7 +406,7 @@ class DecimalSearch(FieldFilter):
         value_str = standard_item.data(PreviewRole)
         return value_str.replace(suffix, '')
         
-class TimeSearch(FieldFilter):
+class TimeFilter(FieldFilter):
     
     python_type = datetime.time
     
@@ -426,7 +426,7 @@ class TimeSearch(FieldFilter):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
 
-class DateSearch(FieldFilter):
+class DateFilter(FieldFilter):
     
     python_type = datetime.date
     
@@ -467,7 +467,7 @@ class IntFilter(FieldFilter):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.EditRole))
 
-class BoolSearch(FieldFilter):
+class BoolFilter(FieldFilter):
     
     python_type = bool
     
