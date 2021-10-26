@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import random
-import string
 import tempfile
 import unittest
 
@@ -75,7 +73,7 @@ class ProfileCase(unittest.TestCase):
     
     def setUp( self ):
         # Tests executed by the launcher should not use the vfinance QSettings
-        QtCore.QCoreApplication.setApplicationName(''.join(random.choice(string.ascii_lowercase) for i in range(10)))
+        QtCore.QCoreApplication.setApplicationName('camelot-tests')
 
     def test_profile_state( self ):
         name, host, password = u'profile_tést', u'192.168.1.1', u'top-sécrèt'
