@@ -30,21 +30,29 @@
 """
 Actions to filter table views
 """
-
-from dataclasses import dataclass
 import datetime
 import decimal
+import operator
 
+from camelot.core.sql import like_op
 from camelot.view import utils
+
+from dataclasses import dataclass
+
 from sqlalchemy import orm, sql
+from sqlalchemy.sql.operators import between_op
 
 from ...core.utils import ugettext
 from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt
 from ...view.utils import locale
+
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
+
+_numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
+_text_operators = (operator.eq, operator.ne, like_op)
 
 @dataclass
 class FilterMode(Mode):
@@ -246,6 +254,7 @@ class FieldFilter(AbstractFilterStrategy):
     """
     
     attribute = None
+    operators = []
 
     def __init__(self, attribute, where=None, name=None, verbose_name=None):
         """
@@ -364,6 +373,7 @@ class NoFilter(FieldFilter):
 class StringFilter(FieldFilter):
     
     python_type = str
+    operators = _text_operators
     
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
@@ -382,6 +392,7 @@ class StringFilter(FieldFilter):
 class DecimalFilter(FieldFilter):
     
     python_type = (float, decimal.Decimal)
+    operators = _numerical_operators
     
     def get_type_clause(self, text, field_attributes):
         try:
@@ -409,6 +420,7 @@ class DecimalFilter(FieldFilter):
 class TimeFilter(FieldFilter):
     
     python_type = datetime.time
+    operators = _numerical_operators
     
     def get_type_clause(self, text, field_attributes):
         try:
@@ -429,6 +441,7 @@ class TimeFilter(FieldFilter):
 class DateFilter(FieldFilter):
     
     python_type = datetime.date
+    operators = _numerical_operators
     
     def get_type_clause(self, text, field_attributes):
         try:
@@ -449,6 +462,7 @@ class DateFilter(FieldFilter):
 class IntFilter(FieldFilter):
     
     python_type = int
+    operators = _numerical_operators
     
     def get_type_clause(self, text, field_attributes):
         try:
@@ -470,6 +484,7 @@ class IntFilter(FieldFilter):
 class BoolFilter(FieldFilter):
     
     python_type = bool
+    operators = (operator.eq,)
     
     def get_type_clause(self, text, field_attributes):
         try:
