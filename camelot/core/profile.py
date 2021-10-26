@@ -200,7 +200,6 @@ class ProfileStore(object):
         """Decrypt and decode a single value, this method is used to
         read profiles.
         """
-        import wingdbstub
         #print(value),
         base64_value = base64.b64decode( value.encode('ascii') )
         cipher = self._cipher()
