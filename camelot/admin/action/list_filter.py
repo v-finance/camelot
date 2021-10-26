@@ -200,15 +200,15 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
 
-class AbstractSearchStrategy(object):
+class AbstractFilterStrategy(object):
     """
-    Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
+    Abstract interface for defining filter clauses as part of an entity admin's query.
     """
-    
+
     def __init__(self, name, where=None, verbose_name=None):
         """
-        :param name: String that uniquely identifies this search strategy within the context of an admin/entity.
-        :param where: an optional additional condition that should be met for the search clause to apply.
+        :param name: String that uniquely identifies this filter strategy within the context of an admin/entity.
+        :param where: an optional additional condition that should be met for the filter clause to apply.
         :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's name.
         """
         assert isinstance(name, str)
@@ -226,7 +226,7 @@ class AbstractSearchStrategy(object):
     
     def value_to_string(self, filter_value, admin):
         """
-        Turn the given filter value into its corresponding string representation applicable for this search strategy, based on the given admin.
+        Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
         """
         raise NotImplementedError
     
@@ -239,7 +239,7 @@ class AbstractSearchStrategy(object):
             return self._verbose_name
         return ugettext(self.name.replace(u'_', u' ').capitalize())
 
-class FieldSearch(AbstractSearchStrategy):
+class FieldSearch(AbstractFilterStrategy):
     """
     Abstract interface for defining a column-based search clause on a queryable attribute of an entity, as part of that entity admin's search query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
@@ -290,7 +290,7 @@ class FieldSearch(AbstractSearchStrategy):
         """
         raise NotImplementedError
 
-class RelatedSearch(AbstractSearchStrategy):
+class RelatedSearch(AbstractFilterStrategy):
     """
     Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
     """

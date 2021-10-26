@@ -692,7 +692,7 @@ and used as a custom action.
         args = []
         
         for search_field in self._get_search_fields(text):
-            assert isinstance(search_field, list_filter.AbstractSearchStrategy)
+            assert isinstance(search_field, list_filter.AbstractFilterStrategy)
             arg = search_field.get_clause(text, self, query.session)
             if arg is not None:
                 args.append(arg)
