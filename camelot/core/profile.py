@@ -201,7 +201,7 @@ class ProfileStore(object):
         read profiles.
         """
         cipher = self._cipher()
-        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')
+        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8', errors='ignore')
 
     def _qsettings(self):
         # recreate QSettings each time it's needed, to make sure we're at
