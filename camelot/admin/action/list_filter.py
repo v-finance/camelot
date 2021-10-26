@@ -361,7 +361,7 @@ class NoFilter(FieldFilter):
     def get_verbose_name(self):
         return None
 
-class StringSearch(FieldFilter):
+class StringFilter(FieldFilter):
     
     python_type = str
     
