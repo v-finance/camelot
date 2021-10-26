@@ -186,8 +186,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.VirtualAddressDelegate,
         'operators' : _text_operators,
         'from_string' : lambda str:None,
-        'search_strategy': list_filter.NoSearch,
-        'filter_strategy': list_filter.NoSearch,
+        'search_strategy': list_filter.NoFilter,
+        'filter_strategy': list_filter.NoFilter,
     },
 
     camelot.types.RichText: lambda f: {
@@ -213,8 +213,8 @@ _sqlalchemy_to_python_type_ = {
         'widget': 'combobox',
         'operators' : _numerical_operators,
         'to_string': enumeration_to_string,
-        'search_strategy': list_filter.NoSearch,
-        'filter_strategy': list_filter.NoSearch,
+        'search_strategy': list_filter.NoFilter,
+        'filter_strategy': list_filter.NoFilter,
     },
 
     camelot.types.Language: lambda f: {
@@ -236,8 +236,8 @@ _sqlalchemy_to_python_type_ = {
         'storage': f.storage,
         'operators' : _text_operators,
         'remove_original': False,
-        'search_strategy': list_filter.NoSearch,
-        'filter_strategy': list_filter.NoSearch,
+        'search_strategy': list_filter.NoFilter,
+        'filter_strategy': list_filter.NoFilter,
         'actions': [
             field_action.DetachFile(),
             field_action.OpenFile(),
