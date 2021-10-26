@@ -48,7 +48,7 @@ from .qt import QtCore, variant_to_py, py_to_variant
 
 from camelot.core.conf import settings
 
-logger = logging.getLogger('camelot.core.dbprofiles')
+LOGGER = logging.getLogger('camelot.core.profile')
 
 profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
                    'port', 'media_location', 'locale_language', 'proxy_host',
@@ -200,8 +200,13 @@ class ProfileStore(object):
         """Decrypt and decode a single value, this method is used to
         read profiles.
         """
+        print('Value about to be decoded: {}'.format(value))
+        LOGGER.info('Value about to be decoded: {}'.format(value))
+        base64_value = base64.b64decode( value )
+        print('Base64 value: {}'.format(base64_value))
+        LOGGER.info('Base64: {}'.format(base64_value))
         cipher = self._cipher()
-        return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')
+        return cipher.decrypt( base64_value ).decode('utf-8')
     
     def _qsettings(self):
         # recreate QSettings each time it's needed, to make sure we're at
