@@ -162,8 +162,8 @@ _sqlalchemy_to_python_type_ = {
         'to_string': str,
         'widget': 'int',
         'operators': _numerical_operators,
-        'search_strategy': list_filter.IntSearch,
-        'filter_strategy': list_filter.IntSearch,
+        'search_strategy': list_filter.IntFilter,
+        'filter_strategy': list_filter.IntFilter,
     },
 
     sqlalchemy.types.String: lambda f: {
