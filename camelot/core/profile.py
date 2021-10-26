@@ -200,22 +200,9 @@ class ProfileStore(object):
         """Decrypt and decode a single value, this method is used to
         read profiles.
         """
-        #print(value),
-        base64_value = base64.b64decode( value.encode('ascii') )
         cipher = self._cipher()
-        decrypted = cipher.decrypt( base64_value )
-        try:
-            return decrypted.decode('utf-8')
-        except Exception:
-            print('Cipher key: {}'.format(self.cipher_key))
-            LOGGER.info('Cipher key: {}'.format(self.cipher_key))
-            print('Value about to be decoded: {}'.format(value))
-            LOGGER.info('Value about to be decoded: {}'.format(value))
-            print('Base64 value: {}'.format(base64_value))
-            LOGGER.info('Base64 value: {}'.format(base64_value))
-            print('Decrypted value: {}'.format(decrypted))
-            LOGGER.info('Decrypted value: {}'.format(decrypted))            
-    
+        return cipher.decrypt( base64.b64decode( value.encode('ascii') ) ).decode('utf-8')
+
     def _qsettings(self):
         # recreate QSettings each time it's needed, to make sure we're at
         # the same entry point
