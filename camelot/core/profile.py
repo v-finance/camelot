@@ -200,7 +200,9 @@ class ProfileStore(object):
         """Decrypt and decode a single value, this method is used to
         read profiles.
         """
-        base64_value = base64.b64decode( value )        
+        import wingdbstub
+        #print(value),
+        base64_value = base64.b64decode( value.encode('ascii') )
         cipher = self._cipher()
         decrypted = cipher.decrypt( base64_value )
         try:
@@ -250,7 +252,7 @@ class ProfileStore(object):
             for key in state.keys():
                 value = variant_to_py(qsettings.value(key, empty))
                 if (key != 'profilename') and (encrypted==1):
-                    value = self._decode(value or b'')
+                    value = self._decode(value or '')
                 else:
                     value = value
                 state[key] = value
