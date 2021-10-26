@@ -203,15 +203,14 @@ class ProfileStore(object):
         base64_value = base64.b64decode( value )        
         cipher = self._cipher()
         try:
-            decoded = cipher.decrypt( base64_value ).decode('utf-8')
+            return cipher.decrypt( base64_value ).decode('utf-8')
         except Exception:
             print('Cipher key: {}'.format(self.cipher_key))
             LOGGER.info('Cipher key: {}'.format(self.cipher_key))
             print('Value about to be decoded: {}'.format(value))
             LOGGER.info('Value about to be decoded: {}'.format(value))
             print('Base64 value: {}'.format(base64_value))
-            LOGGER.info('Base64: {}'.format(base64_value))            
-        return decoded
+            LOGGER.info('Base64: {}'.format(base64_value))
     
     def _qsettings(self):
         # recreate QSettings each time it's needed, to make sure we're at
