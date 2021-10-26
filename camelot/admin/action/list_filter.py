@@ -239,9 +239,9 @@ class AbstractFilterStrategy(object):
             return self._verbose_name
         return ugettext(self.name.replace(u'_', u' ').capitalize())
 
-class FieldSearch(AbstractFilterStrategy):
+class FieldFilter(AbstractFilterStrategy):
     """
-    Abstract interface for defining a column-based search clause on a queryable attribute of an entity, as part of that entity admin's search query.
+    Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
     """
     
@@ -249,7 +249,7 @@ class FieldSearch(AbstractFilterStrategy):
 
     def __init__(self, attribute, where=None, name=None, verbose_name=None):
         """
-        :param attribute: a queryable attribute for which this field search should be applied. It's key will be used as this field search's name.
+        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter name.
         :param name: Optional string to use as this strategy's name. By default the attribute's key will be used.
         """
         self.assert_valid_attribute(attribute)
@@ -267,7 +267,7 @@ class FieldSearch(AbstractFilterStrategy):
             if isinstance(expression, sql.selectable.Select):
                 expression = expression.as_scalar()
             python_type = expression.type.python_type
-        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
+        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
     
     def get_clause(self, text, admin, session):
         """
@@ -290,24 +290,24 @@ class FieldSearch(AbstractFilterStrategy):
         """
         raise NotImplementedError
 
-class RelatedSearch(AbstractFilterStrategy):
+class RelatedFilter(AbstractFilterStrategy):
     """
-    Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
+    Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
     """
 
-    def __init__(self, *field_searches, joins, where=None, name=None, verbose_name=None):
+    def __init__(self, *field_filters, joins, where=None, name=None, verbose_name=None):
         """
-        :param field_searches: field search strategies for the search fields on which this related search should apply.
-        :param joins: join definition between the entity on which the search query this related search is part of takes place,
-                      and the related entity of the given field searches.
-        :param name: Optional string to use as this strategy's name. By default the name of this related search's first field search will be used.
+        :param field_filters: field filter strategies for the fields on which this related filter should apply.
+        :param joins: join definition between the entity on which the query this related filter is part of takes place,
+                      and the related entity of the given field filters.
+        :param name: Optional string to use as this strategy's name. By default the name of this related filter's first field filter will be used.
         """
         assert isinstance(joins, list) and len(joins) > 0
-        for field_search in field_searches:
-            assert isinstance(field_search, FieldSearch)
-        name = name or field_searches[0].name
+        for field_search in field_filters:
+            assert isinstance(field_search, FieldFilter)
+        name = name or field_filters[0].name
         super().__init__(name, where, verbose_name)
-        self.field_searches = field_searches
+        self.field_filters = field_filters
         self.joins = joins
 
     def get_clause(self, text, admin, session):
@@ -317,33 +317,33 @@ class RelatedSearch(AbstractFilterStrategy):
         where the search clauses of each.
         The subquery is composed based on this related search strategy's joins and where condition,
         """        
-        related_search_query = session.query(admin.entity.id)
+        related_query = session.query(admin.entity.id)
 
         for join in self.joins:
-            related_search_query = related_search_query.join(join)
+            related_query = related_query.join(join)
 
         if self.where is not None:
-            related_search_query.filter(self.where)
+            related_query.filter(self.where)
 
-        field_search_clauses = []
-        for field_search in self.field_searches:
-            related_admin = admin.get_related_admin(field_search.attribute.class_)
-            field_search_clause = field_search.get_clause(text, related_admin, session)
-            if field_search_clause is not None:
-                field_search_clauses.append(field_search_clause)
+        field_filter_clauses = []
+        for field_filter in self.field_filters:
+            related_admin = admin.get_related_admin(field_filter.attribute.class_)
+            field_filter_clause = field_filter.get_clause(text, related_admin, session)
+            if field_filter_clause is not None:
+                field_filter_clauses.append(field_filter_clause)
                 
-        if field_search_clauses:
-            related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
-            related_search_query = related_search_query.subquery()
-            search_clause = admin.entity.id.in_(related_search_query)
+        if field_filter_clauses:
+            related_query = related_query.filter(sql.or_(*field_filter_clauses))
+            related_query = related_query.subquery()
+            search_clause = admin.entity.id.in_(related_query)
             return search_clause
     
     def value_to_string(self, filter_value, admin):
-        for field_search in self.field_searches:
-            related_admin = admin.get_related_admin(field_search.attribute.class_)
-            return field_search.value_to_string(filter_value, related_admin)
+        for field_filter in self.field_filters:
+            related_admin = admin.get_related_admin(field_filter.attribute.class_)
+            return field_filter.value_to_string(filter_value, related_admin)
 
-class NoSearch(FieldSearch):
+class NoSearch(FieldFilter):
     
     def __init__(self, attribute):
         super().__init__(attribute, name=str(attribute))
@@ -361,7 +361,7 @@ class NoSearch(FieldSearch):
     def get_verbose_name(self):
         return None
 
-class StringSearch(FieldSearch):
+class StringSearch(FieldFilter):
     
     python_type = str
     
@@ -379,7 +379,7 @@ class StringSearch(FieldSearch):
     def value_to_string(self, filter_value, admin):
         return filter_value
     
-class DecimalSearch(FieldSearch):
+class DecimalSearch(FieldFilter):
     
     python_type = (float, decimal.Decimal)
     
@@ -406,7 +406,7 @@ class DecimalSearch(FieldSearch):
         value_str = standard_item.data(PreviewRole)
         return value_str.replace(suffix, '')
         
-class TimeSearch(FieldSearch):
+class TimeSearch(FieldFilter):
     
     python_type = datetime.time
     
@@ -426,7 +426,7 @@ class TimeSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
 
-class DateSearch(FieldSearch):
+class DateSearch(FieldFilter):
     
     python_type = datetime.date
     
@@ -446,7 +446,7 @@ class DateSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
-class IntSearch(FieldSearch):
+class IntSearch(FieldFilter):
     
     python_type = int
     
@@ -467,7 +467,7 @@ class IntSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.EditRole))
 
-class BoolSearch(FieldSearch):
+class BoolSearch(FieldFilter):
     
     python_type = bool
     
