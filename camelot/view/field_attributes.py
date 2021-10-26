@@ -175,8 +175,8 @@ _sqlalchemy_to_python_type_ = {
         'widget': 'str',
         'from_string': string_from_string,
         'operators' : _text_operators,
-        'search_strategy': list_filter.StringSearch,
-        'filter_strategy': list_filter.StringSearch,
+        'search_strategy': list_filter.StringFilter,
+        'filter_strategy': list_filter.StringFilter,
     },
 
     camelot.types.VirtualAddress: lambda f: {
@@ -198,8 +198,8 @@ _sqlalchemy_to_python_type_ = {
         'from_string': string_from_string,
         'operators' : [],
         'to_string': richtext_to_string,
-        'search_strategy': list_filter.StringSearch,
-        'filter_strategy': list_filter.StringSearch,
+        'search_strategy': list_filter.StringFilter,
+        'filter_strategy': list_filter.StringFilter,
     },
 
     camelot.types.Enumeration: lambda f: {
@@ -225,8 +225,8 @@ _sqlalchemy_to_python_type_ = {
         'editable': True,
         'nullable': False,
         'widget': 'combobox',
-        'search_strategy': list_filter.StringSearch,
-        'filter_strategy': list_filter.StringSearch,
+        'search_strategy': list_filter.StringFilter,
+        'filter_strategy': list_filter.StringFilter,
     },
 
     camelot.types.File : lambda f: {
