@@ -335,15 +335,15 @@ class RelatedFilter(AbstractFilterStrategy):
         if field_filter_clauses:
             related_query = related_query.filter(sql.or_(*field_filter_clauses))
             related_query = related_query.subquery()
-            search_clause = admin.entity.id.in_(related_query)
-            return search_clause
+            filter_clause = admin.entity.id.in_(related_query)
+            return filter_clause
     
     def value_to_string(self, filter_value, admin):
         for field_filter in self.field_filters:
             related_admin = admin.get_related_admin(field_filter.attribute.class_)
             return field_filter.value_to_string(filter_value, related_admin)
 
-class NoSearch(FieldFilter):
+class NoFilter(FieldFilter):
     
     def __init__(self, attribute):
         super().__init__(attribute, name=str(attribute))
