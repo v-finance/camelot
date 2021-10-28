@@ -684,8 +684,8 @@ be specified using the verbose_name attribute.
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
                 name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
-                search_strategy=list_filter.NoSearch,
-                filter_strategy=list_filter.NoSearch,
+                search_strategy=list_filter.NoFilter,
+                filter_strategy=list_filter.NoFilter,
                 action_routes=[],
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
@@ -786,17 +786,17 @@ be specified using the verbose_name attribute.
         
         # Initialize search & filter strategies with the retrieved corresponding attribute.
         # We take the field_name as the default, to handle properties that do not exist on the admin's entity class.
-        # This handles regular object properties that may only be defined at construction time, as long as they have a NoSearch strategy,
+        # This handles regular object properties that may only be defined at construction time, as long as they have a NoFilter strategy,
         # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
         # which is enforced by the strategy constructor.
 
         descriptor = self._get_entity_descriptor(field_name)
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
-        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldSearch):
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldFilter):
             field_attributes['filter_strategy'] = filter_strategy(attribute)
         search_strategy = field_attributes['search_strategy']
-        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldSearch):
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldFilter):
             field_attributes['search_strategy'] = search_strategy(attribute)
     
     def _get_entity_descriptor(self, field_name):
@@ -1061,11 +1061,11 @@ be specified using the verbose_name attribute.
     def get_field_filters(self):
         """
         Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
-        This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoSearch strategies and concrete field strategies are not applicable for regular objects.
+        This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoFilter strategies and concrete field strategies are not applicable for regular objects.
         The resulting dictionary is cached so that the conversion is not executed needlessly.
         """
         if self._field_filters is None:
-            self._field_filters =  {strategy.name: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoSearch)}
+            self._field_filters =  {strategy.name: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
         return self._field_filters
     def _get_field_strategies(self):
         """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""

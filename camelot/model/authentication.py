@@ -182,7 +182,7 @@ class AuthenticationMechanism( Entity ):
                 'max_size': 100000,
                 'preview_width': 100,
                 'preview_height': 200,
-                'search_strategy': list_filter.NoSearch
+                'search_strategy': list_filter.NoFilter
                 }}
 
 class AuthenticationGroup( Entity ):

@@ -618,7 +618,8 @@ class EntityAdminCase(TestMetaData):
         admin = self.app_admin.get_related_admin(A)
         fa = admin.get_field_attributes('h')
         self.assertEqual( fa['editable'], True )
-        self.assertTrue( fa['operators'] )
+        self.assertTrue( fa['filter_strategy'] )
+        self.assertTrue( fa['search_strategy'] )
         self.assertEqual( fa['field_name'], 'h' )
         
         fa = admin.get_field_attributes('i')
