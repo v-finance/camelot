@@ -37,7 +37,6 @@ import sqlalchemy.types
 
 import camelot.types
 import datetime
-import operator
 
 from .controls import delegates
 from ..admin.action import list_filter, field_action
