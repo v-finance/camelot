@@ -212,6 +212,7 @@ class AbstractFilterStrategy(object):
     """
     Abstract interface for defining filter clauses as part of an entity admin's query.
     """
+    operators = []
 
     def __init__(self, name, where=None, verbose_name=None):
         """
@@ -254,7 +255,6 @@ class FieldFilter(AbstractFilterStrategy):
     """
     
     attribute = None
-    operators = []
 
     def __init__(self, attribute, where=None, name=None, verbose_name=None):
         """
