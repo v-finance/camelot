@@ -951,15 +951,11 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('filter')
     name = 'filter'
 
-    def get_field_name_choices(self, model_context):
-        """
-        :return: a list of choices with the fields the user can select to
-           filter upon.
-        """
-        filter_strategies = model_context.admin.get_field_filters()
-        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
-        field_choices.sort(key=lambda choice:choice[1])
-        return field_choices
+    def get_filter_strategies(self, model_context):
+        """:return: a list of field strategies the user can select."""
+        filter_strategies = list(model_context.admin.get_field_filters().items())
+        filter_strategies.sort(key=lambda choice:choice[1].get_verbose_name())
+        return filter_strategies
 
     def model_run( self, model_context, mode ):
         from camelot.admin.object_admin import ObjectAdmin
@@ -1024,11 +1020,10 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
-        for name, verbose_name in self.get_field_name_choices(model_context):
-            if name in filter_value:
-                modes.append(Mode(name, verbose_name, icon=Icon('check-circle')))
-            else:
-                modes.append(Mode(name, verbose_name))
+        for name, filter_strategy in self.get_filter_strategies(model_context):
+            icon = Icon('check-circle') if name in filter_value else None
+            operators = [Mode(op.__name__, _(op.__name__)) for op in filter_strategy.operators]
+            modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
