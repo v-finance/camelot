@@ -39,8 +39,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
-from camelot.core.utils import ugettext
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import delegates, editors
@@ -79,16 +78,12 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   action_states,
                   accept,
                   reject,
-                  title =  _('Please complete'),
-                  subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
                   flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
-        self.set_banner_title( str(title) )
-        self.set_banner_subtitle( str(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
         model = CollectionProxy(admin_route)
@@ -287,6 +282,8 @@ class ChangeObject(ActionStep):
     form_actions: List[Action] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     admin_route: AdminRoute = field(init=False)
+    title: typing.Union[str, ugettext_lazy, None] = _('Please complete')
+    subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
     accept = _('OK')
     reject = _('Cancel')
 
@@ -328,6 +325,8 @@ class ChangeObject(ActionStep):
                                     self.action_states,
                                     self.accept,
                                     self.reject)
+        dialog.set_banner_title(str(self.title))
+        dialog.set_banner_subtitle(str(self.subtitle))
         return dialog
 
     def gui_run( self, gui_context ):
