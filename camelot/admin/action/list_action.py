@@ -940,9 +940,51 @@ class FieldFilter(object):
 
 class FilterValue(object):
 
+    filter_strategy = None
+    _filter_values = {}
+
     def __init__(self, value_1=None, value_2=None):
         self.value_1 = value_1
         self.value_2 = value_2
+
+    @classmethod
+    def get_filter_value(cls, filter_strategy):
+        """
+        Get the default :class:`FilterValue` class for the given specific filter
+        strategy class, return None, if not known.  The FilterValue
+        should either be registered through the :meth:`register` method or be
+        defined as an inner class with name :keyword:`Value` of the filter strategy.
+
+        :param filter_strategy: a subclass of :class:``camelot.admin.action.list_filter.AbstractFilterStrategy`
+        """
+        try:
+            return cls._filter_values[filter_strategy]
+        except KeyError:
+            for strategy_cls in filter_strategy.__mro__:
+                value_class = cls._filter_values.get(strategy_cls, None)
+                if value_class is None:
+                    if hasattr(strategy_cls, 'Value'):
+                        value_class = strategy_cls.Value
+                        value_class.filter_strategy = filter_strategy
+                        break
+                else:
+                    break
+            else:
+                raise Exception('Could not construct a default filter value class')
+            cls._filter_values[filter_strategy] = value_class
+            return value_class
+
+    @classmethod
+    def register(cls, filter_strategy, value_class):
+        """
+        Associate a certain FilterValue class with a filter strategy.
+        This FilterValue will be used as default.
+
+        :param filter_strategy: :class:`camelot.admin.action.list_filter.AbstractFilterStrategy`
+        :param value_class: a subclass of `FilterValue.`
+        """
+        assert value_class.filter_strategy == filter_strategy
+        cls._filter_values[filter_strategy] = value_class
 
 class SetFilters(Action, AbstractModelFilter):
     """
