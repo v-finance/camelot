@@ -937,7 +937,13 @@ class FieldFilter(object):
     
     def __init__(self, value=None):
         self.value = value
-    
+
+class FilterValue(object):
+
+    def __init__(self, value_1=None, value_2=None):
+        self.value_1 = value_1
+        self.value_2 = value_2
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
