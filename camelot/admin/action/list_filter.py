@@ -214,6 +214,7 @@ class AbstractFilterStrategy(object):
     :attribute name: string that uniquely identifies this filter strategy class.
     """
     operators = []
+    name = None
 
     def __init__(self, key, where=None, verbose_name=None):
         """
@@ -254,7 +255,7 @@ class FieldFilter(AbstractFilterStrategy):
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
     """
-    
+
     attribute = None
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None):
@@ -305,6 +306,8 @@ class RelatedFilter(AbstractFilterStrategy):
     Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
     """
 
+    name = 'related_filter'
+
     def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
         :param field_filters: field filter strategies for the fields on which this related filter should apply.
@@ -354,7 +357,9 @@ class RelatedFilter(AbstractFilterStrategy):
             return field_filter.value_to_string(filter_value, related_admin)
 
 class NoFilter(FieldFilter):
-    
+
+    name = 'no_filter'
+
     def __init__(self, attribute):
         super().__init__(attribute, key=str(attribute))
         
@@ -373,6 +378,7 @@ class NoFilter(FieldFilter):
 
 class StringFilter(FieldFilter):
     
+    name = 'string_filter'
     python_type = str
     operators = _text_operators
     
@@ -392,6 +398,7 @@ class StringFilter(FieldFilter):
     
 class DecimalFilter(FieldFilter):
     
+    name = 'decimal_filter'
     python_type = (float, decimal.Decimal)
     operators = _numerical_operators
     
@@ -440,7 +447,8 @@ class TimeFilter(FieldFilter):
         return standard_item.data(PreviewRole)
 
 class DateFilter(FieldFilter):
-    
+
+    name = 'date_filter'
     python_type = datetime.date
     operators = _numerical_operators
     
@@ -461,7 +469,8 @@ class DateFilter(FieldFilter):
         return standard_item.data(PreviewRole)
     
 class IntFilter(FieldFilter):
-    
+
+    name = 'int_filter'
     python_type = int
     operators = _numerical_operators
     
@@ -483,7 +492,8 @@ class IntFilter(FieldFilter):
         return to_string(standard_item.data(Qt.EditRole))
 
 class BoolFilter(FieldFilter):
-    
+
+    name = 'bool_filter'
     python_type = bool
     operators = (operator.eq,)
     
