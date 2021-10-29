@@ -1,8 +1,10 @@
 """
 Admin classes for Filter strategies
 """
-
+import copy
 import logging
+
+from camelot.core.utils import ugettext_lazy as _
 
 from .action import list_filter
 from .action.list_action import FilterValue
@@ -13,7 +15,12 @@ LOGGER = logging.getLogger('camelot.admin.filter_admin')
 
 class FilterValueAdmin(ObjectAdmin):
 
+    verbose_name = _('Filter')
     list_display = ['value_1', 'value_2']
+    field_attributes = {
+        'value_1': {'editable': True},
+        'value_2': {'editable': True},
+    }
 
     def __init__(self, app_admin, entity):
         assert issubclass(entity, FilterValue), '{} is not a FilterValue class'.format(entity)
@@ -44,9 +51,12 @@ for strategy_cls, delegate in [
 
         class Admin(FilterValueAdmin):
 
-            field_attributes = {
+            field_attributes = copy.copy(FilterValueAdmin.field_attributes)
+            attributes_dict = {
                 'value_1': {'delegate': delegate},
                 'value_2': {'delegate': delegate},
             }
+            for field_name, attributes in attributes_dict.items():
+                field_attributes.setdefault(field_name, {}).update(attributes)
 
         new_value_cls.Admin = Admin
