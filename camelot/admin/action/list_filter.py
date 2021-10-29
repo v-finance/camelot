@@ -211,17 +211,18 @@ class ComboBoxFilter(Filter):
 class AbstractFilterStrategy(object):
     """
     Abstract interface for defining filter clauses as part of an entity admin's query.
+    :attribute name: string that uniquely identifies this filter strategy class.
     """
     operators = []
 
-    def __init__(self, name, where=None, verbose_name=None):
+    def __init__(self, key, where=None, verbose_name=None):
         """
-        :param name: String that uniquely identifies this filter strategy within the context of an admin/entity.
+        :param key: String that identifies this filter strategy instance within the context of an admin/entity.
         :param where: an optional additional condition that should be met for the filter clause to apply.
-        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's name.
+        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's key.
         """
-        assert isinstance(name, str)
-        self._name = name
+        assert isinstance(key, str)
+        self._key = key
         self.where = where
         self._verbose_name = verbose_name
     
@@ -240,13 +241,13 @@ class AbstractFilterStrategy(object):
         raise NotImplementedError
     
     @property
-    def name(self):
-        return self._name
+    def key(self):
+        return self._key
     
     def get_verbose_name(self):
         if self._verbose_name is not None:
             return self._verbose_name
-        return ugettext(self.name.replace(u'_', u' ').capitalize())
+        return ugettext(self.key.replace(u'_', u' ').capitalize())
 
 class FieldFilter(AbstractFilterStrategy):
     """
@@ -256,14 +257,14 @@ class FieldFilter(AbstractFilterStrategy):
     
     attribute = None
 
-    def __init__(self, attribute, where=None, name=None, verbose_name=None):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None):
         """
-        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter name.
-        :param name: Optional string to use as this strategy's name. By default the attribute's key will be used.
+        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
+        :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
         """
         self.assert_valid_attribute(attribute)
-        name = name or attribute.key
-        super().__init__(name, where, verbose_name)
+        key = key or attribute.key
+        super().__init__(key, where, verbose_name)
         self.attribute = attribute
     
     @classmethod
@@ -304,18 +305,18 @@ class RelatedFilter(AbstractFilterStrategy):
     Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
     """
 
-    def __init__(self, *field_filters, joins, where=None, name=None, verbose_name=None):
+    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
         :param field_filters: field filter strategies for the fields on which this related filter should apply.
         :param joins: join definition between the entity on which the query this related filter is part of takes place,
                       and the related entity of the given field filters.
-        :param name: Optional string to use as this strategy's name. By default the name of this related filter's first field filter will be used.
+        :param key: Optional string to use as this strategy's key. By default the key of this related filter's first field filter will be used.
         """
         assert isinstance(joins, list) and len(joins) > 0
         for field_search in field_filters:
             assert isinstance(field_search, FieldFilter)
-        name = name or field_filters[0].name
-        super().__init__(name, where, verbose_name)
+        key = key or field_filters[0].key
+        super().__init__(key, where, verbose_name)
         self.field_filters = field_filters
         self.joins = joins
 
@@ -355,7 +356,7 @@ class RelatedFilter(AbstractFilterStrategy):
 class NoFilter(FieldFilter):
     
     def __init__(self, attribute):
-        super().__init__(attribute, name=str(attribute))
+        super().__init__(attribute, key=str(attribute))
         
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -378,8 +379,8 @@ class StringFilter(FieldFilter):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
     
-    def __init__(self, attribute, allow_digits=True, where=None, name=None, verbose_name=None):
-        super().__init__(attribute, where, name, verbose_name)
+    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None):
+        super().__init__(attribute, where, key, verbose_name)
         self.allow_digits = allow_digits
         
     def get_type_clause(self, text, field_attributes):
