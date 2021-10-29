@@ -38,9 +38,8 @@ for strategy_cls, delegate in [
     (list_filter.DecimalFilter, delegates.FloatDelegate),
     (list_filter.IntFilter,     delegates.IntegerDelegate),
     (list_filter.TimeFilter,    delegates.TimeDelegate),
-    #(list_filter.RelatedFilter, delegates.PlainTextDelegate),
+    (list_filter.RelatedFilter, delegates.PlainTextDelegate),
     ]:
-
     try:
         FilterValue.get_filter_value(strategy_cls)
     except Exception:
@@ -51,11 +50,11 @@ for strategy_cls, delegate in [
 
         class Admin(FilterValueAdmin):
 
-            field_attributes = copy.copy(FilterValueAdmin.field_attributes)
+            field_attributes = {h:copy.copy(v) for h,v in FilterValueAdmin.field_attributes.items()}
             attributes_dict = {
-                'value_1': {'delegate': delegate},
-                'value_2': {'delegate': delegate},
-            }
+                    'value_1': {'delegate': delegate},
+                    'value_2': {'delegate': delegate},
+                }
             for field_name, attributes in attributes_dict.items():
                 field_attributes.setdefault(field_name, {}).update(attributes)
 
