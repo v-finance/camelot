@@ -19,7 +19,7 @@ class FilterValueAdmin(ObjectAdmin):
     list_display = ['value_1', 'value_2']
     field_attributes = {
         'value_1': {'editable': True},
-        'value_2': {'editable': True},
+        'value_2': {'editable': True, 'visible': False},
     }
 
     def __init__(self, app_admin, entity):
