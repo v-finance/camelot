@@ -1007,13 +1007,12 @@ class SetFilters(Action, AbstractModelFilter):
         return filter_strategies
 
     def model_run( self, model_context, mode ):
-        from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
 
         if mode == '__clear':
-            new_filter_value = {}
+            new_filter_values = {}
         elif mode is None:
-            new_filter_value = {}
+            new_filter_values = {}
         else:
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_field_name = mode
