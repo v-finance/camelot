@@ -41,7 +41,7 @@ from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
 from camelot.view.utils import operator_names
 
@@ -1015,40 +1015,21 @@ class SetFilters(Action, AbstractModelFilter):
         elif mode is None:
             new_filter_value = {}
         else:
-            filter_value = model_context.proxy.get_filter(self) or {}
+            filter_values = model_context.proxy.get_filter(self) or {}
             filter_field_name = mode
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-            filter_value_attributes = {
-                'name': filter_field_attributes['name'],
-                'editable': True,
-                'delegate': filter_field_attributes['delegate'],
-            }
-            # in case the original choices are non dynamic list, they
-            # can be reused
-            if isinstance(filter_field_attributes.get('choices'), list):
-                filter_value_attributes['choices'] = filter_field_attributes['choices']
-            if 'precision' in filter_field_attributes:
-                filter_value_attributes['precision'] = filter_field_attributes['precision']
-    
-            class FieldFilterAdmin(ObjectAdmin):
-                verbose_name = _('Filter')
-                list_display = ['value']
-                field_attributes = {
-                    'value': filter_value_attributes
-                }
-    
-            field_filter = FieldFilter(value=None)
-            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
-            change_filter = action_steps.ChangeObject(field_filter, filter_admin)
+            filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
+            filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
+            filter_value = filter_value_cls()
+            change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
             yield change_filter
-            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
-            new_filter_value = {k:v for k,v in filter_value.items()}
-            new_filter_value[filter_field_name] = filter_text
+            filter_text = filter_strategy.value_to_string(filter_value.value, model_context.admin)
+            new_filter_values = {k:v for k,v in filter_values.items()}
+            new_filter_values[filter_field_name] = filter_text
 
-        yield action_steps.SetFilter(self, new_filter_value)
-        new_state = self._get_state(model_context, new_filter_value)
+        yield action_steps.SetFilter(self, new_filter_values)
+        new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
