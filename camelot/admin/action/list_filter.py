@@ -36,6 +36,7 @@ import operator
 
 from camelot.core.sql import like_op
 from camelot.view import utils
+from camelot.view.controls import delegates
 
 from dataclasses import dataclass
 
@@ -213,8 +214,10 @@ class AbstractFilterStrategy(object):
     Abstract interface for defining filter clauses as part of an entity admin's query.
     :attribute name: string that uniquely identifies this filter strategy class.
     """
+
+    name = None    
     operators = []
-    name = None
+    delegate = None
 
     def __init__(self, key, where=None, verbose_name=None):
         """
@@ -307,6 +310,7 @@ class RelatedFilter(AbstractFilterStrategy):
     """
 
     name = 'related_filter'
+    delegate = delegates.PlainTextDelegate
 
     def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
@@ -381,7 +385,8 @@ class StringFilter(FieldFilter):
     name = 'string_filter'
     python_type = str
     operators = _text_operators
-    
+    delegate = delegates.PlaintTextDelegate
+
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
     
@@ -401,7 +406,8 @@ class DecimalFilter(FieldFilter):
     name = 'decimal_filter'
     python_type = (float, decimal.Decimal)
     operators = _numerical_operators
-    
+    delegate = delegates.FloatDelegate    
+
     def get_type_clause(self, text, field_attributes):
         try:
             float_value = field_attributes.get('from_string', utils.float_from_string)(text)
@@ -427,9 +433,11 @@ class DecimalFilter(FieldFilter):
         
 class TimeFilter(FieldFilter):
     
+    name = 'time_filter'
     python_type = datetime.time
     operators = _numerical_operators
-    
+    delegate = delegates.TimeDelegate
+
     def get_type_clause(self, text, field_attributes):
         try:
             return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
@@ -451,6 +459,7 @@ class DateFilter(FieldFilter):
     name = 'date_filter'
     python_type = datetime.date
     operators = _numerical_operators
+    delegate = delegates.DateDelegate
     
     def get_type_clause(self, text, field_attributes):
         try:
@@ -473,6 +482,7 @@ class IntFilter(FieldFilter):
     name = 'int_filter'
     python_type = int
     operators = _numerical_operators
+    delegate = delegates.IntegerDelegate
     
     def get_type_clause(self, text, field_attributes):
         try:
@@ -496,6 +506,7 @@ class BoolFilter(FieldFilter):
     name = 'bool_filter'
     python_type = bool
     operators = (operator.eq,)
+    delegate = delegates.BoolDelegate
     
     def get_type_clause(self, text, field_attributes):
         try:
