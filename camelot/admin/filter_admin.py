@@ -18,7 +18,7 @@ class FilterValueAdmin(ObjectAdmin):
     verbose_name = _('Filter')
     list_display = ['value_1', 'value_2']
     field_attributes = {
-        'value_1': {'editable': True},
+        'value_1': {'editable': True, 'choices': lambda o: o.strategy.choices},
         'value_2': {'editable': True, 'visible': False},
     }
 
