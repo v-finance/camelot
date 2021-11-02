@@ -943,7 +943,9 @@ class FilterValue(object):
     filter_strategy = None
     _filter_values = {}
 
-    def __init__(self, value_1=None, value_2=None):
+    def __init__(self, strategy, value_1=None, value_2=None):
+        assert isinstance(strategy, self.filter_strategy)
+        self.strategy = strategy
         self.value_1 = value_1
         self.value_2 = value_2
 
@@ -1020,10 +1022,10 @@ class SetFilters(Action, AbstractModelFilter):
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
-            filter_value = filter_value_cls()
+            filter_value = filter_value_cls(filter_strategy)
             change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
             yield change_filter
-            filter_text = filter_strategy.value_to_string(filter_value.value, model_context.admin)
+            filter_text = filter_strategy.value_to_string(filter_value.value_1, model_context.admin)
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = filter_text
 
