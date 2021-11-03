@@ -212,11 +212,11 @@ class AbstractFilterStrategy(object):
     """
     Abstract interface for defining filter clauses as part of an entity admin's query.
     :attribute name: string that uniquely identifies this filter strategy class.
+    :attribute operators: complete list of operators that are available for this filter strategy class.
     """
 
     name = None    
     operators = []
-    delegate = None
 
     def __init__(self, key, where=None, verbose_name=None):
         """
@@ -242,7 +242,14 @@ class AbstractFilterStrategy(object):
         Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
         """
         raise NotImplementedError
-    
+
+    def get_operators(self):
+        """
+        Return the the list of operators that are available for this filter strategy instance.
+        By default, this returns the ´operators´ class attribute, but this may be customized on an filter strategy instance basis.
+        """
+        return self.operators
+
     @property
     def key(self):
         return self._key
@@ -282,7 +289,7 @@ class FieldFilter(AbstractFilterStrategy):
                 expression = expression.as_scalar()
             python_type = expression.type.python_type
         assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
-    
+
     def get_clause(self, text, admin, session):
         """
         Return a search clause consisting of this field search's type clause,
