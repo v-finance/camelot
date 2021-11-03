@@ -794,7 +794,7 @@ be specified using the verbose_name attribute.
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
         if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldFilter):
-            field_attributes['filter_strategy'] = filter_strategy(attribute)
+            field_attributes['filter_strategy'] = filter_strategy(attribute, choices=field_attributes.get('choices'))
         search_strategy = field_attributes['search_strategy']
         if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldFilter):
             field_attributes['search_strategy'] = search_strategy(attribute)
@@ -1065,7 +1065,7 @@ be specified using the verbose_name attribute.
         The resulting dictionary is cached so that the conversion is not executed needlessly.
         """
         if self._field_filters is None:
-            self._field_filters =  {strategy.name: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
+            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
         return self._field_filters
     def _get_field_strategies(self):
         """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""

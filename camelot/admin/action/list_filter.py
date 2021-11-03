@@ -211,16 +211,21 @@ class ComboBoxFilter(Filter):
 class AbstractFilterStrategy(object):
     """
     Abstract interface for defining filter clauses as part of an entity admin's query.
+    :attribute name: string that uniquely identifies this filter strategy class.
     """
 
-    def __init__(self, name, where=None, verbose_name=None):
+    name = None    
+    operators = []
+    delegate = None
+
+    def __init__(self, key, where=None, verbose_name=None):
         """
-        :param name: String that uniquely identifies this filter strategy within the context of an admin/entity.
+        :param key: String that identifies this filter strategy instance within the context of an admin/entity.
         :param where: an optional additional condition that should be met for the filter clause to apply.
-        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's name.
+        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's key.
         """
-        assert isinstance(name, str)
-        self._name = name
+        assert isinstance(key, str)
+        self._key = key
         self.where = where
         self._verbose_name = verbose_name
     
@@ -239,32 +244,32 @@ class AbstractFilterStrategy(object):
         raise NotImplementedError
     
     @property
-    def name(self):
-        return self._name
+    def key(self):
+        return self._key
     
     def get_verbose_name(self):
         if self._verbose_name is not None:
             return self._verbose_name
-        return ugettext(self.name.replace(u'_', u' ').capitalize())
+        return ugettext(self.key.replace(u'_', u' ').capitalize())
 
 class FieldFilter(AbstractFilterStrategy):
     """
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
     """
-    
-    attribute = None
-    operators = []
 
-    def __init__(self, attribute, where=None, name=None, verbose_name=None):
+    attribute = None
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
         """
-        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter name.
-        :param name: Optional string to use as this strategy's name. By default the attribute's key will be used.
+        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
+        :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
         """
         self.assert_valid_attribute(attribute)
-        name = name or attribute.key
-        super().__init__(name, where, verbose_name)
+        key = key or attribute.key
+        super().__init__(key, where, verbose_name)
         self.attribute = attribute
+        self.choices = choices
     
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -284,7 +289,10 @@ class FieldFilter(AbstractFilterStrategy):
         expanded with condition on the attribute being set (None check) and the optionally set where condition.
         """
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        search_clause = self.get_type_clause(text, field_attributes)
+        if self.choices is not None:
+            search_clause = (self.attribute==text)
+        else:
+            search_clause = self.get_type_clause(text, field_attributes)
         if search_clause is not None:
             where_conditions = [self.attribute != None]
             if self.where is not None:
@@ -304,18 +312,20 @@ class RelatedFilter(AbstractFilterStrategy):
     Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
     """
 
-    def __init__(self, *field_filters, joins, where=None, name=None, verbose_name=None):
+    name = 'related_filter'
+
+    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
         :param field_filters: field filter strategies for the fields on which this related filter should apply.
         :param joins: join definition between the entity on which the query this related filter is part of takes place,
                       and the related entity of the given field filters.
-        :param name: Optional string to use as this strategy's name. By default the name of this related filter's first field filter will be used.
+        :param key: Optional string to use as this strategy's key. By default the key of this related filter's first field filter will be used.
         """
         assert isinstance(joins, list) and len(joins) > 0
         for field_search in field_filters:
             assert isinstance(field_search, FieldFilter)
-        name = name or field_filters[0].name
-        super().__init__(name, where, verbose_name)
+        key = key or field_filters[0].key
+        super().__init__(key, where, verbose_name)
         self.field_filters = field_filters
         self.joins = joins
 
@@ -353,9 +363,11 @@ class RelatedFilter(AbstractFilterStrategy):
             return field_filter.value_to_string(filter_value, related_admin)
 
 class NoFilter(FieldFilter):
-    
-    def __init__(self, attribute):
-        super().__init__(attribute, name=str(attribute))
+
+    name = 'no_filter'
+
+    def __init__(self, attribute, choices=None):
+        super().__init__(attribute, key=str(attribute), choices=choices)
         
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -372,14 +384,15 @@ class NoFilter(FieldFilter):
 
 class StringFilter(FieldFilter):
     
+    name = 'string_filter'
     python_type = str
     operators = _text_operators
-    
+
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
     
-    def __init__(self, attribute, allow_digits=True, where=None, name=None, verbose_name=None):
-        super().__init__(attribute, where, name, verbose_name)
+    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, choices=None):
+        super().__init__(attribute, where, key, verbose_name, choices)
         self.allow_digits = allow_digits
         
     def get_type_clause(self, text, field_attributes):
@@ -388,12 +401,13 @@ class StringFilter(FieldFilter):
     
     def value_to_string(self, filter_value, admin):
         return filter_value
-    
+
 class DecimalFilter(FieldFilter):
     
+    name = 'decimal_filter'
     python_type = (float, decimal.Decimal)
     operators = _numerical_operators
-    
+
     def get_type_clause(self, text, field_attributes):
         try:
             float_value = field_attributes.get('from_string', utils.float_from_string)(text)
@@ -419,9 +433,10 @@ class DecimalFilter(FieldFilter):
         
 class TimeFilter(FieldFilter):
     
+    name = 'time_filter'
     python_type = datetime.time
     operators = _numerical_operators
-    
+
     def get_type_clause(self, text, field_attributes):
         try:
             return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
@@ -439,7 +454,8 @@ class TimeFilter(FieldFilter):
         return standard_item.data(PreviewRole)
 
 class DateFilter(FieldFilter):
-    
+
+    name = 'date_filter'
     python_type = datetime.date
     operators = _numerical_operators
     
@@ -460,7 +476,8 @@ class DateFilter(FieldFilter):
         return standard_item.data(PreviewRole)
     
 class IntFilter(FieldFilter):
-    
+
+    name = 'int_filter'
     python_type = int
     operators = _numerical_operators
     
@@ -482,7 +499,8 @@ class IntFilter(FieldFilter):
         return to_string(standard_item.data(Qt.EditRole))
 
 class BoolFilter(FieldFilter):
-    
+
+    name = 'bool_filter'
     python_type = bool
     operators = (operator.eq,)
     
