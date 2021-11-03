@@ -43,7 +43,7 @@ from dataclasses import dataclass
 from sqlalchemy import orm, sql
 from sqlalchemy.sql.operators import between_op
 
-from ...core.utils import ugettext
+from ...core.utils import ugettext, ugettext_lazy as _
 from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt
