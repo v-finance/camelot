@@ -298,9 +298,12 @@ class FieldFilter(AbstractFilterStrategy):
     """
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    :attribute search_operator: The operator that this strategy will use when constructing a filter clause meant for searching based on a search text.
+                                By default the `Operator.eq` is used.
     """
 
     attribute = None
+    search_operator = Operator.eq
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
         """
@@ -334,7 +337,7 @@ class FieldFilter(AbstractFilterStrategy):
         if self.choices is not None:
             search_clause = (self.attribute==text)
         else:
-            search_clause = self.get_type_clause(text, field_attributes)
+            search_clause = self.get_type_clause(self.search_operator, text, field_attributes)
         if search_clause is not None:
             where_conditions = [self.attribute != None]
             if self.where is not None:
@@ -429,6 +432,7 @@ class StringFilter(FieldFilter):
     name = 'string_filter'
     python_type = str
     operators = Operator.text_operators()
+    search_operator = Operator.like
 
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
