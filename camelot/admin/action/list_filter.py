@@ -35,7 +35,7 @@ import decimal
 import enum
 import operator
 
-from camelot.core.sql import like_op
+from camelot.core.sql import ilike_op
 from camelot.view import utils
 
 from dataclasses import dataclass
@@ -220,7 +220,7 @@ class Operator(enum.Enum):
     le =      (operator.le, True,  _('<='))
     gt =      (operator.gt, True,  _('>'))
     ge =      (operator.ge, True,  _('>='))
-    like =    (like_op,     False, _('like'))
+    like =    (ilike_op,     False, _('like'))
     between = (between_op,  True,  _('between'))
 
     @property
