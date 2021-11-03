@@ -264,7 +264,7 @@ class AbstractFilterStrategy(object):
         self.where = where
         self._verbose_name = verbose_name
     
-    def get_clause(self, text, admin, session):
+    def get_search_clause(self, text, admin, session):
         """
         Return a search clause for the given search text.
         :param admin: The entity admin that will use the resulting search clause as part of its search query.
@@ -325,7 +325,7 @@ class FieldFilter(AbstractFilterStrategy):
             python_type = expression.type.python_type
         assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
 
-    def get_clause(self, text, admin, session):
+    def get_search_clause(self, text, admin, session):
         """
         Return a search clause consisting of this field search's type clause,
         expanded with condition on the attribute being set (None check) and the optionally set where condition.
@@ -371,7 +371,7 @@ class RelatedFilter(AbstractFilterStrategy):
         self.field_filters = field_filters
         self.joins = joins
 
-    def get_clause(self, text, admin, session):
+    def get_search_clause(self, text, admin, session):
         """
         Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
         The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
@@ -389,7 +389,7 @@ class RelatedFilter(AbstractFilterStrategy):
         field_filter_clauses = []
         for field_filter in self.field_filters:
             related_admin = admin.get_related_admin(field_filter.attribute.class_)
-            field_filter_clause = field_filter.get_clause(text, related_admin, session)
+            field_filter_clause = field_filter.get_search_clause(text, related_admin, session)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
                 
@@ -415,7 +415,7 @@ class NoFilter(FieldFilter):
     def assert_valid_attribute(cls, attribute):
         pass
     
-    def get_clause(self, text, admin, session):
+    def get_search_clause(self, text, admin, session):
         return None
     
     def value_to_string(self, filter_value, admin):
