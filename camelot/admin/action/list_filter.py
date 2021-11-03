@@ -350,7 +350,7 @@ class FieldFilter(AbstractFilterStrategy):
         :param field_attributes: The field attributes for this filter strategy's attribute on the entity admin
                                  that will use the resulting clause as part of its query.
         """
-        return filter_operator.operator(self.attribute, value)
+        return filter_operator.operator(self.attribute, filter_value)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
@@ -440,11 +440,11 @@ class StringFilter(FieldFilter):
     def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, choices=None):
         super().__init__(attribute, where, key, verbose_name, choices)
         self.allow_digits = allow_digits
-        
-    def get_type_clause(self, text, field_attributes):
-        if not text.isdigit() or self.allow_digits:
-            return sql.operators.ilike_op(self.attribute, '%'+text+'%')
-    
+
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
+        if not filter_value.isdigit() or self.allow_digits:
+            return super().get_type_clause(filter_operator, filter_value, field_attributes)
+
     def value_to_string(self, filter_value, admin):
         return filter_value
 
@@ -454,14 +454,24 @@ class DecimalFilter(FieldFilter):
     python_type = (float, decimal.Decimal)
     operators = Operator.numerical_operators()
 
-    def get_type_clause(self, text, field_attributes):
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
         try:
-            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
+            float_value = field_attributes.get('from_string', utils.float_from_string)(filter_value)
             precision = self.attribute.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
-            return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
+            if filter_operator == Operator.eq:
+                return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
+            if filter_operator == Operator.ne:
+                return sql.or_(self.attribute<float_value-delta, self.attribute>float_value+delta)            
+            elif filter_operator in (Operator.lt, Operator.le):
+                return super().get_type_clause(filter_operator, float_value-delta, field_attributes)
+            elif filter_operator in (Operator.gt, Operator.ge):
+                return super().get_type_clause(filter_operator, float_value+delta, field_attributes)
+            #elif self.attribute == Operator.between:
+                # TODO: implement when supporting binary filter values
+                # value_1: float_value-delta, value_2: float_value+delta
         except utils.ParsingError:
             pass
     
@@ -483,12 +493,12 @@ class TimeFilter(FieldFilter):
     python_type = datetime.time
     operators = Operator.numerical_operators()
 
-    def get_type_clause(self, text, field_attributes):
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
+            return super().get_type_clause(filter_operator, field_attributes.get('from_string', utils.time_from_string)(filter_value), field_attributes)
         except utils.ParsingError:
             pass
-    
+
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
@@ -505,9 +515,9 @@ class DateFilter(FieldFilter):
     python_type = datetime.date
     operators = Operator.numerical_operators()
 
-    def get_type_clause(self, text, field_attributes):
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
+            return super().get_type_clause(filter_operator, field_attributes.get('from_string', utils.date_from_string)(filter_value), field_attributes)
         except utils.ParsingError:
             pass
     
@@ -527,9 +537,9 @@ class IntFilter(FieldFilter):
     python_type = int
     operators = Operator.numerical_operators()
 
-    def get_type_clause(self, text, field_attributes):
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
+            return super().get_type_clause(filter_operator, field_attributes.get('from_string', utils.int_from_string)(filter_value), field_attributes)
         except utils.ParsingError:
             pass
 
@@ -542,7 +552,7 @@ class IntFilter(FieldFilter):
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.EditRole))
+        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
 
 class BoolFilter(FieldFilter):
 
@@ -550,9 +560,9 @@ class BoolFilter(FieldFilter):
     python_type = bool
     operators = (Operator.eq,)
     
-    def get_type_clause(self, text, field_attributes):
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.bool_from_string)(text))
+            return super().get_type_clause(filter_operator, field_attributes.get('from_string', utils.bool_from_string)(filter_value), field_attributes)
         except utils.ParsingError:
             pass
 
@@ -565,7 +575,7 @@ class BoolFilter(FieldFilter):
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.EditRole))
+        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
     
 class SearchFilter(Action, AbstractModelFilter):
 
