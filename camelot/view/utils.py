@@ -36,11 +36,9 @@ import decimal
 import re
 import string
 import logging
-import operator
 
 from ..core.qt import QtCore
 from camelot.core.utils import ugettext
-from camelot.core.utils import ugettext_lazy as _
 
 logger = logging.getLogger('camelot.view.utils')
 
