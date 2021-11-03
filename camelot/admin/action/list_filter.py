@@ -32,6 +32,7 @@ Actions to filter table views
 """
 import datetime
 import decimal
+import enum
 import operator
 
 from camelot.core.sql import like_op
@@ -207,6 +208,35 @@ class ComboBoxFilter(Filter):
 
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
+
+class Operator(enum.Enum):
+    """
+    Enum that keeps track of the operator functions that are available for filtering,
+    together with some related information like
+      * verbose name : to display the operator in the GUI to the user
+      * bounded : whether the operator function is applicable when the operands have bounded values.
+    """
+
+    eq =      (operator.eq, True,  _('='))
+    ne =      (operator.ne, True,  _('!='))
+    lt =      (operator.lt, True,  _('<'))
+    le =      (operator.le, True,  _('<='))
+    gt =      (operator.gt, True,  _('>'))
+    ge =      (operator.ge, True,  _('>='))
+    like =    (like_op,     False, _('like'))
+    between = (between_op,  True,  _('between'))
+
+    @property
+    def operator(self):
+        return self._value_[0]
+
+    @property
+    def bounded(self):
+        return self._value_[1]
+
+    @property
+    def verbose_name(self):
+        return self._value_[2]
 
 class AbstractFilterStrategy(object):
     """
