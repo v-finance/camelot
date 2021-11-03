@@ -190,7 +190,7 @@ _sqlalchemy_to_python_type_ = {
         'widget': 'combobox',
         'to_string': enumeration_to_string,
         'search_strategy': list_filter.NoFilter,
-        'filter_strategy': list_filter.StringFilter,
+        'filter_strategy': list_filter.NoFilter,
     },
 
     camelot.types.Language: lambda f: {
