@@ -1053,7 +1053,7 @@ class SetFilters(Action, AbstractModelFilter):
             state.notification = True
         for name, filter_strategy in self.get_filter_strategies(model_context):
             icon = Icon('check-circle') if name in filter_value else None
-            operators = [Mode(op.__name__, operator_names.get(op, _(op.__name__))) for op in filter_strategy.operators]
+            operators = [Mode(op.__name__, operator_names.get(op, _(op.__name__))) for op in filter_strategy.get_operators()]
             modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
