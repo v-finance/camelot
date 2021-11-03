@@ -39,8 +39,6 @@ import logging
 import operator
 
 from ..core.qt import QtCore
-from camelot.core.sql import like_op
-from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
 from camelot.core.utils import ugettext_lazy as _
 
