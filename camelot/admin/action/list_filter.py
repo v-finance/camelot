@@ -52,9 +52,6 @@ from ...view.utils import locale
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
 
-_numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
-_text_operators = (operator.eq, operator.ne, like_op)
-
 @dataclass
 class FilterMode(Mode):
 
@@ -216,7 +213,7 @@ class Operator(enum.Enum):
       * verbose name : to display the operator in the GUI to the user
       * bounded : whether the operator function is applicable when the operands have bounded values.
     """
-
+    #name      operator     bounded  verbose_name         
     eq =      (operator.eq, True,  _('='))
     ne =      (operator.ne, True,  _('!='))
     lt =      (operator.lt, True,  _('<'))
@@ -237,6 +234,14 @@ class Operator(enum.Enum):
     @property
     def verbose_name(self):
         return self._value_[2]
+                            
+    @classmethod
+    def numerical_operators(cls):
+        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between)
+
+    @classmethod
+    def text_operators(cls):
+        return (cls.eq, cls.ne, cls.like)
 
 class AbstractFilterStrategy(object):
     """
@@ -423,7 +428,7 @@ class StringFilter(FieldFilter):
     
     name = 'string_filter'
     python_type = str
-    operators = _text_operators
+    operators = Operator.text_operators()
 
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
@@ -443,7 +448,7 @@ class DecimalFilter(FieldFilter):
     
     name = 'decimal_filter'
     python_type = (float, decimal.Decimal)
-    operators = _numerical_operators
+    operators = Operator.numerical_operators()
 
     def get_type_clause(self, text, field_attributes):
         try:
@@ -472,7 +477,7 @@ class TimeFilter(FieldFilter):
     
     name = 'time_filter'
     python_type = datetime.time
-    operators = _numerical_operators
+    operators = Operator.numerical_operators()
 
     def get_type_clause(self, text, field_attributes):
         try:
@@ -494,8 +499,8 @@ class DateFilter(FieldFilter):
 
     name = 'date_filter'
     python_type = datetime.date
-    operators = _numerical_operators
-    
+    operators = Operator.numerical_operators()
+
     def get_type_clause(self, text, field_attributes):
         try:
             return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
@@ -516,8 +521,8 @@ class IntFilter(FieldFilter):
 
     name = 'int_filter'
     python_type = int
-    operators = _numerical_operators
-    
+    operators = Operator.numerical_operators()
+
     def get_type_clause(self, text, field_attributes):
         try:
             return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
@@ -539,7 +544,7 @@ class BoolFilter(FieldFilter):
 
     name = 'bool_filter'
     python_type = bool
-    operators = (operator.eq,)
+    operators = (Operator.eq,)
     
     def get_type_clause(self, text, field_attributes):
         try:
