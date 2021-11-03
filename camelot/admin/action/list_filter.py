@@ -340,14 +340,14 @@ class FieldFilter(AbstractFilterStrategy):
             if self.where is not None:
                 where_conditions.append(self.where)
             return sql.and_(*where_conditions, search_clause)
-    
-    def get_type_clause(self, text, field_attributes):
+
+    def get_type_clause(self, filter_operator, filter_value, field_attributes):
         """
-        Return a column-based expression search clause on this search strategy's attribute for the given search text.
-        :param field_attributes: The field attributes for this search strategy's attribute on the entity admin
-                                 that will use the resulting search clause as part of its search query.
+        Return a column-based expression filter clause on this filter strategy's attribute with the given filter operator and filter value.
+        :param field_attributes: The field attributes for this filter strategy's attribute on the entity admin
+                                 that will use the resulting clause as part of its query.
         """
-        raise NotImplementedError
+        return filter_operator.operator(self.attribute, value)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
