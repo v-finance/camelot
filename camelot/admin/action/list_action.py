@@ -951,7 +951,7 @@ class FilterValue(object):
 
     @property
     def operator_prefix(self):
-        return str(self.operator.verbose_name)
+        return str(self.operator.prefix)
 
     @property
     def operator_infix(self):

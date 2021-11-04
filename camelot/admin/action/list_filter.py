@@ -210,25 +210,27 @@ class ComboBoxFilter(Filter):
 
 filter_operator = collections.namedtuple(
     'filter_operator',
-    ('operator', 'bounded', 'arity', 'verbose_name', 'infix'))
+    ('operator', 'bounded', 'arity', 'verbose_name', 'prefix', 'infix'))
 
 class Operator(enum.Enum):
     """
     Enum that keeps track of the operator functions that are available for filtering,
     together with some related information like
-      * verbose name : to display the operator in the GUI to the user
       * bounded : whether the operator function is applicable when the operands have bounded values.
-      * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3d operands (filter values).
+      * arity : the number of operands the operator takes.
+      * verbose name : short verbose description of the operator to display in the GUI.
+      * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
+      * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
     """
-    #name                     operator     bounded  arity verbose_name   infix
-    eq =      filter_operator(operator.eq, True,    2,  _('='),          None)
-    ne =      filter_operator(operator.ne, True,    2,  _('!='),         None)
-    lt =      filter_operator(operator.lt, True,    2,  _('<'),          None)
-    le =      filter_operator(operator.le, True,    2,  _('<='),         None)
-    gt =      filter_operator(operator.gt, True,    2,  _('>'),          None)
-    ge =      filter_operator(operator.ge, True,    2,  _('>='),         None)
-    like =    filter_operator(ilike_op,    False,   2,  _('like'),       None)
-    between = filter_operator(between_op,  True,    3,  _('between'), _('and'))
+    #name                     operator     bounded  arity verbose_name   prefix   infix
+    eq =      filter_operator(operator.eq, True,    2,  _('='),          None,    None)
+    ne =      filter_operator(operator.ne, True,    2,  _('!='),         None,    None)
+    lt =      filter_operator(operator.lt, True,    2,  _('<'),          None,    None)
+    le =      filter_operator(operator.le, True,    2,  _('<='),         None,    None)
+    gt =      filter_operator(operator.gt, True,    2,  _('>'),          None,    None)
+    ge =      filter_operator(operator.ge, True,    2,  _('>='),         None,    None)
+    like =    filter_operator(ilike_op,    False,   2,  _('like'),       None,    None)
+    between = filter_operator(between_op,  True,    3,  _('between'),    None,  _('and'))
 
     @property
     def operator(self):
@@ -245,6 +247,10 @@ class Operator(enum.Enum):
     @property
     def verbose_name(self):
         return self._value_.verbose_name
+
+    @property
+    def prefix(self):
+        return self._value_.prefix or self.verbose_name
 
     @property
     def infix(self):
