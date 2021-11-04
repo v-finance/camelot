@@ -19,20 +19,13 @@ class FilterValueAdmin(ObjectAdmin):
 
     verbose_name = _('Filter')
 
-    form_display = forms.GridForm([ ['operator',       'value_1'],
-                                    ['operator_infix', 'value_2']])
+    form_display = forms.GridForm([ ['operator_prefix', 'value_1'],
+                                    ['operator_infix',  'value_2']])
     field_attributes = {
-        'operator': {
-            'editable': False,
-            'choices': [(op, op.verbose_name) for op in list_filter.Operator],
-            'minimal_column_width': max(itertools.chain((0,), (len(str(op.verbose_name)) for op in list_filter.Operator)))
-        },
+        'operator_prefix': {'editable': False, 'delegate': delegates.LabelDelegate},
         'value_1': {'editable': True},
-        'operator_infix': {
-            'editable': False, 'visible': lambda o: o.operator.arity > 2,
-            'choices': [(op, op.infix) for op in list_filter.Operator],
-            'minimal_column_width': max(itertools.chain((0,), (len(str(op.infix)) for op in list_filter.Operator)))
-        },
+        # 2n filter value (i.e. 3rd operand) and operator infix should only be visible in case of a ternary operator (arity >= 3):
+        'operator_infix': {'editable': False, 'delegate': delegates.LabelDelegate, 'visible': lambda o: o.operator.arity > 2},
         'value_2': {'editable': True, 'visible': lambda o: o.operator.arity > 2},
     }
 
