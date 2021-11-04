@@ -270,6 +270,12 @@ class AbstractFilterStrategy(object):
     operators = []
     search_operator = Operator.eq
 
+    class AssertionMessage(enum.Enum):
+
+        no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
+        python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
+        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'
+
     def __init__(self, key, where=None, verbose_name=None):
         """
         :param key: String that identifies this filter strategy instance within the context of an admin/entity.
@@ -340,9 +346,9 @@ class FieldFilter(AbstractFilterStrategy):
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
 
-    @staticmethod
-    def get_attribute_python_type(attribute):
-        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+    @classmethod
+    def get_attribute_python_type(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), cls.AssertionMessage.no_queryable_attribute.value
         if isinstance(attribute, orm.attributes.InstrumentedAttribute):
             python_type = attribute.type.python_type
         else:
@@ -354,12 +360,11 @@ class FieldFilter(AbstractFilterStrategy):
 
     def assert_valid_attribute(self, attribute):
         python_type = self.get_attribute_python_type(attribute)
-        assert issubclass(python_type, self.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
+        assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
 
-    @staticmethod
-    def assert_operands(operator, *operands):
-        assert (operator.arity - 1) == len(operands), 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'.format(
-            len(operands), operator.arity-1)        
+    @classmethod
+    def assert_operands(cls, operator, *operands):
+        assert (operator.arity - 1) == len(operands), cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), operator.arity-1)
 
     def get_clause(self, admin, session, operator, *operands):
         """
