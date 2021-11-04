@@ -1053,8 +1053,10 @@ class SetFilters(Action, AbstractModelFilter):
         clauses = []
         for name, (operator_name, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
-            filter_operator = Operator[operator_name]
-            filter_clause = filter_strategy.get_clause(self.admin, query.session, filter_operator, *operands)
+            operator = Operator[operator_name]
+            # Determine appropriate number of operands based on the arity of the operator (-1 because the filtered attribute is an operand as well)
+            operands = operands[0:operator.arity-1]
+            filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
         return query.filter(*clauses)
