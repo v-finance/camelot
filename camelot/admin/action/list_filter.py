@@ -263,7 +263,7 @@ class AbstractFilterStrategy(object):
         self._key = key
         self.where = where
         self._verbose_name = verbose_name
-    
+
     def get_search_clause(self, text, admin, session):
         """
         Return a search clause for the given search text.
@@ -271,7 +271,17 @@ class AbstractFilterStrategy(object):
         :param session: The session in which the search query takes place.
         """
         raise NotImplementedError
-    
+
+    def get_clause(self, filter_operator, filter_value, admin, session):
+        """
+        Construct a filter clause for the given filter operator and value, within the given admin and session.
+        :param filter_operator: a `camelot.admin.action.list_filter.Operator` instance that defines which operator to use in the column based expression(s) of the resulting filter clause.
+        :param filter_value: the value that is used as one of the operands for the given filter operator to filter by.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        """
+        raise NotImplementedError
+
     def value_to_string(self, filter_value, admin):
         """
         Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
@@ -340,6 +350,20 @@ class FieldFilter(AbstractFilterStrategy):
                 where_conditions.append(self.where)
             return sql.and_(*where_conditions, search_clause)
 
+    def get_clause(self, filter_operator, filter_value, admin, session):
+        """
+        Construct a filter clause for the given filter operator and value, within the given admin and session.
+        The resulting clause will consists of this strategy's field type clause,
+        expanded with a condition on the attribute being set (None check) and the optionally set where conditions.
+        """        
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        search_clause = self.get_type_clause(filter_operator, filter_value, field_attributes)
+        if search_clause is not None:
+            where_conditions = [self.attribute != None]
+            if self.where is not None:
+                where_conditions.append(self.where)
+            return sql.and_(*where_conditions, search_clause)
+
     def get_type_clause(self, filter_operator, filter_value, field_attributes):
         """
         Return a column-based expression filter clause on this filter strategy's attribute with the given filter operator and filter value.
@@ -397,6 +421,34 @@ class RelatedFilter(AbstractFilterStrategy):
             related_query = related_query.subquery()
             filter_clause = admin.entity.id.in_(related_query)
             return filter_clause
+
+    def get_clause(self, filter_operator, filter_value, admin, session):
+        """
+        Construct a filter clause for the given filter operator and value, within the given admin and session.
+        The resulting clause will consists of a check on the admin's entity's id being present in a related subquery.
+        That subquery will use the this strategy's joins to join the entity with the related entity on which the set field filters are defined.
+        The subquery is composed based on this related filter strategy's joins and where condition.
+        """        
+        related_query = session.query(admin.entity.id)
+
+        for join in self.joins:
+            related_query = related_query.join(join)
+
+        if self.where is not None:
+            related_query.filter(self.where)
+
+        field_filter_clauses = []
+        for field_filter in self.field_filters:
+            related_admin = admin.get_related_admin(field_filter.attribute.class_)
+            field_filter_clause = field_filter.get_clause(filter_operator, filter_value, related_admin, session)
+            if field_filter_clause is not None:
+                field_filter_clauses.append(field_filter_clause)
+                
+        if field_filter_clauses:
+            related_query = related_query.filter(sql.or_(*field_filter_clauses))
+            related_query = related_query.subquery()
+            filter_clause = admin.entity.id.in_(related_query)
+            return filter_clause
     
     def value_to_string(self, filter_value, admin):
         for field_filter in self.field_filters:
@@ -409,22 +461,25 @@ class NoFilter(FieldFilter):
 
     def __init__(self, attribute, **kwargs):
         super().__init__(attribute, key=str(attribute), **kwargs)
-        
+
     @classmethod
     def assert_valid_attribute(cls, attribute):
         pass
-    
+
     def get_search_clause(self, text, admin, session):
         return None
-    
+
+    def get_clause(self, filter_operator, filter_value, admin, session):
+        return None
+
     def value_to_string(self, filter_value, admin):
         return filter_value
-    
+
     def get_verbose_name(self):
         return None
 
 class StringFilter(FieldFilter):
-    
+
     name = 'string_filter'
     python_type = str
     operators = Operator.text_operators()
@@ -432,7 +487,7 @@ class StringFilter(FieldFilter):
 
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
-    
+
     def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, **kwargs):
         super().__init__(attribute, where, key, verbose_name, **kwargs)
         self.allow_digits = allow_digits
