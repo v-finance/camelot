@@ -711,6 +711,10 @@ be specified using the verbose_name attribute.
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict.get(x, '')
+                    if attributes['filter_strategy'] != list_filter.NoFilter:
+                        # Only overrule the filter strategy to ChoicesFilter if the choices are non-dynamic,
+                        # as the choices needed for filtering should apply for all entities.
+                        attributes['filter_strategy'] = list_filter.ChoicesFilter
             self._expand_field_attributes(attributes, field_name)
             return attributes
 
