@@ -1031,12 +1031,14 @@ class SetFilters(Action, AbstractModelFilter):
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
+            # TODO: get the selected operator from the modes,
+            # instead of using the standard search operator for the selected strategy by default for now.
             filter_value = filter_value_cls(filter_strategy, filter_strategy.search_operator)
             change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
             yield change_filter
-            filter_text = filter_strategy.value_to_string(filter_value.value_1, model_context.admin)
+            operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in [filter_value.value_1, filter_value.value_2]]
             new_filter_values = {k:v for k,v in filter_values.items()}
-            new_filter_values[filter_field_name] = (filter_value.operator.name, filter_text)
+            new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
 
         yield action_steps.SetFilter(self, new_filter_values)
         new_state = self._get_state(model_context, new_filter_values)
@@ -1049,10 +1051,10 @@ class SetFilters(Action, AbstractModelFilter):
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, (operator_name, filter_value) in values.items():
+        for name, (operator_name, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
             filter_operator = Operator[operator_name]
-            filter_clause = filter_strategy.get_clause(filter_operator, filter_value, self.admin, query.session)
+            filter_clause = filter_strategy.get_clause(self.admin, query.session, filter_operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
         return query.filter(*clauses)
