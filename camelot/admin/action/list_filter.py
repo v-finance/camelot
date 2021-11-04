@@ -30,6 +30,7 @@
 """
 Actions to filter table views
 """
+import collections
 import datetime
 import decimal
 import enum
@@ -206,6 +207,10 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
 
+filter_operator = collections.namedtuple(
+    'filter_operator',
+    ('name', 'operator', 'bounded', 'arity', 'verbose_name', 'infix'))
+
 class Operator(enum.Enum):
     """
     Enum that keeps track of the operator functions that are available for filtering,
@@ -214,35 +219,35 @@ class Operator(enum.Enum):
       * bounded : whether the operator function is applicable when the operands have bounded values.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3d operands (filter values).
     """
-    #name      operator     bounded  arity verbose_name   infix
-    eq =      (operator.eq, True,    2,  _('='),          None)
-    ne =      (operator.ne, True,    2,  _('!='),         None)
-    lt =      (operator.lt, True,    2,  _('<'),          None)
-    le =      (operator.le, True,    2,  _('<='),         None)
-    gt =      (operator.gt, True,    2,  _('>'),          None)
-    ge =      (operator.ge, True,    2,  _('>='),         None)
-    like =    (ilike_op,    False,   2,  _('like'),       None)
-    between = (between_op,  True,    3,  _('between'), _('and'))
+    #name                     operator     bounded  arity verbose_name   infix
+    eq =      filter_operator(operator.eq, True,    2,  _('='),          None)
+    ne =      filter_operator(operator.ne, True,    2,  _('!='),         None)
+    lt =      filter_operator(operator.lt, True,    2,  _('<'),          None)
+    le =      filter_operator(operator.le, True,    2,  _('<='),         None)
+    gt =      filter_operator(operator.gt, True,    2,  _('>'),          None)
+    ge =      filter_operator(operator.ge, True,    2,  _('>='),         None)
+    like =    filter_operator(ilike_op,    False,   2,  _('like'),       None)
+    between = filter_operator(between_op,  True,    3,  _('between'), _('and'))
 
     @property
     def operator(self):
-        return self._value_[0]
+        return self._value_.operator
 
     @property
     def bounded(self):
-        return self._value_[1]
+        return self._value_.bounded
 
     @property
     def arity(self):
-        return self._value_[2]
+        return self._value_.arity
 
     @property
     def verbose_name(self):
-        return self._value_[3]
+        return self._value_.verbose_name
 
     @property
     def infix(self):
-        return self._value_[4]
+        return self._value_.infix
 
     @classmethod
     def numerical_operators(cls):
