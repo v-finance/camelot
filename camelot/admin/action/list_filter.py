@@ -212,16 +212,17 @@ class Operator(enum.Enum):
     together with some related information like
       * verbose name : to display the operator in the GUI to the user
       * bounded : whether the operator function is applicable when the operands have bounded values.
+      * infix : In case of a multi-ary operator, an optional verbose infix part to display between the operands/filter values.
     """
-    #name      operator     bounded  verbose_name         
-    eq =      (operator.eq, True,  _('='))
-    ne =      (operator.ne, True,  _('!='))
-    lt =      (operator.lt, True,  _('<'))
-    le =      (operator.le, True,  _('<='))
-    gt =      (operator.gt, True,  _('>'))
-    ge =      (operator.ge, True,  _('>='))
-    like =    (ilike_op,     False, _('like'))
-    between = (between_op,  True,  _('between'))
+    #name      operator     bounded  verbose_name    infix
+    eq =      (operator.eq, True,   _('='),          None)
+    ne =      (operator.ne, True,   _('!='),         None)
+    lt =      (operator.lt, True,   _('<'),          None)
+    le =      (operator.le, True,   _('<='),         None)
+    gt =      (operator.gt, True,   _('>'),          None)
+    ge =      (operator.ge, True,   _('>='),         None)
+    like =    (ilike_op,     False, _('like'),       None)
+    between = (between_op,  True,   _('between'), _('and'))
 
     @property
     def operator(self):
@@ -234,6 +235,10 @@ class Operator(enum.Enum):
     @property
     def verbose_name(self):
         return self._value_[2]
+
+    @property
+    def infix(self):
+        return self._value_[3]
                             
     @classmethod
     def numerical_operators(cls):
