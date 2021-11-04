@@ -210,35 +210,30 @@ class ComboBoxFilter(Filter):
 
 filter_operator = collections.namedtuple(
     'filter_operator',
-    ('operator', 'bounded', 'arity', 'verbose_name', 'prefix', 'infix'))
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix'))
 
 class Operator(enum.Enum):
     """
     Enum that keeps track of the operator functions that are available for filtering,
     together with some related information like
-      * bounded : whether the operator function is applicable when the operands have bounded values.
       * arity : the number of operands the operator takes.
       * verbose name : short verbose description of the operator to display in the GUI.
       * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
     """
-    #name                     operator     bounded  arity verbose_name   prefix   infix
-    eq =      filter_operator(operator.eq, True,    2,  _('='),          None,    None)
-    ne =      filter_operator(operator.ne, True,    2,  _('!='),         None,    None)
-    lt =      filter_operator(operator.lt, True,    2,  _('<'),          None,    None)
-    le =      filter_operator(operator.le, True,    2,  _('<='),         None,    None)
-    gt =      filter_operator(operator.gt, True,    2,  _('>'),          None,    None)
-    ge =      filter_operator(operator.ge, True,    2,  _('>='),         None,    None)
-    like =    filter_operator(ilike_op,    False,   2,  _('like'),       None,    None)
-    between = filter_operator(between_op,  True,    3,  _('between'),    None,  _('and'))
+    #name                     operator     arity verbose_name   prefix   infix
+    eq =      filter_operator(operator.eq, 2,  _('='),          None,    None)
+    ne =      filter_operator(operator.ne, 2,  _('!='),         None,    None)
+    lt =      filter_operator(operator.lt, 2,  _('<'),          None,    None)
+    le =      filter_operator(operator.le, 2,  _('<='),         None,    None)
+    gt =      filter_operator(operator.gt, 2,  _('>'),          None,    None)
+    ge =      filter_operator(operator.ge, 2,  _('>='),         None,    None)
+    like =    filter_operator(ilike_op,    2,  _('like'),       None,    None)
+    between = filter_operator(between_op,  3,  _('between'),    None,  _('and'))
 
     @property
     def operator(self):
         return self._value_.operator
-
-    @property
-    def bounded(self):
-        return self._value_.bounded
 
     @property
     def arity(self):
