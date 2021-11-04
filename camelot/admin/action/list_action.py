@@ -950,8 +950,13 @@ class FilterValue(object):
         self.value_2 = value_2
 
     @property
+    def operator_prefix(self):
+        return str(self.operator.verbose_name)
+
+    @property
     def operator_infix(self):
-        return self.operator.infix
+        if self.operator.infix is not None:
+            return str(self.operator.infix)
 
     @classmethod
     def get_filter_value(cls, filter_strategy):
