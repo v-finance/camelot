@@ -325,9 +325,9 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attribute.key
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
-    
-    @classmethod
-    def assert_valid_attribute(cls, attribute):
+
+    @staticmethod
+    def get_attribute_python_type(attribute):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
         if isinstance(attribute, orm.attributes.InstrumentedAttribute):
             python_type = attribute.type.python_type
@@ -336,7 +336,11 @@ class FieldFilter(AbstractFilterStrategy):
             if isinstance(expression, sql.selectable.Select):
                 expression = expression.as_scalar()
             python_type = expression.type.python_type
-        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
+        return python_type
+
+    def assert_valid_attribute(self, attribute):
+        python_type = self.get_attribute_python_type(attribute)
+        assert issubclass(python_type, self.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
 
     def get_clause(self, filter_operator, filter_value, admin, session):
         """
@@ -592,6 +596,7 @@ class ChoicesFilter(FieldFilter):
     operators = (Operator.eq, Operator.ne)
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
+        self.python_type = self.get_attribute_python_type(attribute)
         super().__init__(attribute, where, key, verbose_name)
         self.choices = choices
 
