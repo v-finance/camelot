@@ -22,18 +22,18 @@ class FilterValueAdmin(ObjectAdmin):
     form_display = forms.GridForm([ ['operator',       'value_1'],
                                     ['operator_infix', 'value_2']])
     field_attributes = {
-        'value_1': {'editable': True},
-        'value_2': {'editable': True, 'visible': False},
         'operator': {
             'editable': False,
             'choices': [(op, op.verbose_name) for op in list_filter.Operator],
             'minimal_column_width': max(itertools.chain((0,), (len(str(op.verbose_name)) for op in list_filter.Operator)))
         },
+        'value_1': {'editable': True},
         'operator_infix': {
-            'editable': False, 'visible': False,
+            'editable': False, 'visible': lambda o: o.operator.arity > 2,
             'choices': [(op, op.infix) for op in list_filter.Operator],
             'minimal_column_width': max(itertools.chain((0,), (len(str(op.infix)) for op in list_filter.Operator)))
-        }
+        },
+        'value_2': {'editable': True, 'visible': lambda o: o.operator.arity > 2},
     }
 
     def __init__(self, app_admin, entity):
