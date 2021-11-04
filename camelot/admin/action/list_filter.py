@@ -576,7 +576,20 @@ class BoolFilter(FieldFilter):
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
-    
+
+class ChoicesFilter(FieldFilter):
+
+    name = 'choices_filter'
+    python_type = str
+    operators = (Operator.eq, Operator.ne)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
+        super().__init__(attribute, where, key, verbose_name, choices)
+        self.choices = choices
+
+    def value_to_string(self, filter_value, admin):
+        return filter_value
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
