@@ -942,9 +942,10 @@ class FilterValue(object):
     filter_strategy = None
     _filter_values = {}
 
-    def __init__(self, strategy, value_1=None, value_2=None):
+    def __init__(self, strategy, operator, value_1=None, value_2=None):
         assert isinstance(strategy, self.filter_strategy)
         self.strategy = strategy
+        self.operator = operator
         self.value_1 = value_1
         self.value_2 = value_2
 
@@ -1021,29 +1022,30 @@ class SetFilters(Action, AbstractModelFilter):
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
-            filter_value = filter_value_cls(filter_strategy)
+            filter_value = filter_value_cls(filter_strategy, filter_strategy.search_operator)
             change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
             yield change_filter
             filter_text = filter_strategy.value_to_string(filter_value.value_1, model_context.admin)
             new_filter_values = {k:v for k,v in filter_values.items()}
-            new_filter_values[filter_field_name] = filter_text
+            new_filter_values[filter_field_name] = (filter_value.operator.name, filter_text)
 
         yield action_steps.SetFilter(self, new_filter_values)
         new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
+        from camelot.admin.action.list_filter import Operator
         # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
         # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, filter_value in values.items():
+        for name, (operator_name, filter_value) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
-            # TODO: pass user-selected operator here.
-            clause = filter_strategy.get_clause(filter_strategy.search_operator, filter_value, self.admin, query.session)
-            if clause is not None:
-                clauses.append(clause)
+            filter_operator = Operator[operator_name]
+            filter_clause = filter_strategy.get_clause(filter_operator, filter_value, self.admin, query.session)
+            if filter_clause is not None:
+                clauses.append(filter_clause)
         return query.filter(*clauses)
     
     def _get_state(self, model_context, filter_value):
@@ -1053,6 +1055,7 @@ class SetFilters(Action, AbstractModelFilter):
             state.notification = True
         for name, filter_strategy in self.get_filter_strategies(model_context):
             icon = Icon('check-circle') if name in filter_value else None
+            # TODO: set checked icon for selected operators as well.
             operators = [Mode(op.name, op.verbose_name) for op in filter_strategy.get_operators()]
             modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
         modes.extend([
