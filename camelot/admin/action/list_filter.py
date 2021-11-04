@@ -356,14 +356,21 @@ class FieldFilter(AbstractFilterStrategy):
         python_type = self.get_attribute_python_type(attribute)
         assert issubclass(python_type, self.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
 
+    @staticmethod
+    def assert_operands(operator, *operands):
+        assert (operator.arity - 1) == len(operands), 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'.format(
+            len(operands), operator.arity-1)        
+
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and operands, within the given admin and session.
         The resulting clause will consists of this strategy's field type clause,
         expanded with a condition on the attribute being set (None check) and the optionally set where conditions.
+        :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
+        self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        search_clause = self.get_type_clause(operator, *operands, field_attributes)
+        search_clause = self.get_type_clause(field_attributes, operator, *operands)
         if search_clause is not None:
             where_conditions = [self.attribute != None]
             if self.where is not None:
@@ -407,7 +414,9 @@ class RelatedFilter(AbstractFilterStrategy):
         The resulting clause will consists of a check on the admin's entity's id being present in a related subquery.
         That subquery will use the this strategy's joins to join the entity with the related entity on which the set field filters are defined.
         The subquery is composed based on this related filter strategy's joins and where condition.
+        :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
+        self.assert_operands(operator, *operands)
         related_query = session.query(admin.entity.id)
 
         for join in self.joins:
