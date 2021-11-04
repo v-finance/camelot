@@ -31,6 +31,7 @@
 Actions to filter table views
 """
 import collections
+import copy
 import datetime
 import decimal
 import enum
@@ -375,12 +376,12 @@ class FieldFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        search_clause = self.get_type_clause(field_attributes, operator, *operands)
-        if search_clause is not None:
+        filter_clause = self.get_type_clause(field_attributes, operator, *operands)
+        if filter_clause is not None:
             where_conditions = [self.attribute != None]
             if self.where is not None:
                 where_conditions.append(self.where)
-            return sql.and_(*where_conditions, search_clause)
+            return sql.and_(*where_conditions, filter_clause)
 
     def get_type_clause(self, field_attributes, operator, *operands):
         """
@@ -504,35 +505,36 @@ class DecimalFilter(FieldFilter):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
 
-            if filter_operator == Operator.eq and float_value_1 is not None:
+            if operator == Operator.eq and float_value_1 is not None:
                 return sql.and_(self.attribute>=float_value_1-delta, self.attribute<=float_value_1+delta)
 
-            if filter_operator == Operator.ne and float_value_1 is not None:
+            if operator == Operator.ne and float_value_1 is not None:
                 return sql.or_(self.attribute<float_value_1-delta, self.attribute>float_value_1+delta) 
 
-            elif filter_operator in (Operator.lt, Operator.le) and float_value_1 is not None:
+            elif operator in (Operator.lt, Operator.le) and float_value_1 is not None:
                 return super().get_type_clause(field_attributes, operator, float_value_1-delta)
             
-            elif filter_operator in (Operator.gt, Operator.ge) and float_value_1 is not None:
+            elif operator in (Operator.gt, Operator.ge) and float_value_1 is not None:
                 return super().get_type_clause(field_attributes, operator, float_value_1+delta)
 
-            elif self.attribute == Operator.between and None not in (float_value_1, float_value_2):
-                return super().get_type_clause(field_attributes, operator, float_value-delta, float_value_1+delta)
+            elif operator == Operator.between and None not in (float_value_1, float_value_2):
+                return super().get_type_clause(field_attributes, operator, float_value_1-delta, float_value_2+delta)
 
         except utils.ParsingError:
             pass
     
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
+        field_attributes = {h:copy.copy(v) for h,v in admin_field_attributes}
+        field_attributes['suffix'] = None
         delegate = field_attributes.get('delegate')
-        suffix = ' ' + field_attributes.get('suffix', '')
         model_context = FieldActionModelContext()
         model_context.admin = admin
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
         value_str = standard_item.data(PreviewRole)
-        return value_str.replace(suffix, '')
+        return value_str
         
 class TimeFilter(FieldFilter):
     
