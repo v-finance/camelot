@@ -248,10 +248,13 @@ class AbstractFilterStrategy(object):
     Abstract interface for defining filter clauses as part of an entity admin's query.
     :attribute name: string that uniquely identifies this filter strategy class.
     :attribute operators: complete list of operators that are available for this filter strategy class.
+    :attribute search_operator: The operator that this strategy will use when constructing a filter clause
+                                meant for searching based on a search text. By default the `Operator.eq` is used.
     """
 
     name = None    
     operators = []
+    search_operator = Operator.eq
 
     def __init__(self, key, where=None, verbose_name=None):
         """
@@ -264,14 +267,6 @@ class AbstractFilterStrategy(object):
         self.where = where
         self._verbose_name = verbose_name
 
-    def get_search_clause(self, text, admin, session):
-        """
-        Return a search clause for the given search text.
-        :param admin: The entity admin that will use the resulting search clause as part of its search query.
-        :param session: The session in which the search query takes place.
-        """
-        raise NotImplementedError
-
     def get_clause(self, filter_operator, filter_value, admin, session):
         """
         Construct a filter clause for the given filter operator and value, within the given admin and session.
@@ -281,6 +276,15 @@ class AbstractFilterStrategy(object):
         :param session: The session in which the search query takes place.
         """
         raise NotImplementedError
+
+    def get_search_clause(self, text, admin, session):
+        """
+        Return a search filter clause for the given search text, within the given admin and session.
+        This method is a shortcut for and equivalent to using the get_clause method with this strategy's search operator.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        """
+        return self.get_clause(self.search_operator, text, admin, session)
 
     def value_to_string(self, filter_value, admin):
         """
@@ -308,12 +312,9 @@ class FieldFilter(AbstractFilterStrategy):
     """
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
-    :attribute search_operator: The operator that this strategy will use when constructing a filter clause meant for searching based on a search text.
-                                By default the `Operator.eq` is used.
     """
 
     attribute = None
-    search_operator = Operator.eq
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **kwargs):
         """
@@ -336,19 +337,6 @@ class FieldFilter(AbstractFilterStrategy):
                 expression = expression.as_scalar()
             python_type = expression.type.python_type
         assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
-
-    def get_search_clause(self, text, admin, session):
-        """
-        Return a search clause consisting of this field search's type clause,
-        expanded with condition on the attribute being set (None check) and the optionally set where condition.
-        """
-        field_attributes = admin.get_field_attributes(self.attribute.key)
-        search_clause = self.get_type_clause(self.search_operator, text, field_attributes)
-        if search_clause is not None:
-            where_conditions = [self.attribute != None]
-            if self.where is not None:
-                where_conditions.append(self.where)
-            return sql.and_(*where_conditions, search_clause)
 
     def get_clause(self, filter_operator, filter_value, admin, session):
         """
@@ -394,34 +382,6 @@ class RelatedFilter(AbstractFilterStrategy):
         self.field_filters = field_filters
         self.joins = joins
 
-    def get_search_clause(self, text, admin, session):
-        """
-        Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
-        The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
-        where the search clauses of each.
-        The subquery is composed based on this related search strategy's joins and where condition,
-        """        
-        related_query = session.query(admin.entity.id)
-
-        for join in self.joins:
-            related_query = related_query.join(join)
-
-        if self.where is not None:
-            related_query.filter(self.where)
-
-        field_filter_clauses = []
-        for field_filter in self.field_filters:
-            related_admin = admin.get_related_admin(field_filter.attribute.class_)
-            field_filter_clause = field_filter.get_search_clause(text, related_admin, session)
-            if field_filter_clause is not None:
-                field_filter_clauses.append(field_filter_clause)
-                
-        if field_filter_clauses:
-            related_query = related_query.filter(sql.or_(*field_filter_clauses))
-            related_query = related_query.subquery()
-            filter_clause = admin.entity.id.in_(related_query)
-            return filter_clause
-
     def get_clause(self, filter_operator, filter_value, admin, session):
         """
         Construct a filter clause for the given filter operator and value, within the given admin and session.
@@ -465,9 +425,6 @@ class NoFilter(FieldFilter):
     @classmethod
     def assert_valid_attribute(cls, attribute):
         pass
-
-    def get_search_clause(self, text, admin, session):
-        return None
 
     def get_clause(self, filter_operator, filter_value, admin, session):
         return None
