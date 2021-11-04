@@ -949,6 +949,10 @@ class FilterValue(object):
         self.value_1 = value_1
         self.value_2 = value_2
 
+    @property
+    def operator_infix(self):
+        return self.operator.infix
+
     @classmethod
     def get_filter_value(cls, filter_strategy):
         """
