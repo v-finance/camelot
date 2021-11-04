@@ -39,6 +39,7 @@ for strategy_cls, delegate in [
     (list_filter.IntFilter,     delegates.IntegerDelegate),
     (list_filter.TimeFilter,    delegates.TimeDelegate),
     (list_filter.RelatedFilter, delegates.PlainTextDelegate),
+    (list_filter.ChoicesFilter, delegates.ComboBoxDelegate),
     ]:
     try:
         FilterValue.get_filter_value(strategy_cls)
@@ -57,5 +58,8 @@ for strategy_cls, delegate in [
                 }
             for field_name, attributes in attributes_dict.items():
                 field_attributes.setdefault(field_name, {}).update(attributes)
+
+        if strategy_cls == list_filter.ChoicesFilter:
+            Admin.field_attributes['value_1'].update({'choices': lambda o: o.strategy.choices})
 
         new_value_cls.Admin = Admin
