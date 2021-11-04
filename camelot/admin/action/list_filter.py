@@ -305,7 +305,7 @@ class FieldFilter(AbstractFilterStrategy):
     attribute = None
     search_operator = Operator.eq
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **kwargs):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
@@ -314,7 +314,6 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attribute.key
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
-        self.choices = choices
     
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -334,10 +333,7 @@ class FieldFilter(AbstractFilterStrategy):
         expanded with condition on the attribute being set (None check) and the optionally set where condition.
         """
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        if self.choices is not None:
-            search_clause = (self.attribute==text)
-        else:
-            search_clause = self.get_type_clause(self.search_operator, text, field_attributes)
+        search_clause = self.get_type_clause(self.search_operator, text, field_attributes)
         if search_clause is not None:
             where_conditions = [self.attribute != None]
             if self.where is not None:
@@ -411,8 +407,8 @@ class NoFilter(FieldFilter):
 
     name = 'no_filter'
 
-    def __init__(self, attribute, choices=None):
-        super().__init__(attribute, key=str(attribute), choices=choices)
+    def __init__(self, attribute, **kwargs):
+        super().__init__(attribute, key=str(attribute), **kwargs)
         
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -437,8 +433,8 @@ class StringFilter(FieldFilter):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
     
-    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, choices=None):
-        super().__init__(attribute, where, key, verbose_name, choices)
+    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, **kwargs):
+        super().__init__(attribute, where, key, verbose_name, **kwargs)
         self.allow_digits = allow_digits
 
     def get_type_clause(self, filter_operator, filter_value, field_attributes):
@@ -584,7 +580,7 @@ class ChoicesFilter(FieldFilter):
     operators = (Operator.eq, Operator.ne)
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
-        super().__init__(attribute, where, key, verbose_name, choices)
+        super().__init__(attribute, where, key, verbose_name)
         self.choices = choices
 
     def value_to_string(self, filter_value, admin):
