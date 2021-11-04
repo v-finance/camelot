@@ -2,6 +2,7 @@
 Admin classes for Filter strategies
 """
 import copy
+import itertools
 import logging
 
 from camelot.core.utils import ugettext_lazy as _
@@ -10,16 +11,22 @@ from .action import list_filter
 from .action.list_action import FilterValue
 from .object_admin import ObjectAdmin
 from ..view.controls import delegates
+from ..view import forms
 
 LOGGER = logging.getLogger('camelot.admin.filter_admin')
 
 class FilterValueAdmin(ObjectAdmin):
 
     verbose_name = _('Filter')
-    list_display = ['value_1', 'value_2']
+
+    form_display = forms.GridForm([ ['operator', 'value_1', 'value_2']])
     field_attributes = {
         'value_1': {'editable': True},
         'value_2': {'editable': True, 'visible': False},
+        'operator': {
+            'editable': False,
+            'choices': [(op, op.verbose_name) for op in list_filter.Operator],
+            'minimal_column_width': max(itertools.chain((0,), (len(str(op.verbose_name)) for op in list_filter.Operator)))}
     }
 
     def __init__(self, app_admin, entity):
