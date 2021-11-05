@@ -102,7 +102,7 @@ class UpdateMixin(object):
                 valid = True
                 message = None
             header_item = QtGui.QStandardItem()
-            header_item.setData(py_to_variant(obj), ObjectRole)
+            header_item.setData(py_to_variant(id(obj)), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
             header_item.setData(py_to_variant(valid), ValidRole)
             header_item.setData(py_to_variant(message), ValidMessageRole)
@@ -416,17 +416,17 @@ class SetData(Update):
         changed_ranges = []
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
-        for row, obj, column, value in self.updates:
-            grouped_requests[(row, obj)].append((column, value))
+        for row, obj_id, column, value in self.updates:
+            grouped_requests[(row, obj_id)].append((column, value))
         admin = model_context.admin
-        for (row, obj), request_group in grouped_requests.items():
+        for (row, obj_id), request_group in grouped_requests.items():
             object_slice = list(model_context.proxy[row:row+1])
             if not len(object_slice):
                 logger.error('Cannot set data : no object in row {0}'.format(row))
                 continue
-            o = object_slice[0]
-            if not (o is obj):
-                logger.warn('Cannot set data : object in row {0} is inconsistent with view'.format(row))
+            obj = object_slice[0]
+            if not (id(obj)==obj_id):
+                logger.warn('Cannot set data : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
                 continue
             #
             # the object might have been deleted while an editor was open

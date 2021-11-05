@@ -626,12 +626,12 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
                 return False
             row = index.row()
-            obj = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
-            if obj is None:
+            obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
+            if obj_id is None:
                 logger.debug('set data called on row without object')
                 return False
             self.logger.debug('set data ({0},{1})'.format(row, column))
-            self._update_requests.append((row, obj, column, value))
+            self._update_requests.append((row, obj_id, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()
