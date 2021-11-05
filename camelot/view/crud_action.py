@@ -519,15 +519,11 @@ class Sort(RowCount):
 
     name = 'sort'
 
-    def __init__(self, column, order):
-        super(Sort, self).__init__()
-        self.column = column
-        self.order = order
-
     def model_run(self, model_context, mode):
-        field_name = model_context.static_field_attributes[self.column]['field_name']
-        model_context.proxy.sort(field_name, self.order!=Qt.SortOrder.AscendingOrder)
+        column, order = mode
+        field_name = model_context.static_field_attributes[column]['field_name']
+        model_context.proxy.sort(field_name, order!=Qt.SortOrder.AscendingOrder.value)
         yield from super(Sort, self).model_run(model_context, mode)
 
     def __repr__(self):
-        return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
+        return '{0.__class__.__name__}'.format(self)

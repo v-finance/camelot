@@ -544,12 +544,11 @@ class CollectionProxy(QtGui.QStandardItemModel):
 
     # decorate method as a slot, to make it accessible in QML
     @QtCore.qt_slot(int, int)
-    @QtCore.qt_slot(int, int)
     def sort(self, column, order=Qt.SortOrder.AscendingOrder):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         self.logger.debug('sort called')
         assert object_thread( self )
-        self._append_request(Sort(column, order), None)
+        self._append_request(Sort(), (column, order))
 
     def data(self, index, role = Qt.ItemDataRole.DisplayRole):
         """:return: the data at index for the specified role
