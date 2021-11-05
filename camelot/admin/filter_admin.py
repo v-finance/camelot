@@ -46,6 +46,7 @@ for strategy_cls, delegate in [
     (list_filter.TimeFilter,    delegates.TimeDelegate),
     (list_filter.RelatedFilter, delegates.PlainTextDelegate),
     (list_filter.ChoicesFilter, delegates.ComboBoxDelegate),
+    (list_filter.MonthsFilter,  delegates.MonthsDelegate)
     ]:
     try:
         FilterValue.get_filter_value(strategy_cls)
