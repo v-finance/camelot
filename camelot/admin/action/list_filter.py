@@ -278,6 +278,10 @@ class AbstractFilterStrategy(object):
         python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
         nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'
 
+    @classmethod
+    def assert_operands(cls, operator, *operands):
+        assert (operator.arity - 1) == len(operands), cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), operator.arity-1)
+
     def __init__(self, key, where=None, verbose_name=None):
         """
         :param key: String that identifies this filter strategy instance within the context of an admin/entity.
@@ -364,10 +368,6 @@ class FieldFilter(AbstractFilterStrategy):
         python_type = self.get_attribute_python_type(attribute)
         assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
 
-    @classmethod
-    def assert_operands(cls, operator, *operands):
-        assert (operator.arity - 1) == len(operands), cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), operator.arity-1)
-
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and operands, within the given admin and session.
@@ -435,7 +435,7 @@ class RelatedFilter(AbstractFilterStrategy):
         field_filter_clauses = []
         for field_filter in self.field_filters:
             related_admin = admin.get_related_admin(field_filter.attribute.class_)
-            field_filter_clause = field_filter.get_clause(related_admin, session, operator, operands)
+            field_filter_clause = field_filter.get_clause(related_admin, session, operator, *operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
                 
@@ -513,7 +513,7 @@ class DecimalFilter(FieldFilter):
 
             elif operator in (Operator.lt, Operator.le) and float_operands[0] is not None:
                 return super().get_type_clause(field_attributes, operator, float_operands[0]-delta)
-            
+
             elif operator in (Operator.gt, Operator.ge) and float_operands[0] is not None:
                 return super().get_type_clause(field_attributes, operator, float_operands[0]+delta)
 
