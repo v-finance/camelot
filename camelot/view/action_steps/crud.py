@@ -76,13 +76,13 @@ class SetColumns(ActionStep):
             #
             fa_copy = fa.copy()
             fa_copy.setdefault('editable', True)
-            set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
+            set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
+            set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
             set_header_data(fa_copy, FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
-                set_header_data(item_model._header_font_required, Qt.FontRole)
+                set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
             else:
-                set_header_data(item_model._header_font, Qt.FontRole)
+                set_header_data(item_model._header_font, Qt.ItemDataRole.FontRole)
 
             settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
             if settings_width > 0:
@@ -90,7 +90,7 @@ class SetColumns(ActionStep):
             else:
                 width = fa['column_width'] * char_width
             header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
+                                 Qt.ItemDataRole.SizeHintRole )
             item_model.setHorizontalHeaderItem( i, header_item )
         item_model.settings.endGroup()
         item_model.settings.endGroup()

@@ -61,7 +61,7 @@ class ActionFactory(object):
         if widgetaction:
             action = QtWidgets.QWidgetAction(parent)
         else:
-            action = QtWidgets.QAction(parent)
+            action = QtGui.QAction(parent)
         action.setText(text)
         if actionicon:
             action.setIcon(from_admin_icon(actionicon).getQIcon())
@@ -82,7 +82,7 @@ class ActionFactory(object):
             text=_('Copy'),
             slot=slot,
             parent=parent,
-            shortcut=QtGui.QKeySequence.Copy,
+            shortcut=QtGui.QKeySequence.StandardKey.Copy,
             actionicon=Icon('copy'), # 'tango/16x16/actions/edit-copy.png'
             tip=_('Duplicate')
         )
@@ -95,7 +95,7 @@ class ActionFactory(object):
             text=_('Paste'),
             slot=slot,
             parent=parent,
-            shortcut=QtGui.QKeySequence.Paste,
+            shortcut=QtGui.QKeySequence.StandardKey.Paste,
             actionicon=Icon('paste'), # 'tango/16x16/actions/edit-paste.png'
             tip=_('Paste content from clipboard')
         )

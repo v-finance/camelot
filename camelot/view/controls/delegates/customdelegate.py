@@ -111,8 +111,8 @@ def DocumentationMetaclass(name, bases, dct):
 
     return type(name, bases, dct)
 
-color_groups = {True: QtGui.QPalette.Inactive,
-                False: QtGui.QPalette.Disabled}
+color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
+                False: QtGui.QPalette.ColorGroup.Disabled}
 
 class CustomDelegate(QtWidgets.QItemDelegate):
     """Base class for implementing custom delegates.
@@ -124,7 +124,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
-    horizontal_align = Qt.AlignLeft | Qt.AlignVCenter
+    horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
@@ -168,17 +168,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         serialized_action_routes = json_encoder.encode(routes)
         serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
-        item.setData(py_to_variant(model_context.value), Qt.EditRole)
+        item.setData(py_to_variant(model_context.value), Qt.ItemDataRole.EditRole)
         item.setData(serialized_action_routes, ActionRoutesRole)
         item.setData(serialized_action_states, ActionStatesRole)
-        item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
+        item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
         item.setData(py_to_variant(model_context.field_attributes.get('tooltip')),
-                     Qt.ToolTipRole)
+                     Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
-                     Qt.BackgroundRole)
-
+                     Qt.ItemDataRole.BackgroundRole)
         return item
 
     def createEditor(self, parent, option, index):
@@ -209,16 +208,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not
         #   getting closed always
-        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
+        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
 
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
-        # Qt model's data for Qt.ToolTipRole
-        # but i wonder if we should make the detour by Qt.ToolTipRole or just
+        # Qt model's data for Qt.ItemDataRole.ToolTipRole
+        # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):

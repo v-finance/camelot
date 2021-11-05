@@ -194,18 +194,18 @@ class SelectProfile( Action ):
                 items = [(None,'')] + [(p,p.name) for p in profiles]
                 font = QtGui.QFont()
                 font.setItalic(True)
-                items.append({Qt.UserRole: new_profile, Qt.FontRole: font,
-                              Qt.DisplayRole: ugettext('new/edit profile'),
-                              Qt.DecorationRole: self.new_icon
+                items.append({Qt.ItemDataRole.UserRole: new_profile, Qt.ItemDataRole.FontRole: font,
+                              Qt.ItemDataRole.DisplayRole: ugettext('new/edit profile'),
+                              Qt.ItemDataRole.DecorationRole: self.new_icon
                               })
                 if len(profiles):
-                    items.append({Qt.UserRole: save_profiles, Qt.FontRole: font,
-                                  Qt.DisplayRole: ugettext('save profiles'),
-                                  Qt.DecorationRole: self.save_icon
+                    items.append({Qt.ItemDataRole.UserRole: save_profiles, Qt.ItemDataRole.FontRole: font,
+                                  Qt.ItemDataRole.DisplayRole: ugettext('save profiles'),
+                                  Qt.ItemDataRole.DecorationRole: self.save_icon
                                   })
-                items.append({Qt.UserRole: load_profiles, Qt.FontRole: font,
-                              Qt.DisplayRole: ugettext('load profiles'),
-                              Qt.DecorationRole: self.load_icon
+                items.append({Qt.ItemDataRole.UserRole: load_profiles, Qt.ItemDataRole.FontRole: font,
+                              Qt.ItemDataRole.DisplayRole: ugettext('load profiles'),
+                              Qt.ItemDataRole.DecorationRole: self.load_icon
                               })
                 select_profile = action_steps.SelectItem( items )
                 last_profile = self.profile_store.get_last_profile()
@@ -242,7 +242,7 @@ class SelectProfile( Action ):
                         except Exception as e:
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
-                                                                     standard_buttons = [QtWidgets.QMessageBox.Ok] )
+                                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
                             exception_box.informative_text = str(e)
                             yield exception_box
                             edit_profile_name = profile.name
@@ -327,7 +327,7 @@ class OpenNewView( EntityAction ):
     """
 
     verbose_name = _('New')
-    shortcut = QtGui.QKeySequence.New
+    shortcut = QtGui.QKeySequence.StandardKey.New
     icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
             
@@ -363,7 +363,7 @@ class ShowAbout(Action):
         yield MessageBox(
             text = about,
             title = ugettext('About'),
-            standard_buttons=[QtWidgets.QMessageBox.Ok],
+            standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok],
         )
 
 class Backup( Action ):
@@ -401,7 +401,7 @@ class Refresh( Action ):
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
-    shortcut = QtGui.QKeySequence( Qt.Key_F9 )
+    shortcut = QtGui.QKeySequence( Qt.Key.Key_F9.value )
     icon = Icon('sync') # 'tango/16x16/actions/view-refresh.png'
     
     def model_run( self, model_context, mode ):
@@ -531,7 +531,7 @@ class Exit( Action ):
 
     name = 'exit'
     verbose_name = _('E&xit')
-    shortcut = QtGui.QKeySequence.Quit
+    shortcut = QtGui.QKeySequence.StandardKey.Quit
     icon = Icon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
 
@@ -546,13 +546,13 @@ class SegmentationFault( Action ):
 
     name = 'segfault'
     verbose_name = _('Segmentation Fault')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 )
+    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL.value + QtCore.Qt.Modifier.ALT.value + QtCore.Qt.Key.Key_0.value )
     
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        ok = yield action_steps.MessageBox( text= 'Are you sure you want to segfault the application',
-                                            standard_buttons=[QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes])
-        if ok == QtWidgets.QMessageBox.Yes:
+        ok = yield action_steps.MessageBox( text =  'Are you sure you want to segfault the application',
+                                            standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes] )
+        if ok == QtWidgets.QMessageBox.StandardButton.Yes:
             import faulthandler
             faulthandler._read_null()        
 

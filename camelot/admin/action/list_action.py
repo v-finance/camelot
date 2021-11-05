@@ -41,8 +41,9 @@ from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
+from camelot.view.utils import operator_names
 
 import xlsxwriter
 
@@ -203,7 +204,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 if current_column is not None:
                     current_field_name = variant_to_py(
                         model.headerData(
-                            current_column, Qt.Horizontal, Qt.UserRole
+                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                         )
                     )
             if self.item_view.selectionModel() is not None:
@@ -323,7 +324,7 @@ list_label = ListLabel()
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
-    shortcut = QtGui.QKeySequence.Open
+    shortcut = QtGui.QKeySequence.StandardKey.Open
     icon = Icon('folder') # 'tango/16x16/places/folder.png'
     tooltip = _('Open')
     # verbose name is set to None to avoid displaying it in the vertical
@@ -383,7 +384,7 @@ duplicate_selection = DuplicateSelection()
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
-    shortcut = QtGui.QKeySequence.Delete
+    shortcut = QtGui.QKeySequence.StandardKey.Delete
     name = 'delete_selection'
     icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
@@ -451,7 +452,7 @@ delete_selection = DeleteSelection()
 class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToPreviousPage
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToPreviousPage
     icon = Icon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
     verbose_name = _('Previous')
@@ -485,7 +486,7 @@ to_previous_row = ToPreviousRow()
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToStartOfDocument
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToStartOfDocument
     icon = Icon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
     verbose_name = _('First')
@@ -503,7 +504,7 @@ to_first_row = ToFirstRow()
 class AbstractToNext(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToNextPage
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToNextPage
     icon = Icon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
     verbose_name = _('Next')
@@ -538,7 +539,7 @@ to_next_row = ToNextRow()
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToEndOfDocument
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToEndOfDocument
     icon = Icon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
     verbose_name = _('Last')
@@ -777,7 +778,7 @@ class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
     verbose_name = _('Select &All')
-    shortcut = QtGui.QKeySequence.SelectAll
+    shortcut = QtGui.QKeySequence.StandardKey.SelectAll
     tooltip = _('Select all rows in the table')
     name = 'select_all'
 
@@ -858,7 +859,7 @@ class ImportFromFile( EditAction ):
             #
             # Ask confirmation
             #
-            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Warning, 
+            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Icon.Warning, 
                                            title = _('Proceed with import'), 
                                            text = _('Importing data cannot be undone,\n'
                                                     'are you sure you want to continue') )
@@ -894,7 +895,7 @@ class ReplaceFieldContents( EditAction ):
     icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
-    shortcut = QtGui.QKeySequence.Replace
+    shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
 
     def gui_run( self, gui_context ):
@@ -936,7 +937,57 @@ class FieldFilter(object):
     
     def __init__(self, value=None):
         self.value = value
-    
+
+class FilterValue(object):
+
+    filter_strategy = None
+    _filter_values = {}
+
+    def __init__(self, strategy, value_1=None, value_2=None):
+        assert isinstance(strategy, self.filter_strategy)
+        self.strategy = strategy
+        self.value_1 = value_1
+        self.value_2 = value_2
+
+    @classmethod
+    def get_filter_value(cls, filter_strategy):
+        """
+        Get the default :class:`FilterValue` class for the given specific filter
+        strategy class, return None, if not known.  The FilterValue
+        should either be registered through the :meth:`register` method or be
+        defined as an inner class with name :keyword:`Value` of the filter strategy.
+
+        :param filter_strategy: a subclass of :class:``camelot.admin.action.list_filter.AbstractFilterStrategy`
+        """
+        try:
+            return cls._filter_values[filter_strategy]
+        except KeyError:
+            for strategy_cls in filter_strategy.__mro__:
+                value_class = cls._filter_values.get(strategy_cls, None)
+                if value_class is None:
+                    if hasattr(strategy_cls, 'Value'):
+                        value_class = strategy_cls.Value
+                        value_class.filter_strategy = filter_strategy
+                        break
+                else:
+                    break
+            else:
+                raise Exception('Could not construct a default filter value class')
+            cls._filter_values[filter_strategy] = value_class
+            return value_class
+
+    @classmethod
+    def register(cls, filter_strategy, value_class):
+        """
+        Associate a certain FilterValue class with a filter strategy.
+        This FilterValue will be used as default.
+
+        :param filter_strategy: :class:`camelot.admin.action.list_filter.AbstractFilterStrategy`
+        :param value_class: a subclass of `FilterValue.`
+        """
+        assert value_class.filter_strategy == filter_strategy
+        cls._filter_values[filter_strategy] = value_class
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -951,59 +1002,35 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('filter')
     name = 'filter'
 
-    def get_field_name_choices(self, model_context):
-        """
-        :return: a list of choices with the fields the user can select to
-           filter upon.
-        """
-        filter_strategies = model_context.admin.get_field_filters()
-        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
-        field_choices.sort(key=lambda choice:choice[1])
-        return field_choices
+    def get_filter_strategies(self, model_context):
+        """:return: a list of field strategies the user can select."""
+        filter_strategies = list(model_context.admin.get_field_filters().items())
+        filter_strategies.sort(key=lambda choice:choice[1].get_verbose_name())
+        return filter_strategies
 
     def model_run( self, model_context, mode ):
-        from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
 
         if mode == '__clear':
-            new_filter_value = {}
+            new_filter_values = {}
         elif mode is None:
-            new_filter_value = {}
+            new_filter_values = {}
         else:
-            filter_value = model_context.proxy.get_filter(self) or {}
+            filter_values = model_context.proxy.get_filter(self) or {}
             filter_field_name = mode
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-            filter_value_attributes = {
-                'name': filter_field_attributes['name'],
-                'editable': True,
-                'delegate': filter_field_attributes['delegate'],
-            }
-            # in case the original choices are non dynamic list, they
-            # can be reused
-            if isinstance(filter_field_attributes.get('choices'), list):
-                filter_value_attributes['choices'] = filter_field_attributes['choices']
-            if 'precision' in filter_field_attributes:
-                filter_value_attributes['precision'] = filter_field_attributes['precision']
-    
-            class FieldFilterAdmin(ObjectAdmin):
-                verbose_name = _('Filter')
-                list_display = ['value']
-                field_attributes = {
-                    'value': filter_value_attributes
-                }
-    
-            field_filter = FieldFilter(value=None)
-            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
-            change_filter = action_steps.ChangeObject(field_filter, filter_admin)
+            filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
+            filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
+            filter_value = filter_value_cls(filter_strategy)
+            change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
             yield change_filter
-            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
-            new_filter_value = {k:v for k,v in filter_value.items()}
-            new_filter_value[filter_field_name] = filter_text
+            filter_text = filter_strategy.value_to_string(filter_value.value_1, model_context.admin)
+            new_filter_values = {k:v for k,v in filter_values.items()}
+            new_filter_values[filter_field_name] = filter_text
 
-        yield action_steps.SetFilter(self, new_filter_value)
-        new_state = self._get_state(model_context, new_filter_value)
+        yield action_steps.SetFilter(self, new_filter_values)
+        new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
@@ -1024,11 +1051,10 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
-        for name, verbose_name in self.get_field_name_choices(model_context):
-            if name in filter_value:
-                modes.append(Mode(name, verbose_name, icon=Icon('check-circle')))
-            else:
-                modes.append(Mode(name, verbose_name))
+        for name, filter_strategy in self.get_filter_strategies(model_context):
+            icon = Icon('check-circle') if name in filter_value else None
+            operators = [Mode(op.__name__, operator_names.get(op, _(op.__name__))) for op in filter_strategy.operators]
+            modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
@@ -1114,7 +1140,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     object to the session, and flush the object if it is valid.
     """
 
-    shortcut = QtGui.QKeySequence.New
+    shortcut = QtGui.QKeySequence.StandardKey.New
     icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')

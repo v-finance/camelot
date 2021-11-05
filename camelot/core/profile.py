@@ -48,7 +48,7 @@ from .qt import QtCore, variant_to_py, py_to_variant
 
 from camelot.core.conf import settings
 
-logger = logging.getLogger('camelot.core.dbprofiles')
+LOGGER = logging.getLogger('camelot.core.profile')
 
 profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
                    'port', 'media_location', 'locale_language', 'proxy_host',
@@ -202,7 +202,7 @@ class ProfileStore(object):
         """
         cipher = self._cipher()
         return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')
-    
+
     def _qsettings(self):
         # recreate QSettings each time it's needed, to make sure we're at
         # the same entry point
@@ -210,7 +210,7 @@ class ProfileStore(object):
             return QtCore.QSettings()
         else:
             return QtCore.QSettings(self.filename, 
-                                    QtCore.QSettings.IniFormat)
+                                    QtCore.QSettings.Format.IniFormat)
     
     def write_to_file(self, filename):
         file_store = ProfileStore(filename, cipher_key=self.cipher_key)

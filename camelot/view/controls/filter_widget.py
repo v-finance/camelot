@@ -76,7 +76,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group.setExclusive(action.exclusive)
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
-        group.buttonClicked[int].connect(self.group_button_clicked)
+        group.idClicked.connect(self.group_button_clicked)
         if action.exclusive == True:
             self.button_type = QtWidgets.QRadioButton
         else:

@@ -29,18 +29,15 @@
 import json
 import os
 
-from dataclasses import dataclass
-
-from ...core.qt import QtWidgets, QtCore, variant_to_py, py_to_variant, qt_api
-
-
-
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
-from ...core.serializable import DataclassSerializable
 
+from dataclasses import dataclass, field
+
+from ...core.serializable import DataclassSerializable
+from ...core.qt import QtWidgets, variant_to_py, py_to_variant, QtCore
 
 @dataclass
 class SelectFile( ActionStep, DataclassSerializable ):
@@ -69,6 +66,7 @@ class SelectFile( ActionStep, DataclassSerializable ):
     """
 
     file_name_filter: str = ''
+    single: bool = field(init=False)
 
     caption = _('Open')
 
@@ -95,8 +93,7 @@ class SelectFile( ActionStep, DataclassSerializable ):
                                     caption=str(cls.caption),
                                     directory=directory,
                                     filter=step["file_name_filter"])
-            if qt_api == 'PyQt5':
-                selected = selected[0]
+            selected = selected[0]
             # selected is an empty string if cancel is pressed
             if selected:
                 if step["single"]:
@@ -155,8 +152,7 @@ class SaveFile( ActionStep, DataclassSerializable ):
                                     caption=str(cls.caption),
                                     directory=directory,
                                     filter=step["file_name_filter"])
-            if qt_api == 'PyQt5':
-                selected = selected[0]
+            selected = selected[0]
             if selected:
                 settings.setValue('datasource', py_to_variant(selected))
                 return str(selected)
@@ -174,14 +170,14 @@ class SelectDirectory(ActionStep, DataclassSerializable):
     .. attribute:: options
 
         options to pass to :meth:`QtWidgets.QFileDialog.getExistingDirectory`,
-        defaults to :const:`QtWidgets.QFileDialog.ShowDirsOnly`
+        defaults to :const:`QtWidgets.QFileDialog.Options.ShowDirsOnly`
 
     """
 
     caption = _('Select directory')
 
     def __post_init__(self):
-        self.options = QtWidgets.QFileDialog.ShowDirsOnly
+        self.options = QtWidgets.QFileDialog.Options.ShowDirsOnly
         self.directory = None
 
     @classmethod

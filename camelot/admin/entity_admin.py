@@ -240,10 +240,10 @@ and used as a custom action.
 
     def get_search_identifiers(self, obj):
         search_identifiers = {}
-        search_identifiers[Qt.DisplayRole] = u'%s' % (str(obj))
+        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (str(obj))
         # Use user role for object to avoid display role / edit role confusion
-        search_identifiers[Qt.UserRole] = obj
-        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
+        search_identifiers[Qt.ItemDataRole.UserRole] = obj
+        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
 
         return search_identifiers
 
@@ -692,7 +692,7 @@ and used as a custom action.
         args = []
         
         for search_field in self._get_search_fields(text):
-            assert isinstance(search_field, list_filter.AbstractSearchStrategy)
+            assert isinstance(search_field, list_filter.AbstractFilterStrategy)
             arg = search_field.get_clause(text, self, query.session)
             if arg is not None:
                 args.append(arg)

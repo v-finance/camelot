@@ -39,8 +39,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
-from camelot.core.utils import ugettext
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import delegates, editors
@@ -79,16 +78,12 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   action_states,
                   accept,
                   reject,
-                  title =  _('Please complete'),
-                  subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
-                  flags=QtCore.Qt.Dialog ):
+                  flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         self.setWindowTitle( admin.get_verbose_name() )
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
-        self.set_banner_title( str(title) )
-        self.set_banner_subtitle( str(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
 
         model = CollectionProxy(admin_route)
@@ -124,7 +119,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         ok_button = QtWidgets.QPushButton(str(accept))
         ok_button.setObjectName( 'ok' )
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
+        layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
         layout.addStretch()
@@ -168,7 +163,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             model = self.sender()
             valid = variant_to_py(model.headerData(0, orientation, ValidRole))
             self._change_complete(model, valid or False)
@@ -183,7 +178,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             if complete:
                 note.set_value(None)
             else:
-                note.set_value(variant_to_py(model.headerData(0, Qt.Vertical, ValidMessageRole))) 
+                note.set_value(variant_to_py(model.headerData(0, Qt.Orientation.Vertical, ValidMessageRole)))
         if cancel_button is not None:
             ok_button.setDefault( not complete )
 
@@ -206,7 +201,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   action_states,
                   invalid_rows,
                   parent = None,
-                  flags = QtCore.Qt.Window ):
+                  flags = QtCore.Qt.WindowType.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
@@ -234,7 +229,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
 
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             model = self.sender()
             for row in range(first, last+1):
                 valid = variant_to_py(model.headerData(row, orientation, ValidRole))
@@ -259,7 +254,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 row = min(self.invalid_rows)
                 note.set_value(u'{0}<br/>{1}'.format(
                     ugettext(u'Please correct row {0} before proceeding.').format(row+1),
-                    variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
+                    variant_to_py(model.headerData(row, Qt.Orientation.Vertical, ValidMessageRole))
                 ))
 
 @dataclass
@@ -287,6 +282,8 @@ class ChangeObject(ActionStep):
     form_actions: List[Action] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     admin_route: AdminRoute = field(init=False)
+    title: typing.Union[str, ugettext_lazy, None] = _('Please complete')
+    subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
     accept = _('OK')
     reject = _('Cancel')
 
@@ -328,14 +325,16 @@ class ChangeObject(ActionStep):
                                     self.action_states,
                                     self.accept,
                                     self.reject)
+        dialog.set_banner_title(str(self.title))
+        dialog.set_banner_subtitle(str(self.subtitle))
         return dialog
 
     def gui_run( self, gui_context ):
         dialog = self.render(gui_context)
         apply_form_state(dialog, None, self.admin.form_state)
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
-            if result == QtWidgets.QDialog.Rejected:
+            result = dialog.exec()
+            if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return self.obj
 
@@ -443,8 +442,8 @@ class ChangeObjects( ActionStep ):
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
-        desktop = QtWidgets.QApplication.desktop()
-        available_geometry = desktop.availableGeometry( dialog )
+        screen = dialog.screen()
+        available_geometry = screen.availableGeometry()
         dialog.resize( available_geometry.width() * 0.75,
                        available_geometry.height() * 0.75 )
         return dialog
@@ -452,8 +451,8 @@ class ChangeObjects( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
-            if result == QtWidgets.QDialog.Rejected:
+            result = dialog.exec()
+            if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return self.objects
 
@@ -467,7 +466,7 @@ class ChangeFieldDialog(StandaloneWizardPage):
                   field_name,
                   field_value = None,
                   parent = None,
-                  flags=QtCore.Qt.Dialog ):
+                  flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeFieldDialog, self).__init__( '', parent, flags )
         from camelot.view.controls.editors import ChoicesEditor
         self.field_attributes = field_attributes
@@ -598,7 +597,7 @@ class ChangeField( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render()
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
-            if result == QtWidgets.QDialog.Rejected:
+            result = dialog.exec()
+            if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
             return (dialog.field, dialog.value)

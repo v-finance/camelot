@@ -84,7 +84,7 @@ strictly to the :class:`ModelContext`
         if window is not None:
             progress_dialog = window.findChild(
                 QtWidgets.QProgressDialog, 'application_progress',
-                Qt.FindDirectChildrenOnly
+                Qt.FindChildOption.FindDirectChildrenOnly
             )
             if progress_dialog is None:
                 progress_dialog = ProgressDialog(parent=window)
@@ -143,33 +143,49 @@ the default mode.
 .. attribute:: icon
 
     The icon of the mode
+    
+.. attribute:: modes: 
+
+    Optionally, a list of sub modes.
     """
 
     name: str
     verbose_name: typing.Union[str, ugettext_lazy] = None
     icon: typing.Union[Icon, None] = None
-    
+    modes: typing.List[DataclassSerializable] = field(default_factory=list)
+
     def __post_init__(self):
+        for mode in self.modes:
+            assert isinstance(mode, type(self))
         if self.verbose_name is None:
             self.verbose_name = self.name.capitalize()
 
     def render( self, parent ):
-        """Create a :class:`QtWidgets.QAction` that can be used to enable widget
-        to trigger the action in a specific mode.  The data attribute of the
-        action will contain the name of the mode.
-        
-        :return: a :class:`QtWidgets.QAction` class to use this mode
         """
-        action = QtWidgets.QAction( parent )
-        action.setData( self.name )
-        action.setText( str(self.verbose_name) )
-        if self.icon is None:
-            action.setIconVisibleInMenu(False)
+        In case this mode is a leaf (no containing sub modes), a :class:`QtWidgets.QAction`
+        will be created (or `QtWidgets.QMenu` in case this modes has sub modes defined)
+        that can be used to enable the widget to trigger the action in a specific mode.
+        The data attribute of the action will contain the name of the mode.
+        In case has underlying sub modes, a `QtWidgets.QMenu` will be created to which
+        the rendered sub modes can be attached.
+        :return: a :class:`QtWidgets.QAction` or :class:`QtWidgets.QMenu` to use this mode
+        """
+        if self.modes:
+            menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
+            if self.icon is not None:
+                menu.setIcon(from_admin_icon(self.icon).getQIcon())
+            parent.addMenu(menu)
+            return menu
         else:
-            action.setIcon(from_admin_icon(self.icon).getQIcon())
-            action.setIconVisibleInMenu(True)
-        return action
-
+            action = QtGui.QAction( parent )
+            action.setData( self.name )
+            action.setText( str(self.verbose_name) )
+            if self.icon is None:
+                action.setIconVisibleInMenu(False)
+            else:
+                action.setIcon(from_admin_icon(self.icon).getQIcon())
+                action.setIconVisibleInMenu(True)
+            return action
 
 @dataclass
 class State(DataclassSerializable):
@@ -281,7 +297,7 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         from camelot.view.action_runner import ActionRunner
         runner = ActionRunner( self.model_run, gui_context )
-        runner.exec_()
+        runner.exec()
         
     def model_run( self, model_context, mode ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`
@@ -427,10 +443,10 @@ with a view.
             tooltip = str(self.tooltip)
 
         if isinstance(self.shortcut, QtGui.QKeySequence):
-            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
         elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
             for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
-                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
                 break
         elif self.shortcut is not None:
             tooltip = (tooltip or u'') + '\n' + str(self.shortcut)

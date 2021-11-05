@@ -24,10 +24,11 @@ _application_ = []
 if QtWidgets.QApplication.instance() is None:
     # set up a test application
     _application_.append(QtWidgets.QApplication([a for a in sys.argv if a]))
-    # set up a specific locale to test import of files
-    QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
     # to generate consistent screenshots
     _application_[0].setStyle('fusion')
+
+# set up a specific locale to test import of files
+QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
 
 getattr(QtCore, 'QObject')
 getattr(QtGui, 'QColor')

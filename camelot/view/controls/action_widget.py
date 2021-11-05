@@ -78,7 +78,7 @@ class AbstractActionWidget( object ):
                   args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             return
         if isinstance(self.gui_context, FormActionGuiContext):
             # the model might emit a dataChanged signal, while the widget mapper
@@ -113,9 +113,16 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode in state.modes:
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                if mode.modes:
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        submode_action.triggered.connect(self.action_triggered)
+                        mode_menu.addAction(submode_action)
+                else:
+                    mode_action = mode.render(menu)
+                    mode_action.triggered.connect(self.action_triggered)
+                    menu.addAction(mode_action)
 
     def set_menu_v2(self, state, parent):
         """This method creates a menu for an object with as its menu items
@@ -134,14 +141,23 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                if mode_data['icon'] is not None:
-                    icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color']) if mode_data['icon'] is not None else None
+                if mode_data['modes']:
+                    submodes = []
+                    for submode_data in mode_data['modes']:
+                        submode_icon = Icon(submode_data['icon']['name'], submode_data['icon']['pixmap_size'], submode_data['icon']['color']) if submode_data['icon'] is not None else None
+                        submodes.append(Mode(submode_data['name'], submode_data['verbose_name'], submode_icon))
+                    mode = Mode(mode_data['name'], mode_data['verbose_name'], submode_icon, submodes)
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        submode_action.triggered.connect(self.action_triggered)
+                        mode_menu.addAction(submode_action)
                 else:
-                    icon = None
-                mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                    mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
+                    mode_action = mode.render(menu)
+                    mode_action.triggered.connect(self.action_triggered)
+                    menu.addAction(mode_action)
 
     # not named triggered to avoid confusion with standard Qt slot
     def action_triggered_by(self, sender):
@@ -151,20 +167,20 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance(sender, QtWidgets.QAction):
+        if isinstance(sender, QtGui.QAction):
             mode = str(variant_to_py(sender.data()))
         elif isinstance(sender, QtQuick.QQuickItem):
-            data = sender.data()
+            data = sender.mode()
             if isinstance(data, QtQml.QJSValue):
                 data = data.toVariant()
             mode = variant_to_py(data)
         self.run_action( mode )
 
 
-class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
+class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
-        QtWidgets.QAction.__init__( self, parent )
+        QtGui.QAction.__init__( self, parent )
         AbstractActionWidget.init( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
@@ -289,7 +305,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu(state, self)
         if state.modes:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
     def set_state_v2( self, state ):
         AbstractActionWidget.set_state_v2(self, state)
@@ -306,7 +322,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu_v2(state, self)
         if state['modes']:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
 
     @QtCore.qt_slot()

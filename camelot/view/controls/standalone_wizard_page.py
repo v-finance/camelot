@@ -38,13 +38,13 @@ class HSeparator(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(HSeparator, self).__init__(parent)
-        self.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
+        self.setFrameStyle(QtWidgets.QFrame.Shape.HLine | QtWidgets.QFrame.Shadow.Sunken)
 
 
 class StandaloneWizardPage(QtWidgets.QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
-    def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
+    def __init__(self, window_title=None, parent=None, flags=Qt.WindowType.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
         self.setWindowTitle( str(window_title or ' ') )
         self.set_layouts()
@@ -59,11 +59,11 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         # of the widget and can be hidden
         # this prevents the ChangeObjects dialog from being scaleable,
         # therefor commented out
-        #self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
+        #self._vlayout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         banner_layout = QtWidgets.QGridLayout()
         banner_layout.setColumnStretch(0, 1)
-        banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignRight)
+        banner_layout.addWidget(QtWidgets.QLabel(), 0, 1, Qt.AlignmentFlag.AlignRight)
         banner_layout.addLayout(QtWidgets.QVBoxLayout(), 0, 0)
 
         # TODO: allow banner widget to be supplied
@@ -103,8 +103,11 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         self.banner_text_layout().insertWidget(0, title_widget)
 
     def set_banner_subtitle(self, subtitle):
+        # setting the subtitle without setting the title crashes the dialog,
+        # probably because index 1 is invalid
+        index = 1 if self.banner_text_layout().count() else 0
         subtitle_widget = QtWidgets.QLabel('<dd>%s</dd>' % subtitle)
-        self.banner_text_layout().insertWidget(1, subtitle_widget)
+        self.banner_text_layout().insertWidget(index, subtitle_widget)
 
     def set_default_buttons( self,
                              accept = _('OK'),
@@ -113,7 +116,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         """add an :guilabel:`ok` and a :guilabel:`cancel` button.
         """
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
+        layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
         if accept != None:
             ok_button = QtWidgets.QPushButton( str( accept ), self )
             ok_button.setObjectName( 'accept' )
