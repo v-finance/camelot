@@ -968,18 +968,21 @@ class FilterValue(object):
 
         :param filter_strategy: a subclass of :class:``camelot.admin.action.list_filter.AbstractFilterStrategy`
         """
+        from camelot.admin.action.list_filter import AbstractFilterStrategy
+        assert issubclass(filter_strategy, AbstractFilterStrategy)
         try:
             return cls._filter_values[filter_strategy]
         except KeyError:
             for strategy_cls in filter_strategy.__mro__:
-                value_class = cls._filter_values.get(strategy_cls, None)
-                if value_class is None:
-                    if hasattr(strategy_cls, 'Value'):
-                        value_class = strategy_cls.Value
-                        value_class.filter_strategy = filter_strategy
+                if issubclass(strategy_cls, AbstractFilterStrategy) and strategy_cls.name == filter_strategy.name:
+                    value_class = cls._filter_values.get(strategy_cls, None)
+                    if value_class is None:
+                        if hasattr(strategy_cls, 'Value'):
+                            value_class = strategy_cls.Value
+                            value_class.filter_strategy = filter_strategy
+                            break
+                    else:
                         break
-                else:
-                    break
             else:
                 raise Exception('Could not construct a default filter value class')
             cls._filter_values[filter_strategy] = value_class
