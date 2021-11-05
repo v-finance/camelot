@@ -640,6 +640,10 @@ class ChoicesFilter(FieldFilter):
     def value_to_string(self, filter_value, admin):
         return filter_value
 
+class MonthsFilter(IntFilter):
+
+    name = 'months_filter'
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
