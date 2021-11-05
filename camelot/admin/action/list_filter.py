@@ -500,26 +500,25 @@ class DecimalFilter(FieldFilter):
     def get_type_clause(self, field_attributes, operator, *operands):
         try:
             float_operands = [field_attributes.get('from_string', utils.float_from_string)(operand) for operand in operands]
-            float_value_1, float_value_2 = float_operands[0:2]
             precision = self.attribute.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
 
-            if operator == Operator.eq and float_value_1 is not None:
-                return sql.and_(self.attribute>=float_value_1-delta, self.attribute<=float_value_1+delta)
+            if operator == Operator.eq and float_operands[0] is not None:
+                return sql.and_(self.attribute>=float_operands[0]-delta, self.attribute<=float_operands[0]+delta)
 
-            if operator == Operator.ne and float_value_1 is not None:
-                return sql.or_(self.attribute<float_value_1-delta, self.attribute>float_value_1+delta) 
+            if operator == Operator.ne and float_operands[0] is not None:
+                return sql.or_(self.attribute<float_operands[0]-delta, self.attribute>float_operands[0]+delta) 
 
-            elif operator in (Operator.lt, Operator.le) and float_value_1 is not None:
-                return super().get_type_clause(field_attributes, operator, float_value_1-delta)
+            elif operator in (Operator.lt, Operator.le) and float_operands[0] is not None:
+                return super().get_type_clause(field_attributes, operator, float_operands[0]-delta)
             
-            elif operator in (Operator.gt, Operator.ge) and float_value_1 is not None:
-                return super().get_type_clause(field_attributes, operator, float_value_1+delta)
+            elif operator in (Operator.gt, Operator.ge) and float_operands[0] is not None:
+                return super().get_type_clause(field_attributes, operator, float_operands[0]+delta)
 
-            elif operator == Operator.between and None not in (float_value_1, float_value_2):
-                return super().get_type_clause(field_attributes, operator, float_value_1-delta, float_value_2+delta)
+            elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
+                return super().get_type_clause(field_attributes, operator, float_operands[0]-delta, float_operands[1]+delta)
 
         except utils.ParsingError:
             pass
