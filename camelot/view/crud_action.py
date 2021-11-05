@@ -286,11 +286,13 @@ class Deleted(RowCount, UpdateMixin):
         # the proxy
         for obj in objects_to_remove:
             model_context.proxy.remove(obj)
+        # update before changing the rowcount, otherwise the update might
+        # modify the rowcount again
+        yield action_steps.Update(changed_ranges)
         #
         # when it's no longer in the proxy, the len of the proxy will be
         # different from the one of the view
         #
-        yield action_steps.Deleted(None, changed_ranges)
         rows = len(model_context.proxy)
         if (row is not None) or (rows != self.rows_in_view):
             # but updating the view is only needed if the rows changed

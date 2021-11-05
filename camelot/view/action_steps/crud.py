@@ -142,24 +142,6 @@ class Update(ActionStep, UpdateMixin):
         
     def gui_run(self, item_model):
         self.update_item_model(item_model)     
-        
-
-class Deleted(ActionStep, UpdateMixin):
-    # Deleted should be a subclass of RowCount, but this is avoided here,
-    # otherwise the changed ranges would need to be serializable
-
-    blocking = False
-
-    def __init__(self, rows, changed_ranges):
-        self.rows = rows
-        self.changed_ranges = changed_ranges
-
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
-        # Calling RowCount.gui_run would avoid this code, but would require
-        # serializing the action step
-        if self.rows is not None:
-            item_model._refresh_content(self.rows)
 
 
 class SetData(Update): 
