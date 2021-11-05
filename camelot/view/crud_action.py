@@ -290,12 +290,13 @@ class Deleted(RowCount, UpdateMixin):
         # when it's no longer in the proxy, the len of the proxy will be
         # different from the one of the view
         #
-        if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
+        yield action_steps.Deleted(None, changed_ranges)
+        rows = len(model_context.proxy)
+        if (row is not None) or (rows != self.rows_in_view):
             # but updating the view is only needed if the rows changed
             yield from super(Deleted, self).model_run(model_context, mode)
-        yield action_steps.Deleted(None, changed_ranges)
-        
-        
+
+
 class Filter(RowCount):
 
     name = 'filter'
