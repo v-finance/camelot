@@ -82,6 +82,7 @@ class QueryModelProxy(ListModelProxy):
         assert not isinstance(obj, assert_value_objects)
         if obj in self._objects:
             return
+        self.indexed_ids[id(obj)] = obj
         # a new object cannot be in the query, so no need to check it
         if obj in self._query.session.new:
             self._objects.append(obj)
@@ -99,7 +100,7 @@ class QueryModelProxy(ListModelProxy):
             # The object is in the query, but might not yet be in the length
             self._length = None
             return
-        self._objects.append(obj)     
+        self._objects.append(obj)
 
     def index(self, obj):
         assert not isinstance(obj, assert_value_objects)
