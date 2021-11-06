@@ -185,7 +185,11 @@ class Update(Action, UpdateMixin):
     def model_run(self, model_context, mode):
         changed_ranges = []
         from camelot.view import action_steps
-        for obj in self.objects:
+        for obj_id in self.objects:
+            try:
+                obj = model_context.proxy.indexed_ids[obj_id]
+            except KeyError:
+                continue
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -232,7 +236,11 @@ class Created(Action, UpdateMixin):
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
         changed_ranges = []
-        for obj in self.objects:
+        for obj_id in self.objects:
+            try:
+                obj = model_context.proxy.indexed_ids[obj_id]
+            except KeyError:
+                continue
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -263,7 +271,11 @@ class Deleted(RowCount, UpdateMixin):
         # the object might or might not be in the proxy when the
         # deletion is handled
         #
-        for obj in self.objects:
+        for obj_id in self.objects:
+            try:
+                obj = model_context.proxy.indexed_ids[obj_id]
+            except KeyError:
+                continue
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:

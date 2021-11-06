@@ -148,9 +148,9 @@ class SetData(Update):
     
     def __init__(self, changed_ranges, created_objects, updated_objects, deleted_objects):
         super(SetData, self).__init__(changed_ranges)
-        self.created_objects = created_objects
-        self.updated_objects = updated_objects
-        self.deleted_objects = deleted_objects
+        self.created_objects = tuple(id(obj) for obj in created_objects)
+        self.updated_objects = tuple(id(obj) for obj in updated_objects)
+        self.deleted_objects = tuple(id(obj) for obj in deleted_objects)
         
     def gui_run(self, item_model):
         super(SetData, self).gui_run(item_model)
