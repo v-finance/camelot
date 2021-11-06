@@ -220,7 +220,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
         # the prefix is prepended to the display role
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), 'pre 1')
-        self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), self.collection[1])
+        self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), id(self.collection[1]))
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['editable'], True)
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['static'], 'static')
         self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['prefix'], 'pre')
@@ -274,14 +274,14 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertTrue(flags & Qt.ItemFlag.ItemIsSelectable)
 
     def test_sort( self ):
-        self.item_model.sort( 0, Qt.SortOrder.AscendingOrder )
+        self.item_model.sort( 0, Qt.SortOrder.AscendingOrder.value )
         # check the sorting
         self._load_data(self.item_model)
         row_0 = self._data( 0, 0, self.item_model )
         row_1 = self._data( 1, 0, self.item_model )
         LOGGER.debug('row 0 : {0}, row 1 : {1}'.format(row_0, row_1))
         self.assertTrue( row_1 > row_0 )
-        self.item_model.sort( 0, Qt.SortOrder.DescendingOrder )
+        self.item_model.sort( 0, Qt.SortOrder.DescendingOrder.value )
         # check the sorting
         self._load_data(self.item_model)
         row_0 = self._data( 0, 0, self.item_model )
@@ -311,7 +311,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             # both are displayed mixed
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole, self.item_model), '')
             self.assertTrue(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model))
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), self.collection[row])
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), id(self.collection[row]))
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), 'A : {0}'.format(row))
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.vertical_header_size)
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), True)
@@ -625,7 +625,7 @@ class QueryQStandardItemModelCase(
     def test_insert_after_sort(self):
         self.item_model.timeout_slot()
         self.assertTrue( self.item_model.columnCount() > 0 )
-        self.item_model.sort( 1, Qt.SortOrder.AscendingOrder )
+        self.item_model.sort( 1, Qt.SortOrder.AscendingOrder.value )
         # check the query
         self.assertTrue( self.item_model.columnCount() > 0 )
         rowcount = self._row_count(self.item_model)
@@ -635,7 +635,7 @@ class QueryQStandardItemModelCase(
         data0 = self._data( 0, 1, self.item_model )
         data1 = self._data( 1, 1, self.item_model )
         self.assertTrue( data1 > data0 )
-        self.item_model.sort( 1, Qt.SortOrder.DescendingOrder )
+        self.item_model.sort( 1, Qt.SortOrder.DescendingOrder.value )
         self._load_data(self.item_model)
         data0 = self._data( 0, 1, self.item_model )
         data1 = self._data( 1, 1, self.item_model )
@@ -666,7 +666,7 @@ class QueryQStandardItemModelCase(
         self.assertEqual( self._data( new_row, 1, self.item_model ), 'Bar' )
         self.assertTrue( self.person_admin.is_persistent( person ) )
         # get the object at the new row (eg, to display a form view)
-        self.assertEqual(self._header_data(new_row, Qt.Orientation.Vertical, ObjectRole, self.item_model), person)
+        self.assertEqual(self._header_data(new_row, Qt.Orientation.Vertical, ObjectRole, self.item_model), id(person))
 
     def test_single_query(self):
         # after constructing a queryproxy, 4 queries are issued
