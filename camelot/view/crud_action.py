@@ -136,31 +136,29 @@ class Completion(Action):
 
     name = 'completion'
 
-    def __init__(self, row, column, prefix):
-        self.row = row
-        self.column = column
-        self.prefix = prefix
-
     def model_run(self, model_context, mode):
-        from camelot.view import action_steps  
-        field_name = model_context.static_field_attributes[self.column]['field_name']
-        admin = model_context.static_field_attributes[self.column]['admin']
-        object_slice = list(model_context.proxy[self.row:self.row+1])
+        from camelot.view import action_steps
+        row = mode['row']
+        column = mode['column']
+        prefix = mode['prefix']
+        field_name = model_context.static_field_attributes[column]['field_name']
+        admin = model_context.static_field_attributes[column]['admin']
+        object_slice = list(model_context.proxy[row:row+1])
         if not len(object_slice):
-            logger.error('Cannot generate completions : no object in row {0}'.format(self.row))
+            logger.error('Cannot generate completions : no object in row {0}'.format(row))
             return
         obj = object_slice[0]
         completions = model_context.admin.get_completions(
             obj,
             field_name,
-            self.prefix,
+            prefix,
         )
         # Empty if the field does not support autocompletions
         completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
-        yield action_steps.Completion(self.row, self.column, self.prefix, completions)
+        yield action_steps.Completion(row, column, prefix, completions)
 
     def __repr__(self):
-        return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
+        return '{0.__class__.__name__}'.format(self)
     
     
 class RowCount(Action):

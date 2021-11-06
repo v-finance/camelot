@@ -290,7 +290,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 timer.setInterval(min(maximum_delay, int(timer.interval()) * 2))
             while len(self.__crud_requests):
                 model_context, request_id, request, mode = self.__crud_requests.popleft()
-                self.logger.debug('post request {0} {1}'.format(request_id, request))
+                self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
                 # dirty hack to get mode to the action runner
                 self._mode_name = mode
                 runner = ActionRunner(request.model_run, self)
@@ -327,7 +327,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         - the request is associated with the current model context
         """
         request_id = next(self.__crud_request_counter)
-        self.logger.debug('append request {0} {1}'.format(request_id, request))
+        self.logger.debug('append request {0} {1} : {2}'.format(request_id, request, mode))
         self.__crud_requests.append((self._model_context, request_id, request, mode))
         self._start_timer()
 
@@ -635,7 +635,9 @@ class CollectionProxy(QtGui.QStandardItemModel):
             # by the time the timout happens
             self.timeout_slot()
         elif role == CompletionPrefixRole:
-            self._append_request(Completion(index.row(), index.column(), value), None)
+            self._append_request(
+                Completion(), {'row': index.row(), 'column': index.column(), 'prefix': value}
+            )
         return True
 
     def get_admin( self ):
