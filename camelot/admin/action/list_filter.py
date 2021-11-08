@@ -210,7 +210,7 @@ class ComboBoxFilter(Filter):
 
 filter_operator = collections.namedtuple(
     'filter_operator',
-    ('operator', 'arity', 'verbose_name', 'prefix', 'infix'))
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
 
 class Operator(enum.Enum):
     """
@@ -220,17 +220,18 @@ class Operator(enum.Enum):
       * verbose name : short verbose description of the operator to display in the GUI.
       * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
+      * pre_condition : Unary operator function to pre filter the filter attribute operand. E.g. is not None.
     """
-    #name                      operator     arity verbose_name           prefix   infix
-    eq =        filter_operator(operator.eq, 2,  _('='),                 None,    None)
-    ne =        filter_operator(operator.ne, 2,  _('!='),                None,    None)
-    lt =        filter_operator(operator.lt, 2,  _('<'),                 None,    None)
-    le =        filter_operator(operator.le, 2,  _('<='),                None,    None)
-    gt =        filter_operator(operator.gt, 2,  _('>'),                 None,    None)
-    ge =        filter_operator(operator.ge, 2,  _('>='),                None,    None)
-    like =      filter_operator(ilike_op,    2,  _('like'),              None,    None)
-    between =   filter_operator(between_op,  3,  _('between'),           None,  _('and'))
-    is_empty =  filter_operator(is_none,     1,  _('is not filled out'), None,    None)
+    #name                      operator     arity verbose_name           prefix   infix   pre_condition
+    eq =        filter_operator(operator.eq, 2,  _('='),                 None,    None,   is_not_none)
+    ne =        filter_operator(operator.ne, 2,  _('!='),                None,    None,   is_not_none)
+    lt =        filter_operator(operator.lt, 2,  _('<'),                 None,    None,   is_not_none)
+    le =        filter_operator(operator.le, 2,  _('<='),                None,    None,   is_not_none)
+    gt =        filter_operator(operator.gt, 2,  _('>'),                 None,    None,   is_not_none)
+    ge =        filter_operator(operator.ge, 2,  _('>='),                None,    None,   is_not_none)
+    like =      filter_operator(ilike_op,    2,  _('like'),              None,    None,   is_not_none)
+    between =   filter_operator(between_op,  3,  _('between'),           None,  _('and'), is_not_none)
+    is_empty =  filter_operator(is_none,     1,  _('is not filled out'), None,    None,   None)
 
     @property
     def operator(self):
@@ -251,6 +252,10 @@ class Operator(enum.Enum):
     @property
     def infix(self):
         return self._value_.infix
+
+    @property
+    def pre_condition(self):
+        return self._value_.pre_condition
 
     @classmethod
     def numerical_operators(cls):
@@ -380,10 +385,15 @@ class FieldFilter(AbstractFilterStrategy):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         filter_clause = self.get_type_clause(field_attributes, operator, *operands)
         if filter_clause is not None:
-            where_conditions = [self.attribute != None]
+            where_conditions = []
+            #where_conditions = [self.attribute != None]
+            if operator.pre_condition is not None:
+                where_conditions.append(operator.pre_condition(self.attribute))
             if self.where is not None:
                 where_conditions.append(self.where)
-            return sql.and_(*where_conditions, filter_clause)
+            if where_conditions:
+                return sql.and_(*where_conditions, filter_clause)
+            return filter_clause
 
     def get_type_clause(self, field_attributes, operator, *operands):
         """
