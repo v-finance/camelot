@@ -1036,9 +1036,13 @@ class SetFilters(Action, AbstractModelFilter):
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
             # TODO: get the selected operator from the modes,
             # instead of using the standard search operator for the selected strategy by default for now.
-            filter_value = filter_value_cls(filter_strategy, filter_strategy.search_operator)
-            change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
-            yield change_filter
+            filter_operator = filter_strategy.search_operator
+            filter_value = filter_value_cls(filter_strategy, filter_operator)
+            # The filter values need only be updated by the user in case of multi-ary filter operators.
+            # Unary operators can be applied directly.
+            if filter_operator.arity > 1:
+                change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
+                yield change_filter
             operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in [filter_value.value_1, filter_value.value_2]]
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
