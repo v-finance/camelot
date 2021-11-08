@@ -349,7 +349,7 @@ class FieldFilter(AbstractFilterStrategy):
 
     attribute = None
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **kwargs):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
@@ -358,6 +358,8 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attribute.key
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
+        nullable = field_attributes.get('nullable')
+        self.nullable = nullable if isinstance(nullable, bool) else True
 
     @classmethod
     def get_attribute_python_type(cls, attribute):
@@ -374,6 +376,12 @@ class FieldFilter(AbstractFilterStrategy):
     def assert_valid_attribute(self, attribute):
         python_type = self.get_attribute_python_type(attribute)
         assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
+
+    def get_operators(self):
+        operators = super().get_operators()
+        if not self.nullable:
+            return [op for op in operators if op not in (Operator.is_empty, Operator.is_not_empty)]
+        return operators
 
     def get_clause(self, admin, session, operator, *operands):
         """
