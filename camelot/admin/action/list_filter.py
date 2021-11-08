@@ -580,15 +580,14 @@ class DateFilter(FieldFilter):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
-class IntFilter(FieldFilter):
+class IntFilter(DecimalFilter):
 
     name = 'int_filter'
-    python_type = int
-    operators = Operator.numerical_operators()
+    python_type = (int, *DecimalFilter.python_type)
 
     def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.int_from_string)(operand) for operand in operands])
+            return super(DecimalFilter, self).get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.int_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
 
