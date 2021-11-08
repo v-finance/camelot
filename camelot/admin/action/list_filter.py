@@ -37,7 +37,7 @@ import decimal
 import enum
 import operator
 
-from camelot.core.sql import ilike_op
+from camelot.core.sql import ilike_op, is_none, is_not_none
 from camelot.view import utils
 
 from dataclasses import dataclass
@@ -221,15 +221,16 @@ class Operator(enum.Enum):
       * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
     """
-    #name                     operator     arity verbose_name   prefix   infix
-    eq =      filter_operator(operator.eq, 2,  _('='),          None,    None)
-    ne =      filter_operator(operator.ne, 2,  _('!='),         None,    None)
-    lt =      filter_operator(operator.lt, 2,  _('<'),          None,    None)
-    le =      filter_operator(operator.le, 2,  _('<='),         None,    None)
-    gt =      filter_operator(operator.gt, 2,  _('>'),          None,    None)
-    ge =      filter_operator(operator.ge, 2,  _('>='),         None,    None)
-    like =    filter_operator(ilike_op,    2,  _('like'),       None,    None)
-    between = filter_operator(between_op,  3,  _('between'),    None,  _('and'))
+    #name                      operator     arity verbose_name           prefix   infix
+    eq =        filter_operator(operator.eq, 2,  _('='),                 None,    None)
+    ne =        filter_operator(operator.ne, 2,  _('!='),                None,    None)
+    lt =        filter_operator(operator.lt, 2,  _('<'),                 None,    None)
+    le =        filter_operator(operator.le, 2,  _('<='),                None,    None)
+    gt =        filter_operator(operator.gt, 2,  _('>'),                 None,    None)
+    ge =        filter_operator(operator.ge, 2,  _('>='),                None,    None)
+    like =      filter_operator(ilike_op,    2,  _('like'),              None,    None)
+    between =   filter_operator(between_op,  3,  _('between'),           None,  _('and'))
+    is_empty =  filter_operator(is_none,     1,  _('is not filled out'), None,    None)
 
     @property
     def operator(self):
