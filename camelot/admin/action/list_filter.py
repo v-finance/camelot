@@ -497,6 +497,10 @@ class DecimalFilter(FieldFilter):
     python_type = (float, decimal.Decimal)
     operators = Operator.numerical_operators()
 
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        super().__init__(attribute, where, key, verbose_name)
+        self.precision = field_attributes.get('precision')
+
     def get_type_clause(self, field_attributes, operator, *operands):
         try:
             float_operands = [field_attributes.get('from_string', utils.float_from_string)(operand) for operand in operands]
