@@ -222,16 +222,17 @@ class Operator(enum.Enum):
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
       * pre_condition : Unary operator function to pre filter the filter attribute operand. E.g. is not None.
     """
-    #name                      operator     arity verbose_name           prefix   infix   pre_condition
-    eq =        filter_operator(operator.eq, 2,  _('='),                 None,    None,   is_not_none)
-    ne =        filter_operator(operator.ne, 2,  _('!='),                None,    None,   is_not_none)
-    lt =        filter_operator(operator.lt, 2,  _('<'),                 None,    None,   is_not_none)
-    le =        filter_operator(operator.le, 2,  _('<='),                None,    None,   is_not_none)
-    gt =        filter_operator(operator.gt, 2,  _('>'),                 None,    None,   is_not_none)
-    ge =        filter_operator(operator.ge, 2,  _('>='),                None,    None,   is_not_none)
-    like =      filter_operator(ilike_op,    2,  _('like'),              None,    None,   is_not_none)
-    between =   filter_operator(between_op,  3,  _('between'),           None,  _('and'), is_not_none)
-    is_empty =  filter_operator(is_none,     1,  _('is not filled out'), None,    None,   None)
+    #name                         operator     arity verbose_name           prefix   infix   pre_condition
+    eq =           filter_operator(operator.eq, 2,  _('='),                 None,    None,   is_not_none)
+    ne =           filter_operator(operator.ne, 2,  _('!='),                None,    None,   is_not_none)
+    lt =           filter_operator(operator.lt, 2,  _('<'),                 None,    None,   is_not_none)
+    le =           filter_operator(operator.le, 2,  _('<='),                None,    None,   is_not_none)
+    gt =           filter_operator(operator.gt, 2,  _('>'),                 None,    None,   is_not_none)
+    ge =           filter_operator(operator.ge, 2,  _('>='),                None,    None,   is_not_none)
+    like =         filter_operator(ilike_op,    2,  _('like'),              None,    None,   is_not_none)
+    between =      filter_operator(between_op,  3,  _('between'),           None,  _('and'), is_not_none)
+    is_empty =     filter_operator(is_none,     1,  _('is not filled out'), None,    None,   None)
+    is_not_empty = filter_operator(is_not_none, 1,  _('is filled out'),     None,    None,   None)
 
     @property
     def operator(self):
