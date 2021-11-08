@@ -260,11 +260,11 @@ class Operator(enum.Enum):
 
     @classmethod
     def numerical_operators(cls):
-        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between)
+        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between, cls.is_empty, cls.is_not_empty)
 
     @classmethod
     def text_operators(cls):
-        return (cls.eq, cls.ne, cls.like)
+        return (cls.eq, cls.ne, cls.like, cls.is_empty, cls.is_not_empty)
 
 class AbstractFilterStrategy(object):
     """
