@@ -631,10 +631,10 @@ class ChoicesFilter(FieldFilter):
     python_type = str
     operators = (Operator.eq, Operator.ne)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         self.python_type = self.get_attribute_python_type(attribute)
         super().__init__(attribute, where, key, verbose_name)
-        self.choices = choices
+        self.choices = field_attributes.get('choices')
 
     def value_to_string(self, filter_value, admin):
         return filter_value
