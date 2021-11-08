@@ -704,17 +704,22 @@ be specified using the verbose_name attribute.
             target = attributes.get('target', None)
             if target is not None and admin is not None:
                 attributes['admin'] = admin(self, target)
-        
+
+            # The filter strategy can only be overruled when it has a valid filter strategy introspected from the descriptor,
+            # and its not overruled explicitly already in the forced attributes.
+            filter_strategy_overrulable = ('filter_strategy' not in forced_attributes) and (attributes['filter_strategy'] != list_filter.NoFilter)
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
                 attributes['delegate'] = delegates.ComboBoxDelegate
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict.get(x, '')
-                    if attributes['filter_strategy'] != list_filter.NoFilter:
+                    if filter_strategy_overrulable:
                         # Only overrule the filter strategy to ChoicesFilter if the choices are non-dynamic,
                         # as the choices needed for filtering should apply for all entities.
                         attributes['filter_strategy'] = list_filter.ChoicesFilter
+            if attributes.get('delegate') == delegates.MonthsDelegate and filter_strategy_overrulable:
+                attributes['filter_strategy'] = list_filter.MonthsFilter
             self._expand_field_attributes(attributes, field_name)
             return attributes
 
