@@ -68,5 +68,8 @@ for strategy_cls, delegate in [
 
         if strategy_cls == list_filter.ChoicesFilter:
             Admin.field_attributes['value_1'].update({'choices': lambda o: o.strategy.choices})
+        if strategy_cls == list_filter.DecimalFilter:
+            Admin.field_attributes['value_1'].update({'precision': lambda o: (o.strategy.precision if not isinstance(o.strategy.precision, tuple) else o.strategy.precision[1]) or 2})
+            Admin.field_attributes['value_2'].update({'precision': lambda o: (o.strategy.precision if not isinstance(o.strategy.precision, tuple) else o.strategy.precision[1]) or 2})
 
         new_value_cls.Admin = Admin
