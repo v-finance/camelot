@@ -89,7 +89,7 @@ class GeographicBoundary( Entity ):
         return cls.translation(language='fr_BE')
 
     __mapper_args__ = {
-        'polymorphic_identity': 'geographic_boundary',
+        'polymorphic_identity': None,
         'polymorphic_on' : row_type
     }
 
