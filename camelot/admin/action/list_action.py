@@ -1035,9 +1035,6 @@ class SetFilters(Action, AbstractModelFilter):
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
-            # TODO: get the selected operator from the modes,
-            # instead of using the standard search operator for the selected strategy by default for now.
-            filter_operator = filter_strategy.search_operator
             filter_operator = Operator[operator_name]
             filter_value = filter_value_cls(filter_strategy, filter_operator)
             # The filter values need only be updated by the user in case of multi-ary filter operators.
