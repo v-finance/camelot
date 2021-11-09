@@ -933,11 +933,11 @@ class FilterValue(object):
     Helper class for the `SetFilters` action that allows the user to
     configure a filter defined by a filter strategy and a filter operator.
     """
-    filter_strategy = None
-    _filter_values = {}
+    _admins = {}
 
     def __init__(self, strategy, operator, value_1=None, value_2=None):
-        assert isinstance(strategy, self.filter_strategy)
+        from camelot.admin.action.list_filter import AbstractFilterStrategy
+        assert issubclass(strategy, AbstractFilterStrategy)
         self.strategy = strategy
         self.operator = operator
         self.value_1 = value_1
@@ -953,10 +953,10 @@ class FilterValue(object):
             return str(self.operator.infix)
 
     @classmethod
-    def get_filter_value(cls, filter_strategy):
+    def get_admin(cls, filter_strategy):
         """
-        Get the default :class:`FilterValue` class for the given specific filter
-        strategy class, return None, if not known.  The FilterValue
+        Get the default :class:`FilterValueAdmin` class for the given specific filter
+        strategy class, return None, if not known.  The FilterValueAdmin
         should either be registered through the :meth:`register` method or be
         defined as an inner class with name :keyword:`Value` of the filter strategy.
 
@@ -965,34 +965,32 @@ class FilterValue(object):
         from camelot.admin.action.list_filter import AbstractFilterStrategy
         assert issubclass(filter_strategy, AbstractFilterStrategy)
         try:
-            return cls._filter_values[filter_strategy]
+            return cls._admins[filter_strategy]
         except KeyError:
             for strategy_cls in filter_strategy.__mro__:
                 if issubclass(strategy_cls, AbstractFilterStrategy) and strategy_cls.name == filter_strategy.name:
-                    value_class = cls._filter_values.get(strategy_cls, None)
-                    if value_class is None:
-                        if hasattr(strategy_cls, 'Value'):
-                            value_class = strategy_cls.Value
-                            value_class.filter_strategy = filter_strategy
+                    admin = cls._admins.get(strategy_cls, None)
+                    if admin is None:
+                        if hasattr(strategy_cls, 'Admin'):
+                            admin = strategy_cls.Admin
                             break
                     else:
                         break
             else:
                 raise Exception('Could not construct a default filter value class')
-            cls._filter_values[filter_strategy] = value_class
-            return value_class
+            cls._admins[filter_strategy] = admin
+            return admin
 
     @classmethod
-    def register(cls, filter_strategy, value_class):
+    def register(cls, filter_strategy, admin):
         """
-        Associate a certain FilterValue class with a filter strategy.
-        This FilterValue will be used as default.
+        Associate a certain FilterValueAdmin with a filter strategy.
+        This FilterValueAdmin will be used as default.
 
         :param filter_strategy: :class:`camelot.admin.action.list_filter.AbstractFilterStrategy`
-        :param value_class: a subclass of `FilterValue.`
+        :param admin: a subclass of `FilterValueAdmin.`
         """
-        assert value_class.filter_strategy == filter_strategy
-        cls._filter_values[filter_strategy] = value_class
+        cls._admins[filter_strategy] = admin
 
 class SetFilters(Action, AbstractModelFilter):
     """
@@ -1027,10 +1025,9 @@ class SetFilters(Action, AbstractModelFilter):
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
-            filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
+            filter_value_admin = FilterValue.get_admin(type(filter_strategy))(model_context.admin, FilterValue)
             filter_operator = Operator[operator_name]
-            filter_value = filter_value_cls(filter_strategy, filter_operator)
+            filter_value = FilterValue(filter_strategy, filter_operator)
             # The filter values need only be updated by the user in case of multi-ary filter operators.
             # Unary operators can be applied directly.
             if filter_operator.arity > 1:
