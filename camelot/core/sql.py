@@ -59,7 +59,7 @@ metadata = MetaData(naming_convention=convention)
 metadata.autoflush = False
 metadata.transactional = False
 
-def like_op(column, string):
-    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
+def ilike_op(column, string):
+    return sqlalchemy.sql.operators.ilike_op(column, '%%%s%%'%string)
 
 

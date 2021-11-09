@@ -36,13 +36,9 @@ import decimal
 import re
 import string
 import logging
-import operator
 
 from ..core.qt import QtCore
-from camelot.core.sql import like_op
-from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
-from camelot.core.utils import ugettext_lazy as _
 
 logger = logging.getLogger('camelot.view.utils')
 
@@ -228,17 +224,6 @@ def to_string( value ):
 
 def enumeration_to_string(value):
     return ugettext(str(value or u'').replace('_', ' ').capitalize())
-
-operator_names = {
-    operator.eq : _( u'=' ),
-    operator.ne : _( u'!=' ),
-    operator.lt : _( u'<' ),
-    operator.le : _( u'<=' ),
-    operator.gt : _( u'>' ),
-    operator.ge : _( u'>=' ),
-    like_op : _( u'like' ),
-    between_op: _( u'between' ),
-}
 
 def text_from_richtext( unstripped_text ):
     """function that returns a list of lines with escaped data, to be used in 

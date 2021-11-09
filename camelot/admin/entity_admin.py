@@ -430,7 +430,7 @@ and used as a custom action.
                     # This should be used with extreme care though, as this behaviour is not generally supported by list actions,
                     # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
                     # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
-                    if not admin.allow_relation_with_pending_owner:
+                    if (admin is not None) and (not admin.allow_relation_with_pending_owner):
                         attributes['editable'] = False
             yield attributes
 
@@ -693,7 +693,7 @@ and used as a custom action.
         
         for search_field in self._get_search_fields(text):
             assert isinstance(search_field, list_filter.AbstractFilterStrategy)
-            arg = search_field.get_clause(text, self, query.session)
+            arg = search_field.get_search_clause(text, self, query.session)
             if arg is not None:
                 args.append(arg)
             

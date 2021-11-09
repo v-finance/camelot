@@ -30,11 +30,14 @@
 """
 Actions to filter table views
 """
+import collections
+import copy
 import datetime
 import decimal
+import enum
 import operator
 
-from camelot.core.sql import like_op
+from camelot.core.sql import ilike_op
 from camelot.view import utils
 
 from dataclasses import dataclass
@@ -42,7 +45,7 @@ from dataclasses import dataclass
 from sqlalchemy import orm, sql
 from sqlalchemy.sql.operators import between_op
 
-from ...core.utils import ugettext
+from ...core.utils import ugettext, ugettext_lazy as _
 from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt
@@ -50,9 +53,6 @@ from ...view.utils import locale
 
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
-
-_numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
-_text_operators = (operator.eq, operator.ne, like_op)
 
 @dataclass
 class FilterMode(Mode):
@@ -208,15 +208,79 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
 
+filter_operator = collections.namedtuple(
+    'filter_operator',
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix'))
+
+class Operator(enum.Enum):
+    """
+    Enum that keeps track of the operator functions that are available for filtering,
+    together with some related information like
+      * arity : the number of operands the operator takes.
+      * verbose name : short verbose description of the operator to display in the GUI.
+      * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
+      * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
+    """
+    #name                     operator     arity verbose_name   prefix   infix
+    eq =      filter_operator(operator.eq, 2,  _('='),          None,    None)
+    ne =      filter_operator(operator.ne, 2,  _('!='),         None,    None)
+    lt =      filter_operator(operator.lt, 2,  _('<'),          None,    None)
+    le =      filter_operator(operator.le, 2,  _('<='),         None,    None)
+    gt =      filter_operator(operator.gt, 2,  _('>'),          None,    None)
+    ge =      filter_operator(operator.ge, 2,  _('>='),         None,    None)
+    like =    filter_operator(ilike_op,    2,  _('like'),       None,    None)
+    between = filter_operator(between_op,  3,  _('between'),    None,  _('and'))
+
+    @property
+    def operator(self):
+        return self._value_.operator
+
+    @property
+    def arity(self):
+        return self._value_.arity
+
+    @property
+    def verbose_name(self):
+        return self._value_.verbose_name
+
+    @property
+    def prefix(self):
+        return self._value_.prefix or self.verbose_name
+
+    @property
+    def infix(self):
+        return self._value_.infix
+
+    @classmethod
+    def numerical_operators(cls):
+        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between)
+
+    @classmethod
+    def text_operators(cls):
+        return (cls.eq, cls.ne, cls.like)
+
 class AbstractFilterStrategy(object):
     """
     Abstract interface for defining filter clauses as part of an entity admin's query.
     :attribute name: string that uniquely identifies this filter strategy class.
+    :attribute operators: complete list of operators that are available for this filter strategy class.
+    :attribute search_operator: The operator that this strategy will use when constructing a filter clause
+                                meant for searching based on a search text. By default the `Operator.eq` is used.
     """
 
     name = None    
     operators = []
-    delegate = None
+    search_operator = Operator.eq
+
+    class AssertionMessage(enum.Enum):
+
+        no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
+        python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
+        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'
+
+    @classmethod
+    def assert_operands(cls, operator, *operands):
+        assert (operator.arity - 1) == len(operands), cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), operator.arity-1)
 
     def __init__(self, key, where=None, verbose_name=None):
         """
@@ -228,21 +292,39 @@ class AbstractFilterStrategy(object):
         self._key = key
         self.where = where
         self._verbose_name = verbose_name
-    
-    def get_clause(self, text, admin, session):
+
+    def get_clause(self, admin, session, operator, *operands):
         """
-        Return a search clause for the given search text.
+        Construct a filter clause for the given filter operator and operands, within the given admin and session.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        :param operator: a `camelot.admin.action.list_filter.Operator` instance that defines which operator to use in the column based expression(s) of the resulting filter clause.
+        :param operands: the filter values that are used as the operands for the given operator to filter by.
+        """
+        raise NotImplementedError
+
+    def get_search_clause(self, text, admin, session):
+        """
+        Return a search filter clause for the given search text, within the given admin and session.
+        This method is a shortcut for and equivalent to using the get_clause method with this strategy's search operator.
         :param admin: The entity admin that will use the resulting search clause as part of its search query.
         :param session: The session in which the search query takes place.
         """
-        raise NotImplementedError
-    
+        return self.get_clause(admin, session, self.search_operator, text)
+
     def value_to_string(self, filter_value, admin):
         """
         Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
         """
         raise NotImplementedError
-    
+
+    def get_operators(self):
+        """
+        Return the the list of operators that are available for this filter strategy instance.
+        By default, this returns the ´operators´ class attribute, but this may be customized on an filter strategy instance basis.
+        """
+        return self.operators
+
     @property
     def key(self):
         return self._key
@@ -260,7 +342,7 @@ class FieldFilter(AbstractFilterStrategy):
 
     attribute = None
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, choices=None):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **kwargs):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
@@ -269,11 +351,10 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attribute.key
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
-        self.choices = choices
-    
+
     @classmethod
-    def assert_valid_attribute(cls, attribute):
-        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+    def get_attribute_python_type(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), cls.AssertionMessage.no_queryable_attribute.value
         if isinstance(attribute, orm.attributes.InstrumentedAttribute):
             python_type = attribute.type.python_type
         else:
@@ -281,31 +362,36 @@ class FieldFilter(AbstractFilterStrategy):
             if isinstance(expression, sql.selectable.Select):
                 expression = expression.as_scalar()
             python_type = expression.type.python_type
-        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this filter strategy'
-    
-    def get_clause(self, text, admin, session):
+        return python_type
+
+    def assert_valid_attribute(self, attribute):
+        python_type = self.get_attribute_python_type(attribute)
+        assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
+
+    def get_clause(self, admin, session, operator, *operands):
         """
-        Return a search clause consisting of this field search's type clause,
-        expanded with condition on the attribute being set (None check) and the optionally set where condition.
+        Construct a filter clause for the given filter operator and operands, within the given admin and session.
+        The resulting clause will consists of this strategy's field type clause,
+        expanded with a condition on the attribute being set (None check) and the optionally set where conditions.
+        :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
+        self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        if self.choices is not None:
-            search_clause = (self.attribute==text)
-        else:
-            search_clause = self.get_type_clause(text, field_attributes)
-        if search_clause is not None:
+        filter_clause = self.get_type_clause(field_attributes, operator, *operands)
+        if filter_clause is not None:
             where_conditions = [self.attribute != None]
             if self.where is not None:
                 where_conditions.append(self.where)
-            return sql.and_(*where_conditions, search_clause)
-    
-    def get_type_clause(self, text, field_attributes):
+            return sql.and_(*where_conditions, filter_clause)
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         """
-        Return a column-based expression search clause on this search strategy's attribute for the given search text.
-        :param field_attributes: The field attributes for this search strategy's attribute on the entity admin
-                                 that will use the resulting search clause as part of its search query.
+        Return a column-based expression filter clause on this filter strategy's attribute with the given filter operator and operands.
+        :param field_attributes: The field attributes for this filter strategy's attribute on the entity admin
+                                 that will use the resulting clause as part of its query.
+        :param operands: the filter values that are used as the operands for the given operator to filter by.
         """
-        raise NotImplementedError
+        return operator.operator(self.attribute, *operands)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
@@ -329,13 +415,15 @@ class RelatedFilter(AbstractFilterStrategy):
         self.field_filters = field_filters
         self.joins = joins
 
-    def get_clause(self, text, admin, session):
+    def get_clause(self, admin, session, operator, *operands):
         """
-        Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
-        The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
-        where the search clauses of each.
-        The subquery is composed based on this related search strategy's joins and where condition,
-        """        
+        Construct a filter clause for the given filter operator and value, within the given admin and session.
+        The resulting clause will consists of a check on the admin's entity's id being present in a related subquery.
+        That subquery will use the this strategy's joins to join the entity with the related entity on which the set field filters are defined.
+        The subquery is composed based on this related filter strategy's joins and where condition.
+        :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
+        """
+        self.assert_operands(operator, *operands)
         related_query = session.query(admin.entity.id)
 
         for join in self.joins:
@@ -347,7 +435,7 @@ class RelatedFilter(AbstractFilterStrategy):
         field_filter_clauses = []
         for field_filter in self.field_filters:
             related_admin = admin.get_related_admin(field_filter.attribute.class_)
-            field_filter_clause = field_filter.get_clause(text, related_admin, session)
+            field_filter_clause = field_filter.get_clause(related_admin, session, operator, *operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
                 
@@ -366,39 +454,40 @@ class NoFilter(FieldFilter):
 
     name = 'no_filter'
 
-    def __init__(self, attribute, choices=None):
-        super().__init__(attribute, key=str(attribute), choices=choices)
-        
+    def __init__(self, attribute, **kwargs):
+        super().__init__(attribute, key=str(attribute), **kwargs)
+
     @classmethod
     def assert_valid_attribute(cls, attribute):
         pass
-    
-    def get_clause(self, text, admin, session):
+
+    def get_clause(self, admin, session, operator, *operands):
         return None
-    
+
     def value_to_string(self, filter_value, admin):
         return filter_value
-    
+
     def get_verbose_name(self):
         return None
 
 class StringFilter(FieldFilter):
-    
+
     name = 'string_filter'
     python_type = str
-    operators = _text_operators
+    operators = Operator.text_operators()
+    search_operator = Operator.like
 
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
-    
-    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, choices=None):
-        super().__init__(attribute, where, key, verbose_name, choices)
+
+    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, **kwargs):
+        super().__init__(attribute, where, key, verbose_name, **kwargs)
         self.allow_digits = allow_digits
-        
-    def get_type_clause(self, text, field_attributes):
-        if not text.isdigit() or self.allow_digits:
-            return sql.operators.ilike_op(self.attribute, '%'+text+'%')
-    
+
+    def get_type_clause(self, field_attributes, operator, *operands):
+        if not all([operand.isdigit() for operand in operands]) or self.allow_digits:
+            return super().get_type_clause(field_attributes, operator, *operands)
+
     def value_to_string(self, filter_value, admin):
         return filter_value
 
@@ -406,43 +495,63 @@ class DecimalFilter(FieldFilter):
     
     name = 'decimal_filter'
     python_type = (float, decimal.Decimal)
-    operators = _numerical_operators
+    operators = Operator.numerical_operators()
 
-    def get_type_clause(self, text, field_attributes):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        super().__init__(attribute, where, key, verbose_name)
+        self.precision = field_attributes.get('precision')
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
+            float_operands = [field_attributes.get('from_string', utils.float_from_string)(operand) for operand in operands]
             precision = self.attribute.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
-            return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
+
+            if operator == Operator.eq and float_operands[0] is not None:
+                return sql.and_(self.attribute>=float_operands[0]-delta, self.attribute<=float_operands[0]+delta)
+
+            if operator == Operator.ne and float_operands[0] is not None:
+                return sql.or_(self.attribute<float_operands[0]-delta, self.attribute>float_operands[0]+delta) 
+
+            elif operator in (Operator.lt, Operator.le) and float_operands[0] is not None:
+                return super().get_type_clause(field_attributes, operator, float_operands[0]-delta)
+
+            elif operator in (Operator.gt, Operator.ge) and float_operands[0] is not None:
+                return super().get_type_clause(field_attributes, operator, float_operands[0]+delta)
+
+            elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
+                return super().get_type_clause(field_attributes, operator, float_operands[0]-delta, float_operands[1]+delta)
+
         except utils.ParsingError:
             pass
     
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
+        field_attributes = {h:copy.copy(v) for h,v in admin_field_attributes}
+        field_attributes['suffix'] = None
         delegate = field_attributes.get('delegate')
-        suffix = ' ' + field_attributes.get('suffix', '')
         model_context = FieldActionModelContext()
         model_context.admin = admin
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
         value_str = standard_item.data(PreviewRole)
-        return value_str.replace(suffix, '')
+        return value_str
         
 class TimeFilter(FieldFilter):
     
     name = 'time_filter'
     python_type = datetime.time
-    operators = _numerical_operators
+    operators = Operator.numerical_operators()
 
-    def get_type_clause(self, text, field_attributes):
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
+            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.time_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
-    
+
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
@@ -457,11 +566,11 @@ class DateFilter(FieldFilter):
 
     name = 'date_filter'
     python_type = datetime.date
-    operators = _numerical_operators
-    
-    def get_type_clause(self, text, field_attributes):
+    operators = Operator.numerical_operators()
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
+            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.date_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
     
@@ -475,15 +584,14 @@ class DateFilter(FieldFilter):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
-class IntFilter(FieldFilter):
+class IntFilter(DecimalFilter):
 
     name = 'int_filter'
-    python_type = int
-    operators = _numerical_operators
-    
-    def get_type_clause(self, text, field_attributes):
+    python_type = (int, *DecimalFilter.python_type)
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
+            return super(DecimalFilter, self).get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.int_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
 
@@ -496,17 +604,17 @@ class IntFilter(FieldFilter):
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.EditRole))
+        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
 
 class BoolFilter(FieldFilter):
 
     name = 'bool_filter'
     python_type = bool
-    operators = (operator.eq,)
-    
-    def get_type_clause(self, text, field_attributes):
+    operators = (Operator.eq,)
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.bool_from_string)(text))
+            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.bool_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
 
@@ -519,8 +627,26 @@ class BoolFilter(FieldFilter):
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.EditRole))
-    
+        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
+
+class ChoicesFilter(FieldFilter):
+
+    name = 'choices_filter'
+    python_type = str
+    operators = (Operator.eq, Operator.ne)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        self.python_type = self.get_attribute_python_type(attribute)
+        super().__init__(attribute, where, key, verbose_name)
+        self.choices = field_attributes.get('choices')
+
+    def value_to_string(self, filter_value, admin):
+        return filter_value
+
+class MonthsFilter(IntFilter):
+
+    name = 'months_filter'
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
