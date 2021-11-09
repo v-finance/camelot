@@ -32,9 +32,6 @@ class FilterValueAdmin(ObjectAdmin):
         assert issubclass(entity, FilterValue), '{} is not a FilterValue class'.format(entity)
         super().__init__(app_admin, entity)
 
-    def get_name(self):
-        return self.entity.filter_strategy.name
-
 # Create and register filter value classes and related admins for each filter strategy
 # that has not got one registered already.
 for strategy_cls, delegate in [
@@ -49,15 +46,12 @@ for strategy_cls, delegate in [
     (list_filter.MonthsFilter,  delegates.MonthsDelegate)
     ]:
     try:
-        FilterValue.get_filter_value(strategy_cls)
+        FilterValue.get_admin(strategy_cls)
     except Exception:
-        cls_name = "%sValue" % strategy_cls.__name__
-        new_value_cls = type(cls_name, (FilterValue,), {})
-        new_value_cls.filter_strategy = strategy_cls
-        FilterValue.register(strategy_cls, new_value_cls)
 
         class Admin(FilterValueAdmin):
-
+            
+            name = strategy_cls.name
             field_attributes = {h:copy.copy(v) for h,v in FilterValueAdmin.field_attributes.items()}
             attributes_dict = {
                     'value_1': {'delegate': delegate},
@@ -72,4 +66,4 @@ for strategy_cls, delegate in [
             Admin.field_attributes['value_1'].update({'precision': lambda o: (o.strategy.precision if not isinstance(o.strategy.precision, tuple) else o.strategy.precision[1]) or 2})
             Admin.field_attributes['value_2'].update({'precision': lambda o: (o.strategy.precision if not isinstance(o.strategy.precision, tuple) else o.strategy.precision[1]) or 2})
 
-        new_value_cls.Admin = Admin
+        FilterValue.register(strategy_cls, Admin)
