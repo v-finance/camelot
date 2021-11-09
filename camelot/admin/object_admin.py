@@ -572,16 +572,15 @@ be specified using the verbose_name attribute.
         """
         field_type = self.get_typing(field_name)
         field_type = field_type.__args__[0] if is_optional_type(field_type) else field_type
-        if issubclass(field_type, Entity):
+        if field_type is not None and issubclass(field_type, Entity):
             all_attributes = self.get_field_attributes(field_name)
             admin = all_attributes.get('admin')
             session = self.get_session(obj)
-            if (admin is not None) and (session is not None):
-                search_filter = list_filter.SearchFilter(admin)
+            if (admin is not None) and (session is not None) and not (prefix is None or len(prefix.strip())==0):
                 query = admin.get_query(session)
-                query = search_filter.decorate_query(query, prefix)
+                query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
-            
+
     def get_session(self, obj):
         """
         Return the session based on the given object
