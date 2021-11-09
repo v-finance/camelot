@@ -102,7 +102,7 @@ class UpdateMixin(object):
                 valid = True
                 message = None
             header_item = QtGui.QStandardItem()
-            header_item.setData(py_to_variant(obj), ObjectRole)
+            header_item.setData(py_to_variant(id(obj)), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
             header_item.setData(py_to_variant(valid), ValidRole)
             header_item.setData(py_to_variant(message), ValidMessageRole)
@@ -115,6 +115,8 @@ class UpdateMixin(object):
 
 
 class ChangeSelection(Action):
+
+    name = 'change_selection'
 
     def __init__(self, action_routes, model_context):
         self.action_routes = action_routes
@@ -131,35 +133,37 @@ class ChangeSelection(Action):
         
         
 class Completion(Action):
-      
-    def __init__(self, row, column, prefix):
-        self.row = row
-        self.column = column
-        self.prefix = prefix
+
+    name = 'completion'
 
     def model_run(self, model_context, mode):
-        from camelot.view import action_steps  
-        field_name = model_context.static_field_attributes[self.column]['field_name']
-        admin = model_context.static_field_attributes[self.column]['admin']
-        object_slice = list(model_context.proxy[self.row:self.row+1])
+        from camelot.view import action_steps
+        row = mode['row']
+        column = mode['column']
+        prefix = mode['prefix']
+        field_name = model_context.static_field_attributes[column]['field_name']
+        admin = model_context.static_field_attributes[column]['admin']
+        object_slice = list(model_context.proxy[row:row+1])
         if not len(object_slice):
-            logger.error('Cannot generate completions : no object in row {0}'.format(self.row))
+            logger.error('Cannot generate completions : no object in row {0}'.format(row))
             return
         obj = object_slice[0]
         completions = model_context.admin.get_completions(
             obj,
             field_name,
-            self.prefix,
+            prefix,
         )
         # Empty if the field does not support autocompletions
         completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
-        yield action_steps.Completion(self.row, self.column, self.prefix, completions)
+        yield action_steps.Completion(row, column, prefix, completions)
 
     def __repr__(self):
-        return '{0.__class__.__name__}(row={0.row}, column={0.column})'.format(self)
+        return '{0.__class__.__name__}'.format(self)
     
     
 class RowCount(Action):
+
+    name = 'row_count'
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -172,6 +176,8 @@ class RowCount(Action):
         
    
 class Update(Action, UpdateMixin):
+
+    name = 'update'
 
     def __init__(self, objects):
         self.objects = objects
@@ -211,6 +217,8 @@ class Created(Action, UpdateMixin):
     assuming other objects have not been changed position.
     """
 
+    name = 'created'
+
     def __init__(self, objects):
         self.objects = objects
 
@@ -235,6 +243,8 @@ class Created(Action, UpdateMixin):
         
         
 class Deleted(RowCount, UpdateMixin):
+
+    name = 'deleted'
 
     def __init__(self, objects, rows_in_view):
         """
@@ -274,17 +284,22 @@ class Deleted(RowCount, UpdateMixin):
         # the proxy
         for obj in objects_to_remove:
             model_context.proxy.remove(obj)
+        # update before changing the rowcount, otherwise the update might
+        # modify the rowcount again
+        yield action_steps.Update(changed_ranges)
         #
         # when it's no longer in the proxy, the len of the proxy will be
         # different from the one of the view
         #
-        if (row is not None) or (len(model_context.proxy) != self.rows_in_view):
+        rows = len(model_context.proxy)
+        if (row is not None) or (rows != self.rows_in_view):
             # but updating the view is only needed if the rows changed
             yield from super(Deleted, self).model_run(model_context, mode)
-        yield action_steps.Deleted(None, changed_ranges)
-        
-        
+
+
 class Filter(RowCount):
+
+    name = 'filter'
 
     def __init__(self, action, old_value, new_value):
         super(Filter, self).__init__()
@@ -307,18 +322,18 @@ class Filter(RowCount):
     
 class RowData(Update):
 
-    def __init__(self, rows, cols):
-        super(RowData, self).__init__(None)
-        self.rows = rows.copy()
-        self.cols = cols.copy()
+    name = 'row_data'
 
-    def offset_and_limit_rows_to_get(self):
+    def __init__(self):
+        super(RowData, self).__init__(None)
+
+    def offset_and_limit_rows_to_get(self, rows):
         """From the current set of rows to get, find the first
         continuous range of rows that should be fetched.
         :return: (offset, limit)
         """
         offset, limit, i = 0, 0, 0
-        rows_to_get = list(self.rows)
+        rows_to_get = list(rows)
         #
         # see if there is anything left to do
         #
@@ -340,37 +355,32 @@ class RowData(Update):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        rows = mode["rows"]
+        columns = mode["columns"]
         changed_ranges = []
-        offset, limit = self.offset_and_limit_rows_to_get()
+        offset, limit = self.offset_and_limit_rows_to_get(rows)
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            changed_ranges.extend(self.add_data(model_context, row, self.cols, obj, True))
+            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         yield action_steps.Update(changed_ranges)
 
             
     def __repr__(self):
-        return '{0.__class__.__name__}(rows={1}, cols={2})'.format(
-            self, repr(self.rows), repr(self.cols))
-    
+        return '{0.__class__.__name__}'.format(self)
+
     
 class SetColumns(Action):
 
-    def __init__(self, columns):
-        """
-        :param columns: a list with field names
-        """
-        self.columns = list(columns)
+    name = 'set_columns'
 
     def __repr__(self):
-        return '{0.__class__.__name__}(columns=[{1}...])'.format(
-            self,
-            ', '.join([col for col, _i in zip(self.columns, (1,2,))])
-        )
+        return '{0.__class__.__name__}'.format(self)
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        columns = list(mode)
         model_context.static_field_attributes = list(
-            model_context.admin.get_static_field_attributes(self.columns)
+            model_context.admin.get_static_field_attributes(columns)
         )
         # creating the header items should be done here instead of in the gui
         # run
@@ -383,6 +393,8 @@ class SetColumns(Action):
         
         
 class SetData(Update):
+
+    name = 'set_data'
 
     def __init__(self, updates):
         super(SetData, self).__init__(None)
@@ -402,17 +414,17 @@ class SetData(Update):
         changed_ranges = []
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
-        for row, obj, column, value in self.updates:
-            grouped_requests[(row, obj)].append((column, value))
+        for row, obj_id, column, value in self.updates:
+            grouped_requests[(row, obj_id)].append((column, value))
         admin = model_context.admin
-        for (row, obj), request_group in grouped_requests.items():
+        for (row, obj_id), request_group in grouped_requests.items():
             object_slice = list(model_context.proxy[row:row+1])
             if not len(object_slice):
                 logger.error('Cannot set data : no object in row {0}'.format(row))
                 continue
-            o = object_slice[0]
-            if not (o is obj):
-                logger.warn('Cannot set data : object in row {0} is inconsistent with view'.format(row))
+            obj = object_slice[0]
+            if not (id(obj)==obj_id):
+                logger.warn('Cannot set data : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
                 continue
             #
             # the object might have been deleted while an editor was open
@@ -503,15 +515,13 @@ class SetData(Update):
 
 class Sort(RowCount):
 
-    def __init__(self, column, order):
-        super(Sort, self).__init__()
-        self.column = column
-        self.order = order
+    name = 'sort'
 
     def model_run(self, model_context, mode):
-        field_name = model_context.static_field_attributes[self.column]['field_name']
-        model_context.proxy.sort(field_name, self.order!=Qt.SortOrder.AscendingOrder)
+        column, order = mode
+        field_name = model_context.static_field_attributes[column]['field_name']
+        model_context.proxy.sort(field_name, order!=Qt.SortOrder.AscendingOrder.value)
         yield from super(Sort, self).model_run(model_context, mode)
 
     def __repr__(self):
-        return '{0.__class__.__name__}(column={0.column}, order={0.order})'.format(self)
+        return '{0.__class__.__name__}'.format(self)
