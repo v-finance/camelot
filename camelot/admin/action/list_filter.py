@@ -654,11 +654,6 @@ class SearchFilter(Action, AbstractModelFilter):
 
     #shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find),
                                #self)
-    
-    def __init__(self, admin):
-        Action.__init__(self)
-        # dirty : action requires admin as argument
-        self.admin = admin
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
@@ -676,7 +671,11 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        # dirty : action requires admin as argument
+        self.admin = model_context.admin
         value = mode
         if (value is not None) and len(value) == 0:
             value = None
         yield action_steps.SetFilter(self, value)
+
+search_filter = SearchFilter()
