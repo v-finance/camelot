@@ -1074,13 +1074,16 @@ class SetFilters(Action, AbstractModelFilter):
             state.notification = True
         selected_mode_names = [op + '__' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
-            # TODO: set checked icon for selected operators as well.
-            #operators = [Mode(op.name, op.verbose_name) for op in filter_strategy.get_operators()]
-            #modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '__' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
                 modes.append(Mode(mode_name, str(op.verbose_name) + ' ' + filter_strategy.get_verbose_name(), icon=icon))
+            # TODO: refactor as sub modes once qml action push button supports this.
+            #mode_name = op.name + '__' + name
+            #op_icon = Icon('check-circle') if mode_name in selected_mode_names else None
+            #icon = Icon('check-circle') if name in filter_value else None
+            #operators = [Mode(mode_name, str(op.verbose_name)) for op in filter_strategy.get_operators(), op_icon=op_icon]
+            #modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
