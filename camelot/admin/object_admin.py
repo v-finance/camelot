@@ -576,9 +576,10 @@ be specified using the verbose_name attribute.
             all_attributes = self.get_field_attributes(field_name)
             admin = all_attributes.get('admin')
             session = self.get_session(obj)
-            if (admin is not None) and (session is not None) and not (prefix is None or len(prefix.strip())==0):
+            if (admin is not None) and (session is not None):
                 query = admin.get_query(session)
-                query = admin.decorate_search_query(query, prefix)
+                if not (prefix is None or len(prefix.strip())==0):
+                    query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
 
     def get_session(self, obj):
