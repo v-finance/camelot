@@ -18,8 +18,11 @@ class FilterValueAdmin(ObjectAdmin):
 
     verbose_name = _('Filter')
 
-    form_display = forms.GridForm([ ['operator_prefix', 'value_1'],
-                                    ['operator_infix',  'value_2']])
+    form_display = forms.Form([
+        forms.GridForm([ ['operator_prefix', 'value_1'],
+                         ['operator_infix',  'value_2']]),
+        forms.Stretch()])
+
     field_attributes = {
         'operator_prefix': {'editable': False, 'delegate': delegates.LabelDelegate},
         'value_1': {'editable': True, 'nullable': False},
