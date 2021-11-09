@@ -928,17 +928,11 @@ class ReplaceFieldContents( EditAction ):
 
 replace_field_contents = ReplaceFieldContents()
 
-class FieldFilter(object):
+class FilterValue(object):
     """
     Helper class for the `SetFilters` action that allows the user to
-    configure a filter on an individual field.
+    configure a filter defined by a filter strategy and a filter operator.
     """
-    
-    def __init__(self, value=None):
-        self.value = value
-
-class FilterValue(object):
-
     filter_strategy = None
     _filter_values = {}
 
