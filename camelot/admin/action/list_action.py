@@ -1028,8 +1028,9 @@ class SetFilters(Action, AbstractModelFilter):
         elif mode is None:
             new_filter_values = {}
         else:
+            from camelot.admin.action.list_filter import Operator
+            operator_name, filter_field_name = mode.split('__')
             filter_values = model_context.proxy.get_filter(self) or {}
-            filter_field_name = mode
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
@@ -1037,6 +1038,7 @@ class SetFilters(Action, AbstractModelFilter):
             # TODO: get the selected operator from the modes,
             # instead of using the standard search operator for the selected strategy by default for now.
             filter_operator = filter_strategy.search_operator
+            filter_operator = Operator[operator_name]
             filter_value = filter_value_cls(filter_strategy, filter_operator)
             # The filter values need only be updated by the user in case of multi-ary filter operators.
             # Unary operators can be applied directly.
@@ -1076,8 +1078,10 @@ class SetFilters(Action, AbstractModelFilter):
         for name, filter_strategy in self.get_filter_strategies(model_context):
             icon = Icon('check-circle') if name in filter_value else None
             # TODO: set checked icon for selected operators as well.
-            operators = [Mode(op.name, op.verbose_name) for op in filter_strategy.get_operators()]
-            modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
+            #operators = [Mode(op.name, op.verbose_name) for op in filter_strategy.get_operators()]
+            #modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
+            for op in filter_strategy.get_operators():
+                modes.append(Mode(op.name + '__' + name, str(op.verbose_name) + ' ' + filter_strategy.get_verbose_name()))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])
