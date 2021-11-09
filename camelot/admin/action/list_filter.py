@@ -505,8 +505,13 @@ class StringFilter(FieldFilter):
         self.allow_digits = allow_digits
 
     def get_type_clause(self, field_attributes, operator, *operands):
-        if not all([operand.isdigit() for operand in operands]) or self.allow_digits:
-            return super().get_type_clause(field_attributes, operator, *operands)
+        filter_clause = super().get_type_clause(field_attributes, operator, *operands)
+        if operator == Operator.is_empty:
+            return sql.or_(super().get_type_clause(field_attributes, Operator.eq, ''), filter_clause)
+        elif operator == Operator.is_not_empty:
+            return sql.and_(super().get_type_clause(field_attributes, Operator.ne, ''), filter_clause)
+        elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
+            return filter_clause
 
     def value_to_string(self, filter_value, admin):
         return filter_value
