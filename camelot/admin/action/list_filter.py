@@ -302,7 +302,7 @@ class AbstractFilterStrategy(object):
 
         no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
         python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
-        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max operands.'
+        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
 
     @classmethod
     def assert_operands(cls, operator, *operands):

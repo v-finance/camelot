@@ -927,7 +927,7 @@ class ListFilterCase(TestMetaData):
             # Verify assertion on operands arity mismatch
             with self.assertRaises(AssertionError) as exc:
                 filter_strategy.get_clause(admin, self.session, list_filter.Operator.eq)
-            self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1))
+            self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1, 1))
 
         # Check assertion on python type mismatch:
         with self.assertRaises(AssertionError) as exc:
