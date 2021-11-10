@@ -67,3 +67,7 @@ def is_none(column):
 
 def is_not_none(column):
     return sqlalchemy.sql.operators.isnot(column, None)
+
+def in_op(column, *values):
+    assert len(values) >= 1
+    return sqlalchemy.sql.operators.in_op(column, values)
