@@ -1023,7 +1023,7 @@ class SetFilters(Action, AbstractModelFilter):
             new_filter_values = {}
         else:
             from camelot.admin.action.list_filter import Operator, Many2OneFilter
-            operator_name, filter_field_name = mode.split('__')
+            operator_name, filter_field_name = mode.split('-')
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
@@ -1077,14 +1077,14 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
-        selected_mode_names = [op + '__' + field for field, (op, *_) in filter_value.items()]
+        selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
             for op in filter_strategy.get_operators():
-                mode_name = op.name + '__' + name
+                mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
                 modes.append(Mode(mode_name, str(op.verbose_name) + ' ' + str(filter_strategy.get_verbose_name()), icon=icon))
             # TODO: refactor as sub modes once qml action push button supports this.
-            #mode_name = op.name + '__' + name
+            #mode_name = op.name + '-' + name
             #op_icon = Icon('check-circle') if mode_name in selected_mode_names else None
             #icon = Icon('check-circle') if name in filter_value else None
             #operators = [Mode(mode_name, str(op.verbose_name)) for op in filter_strategy.get_operators(), op_icon=op_icon]
