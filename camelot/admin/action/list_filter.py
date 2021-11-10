@@ -677,7 +677,7 @@ class Many2OneFilter(IntFilter):
 
     name = 'many2one_filter'
     python_type = int
-    operators = (Operator.eq, Operator.is_empty, Operator.is_not_empty)
+    operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and isinstance(attribute.prop, orm.RelationshipProperty)
