@@ -53,7 +53,7 @@ for strategy_cls, delegate in [
     (list_filter.Many2OneFilter, delegates.IntegerDelegate),
     ]:
     try:
-        FilterValue.get_filter_value(strategy_cls)
+        FilterValue.for_strategy(strategy_cls)
     except Exception:
         cls_name = "%sValue" % strategy_cls.__name__
         new_value_cls = type(cls_name, (FilterValue,), {})

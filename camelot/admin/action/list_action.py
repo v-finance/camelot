@@ -953,7 +953,7 @@ class FilterValue(object):
             return str(self.operator.infix)
 
     @classmethod
-    def get_filter_value(cls, filter_strategy):
+    def for_strategy(cls, filter_strategy):
         """
         Get the default :class:`FilterValue` class for the given specific filter
         strategy class, return None, if not known.  The FilterValue
@@ -1027,7 +1027,7 @@ class SetFilters(Action, AbstractModelFilter):
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
+            filter_value_cls = FilterValue.for_strategy(type(filter_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
             filter_operator = Operator[operator_name]
             filter_value = filter_value_cls(filter_strategy, filter_operator)
