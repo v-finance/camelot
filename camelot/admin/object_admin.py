@@ -1076,6 +1076,7 @@ be specified using the verbose_name attribute.
         if self._field_filters is None:
             self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
         return self._field_filters
+
     def _get_field_strategies(self):
         """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
         return self.field_filter

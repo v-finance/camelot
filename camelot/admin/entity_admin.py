@@ -372,6 +372,7 @@ and used as a custom action.
                 else:
                     attributes.update(
                         delegate = delegates.Many2OneDelegate,
+                        filter_strategy = list_filter.Many2OneFilter,
                         python_type = str,
                     )
 
