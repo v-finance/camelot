@@ -208,6 +208,24 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
 
+arity = collections.namedtuple('arity', ('minimum', 'maximum'))
+
+class Arity(enum.Enum):
+
+    #nullary = arity(0, 0)
+    unary =    arity(1, 1)
+    binary =   arity(2, 2)
+    ternary =  arity(3, 3)
+    multiary = arity(2, None)
+
+    @property
+    def minimum(self):
+        return self._value_.minimum
+
+    @property
+    def maximum(self):
+        return self._value_.maximum
+
 filter_operator = collections.namedtuple(
     'filter_operator',
     ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
