@@ -496,7 +496,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self._append_request(SetColumns(self._columns))
 
     # decorate method as a slot, to make it accessible in QML
-    @QtCore.qt_slot(int, int, QtCore.QVariant, int)
+    @QtCore.qt_slot(int, Qt.Orientation, QtCore.QVariant, int)
     def setHeaderData(self, section, orientation, value, role):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )

@@ -41,7 +41,7 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore, QtQml
+from ...core.qt import Qt, QtCore, QtQml, variant_to_py
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
@@ -217,6 +217,30 @@ class OpenTableView( UpdateTableView ):
         table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
+# FIXME: find a better way to do this...
+class ActionDispatch(QtCore.QObject):
+
+    def __init__(self, gui_context, parent):
+        super().__init__(parent)
+        self.gui_context = gui_context
+
+    def run_action( self, action, mode=None ):
+        gui_context = self.gui_context.copy()
+        if isinstance(mode, QtQml.QJSValue):
+            mode = variant_to_py(mode.toVariant())
+        if isinstance(mode, list):
+            action.gui_run( gui_context, mode )
+        else:
+            gui_context.mode_name = mode
+            action.gui_run( gui_context )
+
+    def qml_action_triggered(self, route, mode):
+        route = tuple(route.split('/'))
+        print('qml_action_triggered(', route, mode, ')')
+        action = AdminRoute.action_for(route)
+        self.run_action(action, mode)
+
+
 @dataclass
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
@@ -251,15 +275,20 @@ class OpenQmlTableView(OpenTableView):
 
         # create QML item
         view = create_qml_item(
-            QtCore.QUrl("qrc:/vortex/qml/common/TablePage.qml"),
+            #QtCore.QUrl("qrc:/Vortex/qml/common/TablePage.qml"),
+            QtCore.QUrl("qrc:/Vortex/TablePage.qml"),
             { 'model': new_model, 'headerModel': header_model },
             engine
         )
         new_model.setParent(view)
         header_model.setParent(view)
 
+        # load JSON data into C++ backend
+        view.fromJson(json.dumps(step))
+
         table = view.findChild(QtCore.QObject, "qml_table")
         item_view = ItemViewProxy(table)
+
 
         class QmlListActionGuiContext(ListActionGuiContext):
 
@@ -271,25 +300,15 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context.admin_route = tuple(step['admin_route'])
         list_gui_context.view = view
 
+
         list_action = AdminRoute.action_for(tuple(step['list_action']))
         qt_action = ActionAction(list_action, list_gui_context, view)
         table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
-        for i, action_route in enumerate(step['actions']):
-            action = AdminRoute.action_for(tuple(action_route['route']))
-            qt_action = ActionAction(action, list_gui_context, table)
-            state = None
-            for action_state in step['action_states']:
-                if action_state[0] == action_route['route']:
-                    state = action_state[1]
-                    break
-            assert state is not None
 
-            rendered_action = item_view._qml_item.addAction(
-                action.render_hint.value, state
-            )
-            rendered_action.triggered.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
-            rendered_action.setObjectName('action_{}'.format(i))
-            list_gui_context.action_routes[action] = rendered_action.objectName()
+        action_dispatch = ActionDispatch(list_gui_context, view)
+        view.triggered.connect(action_dispatch.qml_action_triggered, type=Qt.ConnectionType.QueuedConnection)
+
+        # FIXME: make update actions work with C++ backends
         UpdateActions().gui_run(list_gui_context)
 
         return view
