@@ -681,15 +681,12 @@ class Many2OneFilter(IntFilter):
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and isinstance(attribute.prop, orm.RelationshipProperty)
         assert len(attribute.prop.local_columns) == 1
+        entity_mapper = orm.class_mapper(attribute.class_)
         foreign_key_col = list(attribute.prop.local_columns)[0]
-        foreign_key_attribute = getattr(attribute.class_, foreign_key_col.key)
+        foreign_key_attribute = entity_mapper.get_property_by_column(foreign_key_col).class_attribute
         super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')))
-
-    def get_type_clause(self, field_attributes, operator, *operands):
-        try:
-            return super().get_type_clause(field_attributes, operator, *[op.id for op in operands])
-        except utils.ParsingError:
-            pass
+        self.entity = attribute.prop.entity.entity
+        self.admin = field_attributes.get('admin')
 
 class SearchFilter(Action, AbstractModelFilter):
 
