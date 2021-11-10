@@ -41,15 +41,16 @@ class FilterValueAdmin(ObjectAdmin):
 # Create and register filter value classes and related admins for each filter strategy
 # that has not got one registered already.
 for strategy_cls, delegate in [
-    (list_filter.StringFilter,  delegates.PlainTextDelegate),
-    (list_filter.BoolFilter,    delegates.BoolDelegate),
-    (list_filter.DateFilter,    delegates.DateDelegate),
-    (list_filter.DecimalFilter, delegates.FloatDelegate),
-    (list_filter.IntFilter,     delegates.IntegerDelegate),
-    (list_filter.TimeFilter,    delegates.TimeDelegate),
-    (list_filter.RelatedFilter, delegates.PlainTextDelegate),
-    (list_filter.ChoicesFilter, delegates.ComboBoxDelegate),
-    (list_filter.MonthsFilter,  delegates.MonthsDelegate)
+    (list_filter.StringFilter,   delegates.PlainTextDelegate),
+    (list_filter.BoolFilter,     delegates.BoolDelegate),
+    (list_filter.DateFilter,     delegates.DateDelegate),
+    (list_filter.DecimalFilter,  delegates.FloatDelegate),
+    (list_filter.IntFilter,      delegates.IntegerDelegate),
+    (list_filter.TimeFilter,     delegates.TimeDelegate),
+    (list_filter.RelatedFilter,  delegates.PlainTextDelegate),
+    (list_filter.ChoicesFilter,  delegates.ComboBoxDelegate),
+    (list_filter.MonthsFilter,   delegates.MonthsDelegate),
+    (list_filter.Many2OneFilter, delegates.IntegerDelegate),
     ]:
     try:
         FilterValue.get_filter_value(strategy_cls)
