@@ -1011,7 +1011,7 @@ class SetFilters(Action, AbstractModelFilter):
     def get_filter_strategies(self, model_context):
         """:return: a list of field strategies the user can select."""
         filter_strategies = list(model_context.admin.get_field_filters().items())
-        filter_strategies.sort(key=lambda choice:choice[1].get_verbose_name())
+        filter_strategies.sort(key=lambda choice:str(choice[1].get_verbose_name()))
         return filter_strategies
 
     def model_run( self, model_context, mode ):
@@ -1071,7 +1071,7 @@ class SetFilters(Action, AbstractModelFilter):
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '__' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
-                modes.append(Mode(mode_name, str(op.verbose_name) + ' ' + filter_strategy.get_verbose_name(), icon=icon))
+                modes.append(Mode(mode_name, str(op.verbose_name) + ' ' + str(filter_strategy.get_verbose_name()), icon=icon))
             # TODO: refactor as sub modes once qml action push button supports this.
             #mode_name = op.name + '__' + name
             #op_icon = Icon('check-circle') if mode_name in selected_mode_names else None
