@@ -921,7 +921,7 @@ class ListFilterCase(TestMetaData):
             # Verify that for each operator of the filter strategy its clause is constructed properly:
             filter_strategy = strategy_cls(col)
             for operator in filter_strategy.get_operators():
-                operands = values[0:operator.arity-1]
+                operands = values[0:operator.arity.maximum-1] if operator.arity.maximum is not None else values
                 filter_strategy.get_clause(admin, self.session, operator, *operands)
 
             # Verify assertion on operands arity mismatch

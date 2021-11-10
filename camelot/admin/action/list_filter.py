@@ -240,18 +240,18 @@ class Operator(enum.Enum):
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
       * pre_condition : Unary operator function to pre filter the filter attribute operand. E.g. is not None.
     """
-    #name                         operator     arity verbose_name           prefix   infix   pre_condition
-    eq =           filter_operator(operator.eq, 2,  _('='),                 None,    None,   is_not_none)
-    ne =           filter_operator(operator.ne, 2,  _('!='),                None,    None,   is_not_none)
-    lt =           filter_operator(operator.lt, 2,  _('<'),                 None,    None,   is_not_none)
-    le =           filter_operator(operator.le, 2,  _('<='),                None,    None,   is_not_none)
-    gt =           filter_operator(operator.gt, 2,  _('>'),                 None,    None,   is_not_none)
-    ge =           filter_operator(operator.ge, 2,  _('>='),                None,    None,   is_not_none)
-    like =         filter_operator(ilike_op,    2,  _('like'),              None,    None,   is_not_none)
-    between =      filter_operator(between_op,  3,  _('between'),           None,  _('and'), is_not_none)
-    is_empty =     filter_operator(is_none,     1,  _('is not filled out'), None,    None,   None)
-    is_not_empty = filter_operator(is_not_none, 1,  _('is filled out'),     None,    None,   None)
-    in_ =          filter_operator(in_op,       2,  _('selection'),         None,    None,   is_not_none)
+    #name                         operator      arity            verbose_name           prefix   infix   pre_condition
+    eq =           filter_operator(operator.eq, Arity.binary,   _('='),                 None,    None,   is_not_none)
+    ne =           filter_operator(operator.ne, Arity.binary,   _('!='),                None,    None,   is_not_none)
+    lt =           filter_operator(operator.lt, Arity.binary,   _('<'),                 None,    None,   is_not_none)
+    le =           filter_operator(operator.le, Arity.binary,   _('<='),                None,    None,   is_not_none)
+    gt =           filter_operator(operator.gt, Arity.binary,   _('>'),                 None,    None,   is_not_none)
+    ge =           filter_operator(operator.ge, Arity.binary,   _('>='),                None,    None,   is_not_none)
+    like =         filter_operator(ilike_op,    Arity.binary,   _('like'),              None,    None,   is_not_none)
+    between =      filter_operator(between_op,  Arity.ternary,  _('between'),           None,  _('and'), is_not_none)
+    is_empty =     filter_operator(is_none,     Arity.unary,    _('is not filled out'), None,    None,   None)
+    is_not_empty = filter_operator(is_not_none, Arity.unary,    _('is filled out'),     None,    None,   None)
+    in_ =          filter_operator(in_op,       Arity.multiary, _('selection'),         None,    None,   is_not_none)
 
     @property
     def operator(self):
@@ -302,11 +302,13 @@ class AbstractFilterStrategy(object):
 
         no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
         python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
-        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'
+        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max operands.'
 
     @classmethod
     def assert_operands(cls, operator, *operands):
-        assert (operator.arity - 1) == len(operands), cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), operator.arity-1)
+        min_operands = operator.arity.minimum - 1
+        max_operands = operator.arity.maximum - 1 if operator.arity.maximum is not None else len(operands)
+        assert min_operands <= len(operands) <= max_operands, cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), min_operands, max_operands)
 
     def __init__(self, key, where=None, verbose_name=None):
         """

@@ -26,9 +26,9 @@ class FilterValueAdmin(ObjectAdmin):
     field_attributes = {
         'operator_prefix': {'editable': False, 'delegate': delegates.LabelDelegate},
         'value_1': {'editable': True, 'nullable': False},
-        # 2nd filter value (i.e. 3rd operand) and operator infix should only be visible in case of a ternary operator (arity >= 3):
-        'operator_infix': {'editable': False, 'delegate': delegates.LabelDelegate, 'visible': lambda o: o.operator.arity > 2},
-        'value_2': {'editable': True, 'visible': lambda o: o.operator.arity > 2, 'nullable': lambda o: o.operator.arity < 3},
+        # 2nd filter value (i.e. 3rd operand) and operator infix should only be visible in case of a ternary operator (min arity >= 3):
+        'operator_infix': {'editable': False, 'delegate': delegates.LabelDelegate, 'visible': lambda o: o.operator.arity.minimum > 2},
+        'value_2': {'editable': True, 'visible': lambda o: o.operator.arity.minimum > 2, 'nullable': lambda o: o.operator.arity.minimum <= 2},
     }
 
     def __init__(self, app_admin, entity):

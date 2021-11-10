@@ -1041,7 +1041,7 @@ class SetFilters(Action, AbstractModelFilter):
             # The filter values should only be updated by the user in case of multi-ary filter operators,
             # which requires filter values to be entered as the additional operands.
             # Unary operators can be applied directly, as the filter attribute is the only operand.
-            if filter_operator.arity > 1:
+            if filter_operator.arity.minimum > 1:
                 # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
                 # So let the user select one, and programmatically set the filter value to the selected entity's id.
                 if isinstance(filter_strategy, Many2OneFilter):
@@ -1069,8 +1069,10 @@ class SetFilters(Action, AbstractModelFilter):
         for name, (operator_name, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
             operator = Operator[operator_name]
-            # Determine appropriate number of operands based on the arity of the operator (-1 because the filtered attribute is an operand as well)
-            operands = operands[0:operator.arity-1]
+            # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
+            # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
+            if operator.arity.maximum is not None:
+                operands = operands[0:operator.arity.maximum-1]
             filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
