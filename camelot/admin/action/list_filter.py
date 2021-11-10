@@ -37,7 +37,7 @@ import decimal
 import enum
 import operator
 
-from camelot.core.sql import ilike_op, is_none, is_not_none
+from camelot.core.sql import ilike_op, in_op, is_none, is_not_none
 from camelot.view import utils
 
 from dataclasses import dataclass
@@ -233,6 +233,7 @@ class Operator(enum.Enum):
     between =      filter_operator(between_op,  3,  _('between'),           None,  _('and'), is_not_none)
     is_empty =     filter_operator(is_none,     1,  _('is not filled out'), None,    None,   None)
     is_not_empty = filter_operator(is_not_none, 1,  _('is filled out'),     None,    None,   None)
+    in_ =          filter_operator(in_op,       2,  _('selection'),         None,    None,   is_not_none)
 
     @property
     def operator(self):
