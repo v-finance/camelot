@@ -1022,7 +1022,7 @@ class SetFilters(Action, AbstractModelFilter):
         elif mode is None:
             new_filter_values = {}
         else:
-            from camelot.admin.action.list_filter import Operator
+            from camelot.admin.action.list_filter import Operator, Many2OneFilter
             operator_name, filter_field_name = mode.split('__')
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
@@ -1031,11 +1031,22 @@ class SetFilters(Action, AbstractModelFilter):
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
             filter_operator = Operator[operator_name]
             filter_value = filter_value_cls(filter_strategy, filter_operator)
-            # The filter values need only be updated by the user in case of multi-ary filter operators.
-            # Unary operators can be applied directly.
+
+            # The filter values should only be updated by the user in case of multi-ary filter operators,
+            # which requires filter values to be entered as the additional operands.
+            # Unary operators can be applied directly, as the filter attribute is the only operand.
             if filter_operator.arity > 1:
-                change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
-                yield change_filter
+                # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
+                # So let the user select one, and programmatically set the filter value to the selected entity's id.
+                if isinstance(filter_strategy, Many2OneFilter):
+                    objects = yield action_steps.SelectObjects(filter_strategy.admin)
+                    for obj in objects:
+                        filter_value.value_1 = obj.id
+                        break
+                # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
+                else:
+                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
+
             operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in [filter_value.value_1, filter_value.value_2]]
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
