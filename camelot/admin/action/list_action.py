@@ -942,6 +942,7 @@ class FilterValue(object):
         self.operator = operator
         self.value_1 = value_1
         self.value_2 = value_2
+        self._values = None
 
     @property
     def operator_prefix(self):
@@ -951,6 +952,11 @@ class FilterValue(object):
     def operator_infix(self):
         if self.operator.infix is not None:
             return str(self.operator.infix)
+
+    def get_values(self):
+        if self._values is not None:
+            return self._values
+        return [self.value_1, self.value_2]
 
     @classmethod
     def for_strategy(cls, filter_strategy):
