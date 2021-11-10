@@ -303,6 +303,7 @@ class AbstractFilterStrategy(object):
         no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
         python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
         nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
+        no_many2one_relationship_attribute = 'The given attribute is not a valid RelationshipProperty attribute'
 
     @classmethod
     def assert_operands(cls, operator, *operands):
@@ -703,7 +704,9 @@ class Many2OneFilter(IntFilter):
     operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
-        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and isinstance(attribute.prop, orm.RelationshipProperty)
+        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
+               isinstance(attribute.prop, orm.RelationshipProperty) and \
+               attribute.prop.direction == orm.interfaces.MANYTOONE, self.AssertionMessage.no_many2one_relationship_attribute.value
         assert len(attribute.prop.local_columns) == 1
         entity_mapper = orm.class_mapper(attribute.class_)
         foreign_key_col = list(attribute.prop.local_columns)[0]
