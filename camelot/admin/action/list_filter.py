@@ -416,7 +416,6 @@ class FieldFilter(AbstractFilterStrategy):
         filter_clause = self.get_type_clause(field_attributes, operator, *operands)
         if filter_clause is not None:
             where_conditions = []
-            #where_conditions = [self.attribute != None]
             if operator.pre_condition is not None:
                 where_conditions.append(operator.pre_condition(self.attribute))
             if self.where is not None:
@@ -694,6 +693,10 @@ class MonthsFilter(IntFilter):
     name = 'months_filter'
 
 class Many2OneFilter(IntFilter):
+    """
+    Specialized IntFilter strategy that expects a many2one relationship attribute from which the
+    local foreign attribute is used to instantiate this strategy.
+    """
 
     name = 'many2one_filter'
     python_type = int
