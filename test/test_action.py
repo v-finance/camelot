@@ -41,7 +41,7 @@ from camelot.view.workspace import DesktopWorkspace
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
 
-from sqlalchemy import schema, types
+from sqlalchemy import orm, schema, types
 
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
@@ -880,6 +880,9 @@ class ListFilterCase(TestMetaData):
 
     def test_filter_strategies(self):
 
+        class B(self.Entity):
+            pass
+
         class A(self.Entity):
 
             text_col = schema.Column(types.Unicode(10))
@@ -890,6 +893,9 @@ class ListFilterCase(TestMetaData):
             months_col = schema.Column(types.Integer)
             enum_col = schema.Column(camelot.types.Enumeration)
 
+            b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id), nullable=False)
+            many2one_col = orm.relationship(B)
+
             class Admin(EntityAdmin):
                 field_attributes = {
                     'months_col':{'delegate': delegates.MonthsDelegate},
@@ -899,13 +905,16 @@ class ListFilterCase(TestMetaData):
         admin = self.app_admin.get_related_admin(A)
 
         for col, strategy_cls, *values in (
-            (A.text_col,   list_filter.StringFilter,  'test'),
-            (A.bool_col,   list_filter.BoolFilter,    'True'),
-            (A.date_col,   list_filter.DateFilter,    '2020-01-01', '2022-01-01'),
-            (A.time_col,   list_filter.TimeFilter,    '2020-01-01', '2022-01-01'),
-            (A.int_col,    list_filter.IntFilter,     '1000',       '5000'),
-            (A.months_col, list_filter.MonthsFilter,  '12',         '24'),
-            (A.enum_col,   list_filter.ChoicesFilter, 'test'),
+            (A.text_col,     list_filter.StringFilter,   'test'),
+            (A.bool_col,     list_filter.BoolFilter,     'True'),
+            (A.date_col,     list_filter.DateFilter,     '2020-01-01', '2022-01-01'),
+            (A.time_col,     list_filter.TimeFilter,     '2020-01-01', '2022-01-01'),
+            (A.int_col,      list_filter.IntFilter,      '1000',       '5000'),
+            (A.months_col,   list_filter.MonthsFilter,   '12',         '24'),
+            (A.enum_col,     list_filter.ChoicesFilter,  'test'),
+            (A.many2one_col, list_filter.Many2OneFilter,  '1'),
+            (A.many2one_col, list_filter.Many2OneFilter,  '1', '2'),
+            (A.many2one_col, list_filter.Many2OneFilter,  '1', '2', '3'),
             ):
 
             # Verify expected filter strategy is set:
@@ -916,7 +925,8 @@ class ListFilterCase(TestMetaData):
             for invalid_attribute in [None, '', 'text_col']:
                 with self.assertRaises(AssertionError) as exc:
                     strategy_cls(invalid_attribute)
-            self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.no_queryable_attribute.value)
+            self.assertEqual(str(exc.exception),
+                             strategy_cls.AssertionMessage.no_queryable_attribute.value if strategy_cls != list_filter.Many2OneFilter else strategy_cls.AssertionMessage.no_many2one_relationship_attribute.value)
 
             # Verify that for each operator of the filter strategy its clause is constructed properly:
             filter_strategy = strategy_cls(col)
