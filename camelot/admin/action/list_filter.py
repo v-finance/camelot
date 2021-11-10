@@ -37,7 +37,7 @@ import decimal
 import enum
 import operator
 
-from camelot.core.sql import ilike_op
+from camelot.core.sql import ilike_op, is_none, is_not_none
 from camelot.view import utils
 
 from dataclasses import dataclass
@@ -210,7 +210,7 @@ class ComboBoxFilter(Filter):
 
 filter_operator = collections.namedtuple(
     'filter_operator',
-    ('operator', 'arity', 'verbose_name', 'prefix', 'infix'))
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
 
 class Operator(enum.Enum):
     """
@@ -220,16 +220,19 @@ class Operator(enum.Enum):
       * verbose name : short verbose description of the operator to display in the GUI.
       * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
+      * pre_condition : Unary operator function to pre filter the filter attribute operand. E.g. is not None.
     """
-    #name                     operator     arity verbose_name   prefix   infix
-    eq =      filter_operator(operator.eq, 2,  _('='),          None,    None)
-    ne =      filter_operator(operator.ne, 2,  _('!='),         None,    None)
-    lt =      filter_operator(operator.lt, 2,  _('<'),          None,    None)
-    le =      filter_operator(operator.le, 2,  _('<='),         None,    None)
-    gt =      filter_operator(operator.gt, 2,  _('>'),          None,    None)
-    ge =      filter_operator(operator.ge, 2,  _('>='),         None,    None)
-    like =    filter_operator(ilike_op,    2,  _('like'),       None,    None)
-    between = filter_operator(between_op,  3,  _('between'),    None,  _('and'))
+    #name                         operator     arity verbose_name           prefix   infix   pre_condition
+    eq =           filter_operator(operator.eq, 2,  _('='),                 None,    None,   is_not_none)
+    ne =           filter_operator(operator.ne, 2,  _('!='),                None,    None,   is_not_none)
+    lt =           filter_operator(operator.lt, 2,  _('<'),                 None,    None,   is_not_none)
+    le =           filter_operator(operator.le, 2,  _('<='),                None,    None,   is_not_none)
+    gt =           filter_operator(operator.gt, 2,  _('>'),                 None,    None,   is_not_none)
+    ge =           filter_operator(operator.ge, 2,  _('>='),                None,    None,   is_not_none)
+    like =         filter_operator(ilike_op,    2,  _('like'),              None,    None,   is_not_none)
+    between =      filter_operator(between_op,  3,  _('between'),           None,  _('and'), is_not_none)
+    is_empty =     filter_operator(is_none,     1,  _('is not filled out'), None,    None,   None)
+    is_not_empty = filter_operator(is_not_none, 1,  _('is filled out'),     None,    None,   None)
 
     @property
     def operator(self):
@@ -251,13 +254,17 @@ class Operator(enum.Enum):
     def infix(self):
         return self._value_.infix
 
+    @property
+    def pre_condition(self):
+        return self._value_.pre_condition
+
     @classmethod
     def numerical_operators(cls):
-        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between)
+        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between, cls.is_empty, cls.is_not_empty)
 
     @classmethod
     def text_operators(cls):
-        return (cls.eq, cls.ne, cls.like)
+        return (cls.eq, cls.ne, cls.like, cls.is_empty, cls.is_not_empty)
 
 class AbstractFilterStrategy(object):
     """
@@ -342,7 +349,7 @@ class FieldFilter(AbstractFilterStrategy):
 
     attribute = None
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **kwargs):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
@@ -351,6 +358,8 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attribute.key
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
+        nullable = field_attributes.get('nullable')
+        self.nullable = nullable if isinstance(nullable, bool) else True
 
     @classmethod
     def get_attribute_python_type(cls, attribute):
@@ -368,6 +377,12 @@ class FieldFilter(AbstractFilterStrategy):
         python_type = self.get_attribute_python_type(attribute)
         assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
 
+    def get_operators(self):
+        operators = super().get_operators()
+        if not self.nullable:
+            return [op for op in operators if op not in (Operator.is_empty, Operator.is_not_empty)]
+        return operators
+
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and operands, within the given admin and session.
@@ -379,10 +394,15 @@ class FieldFilter(AbstractFilterStrategy):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         filter_clause = self.get_type_clause(field_attributes, operator, *operands)
         if filter_clause is not None:
-            where_conditions = [self.attribute != None]
+            where_conditions = []
+            #where_conditions = [self.attribute != None]
+            if operator.pre_condition is not None:
+                where_conditions.append(operator.pre_condition(self.attribute))
             if self.where is not None:
                 where_conditions.append(self.where)
-            return sql.and_(*where_conditions, filter_clause)
+            if where_conditions:
+                return sql.and_(*where_conditions, filter_clause)
+            return filter_clause
 
     def get_type_clause(self, field_attributes, operator, *operands):
         """
@@ -485,8 +505,13 @@ class StringFilter(FieldFilter):
         self.allow_digits = allow_digits
 
     def get_type_clause(self, field_attributes, operator, *operands):
-        if not all([operand.isdigit() for operand in operands]) or self.allow_digits:
-            return super().get_type_clause(field_attributes, operator, *operands)
+        filter_clause = super().get_type_clause(field_attributes, operator, *operands)
+        if operator == Operator.is_empty:
+            return sql.or_(super().get_type_clause(field_attributes, Operator.eq, ''), filter_clause)
+        elif operator == Operator.is_not_empty:
+            return sql.and_(super().get_type_clause(field_attributes, Operator.ne, ''), filter_clause)
+        elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
+            return filter_clause
 
     def value_to_string(self, filter_value, admin):
         return filter_value
@@ -646,6 +671,22 @@ class ChoicesFilter(FieldFilter):
 class MonthsFilter(IntFilter):
 
     name = 'months_filter'
+
+class Many2OneFilter(IntFilter):
+
+    name = 'many2one_filter'
+    python_type = int
+    operators = (Operator.eq,)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and isinstance(attribute.prop, orm.RelationshipProperty)
+        assert len(attribute.prop.local_columns) == 1
+        entity_mapper = orm.class_mapper(attribute.class_)
+        foreign_key_col = list(attribute.prop.local_columns)[0]
+        foreign_key_attribute = entity_mapper.get_property_by_column(foreign_key_col).class_attribute
+        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')))
+        self.entity = attribute.prop.entity.entity
+        self.admin = field_attributes.get('admin')
 
 class SearchFilter(Action, AbstractModelFilter):
 
