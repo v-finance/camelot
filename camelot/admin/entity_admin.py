@@ -250,7 +250,7 @@ and used as a custom action.
     @register_list_actions('_admin_route', '_shared_toolbar_actions')
     def _get_shared_toolbar_actions( self ):
         return [
-            list_filter.SearchFilter(self),
+            list_filter.search_filter,
             list_action.set_filters,
             application_action.refresh,
         ]
@@ -442,10 +442,9 @@ and used as a custom action.
         all_attributes = self.get_field_attributes(field_name)
         admin = all_attributes.get('admin')
         session = orm.object_session(obj)
-        if (admin is not None) and (session is not None):
-            search_filter = list_filter.SearchFilter(admin)
+        if (admin is not None) and (session is not None) and not (prefix is None or len(prefix.strip())==0):
             query = admin.get_query(session)
-            query = search_filter.decorate_query(query, prefix)
+            query = admin.decorate_search_query(query, prefix)
             return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
