@@ -672,6 +672,25 @@ class MonthsFilter(IntFilter):
 
     name = 'months_filter'
 
+class Many2OneFilter(IntFilter):
+
+    name = 'many2one_filter'
+    python_type = int
+    operators = (Operator.eq,)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and isinstance(attribute.prop, orm.RelationshipProperty)
+        assert len(attribute.prop.local_columns) == 1
+        foreign_key_col = list(attribute.prop.local_columns)[0]
+        foreign_key_attribute = getattr(attribute.class_, foreign_key_col.key)
+        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')))
+
+    def get_type_clause(self, field_attributes, operator, *operands):
+        try:
+            return super().get_type_clause(field_attributes, operator, *[op.id for op in operands])
+        except utils.ParsingError:
+            pass
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
