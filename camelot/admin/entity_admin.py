@@ -357,6 +357,7 @@ and used as a custom action.
                         #
                         nullable = foreign_keys[0].nullable,
                         direction = 'manytoone',
+                        filter_strategy = list_filter.Many2OneFilter,
                     )
                 elif property.direction == orm.interfaces.MANYTOMANY:
                     attributes.update( direction = 'manytomany' )
@@ -372,7 +373,6 @@ and used as a custom action.
                 else:
                     attributes.update(
                         delegate = delegates.Many2OneDelegate,
-                        filter_strategy = list_filter.Many2OneFilter,
                         python_type = str,
                     )
 
