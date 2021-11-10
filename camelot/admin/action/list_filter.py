@@ -37,6 +37,7 @@ import decimal
 import enum
 import operator
 
+from camelot.core.orm import Entity
 from camelot.core.sql import ilike_op, in_op, is_none, is_not_none
 from camelot.view import utils
 
@@ -387,7 +388,10 @@ class FieldFilter(AbstractFilterStrategy):
     def get_attribute_python_type(cls, attribute):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), cls.AssertionMessage.no_queryable_attribute.value
         if isinstance(attribute, orm.attributes.InstrumentedAttribute):
-            python_type = attribute.type.python_type
+            if isinstance(attribute.prop, orm.RelationshipProperty):
+                python_type = Entity
+            else:
+                python_type = attribute.type.python_type
         else:
             expression =  attribute.expression
             if isinstance(expression, sql.selectable.Select):
