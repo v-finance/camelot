@@ -11,7 +11,7 @@ from . import test_orm
 from camelot.admin.action.list_filter import SearchFilter
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-
+from camelot.test.action import MockListActionGuiContext, MockModelContext
 #
 # build a list of the various column types for which the search functions
 # should be tested
@@ -100,7 +100,10 @@ class SearchCase( test_orm.TestMetaData ):
     def test_search_filter( self ):
         """Verify it search works for most common types"""
         admin = self.TAdmin(self.app_admin, self.T)
-        search_filter = SearchFilter(admin)
+        search_filter = SearchFilter()
+        model_context = MockModelContext()
+        model_context.admin = admin
+        list(search_filter.model_run(model_context, None))
         #
         # insert the value of i in each column of T, that can be searched for
         #

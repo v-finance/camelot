@@ -963,7 +963,7 @@ class ControlsTest(
         self.grab_widget( busy_widget )
 
     def test_search_control(self):
-        filter_action = SearchFilter(self.app_admin)
+        filter_action = SearchFilter()
         search = SimpleSearchControl(filter_action, self.gui_context, None)
         self.grab_widget(search)
 

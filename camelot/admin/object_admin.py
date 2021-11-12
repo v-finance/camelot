@@ -572,16 +572,16 @@ be specified using the verbose_name attribute.
         """
         field_type = self.get_typing(field_name)
         field_type = field_type.__args__[0] if is_optional_type(field_type) else field_type
-        if issubclass(field_type, Entity):
+        if field_type is not None and issubclass(field_type, Entity):
             all_attributes = self.get_field_attributes(field_name)
             admin = all_attributes.get('admin')
             session = self.get_session(obj)
             if (admin is not None) and (session is not None):
-                search_filter = list_filter.SearchFilter(admin)
                 query = admin.get_query(session)
-                query = search_filter.decorate_query(query, prefix)
+                if not (prefix is None or len(prefix.strip())==0):
+                    query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
-            
+
     def get_session(self, obj):
         """
         Return the session based on the given object
@@ -704,13 +704,22 @@ be specified using the verbose_name attribute.
             target = attributes.get('target', None)
             if target is not None and admin is not None:
                 attributes['admin'] = admin(self, target)
-        
+
+            # The filter strategy can only be overruled when it has a valid filter strategy introspected from the descriptor,
+            # and its not overruled explicitly already in the forced attributes.
+            filter_strategy_overrulable = ('filter_strategy' not in forced_attributes) and (attributes['filter_strategy'] != list_filter.NoFilter)
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
                 attributes['delegate'] = delegates.ComboBoxDelegate
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : choices_dict.get(x, '')
+                    if filter_strategy_overrulable:
+                        # Only overrule the filter strategy to ChoicesFilter if the choices are non-dynamic,
+                        # as the choices needed for filtering should apply for all entities.
+                        attributes['filter_strategy'] = list_filter.ChoicesFilter
+            if attributes.get('delegate') == delegates.MonthsDelegate and filter_strategy_overrulable:
+                attributes['filter_strategy'] = list_filter.MonthsFilter
             self._expand_field_attributes(attributes, field_name)
             return attributes
 
@@ -794,7 +803,7 @@ be specified using the verbose_name attribute.
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
         if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldFilter):
-            field_attributes['filter_strategy'] = filter_strategy(attribute, choices=field_attributes.get('choices'))
+            field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
         search_strategy = field_attributes['search_strategy']
         if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldFilter):
             field_attributes['search_strategy'] = search_strategy(attribute)
