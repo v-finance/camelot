@@ -1059,7 +1059,7 @@ class SetFilters(Action, AbstractModelFilter):
                 # So let the user select one, and programmatically set the filter value to the selected entity's id.
                 if isinstance(filter_strategy, Many2OneFilter):
                     objects = yield action_steps.SelectObjects(filter_strategy.admin)
-                    filter_value._values = [obj.id for obj in objects]
+                    filter_value.set_operands(*[obj.id for obj in objects])
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
                     yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
