@@ -519,6 +519,8 @@ class ListActionsCase(
         self.assertEqual(copied_obj.last_name, person.last_name)
 
         # Verify in the case wherein the duplicated instance is invalid, its is not flushed yet and opened within its form.
+        # Set custom validator that always fails to make sure duplicated instance is found to be invalid/
+        validator = self.admin.validator
         class CustomValidator(EntityValidator):
 
             def validate_object(self, p):
@@ -533,6 +535,8 @@ class ListActionsCase(
         copied_obj = created[0]
         self.assertEqual(copied_obj.first_name, person.first_name)
         self.assertEqual(copied_obj.last_name, person.last_name)
+        # Reinstated original validator to prevent intermingling with other test (cases).
+        self.admin.validator = validator
 
     def test_delete_selection(self):
         selected_object = self.model_context.get_object()
