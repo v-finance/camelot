@@ -946,7 +946,7 @@ class FilterValue(object):
         self.operator = operator
         self.value_1 = value_1
         self.value_2 = value_2
-        self._values = None
+        self._other_values = []
 
     @property
     def operator_prefix(self):
@@ -958,12 +958,18 @@ class FilterValue(object):
             return str(self.operator.infix)
 
     def get_operands(self):
-        operands = self._values or [self.value_1, self.value_2]
+        operands = (self.value_1, self.value_2, *self._other_values)
         # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
         # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
         if self.operator.arity.maximum is not None:
             operands = operands[0:self.operator.arity.maximum-1]
         return operands
+
+    def set_operands(self, *operands):
+        for i, operand in enumerate(operands[:2], start=1):
+            if i == 1: self.value_1 = operand
+            if i == 2: self.value_2 = operand
+        self._other_values = operands[2:]
 
     @classmethod
     def for_strategy(cls, filter_strategy):
