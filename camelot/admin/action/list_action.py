@@ -958,9 +958,12 @@ class FilterValue(object):
             return str(self.operator.infix)
 
     def get_values(self):
-        if self._values is not None:
-            return self._values
-        return [self.value_1, self.value_2]
+        operands = self._values or [self.value_1, self.value_2]
+        # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
+        # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
+        if self.operator.arity.maximum is not None:
+            operands = operands[0:self.operator.arity.maximum-1]
+        return operands
 
     @classmethod
     def for_strategy(cls, filter_strategy):
@@ -1073,10 +1076,6 @@ class SetFilters(Action, AbstractModelFilter):
         for name, (operator_name, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
             operator = Operator[operator_name]
-            # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
-            # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
-            if operator.arity.maximum is not None:
-                operands = operands[0:operator.arity.maximum-1]
             filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
