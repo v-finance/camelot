@@ -957,7 +957,7 @@ class FilterValue(object):
         if self.operator.infix is not None:
             return str(self.operator.infix)
 
-    def get_values(self):
+    def get_operands(self):
         operands = self._values or [self.value_1, self.value_2]
         # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
         # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
@@ -1058,7 +1058,7 @@ class SetFilters(Action, AbstractModelFilter):
                 else:
                     yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
 
-            operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_values()]
+            operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
 
