@@ -41,7 +41,7 @@ from camelot.view.workspace import DesktopWorkspace
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
 
-from sqlalchemy import schema, types
+from sqlalchemy import orm, schema, types
 
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
@@ -880,54 +880,77 @@ class ListFilterCase(TestMetaData):
 
     def test_filter_strategies(self):
 
+        class B(self.Entity):
+            pass
+
         class A(self.Entity):
 
-            text_col = schema.Column(types.Unicode(10))
-            bool_col = schema.Column(types.Boolean)
-            date_col = schema.Column(types.Date)
-            time_col = schema.Column(types.Time)
-            int_col = schema.Column(types.Integer)
-            months_col = schema.Column(types.Integer)
-            enum_col = schema.Column(camelot.types.Enumeration)
+            text_col = schema.Column(types.Unicode(10), nullable=False)
+            text_col_nullable = schema.Column(types.Unicode(10))
+            bool_col = schema.Column(types.Boolean, nullable=False)
+            bool_col_nullable = schema.Column(types.Boolean)
+            date_col = schema.Column(types.Date, nullable=False)
+            date_col_nullable = schema.Column(types.Date)
+            time_col = schema.Column(types.Time, nullable=False)
+            time_col_nullable = schema.Column(types.Time)
+            int_col = schema.Column(types.Integer, nullable=False)
+            int_col_nullable = schema.Column(types.Integer)
+            months_col = schema.Column(types.Integer, nullable=False)
+            months_col_nullable = schema.Column(types.Integer)
+            enum_col = schema.Column(camelot.types.Enumeration, nullable=False)
+            enum_col_nullable = schema.Column(camelot.types.Enumeration)
+
+            b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id), nullable=False)
+            many2one_col = orm.relationship(B)
 
             class Admin(EntityAdmin):
                 field_attributes = {
                     'months_col':{'delegate': delegates.MonthsDelegate},
+                    'months_col_nullable':{'delegate': delegates.MonthsDelegate},
                 }
 
         self.create_all()
         admin = self.app_admin.get_related_admin(A)
 
-        for col, strategy_cls, *values in (
-            (A.text_col,   list_filter.StringFilter,  'test'),
-            (A.bool_col,   list_filter.BoolFilter,    'True'),
-            (A.date_col,   list_filter.DateFilter,    '2020-01-01', '2022-01-01'),
-            (A.time_col,   list_filter.TimeFilter,    '2020-01-01', '2022-01-01'),
-            (A.int_col,    list_filter.IntFilter,     '1000',       '5000'),
-            (A.months_col, list_filter.MonthsFilter,  '12',         '24'),
-            (A.enum_col,   list_filter.ChoicesFilter, 'test'),
+        for cols, strategy_cls, *values in (
+            ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
+            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True'),
+            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '2020-01-01', '2022-01-01'),
+            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '2020-01-01', '2022-01-01'),
+            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',       '5000'),
+            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',         '24'),
+            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'test'),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1'),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2'),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2', '3'),
             ):
+            for col in cols:
+                # Verify expected filter strategy is set:
+                fa = admin.get_field_attributes(col.key)
+                self.assertIsInstance( fa['filter_strategy'], strategy_cls)
 
-            # Verify expected filter strategy is set:
-            fa = admin.get_field_attributes(col.key)
-            self.assertIsInstance( fa['filter_strategy'], strategy_cls)
+                # Check assertion on invalid attribute:
+                for invalid_attribute in [None, '', 'text_col']:
+                    with self.assertRaises(AssertionError) as exc:
+                        strategy_cls(invalid_attribute)
+                self.assertEqual(str(exc.exception),
+                                 strategy_cls.AssertionMessage.no_queryable_attribute.value if strategy_cls != list_filter.Many2OneFilter else strategy_cls.AssertionMessage.no_many2one_relationship_attribute.value)
 
-            # Check assertion on invalid attribute:
-            for invalid_attribute in [None, '', 'text_col']:
+                filter_strategy = strategy_cls(col, **fa)
+                operators = filter_strategy.get_operators()
+                # Verify that the operators that check on emptiness are only present for nullable attributes.
+                if not fa['nullable']:
+                    self.assertNotIn(list_filter.Operator.is_empty, operators)
+                    self.assertNotIn(list_filter.Operator.is_not_empty, operators)
+                # Verify that for each operator of the filter strategy its clause is constructed properly:
+                for operator in operators:
+                    operands = values[0:operator.arity.maximum-1] if operator.arity.maximum is not None else values
+                    filter_strategy.get_clause(admin, self.session, operator, *operands)
+
+                # Verify assertion on operands arity mismatch
                 with self.assertRaises(AssertionError) as exc:
-                    strategy_cls(invalid_attribute)
-            self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.no_queryable_attribute.value)
-
-            # Verify that for each operator of the filter strategy its clause is constructed properly:
-            filter_strategy = strategy_cls(col)
-            for operator in filter_strategy.get_operators():
-                operands = values[0:operator.arity-1]
-                filter_strategy.get_clause(admin, self.session, operator, *operands)
-
-            # Verify assertion on operands arity mismatch
-            with self.assertRaises(AssertionError) as exc:
-                filter_strategy.get_clause(admin, self.session, list_filter.Operator.eq)
-            self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1))
+                    filter_strategy.get_clause(admin, self.session, list_filter.Operator.eq)
+                self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1, 1))
 
         # Check assertion on python type mismatch:
         with self.assertRaises(AssertionError) as exc:

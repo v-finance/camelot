@@ -37,7 +37,8 @@ import decimal
 import enum
 import operator
 
-from camelot.core.sql import ilike_op
+from camelot.core.orm import Entity
+from camelot.core.sql import ilike_op, in_op, is_none, is_not_none
 from camelot.view import utils
 
 from dataclasses import dataclass
@@ -208,9 +209,36 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
 
+arity = collections.namedtuple('arity', ('minimum', 'maximum'))
+
+class Arity(enum.Enum):
+    """
+    Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
+    To support operations with a varying arity that accept a variable number of arguments, the arity values
+    are composed of a minimum and a maximum arity, with None representing a varyable value.
+    """
+
+    # Never applicable in its current sole use with filter strategies, where always
+    # at least 1 operand is defined in the form of the filtered attribute.
+    # But it may become for future application.
+    #nullary = arity(0, 0)
+
+    unary =    arity(1, 1)
+    binary =   arity(2, 2)
+    ternary =  arity(3, 3)
+    multiary = arity(2, None)
+
+    @property
+    def minimum(self):
+        return self._value_.minimum
+
+    @property
+    def maximum(self):
+        return self._value_.maximum
+
 filter_operator = collections.namedtuple(
     'filter_operator',
-    ('operator', 'arity', 'verbose_name', 'prefix', 'infix'))
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
 
 class Operator(enum.Enum):
     """
@@ -220,16 +248,20 @@ class Operator(enum.Enum):
       * verbose name : short verbose description of the operator to display in the GUI.
       * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
+      * pre_condition : an optional additional unary condition that should be met for the operator to apply or pre-filter for optimalization. E.g. the is not None check.
     """
-    #name                     operator     arity verbose_name   prefix   infix
-    eq =      filter_operator(operator.eq, 2,  _('='),          None,    None)
-    ne =      filter_operator(operator.ne, 2,  _('!='),         None,    None)
-    lt =      filter_operator(operator.lt, 2,  _('<'),          None,    None)
-    le =      filter_operator(operator.le, 2,  _('<='),         None,    None)
-    gt =      filter_operator(operator.gt, 2,  _('>'),          None,    None)
-    ge =      filter_operator(operator.ge, 2,  _('>='),         None,    None)
-    like =    filter_operator(ilike_op,    2,  _('like'),       None,    None)
-    between = filter_operator(between_op,  3,  _('between'),    None,  _('and'))
+    #name                         operator      arity            verbose_name           prefix   infix   pre_condition
+    eq =           filter_operator(operator.eq, Arity.binary,   _('='),                 None,    None,   is_not_none)
+    ne =           filter_operator(operator.ne, Arity.binary,   _('!='),                None,    None,   is_not_none)
+    lt =           filter_operator(operator.lt, Arity.binary,   _('<'),                 None,    None,   is_not_none)
+    le =           filter_operator(operator.le, Arity.binary,   _('<='),                None,    None,   is_not_none)
+    gt =           filter_operator(operator.gt, Arity.binary,   _('>'),                 None,    None,   is_not_none)
+    ge =           filter_operator(operator.ge, Arity.binary,   _('>='),                None,    None,   is_not_none)
+    like =         filter_operator(ilike_op,    Arity.binary,   _('like'),              None,    None,   is_not_none)
+    between =      filter_operator(between_op,  Arity.ternary,  _('between'),           None,  _('and'), is_not_none)
+    is_empty =     filter_operator(is_none,     Arity.unary,    _('is not filled out'), None,    None,   None)
+    is_not_empty = filter_operator(is_not_none, Arity.unary,    _('is filled out'),     None,    None,   None)
+    in_ =          filter_operator(in_op,       Arity.multiary, _('selection'),         None,    None,   is_not_none)
 
     @property
     def operator(self):
@@ -251,13 +283,17 @@ class Operator(enum.Enum):
     def infix(self):
         return self._value_.infix
 
+    @property
+    def pre_condition(self):
+        return self._value_.pre_condition
+
     @classmethod
     def numerical_operators(cls):
-        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between)
+        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between, cls.is_empty, cls.is_not_empty)
 
     @classmethod
     def text_operators(cls):
-        return (cls.eq, cls.ne, cls.like)
+        return (cls.eq, cls.ne, cls.like, cls.is_empty, cls.is_not_empty)
 
 class AbstractFilterStrategy(object):
     """
@@ -276,11 +312,14 @@ class AbstractFilterStrategy(object):
 
         no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
         python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
-        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects {}.'
+        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
+        no_many2one_relationship_attribute = 'The given attribute is not a valid RelationshipProperty attribute'
 
     @classmethod
     def assert_operands(cls, operator, *operands):
-        assert (operator.arity - 1) == len(operands), cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), operator.arity-1)
+        min_operands = operator.arity.minimum - 1
+        max_operands = operator.arity.maximum - 1 if operator.arity.maximum is not None else len(operands)
+        assert min_operands <= len(operands) <= max_operands, cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), min_operands, max_operands)
 
     def __init__(self, key, where=None, verbose_name=None):
         """
@@ -338,11 +377,12 @@ class FieldFilter(AbstractFilterStrategy):
     """
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    :attribute nullable: flag that indicates whether this strategy's field attribute is nullable or not, which influences which operators may or may not be applicable
     """
 
     attribute = None
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **kwargs):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
@@ -351,12 +391,17 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attribute.key
         super().__init__(key, where, verbose_name)
         self.attribute = attribute
+        nullable = field_attributes.get('nullable')
+        self.nullable = nullable if isinstance(nullable, bool) else True
 
     @classmethod
     def get_attribute_python_type(cls, attribute):
         assert isinstance(attribute, orm.attributes.QueryableAttribute), cls.AssertionMessage.no_queryable_attribute.value
         if isinstance(attribute, orm.attributes.InstrumentedAttribute):
-            python_type = attribute.type.python_type
+            if isinstance(attribute.prop, orm.RelationshipProperty):
+                python_type = Entity
+            else:
+                python_type = attribute.type.python_type
         else:
             expression =  attribute.expression
             if isinstance(expression, sql.selectable.Select):
@@ -367,6 +412,12 @@ class FieldFilter(AbstractFilterStrategy):
     def assert_valid_attribute(self, attribute):
         python_type = self.get_attribute_python_type(attribute)
         assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
+
+    def get_operators(self):
+        operators = super().get_operators()
+        if not self.nullable:
+            return [op for op in operators if op not in (Operator.is_empty, Operator.is_not_empty)]
+        return operators
 
     def get_clause(self, admin, session, operator, *operands):
         """
@@ -379,10 +430,14 @@ class FieldFilter(AbstractFilterStrategy):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         filter_clause = self.get_type_clause(field_attributes, operator, *operands)
         if filter_clause is not None:
-            where_conditions = [self.attribute != None]
+            where_conditions = []
+            if operator.pre_condition is not None:
+                where_conditions.append(operator.pre_condition(self.attribute))
             if self.where is not None:
                 where_conditions.append(self.where)
-            return sql.and_(*where_conditions, filter_clause)
+            if where_conditions:
+                return sql.and_(*where_conditions, filter_clause)
+            return filter_clause
 
     def get_type_clause(self, field_attributes, operator, *operands):
         """
@@ -485,8 +540,13 @@ class StringFilter(FieldFilter):
         self.allow_digits = allow_digits
 
     def get_type_clause(self, field_attributes, operator, *operands):
-        if not all([operand.isdigit() for operand in operands]) or self.allow_digits:
-            return super().get_type_clause(field_attributes, operator, *operands)
+        filter_clause = super().get_type_clause(field_attributes, operator, *operands)
+        if operator == Operator.is_empty:
+            return sql.or_(super().get_type_clause(field_attributes, Operator.eq, ''), filter_clause)
+        elif operator == Operator.is_not_empty:
+            return sql.and_(super().get_type_clause(field_attributes, Operator.ne, ''), filter_clause)
+        elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
+            return filter_clause
 
     def value_to_string(self, filter_value, admin):
         return filter_value
@@ -498,7 +558,7 @@ class DecimalFilter(FieldFilter):
     operators = Operator.numerical_operators()
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
-        super().__init__(attribute, where, key, verbose_name)
+        super().__init__(attribute, where, key, verbose_name, **field_attributes)
         self.precision = field_attributes.get('precision')
 
     def get_type_clause(self, field_attributes, operator, *operands):
@@ -646,6 +706,28 @@ class ChoicesFilter(FieldFilter):
 class MonthsFilter(IntFilter):
 
     name = 'months_filter'
+
+class Many2OneFilter(IntFilter):
+    """
+    Specialized IntFilter strategy that expects a many2one relationship attribute from which the
+    local foreign key attribute is used to instantiate this strategy with.
+    """
+
+    name = 'many2one_filter'
+    python_type = int
+    operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
+               isinstance(attribute.prop, orm.RelationshipProperty) and \
+               attribute.prop.direction == orm.interfaces.MANYTOONE, self.AssertionMessage.no_many2one_relationship_attribute.value
+        assert len(attribute.prop.local_columns) == 1
+        entity_mapper = orm.class_mapper(attribute.class_)
+        foreign_key_col = list(attribute.prop.local_columns)[0]
+        foreign_key_attribute = entity_mapper.get_property_by_column(foreign_key_col).class_attribute
+        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')), **field_attributes)
+        self.entity = attribute.prop.entity.entity
+        self.admin = field_attributes.get('admin')
 
 class SearchFilter(Action, AbstractModelFilter):
 

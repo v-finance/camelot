@@ -754,6 +754,12 @@ class EntityAdminCase(TestMetaData):
 
     def test_overruled_filter_strategies( self ):
 
+        class B(self.Entity):
+            pass
+
+        class C(self.Entity):
+            pass
+
         class A(self.Entity):
 
             text_col = schema.Column(types.Unicode(10))
@@ -767,9 +773,11 @@ class EntityAdminCase(TestMetaData):
             months_col = schema.Column(types.Integer)
             months_col_no_filter = schema.Column(types.Integer)
 
-            b = schema.Column(types.Unicode(10))
-            c = schema.Column(types.Unicode(10))
-            e = schema.Column(types.Integer)
+            b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id), nullable=False)
+            many2one_col = orm.relationship(B)
+
+            c_id = schema.Column(types.Integer(), schema.ForeignKey(C.id), nullable=False)
+            many2one_col_no_filter = orm.relationship(C)
 
             class Admin(EntityAdmin):
                 list_display = ['text_col', 'int_col', 'text_col_with_choices', 'int_col_with_choices', 'text_col_with_choices_no_filter', 'int_col_with_choices_no_filter']
@@ -779,7 +787,8 @@ class EntityAdminCase(TestMetaData):
                     'text_col_with_choices_no_filter': {'choices': [('x', 'X'), ('y', 'Y')], 'filter_strategy': list_filter.NoFilter},
                     'int_col_with_choices_no_filter': {'choices': [(1, 'X'), (2, 'Y')], 'filter_strategy': list_filter.NoFilter},
                     'months_col':{'delegate': delegates.MonthsDelegate},
-                    'months_col_no_filter':{'delegate': delegates.MonthsDelegate, 'filter_strategy': list_filter.NoFilter}
+                    'months_col_no_filter':{'delegate': delegates.MonthsDelegate, 'filter_strategy': list_filter.NoFilter},
+                    'many2one_col_no_filter': {'filter_strategy': list_filter.NoFilter}
                 }
 
         self.create_all()
@@ -815,3 +824,11 @@ class EntityAdminCase(TestMetaData):
         fa = admin.get_field_attributes('months_col_no_filter')
         self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
         self.assertIsInstance( fa['search_strategy'], list_filter.IntFilter)
+
+        # Many2One relationship attribute should get the Many2OneFilter assigned, unless explicitly disabled:
+        fa = admin.get_field_attributes('many2one_col')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.Many2OneFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)
+        fa = admin.get_field_attributes('many2one_col_no_filter')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)

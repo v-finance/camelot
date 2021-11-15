@@ -357,6 +357,7 @@ and used as a custom action.
                         #
                         nullable = foreign_keys[0].nullable,
                         direction = 'manytoone',
+                        filter_strategy = list_filter.Many2OneFilter,
                     )
                 elif property.direction == orm.interfaces.MANYTOMANY:
                     attributes.update( direction = 'manytomany' )
@@ -772,4 +773,8 @@ and used as a custom action.
                 if isinstance(col_property.expression, schema.Column):
                     field_attributes = self.get_field_attributes(field_name)
                     field_strategies.append(field_attributes.get('filter_strategy'))
+        for relationship_property in self.mapper.relationships:
+            if relationship_property.direction == orm.interfaces.MANYTOONE:
+                field_attributes = self.get_field_attributes(relationship_property.key)
+                field_strategies.append(field_attributes.get('filter_strategy'))
         return field_strategies
