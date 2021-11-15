@@ -8,6 +8,7 @@ import openpyxl
 
 import six
 
+from camelot.core.exception import UserException
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.action import Action, ActionStep, State
 from camelot.admin.action import (
@@ -15,6 +16,7 @@ from camelot.admin.action import (
     ApplicationActionGuiContext
 )
 from camelot.admin.action.application import Application
+from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
@@ -33,6 +35,8 @@ from camelot.view.import_utils import (
 )
 from camelot.view.workspace import DesktopWorkspace
 from camelot_example.model import Movie
+
+from sqlalchemy import orm
 
 from . import app_admin
 from . import test_view
@@ -466,7 +470,20 @@ class ListActionsCase(
             form = step.render(self.gui_context)
             form_value = form.model.get_value()
         self.assertTrue(isinstance(form_value, ListModelProxy))
-        
+
+    @staticmethod
+    def track_crud_steps(action, model_context):
+        created = updated = None
+        steps = []
+        flushed = False
+        for step in action.model_run(model_context):
+            steps.append(type(step))
+            if isinstance(step, action_steps.CreateObjects):
+                created = step.objects_created if created is None else created.extend(step.objects_created)
+            elif isinstance(step, action_steps.UpdateObjects):
+                updated = step.objects_updated if updated is None else updated.extend(step.objects_updated)
+        return steps, created, updated
+
     def test_duplicate_selection( self ):
         initial_row_count = self._row_count(self.item_model)
         action = list_action.DuplicateSelection()
@@ -474,6 +491,55 @@ class ListActionsCase(
         self.process()
         new_row_count = self._row_count(self.item_model)
         self.assertEqual(new_row_count, initial_row_count+1)
+        person = Person(first_name='test', last_name='person')
+        self.session.flush()
+        model_context = MockModelContext(self.session)
+        model_context.admin = self.admin
+        model_context.proxy = self.admin.get_proxy([])
+
+        # The action should only be applicable for a single selection.
+        # So verify a UserException is raised when selecting multiple ...
+        model_context.selection = [None, None]
+        with self.assertRaises(UserException) as exc:
+            list(action.model_run(model_context))
+        self.assertEqual(exc.exception.text, action.Message.no_single_selection.value) 
+        # ...and selecting None has no side-effects.
+        model_context.selection = []
+        steps, created, updated = self.track_crud_steps(action, model_context)
+        self.assertIsNone(created)
+        self.assertIsNone(updated)
+        self.assertNotIn(action_steps.FlushSession, steps)
+
+        # Verify the valid duplication of a single selection.
+        model_context.selection = [person]
+        steps, created, updated = self.track_crud_steps(action, model_context)
+        self.assertEqual(len(created), 1)
+        self.assertEqual(len(updated), 0)
+        self.assertIn(action_steps.FlushSession, steps)
+        copied_obj = created[0]
+        self.assertEqual(copied_obj.first_name, person.first_name)
+        self.assertEqual(copied_obj.last_name, person.last_name)
+
+        # Verify in the case wherein the duplicated instance is invalid, its is not flushed yet and opened within its form.
+        # Set custom validator that always fails to make sure duplicated instance is found to be invalid/
+        validator = self.admin.validator
+        class CustomValidator(EntityValidator):
+
+            def validate_object(self, p):
+                return ['some validation error']
+
+        self.admin.validator = CustomValidator
+        model_context.selection = [person]
+        steps, created, updated = self.track_crud_steps(action, model_context)
+        self.assertEqual(len(created), 1)
+        self.assertIsNone(updated)
+        self.assertIn(action_steps.OpenFormView, steps)
+        self.assertNotIn(action_steps.FlushSession, steps)
+        copied_obj = created[0]
+        self.assertEqual(copied_obj.first_name, person.first_name)
+        self.assertEqual(copied_obj.last_name, person.last_name)
+        # Reinstated original validator to prevent intermingling with other test (cases).
+        self.admin.validator = validator
 
     def test_delete_selection(self):
         selected_object = self.model_context.get_object()
