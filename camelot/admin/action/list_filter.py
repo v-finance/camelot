@@ -212,8 +212,17 @@ class ComboBoxFilter(Filter):
 arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
 class Arity(enum.Enum):
+    """
+    Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
+    To support operations with a varying arity that accept a variable number of arguments, the arity values
+    are composed of a minimum and a maximum arity, with None representing a varyable value.
+    """
 
+    # Never applicable in its current sole use with filter strategies, where always
+    # at least 1 operand is defined in the form of the filtered attribute.
+    # But it may become for future application.
     #nullary = arity(0, 0)
+
     unary =    arity(1, 1)
     binary =   arity(2, 2)
     ternary =  arity(3, 3)
@@ -239,7 +248,7 @@ class Operator(enum.Enum):
       * verbose name : short verbose description of the operator to display in the GUI.
       * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
       * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
-      * pre_condition : Unary operator function to pre filter the filter attribute operand. E.g. is not None.
+      * pre_condition : an optional additional unary condition that should be met for the operator to apply or pre-filter for optimalization. E.g. the is not None check.
     """
     #name                         operator      arity            verbose_name           prefix   infix   pre_condition
     eq =           filter_operator(operator.eq, Arity.binary,   _('='),                 None,    None,   is_not_none)
@@ -368,6 +377,7 @@ class FieldFilter(AbstractFilterStrategy):
     """
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    :attribute nullable: flag that indicates whether this strategy's field attribute is nullable or not, which influences which operators may or may not be applicable
     """
 
     attribute = None
@@ -700,7 +710,7 @@ class MonthsFilter(IntFilter):
 class Many2OneFilter(IntFilter):
     """
     Specialized IntFilter strategy that expects a many2one relationship attribute from which the
-    local foreign attribute is used to instantiate this strategy.
+    local foreign key attribute is used to instantiate this strategy with.
     """
 
     name = 'many2one_filter'

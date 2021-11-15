@@ -930,8 +930,12 @@ replace_field_contents = ReplaceFieldContents()
 
 class FilterValue(object):
     """
-    Helper class for the `SetFilters` action that allows the user to
-    configure a filter defined by a filter strategy and a filter operator.
+    Abstract helper class for the `SetFilters` action to configure the filter values
+    for a certain filter strategy and operator.
+    The dimension of these filter values (remaining operands) depends on the arity of the operator.
+    This class also provides functionality to associate implementations of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
+    with implementations of this FilterValue interface; either by defining them as an innner Value class, or directly using the :method register: method.
+    Using the :method for_strategy: the concrete registered FilterValue class for a certain filter strategy class can be retrieved afterwards.
     """
     filter_strategy = None
     _filter_values = {}
@@ -966,7 +970,7 @@ class FilterValue(object):
         should either be registered through the :meth:`register` method or be
         defined as an inner class with name :keyword:`Value` of the filter strategy.
 
-        :param filter_strategy: a subclass of :class:``camelot.admin.action.list_filter.AbstractFilterStrategy`
+        :param filter_strategy: a subclass of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
         """
         from camelot.admin.action.list_filter import AbstractFilterStrategy
         assert issubclass(filter_strategy, AbstractFilterStrategy)
