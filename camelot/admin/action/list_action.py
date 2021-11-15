@@ -30,6 +30,7 @@
 import codecs
 import copy
 import datetime
+import enum
 import logging
 
 import six
@@ -260,6 +261,10 @@ class EditAction( ListContextAction ):
 
     render_hint = RenderHint.TOOL_BUTTON
 
+    class Message(enum.Enum):
+
+        no_single_selection = _('Can only select 1 line')
+
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
         if isinstance( model_context, ListActionModelContext ):
@@ -330,7 +335,7 @@ class DuplicateSelection( EditAction ):
         admin = model_context.admin
         selection = list(model_context.get_selection())
         if len(selection) > 1:
-            raise UserException(_('Can only select 1 line'))
+            raise UserException(self.Message.no_single_selection.value)
         for obj in selection:
             new_object = admin.copy(obj)
             model_context.proxy.append(new_object)
