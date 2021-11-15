@@ -558,7 +558,7 @@ class DecimalFilter(FieldFilter):
     operators = Operator.numerical_operators()
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
-        super().__init__(attribute, where, key, verbose_name)
+        super().__init__(attribute, where, key, verbose_name, **field_attributes)
         self.precision = field_attributes.get('precision')
 
     def get_type_clause(self, field_attributes, operator, *operands):
@@ -725,7 +725,7 @@ class Many2OneFilter(IntFilter):
         entity_mapper = orm.class_mapper(attribute.class_)
         foreign_key_col = list(attribute.prop.local_columns)[0]
         foreign_key_attribute = entity_mapper.get_property_by_column(foreign_key_col).class_attribute
-        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')))
+        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')), **field_attributes)
         self.entity = attribute.prop.entity.entity
         self.admin = field_attributes.get('admin')
 
