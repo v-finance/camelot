@@ -473,14 +473,15 @@ class ListActionsCase(
 
     @staticmethod
     def track_crud_steps(action, model_context):
-        created = updated = steps = []
+        created = updated = None
+        steps = []
         flushed = False
         for step in action.model_run(model_context):
             steps.append(type(step))
             if isinstance(step, action_steps.CreateObjects):
-                created = step.objects_created
+                created = step.objects_created if created is None else created.extend(step.objects_created)
             elif isinstance(step, action_steps.UpdateObjects):
-                updated = step.objects_updated
+                updated = step.objects_updated if updated is None else updated.extend(step.objects_updated)
         return steps, created, updated
 
     def test_duplicate_selection( self ):
@@ -505,14 +506,15 @@ class ListActionsCase(
         # ...and selecting None has no side-effects.
         model_context.selection = []
         steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertEqual(len(created), 0)
-        self.assertEqual(len(updated), 0)
+        self.assertIsNone(created)
+        self.assertIsNone(updated)
         self.assertNotIn(action_steps.FlushSession, steps)
 
         # Verify the valid duplication of a single selection.
         model_context.selection = [person]
         steps, created, updated = self.track_crud_steps(action, model_context)
         self.assertEqual(len(created), 1)
+        self.assertEqual(len(updated), 0)
         self.assertIn(action_steps.FlushSession, steps)
         copied_obj = created[0]
         self.assertEqual(copied_obj.first_name, person.first_name)
@@ -530,6 +532,7 @@ class ListActionsCase(
         model_context.selection = [person]
         steps, created, updated = self.track_crud_steps(action, model_context)
         self.assertEqual(len(created), 1)
+        self.assertIsNone(updated)
         self.assertIn(action_steps.OpenFormView, steps)
         self.assertNotIn(action_steps.FlushSession, steps)
         copied_obj = created[0]
