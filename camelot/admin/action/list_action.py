@@ -328,20 +328,17 @@ class DuplicateSelection( EditAction ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = model_context.admin
-        new_objects = list()
-        updated_objects = set()
-        for i, obj in enumerate(model_context.get_selection()):
-            yield action_steps.UpdateProgress(i, 
-                                              model_context.selection_count,
-                                              self.verbose_name )
+        selection = list(model_context.get_selection())
+        if len(selection) > 1:
+            raise UserException(_('Can only select 1 line'))
+        for obj in selection:
             new_object = admin.copy(obj)
             model_context.proxy.append(new_object)
-            new_objects.append(new_object)
-            updated_objects.update(set(admin.get_depending_objects(new_object)))
-        yield action_steps.CreateObjects(new_objects)
-        yield action_steps.UpdateObjects(updated_objects)
-        yield action_steps.FlushSession(model_context.session)
-            
+            updated_objects = set(admin.get_depending_objects(new_object))
+            yield action_steps.CreateObjects([new_object])
+            yield action_steps.UpdateObjects(updated_objects)
+            yield action_steps.FlushSession(model_context.session)
+
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
