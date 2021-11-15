@@ -339,10 +339,13 @@ class DuplicateSelection( EditAction ):
         for obj in selection:
             new_object = admin.copy(obj)
             model_context.proxy.append(new_object)
-            updated_objects = set(admin.get_depending_objects(new_object))
             yield action_steps.CreateObjects([new_object])
-            yield action_steps.UpdateObjects(updated_objects)
-            yield action_steps.FlushSession(model_context.session)
+            if not len(admin.get_validator().validate_object(new_object)):
+                updated_objects = set(admin.get_depending_objects(new_object))
+                yield action_steps.UpdateObjects(updated_objects)
+                yield action_steps.FlushSession(model_context.session)
+            else:
+                yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
 
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
