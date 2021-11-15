@@ -470,6 +470,10 @@ class RelatedFilter(AbstractFilterStrategy):
         self.field_filters = field_filters
         self.joins = joins
 
+    def get_operators(self):
+        for field_filter in self.field_filters:
+            return field_filter.get_operators()
+
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and value, within the given admin and session.
