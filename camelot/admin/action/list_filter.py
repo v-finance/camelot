@@ -310,10 +310,10 @@ class AbstractFilterStrategy(object):
 
     class AssertionMessage(enum.Enum):
 
-        no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
-        python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
-        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
-        no_many2one_relationship_attribute = 'The given attribute is not a valid RelationshipProperty attribute'
+        no_queryable_attribute =         'The given attribute is not a valid QueryableAttribute'
+        python_type_mismatch =           'The python_type of the given attribute does not match the python_type of this filter strategy'
+        nr_operands_arity_mismatch =     'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
+        invalid_relationship_attribute = 'The given attribute is not a valid {} RelationshipProperty attribute'
 
     @classmethod
     def assert_operands(cls, operator, *operands):
@@ -745,7 +745,7 @@ class Many2OneFilter(IntFilter):
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty) and \
-               attribute.prop.direction == orm.interfaces.MANYTOONE, self.AssertionMessage.no_many2one_relationship_attribute.value
+               attribute.prop.direction == orm.interfaces.MANYTOONE, self.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.MANYTOONE)
         assert len(attribute.prop.local_columns) == 1
         entity_mapper = orm.class_mapper(attribute.class_)
         foreign_key_col = list(attribute.prop.local_columns)[0]
@@ -771,11 +771,10 @@ class One2ManyFilter(RelatedFilter):
     def __init__(self, attribute, joins, field_filters=[], where=None, key=None, verbose_name=None):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty) and \
-               attribute.prop.direction == orm.interfaces.ONETOMANY, 'The given attribute is not a valid RelationshipProperty attribute'
+               attribute.prop.direction == orm.interfaces.ONETOMANY, self.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.ONETOMANY)
         self.entity = attribute.prop.entity.entity
         self.admin = None
         field_filters = field_filters or [IntFilter(self.entity.id)]
-        # TODO: assertion on field filters being numerical
         super().__init__(*field_filters, joins=joins, where=where, key=key, verbose_name=verbose_name)
 
     def get_clause(self, admin, session, operator, *operands):
