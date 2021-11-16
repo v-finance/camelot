@@ -507,7 +507,8 @@ class RelatedFilter(AbstractFilterStrategy):
         field_filter_clauses = []
         for field_strategy in self.field_filters:
             related_admin = admin.get_related_admin(field_strategy.attribute.class_)
-            field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *operands)
+            field_operands = [self.field_operand(related_admin, field_strategy, operand) for operand in operands]
+            field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *field_operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
                 
@@ -516,7 +517,14 @@ class RelatedFilter(AbstractFilterStrategy):
             related_query = related_query.subquery()
             filter_clause = admin.entity.id.in_(related_query)
             return filter_clause
-    
+
+    def field_operand(self, admin, field_strategy, operand):
+        """
+        Turn a operand value for this related filter strategy into the appropriate field operand value
+        for the given field strategy and related admin.
+        """
+        return operand
+
     def value_to_string(self, filter_value, admin):
         for field_strategy in self.field_filters:
             related_admin = admin.get_related_admin(field_strategy.attribute.class_)
@@ -747,7 +755,7 @@ class Many2OneFilter(IntFilter):
         self.admin = field_attributes.get('admin')
 
     def value_to_string(self, value, admin):
-        return super().value_to_string(value.id, admin)
+        return str(value.id)
 
 class One2ManyFilter(RelatedFilter):
     """
@@ -767,7 +775,17 @@ class One2ManyFilter(RelatedFilter):
         self.entity = attribute.prop.entity.entity
         self.admin = None
         field_filters = field_filters or [IntFilter(self.entity.id)]
+        # TODO: assertion on field filters being numerical
         super().__init__(*field_filters, joins=joins, where=where, key=key, verbose_name=verbose_name)
+
+    def get_clause(self, admin, session, operator, *operands):
+        # The operand entity identities into entity instances, to allow the field operand extraction.
+        operands = [session.query(self.entity).get(int(op)) for op in operands]
+        return super().get_clause(admin, session, operator, *operands)
+
+    def field_operand(self, admin, field_strategy, operand):
+        field_value = field_strategy.attribute.__get__(operand, None)
+        return field_strategy.value_to_string(field_value, admin)
 
     def get_field_strategy(self):
         return self
@@ -776,7 +794,7 @@ class One2ManyFilter(RelatedFilter):
         return self.operators
 
     def value_to_string(self, value, admin):
-        return super().value_to_string(value.id, admin)
+        return str(value.id)
 
 class SearchFilter(Action, AbstractModelFilter):
 
