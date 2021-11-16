@@ -30,19 +30,28 @@
 """
 Actions to filter table views
 """
-
-from dataclasses import dataclass
+import collections
+import copy
 import datetime
 import decimal
+import enum
+import operator
 
+from camelot.core.orm import Entity
+from camelot.core.sql import ilike_op, in_op, is_none, is_not_none
 from camelot.view import utils
-from sqlalchemy import orm, sql
 
-from ...core.utils import ugettext
+from dataclasses import dataclass
+
+from sqlalchemy import orm, sql
+from sqlalchemy.sql.operators import between_op
+
+from ...core.utils import ugettext, ugettext_lazy as _
 from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt
 from ...view.utils import locale
+
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
 
@@ -200,222 +209,409 @@ class ComboBoxFilter(Filter):
     render_hint = RenderHint.COMBO_BOX
     name = 'combo_box_filter'
 
-class AbstractSearchStrategy(object):
+arity = collections.namedtuple('arity', ('minimum', 'maximum'))
+
+class Arity(enum.Enum):
     """
-    Abstract interface for defining a search clause as part of an entity admin's search query for a certain search text.
+    Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
+    To support operations with a varying arity that accept a variable number of arguments, the arity values
+    are composed of a minimum and a maximum arity, with None representing a varyable value.
     """
-    
-    def __init__(self, name, where=None, verbose_name=None):
+
+    # Never applicable in its current sole use with filter strategies, where always
+    # at least 1 operand is defined in the form of the filtered attribute.
+    # But it may become for future application.
+    #nullary = arity(0, 0)
+
+    unary =    arity(1, 1)
+    binary =   arity(2, 2)
+    ternary =  arity(3, 3)
+    multiary = arity(2, None)
+
+    @property
+    def minimum(self):
+        return self._value_.minimum
+
+    @property
+    def maximum(self):
+        return self._value_.maximum
+
+filter_operator = collections.namedtuple(
+    'filter_operator',
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
+
+class Operator(enum.Enum):
+    """
+    Enum that keeps track of the operator functions that are available for filtering,
+    together with some related information like
+      * arity : the number of operands the operator takes.
+      * verbose name : short verbose description of the operator to display in the GUI.
+      * prefix : custom verbose prefix to display between the 1st operand (filtered attribute) and 2nd operand (1st filter value). Defaults to the verbose_name.
+      * infix : In case of a ternary operator (arity 3), an optional verbose infix part to display between the 2nd and 3rd operand (1st and 2nd filter value).
+      * pre_condition : an optional additional unary condition that should be met for the operator to apply or pre-filter for optimalization. E.g. the is not None check.
+    """
+    #name                         operator      arity            verbose_name           prefix   infix   pre_condition
+    eq =           filter_operator(operator.eq, Arity.binary,   _('='),                 None,    None,   is_not_none)
+    ne =           filter_operator(operator.ne, Arity.binary,   _('!='),                None,    None,   is_not_none)
+    lt =           filter_operator(operator.lt, Arity.binary,   _('<'),                 None,    None,   is_not_none)
+    le =           filter_operator(operator.le, Arity.binary,   _('<='),                None,    None,   is_not_none)
+    gt =           filter_operator(operator.gt, Arity.binary,   _('>'),                 None,    None,   is_not_none)
+    ge =           filter_operator(operator.ge, Arity.binary,   _('>='),                None,    None,   is_not_none)
+    like =         filter_operator(ilike_op,    Arity.binary,   _('like'),              None,    None,   is_not_none)
+    between =      filter_operator(between_op,  Arity.ternary,  _('between'),           None,  _('and'), is_not_none)
+    is_empty =     filter_operator(is_none,     Arity.unary,    _('is not filled out'), None,    None,   None)
+    is_not_empty = filter_operator(is_not_none, Arity.unary,    _('is filled out'),     None,    None,   None)
+    in_ =          filter_operator(in_op,       Arity.multiary, _('selection'),         None,    None,   is_not_none)
+
+    @property
+    def operator(self):
+        return self._value_.operator
+
+    @property
+    def arity(self):
+        return self._value_.arity
+
+    @property
+    def verbose_name(self):
+        return self._value_.verbose_name
+
+    @property
+    def prefix(self):
+        return self._value_.prefix or self.verbose_name
+
+    @property
+    def infix(self):
+        return self._value_.infix
+
+    @property
+    def pre_condition(self):
+        return self._value_.pre_condition
+
+    @classmethod
+    def numerical_operators(cls):
+        return (cls.eq, cls.ne, cls.lt, cls.le, cls.gt, cls.ge, cls.between, cls.is_empty, cls.is_not_empty)
+
+    @classmethod
+    def text_operators(cls):
+        return (cls.eq, cls.ne, cls.like, cls.is_empty, cls.is_not_empty)
+
+class AbstractFilterStrategy(object):
+    """
+    Abstract interface for defining filter clauses as part of an entity admin's query.
+    :attribute name: string that uniquely identifies this filter strategy class.
+    :attribute operators: complete list of operators that are available for this filter strategy class.
+    :attribute search_operator: The operator that this strategy will use when constructing a filter clause
+                                meant for searching based on a search text. By default the `Operator.eq` is used.
+    """
+
+    name = None    
+    operators = []
+    search_operator = Operator.eq
+
+    class AssertionMessage(enum.Enum):
+
+        no_queryable_attribute =     'The given attribute is not a valid QueryableAttribute'
+        python_type_mismatch =       'The python_type of the given attribute does not match the python_type of this filter strategy'
+        nr_operands_arity_mismatch = 'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
+        no_many2one_relationship_attribute = 'The given attribute is not a valid RelationshipProperty attribute'
+
+    @classmethod
+    def assert_operands(cls, operator, *operands):
+        min_operands = operator.arity.minimum - 1
+        max_operands = operator.arity.maximum - 1 if operator.arity.maximum is not None else len(operands)
+        assert min_operands <= len(operands) <= max_operands, cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), min_operands, max_operands)
+
+    def __init__(self, key, where=None, verbose_name=None):
         """
-        :param name: String that uniquely identifies this search strategy within the context of an admin/entity.
-        :param where: an optional additional condition that should be met for the search clause to apply.
-        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's name.
+        :param key: String that identifies this filter strategy instance within the context of an admin/entity.
+        :param where: an optional additional condition that should be met for the filter clause to apply.
+        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's key.
         """
-        assert isinstance(name, str)
-        self._name = name
+        assert isinstance(key, str)
+        self._key = key
         self.where = where
         self._verbose_name = verbose_name
-    
-    def get_clause(self, text, admin, session):
+
+    def get_clause(self, admin, session, operator, *operands):
         """
-        Return a search clause for the given search text.
+        Construct a filter clause for the given filter operator and operands, within the given admin and session.
+        :param admin: The entity admin that will use the resulting search clause as part of its search query.
+        :param session: The session in which the search query takes place.
+        :param operator: a `camelot.admin.action.list_filter.Operator` instance that defines which operator to use in the column based expression(s) of the resulting filter clause.
+        :param operands: the filter values that are used as the operands for the given operator to filter by.
+        """
+        raise NotImplementedError
+
+    def get_search_clause(self, text, admin, session):
+        """
+        Return a search filter clause for the given search text, within the given admin and session.
+        This method is a shortcut for and equivalent to using the get_clause method with this strategy's search operator.
         :param admin: The entity admin that will use the resulting search clause as part of its search query.
         :param session: The session in which the search query takes place.
         """
-        raise NotImplementedError
-    
+        return self.get_clause(admin, session, self.search_operator, text)
+
     def value_to_string(self, filter_value, admin):
         """
-        Turn the given filter value into its corresponding string representation applicable for this search strategy, based on the given admin.
+        Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
         """
         raise NotImplementedError
-    
+
+    def get_operators(self):
+        """
+        Return the the list of operators that are available for this filter strategy instance.
+        By default, this returns the ´operators´ class attribute, but this may be customized on an filter strategy instance basis.
+        """
+        return self.operators
+
     @property
-    def name(self):
-        return self._name
+    def key(self):
+        return self._key
     
     def get_verbose_name(self):
         if self._verbose_name is not None:
             return self._verbose_name
-        return ugettext(self.name.replace(u'_', u' ').capitalize())
+        return ugettext(self.key.replace(u'_', u' ').capitalize())
 
-class FieldSearch(AbstractSearchStrategy):
+class FieldFilter(AbstractFilterStrategy):
     """
-    Abstract interface for defining a column-based search clause on a queryable attribute of an entity, as part of that entity admin's search query.
+    Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
+    :attribute nullable: flag that indicates whether this strategy's field attribute is nullable or not, which influences which operators may or may not be applicable
     """
-    
+
     attribute = None
 
-    def __init__(self, attribute, where=None, name=None, verbose_name=None):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         """
-        :param attribute: a queryable attribute for which this field search should be applied. It's key will be used as this field search's name.
-        :param name: Optional string to use as this strategy's name. By default the attribute's key will be used.
+        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
+        :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
         """
         self.assert_valid_attribute(attribute)
-        name = name or attribute.key
-        super().__init__(name, where, verbose_name)
+        key = key or attribute.key
+        super().__init__(key, where, verbose_name)
         self.attribute = attribute
-    
+        nullable = field_attributes.get('nullable')
+        self.nullable = nullable if isinstance(nullable, bool) else True
+
     @classmethod
-    def assert_valid_attribute(cls, attribute):
-        assert isinstance(attribute, orm.attributes.QueryableAttribute), 'The given attribute is not a valid QueryableAttribute'
+    def get_attribute_python_type(cls, attribute):
+        assert isinstance(attribute, orm.attributes.QueryableAttribute), cls.AssertionMessage.no_queryable_attribute.value
         if isinstance(attribute, orm.attributes.InstrumentedAttribute):
-            python_type = attribute.type.python_type
+            if isinstance(attribute.prop, orm.RelationshipProperty):
+                python_type = Entity
+            else:
+                python_type = attribute.type.python_type
         else:
             expression =  attribute.expression
             if isinstance(expression, sql.selectable.Select):
                 expression = expression.as_scalar()
             python_type = expression.type.python_type
-        assert issubclass(python_type, cls.python_type), 'The python_type of the given attribute does not match the python_type of this search strategy'
-    
-    def get_clause(self, text, admin, session):
+        return python_type
+
+    def assert_valid_attribute(self, attribute):
+        python_type = self.get_attribute_python_type(attribute)
+        assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
+
+    def get_operators(self):
+        operators = super().get_operators()
+        if not self.nullable:
+            return [op for op in operators if op not in (Operator.is_empty, Operator.is_not_empty)]
+        return operators
+
+    def get_clause(self, admin, session, operator, *operands):
         """
-        Return a search clause consisting of this field search's type clause,
-        expanded with condition on the attribute being set (None check) and the optionally set where condition.
+        Construct a filter clause for the given filter operator and operands, within the given admin and session.
+        The resulting clause will consists of this strategy's field type clause,
+        expanded with a condition on the attribute being set (None check) and the optionally set where conditions.
+        :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
+        self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        search_clause = self.get_type_clause(text, field_attributes)
-        if search_clause is not None:
-            where_conditions = [self.attribute != None]
+        filter_clause = self.get_type_clause(field_attributes, operator, *operands)
+        if filter_clause is not None:
+            where_conditions = []
+            if operator.pre_condition is not None:
+                where_conditions.append(operator.pre_condition(self.attribute))
             if self.where is not None:
                 where_conditions.append(self.where)
-            return sql.and_(*where_conditions, search_clause)
-    
-    def get_type_clause(self, text, field_attributes):
-        """
-        Return a column-based expression search clause on this search strategy's attribute for the given search text.
-        :param field_attributes: The field attributes for this search strategy's attribute on the entity admin
-                                 that will use the resulting search clause as part of its search query.
-        """
-        raise NotImplementedError
+            if where_conditions:
+                return sql.and_(*where_conditions, filter_clause)
+            return filter_clause
 
-class RelatedSearch(AbstractSearchStrategy):
+    def get_type_clause(self, field_attributes, operator, *operands):
+        """
+        Return a column-based expression filter clause on this filter strategy's attribute with the given filter operator and operands.
+        :param field_attributes: The field attributes for this filter strategy's attribute on the entity admin
+                                 that will use the resulting clause as part of its query.
+        :param operands: the filter values that are used as the operands for the given operator to filter by.
+        """
+        return operator.operator(self.attribute, *operands)
+
+class RelatedFilter(AbstractFilterStrategy):
     """
-    Search strategy for defining a search clause as part of an entity admin's search query on fields of one of its related entities.
+    Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
     """
 
-    def __init__(self, *field_searches, joins, where=None, name=None, verbose_name=None):
+    name = 'related_filter'
+
+    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
-        :param field_searches: field search strategies for the search fields on which this related search should apply.
-        :param joins: join definition between the entity on which the search query this related search is part of takes place,
-                      and the related entity of the given field searches.
-        :param name: Optional string to use as this strategy's name. By default the name of this related search's first field search will be used.
+        :param field_filters: field filter strategies for the fields on which this related filter should apply.
+        :param joins: join definition between the entity on which the query this related filter is part of takes place,
+                      and the related entity of the given field filters.
+        :param key: Optional string to use as this strategy's key. By default the key of this related filter's first field filter will be used.
         """
         assert isinstance(joins, list) and len(joins) > 0
-        for field_search in field_searches:
-            assert isinstance(field_search, FieldSearch)
-        name = name or field_searches[0].name
-        super().__init__(name, where, verbose_name)
-        self.field_searches = field_searches
+        for field_search in field_filters:
+            assert isinstance(field_search, FieldFilter)
+        key = key or field_filters[0].key
+        super().__init__(key, where, verbose_name)
+        self.field_filters = field_filters
         self.joins = joins
 
-    def get_clause(self, text, admin, session):
+    def get_clause(self, admin, session, operator, *operands):
         """
-        Return a search clause consisting of a check on the admin's entity's id being present in a related search subquery.
-        The subquery will use this related search strategy's joins to join the entity with the related entity on which the set search fields are defined.
-        where the search clauses of each.
-        The subquery is composed based on this related search strategy's joins and where condition,
-        """        
-        related_search_query = session.query(admin.entity.id)
+        Construct a filter clause for the given filter operator and value, within the given admin and session.
+        The resulting clause will consists of a check on the admin's entity's id being present in a related subquery.
+        That subquery will use the this strategy's joins to join the entity with the related entity on which the set field filters are defined.
+        The subquery is composed based on this related filter strategy's joins and where condition.
+        :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
+        """
+        self.assert_operands(operator, *operands)
+        related_query = session.query(admin.entity.id)
 
         for join in self.joins:
-            related_search_query = related_search_query.join(join)
+            related_query = related_query.join(join)
 
         if self.where is not None:
-            related_search_query.filter(self.where)
+            related_query.filter(self.where)
 
-        field_search_clauses = []
-        for field_search in self.field_searches:
-            related_admin = admin.get_related_admin(field_search.attribute.class_)
-            field_search_clause = field_search.get_clause(text, related_admin, session)
-            if field_search_clause is not None:
-                field_search_clauses.append(field_search_clause)
+        field_filter_clauses = []
+        for field_filter in self.field_filters:
+            related_admin = admin.get_related_admin(field_filter.attribute.class_)
+            field_filter_clause = field_filter.get_clause(related_admin, session, operator, *operands)
+            if field_filter_clause is not None:
+                field_filter_clauses.append(field_filter_clause)
                 
-        if field_search_clauses:
-            related_search_query = related_search_query.filter(sql.or_(*field_search_clauses))
-            related_search_query = related_search_query.subquery()
-            search_clause = admin.entity.id.in_(related_search_query)
-            return search_clause
+        if field_filter_clauses:
+            related_query = related_query.filter(sql.or_(*field_filter_clauses))
+            related_query = related_query.subquery()
+            filter_clause = admin.entity.id.in_(related_query)
+            return filter_clause
     
     def value_to_string(self, filter_value, admin):
-        for field_search in self.field_searches:
-            related_admin = admin.get_related_admin(field_search.attribute.class_)
-            return field_search.value_to_string(filter_value, related_admin)
+        for field_filter in self.field_filters:
+            related_admin = admin.get_related_admin(field_filter.attribute.class_)
+            return field_filter.value_to_string(filter_value, related_admin)
 
-class NoSearch(FieldSearch):
-    
-    def __init__(self, attribute):
-        super().__init__(attribute, name=str(attribute))
-        
+class NoFilter(FieldFilter):
+
+    name = 'no_filter'
+
+    def __init__(self, attribute, **kwargs):
+        super().__init__(attribute, key=str(attribute), **kwargs)
+
     @classmethod
     def assert_valid_attribute(cls, attribute):
         pass
-    
-    def get_clause(self, text, admin, session):
+
+    def get_clause(self, admin, session, operator, *operands):
         return None
-    
+
     def value_to_string(self, filter_value, admin):
         return filter_value
-    
+
     def get_verbose_name(self):
         return None
 
-class StringSearch(FieldSearch):
-    
+class StringFilter(FieldFilter):
+
+    name = 'string_filter'
     python_type = str
-    
+    operators = Operator.text_operators()
+    search_operator = Operator.like
+
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
-    
-    def __init__(self, attribute, allow_digits=True, where=None, name=None, verbose_name=None):
-        super().__init__(attribute, where, name, verbose_name)
+
+    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, **kwargs):
+        super().__init__(attribute, where, key, verbose_name, **kwargs)
         self.allow_digits = allow_digits
-        
-    def get_type_clause(self, text, field_attributes):
-        if not text.isdigit() or self.allow_digits:
-            return sql.operators.ilike_op(self.attribute, '%'+text+'%')
-    
+
+    def get_type_clause(self, field_attributes, operator, *operands):
+        filter_clause = super().get_type_clause(field_attributes, operator, *operands)
+        if operator == Operator.is_empty:
+            return sql.or_(super().get_type_clause(field_attributes, Operator.eq, ''), filter_clause)
+        elif operator == Operator.is_not_empty:
+            return sql.and_(super().get_type_clause(field_attributes, Operator.ne, ''), filter_clause)
+        elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
+            return filter_clause
+
     def value_to_string(self, filter_value, admin):
         return filter_value
+
+class DecimalFilter(FieldFilter):
     
-class DecimalSearch(FieldSearch):
-    
+    name = 'decimal_filter'
     python_type = (float, decimal.Decimal)
-    
-    def get_type_clause(self, text, field_attributes):
+    operators = Operator.numerical_operators()
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        super().__init__(attribute, where, key, verbose_name, **field_attributes)
+        self.precision = field_attributes.get('precision')
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            float_value = field_attributes.get('from_string', utils.float_from_string)(text)
+            float_operands = [field_attributes.get('from_string', utils.float_from_string)(operand) for operand in operands]
             precision = self.attribute.type.precision
             if isinstance(precision, (tuple)):
                 precision = precision[1]
             delta = 0.1**( precision or 0 )
-            return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
+
+            if operator == Operator.eq and float_operands[0] is not None:
+                return sql.and_(self.attribute>=float_operands[0]-delta, self.attribute<=float_operands[0]+delta)
+
+            if operator == Operator.ne and float_operands[0] is not None:
+                return sql.or_(self.attribute<float_operands[0]-delta, self.attribute>float_operands[0]+delta) 
+
+            elif operator in (Operator.lt, Operator.le) and float_operands[0] is not None:
+                return super().get_type_clause(field_attributes, operator, float_operands[0]-delta)
+
+            elif operator in (Operator.gt, Operator.ge) and float_operands[0] is not None:
+                return super().get_type_clause(field_attributes, operator, float_operands[0]+delta)
+
+            elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
+                return super().get_type_clause(field_attributes, operator, float_operands[0]-delta, float_operands[1]+delta)
+
         except utils.ParsingError:
             pass
     
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
+        field_attributes = {h:copy.copy(v) for h,v in admin_field_attributes}
+        field_attributes['suffix'] = None
         delegate = field_attributes.get('delegate')
-        suffix = ' ' + field_attributes.get('suffix', '')
         model_context = FieldActionModelContext()
         model_context.admin = admin
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
         value_str = standard_item.data(PreviewRole)
-        return value_str.replace(suffix, '')
+        return value_str
         
-class TimeSearch(FieldSearch):
+class TimeFilter(FieldFilter):
     
+    name = 'time_filter'
     python_type = datetime.time
-    
-    def get_type_clause(self, text, field_attributes):
+    operators = Operator.numerical_operators()
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.time_from_string)(text))
+            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.time_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
-    
+
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
@@ -426,13 +622,15 @@ class TimeSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
 
-class DateSearch(FieldSearch):
-    
+class DateFilter(FieldFilter):
+
+    name = 'date_filter'
     python_type = datetime.date
-    
-    def get_type_clause(self, text, field_attributes):
+    operators = Operator.numerical_operators()
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.date_from_string)(text))
+            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.date_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
     
@@ -446,13 +644,14 @@ class DateSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
-class IntSearch(FieldSearch):
-    
-    python_type = int
-    
-    def get_type_clause(self, text, field_attributes):
+class IntFilter(DecimalFilter):
+
+    name = 'int_filter'
+    python_type = (int, *DecimalFilter.python_type)
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.int_from_string)(text))
+            return super(DecimalFilter, self).get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.int_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
 
@@ -467,13 +666,15 @@ class IntSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
 
-class BoolSearch(FieldSearch):
-    
+class BoolFilter(FieldFilter):
+
+    name = 'bool_filter'
     python_type = bool
-    
-    def get_type_clause(self, text, field_attributes):
+    operators = (Operator.eq,)
+
+    def get_type_clause(self, field_attributes, operator, *operands):
         try:
-            return (self.attribute==field_attributes.get('from_string', utils.bool_from_string)(text))
+            return super().get_type_clause(field_attributes, operator, *[field_attributes.get('from_string', utils.bool_from_string)(operand) for operand in operands])
         except utils.ParsingError:
             pass
 
@@ -488,6 +689,46 @@ class BoolSearch(FieldSearch):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
     
+class ChoicesFilter(FieldFilter):
+
+    name = 'choices_filter'
+    python_type = str
+    operators = (Operator.eq, Operator.ne)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        self.python_type = self.get_attribute_python_type(attribute)
+        super().__init__(attribute, where, key, verbose_name)
+        self.choices = field_attributes.get('choices')
+
+    def value_to_string(self, filter_value, admin):
+        return filter_value
+
+class MonthsFilter(IntFilter):
+
+    name = 'months_filter'
+
+class Many2OneFilter(IntFilter):
+    """
+    Specialized IntFilter strategy that expects a many2one relationship attribute from which the
+    local foreign key attribute is used to instantiate this strategy with.
+    """
+
+    name = 'many2one_filter'
+    python_type = int
+    operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
+
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
+               isinstance(attribute.prop, orm.RelationshipProperty) and \
+               attribute.prop.direction == orm.interfaces.MANYTOONE, self.AssertionMessage.no_many2one_relationship_attribute.value
+        assert len(attribute.prop.local_columns) == 1
+        entity_mapper = orm.class_mapper(attribute.class_)
+        foreign_key_col = list(attribute.prop.local_columns)[0]
+        foreign_key_attribute = entity_mapper.get_property_by_column(foreign_key_col).class_attribute
+        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')), **field_attributes)
+        self.entity = attribute.prop.entity.entity
+        self.admin = field_attributes.get('admin')
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
@@ -495,11 +736,6 @@ class SearchFilter(Action, AbstractModelFilter):
 
     #shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find),
                                #self)
-    
-    def __init__(self, admin):
-        Action.__init__(self)
-        # dirty : action requires admin as argument
-        self.admin = admin
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
@@ -517,7 +753,11 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        # dirty : action requires admin as argument
+        self.admin = model_context.admin
         value = mode
         if (value is not None) and len(value) == 0:
             value = None
         yield action_steps.SetFilter(self, value)
+
+search_filter = SearchFilter()

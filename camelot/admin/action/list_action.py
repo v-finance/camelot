@@ -41,7 +41,7 @@ from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
 
 import xlsxwriter
@@ -928,15 +928,85 @@ class ReplaceFieldContents( EditAction ):
 
 replace_field_contents = ReplaceFieldContents()
 
-class FieldFilter(object):
+class FilterValue(object):
     """
-    Helper class for the `SetFilters` action that allows the user to
-    configure a filter on an individual field.
+    Abstract helper class for the `SetFilters` action to configure the filter values
+    for a certain filter strategy and operator.
+    The dimension of these filter values (remaining operands) depends on the arity of the operator.
+    This class also provides functionality to associate implementations of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
+    with implementations of this FilterValue interface; either by defining them as an innner Value class, or directly using the :method register: method.
+    Using the :method for_strategy: the concrete registered FilterValue class for a certain filter strategy class can be retrieved afterwards.
     """
-    
-    def __init__(self, value=None):
-        self.value = value
-    
+    filter_strategy = None
+    _filter_values = {}
+
+    def __init__(self, strategy, operator, value_1=None, value_2=None):
+        assert isinstance(strategy, self.filter_strategy)
+        self.strategy = strategy
+        self.operator = operator
+        self.value_1 = value_1
+        self.value_2 = value_2
+        self._values = None
+
+    @property
+    def operator_prefix(self):
+        return str(self.operator.prefix)
+
+    @property
+    def operator_infix(self):
+        if self.operator.infix is not None:
+            return str(self.operator.infix)
+
+    def get_operands(self):
+        operands = self._values or [self.value_1, self.value_2]
+        # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
+        # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
+        if self.operator.arity.maximum is not None:
+            operands = operands[0:self.operator.arity.maximum-1]
+        return operands
+
+    @classmethod
+    def for_strategy(cls, filter_strategy):
+        """
+        Get the default :class:`FilterValue` class for the given specific filter
+        strategy class, return None, if not known.  The FilterValue
+        should either be registered through the :meth:`register` method or be
+        defined as an inner class with name :keyword:`Value` of the filter strategy.
+
+        :param filter_strategy: a subclass of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
+        """
+        from camelot.admin.action.list_filter import AbstractFilterStrategy
+        assert issubclass(filter_strategy, AbstractFilterStrategy)
+        try:
+            return cls._filter_values[filter_strategy]
+        except KeyError:
+            for strategy_cls in filter_strategy.__mro__:
+                if issubclass(strategy_cls, AbstractFilterStrategy) and strategy_cls.name == filter_strategy.name:
+                    value_class = cls._filter_values.get(strategy_cls, None)
+                    if value_class is None:
+                        if hasattr(strategy_cls, 'Value'):
+                            value_class = strategy_cls.Value
+                            value_class.filter_strategy = filter_strategy
+                            break
+                    else:
+                        break
+            else:
+                raise Exception('Could not construct a default filter value class')
+            cls._filter_values[filter_strategy] = value_class
+            return value_class
+
+    @classmethod
+    def register(cls, filter_strategy, value_class):
+        """
+        Associate a certain FilterValue class with a filter strategy.
+        This FilterValue will be used as default.
+
+        :param filter_strategy: :class:`camelot.admin.action.list_filter.AbstractFilterStrategy`
+        :param value_class: a subclass of `FilterValue.`
+        """
+        assert value_class.filter_strategy == filter_strategy
+        cls._filter_values[filter_strategy] = value_class
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -951,72 +1021,64 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('filter')
     name = 'filter'
 
-    def get_field_name_choices(self, model_context):
-        """
-        :return: a list of choices with the fields the user can select to
-           filter upon.
-        """
-        filter_strategies = model_context.admin.get_field_filters()
-        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
-        field_choices.sort(key=lambda choice:choice[1])
-        return field_choices
+    def get_filter_strategies(self, model_context):
+        """:return: a list of field strategies the user can select."""
+        filter_strategies = list(model_context.admin.get_field_filters().items())
+        filter_strategies.sort(key=lambda choice:str(choice[1].get_verbose_name()))
+        return filter_strategies
 
     def model_run( self, model_context, mode ):
-        from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
 
         if mode == '__clear':
-            new_filter_value = {}
+            new_filter_values = {}
         elif mode is None:
-            new_filter_value = {}
+            new_filter_values = {}
         else:
-            filter_value = model_context.proxy.get_filter(self) or {}
-            filter_field_name = mode
+            from camelot.admin.action.list_filter import Operator, Many2OneFilter
+            operator_name, filter_field_name = mode.split('-')
+            filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-            filter_value_attributes = {
-                'name': filter_field_attributes['name'],
-                'editable': True,
-                'delegate': filter_field_attributes['delegate'],
-            }
-            # in case the original choices are non dynamic list, they
-            # can be reused
-            if isinstance(filter_field_attributes.get('choices'), list):
-                filter_value_attributes['choices'] = filter_field_attributes['choices']
-            if 'precision' in filter_field_attributes:
-                filter_value_attributes['precision'] = filter_field_attributes['precision']
-    
-            class FieldFilterAdmin(ObjectAdmin):
-                verbose_name = _('Filter')
-                list_display = ['value']
-                field_attributes = {
-                    'value': filter_value_attributes
-                }
-    
-            field_filter = FieldFilter(value=None)
-            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
-            change_filter = action_steps.ChangeObject(field_filter, filter_admin)
-            yield change_filter
-            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
-            new_filter_value = {k:v for k,v in filter_value.items()}
-            new_filter_value[filter_field_name] = filter_text
+            filter_value_cls = FilterValue.for_strategy(type(filter_strategy))
+            filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
+            filter_operator = Operator[operator_name]
+            filter_value = filter_value_cls(filter_strategy, filter_operator)
 
-        yield action_steps.SetFilter(self, new_filter_value)
-        new_state = self._get_state(model_context, new_filter_value)
+            # The filter values should only be updated by the user in case of multi-ary filter operators,
+            # which requires filter values to be entered as the additional operands.
+            # Unary operators can be applied directly, as the filter attribute is the only operand.
+            if filter_operator.arity.minimum > 1:
+                # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
+                # So let the user select one, and programmatically set the filter value to the selected entity's id.
+                if isinstance(filter_strategy, Many2OneFilter):
+                    objects = yield action_steps.SelectObjects(filter_strategy.admin)
+                    filter_value._values = [obj.id for obj in objects]
+                # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
+                else:
+                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
+
+            operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
+            new_filter_values = {k:v for k,v in filter_values.items()}
+            new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
+
+        yield action_steps.SetFilter(self, new_filter_values)
+        new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState({self: new_state})
 
     def decorate_query(self, query, values):
+        from camelot.admin.action.list_filter import Operator
         # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
         # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, filter_value in values.items():
+        for name, (operator_name, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
-            clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
-            if clause is not None:
-                clauses.append(clause)
+            operator = Operator[operator_name]
+            filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
+            if filter_clause is not None:
+                clauses.append(filter_clause)
         return query.filter(*clauses)
     
     def _get_state(self, model_context, filter_value):
@@ -1024,11 +1086,13 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
-        for name, verbose_name in self.get_field_name_choices(model_context):
-            if name in filter_value:
-                modes.append(Mode(name, verbose_name, icon=Icon('check-circle')))
-            else:
-                modes.append(Mode(name, verbose_name))
+        selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
+        for name, filter_strategy in self.get_filter_strategies(model_context):
+            # TODO: refactor as sub modes once qml action push button supports this.
+            for op in filter_strategy.get_operators():
+                mode_name = op.name + '-' + name
+                icon = Icon('check-circle') if mode_name in selected_mode_names else None
+                modes.append(Mode(mode_name, str(op.verbose_name) + ' ' + str(filter_strategy.get_verbose_name()), icon=icon))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])

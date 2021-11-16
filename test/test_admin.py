@@ -2,10 +2,12 @@
 """
 Tests for the Admin classes
 """
+import camelot.types
 import datetime
+import unittest
+
 from decimal import Decimal
 from typing import Optional, List
-import unittest
 from dataclasses import field, InitVar
 
 from sqlalchemy import orm, schema, sql, types
@@ -15,6 +17,7 @@ from sqlalchemy.orm.session import Session
 
 from .test_model import ExampleModelMixinCase
 from .test_orm import TestMetaData
+from camelot.admin.action import list_filter
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.dataclass_admin import DataclassAdmin
@@ -553,6 +556,8 @@ class EntityAdminCase(TestMetaData):
         self.assertTrue( fa_1['editable'] )
         self.assertFalse( fa_1['nullable'] )
         self.assertEqual( fa_1['delegate'], delegates.PlainTextDelegate )
+        self.assertEqual( fa_1['filter_strategy'], list_filter.StringFilter)
+        self.assertEqual( fa_1['search_strategy'], list_filter.StringFilter)
         #
         # test sql standard types
         #
@@ -561,6 +566,8 @@ class EntityAdminCase(TestMetaData):
         self.assertTrue( fa_2['editable'] )
         self.assertTrue( fa_2['nullable'] )
         self.assertEqual( fa_2['delegate'], delegates.FloatDelegate )
+        self.assertEqual( fa_2['filter_strategy'], list_filter.DecimalFilter )
+        self.assertEqual( fa_2['search_strategy'], list_filter.DecimalFilter)
         #
         # test a vendor specific field type
         #
@@ -568,6 +575,22 @@ class EntityAdminCase(TestMetaData):
         fa_3 = EntityAdmin.get_sql_field_attributes( [column_3] )
         self.assertTrue( fa_3['default'] )
         self.assertEqual( fa_3['delegate'], delegates.IntegerDelegate )
+        self.assertEqual( fa_3['filter_strategy'], list_filter.IntFilter )
+        self.assertEqual( fa_3['search_strategy'], list_filter.IntFilter)
+        #
+        # test camelot types
+        #
+        column_4 = schema.Column( camelot.types.Enumeration)
+        fa_4 = EntityAdmin.get_sql_field_attributes( [column_4] )
+        self.assertEqual( fa_4['delegate'], delegates.ComboBoxDelegate )
+        self.assertEqual( fa_4['filter_strategy'], list_filter.ChoicesFilter )
+        self.assertEqual( fa_4['search_strategy'], list_filter.NoFilter)
+
+        column_5 = schema.Column( camelot.types.File)
+        fa_5 = EntityAdmin.get_sql_field_attributes( [column_5] )
+        self.assertEqual( fa_5['delegate'], delegates.FileDelegate )
+        self.assertEqual( fa_5['filter_strategy'], list_filter.NoFilter )
+        self.assertEqual( fa_5['search_strategy'], list_filter.NoFilter)
 
     def test_field_admin( self ):
 
@@ -618,7 +641,8 @@ class EntityAdminCase(TestMetaData):
         admin = self.app_admin.get_related_admin(A)
         fa = admin.get_field_attributes('h')
         self.assertEqual( fa['editable'], True )
-        self.assertTrue( fa['operators'] )
+        self.assertIsInstance( fa['filter_strategy'], list_filter.StringFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.StringFilter)
         self.assertEqual( fa['field_name'], 'h' )
         
         fa = admin.get_field_attributes('i')
@@ -727,3 +751,84 @@ class EntityAdminCase(TestMetaData):
         # completing all fields makes it valid
         b.z = 14
         self.assertEqual(len(validator.validate_object(b)), 0)
+
+    def test_overruled_filter_strategies( self ):
+
+        class B(self.Entity):
+            pass
+
+        class C(self.Entity):
+            pass
+
+        class A(self.Entity):
+
+            text_col = schema.Column(types.Unicode(10))
+            text_col_with_choices = schema.Column(types.Unicode(10))
+            text_col_with_choices_no_filter = schema.Column(types.Unicode(10))
+
+            int_col = schema.Column(types.Integer)
+            int_col_with_choices = schema.Column(types.Integer)
+            int_col_with_choices_no_filter = schema.Column(types.Integer)
+
+            months_col = schema.Column(types.Integer)
+            months_col_no_filter = schema.Column(types.Integer)
+
+            b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id), nullable=False)
+            many2one_col = orm.relationship(B)
+
+            c_id = schema.Column(types.Integer(), schema.ForeignKey(C.id), nullable=False)
+            many2one_col_no_filter = orm.relationship(C)
+
+            class Admin(EntityAdmin):
+                list_display = ['text_col', 'int_col', 'text_col_with_choices', 'int_col_with_choices', 'text_col_with_choices_no_filter', 'int_col_with_choices_no_filter']
+                field_attributes = {
+                    'text_col_with_choices': {'choices': [('x', 'X'), ('y', 'Y')]},
+                    'int_col_with_choices': {'choices': [(1, 'X'), (2, 'Y')]},
+                    'text_col_with_choices_no_filter': {'choices': [('x', 'X'), ('y', 'Y')], 'filter_strategy': list_filter.NoFilter},
+                    'int_col_with_choices_no_filter': {'choices': [(1, 'X'), (2, 'Y')], 'filter_strategy': list_filter.NoFilter},
+                    'months_col':{'delegate': delegates.MonthsDelegate},
+                    'months_col_no_filter':{'delegate': delegates.MonthsDelegate, 'filter_strategy': list_filter.NoFilter},
+                    'many2one_col_no_filter': {'filter_strategy': list_filter.NoFilter}
+                }
+
+        self.create_all()
+        admin = self.app_admin.get_related_admin(A)
+
+        # Regular sql columns should get their corresponding filter strategies by default:
+        fa = admin.get_field_attributes('text_col')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.StringFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.StringFilter)
+        fa = admin.get_field_attributes('int_col')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.IntFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.IntFilter)
+        # Setting choices for any property with a default applicable filter strategy should be overruled to use the ChoicesFilter...:
+        fa = admin.get_field_attributes('text_col_with_choices')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.ChoicesFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.StringFilter)
+        fa = admin.get_field_attributes('int_col_with_choices')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.ChoicesFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.IntFilter)
+        # ... unless the filter strategy is set explicitly in the forced field attributes:
+        fa = admin.get_field_attributes('text_col_with_choices_no_filter')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.StringFilter)
+        fa = admin.get_field_attributes('int_col_with_choices_no_filter')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.IntFilter)
+
+        # Setting the MonthsDelegate should result in the MonthsFilter being overruled as the filter strategy:
+        fa = admin.get_field_attributes('months_col')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.MonthsFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.IntFilter)
+        # Unless the filter strategy is set explicitly in the forced field attributes:
+        fa = admin.get_field_attributes('months_col_no_filter')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.IntFilter)
+
+        # Many2One relationship attribute should get the Many2OneFilter assigned, unless explicitly disabled:
+        fa = admin.get_field_attributes('many2one_col')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.Many2OneFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)
+        fa = admin.get_field_attributes('many2one_col_no_filter')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)

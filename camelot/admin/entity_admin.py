@@ -250,7 +250,7 @@ and used as a custom action.
     @register_list_actions('_admin_route', '_shared_toolbar_actions')
     def _get_shared_toolbar_actions( self ):
         return [
-            list_filter.SearchFilter(self),
+            list_filter.search_filter,
             list_action.set_filters,
             application_action.refresh,
         ]
@@ -357,6 +357,7 @@ and used as a custom action.
                         #
                         nullable = foreign_keys[0].nullable,
                         direction = 'manytoone',
+                        filter_strategy = list_filter.Many2OneFilter,
                     )
                 elif property.direction == orm.interfaces.MANYTOMANY:
                     attributes.update( direction = 'manytomany' )
@@ -430,7 +431,7 @@ and used as a custom action.
                     # This should be used with extreme care though, as this behaviour is not generally supported by list actions,
                     # and thus specialized actions should be used by the target admin to handle the persistence flow correctly.
                     # This is a temporary measure in order to work towards supporting this behaviour in general in the future.
-                    if not admin.allow_relation_with_pending_owner:
+                    if (admin is not None) and (not admin.allow_relation_with_pending_owner):
                         attributes['editable'] = False
             yield attributes
 
@@ -442,10 +443,9 @@ and used as a custom action.
         all_attributes = self.get_field_attributes(field_name)
         admin = all_attributes.get('admin')
         session = orm.object_session(obj)
-        if (admin is not None) and (session is not None):
-            search_filter = list_filter.SearchFilter(admin)
+        if (admin is not None) and (session is not None) and not (prefix is None or len(prefix.strip())==0):
             query = admin.get_query(session)
-            query = search_filter.decorate_query(query, prefix)
+            query = admin.decorate_search_query(query, prefix)
             return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
@@ -692,8 +692,8 @@ and used as a custom action.
         args = []
         
         for search_field in self._get_search_fields(text):
-            assert isinstance(search_field, list_filter.AbstractSearchStrategy)
-            arg = search_field.get_clause(text, self, query.session)
+            assert isinstance(search_field, list_filter.AbstractFilterStrategy)
+            arg = search_field.get_search_clause(text, self, query.session)
             if arg is not None:
                 args.append(arg)
             
@@ -773,4 +773,8 @@ and used as a custom action.
                 if isinstance(col_property.expression, schema.Column):
                     field_attributes = self.get_field_attributes(field_name)
                     field_strategies.append(field_attributes.get('filter_strategy'))
+        for relationship_property in self.mapper.relationships:
+            if relationship_property.direction == orm.interfaces.MANYTOONE:
+                field_attributes = self.get_field_attributes(relationship_property.key)
+                field_strategies.append(field_attributes.get('filter_strategy'))
         return field_strategies

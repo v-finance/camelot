@@ -45,7 +45,7 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.action.list_filter import StringSearch
+from camelot.admin.action.list_filter import StringFilter
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
@@ -89,7 +89,7 @@ class GeographicBoundary( Entity ):
         return cls.translation(language='fr_BE')
 
     __mapper_args__ = {
-        'polymorphic_identity': 'geographic_boundary',
+        'polymorphic_identity': None,
         'polymorphic_on' : row_type
     }
 
@@ -1159,7 +1159,7 @@ Party.Admin = PartyAdmin
 class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
-    list_search = [StringSearch(Organization.name), StringSearch(Organization.tax_id)]
+    list_search = [StringFilter(Organization.name), StringFilter(Organization.tax_id)]
     list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
     form_display = TabForm( [( _('Basic'), Form( [ WidgetOnlyForm('note'), 'name', 'email', 
                                                    'phone', 
@@ -1177,7 +1177,7 @@ Organization.Admin = OrganizationAdmin
 class PersonAdmin( Party.Admin ):
     verbose_name = _( 'Person' )
     verbose_name_plural = _( 'Persons' )
-    list_search = [StringSearch(Person.first_name), StringSearch(Person.last_name)]
+    list_search = [StringFilter(Person.first_name), StringFilter(Person.last_name)]
     list_display = ['first_name', 'last_name', 'email', 'phone']
     form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
                                                               'first_name', 
@@ -1219,5 +1219,5 @@ PartyAddress.party_name = orm.column_property(
     deferred = True 
 )
 
-PartyAddress.Admin.list_search = [StringSearch(PartyAddress.party_name), StringSearch(PartyAddress.street1), StringSearch(PartyAddress.street2)]
-PartyAdmin.list_search = [StringSearch(Party.full_name)]
+PartyAddress.Admin.list_search = [StringFilter(PartyAddress.party_name), StringFilter(PartyAddress.street1), StringFilter(PartyAddress.street2)]
+PartyAdmin.list_search = [StringFilter(Party.full_name)]

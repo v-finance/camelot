@@ -1,9 +1,13 @@
+from dataclasses import dataclass
+import json
+import typing
 import logging
 
 logger = logging.getLogger(__name__)
     
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
+from ...core.serializable import DataclassSerializable
 from ...core.item_model import FieldAttributesRole, CompletionsRole
 
 class UpdateMixin(object):
@@ -28,17 +32,18 @@ class UpdateMixin(object):
         
         logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
 
+@dataclass
+class RowCount(ActionStep, DataclassSerializable):
 
-class RowCount(ActionStep):
-    
     blocking = False
-    
-    def __init__(self, rows):
-        self.rows = rows   
-    
-    def gui_run(self, item_model):
-        if self.rows is not None:
-            item_model._refresh_content(self.rows)    
+
+    rows: typing.Optional[int] = None
+
+    @classmethod
+    def gui_run(self, item_model, serialized_step):
+        step = json.loads(serialized_step)
+        if step["rows"] is not None:
+            item_model._refresh_content(step["rows"])
 
 class SetColumns(ActionStep):
     
@@ -137,16 +142,6 @@ class Update(ActionStep, UpdateMixin):
         
     def gui_run(self, item_model):
         self.update_item_model(item_model)     
-        
-        
-class Deleted(RowCount, UpdateMixin):
-    
-    def __init__(self, rows, changed_ranges):
-        super(Deleted, self).__init__(rows)
-        self.changed_ranges = changed_ranges
-        
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
 
 
 class SetData(Update): 
