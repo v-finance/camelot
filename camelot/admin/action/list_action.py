@@ -1061,7 +1061,7 @@ class SetFilters(Action, AbstractModelFilter):
                 if isinstance(filter_field_strategy, Many2OneFilter):
                     admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
                     objects = yield action_steps.SelectObjects(admin)
-                    filter_value.set_operands(*[obj.id for obj in objects])
+                    filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
                     yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))

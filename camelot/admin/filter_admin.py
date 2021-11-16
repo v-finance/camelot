@@ -50,7 +50,7 @@ for strategy_cls, delegate in [
     (list_filter.RelatedFilter,  delegates.PlainTextDelegate),
     (list_filter.ChoicesFilter,  delegates.ComboBoxDelegate),
     (list_filter.MonthsFilter,   delegates.MonthsDelegate),
-    (list_filter.Many2OneFilter, delegates.IntegerDelegate),
+    (list_filter.Many2OneFilter, delegates.Many2OneDelegate),
     ]:
     try:
         FilterValue.for_strategy(strategy_cls)

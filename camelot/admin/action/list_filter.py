@@ -746,6 +746,9 @@ class Many2OneFilter(IntFilter):
         self.entity = attribute.prop.entity.entity
         self.admin = field_attributes.get('admin')
 
+    def value_to_string(self, value, admin):
+        return super().value_to_string(value.id, admin)
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
