@@ -364,10 +364,16 @@ class AbstractFilterStrategy(object):
         """
         return self.operators
 
+    def get_field_strategy(self):
+        """
+        Return the acting filter strategy for this filter strategy's (first) field.
+        """
+        raise NotImplementedError
+
     @property
     def key(self):
         return self._key
-    
+
     def get_verbose_name(self):
         if self._verbose_name is not None:
             return self._verbose_name
@@ -412,6 +418,9 @@ class FieldFilter(AbstractFilterStrategy):
     def assert_valid_attribute(self, attribute):
         python_type = self.get_attribute_python_type(attribute)
         assert issubclass(python_type, self.python_type), self.AssertionMessage.python_type_mismatch.value
+
+    def get_field_strategy(self):
+        return self
 
     def get_operators(self):
         operators = super().get_operators()
@@ -470,9 +479,13 @@ class RelatedFilter(AbstractFilterStrategy):
         self.field_filters = field_filters
         self.joins = joins
 
+    def get_field_strategy(self):
+        for field_strategy in self.field_filters:
+            return field_strategy
+
     def get_operators(self):
-        for field_filter in self.field_filters:
-            return field_filter.get_operators()
+        for field_strategy in self.field_filters:
+            return field_strategy.get_operators()
 
     def get_clause(self, admin, session, operator, *operands):
         """
@@ -492,9 +505,9 @@ class RelatedFilter(AbstractFilterStrategy):
             related_query.filter(self.where)
 
         field_filter_clauses = []
-        for field_filter in self.field_filters:
-            related_admin = admin.get_related_admin(field_filter.attribute.class_)
-            field_filter_clause = field_filter.get_clause(related_admin, session, operator, *operands)
+        for field_strategy in self.field_filters:
+            related_admin = admin.get_related_admin(field_strategy.attribute.class_)
+            field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
                 
@@ -505,9 +518,9 @@ class RelatedFilter(AbstractFilterStrategy):
             return filter_clause
     
     def value_to_string(self, filter_value, admin):
-        for field_filter in self.field_filters:
-            related_admin = admin.get_related_admin(field_filter.attribute.class_)
-            return field_filter.value_to_string(filter_value, related_admin)
+        for field_strategy in self.field_filters:
+            related_admin = admin.get_related_admin(field_strategy.attribute.class_)
+            return field_strategy.value_to_string(filter_value, related_admin)
 
 class NoFilter(FieldFilter):
 
