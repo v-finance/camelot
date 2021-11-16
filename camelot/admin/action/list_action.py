@@ -1041,7 +1041,7 @@ class SetFilters(Action, AbstractModelFilter):
         elif mode is None:
             new_filter_values = {}
         else:
-            from camelot.admin.action.list_filter import Operator, Many2OneFilter
+            from camelot.admin.action.list_filter import Operator, Many2OneFilter, One2ManyFilter
             operator_name, filter_field_name = mode.split('-')
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
@@ -1058,9 +1058,13 @@ class SetFilters(Action, AbstractModelFilter):
             if filter_operator.arity.minimum > 1:
                 # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
                 # So let the user select one, and programmatically set the filter value to the selected entity's id.
-                if isinstance(filter_field_strategy, Many2OneFilter):
+                if isinstance(filter_field_strategy, (Many2OneFilter, One2ManyFilter)):
                     admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
-                    objects = yield action_steps.SelectObjects(admin)
+                    query = None
+                    if filter_field_strategy.where is not None:
+                        query = admin.get_query()
+                        query = query.filter(filter_field_strategy.where)
+                    objects = yield action_steps.SelectObjects(admin, query)
                     filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
