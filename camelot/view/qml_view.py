@@ -64,6 +64,7 @@ class QmlView(AbstractView):
         self.setObjectName('qml_view')
         self.gui_context = gui_context
         self.quick_view = QtQuick.QQuickView()
+        self.quick_view.engine().addImportPath(':/')
         self.quick_view.setInitialProperties(initial_properties)
         self.quick_view.setSource(url)
         check_qml_errors(self.quick_view, url)

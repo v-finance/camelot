@@ -68,7 +68,7 @@ class DesktopWorkspace(QtWidgets.QTabWidget):
         self.currentChanged.connect(self._tab_changed)
 
         #qml_view = QmlView(self.gui_context, QtCore.QUrl("qrc:/Vortex/qml/common/TabView.qml"))
-        qml_view = QmlView(self.gui_context, QtCore.QUrl("qrc:/Vortex/TabView.qml"))
+        qml_view = QmlView(self.gui_context, QtCore.QUrl("qrc:/Vortex/Common/TabView.qml"))
         self.quick_view = qml_view.quick_view
         self.set_view(qml_view, title='QML View')
 
