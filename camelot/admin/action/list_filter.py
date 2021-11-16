@@ -465,7 +465,7 @@ class IntSearch(FieldSearch):
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.EditRole))
+        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
 
 class BoolSearch(FieldSearch):
     
@@ -486,7 +486,7 @@ class BoolSearch(FieldSearch):
         model_context.value = value
         model_context.field_attributes = field_attributes
         standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.EditRole))
+        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
     
 class SearchFilter(Action, AbstractModelFilter):
 
