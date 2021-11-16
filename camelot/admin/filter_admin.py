@@ -51,6 +51,7 @@ for strategy_cls, delegate in [
     (list_filter.ChoicesFilter,  delegates.ComboBoxDelegate),
     (list_filter.MonthsFilter,   delegates.MonthsDelegate),
     (list_filter.Many2OneFilter, delegates.Many2OneDelegate),
+    (list_filter.One2ManyFilter, delegates.Many2OneDelegate),
     ]:
     try:
         FilterValue.for_strategy(strategy_cls)
