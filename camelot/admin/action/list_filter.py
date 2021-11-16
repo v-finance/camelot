@@ -749,6 +749,35 @@ class Many2OneFilter(IntFilter):
     def value_to_string(self, value, admin):
         return super().value_to_string(value.id, admin)
 
+class One2ManyFilter(RelatedFilter):
+    """
+    Specialized RelatedFilter strategy that expects a one2many relationship attribute which
+    entity's primary key attribute is used to construct a IntFilter field filter strategy
+    to instantiate this related filter with by default.
+    Custom field filter strategies can be provided to overrule this default behaviour.
+    """
+
+    name = 'one2many_filter'
+    operators = (Operator.in_,)
+
+    def __init__(self, attribute, joins, field_filters=[], where=None, key=None, verbose_name=None):
+        assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
+               isinstance(attribute.prop, orm.RelationshipProperty) and \
+               attribute.prop.direction == orm.interfaces.ONETOMANY, 'The given attribute is not a valid RelationshipProperty attribute'
+        self.entity = attribute.prop.entity.entity
+        self.admin = None
+        field_filters = field_filters or [IntFilter(self.entity.id)]
+        super().__init__(*field_filters, joins=joins, where=where, key=key, verbose_name=verbose_name)
+
+    def get_field_strategy(self):
+        return self
+
+    def get_operators(self):
+        return self.operators
+
+    def value_to_string(self, value, admin):
+        return super().value_to_string(value.id, admin)
+
 class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
