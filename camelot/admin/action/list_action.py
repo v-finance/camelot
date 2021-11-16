@@ -962,8 +962,8 @@ class FilterValue(object):
         # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
         # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
         if self.operator.arity.maximum is not None:
-            operands = operands[0:self.operator.arity.maximum-1]
-        return operands
+            return operands[0:self.operator.arity.maximum-1]
+        return [op for op in operands if op is not None]
 
     def set_operands(self, *operands):
         for i, operand in enumerate(operands[:2], start=1):
@@ -1046,10 +1046,11 @@ class SetFilters(Action, AbstractModelFilter):
             filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_value_cls = FilterValue.for_strategy(type(filter_strategy))
+            filter_field_strategy = filter_strategy.get_field_strategy()
+            filter_value_cls = FilterValue.for_strategy(type(filter_field_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
             filter_operator = Operator[operator_name]
-            filter_value = filter_value_cls(filter_strategy, filter_operator)
+            filter_value = filter_value_cls(filter_field_strategy, filter_operator)
 
             # The filter values should only be updated by the user in case of multi-ary filter operators,
             # which requires filter values to be entered as the additional operands.
@@ -1057,14 +1058,15 @@ class SetFilters(Action, AbstractModelFilter):
             if filter_operator.arity.minimum > 1:
                 # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
                 # So let the user select one, and programmatically set the filter value to the selected entity's id.
-                if isinstance(filter_strategy, Many2OneFilter):
-                    objects = yield action_steps.SelectObjects(filter_strategy.admin)
+                if isinstance(filter_field_strategy, Many2OneFilter):
+                    admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
+                    objects = yield action_steps.SelectObjects(admin)
                     filter_value.set_operands(*[obj.id for obj in objects])
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
-                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
+                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
 
-            operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
+            operands = [filter_field_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
 
