@@ -333,10 +333,9 @@ class DuplicateSelection( EditAction ):
     def model_run( self, model_context ):
         from camelot.view import action_steps
         admin = model_context.admin
-        selection = list(model_context.get_selection())
-        if len(selection) > 1:
+        if model_context.selection_count > 1:
             raise UserException(self.Message.no_single_selection.value)
-        for obj in selection:
+        for obj in model_context.get_selection():
             new_object = admin.copy(obj)
             model_context.proxy.append(new_object)
             yield action_steps.CreateObjects([new_object])
