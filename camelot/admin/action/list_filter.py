@@ -768,7 +768,7 @@ class One2ManyFilter(RelatedFilter):
     name = 'one2many_filter'
     operators = (Operator.in_,)
 
-    def __init__(self, attribute, joins, field_filters=[], where=None, key=None, verbose_name=None):
+    def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty) and \
                attribute.prop.direction in (orm.interfaces.ONETOMANY, orm.interfaces.MANYTOMANY), self.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.ONETOMANY)
@@ -776,7 +776,7 @@ class One2ManyFilter(RelatedFilter):
         self.admin = None
         entity_mapper = orm.class_mapper(self.entity)
         field_filters = field_filters or [IntFilter(entity_mapper.get_property_by_column(pk).class_attribute) for pk in entity_mapper.primary_key]
-        super().__init__(*field_filters, joins=joins, where=where, key=key or attribute.key, verbose_name=verbose_name)
+        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name)
 
     def get_clause(self, admin, session, operator, *operands):
         # The operand entity identities into entity instances, to allow the field operand extraction.
