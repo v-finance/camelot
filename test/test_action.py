@@ -881,7 +881,9 @@ class ListFilterCase(TestMetaData):
     def test_filter_strategies(self):
 
         class B(self.Entity):
-            pass
+
+            class Admin(EntityAdmin):
+                list_display = ['one2many_col']
 
         class A(self.Entity):
 
@@ -908,9 +910,9 @@ class ListFilterCase(TestMetaData):
                     'months_col':{'delegate': delegates.MonthsDelegate},
                     'months_col_nullable':{'delegate': delegates.MonthsDelegate},
                 }
+        B.one2many_col = orm.relationship(A)
 
         self.create_all()
-        admin = self.app_admin.get_related_admin(A)
 
         for cols, strategy_cls, *values in (
             ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
@@ -923,25 +925,39 @@ class ListFilterCase(TestMetaData):
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2', '3'),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1'),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2'),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2', '3'),
             ):
             for col in cols:
+                admin = self.app_admin.get_related_admin(col.class_)
                 # Verify expected filter strategy is set:
                 fa = admin.get_field_attributes(col.key)
                 self.assertIsInstance( fa['filter_strategy'], strategy_cls)
 
-                # Check assertion on invalid attribute:
-                for invalid_attribute in [None, '', 'text_col']:
-                    with self.assertRaises(AssertionError) as exc:
-                        strategy_cls(invalid_attribute)
-                self.assertEqual(str(exc.exception),
-                                 strategy_cls.AssertionMessage.no_queryable_attribute.value if strategy_cls != list_filter.Many2OneFilter else strategy_cls.AssertionMessage.no_many2one_relationship_attribute.value)
+                if strategy_cls == list_filter.One2ManyFilter:
+                    # Check assertion on invalid attribute:
+                    for invalid_attribute in [None, '', 'text_col']:
+                        with self.assertRaises(AssertionError) as exc:
+                            strategy_cls(invalid_attribute, joins=[])
+                    self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.ONETOMANY))
+                else:
+                    # Check assertion on invalid attribute:
+                    for invalid_attribute in [None, '', 'text_col']:
+                        with self.assertRaises(AssertionError) as exc:
+                            strategy_cls(invalid_attribute)
+                    if strategy_cls == list_filter.Many2OneFilter:
+                        self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.MANYTOONE))
+                    else:
+                        self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.no_queryable_attribute.value)
 
-                filter_strategy = strategy_cls(col, **fa)
-                operators = filter_strategy.get_operators()
-                # Verify that the operators that check on emptiness are only present for nullable attributes.
-                if not fa['nullable']:
-                    self.assertNotIn(list_filter.Operator.is_empty, operators)
-                    self.assertNotIn(list_filter.Operator.is_not_empty, operators)
+                    filter_strategy = strategy_cls(col, **fa)
+                    operators = filter_strategy.get_operators()
+                    # Verify that the operators that check on emptiness are only present for nullable attributes.
+                    if not fa['nullable']:
+                        self.assertNotIn(list_filter.Operator.is_empty, operators)
+                        self.assertNotIn(list_filter.Operator.is_not_empty, operators)
+    
                 # Verify that for each operator of the filter strategy its clause is constructed properly:
                 for operator in operators:
                     operands = values[0:operator.arity.maximum-1] if operator.arity.maximum is not None else values
