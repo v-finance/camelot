@@ -774,7 +774,8 @@ class One2ManyFilter(RelatedFilter):
                attribute.prop.direction in (orm.interfaces.ONETOMANY, orm.interfaces.MANYTOMANY), self.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.ONETOMANY)
         self.entity = attribute.prop.entity.entity
         self.admin = None
-        field_filters = field_filters or [IntFilter(self.entity.id)]
+        entity_mapper = orm.class_mapper(self.entity)
+        field_filters = field_filters or [IntFilter(entity_mapper.get_property_by_column(pk).class_attribute) for pk in entity_mapper.primary_key]
         super().__init__(*field_filters, joins=joins, where=where, key=key or attribute.key, verbose_name=verbose_name)
 
     def get_clause(self, admin, session, operator, *operands):
