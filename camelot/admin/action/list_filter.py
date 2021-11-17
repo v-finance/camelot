@@ -775,7 +775,7 @@ class One2ManyFilter(RelatedFilter):
         self.entity = attribute.prop.entity.entity
         self.admin = None
         field_filters = field_filters or [IntFilter(self.entity.id)]
-        super().__init__(*field_filters, joins=joins, where=where, key=key, verbose_name=verbose_name)
+        super().__init__(*field_filters, joins=joins, where=where, key=key or attribute.key, verbose_name=verbose_name)
 
     def get_clause(self, admin, session, operator, *operands):
         # The operand entity identities into entity instances, to allow the field operand extraction.
