@@ -771,7 +771,7 @@ class One2ManyFilter(RelatedFilter):
     def __init__(self, attribute, joins, field_filters=[], where=None, key=None, verbose_name=None):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty) and \
-               attribute.prop.direction == orm.interfaces.ONETOMANY, self.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.ONETOMANY)
+               attribute.prop.direction in (orm.interfaces.ONETOMANY, orm.interfaces.MANYTOMANY), self.AssertionMessage.invalid_relationship_attribute.value.format(orm.interfaces.ONETOMANY)
         self.entity = attribute.prop.entity.entity
         self.admin = None
         field_filters = field_filters or [IntFilter(self.entity.id)]
