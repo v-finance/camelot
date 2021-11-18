@@ -513,7 +513,11 @@ class RelatedFilter(AbstractFilterStrategy):
         field_filter_clauses = []
         for field_strategy in self.field_filters:
             related_admin = admin.get_related_admin(field_strategy.attribute.class_)
-            field_operands = [self.field_operand(related_admin, field_strategy, operand) for operand in operands]
+            field_operands = []
+            for operand in operands:
+                field_operand = self.field_operand(related_admin, field_strategy, operand)
+                if field_operand is not None:
+                    field_operands.append(field_strategy.value_to_string(field_operand, admin))
             field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *field_operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
@@ -811,12 +815,11 @@ class One2ManyFilter(RelatedFilter):
 
     def field_operand(self, admin, field_strategy, operand):
         """
-        Turn the given entity instance operand into the appropriate stringified field operand value
+        Turn the given entity instance operand into the appropriate field operand value
         for the given field strategy using its instrumented attribute.
         """
         assert isinstance(operand, self.entity)
-        field_value = field_strategy.attribute.__get__(operand, None)
-        return field_strategy.value_to_string(field_value, admin)
+        return field_strategy.attribute.__get__(operand, None)
 
     def get_field_strategy(self):
         return self
