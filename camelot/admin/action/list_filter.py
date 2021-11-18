@@ -496,6 +496,7 @@ class RelatedFilter(AbstractFilterStrategy):
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
+        operands = [self.from_string(op) for op in operands]
         related_query = session.query(admin.entity.id)
 
         for join in self.joins:
@@ -522,6 +523,14 @@ class RelatedFilter(AbstractFilterStrategy):
         """
         Turn a operand value for this related filter strategy into the appropriate field operand value
         for the given field strategy and related admin.
+        By default, no conversion is done, and the operand is shared between all underlying field strategies.
+        """
+        return operand
+
+    def from_string(self, operand):
+        """
+        Turn the given stringified operand into its original value, when this is necessary for the field operand extraction.
+        By default, the operand is shared between all underlying field strategies and the conversion is left up to them.
         """
         return operand
 
@@ -779,12 +788,15 @@ class One2ManyFilter(RelatedFilter):
         field_filters = field_filters or [IntFilter(primary_key_attribute) for primary_key_attribute in self.primary_key_attributes]
         super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name)
 
-    def get_clause(self, admin, session, operator, *operands):
-        # The operand entity identities into entity instances, to allow the field operand extraction.
-        operands = [session.query(self.entity).get(int(op)) for op in operands]
-        return super().get_clause(admin, session, operator, *operands)
+    def from_string(self, admin, session, operand):
+        """
+        Convert the given stringified primary key operand value to query and return the corresponding entity instance.
+        This will allow the field operand extraction to get the appropriate field filter operands.
+        """
+        return session.query(self.entity).get(int(operand))
 
     def field_operand(self, admin, field_strategy, operand):
+        assert isinstance(operand, self.entity)
         field_value = field_strategy.attribute.__get__(operand, None)
         return field_strategy.value_to_string(field_value, admin)
 
