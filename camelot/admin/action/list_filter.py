@@ -35,6 +35,7 @@ import copy
 import datetime
 import decimal
 import enum
+import functools
 import operator
 
 from camelot.core.orm import Entity
@@ -399,7 +400,7 @@ class FieldFilter(AbstractFilterStrategy):
     """
 
     attribute = None
-    _default_from_string = None
+    _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
         """
