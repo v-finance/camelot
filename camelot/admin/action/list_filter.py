@@ -460,9 +460,11 @@ class FieldFilter(AbstractFilterStrategy):
 class RelatedFilter(AbstractFilterStrategy):
     """
     Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
+    :attr logical_operator: A logical binary sql operator (AND or OR) to connect the resulting clauses of this related filter's underlying field strategies. Defaults to `sqlalchemy.sql.and_`.
     """
 
     name = 'related_filter'
+    logical_operator = sql.and_
 
     def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
@@ -514,7 +516,7 @@ class RelatedFilter(AbstractFilterStrategy):
                 field_filter_clauses.append(field_filter_clause)
                 
         if field_filter_clauses:
-            related_query = related_query.filter(sql.or_(*field_filter_clauses))
+            related_query = related_query.filter(self.logical_operator(*field_filter_clauses))
             related_query = related_query.subquery()
             filter_clause = admin.entity.id.in_(related_query)
             return filter_clause
