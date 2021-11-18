@@ -899,8 +899,8 @@ class ListFilterCase(TestMetaData):
             int_col_nullable = schema.Column(types.Integer)
             months_col = schema.Column(types.Integer, nullable=False)
             months_col_nullable = schema.Column(types.Integer)
-            enum_col = schema.Column(camelot.types.Enumeration, nullable=False)
-            enum_col_nullable = schema.Column(camelot.types.Enumeration)
+            enum_col = schema.Column(camelot.types.Enumeration([('Test', 'Test')]), nullable=False)
+            enum_col_nullable = schema.Column(camelot.types.Enumeration([('Test', 'Test')]))
 
             b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id), nullable=False)
             many2one_col = orm.relationship(B)
@@ -913,6 +913,17 @@ class ListFilterCase(TestMetaData):
         B.one2many_col = orm.relationship(A)
 
         self.create_all()
+        # Create entity instance to be able to test Many2One and One2Many filter strategies.
+        b = B()
+        self.session.flush()
+        a_defaults = dict(
+            text_col='', bool_col=False, date_col=datetime.date.today(), time_col=datetime.time(21, 5, 0),
+            int_col=1000, months_col=12, enum_col='Test', many2one_col=b
+        )
+        a1 = A(**a_defaults)
+        a2 = A(**a_defaults)
+        a3 = A(**a_defaults)
+        self.session.flush()
 
         for cols, strategy_cls, *values in (
             ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
@@ -921,7 +932,7 @@ class ListFilterCase(TestMetaData):
             ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '2020-01-01', '2022-01-01'),
             ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',       '5000'),
             ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',         '24'),
-            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'test'),
+            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2', '3'),
@@ -953,6 +964,9 @@ class ListFilterCase(TestMetaData):
                     if not fa['nullable']:
                         self.assertNotIn(list_filter.Operator.is_empty, operators)
                         self.assertNotIn(list_filter.Operator.is_not_empty, operators)
+                else:
+                    filter_strategy = strategy_cls(col)
+                    operators = filter_strategy.get_operators()
 
                 # Verify that for each operator of the filter strategy its clause is constructed properly:
                 for operator in operators:
