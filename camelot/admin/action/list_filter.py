@@ -696,14 +696,12 @@ class DateFilter(FieldFilter):
         standard_item = delegate.get_standard_item(locale(), model_context)
         return standard_item.data(PreviewRole)
     
-class IntFilter(DecimalFilter):
+class IntFilter(FieldFilter):
 
     name = 'int_filter'
     python_type = (int, *DecimalFilter.python_type)
+    operators = Operator.numerical_operators()
     _default_from_string = utils.int_from_string
-
-    def get_type_clause(self, field_attributes, operator, *operands):
-        return super(DecimalFilter, self).get_type_clause(field_attributes, operator, *operands)
 
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
