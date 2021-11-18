@@ -496,7 +496,7 @@ class RelatedFilter(AbstractFilterStrategy):
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
-        operands = [self.from_string(op) for op in operands]
+        operands = [self.from_string(admin, session, op) for op in operands]
         related_query = session.query(admin.entity.id)
 
         for join in self.joins:
@@ -527,7 +527,7 @@ class RelatedFilter(AbstractFilterStrategy):
         """
         return operand
 
-    def from_string(self, operand):
+    def from_string(self, admin, session, operand):
         """
         Turn the given stringified operand into its original value, when this is necessary for the field operand extraction.
         By default, the operand is shared between all underlying field strategies and the conversion is left up to them.
@@ -793,9 +793,13 @@ class One2ManyFilter(RelatedFilter):
         Convert the given stringified primary key operand value to query and return the corresponding entity instance.
         This will allow the field operand extraction to get the appropriate field filter operands.
         """
-        return session.query(self.entity).get(int(operand))
+        return session.query(self.entity).get(operand)
 
     def field_operand(self, admin, field_strategy, operand):
+        """
+        Turn the given entity instance operand into the appropriate stringified field operand value
+        for the given field strategy using its instrumented attribute.
+        """
         assert isinstance(operand, self.entity)
         field_value = field_strategy.attribute.__get__(operand, None)
         return field_strategy.value_to_string(field_value, admin)
