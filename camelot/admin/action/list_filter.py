@@ -262,6 +262,8 @@ class Operator(enum.Enum):
     is_empty =     filter_operator(is_none,     Arity.unary,    _('is not filled out'), None,    None,   None)
     is_not_empty = filter_operator(is_not_none, Arity.unary,    _('is filled out'),     None,    None,   None)
     in_ =          filter_operator(in_op,       Arity.multiary, _('selection'),         None,    None,   is_not_none)
+    and_ =         filter_operator(sql.and_,    Arity.multiary, _('conjunction'),       None,  _('and'), None)
+    or_ =          filter_operator(sql.or_,     Arity.multiary, _('disjunction'),       None,  _('or'),  None)
 
     @property
     def operator(self):
@@ -460,11 +462,11 @@ class FieldFilter(AbstractFilterStrategy):
 class RelatedFilter(AbstractFilterStrategy):
     """
     Filter strategy for defining a filter clause as part of an entity admin's query on fields of one of its related entities.
-    :attr logical_operator: A logical binary sql operator (AND or OR) to connect the resulting clauses of this related filter's underlying field strategies. Defaults to `sqlalchemy.sql.and_`.
+    :attr logical_operator: A logical multiary sql operator (AND or OR) to connect the resulting clauses of this related filter's underlying field strategies. Defaults to `sqlalchemy.sql.and_`.
     """
 
     name = 'related_filter'
-    logical_operator = sql.and_
+    logical_operator = Operator.and_
 
     def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
         """
@@ -516,7 +518,7 @@ class RelatedFilter(AbstractFilterStrategy):
                 field_filter_clauses.append(field_filter_clause)
                 
         if field_filter_clauses:
-            related_query = related_query.filter(self.logical_operator(*field_filter_clauses))
+            related_query = related_query.filter(self.logical_operator.operator(*field_filter_clauses))
             related_query = related_query.subquery()
             filter_clause = admin.entity.id.in_(related_query)
             return filter_clause
