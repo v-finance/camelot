@@ -775,7 +775,8 @@ class One2ManyFilter(RelatedFilter):
         self.entity = attribute.prop.entity.entity
         self.admin = None
         entity_mapper = orm.class_mapper(self.entity)
-        field_filters = field_filters or [IntFilter(entity_mapper.get_property_by_column(pk).class_attribute) for pk in entity_mapper.primary_key]
+        self.primary_key_attributes = [entity_mapper.get_property_by_column(pk).class_attribute for pk in entity_mapper.primary_key]
+        field_filters = field_filters or [IntFilter(primary_key_attribute) for primary_key_attribute in self.primary_key_attributes]
         super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name)
 
     def get_clause(self, admin, session, operator, *operands):
@@ -794,7 +795,10 @@ class One2ManyFilter(RelatedFilter):
         return self.operators
 
     def value_to_string(self, value, admin):
-        return str(value.id)
+        assert isinstance(value, self.entity)
+        mapper = orm.object_mapper(value)
+        primary_key = mapper.primary_key_from_instance(value)
+        return [str(pk) for pk in primary_key]
 
 class SearchFilter(Action, AbstractModelFilter):
 
