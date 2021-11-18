@@ -354,6 +354,15 @@ class AbstractFilterStrategy(object):
         """
         return self.get_clause(admin, session, self.search_operator, text)
 
+    def from_string(self, admin, session, operand):
+        """
+        Turn the given stringified operand into its original value.
+        By default, the conversion of stringified None values is supported.
+        """
+        if operand in ('None', 'none'):
+            return None
+        return operand
+
     def value_to_string(self, filter_value, admin):
         """
         Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
@@ -440,7 +449,10 @@ class FieldFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        filter_clause = self.get_type_clause(field_attributes, operator, *operands)
+        field_operands = []
+        for operand in operands:
+            field_operands.append(self.from_string(admin, session, operand))
+        filter_clause = self.get_type_clause(field_attributes, operator, *field_operands)
         if filter_clause is not None:
             where_conditions = []
             if operator.pre_condition is not None:
@@ -516,8 +528,7 @@ class RelatedFilter(AbstractFilterStrategy):
             field_operands = []
             for operand in operands:
                 field_operand = self.field_operand(related_admin, field_strategy, operand)
-                if field_operand is not None:
-                    field_operands.append(field_strategy.value_to_string(field_operand, admin))
+                field_operands.append(field_strategy.value_to_string(field_operand, admin))
             field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *field_operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
@@ -533,13 +544,6 @@ class RelatedFilter(AbstractFilterStrategy):
         Turn a operand value for this related filter strategy into the appropriate field operand value
         for the given field strategy and related admin.
         By default, no conversion is done, and the operand is shared between all underlying field strategies.
-        """
-        return operand
-
-    def from_string(self, admin, session, operand):
-        """
-        Turn the given stringified operand into its original value, when this is necessary for the field operand extraction.
-        By default, the operand is shared between all underlying field strategies and the conversion is left up to them.
         """
         return operand
 
