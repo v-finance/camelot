@@ -543,6 +543,16 @@ class RelatedFilter(AbstractFilterStrategy):
             related_admin = admin.get_related_admin(field_strategy.attribute.class_)
             return field_strategy.value_to_string(filter_value, related_admin)
 
+class RelatedSearch(RelatedFilter):
+    """
+    RelatedFilter strategy for defining a filter clause as part of an entity admin's search query on fields of one of its related entities.
+    As this strategy is meant for decorating a search query, the operators used by this RelatedFilter strategy are configured as such:
+      * search operator:  as the field operands are text-based subsets of the values to be matched, the search operator is set to be the `Operator.like` operator.
+      * logical operator: as it concerns a search query, the logical operator for connecting the underlying field strategies' clauses is set to be the `Operator.or_` operator.
+    """
+    search_operator = Operator.like
+    logical_operator = Operator.or_
+
 class NoFilter(FieldFilter):
 
     name = 'no_filter'
