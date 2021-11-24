@@ -303,13 +303,10 @@ class AbstractFilterStrategy(object):
     Abstract interface for defining filter clauses as part of an entity admin's query.
     :attribute name: string that uniquely identifies this filter strategy class.
     :attribute operators: complete list of operators that are available for this filter strategy class.
-    :attribute search_operator: The operator that this strategy will use when constructing a filter clause
-                                meant for searching based on a search text. By default the `Operator.eq` is used.
     """
 
     name = None    
     operators = []
-    search_operator = Operator.eq
 
     class AssertionMessage(enum.Enum):
 
@@ -353,7 +350,7 @@ class AbstractFilterStrategy(object):
         :param admin: The entity admin that will use the resulting search clause as part of its search query.
         :param session: The session in which the search query takes place.
         """
-        return self.get_clause(admin, session, self.search_operator, text)
+        return self.get_clause(admin, session, self.get_search_operator(), text)
 
     def from_string(self, admin, session, operand):
         """
@@ -372,10 +369,16 @@ class AbstractFilterStrategy(object):
 
     def get_operators(self):
         """
-        Return the the list of operators that are available for this filter strategy instance.
+        Return the list of operators that are available for this filter strategy instance.
         By default, this returns the ´operators´ class attribute, but this may be customized on an filter strategy instance basis.
         """
         return self.operators
+
+    def get_search_operator(self):
+        """
+        Return the operator used for constructing a filter clause meant for searching based on a search text.
+        """
+        raise NotImplementedError
 
     def get_field_strategy(self):
         """
@@ -397,8 +400,11 @@ class FieldFilter(AbstractFilterStrategy):
     Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
     :attribute nullable: flag that indicates whether this strategy's field attribute is nullable or not, which influences which operators may or may not be applicable
+    :attribute search_operator: The default operator that this strategy will use when constructing a filter clause
+                                meant for searching based on a search text. By default the `Operator.eq` is used.
     """
 
+    search_operator = Operator.eq
     attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
@@ -441,6 +447,13 @@ class FieldFilter(AbstractFilterStrategy):
         if not self.nullable:
             return [op for op in operators if op not in (Operator.is_empty, Operator.is_not_empty)]
         return operators
+
+    def get_search_operator(self):
+        """
+        Return the operator used for constructing a filter clause meant for searching based on a search text.
+        By default the `search_operator` class attribute is used.
+        """
+        return self.search_operator
 
     def get_clause(self, admin, session, operator, *operands):
         """
@@ -514,6 +527,10 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_strategy in self.field_filters:
             return field_strategy.get_operators()
 
+    def get_search_operator(self):
+        for field_strategy in self.field_filters:
+            return field_strategy.get_search_operator()
+
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and value, within the given admin and session.
@@ -569,7 +586,6 @@ class RelatedSearch(RelatedFilter):
       * search operator:  as the field operands are text-based subsets of the values to be matched, the search operator is set to be the `Operator.like` operator.
       * connecttive operator: as it concerns a search query, the logical connective operator for connecting the underlying field strategies' clauses is set to be the `Operator.or_` operator.
     """
-    search_operator = Operator.like
     connective_operator = Operator.or_
 
 class NoFilter(FieldFilter):
