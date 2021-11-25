@@ -881,7 +881,9 @@ class ListFilterCase(TestMetaData):
     def test_filter_strategies(self):
 
         class B(self.Entity):
-            pass
+
+            class Admin(EntityAdmin):
+                list_display = ['one2many_col']
 
         class A(self.Entity):
 
@@ -897,8 +899,8 @@ class ListFilterCase(TestMetaData):
             int_col_nullable = schema.Column(types.Integer)
             months_col = schema.Column(types.Integer, nullable=False)
             months_col_nullable = schema.Column(types.Integer)
-            enum_col = schema.Column(camelot.types.Enumeration, nullable=False)
-            enum_col_nullable = schema.Column(camelot.types.Enumeration)
+            enum_col = schema.Column(camelot.types.Enumeration([('Test', 'Test')]), nullable=False)
+            enum_col_nullable = schema.Column(camelot.types.Enumeration([('Test', 'Test')]))
 
             b_id = schema.Column(types.Integer(), schema.ForeignKey(B.id), nullable=False)
             many2one_col = orm.relationship(B)
@@ -908,9 +910,20 @@ class ListFilterCase(TestMetaData):
                     'months_col':{'delegate': delegates.MonthsDelegate},
                     'months_col_nullable':{'delegate': delegates.MonthsDelegate},
                 }
+        B.one2many_col = orm.relationship(A)
 
         self.create_all()
-        admin = self.app_admin.get_related_admin(A)
+        # Create entity instance to be able to test Many2One and One2Many filter strategies.
+        b = B()
+        self.session.flush()
+        a_defaults = dict(
+            text_col='', bool_col=False, date_col=datetime.date.today(), time_col=datetime.time(21, 5, 0),
+            int_col=1000, months_col=12, enum_col='Test', many2one_col=b
+        )
+        a1 = A(**a_defaults)
+        a2 = A(**a_defaults)
+        a3 = A(**a_defaults)
+        self.session.flush()
 
         for cols, strategy_cls, *values in (
             ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
@@ -919,12 +932,16 @@ class ListFilterCase(TestMetaData):
             ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '2020-01-01', '2022-01-01'),
             ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',       '5000'),
             ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',         '24'),
-            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'test'),
+            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2'),
             ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2', '3'),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1'),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2'),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2', '3'),
             ):
             for col in cols:
+                admin = self.app_admin.get_related_admin(col.class_)
                 # Verify expected filter strategy is set:
                 fa = admin.get_field_attributes(col.key)
                 self.assertIsInstance( fa['filter_strategy'], strategy_cls)
@@ -933,15 +950,24 @@ class ListFilterCase(TestMetaData):
                 for invalid_attribute in [None, '', 'text_col']:
                     with self.assertRaises(AssertionError) as exc:
                         strategy_cls(invalid_attribute)
-                self.assertEqual(str(exc.exception),
-                                 strategy_cls.AssertionMessage.no_queryable_attribute.value if strategy_cls != list_filter.Many2OneFilter else strategy_cls.AssertionMessage.no_many2one_relationship_attribute.value)
+                if strategy_cls == list_filter.Many2OneFilter:
+                    self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.invalid_many2one_relationship_attribute.value)
+                elif strategy_cls == list_filter.One2ManyFilter:
+                    self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.invalid_relationship_attribute.value)
+                else:
+                    self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.no_queryable_attribute.value)
 
-                filter_strategy = strategy_cls(col, **fa)
-                operators = filter_strategy.get_operators()
-                # Verify that the operators that check on emptiness are only present for nullable attributes.
-                if not fa['nullable']:
-                    self.assertNotIn(list_filter.Operator.is_empty, operators)
-                    self.assertNotIn(list_filter.Operator.is_not_empty, operators)
+                if strategy_cls != list_filter.One2ManyFilter:
+                    filter_strategy = strategy_cls(col, **fa)
+                    operators = filter_strategy.get_operators()
+                    # Verify that the operators that check on emptiness are only present for nullable attributes.
+                    if not fa['nullable']:
+                        self.assertNotIn(list_filter.Operator.is_empty, operators)
+                        self.assertNotIn(list_filter.Operator.is_not_empty, operators)
+                else:
+                    filter_strategy = strategy_cls(col)
+                    operators = filter_strategy.get_operators()
+
                 # Verify that for each operator of the filter strategy its clause is constructed properly:
                 for operator in operators:
                     operands = values[0:operator.arity.maximum-1] if operator.arity.maximum is not None else values
