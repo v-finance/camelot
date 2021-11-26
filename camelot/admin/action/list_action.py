@@ -1105,6 +1105,10 @@ class SetFilters(Action, AbstractModelFilter):
                 mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
                 operator_modes.append(Mode(mode_name, str(op.verbose_name), icon=icon))
+            # Possibly condence filters with only a single operator into a leaf mode to save the user from an additional click.
+            #if len(operator_modes) == 1:
+                #modes.append(Mode(mode_name, str(filter_strategy.get_verbose_name()), icon=icon))
+            #elif
             if operator_modes:
                 icon = Icon('check-circle') if name in filter_value else None
                 modes.append(Mode(name, str(filter_strategy.get_verbose_name()), icon=icon, modes=operator_modes))
