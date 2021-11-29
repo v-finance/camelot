@@ -315,6 +315,9 @@ class AbstractFilterStrategy(object):
         nr_operands_arity_mismatch =     'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
         invalid_relationship_attribute = 'The given attribute is not a valid RelationshipProperty attribute'
         invalid_many2one_relationship_attribute = 'The given attribute is not a valid Many2One RelationshipProperty attribute'
+        invalid_target_entity_instance = "Argument is not an instance of this One2ManyFilter's target entity"
+        insufficient_join_arguments =    'A related filter strategy requires at least one join argument'
+        invalid_field_filters =          'The provided field filters should be instances of :class: `camelot.admin.action.list_filter.FieldFilter`'
 
     @classmethod
     def assert_operands(cls, operator, *operands):
@@ -511,9 +514,9 @@ class RelatedFilter(AbstractFilterStrategy):
                       and the related entity of the given field filters.
         :param key: Optional string to use as this strategy's key. By default the key of this related filter's first field filter will be used.
         """
-        assert isinstance(joins, list) and len(joins) > 0
+        assert isinstance(joins, list) and len(joins) > 0, self.AssertionMessage.insufficient_join_arguments.value
         for field_search in field_filters:
-            assert isinstance(field_search, FieldFilter)
+            assert isinstance(field_search, FieldFilter), self.AssertionMessage.invalid_field_filters.value
         key = key or field_filters[0].key
         super().__init__(key, where, verbose_name)
         self.field_filters = field_filters
@@ -825,7 +828,7 @@ class One2ManyFilter(RelatedFilter):
         Turn the given entity instance operand into the appropriate field operand value
         for the given field strategy using its instrumented attribute.
         """
-        assert isinstance(operand, self.entity)
+        assert isinstance(operand, self.entity), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
         return field_strategy.attribute.__get__(operand, None)
 
     def get_field_strategy(self):
@@ -835,7 +838,7 @@ class One2ManyFilter(RelatedFilter):
         return self.operators
 
     def value_to_string(self, value, admin):
-        assert isinstance(value, self.entity)
+        assert isinstance(value, self.entity), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
         mapper = orm.object_mapper(value)
         primary_key = mapper.primary_key_from_instance(value)
         return [str(pk) for pk in primary_key]
