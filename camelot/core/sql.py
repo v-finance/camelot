@@ -62,4 +62,12 @@ metadata.transactional = False
 def ilike_op(column, string):
     return sqlalchemy.sql.operators.ilike_op(column, '%%%s%%'%string)
 
+def is_none(column):
+    return sqlalchemy.sql.operators.is_(column, None)
 
+def is_not_none(column):
+    return sqlalchemy.sql.operators.isnot(column, None)
+
+def in_op(column, *values):
+    assert len(values) >= 1
+    return sqlalchemy.sql.operators.in_op(column, values)
