@@ -41,7 +41,7 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore, QtQml, variant_to_py
+from ...core.qt import Qt, QtCore, QtQml, QtQuick, variant_to_py
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
@@ -51,7 +51,7 @@ from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
 )
-from ..qml_view import create_qml_item
+from ..qml_view import create_qml_item, qml_action_step_item, get_qml_engine, get_qml_window
 
 
 @dataclass
@@ -250,29 +250,6 @@ class OpenTableView( UpdateTableView ):
         table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
-# FIXME: find a better way to do this...
-class ActionDispatch(QtCore.QObject):
-
-    def __init__(self, gui_context, parent):
-        super().__init__(parent)
-        self.gui_context = gui_context
-
-    def run_action( self, action, mode=None ):
-        gui_context = self.gui_context.copy()
-        if isinstance(mode, QtQml.QJSValue):
-            mode = variant_to_py(mode.toVariant())
-        if isinstance(mode, list):
-            action.gui_run( gui_context, mode )
-        else:
-            gui_context.mode_name = mode
-            action.gui_run( gui_context )
-
-    def qml_action_triggered(self, route, mode):
-        route = tuple(route.split('/'))
-        print('qml_action_triggered(', route, mode, ')')
-        action = AdminRoute.action_for(route)
-        self.run_action(action, mode)
-
 
 @dataclass
 class OpenQmlTableView(OpenTableView):
@@ -319,7 +296,7 @@ class OpenQmlTableView(OpenTableView):
         # load JSON data into C++ backend
         view.fromJson(json.dumps(step))
 
-        table = view.findChild(QtCore.QObject, "qml_table")
+        table = view.findChild(QtQuick.QQuickItem, "qml_table")
         item_view = ItemViewProxy(table)
 
 
@@ -338,8 +315,7 @@ class OpenQmlTableView(OpenTableView):
         qt_action = ActionAction(list_action, list_gui_context, view)
         table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
 
-        action_dispatch = ActionDispatch(list_gui_context, view)
-        view.triggered.connect(action_dispatch.qml_action_triggered, type=Qt.ConnectionType.QueuedConnection)
+        qml_action_step_item(list_gui_context, view)
 
         # FIXME: make update actions work with C++ backends
         UpdateActions().gui_run(list_gui_context)
@@ -350,13 +326,15 @@ class OpenQmlTableView(OpenTableView):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
-        quick_view = gui_context.workspace.quick_view
-        view = cls.render(gui_context, step, quick_view.engine())
-        # tabs will be destroyed by javascript code
-        quick_view.engine().setObjectOwnership(view, QtQml.QQmlEngine.ObjectOwnership.JavaScriptOwnership)
-        tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
-        assert tab_view
-        tab_view.addTab(step['title'], view)
+
+        engine = get_qml_engine()
+        window = get_qml_window()
+        view = cls.render(gui_context, step, engine)
+        engine.setObjectOwnership(view, QtQml.QQmlEngine.ObjectOwnership.JavaScriptOwnership)
+
+        workspace = window.findChild(QtCore.QObject, 'qml_workspace')
+        workspace.addTab(step['title'], view)
+
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
