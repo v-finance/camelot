@@ -752,14 +752,20 @@ class EntityAdminCase(TestMetaData):
         b.z = 14
         self.assertEqual(len(validator.validate_object(b)), 0)
 
-    def test_overruled_filter_strategies( self ):
+    def test_filter_strategies( self ):
 
         class B(self.Entity):
-            pass
+
+            class Admin(EntityAdmin):
+                list_display = ['one2many_col']
 
         class C(self.Entity):
-            pass
 
+            class Admin(EntityAdmin):
+                list_display = ['one2many_col_no_filter']
+                field_attributes = {
+                    'one2many_col_no_filter': {'filter_strategy': list_filter.NoFilter}
+                }
         class A(self.Entity):
 
             text_col = schema.Column(types.Unicode(10))
@@ -790,6 +796,9 @@ class EntityAdminCase(TestMetaData):
                     'months_col_no_filter':{'delegate': delegates.MonthsDelegate, 'filter_strategy': list_filter.NoFilter},
                     'many2one_col_no_filter': {'filter_strategy': list_filter.NoFilter}
                 }
+
+        B.one2many_col = orm.relationship(A)
+        C.one2many_col_no_filter = orm.relationship(A)
 
         self.create_all()
         admin = self.app_admin.get_related_admin(A)
@@ -830,5 +839,15 @@ class EntityAdminCase(TestMetaData):
         self.assertIsInstance( fa['filter_strategy'], list_filter.Many2OneFilter)
         self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)
         fa = admin.get_field_attributes('many2one_col_no_filter')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)
+
+        # One2Many relationship attribute should get the One2Manyfilter assigned, unless explicitly disabled:
+        admin = self.app_admin.get_related_admin(B)
+        fa = admin.get_field_attributes('one2many_col')
+        self.assertIsInstance( fa['filter_strategy'], list_filter.One2ManyFilter)
+        self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)
+        admin = self.app_admin.get_related_admin(C)
+        fa = admin.get_field_attributes('one2many_col_no_filter')
         self.assertIsInstance( fa['filter_strategy'], list_filter.NoFilter)
         self.assertIsInstance( fa['search_strategy'], list_filter.NoFilter)

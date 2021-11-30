@@ -365,8 +365,10 @@ and used as a custom action.
                     raise Exception('RelationshipProperty has unknown direction')
 
                 if property.uselist == True:
+                    relationship_attribute = self._get_entity_descriptor(field_name)
                     attributes.update(
                         delegate = delegates.One2ManyDelegate,
+                        filter_strategy = list_filter.One2ManyFilter(relationship_attribute, verbose_name=attributes.get('name')),
                         python_type = list,
                         create_inline = False,
                     )
@@ -774,7 +776,7 @@ and used as a custom action.
                     field_attributes = self.get_field_attributes(field_name)
                     field_strategies.append(field_attributes.get('filter_strategy'))
         for relationship_property in self.mapper.relationships:
-            if relationship_property.direction == orm.interfaces.MANYTOONE:
+            if relationship_property.direction == orm.interfaces.MANYTOONE or relationship_property.uselist:
                 field_attributes = self.get_field_attributes(relationship_property.key)
                 field_strategies.append(field_attributes.get('filter_strategy'))
         return field_strategies
