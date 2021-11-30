@@ -1,10 +1,10 @@
 import logging
 import itertools
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py
 from camelot.core.exception import UserException
 from camelot.view.controls.view import AbstractView
-from camelot.admin.admin_route import AdminRoute, Route
+from camelot.admin.admin_route import AdminRoute
 
 LOGGER = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ class QmlActionDispatch(QtCore.QObject):
         gui_context = self.gui_contexts[context_id].copy()
 
         if isinstance(args, QtQml.QJSValue):
-            mode = variant_to_py(mode.toVariant())
+            args = variant_to_py(args.toVariant())
         if isinstance(args, list):
             action.gui_run( gui_context, args )
         else:

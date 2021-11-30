@@ -31,7 +31,7 @@ import logging
 import os
 
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from ..admin_route import AdminRoute
 from .base import RenderHint

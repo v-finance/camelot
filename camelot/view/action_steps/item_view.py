@@ -41,7 +41,7 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore, QtQml, QtQuick, variant_to_py
+from ...core.qt import Qt, QtCore, QtQml, QtQuick
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
