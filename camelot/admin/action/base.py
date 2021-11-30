@@ -34,7 +34,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 
 from ...admin.icon import Icon
-from ...core.qt import QtWidgets, QtGui, Qt
+from ...core.qt import QtWidgets, QtGui, Qt, transferto
 from ...core.serializable import DataclassSerializable, Serializable
 from ...core.utils import ugettext_lazy
 from ...view.art import from_admin_icon
@@ -82,13 +82,11 @@ strictly to the :class:`ModelContext`
         from camelot.view.controls.progress_dialog import ProgressDialog
         window = self.get_window()
         if window is not None:
-            progress_dialog = window.findChild(
-                QtWidgets.QProgressDialog, 'application_progress',
-                Qt.FindChildOption.FindDirectChildrenOnly
-            )
+            progress_dialog = window.property('application_progress')
             if progress_dialog is None:
-                progress_dialog = ProgressDialog(parent=window)
-                progress_dialog.setObjectName('application_progress')
+                progress_dialog = ProgressDialog(None) #(parent=window) FIXME
+                transferto(progress_dialog, progress_dialog) # FIXME -> replace with qml
+                window.setProperty('application_progress', progress_dialog)
             return progress_dialog
 
     def get_window(self):
