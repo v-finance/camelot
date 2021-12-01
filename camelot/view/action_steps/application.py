@@ -39,6 +39,7 @@ from ...admin.menu import MenuItem
 from ...core.qt import QtCore, QtWidgets, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
+from camelot.view.controls.action_widget import ActionAction
 from camelot.view.qml_view import qml_action_step, get_qml_window, qml_action_dispatch, get_qml_root_backend
 
 LOGGER = logging.getLogger(__name__)
@@ -224,7 +225,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'NavigationPanel', serialized_step)
 
-    '''
     @classmethod
     def render(self, gui_context, step):
         """create the navigation panel.
@@ -239,6 +239,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
         )
         return navigation_panel
 
+    '''
     @classmethod
     def gui_run(self, gui_context, serialized_step):
         step = json.loads(serialized_step)
@@ -282,7 +283,6 @@ class MainMenu(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'MainMenu', serialized_step)
 
-    '''
     @classmethod
     def render(cls, gui_context, items, parent_menu, action_states):
         """
@@ -310,6 +310,7 @@ class MainMenu(ActionStep, DataclassSerializable):
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
 
+    '''
     @classmethod
     def gui_run(self, gui_context, serialized_step):
         from ..controls.busy_widget import BusyWidget
