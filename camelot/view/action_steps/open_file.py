@@ -27,12 +27,17 @@
 #
 #  ============================================================================
 
+import os
+
 from ...core.qt import QtCore, QtGui
   
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
+from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.exception import UserException
 
 from six import BytesIO
+
 
 class OpenFile( ActionStep ):
     """
@@ -75,6 +80,21 @@ class OpenFile( ActionStep ):
         return file_name
         
     def gui_run( self, gui_context ):
+        if not os.path.isfile(self.path):
+            raise UserException(
+                _('Could not open file'),
+                detail=ugettext('"%s" is not a file') % self.path
+            )
+        # Test if file is readable, both os.access and QFileInfo.isReadable
+        # can result in false positives on windows.
+        f = QtCore.QFile(self.path)
+        if f.open(QtCore.QIODevice.ReadOnly):
+            f.close()
+        else:
+            raise UserException(
+                _('Could not open file'),
+                detail=ugettext('"%s" is not readable') % self.path
+            )
         #
         # support for windows shares
         #
