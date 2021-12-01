@@ -30,6 +30,7 @@
 import codecs
 import copy
 import datetime
+import enum
 import logging
 import itertools
 
@@ -269,6 +270,10 @@ class EditAction( ListContextAction ):
     name = 'edit_action'
     render_hint = RenderHint.TOOL_BUTTON
 
+    class Message(enum.Enum):
+
+        no_single_selection = _('Can only select 1 line')
+
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
         # Check for editability on the level of the field
@@ -357,19 +362,18 @@ class DuplicateSelection( EditAction ):
         from camelot.view import action_steps
         super().model_run(model_context, mode)
         admin = model_context.admin
-        new_objects = list()
-        updated_objects = set()
-        for i, obj in enumerate(model_context.get_selection()):
-            yield action_steps.UpdateProgress(i, 
-                                              model_context.selection_count,
-                                              self.verbose_name )
+        if model_context.selection_count > 1:
+            raise UserException(self.Message.no_single_selection.value)
+        for obj in model_context.get_selection():
             new_object = admin.copy(obj)
             model_context.proxy.append(new_object)
-            new_objects.append(new_object)
-            updated_objects.update(set(admin.get_depending_objects(new_object)))
-        yield action_steps.CreateObjects(new_objects)
-        yield action_steps.UpdateObjects(updated_objects)
-        yield action_steps.FlushSession(model_context.session)
+            yield action_steps.CreateObjects([new_object])
+            if not len(admin.get_validator().validate_object(new_object)):
+                updated_objects = set(admin.get_depending_objects(new_object))
+                yield action_steps.UpdateObjects(updated_objects)
+                yield action_steps.FlushSession(model_context.session)
+            else:
+                yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
 
     def get_state(self, model_context):
         assert isinstance(model_context, ListActionModelContext)
@@ -379,7 +383,8 @@ class DuplicateSelection( EditAction ):
         return state
 
 duplicate_selection = DuplicateSelection()
-            
+
+
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
