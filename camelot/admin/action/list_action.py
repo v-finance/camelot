@@ -928,17 +928,15 @@ class ReplaceFieldContents( EditAction ):
 
 replace_field_contents = ReplaceFieldContents()
 
-class FieldFilter(object):
-    """
-    Helper class for the `SetFilters` action that allows the user to
-    configure a filter on an individual field.
-    """
-    
-    def __init__(self, value=None):
-        self.value = value
-
 class FilterValue(object):
-
+    """
+    Abstract helper class for the `SetFilters` action to configure the filter values
+    for a certain filter strategy and operator.
+    The dimension of these filter values (remaining operands) depends on the arity of the operator.
+    This class also provides functionality to associate implementations of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
+    with implementations of this FilterValue interface; either by defining them as an innner Value class, or directly using the :method register: method.
+    Using the :method for_strategy: the concrete registered FilterValue class for a certain filter strategy class can be retrieved afterwards.
+    """
     filter_strategy = None
     _filter_values = {}
 
@@ -948,6 +946,7 @@ class FilterValue(object):
         self.operator = operator
         self.value_1 = value_1
         self.value_2 = value_2
+        self._other_values = []
 
     @property
     def operator_prefix(self):
@@ -958,15 +957,29 @@ class FilterValue(object):
         if self.operator.infix is not None:
             return str(self.operator.infix)
 
+    def get_operands(self):
+        operands = (self.value_1, self.value_2, *self._other_values)
+        # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
+        # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
+        if self.operator.arity.maximum is not None:
+            return operands[0:self.operator.arity.maximum-1]
+        return [op for op in operands if op is not None]
+
+    def set_operands(self, *operands):
+        for i, operand in enumerate(operands[:2], start=1):
+            if i == 1: self.value_1 = operand
+            if i == 2: self.value_2 = operand
+        self._other_values = operands[2:]
+
     @classmethod
-    def get_filter_value(cls, filter_strategy):
+    def for_strategy(cls, filter_strategy):
         """
         Get the default :class:`FilterValue` class for the given specific filter
         strategy class, return None, if not known.  The FilterValue
         should either be registered through the :meth:`register` method or be
         defined as an inner class with name :keyword:`Value` of the filter strategy.
 
-        :param filter_strategy: a subclass of :class:``camelot.admin.action.list_filter.AbstractFilterStrategy`
+        :param filter_strategy: a subclass of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
         """
         from camelot.admin.action.list_filter import AbstractFilterStrategy
         assert issubclass(filter_strategy, AbstractFilterStrategy)
@@ -1017,7 +1030,7 @@ class SetFilters(Action, AbstractModelFilter):
     def get_filter_strategies(self, model_context):
         """:return: a list of field strategies the user can select."""
         filter_strategies = list(model_context.admin.get_field_filters().items())
-        filter_strategies.sort(key=lambda choice:choice[1].get_verbose_name())
+        filter_strategies.sort(key=lambda choice:str(choice[1].get_verbose_name()))
         return filter_strategies
 
     def model_run( self, model_context, mode ):
@@ -1028,18 +1041,36 @@ class SetFilters(Action, AbstractModelFilter):
         elif mode is None:
             new_filter_values = {}
         else:
+            from camelot.admin.action.list_filter import Operator, Many2OneFilter, One2ManyFilter
+            operator_name, filter_field_name = mode.split('-')
             filter_values = model_context.proxy.get_filter(self) or {}
-            filter_field_name = mode
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_value_cls = FilterValue.get_filter_value(type(filter_strategy))
+            filter_field_strategy = filter_strategy.get_field_strategy()
+            filter_value_cls = FilterValue.for_strategy(type(filter_field_strategy))
             filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
-            # TODO: get the selected operator from the modes,
-            # instead of using the standard search operator for the selected strategy by default for now.
-            filter_value = filter_value_cls(filter_strategy, filter_strategy.search_operator)
-            change_filter = action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_strategy.get_verbose_name()))
-            yield change_filter
-            operands = [filter_strategy.value_to_string(operand, model_context.admin) for operand in [filter_value.value_1, filter_value.value_2]]
+            filter_operator = Operator[operator_name]
+            filter_value = filter_value_cls(filter_field_strategy, filter_operator)
+
+            # The filter values should only be updated by the user in case of multi-ary filter operators,
+            # which requires filter values to be entered as the additional operands.
+            # Unary operators can be applied directly, as the filter attribute is the only operand.
+            if filter_operator.arity.minimum > 1:
+                # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
+                # So let the user select one, and programmatically set the filter value to the selected entity's id.
+                if isinstance(filter_field_strategy, (Many2OneFilter, One2ManyFilter)):
+                    admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
+                    query = None
+                    if filter_field_strategy.where is not None:
+                        query = admin.get_query()
+                        query = query.filter(filter_field_strategy.where)
+                    objects = yield action_steps.SelectObjects(admin, query)
+                    filter_value.set_operands(*objects)
+                # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
+                else:
+                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
+
+            operands = [filter_field_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
 
@@ -1057,8 +1088,6 @@ class SetFilters(Action, AbstractModelFilter):
         for name, (operator_name, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
             operator = Operator[operator_name]
-            # Determine appropriate number of operands based on the arity of the operator (-1 because the filtered attribute is an operand as well)
-            operands = operands[0:operator.arity-1]
             filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
@@ -1069,11 +1098,20 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
+        selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
-            icon = Icon('check-circle') if name in filter_value else None
-            # TODO: set checked icon for selected operators as well.
-            operators = [Mode(op.name, op.verbose_name) for op in filter_strategy.get_operators()]
-            modes.append(Mode(name, filter_strategy.get_verbose_name(), icon=icon, modes=operators))
+            operator_modes = []
+            for op in filter_strategy.get_operators():
+                mode_name = op.name + '-' + name
+                icon = Icon('check-circle') if mode_name in selected_mode_names else None
+                operator_modes.append(Mode(mode_name, str(op.verbose_name), icon=icon))
+            # Possibly condence filters with only a single operator into a leaf mode to save the user from an additional click.
+            #if len(operator_modes) == 1:
+                #modes.append(Mode(mode_name, str(filter_strategy.get_verbose_name()), icon=icon))
+            #elif
+            if operator_modes:
+                icon = Icon('check-circle') if name in filter_value else None
+                modes.append(Mode(name, str(filter_strategy.get_verbose_name()), icon=icon, modes=operator_modes))
         modes.extend([
             Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
         ])

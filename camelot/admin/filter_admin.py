@@ -18,14 +18,17 @@ class FilterValueAdmin(ObjectAdmin):
 
     verbose_name = _('Filter')
 
-    form_display = forms.GridForm([ ['operator_prefix', 'value_1'],
-                                    ['operator_infix',  'value_2']])
+    form_display = forms.Form([
+        forms.GridForm([ ['operator_prefix', 'value_1'],
+                         ['operator_infix',  'value_2']]),
+        forms.Stretch()])
+
     field_attributes = {
         'operator_prefix': {'editable': False, 'delegate': delegates.LabelDelegate},
-        'value_1': {'editable': True},
-        # 2nd filter value (i.e. 3rd operand) and operator infix should only be visible in case of a ternary operator (arity >= 3):
-        'operator_infix': {'editable': False, 'delegate': delegates.LabelDelegate, 'visible': lambda o: o.operator.arity > 2},
-        'value_2': {'editable': True, 'visible': lambda o: o.operator.arity > 2},
+        'value_1': {'editable': True, 'nullable': False},
+        # 2nd filter value (i.e. 3rd operand) and operator infix should only be visible in case of a ternary operator (min arity >= 3):
+        'operator_infix': {'editable': False, 'delegate': delegates.LabelDelegate, 'visible': lambda o: o.operator.arity.minimum > 2},
+        'value_2': {'editable': True, 'visible': lambda o: o.operator.arity.minimum > 2, 'nullable': lambda o: o.operator.arity.minimum <= 2},
     }
 
     def __init__(self, app_admin, entity):
@@ -38,18 +41,20 @@ class FilterValueAdmin(ObjectAdmin):
 # Create and register filter value classes and related admins for each filter strategy
 # that has not got one registered already.
 for strategy_cls, delegate in [
-    (list_filter.StringFilter,  delegates.PlainTextDelegate),
-    (list_filter.BoolFilter,    delegates.BoolDelegate),
-    (list_filter.DateFilter,    delegates.DateDelegate),
-    (list_filter.DecimalFilter, delegates.FloatDelegate),
-    (list_filter.IntFilter,     delegates.IntegerDelegate),
-    (list_filter.TimeFilter,    delegates.TimeDelegate),
-    (list_filter.RelatedFilter, delegates.PlainTextDelegate),
-    (list_filter.ChoicesFilter, delegates.ComboBoxDelegate),
-    (list_filter.MonthsFilter,  delegates.MonthsDelegate)
+    (list_filter.StringFilter,   delegates.PlainTextDelegate),
+    (list_filter.BoolFilter,     delegates.BoolDelegate),
+    (list_filter.DateFilter,     delegates.DateDelegate),
+    (list_filter.DecimalFilter,  delegates.FloatDelegate),
+    (list_filter.IntFilter,      delegates.IntegerDelegate),
+    (list_filter.TimeFilter,     delegates.TimeDelegate),
+    (list_filter.RelatedFilter,  delegates.PlainTextDelegate),
+    (list_filter.ChoicesFilter,  delegates.ComboBoxDelegate),
+    (list_filter.MonthsFilter,   delegates.MonthsDelegate),
+    (list_filter.Many2OneFilter, delegates.Many2OneDelegate),
+    (list_filter.One2ManyFilter, delegates.Many2OneDelegate),
     ]:
     try:
-        FilterValue.get_filter_value(strategy_cls)
+        FilterValue.for_strategy(strategy_cls)
     except Exception:
         cls_name = "%sValue" % strategy_cls.__name__
         new_value_cls = type(cls_name, (FilterValue,), {})
