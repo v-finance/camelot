@@ -80,14 +80,13 @@ strictly to the :class:`ModelContext`
                  or :keyword:`None`
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
-        window = self.get_window()
-        if window is not None:
-            progress_dialog = window.property('application_progress')
-            if progress_dialog is None:
-                progress_dialog = ProgressDialog(None) #(parent=window) FIXME
-                transferto(progress_dialog, progress_dialog) # FIXME -> replace with qml
-                window.setProperty('application_progress', progress_dialog)
-            return progress_dialog
+        app = QtWidgets.QApplication.instance()
+        progress_dialog = app.property('application_progress')
+        if progress_dialog is None:
+            progress_dialog = ProgressDialog(None) #(parent=window) FIXME
+            transferto(progress_dialog, progress_dialog) # FIXME -> replace with qml
+            app.setProperty('application_progress', progress_dialog)
+        return progress_dialog
 
     def get_window(self):
         """
