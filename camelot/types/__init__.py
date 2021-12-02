@@ -169,6 +169,23 @@ used too much memory, so now it's implemented using QT.
     def __repr__(self):
         return 'Language()'
 
+class Color(types.TypeDecorator):
+    """
+    Colors are stored as hexidecimal color codes in the database.
+    """
+
+    impl = types.Unicode
+
+    def __init__(self):
+        types.TypeDecorator.__init__(self, length=20)
+
+    @property
+    def python_type(self):
+        return self.impl.python_type
+
+    def __repr__(self):
+        return 'Color()'
+
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
   strings.  This allows efficient storage and querying while preserving readable code.
