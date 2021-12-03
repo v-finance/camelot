@@ -177,7 +177,7 @@ class Color(types.TypeDecorator):
     impl = types.Unicode
 
     def __init__(self):
-        types.TypeDecorator.__init__(self, length=20)
+        types.TypeDecorator.__init__(self, length=7)
 
     @property
     def python_type(self):
