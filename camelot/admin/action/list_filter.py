@@ -847,7 +847,7 @@ class One2ManyFilter(RelatedFilter):
     def get_clause(self, admin, session, operator, *operands):
         # Explicity support for the is_empty and is_not_empty operators on the one2many relation.
         # In this case, the underlying field filters are not needed and the related query's join is enough.
-        # So if suffices for the resulting clause to check if the entity's id is in the related query (or not).
+        # So it suffices for the resulting clause to check if the entity's id is in the related query (or not).
         if operator in (Operator.is_empty, Operator.is_not_empty):
             related_query = self.get_related_query(admin, session)
             related_query = related_query.subquery()
