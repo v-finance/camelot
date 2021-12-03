@@ -534,6 +534,14 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_strategy in self.field_filters:
             return field_strategy.get_search_operator()
 
+    def get_related_query(self, admin, session):
+        related_query = session.query(admin.entity.id)
+        for join in self.joins:
+            related_query = related_query.join(join)
+        if self.where is not None:
+            related_query.filter(self.where)
+        return related_query
+
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and value, within the given admin and session.
@@ -544,13 +552,7 @@ class RelatedFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         operands = [self.from_string(admin, session, op) for op in operands]
-        related_query = session.query(admin.entity.id)
-
-        for join in self.joins:
-            related_query = related_query.join(join)
-
-        if self.where is not None:
-            related_query.filter(self.where)
+        related_query = self.get_related_query(admin, session)
 
         field_filter_clauses = []
         for field_strategy in self.field_filters:
