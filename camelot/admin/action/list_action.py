@@ -1027,10 +1027,10 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('filter')
     name = 'filter'
 
-    def get_filter_strategies(self, model_context):
+    def get_filter_strategies(self, model_context, priority_level=None):
         """:return: a list of field strategies the user can select."""
-        filter_strategies = list(model_context.admin.get_field_filters().items())
-        filter_strategies.sort(key=lambda choice:str(choice[1].get_verbose_name()))
+        filter_strategies = list(model_context.admin.get_field_filters(priority_level).items())
+        filter_strategies.sort(key=lambda choice:(choice[1].priority_level.value, str(choice[1].get_verbose_name())))
         return filter_strategies
 
     def model_run( self, model_context, mode ):
