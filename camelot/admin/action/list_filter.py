@@ -325,7 +325,7 @@ class AbstractFilterStrategy(object):
         max_operands = operator.arity.maximum - 1 if operator.arity.maximum is not None else len(operands)
         assert min_operands <= len(operands) <= max_operands, cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), min_operands, max_operands)
 
-    def __init__(self, key, where=None, verbose_name=None):
+    def __init__(self, key, where=None, verbose_name=None, **field_attributes):
         """
         :param key: String that identifies this filter strategy instance within the context of an admin/entity.
         :param where: an optional additional condition that should be met for the filter clause to apply.
@@ -418,7 +418,7 @@ class FieldFilter(AbstractFilterStrategy):
         """
         self.assert_valid_attribute(attribute)
         key = key or attribute.key
-        super().__init__(key, where, verbose_name)
+        super().__init__(key, where, verbose_name, **field_attributes)
         self.attribute = attribute
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
@@ -507,7 +507,7 @@ class RelatedFilter(AbstractFilterStrategy):
     name = 'related_filter'
     connective_operator = Operator.and_
 
-    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
+    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None, **field_attributes):
         """
         :param field_filters: field filter strategies for the fields on which this related filter should apply.
         :param joins: join definition between the entity on which the query this related filter is part of takes place,
@@ -518,7 +518,7 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_search in field_filters:
             assert isinstance(field_search, FieldFilter), self.AssertionMessage.invalid_field_filters.value
         key = key or field_filters[0].key
-        super().__init__(key, where, verbose_name)
+        super().__init__(key, where, verbose_name, **field_attributes)
         self.field_filters = field_filters
         self.joins = joins
 
@@ -597,8 +597,8 @@ class NoFilter(FieldFilter):
 
     name = 'no_filter'
 
-    def __init__(self, attribute, **kwargs):
-        super().__init__(attribute, key=str(attribute), **kwargs)
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+        super().__init__(attribute, where, key or str(attribute), verbose_name, **field_attributes)
 
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -808,7 +808,7 @@ class One2ManyFilter(RelatedFilter):
     name = 'one2many_filter'
     operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
 
-    def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None):
+    def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty), self.AssertionMessage.invalid_relationship_attribute.value
         self.entity = attribute.prop.entity.entity
@@ -816,7 +816,7 @@ class One2ManyFilter(RelatedFilter):
         entity_mapper = orm.class_mapper(self.entity)
         self.primary_key_attributes = [entity_mapper.get_property_by_column(pk).class_attribute for pk in entity_mapper.primary_key]
         field_filters = field_filters or [IntFilter(primary_key_attribute) for primary_key_attribute in self.primary_key_attributes]
-        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name)
+        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name, **field_attributes)
 
     def from_string(self, admin, session, operand):
         """
