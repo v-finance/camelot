@@ -212,6 +212,11 @@ class ComboBoxFilter(Filter):
 
 arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
+class PriorityLevel(enum.Enum):
+
+    HIGH = 1
+    MEDIUM = 2
+
 class Arity(enum.Enum):
     """
     Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
