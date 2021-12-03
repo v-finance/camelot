@@ -52,7 +52,7 @@ class DefaultEnvironment( Environment ):
     def __repr__( self ):
         return '<camelot.core.templates.environment>'
     
-environment = DefaultEnvironment( loader = loader )
+environment = DefaultEnvironment( loader = loader, extensions=['jinja2.ext.i18n'])
 
 
 
