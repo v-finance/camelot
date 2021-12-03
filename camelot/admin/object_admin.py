@@ -802,12 +802,12 @@ be specified using the verbose_name attribute.
         descriptor = self._get_entity_descriptor(field_name)
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
-        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldFilter):
-            field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.AbstractFilterStrategy):
+            field_attributes['filter_strategy'] = filter_strategy(attribute, verbose_name=field_attributes.get('name'), **field_attributes)
         search_strategy = field_attributes['search_strategy']
-        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldFilter):
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.AbstractFilterStrategy):
             field_attributes['search_strategy'] = search_strategy(attribute)
-    
+
     def _get_entity_descriptor(self, field_name):
         return getattr(self.entity, field_name, None)
     
