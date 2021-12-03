@@ -806,7 +806,7 @@ class One2ManyFilter(RelatedFilter):
     """
 
     name = 'one2many_filter'
-    operators = (Operator.in_,)
+    operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
 
     def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
@@ -832,6 +832,19 @@ class One2ManyFilter(RelatedFilter):
         """
         assert isinstance(operand, self.entity), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
         return field_strategy.attribute.__get__(operand, None)
+
+    def get_clause(self, admin, session, operator, *operands):
+        # Explicity support for the is_empty and is_not_empty operators on the one2many relation.
+        # In this case, the underlying field filters are not needed and the related query's join is enough.
+        # So if suffices for the resulting clause to check if the entity's id is in the related query (or not).
+        if operator in (Operator.is_empty, Operator.is_not_empty):
+            related_query = self.get_related_query(admin, session)
+            related_query = related_query.subquery()
+            if operator == Operator.is_empty:
+                return admin.entity.id.notin_(related_query)
+            else:
+                return admin.entity.id.in_(related_query)
+        return super().get_clause(admin, session, operator, *operands)
 
     def get_field_strategy(self):
         return self
