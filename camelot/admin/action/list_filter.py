@@ -338,6 +338,7 @@ class AbstractFilterStrategy(object):
         :param priority_level: indicates the level of priority of this filter strategy e.g. to seperate the set of frequently used ones from others.
         """
         assert isinstance(key, str)
+        assert isinstance(priority_level, PriorityLevel)
         self._key = key
         self.where = where
         self._verbose_name = verbose_name
