@@ -1067,16 +1067,18 @@ be specified using the verbose_name attribute.
         """Set the given discriminator value on the provided obj."""
         pass
     
-    def get_field_filters(self):
+    def get_field_filters(self, priority_level=None):
         """
         Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
         This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoFilter strategies and concrete field strategies are not applicable for regular objects.
         The resulting dictionary is cached so that the conversion is not executed needlessly.
         """
         if self._field_filters is None:
-            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
+            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies(priority_level) if not isinstance(strategy, list_filter.NoFilter)}
         return self._field_filters
 
-    def _get_field_strategies(self):
+    def _get_field_strategies(self, priority_level=None):
         """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        if priority_level is not None:
+            return [strategy for strategy in self.field_filter if strategy.priority_level == priority_level]
         return self.field_filter
