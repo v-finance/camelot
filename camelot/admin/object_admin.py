@@ -803,7 +803,7 @@ be specified using the verbose_name attribute.
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
         if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.AbstractFilterStrategy):
-            field_attributes['filter_strategy'] = filter_strategy(attribute, verbose_name=field_attributes.get('name'), **field_attributes)
+            field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
         search_strategy = field_attributes['search_strategy']
         if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.AbstractFilterStrategy):
             field_attributes['search_strategy'] = search_strategy(attribute)

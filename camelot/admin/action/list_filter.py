@@ -824,7 +824,10 @@ class One2ManyFilter(RelatedFilter):
         entity_mapper = orm.class_mapper(self.entity)
         self.primary_key_attributes = [entity_mapper.get_property_by_column(pk).class_attribute for pk in entity_mapper.primary_key]
         field_filters = field_filters or [IntFilter(primary_key_attribute) for primary_key_attribute in self.primary_key_attributes]
-        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name, priority_level=priority_level, **field_attributes)
+        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key,
+                         verbose_name=(verbose_name or field_attributes.get('name')),
+                         priority_level=priority_level,
+                         **field_attributes)
 
     def from_string(self, admin, session, operand):
         """
