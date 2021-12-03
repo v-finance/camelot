@@ -365,7 +365,6 @@ and used as a custom action.
                     raise Exception('RelationshipProperty has unknown direction')
 
                 if property.uselist == True:
-                    relationship_attribute = self._get_entity_descriptor(field_name)
                     attributes.update(
                         delegate = delegates.One2ManyDelegate,
                         python_type = list,
