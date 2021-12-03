@@ -368,7 +368,6 @@ and used as a custom action.
                     relationship_attribute = self._get_entity_descriptor(field_name)
                     attributes.update(
                         delegate = delegates.One2ManyDelegate,
-                        filter_strategy = list_filter.One2ManyFilter(relationship_attribute, verbose_name=attributes.get('name')),
                         python_type = list,
                         create_inline = False,
                     )
