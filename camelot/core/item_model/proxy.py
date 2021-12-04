@@ -39,7 +39,8 @@ Each different type of model that needs to be displayed in Camelot should implem
 it's own concrete `ModelProxy`.  Camelot has a built in `ModelProxy` for pure
 python lists and for sqlalchemy query objects.
 
-The model proxy classes should be used in the model thread.
+The model proxy classes should be used in the model thread, but they
+can be constructed in the gui thread.
 
 This module defines the `AbstractModelProxy` interface class.
 Concrete model proxy classes should implement this interface to be usable
@@ -48,13 +49,8 @@ by the `QAbstractItemModel`.
 The proxy guarantees temporary consistency, meaning that as long as no sort, add,
 remove or filter operation is applied on the proxy, an object returned at an index
 by the proxy will stay at this index, even when the model has changed.
-
-`AbstractModelProxy` holds the global `indexed_ids` class attribute which tracks the
-object id of objects that are indexed by a proxy.
-
 """
 
-import weakref
 
 class AbstractModelFilter(object):
 
@@ -69,8 +65,6 @@ class AbstractModelFilter(object):
 
 
 class AbstractModelProxy(object):
-
-    indexed_ids = weakref.WeakValueDictionary()
 
     def __len__(self):
         """

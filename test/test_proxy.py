@@ -104,7 +104,6 @@ class ListModelProxyCase(unittest.TestCase):
         # a new object is created, and the proxy is unaware
         obj = self.create_object()
         self.assertEqual(len(self.proxy), initial_length)
-        self.assertNotIn(id(obj), self.proxy.indexed_ids)
         # append the new object to the collection without going
         # through the proxy
         self.append_object_to_collection(obj)
@@ -119,7 +118,6 @@ class ListModelProxyCase(unittest.TestCase):
         # if the object was found, so the length of the proxy has changed
         if i is not None:
             self.assertEqual(len(self.proxy), initial_length+1)
-            self.assertIn(id(obj), self.proxy.indexed_ids)
 
     def test_length(self):
         self.assertTrue(len(self.proxy))
@@ -136,7 +134,6 @@ class ListModelProxyCase(unittest.TestCase):
         self.proxy.append(obj)
         self.proxy.append(obj)
         self.assertEqual(len(self.proxy), size+1)
-        self.assertIn(id(obj), self.proxy.indexed_ids)
         # append an existing object
         first_obj = list(self.proxy[0:1])[0]
         self.proxy.append(first_obj)

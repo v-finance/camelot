@@ -115,9 +115,6 @@ class ListModelProxy(AbstractModelProxy, dict):
         if obj not in self._objects:
             self._objects.append(obj)
             self._length = None
-            # while the object is not yet indexed, it will be at first access,
-            # so we want to be able to retrieve it by id
-            self.indexed_ids[id(obj)] = obj
 
     def remove(self, obj):
         assert not isinstance(obj, assert_value_objects)
@@ -142,8 +139,7 @@ class ListModelProxy(AbstractModelProxy, dict):
                 # So in this case we reassign the new object a new index at the end:
                 i = len(self._indexed_objects) // 2
             self._indexed_objects[i] = obj
-            self.indexed_ids[id(obj)] = obj
-
+            
             # now the length is outdated
             self._length = None
             return i
