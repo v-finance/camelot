@@ -60,7 +60,8 @@ from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
 from ...core.item_model import (
     ObjectRole, FieldAttributesRole, PreviewRole, 
     AbstractModelProxy, CompletionPrefixRole, ActionRoutesRole,
-    ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole
+    ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole,
+    ActionModeRole,
 )
 from ..crud_action import ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData, SetData, SetColumns, Sort, Update
 from ..crud_signals import CrudSignalHandler
@@ -87,6 +88,7 @@ invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
 invalid_item.setData('[]', ActionRoutesRole)
 invalid_item.setData('[]', ActionStatesRole)
+invalid_item.setData(invalid_data, ActionModeRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -245,6 +247,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         role_names[ActionStatesRole] = b'action_states'
         role_names[Qt.ItemDataRole.BackgroundRole] = b'background'
         role_names[Qt.ItemDataRole.TextAlignmentRole] = b'text_alignment'
+        role_names[ActionModeRole] = b'action_mode'
         return role_names
     #
     # end or reimplementation
@@ -638,6 +641,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self._append_request(
                 Completion(), {'row': index.row(), 'column': index.column(), 'prefix': value}
             )
+        elif role == ActionModeRole:
+            logger.info('action mode set :' + str(value))
         return True
 
     def get_admin( self ):
