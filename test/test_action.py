@@ -492,7 +492,7 @@ class ListActionsCase(
     def track_crud_steps(action, model_context):
         created = updated = None
         steps = []
-        for step in action.model_run(model_context):
+        for step in action.model_run(model_context, None):
             steps.append(type(step))
             if isinstance(step, action_steps.CreateObjects):
                 created = step.objects_created if created is None else created.extend(step.objects_created)
@@ -518,7 +518,7 @@ class ListActionsCase(
         model_context.selection = [None, None]
         model_context.selection_count = 2
         with self.assertRaises(UserException) as exc:
-            list(action.model_run(model_context))
+            list(action.model_run(model_context, None))
         self.assertEqual(exc.exception.text, action.Message.no_single_selection.value) 
         # ...and selecting None has no side-effects.
         model_context.selection = []
