@@ -44,6 +44,7 @@ returned and an update signal is emitted when the correct data is available.
 #
 import collections
 import itertools
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,10 @@ from ...core.item_model import (
     ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole,
     ActionModeRole,
 )
-from ..crud_action import ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData, SetData, SetColumns, Sort, Update
+from ..crud_action import (
+    ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData,
+    SetData, SetColumns, Sort, Update, run_field_action
+)
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
@@ -642,7 +646,18 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 Completion(), {'row': index.row(), 'column': index.column(), 'prefix': value}
             )
         elif role == ActionModeRole:
-            logger.info('action mode set :' + str(value))
+            value = json.loads(value)
+            row = index.row()
+            obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
+            self._append_request(
+                run_field_action, {
+                    'row': row,
+                    'column': index.column(),
+                    'object': obj_id,
+                    'action_route': value[0],
+                    'action_mode': value[1],
+                }
+            )
         return True
 
     def get_admin( self ):
