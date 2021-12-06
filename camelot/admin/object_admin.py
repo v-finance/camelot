@@ -802,12 +802,12 @@ be specified using the verbose_name attribute.
         descriptor = self._get_entity_descriptor(field_name)
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
-        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldFilter):
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.AbstractFilterStrategy):
             field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
         search_strategy = field_attributes['search_strategy']
-        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldFilter):
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.AbstractFilterStrategy):
             field_attributes['search_strategy'] = search_strategy(attribute)
-    
+
     def _get_entity_descriptor(self, field_name):
         return getattr(self.entity, field_name, None)
     
@@ -1067,16 +1067,18 @@ be specified using the verbose_name attribute.
         """Set the given discriminator value on the provided obj."""
         pass
     
-    def get_field_filters(self):
+    def get_field_filters(self, priority_level=None):
         """
         Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
         This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoFilter strategies and concrete field strategies are not applicable for regular objects.
         The resulting dictionary is cached so that the conversion is not executed needlessly.
         """
         if self._field_filters is None:
-            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
+            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies(priority_level) if not isinstance(strategy, list_filter.NoFilter)}
         return self._field_filters
 
-    def _get_field_strategies(self):
+    def _get_field_strategies(self, priority_level=None):
         """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        if priority_level is not None:
+            return [strategy for strategy in self.field_filter if strategy.priority_level == priority_level]
         return self.field_filter
