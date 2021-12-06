@@ -94,11 +94,10 @@ class QmlActionDispatch(QtCore.QObject):
 
 
     def register(self, gui_context):
-        print('register_context:', gui_context)
-        #if gui_context.context_id is not None:
-        #    return gui_context.context_id
+        if gui_context.context_id is not None:
+            if id(self.gui_contexts[gui_context.context_id]) == id(gui_context):
+                return gui_context.context_id
         context_id = self._context_ids.__next__()
-        print('    id -->', context_id)
         self.gui_contexts[context_id] = gui_context
         gui_context.context_id = context_id
         return context_id
