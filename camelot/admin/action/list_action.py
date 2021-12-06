@@ -1098,9 +1098,9 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
-        # TODO: only show clear filter mode if any filters are active
-        #if len(filter_value):
-        modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
+        # Only show clear filter mode if any filters are active
+        if len(filter_value):
+            modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
         selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
             operator_modes = []
