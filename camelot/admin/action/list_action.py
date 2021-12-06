@@ -1027,10 +1027,10 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('filter')
     name = 'filter'
 
-    def get_filter_strategies(self, model_context):
+    def get_filter_strategies(self, model_context, priority_level=None):
         """:return: a list of field strategies the user can select."""
-        filter_strategies = list(model_context.admin.get_field_filters().items())
-        filter_strategies.sort(key=lambda choice:str(choice[1].get_verbose_name()))
+        filter_strategies = list(model_context.admin.get_field_filters(priority_level).items())
+        filter_strategies.sort(key=lambda choice:(choice[1].priority_level.value, str(choice[1].get_verbose_name())))
         return filter_strategies
 
     def model_run( self, model_context, mode ):
@@ -1098,6 +1098,9 @@ class SetFilters(Action, AbstractModelFilter):
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
+        # Only show clear filter mode if any filters are active
+        if len(filter_value):
+            modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
         selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
             operator_modes = []
@@ -1105,16 +1108,9 @@ class SetFilters(Action, AbstractModelFilter):
                 mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
                 operator_modes.append(Mode(mode_name, str(op.verbose_name), icon=icon))
-            # Possibly condence filters with only a single operator into a leaf mode to save the user from an additional click.
-            #if len(operator_modes) == 1:
-                #modes.append(Mode(mode_name, str(filter_strategy.get_verbose_name()), icon=icon))
-            #elif
             if operator_modes:
                 icon = Icon('check-circle') if name in filter_value else None
                 modes.append(Mode(name, str(filter_strategy.get_verbose_name()), icon=icon, modes=operator_modes))
-        modes.extend([
-            Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
-        ])
         self.admin = model_context.admin
         return state
 

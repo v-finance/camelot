@@ -365,10 +365,8 @@ and used as a custom action.
                     raise Exception('RelationshipProperty has unknown direction')
 
                 if property.uselist == True:
-                    relationship_attribute = self._get_entity_descriptor(field_name)
                     attributes.update(
                         delegate = delegates.One2ManyDelegate,
-                        filter_strategy = list_filter.One2ManyFilter(relationship_attribute, verbose_name=attributes.get('name')),
                         python_type = list,
                         create_inline = False,
                     )
@@ -763,7 +761,7 @@ and used as a custom action.
             return True
         return editable
 
-    def _get_field_strategies(self):
+    def _get_field_strategies(self, priority_level=None):
         """
         Return this admins available field filter strategies.
         By default, this returns the ´field_filter´ attribute, expanded with the corresponding filter strategies for this admin's entity mapper columns if basic filtering is enabled.
@@ -779,4 +777,7 @@ and used as a custom action.
             if relationship_property.direction == orm.interfaces.MANYTOONE or relationship_property.uselist:
                 field_attributes = self.get_field_attributes(relationship_property.key)
                 field_strategies.append(field_attributes.get('filter_strategy'))
+
+        if priority_level is not None:
+            return [strategy for strategy in field_strategies if strategy.priority_level == priority_level]
         return field_strategies

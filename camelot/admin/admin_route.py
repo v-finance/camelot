@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-import collections
 import itertools
 import logging
 import typing
 
 from ..admin.action.base import RenderHint
 from ..core.exception import UserException
+from ..core.naming import NamingContext
 from ..core.utils import ugettext
 from ..core.serializable import DataclassSerializable
 
@@ -30,16 +30,7 @@ class AdminRoute(object):
     """
 
     _admin_counter = itertools.count()
-    _admin_routes = collections.defaultdict(dict)
-
-    @classmethod
-    def verbose_route(cls, route):
-        return '/'.join(route)
-
-    @classmethod
-    def dump_routes(cls):
-        for route in cls._admin_routes.keys():
-            LOGGER.info(cls.verbose_route(route))
+    _admin_routes = NamingContext()
 
     @classmethod
     def admin_for(cls, route):
@@ -50,9 +41,9 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = cls._admin_routes[route]
+            admin = cls._admin_routes.resolve(route)
         except KeyError:
-            cls.dump_routes()
+            cls._admin_routes.dump_names()
             raise UserException(
                 ugettext('Admin no longer available'),
                 resolution=ugettext('Restart the application'),
@@ -75,7 +66,7 @@ class AdminRoute(object):
         # be used as a reference to store settings
         admin_route = ('admin', str(next_admin), admin.get_name())
         LOGGER.debug('Register admin route: {} -> {}'.format(admin_route, admin))
-        cls._admin_routes[admin_route] = admin
+        cls._admin_routes.bind(admin_route, admin)
         return admin_route
 
     @classmethod
@@ -87,9 +78,9 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = cls._admin_routes[route]
+            admin = cls._admin_routes.resolve(route)
         except KeyError:
-            cls.dump_routes()
+            cls._admin_routes.dump_names()
             raise UserException(
                 ugettext('Action no longer available'),
                 resolution=ugettext('Restart the application'),
@@ -128,9 +119,9 @@ class AdminRoute(object):
         assert isinstance(field_name, str)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
-        assert action_route not in cls._admin_routes, cls.verbose_route(action_route) + ' registered before'
+        assert action_route not in cls._admin_routes, NamingContext.verbose_name(action_route) + ' registered before'
         LOGGER.debug('Register field action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes[action_route] = action
+        cls._admin_routes.bind(action_route, action)
         return action_route
 
     @classmethod
@@ -139,9 +130,9 @@ class AdminRoute(object):
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'list', 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes[action_route] = action
+        cls._admin_routes.bind(action_route, action)
         return action_route
 
     @classmethod
@@ -150,9 +141,9 @@ class AdminRoute(object):
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'form', 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes[action_route] = action
+        cls._admin_routes.bind(action_route, action)
         return action_route
 
     @classmethod
@@ -161,9 +152,9 @@ class AdminRoute(object):
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
         action_route = (*admin_route, 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes[action_route]==action), cls.verbose_route(action_route) + ' registered before with a different action : ' + type(action).__name__
+        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Register action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes[action_route] = action
+        cls._admin_routes.bind(action_route, action)
         return action_route
 
 def _register_actions_decorator(register_func, attr_admin_route, attr_cache):
