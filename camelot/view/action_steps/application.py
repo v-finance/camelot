@@ -372,9 +372,7 @@ class RemoveTranslators(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        app = QtCore.QCoreApplication.instance()
-        for active_translator in app.findChildren(QtCore.QTranslator):
-            app.removeTranslator(active_translator)
+        qml_action_step(gui_context, 'RemoveTranslators', serialized_step)
 
 @dataclass
 class UpdateActionsState(ActionStep, DataclassSerializable):

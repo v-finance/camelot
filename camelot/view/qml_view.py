@@ -89,7 +89,8 @@ class QmlActionDispatch(QtCore.QObject):
         super().__init__(parent)
         self.gui_contexts = {}
         root_backend = get_qml_root_backend()
-        root_backend.runAction.connect(self.run_action)
+        if root_backend is not None:
+            root_backend.runAction.connect(self.run_action)
 
 
     def register(self, gui_context):
@@ -130,23 +131,15 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context, name, step):
+def qml_action_step(gui_context, name, step, props={}):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
     context_id = qml_action_dispatch.register(gui_context)
     backend = get_qml_root_backend()
-    backend.actionStep(context_id, name, step)
-
-def qml_action_step_item(gui_context, qml_item):
-    """
-    Register the gui_context and execute the action step by specifying a QQuickItem.
-    """
-    global qml_action_dispatch
-    context_id = qml_action_dispatch.register(gui_context)
-    backend = get_qml_root_backend()
-    backend.actionStepItem(context_id, qml_item)
+    backend.actionStep(context_id, name, step, props)
+    return context_id
 
 
 class QmlView(AbstractView):
