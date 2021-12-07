@@ -52,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...admin.action.application_action import ApplicationActionGuiContext
 from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.form_action import FormActionModelContext
@@ -364,13 +365,17 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.error('exception during update {0}'.format(crud_request),
                               exc_info=e
                               )
+
     # Methods to behave like a GuiContext.
     def create_model_context(self):
         return self._model_context
     
     def get_progress_dialog(self):
         pass
-    
+
+    def copy(self, base_class=None):
+        return ApplicationActionGuiContext()
+
     @property
     def mode_name(self):
         return self._mode_name
