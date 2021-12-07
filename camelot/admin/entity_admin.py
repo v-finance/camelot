@@ -41,7 +41,7 @@ from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.memento import memento_change
-from camelot.core.orm import Session
+from camelot.core.orm import Entity, Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
 from camelot.core.qt import Qt
@@ -781,3 +781,6 @@ and used as a custom action.
         if priority_level is not None:
             return [strategy for strategy in field_strategies if strategy.priority_level == priority_level]
         return field_strategies
+
+    def set_discriminator_value(self, obj, discriminator_value):
+        self.entity.set_discriminator_value(obj, discriminator_value)
