@@ -953,6 +953,9 @@ class ListFilterCase(TestMetaData):
 
             class Admin(EntityAdmin):
                 list_display = ['one2many_col']
+                field_attributes = {
+                    'one2many_col':{'filter_strategy': list_filter.One2ManyFilter},
+                }
 
         class A(self.Entity):
 

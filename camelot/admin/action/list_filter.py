@@ -212,6 +212,11 @@ class ComboBoxFilter(Filter):
 
 arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
+class PriorityLevel(enum.Enum):
+
+    HIGH = 1
+    MEDIUM = 2
+
 class Arity(enum.Enum):
     """
     Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
@@ -325,16 +330,19 @@ class AbstractFilterStrategy(object):
         max_operands = operator.arity.maximum - 1 if operator.arity.maximum is not None else len(operands)
         assert min_operands <= len(operands) <= max_operands, cls.AssertionMessage.nr_operands_arity_mismatch.value.format(len(operands), min_operands, max_operands)
 
-    def __init__(self, key, where=None, verbose_name=None):
+    def __init__(self, key, where=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         """
-        :param key: String that identifies this filter strategy instance within the context of an admin/entity.
+        :param key: string that identifies this filter strategy instance within the context of an admin/entity.
         :param where: an optional additional condition that should be met for the filter clause to apply.
-        :param verbose_name: Optional verbose name to override the default verbose name behaviour based on this strategy's key.
+        :param verbose_name: optional verbose name to override the default verbose name behaviour based on this strategy's key.
+        :param priority_level: indicates the level of priority of this filter strategy e.g. to seperate the set of frequently used ones from others.
         """
         assert isinstance(key, str)
+        assert isinstance(priority_level, PriorityLevel)
         self._key = key
         self.where = where
         self._verbose_name = verbose_name
+        self.priority_level = priority_level
 
     def get_clause(self, admin, session, operator, *operands):
         """
@@ -411,14 +419,14 @@ class FieldFilter(AbstractFilterStrategy):
     attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
         """
         self.assert_valid_attribute(attribute)
         key = key or attribute.key
-        super().__init__(key, where, verbose_name)
+        super().__init__(key, where, verbose_name, priority_level, **field_attributes)
         self.attribute = attribute
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
@@ -507,7 +515,7 @@ class RelatedFilter(AbstractFilterStrategy):
     name = 'related_filter'
     connective_operator = Operator.and_
 
-    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None):
+    def __init__(self, *field_filters, joins, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         """
         :param field_filters: field filter strategies for the fields on which this related filter should apply.
         :param joins: join definition between the entity on which the query this related filter is part of takes place,
@@ -518,7 +526,7 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_search in field_filters:
             assert isinstance(field_search, FieldFilter), self.AssertionMessage.invalid_field_filters.value
         key = key or field_filters[0].key
-        super().__init__(key, where, verbose_name)
+        super().__init__(key, where, verbose_name, priority_level, **field_attributes)
         self.field_filters = field_filters
         self.joins = joins
 
@@ -534,6 +542,14 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_strategy in self.field_filters:
             return field_strategy.get_search_operator()
 
+    def get_related_query(self, admin, session):
+        related_query = session.query(admin.entity.id)
+        for join in self.joins:
+            related_query = related_query.join(join)
+        if self.where is not None:
+            related_query.filter(self.where)
+        return related_query
+
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and value, within the given admin and session.
@@ -544,13 +560,7 @@ class RelatedFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         operands = [self.from_string(admin, session, op) for op in operands]
-        related_query = session.query(admin.entity.id)
-
-        for join in self.joins:
-            related_query = related_query.join(join)
-
-        if self.where is not None:
-            related_query.filter(self.where)
+        related_query = self.get_related_query(admin, session)
 
         field_filter_clauses = []
         for field_strategy in self.field_filters:
@@ -595,8 +605,8 @@ class NoFilter(FieldFilter):
 
     name = 'no_filter'
 
-    def __init__(self, attribute, **kwargs):
-        super().__init__(attribute, key=str(attribute), **kwargs)
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+        super().__init__(attribute, where, key or str(attribute), verbose_name, priority_level, **field_attributes)
 
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -621,8 +631,8 @@ class StringFilter(FieldFilter):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
 
-    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, **kwargs):
-        super().__init__(attribute, where, key, verbose_name, **kwargs)
+    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **kwargs):
+        super().__init__(attribute, where, key, verbose_name, priority_level, **kwargs)
         self.allow_digits = allow_digits
 
     def get_type_clause(self, field_attributes, operator, *operands):
@@ -644,8 +654,8 @@ class DecimalFilter(FieldFilter):
     operators = Operator.numerical_operators()
     _default_from_string = utils.float_from_string
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
-        super().__init__(attribute, where, key, verbose_name, **field_attributes)
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+        super().__init__(attribute, where, key, verbose_name, priority_level, **field_attributes)
         self.precision = field_attributes.get('precision')
 
     def get_type_clause(self, field_attributes, operator, *float_operands):
@@ -758,9 +768,9 @@ class ChoicesFilter(FieldFilter):
     python_type = str
     operators = (Operator.eq, Operator.ne)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         self.python_type = self.get_attribute_python_type(attribute)
-        super().__init__(attribute, where, key, verbose_name)
+        super().__init__(attribute, where, key, verbose_name, priority_level)
         self.choices = field_attributes.get('choices')
 
     def value_to_string(self, filter_value, admin):
@@ -780,7 +790,7 @@ class Many2OneFilter(IntFilter):
     python_type = int
     operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, **field_attributes):
+    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty) and \
                attribute.prop.direction == orm.interfaces.MANYTOONE, self.AssertionMessage.invalid_many2one_relationship_attribute.value
@@ -788,7 +798,7 @@ class Many2OneFilter(IntFilter):
         entity_mapper = orm.class_mapper(attribute.class_)
         foreign_key_col = list(attribute.prop.local_columns)[0]
         foreign_key_attribute = entity_mapper.get_property_by_column(foreign_key_col).class_attribute
-        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')), **field_attributes)
+        super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')), priority_level=priority_level, **field_attributes)
         self.entity = attribute.prop.entity.entity
         self.admin = field_attributes.get('admin')
 
@@ -804,9 +814,9 @@ class One2ManyFilter(RelatedFilter):
     """
 
     name = 'one2many_filter'
-    operators = (Operator.in_,)
+    operators = (Operator.in_, Operator.is_empty, Operator.is_not_empty)
 
-    def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None):
+    def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty), self.AssertionMessage.invalid_relationship_attribute.value
         self.entity = attribute.prop.entity.entity
@@ -814,7 +824,10 @@ class One2ManyFilter(RelatedFilter):
         entity_mapper = orm.class_mapper(self.entity)
         self.primary_key_attributes = [entity_mapper.get_property_by_column(pk).class_attribute for pk in entity_mapper.primary_key]
         field_filters = field_filters or [IntFilter(primary_key_attribute) for primary_key_attribute in self.primary_key_attributes]
-        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key, verbose_name=verbose_name)
+        super().__init__(*field_filters, joins=joins+[attribute], where=where, key=key or attribute.key,
+                         verbose_name=(verbose_name or field_attributes.get('name')),
+                         priority_level=priority_level,
+                         **field_attributes)
 
     def from_string(self, admin, session, operand):
         """
@@ -830,6 +843,19 @@ class One2ManyFilter(RelatedFilter):
         """
         assert isinstance(operand, self.entity), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
         return field_strategy.attribute.__get__(operand, None)
+
+    def get_clause(self, admin, session, operator, *operands):
+        # Explicity support for the is_empty and is_not_empty operators on the one2many relation.
+        # In this case, the underlying field filters are not needed and the related query's join is enough.
+        # So it suffices for the resulting clause to check if the entity's id is in the related query (or not).
+        if operator in (Operator.is_empty, Operator.is_not_empty):
+            related_query = self.get_related_query(admin, session)
+            related_query = related_query.subquery()
+            if operator == Operator.is_empty:
+                return admin.entity.id.notin_(related_query)
+            else:
+                return admin.entity.id.in_(related_query)
+        return super().get_clause(admin, session, operator, *operands)
 
     def get_field_strategy(self):
         return self
