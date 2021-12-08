@@ -108,12 +108,14 @@ class ApplicationActionGuiContext( GuiContext ):
         self.action_routes = {}
     
     def get_progress_dialog(self):
-        from camelot.view.qml_view import get_qml_window
-        window = get_qml_window()
-        if window is not None:
-            progress_dialog = window.findChild(QtCore.QObject, 'qml_progress_dialog')
-            if progress_dialog is not None:
-                return progress_dialog
+        from camelot.view.qml_view import get_qml_window, get_qml_root_backend
+        root_backend = get_qml_root_backend()
+        if not root_backend.isSplash():
+            window = get_qml_window()
+            if window is not None:
+                progress_dialog = window.findChild(QtCore.QObject, 'qml_progress_dialog')
+                if progress_dialog is not None:
+                    return progress_dialog
 
         # return the regular progress dialog
         return super( ApplicationActionGuiContext, self ).get_progress_dialog()
