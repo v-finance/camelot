@@ -1081,7 +1081,7 @@ class SetFilters(Action, AbstractModelFilter):
 
         yield action_steps.SetFilter(self, new_filter_values)
         new_state = self._get_state(model_context, new_filter_values)
-        yield action_steps.UpdateActionsState({self: new_state})
+        yield action_steps.UpdateActionsState(model_context, {self: new_state})
 
     def decorate_query(self, query, values):
         from camelot.admin.action.list_filter import Operator

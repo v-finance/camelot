@@ -203,7 +203,7 @@ class CloseView(ActionStep, DataclassSerializable):
     def gui_run( cls, gui_context, serialized_step ):
         step = json.loads(serialized_step)
         view = gui_context.view
-        if view != None:
+        if view is not None and not is_deleted(view):
             view.close_view( step["accept"] )
 
 @dataclass

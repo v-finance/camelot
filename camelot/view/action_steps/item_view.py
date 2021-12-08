@@ -41,17 +41,16 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore, QtQml, variant_to_py
+from ...core.qt import Qt, QtQuick
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
-from ..controls.action_widget import ActionAction
 from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
 )
-from ..qml_view import create_qml_item
+from ..qml_view import get_qml_window, qml_action_step
 
 
 @dataclass
@@ -250,29 +249,6 @@ class OpenTableView( UpdateTableView ):
         table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
-# FIXME: find a better way to do this...
-class ActionDispatch(QtCore.QObject):
-
-    def __init__(self, gui_context, parent):
-        super().__init__(parent)
-        self.gui_context = gui_context
-
-    def run_action( self, action, mode=None ):
-        gui_context = self.gui_context.copy()
-        if isinstance(mode, QtQml.QJSValue):
-            mode = variant_to_py(mode.toVariant())
-        if isinstance(mode, list):
-            action.gui_run( gui_context, mode )
-        else:
-            gui_context.mode_name = mode
-            action.gui_run( gui_context )
-
-    def qml_action_triggered(self, route, mode):
-        route = tuple(route.split('/'))
-        print('qml_action_triggered(', route, mode, ')')
-        action = AdminRoute.action_for(route)
-        self.run_action(action, mode)
-
 
 @dataclass
 class OpenQmlTableView(OpenTableView):
@@ -294,10 +270,16 @@ class OpenQmlTableView(OpenTableView):
         self.list_action = admin.get_list_action()
 
     @classmethod
-    def render(cls, gui_context, step, engine):
-        # create header model & model
-        header_model = QtCore.QStringListModel()
-        header_model.setStringList(step['columns'])
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+
+        class QmlListActionGuiContext(ListActionGuiContext):
+
+            def get_progress_dialog(self):
+                return ApplicationActionGuiContext.get_progress_dialog(self)
+
+        list_gui_context = gui_context.copy(QmlListActionGuiContext)
+        list_gui_context.admin_route = tuple(step['admin_route'])
 
         new_model = CollectionProxy(tuple(step['admin_route']))
         # filters can have default values, so they need to be set before
@@ -306,57 +288,21 @@ class OpenQmlTableView(OpenTableView):
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
 
-        # create QML item
-        view = create_qml_item(
-            #QtCore.QUrl("qrc:/Vortex/qml/common/TablePage.qml"),
-            QtCore.QUrl("qrc:/Vortex/TableView/TablePage.qml"),
-            { 'model': new_model, 'headerModel': header_model },
-            engine
-        )
-        new_model.setParent(view)
-        header_model.setParent(view)
+        context_id = qml_action_step(list_gui_context, 'OpenTableView',
+                serialized_step, { 'model': new_model })
 
-        # load JSON data into C++ backend
-        view.fromJson(json.dumps(step))
-
-        table = view.findChild(QtCore.QObject, "qml_table")
+        window = get_qml_window()
+        view = window.findChild(QtQuick.QQuickItem, 'qml_table_view_{}'.format(context_id))
+        table = view.findChild(QtQuick.QQuickItem, 'qml_table')
         item_view = ItemViewProxy(table)
 
+        new_model.setParent(view)
 
-        class QmlListActionGuiContext(ListActionGuiContext):
-
-            def get_progress_dialog(self):
-                return ApplicationActionGuiContext.get_progress_dialog(self)
-
-        list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.item_view = item_view
-        list_gui_context.admin_route = tuple(step['admin_route'])
         list_gui_context.view = view
 
-
-        list_action = AdminRoute.action_for(tuple(step['list_action']))
-        qt_action = ActionAction(list_action, list_gui_context, view)
-        table.activated.connect(qt_action.action_triggered, type=Qt.ConnectionType.QueuedConnection)
-
-        action_dispatch = ActionDispatch(list_gui_context, view)
-        view.triggered.connect(action_dispatch.qml_action_triggered, type=Qt.ConnectionType.QueuedConnection)
-
-        # FIXME: make update actions work with C++ backends
         UpdateActions().gui_run(list_gui_context)
 
-        return view
-
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        quick_view = gui_context.workspace.quick_view
-        view = cls.render(gui_context, step, quick_view.engine())
-        # tabs will be destroyed by javascript code
-        quick_view.engine().setObjectOwnership(view, QtQml.QQmlEngine.ObjectOwnership.JavaScriptOwnership)
-        tab_view = quick_view.findChild(QtCore.QObject, "qml_tab_view")
-        assert tab_view
-        tab_view.addTab(step['title'], view)
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):

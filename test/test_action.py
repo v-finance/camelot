@@ -42,7 +42,7 @@ from camelot.view.controls import actionsbox, delegates, tableview
 from camelot.view.controls.action_widget import ActionPushButton
 from camelot.view.controls.tableview import TableView
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
-from camelot.view.workspace import DesktopWorkspace
+from camelot.view.qml_view import get_qml_root_backend
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
 
@@ -111,10 +111,11 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     images_path = test_view.static_images_path
 
     def setUp(self):
+        get_qml_root_backend().setSplash(False)
         self.action = ImportCovers()
         self.admin_route = app_admin.get_admin_route()
-        self.workspace = DesktopWorkspace(self.admin_route, None)
-        self.gui_context = self.workspace.gui_context
+        self.gui_context = ApplicationActionGuiContext()
+        self.gui_context.admin_route = app_admin.get_admin_route()
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -166,9 +167,10 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
+        get_qml_root_backend().setSplash(False)
         self.admin_route = app_admin.get_admin_route()
-        self.workspace = DesktopWorkspace(self.admin_route, None)
-        self.gui_context = self.workspace.gui_context
+        self.gui_context = ApplicationActionGuiContext()
+        self.gui_context.admin_route = self.admin_route
 
     def test_change_object( self ):
         admin = app_admin.get_related_admin(NewProjectOptions)
@@ -873,7 +875,6 @@ class ApplicationActionsCase(
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = application_action.ApplicationActionGuiContext()
         self.gui_context.admin_route = self.admin_route
-        self.gui_context.workspace = DesktopWorkspace(self.admin_route, None)
 
     def test_refresh(self):
         refresh_action = application_action.Refresh()

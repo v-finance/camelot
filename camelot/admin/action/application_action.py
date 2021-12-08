@@ -31,7 +31,7 @@ import logging
 import os
 
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from ..admin_route import AdminRoute
 from .base import RenderHint
@@ -102,29 +102,27 @@ class ApplicationActionGuiContext( GuiContext ):
     
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
+        self.context_id = None
         self.workspace = None
         self.admin_route = None
         self.action_routes = {}
     
     def get_progress_dialog(self):
-        if self.workspace is not None and not is_deleted(self.workspace):
-            view = self.workspace.active_view()
-            if view is not None:
-                if view.objectName() == 'qml_view':
-                    quick_view = view.quick_view
-                    if not is_deleted(quick_view):
-                        # try to return the C++ QML progress dialog
-                        qml_progress_dialog = quick_view.findChild(QtCore.QObject, 'qml_progress_dialog')
-                        if qml_progress_dialog is not None:
-                            return qml_progress_dialog
-
+        from camelot.view.qml_view import get_qml_window, get_qml_root_backend
+        root_backend = get_qml_root_backend()
+        if not root_backend.isSplash():
+            window = get_qml_window()
+            if window is not None:
+                progress_dialog = window.findChild(QtCore.QObject, 'qml_progress_dialog')
+                if progress_dialog is not None:
+                    return progress_dialog
 
         # return the regular progress dialog
         return super( ApplicationActionGuiContext, self ).get_progress_dialog()
 
     def get_window(self):
-        if self.workspace is not None and not is_deleted(self.workspace):
-            return self.workspace.window()
+        from camelot.view.qml_view import get_qml_window
+        return get_qml_window()
 
     def create_model_context(self):
         # the possibility of having no admin class is an aberation, needed
@@ -137,6 +135,7 @@ class ApplicationActionGuiContext( GuiContext ):
         
     def copy(self, base_class=None):
         new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
+        new_context.context_id = self.context_id
         new_context.workspace = self.workspace
         new_context.admin_route = self.admin_route
         new_context.action_routes = dict(self.action_routes)
@@ -150,7 +149,7 @@ class UpdateActions(Action):
         actions_state = dict()
         for action in model_context.actions:
             actions_state[action] = action.get_state(model_context)
-        yield action_steps.UpdateActionsState(actions_state)
+        yield action_steps.UpdateActionsState(model_context, actions_state)
 
 
 class SelectProfile( Action ):
