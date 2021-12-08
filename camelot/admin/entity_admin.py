@@ -783,4 +783,5 @@ and used as a custom action.
         return field_strategies
 
     def set_discriminator_value(self, obj, discriminator_value):
-        self.entity.set_discriminator_value(obj, discriminator_value)
+        if discriminator_value is not None:
+            self.entity.set_discriminator_value(obj, discriminator_value)
