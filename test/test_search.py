@@ -11,7 +11,7 @@ from . import test_orm
 from camelot.admin.action.list_filter import SearchFilter
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.test.action import MockListActionGuiContext, MockModelContext
+from camelot.test.action import MockModelContext
 #
 # build a list of the various column types for which the search functions
 # should be tested
