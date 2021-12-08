@@ -258,6 +258,14 @@ class EntityMeta( DeclarativeMeta ):
                 return getattr(cls, discriminator.key)
             return discriminator
 
+    def set_discriminator_value(cls, entity_instance, discriminator_value):
+        """Set the given entity instance's discriminator with the provided discriminator value."""
+        assert isinstance(entity_instance, cls)
+        discriminator = cls.get_cls_discriminator()
+        if discriminator is not None:
+            assert discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_value)
+            discriminator.__set__(entity_instance, discriminator_value)
+
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
