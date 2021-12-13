@@ -27,10 +27,11 @@
 #
 #  ============================================================================
 
+
 from dataclasses import dataclass, InitVar, field
 import json
 
-from ...core.qt import QtWidgets
+from ...core.qt import QtWidgets, QtCore
 
 from camelot.admin.admin_route import RouteWithRenderHint, AdminRoute
 from camelot.admin.action import ActionStep, Action
@@ -84,9 +85,15 @@ class SelectDialog(QtWidgets.QDialog):
         self.setSizeGripEnabled(True)
         table = TableView(gui_context, admin_route, parent=self)
         table.setObjectName('table_view')
+        table.close_clicked_signal.connect(self.close_view)
         layout.addWidget(table)
         self.setLayout( layout )
         self.objects = []
+
+    @QtCore.qt_slot()
+    def close_view(self):
+        self.reject()
+
 
 @dataclass
 class SelectObjects( OpenTableView ):
