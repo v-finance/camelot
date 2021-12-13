@@ -44,6 +44,7 @@ returned and an update signal is emitted when the correct data is available.
 #
 import collections
 import itertools
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ...admin.action.application_action import ApplicationActionGuiContext
 from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.form_action import FormActionModelContext
@@ -60,9 +62,13 @@ from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
 from ...core.item_model import (
     ObjectRole, FieldAttributesRole, PreviewRole, 
     AbstractModelProxy, CompletionPrefixRole, ActionRoutesRole,
-    ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole
+    ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole,
+    ActionModeRole,
 )
-from ..crud_action import ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData, SetData, SetColumns, Sort, Update
+from ..crud_action import (
+    ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData,
+    SetData, SetColumns, Sort, Update, run_field_action
+)
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
@@ -87,6 +93,7 @@ invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
 invalid_item.setData('[]', ActionRoutesRole)
 invalid_item.setData('[]', ActionStatesRole)
+invalid_item.setData(invalid_data, ActionModeRole)
 
 initial_delay = 50
 maximum_delay = 1000
@@ -245,6 +252,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         role_names[ActionStatesRole] = b'action_states'
         role_names[Qt.ItemDataRole.BackgroundRole] = b'background'
         role_names[Qt.ItemDataRole.TextAlignmentRole] = b'text_alignment'
+        role_names[ActionModeRole] = b'action_mode'
         return role_names
     #
     # end or reimplementation
@@ -357,13 +365,17 @@ class CollectionProxy(QtGui.QStandardItemModel):
             self.logger.error('exception during update {0}'.format(crud_request),
                               exc_info=e
                               )
+
     # Methods to behave like a GuiContext.
     def create_model_context(self):
         return self._model_context
     
     def get_progress_dialog(self):
         pass
-    
+
+    def copy(self, base_class=None):
+        return ApplicationActionGuiContext()
+
     @property
     def mode_name(self):
         return self._mode_name
@@ -637,6 +649,19 @@ class CollectionProxy(QtGui.QStandardItemModel):
         elif role == CompletionPrefixRole:
             self._append_request(
                 Completion(), {'row': index.row(), 'column': index.column(), 'prefix': value}
+            )
+        elif role == ActionModeRole:
+            value = json.loads(value)
+            row = index.row()
+            obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
+            self._append_request(
+                run_field_action, {
+                    'row': row,
+                    'column': index.column(),
+                    'object': obj_id,
+                    'action_route': value[0],
+                    'action_mode': value[1],
+                }
             )
         return True
 
