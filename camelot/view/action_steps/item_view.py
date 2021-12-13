@@ -41,7 +41,7 @@ from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtQuick
+from ...core.qt import Qt, QtCore
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
@@ -50,7 +50,7 @@ from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
 )
-from ..qml_view import get_qml_window, qml_action_step
+from ..qml_view import get_qml_root_backend, qml_action_step
 
 
 @dataclass
@@ -291,15 +291,14 @@ class OpenQmlTableView(OpenTableView):
         context_id = qml_action_step(list_gui_context, 'OpenTableView',
                 serialized_step, { 'model': new_model })
 
-        window = get_qml_window()
-        view = window.findChild(QtQuick.QQuickItem, 'qml_table_view_{}'.format(context_id))
-        table = view.findChild(QtQuick.QQuickItem, 'qml_table')
-        item_view = ItemViewProxy(table)
+        root_backend = get_qml_root_backend()
+        backend = root_backend.findChild(QtCore.QObject, 'qml_table_view_backend_{}'.format(context_id))
+        item_view = ItemViewProxy(backend)
 
-        new_model.setParent(view)
+        new_model.setParent(item_view)
 
         list_gui_context.item_view = item_view
-        list_gui_context.view = view
+        list_gui_context.view = backend.property('view')
 
         UpdateActions().gui_run(list_gui_context)
 

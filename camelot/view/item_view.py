@@ -1,4 +1,5 @@
-from camelot.core.qt import QtQml, QtCore
+from camelot.core.qt import QtCore
+from camelot.view.qml_view import get_qml_window
 
 class ItemViewProxy(QtCore.QObject):
     """
@@ -6,37 +7,25 @@ class ItemViewProxy(QtCore.QObject):
     a qml ListView item.
     """
 
-    def __init__(self, qml_item):
+    def __init__(self, backend):
         super().__init__()
-        self._qml_item = qml_item
-        selection_model = QtCore.QItemSelectionModel(self.model(), qml_item)
-        selection_model.setObjectName('selection_model')
-        qml_item.activated.connect(self._update_current_index)
-
-    @QtCore.qt_slot()
-    def _update_current_index(self):
-        selection_model = self.selectionModel()
-        selection_model.setCurrentIndex(
-            self.currentIndex(), QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
-        )
+        self._backend = backend
 
     def model(self):
-        return self._qml_item.property('model')
-
-    def currentIndex(self):
-        model = self.model()
-        qml_property = QtQml.QQmlProperty(self._qml_item, 'currentIndex')
-        view_index = qml_property.read()
-        return model.index(view_index, 0)
+        return self._backend.property('model')
 
     def selectionModel(self):
-        selection_model = self._qml_item.findChild(
-            QtCore.QItemSelectionModel, 'selection_model'
-        )
-        return selection_model
+        return self._backend.property('selectionModel')
+
+    def currentIndex(self):
+        selection_model = self.selectionModel()
+        if selection_model is not None:
+            return selection_model.property('currentIndex')
+        model = self.model()
+        return model.index(-1, 0)
 
     def window(self):
-        return self._qml_item.window()
+        return get_qml_window()
 
     def close_editor(self):
         pass
