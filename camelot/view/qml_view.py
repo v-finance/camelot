@@ -130,12 +130,16 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context, name, step, props={}):
+def qml_action_step(gui_context, name, step, props={}, keep_context_id=False):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
-    context_id = qml_action_dispatch.register(gui_context)
+    if keep_context_id:
+        assert gui_context.context_id is not None
+        context_id = gui_context.context_id
+    else:
+        context_id = qml_action_dispatch.register(gui_context)
     backend = get_qml_root_backend()
     backend.actionStep(context_id, name, step, props)
     return context_id

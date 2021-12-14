@@ -41,6 +41,7 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 
@@ -201,10 +202,15 @@ class CloseView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
-        step = json.loads(serialized_step)
-        view = gui_context.view
-        if view is not None and not is_deleted(view):
-            view.close_view( step["accept"] )
+        if gui_context.context_id is None:
+            # python implementation, still used for FormView
+            step = json.loads(serialized_step)
+            view = gui_context.view
+            if view is not None and not is_deleted(view):
+                view.close_view( step["accept"] )
+        else:
+            qml_action_step(gui_context, 'CloseView', serialized_step, keep_context_id=True)
+
 
 @dataclass
 class MessageBox( ActionStep, DataclassSerializable ):
