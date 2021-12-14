@@ -4,6 +4,7 @@ import dataclasses
 import io
 import json
 
+from camelot.core.qt import QtGui
 from .utils import ugettext_lazy
 from enum import Enum
 
@@ -53,6 +54,10 @@ class DataclassEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ugettext_lazy):
             return str(obj)
+        if isinstance(obj, QtGui.QKeySequence):
+            return obj.toString()
+        if isinstance(obj, QtGui.QKeySequence.StandardKey):
+            return QtGui.QKeySequence(obj).toString()
         if isinstance(obj, Enum):
             return obj.value
         return json.JSONEncoder.default(self, obj)
