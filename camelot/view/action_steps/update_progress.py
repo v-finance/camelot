@@ -117,11 +117,8 @@ updated.
                     raise CancelRequest()
             else:
                 # C++ QmlProgressDialog
-                obj = QtCore.QByteArray(serialized_step)
-                result_json = progress_dialog.render([], obj)
-                # process returned json
-                result = json.loads(result_json.data())
-                if result.get('was_canceled', False):
+                progress_dialog.fromJson(serialized_step)
+                if progress_dialog.wasCanceled():
                     # reset progress dialog
-                    progress_dialog.render([], QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
+                    progress_dialog.fromJson(QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
                     raise CancelRequest()

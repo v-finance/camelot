@@ -47,7 +47,7 @@ class SourceQualityCase( unittest.TestCase ):
 
         for dirpath, filename in self.walk_source_files():
             code = open( os.path.join( dirpath, filename ) ).read()
-            if filename=='qt.py':
+            if filename in ['qt.py', 'serializable.py']:
                 continue
             for expr in qt_incompatible:
                 if expr in code:
