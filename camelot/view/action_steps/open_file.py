@@ -30,14 +30,19 @@ import json
 
 from dataclasses import dataclass
 
+import os
+
 from ...core.qt import QtCore, QtGui
   
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
+from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.exception import UserException
 
 from io import BytesIO
 
 from ...core.serializable import DataclassSerializable
+
 
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
@@ -82,11 +87,28 @@ class OpenFile( ActionStep, DataclassSerializable ):
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
         step = json.loads(serialized_step)
-        # support for windows shares
-        if not step["path"].startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile( step["path"] )
+        path = step['path']
+        if not os.path.isfile(path):
+            raise UserException(
+                _('Could not open file'),
+                detail=ugettext('"%s" is not a file') % path
+            )
+        # Test if file is readable, both os.access and QFileInfo.isReadable
+        # can result in false positives on windows.
+        f = QtCore.QFile(path)
+        if f.open(QtCore.QIODevice.ReadOnly):
+            f.close()
         else:
-            url = QtCore.QUrl( step["path"], QtCore.QUrl.ParsingMode.TolerantMode )
+            raise UserException(
+                _('Could not open file'),
+                detail=ugettext('"%s" is not readable') % path
+            )
+        #
+        # support for windows shares
+        if not path.startswith(r'\\'):
+            url = QtCore.QUrl.fromLocalFile(path)
+        else:
+            url = QtCore.QUrl(path, QtCore.QUrl.ParsingMode.TolerantMode)
         return QtGui.QDesktopServices.openUrl( url )
     
 class OpenStream( OpenFile ):
