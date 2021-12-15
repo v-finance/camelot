@@ -35,10 +35,7 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
-from ..core.qt import QtCore, QtGui, QtWidgets, transferto
-from camelot.admin.action import ApplicationActionGuiContext
-from camelot.view.model_thread import object_thread
-from camelot.view.qml_view import QmlView
+from ..core.qt import QtCore, QtWidgets, transferto
 
 
 top_level_windows = []
