@@ -119,7 +119,7 @@ class Application( Action ):
         from ...core.conf import settings
         from ...core.utils import load_translations
         from ...view import action_steps
-        yield action_steps.MainWindow(self.application_admin)
+        yield action_steps.QmlMainWindow(self.application_admin)
         yield action_steps.UpdateProgress( 1, 5, _('Setup database') )
         settings.setup_model()
         yield action_steps.UpdateProgress( 2, 5, _('Load translations') )
