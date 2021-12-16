@@ -74,7 +74,6 @@ def get_current_authentication( _obj = None ):
                 user = getpass.getuser()
             except Exception:
                 pass
-            user = getpass.getuser()
             _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( user )
     return _current_authentication_.mechanism
 
