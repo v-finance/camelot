@@ -66,7 +66,14 @@ def get_current_authentication( _obj = None ):
     if not hasattr( _current_authentication_, 'mechanism' ) \
         or not _current_authentication_.mechanism \
         or not orm.object_session( _current_authentication_.mechanism ):
-            user = getpass.getuser()
+            # According to the documentation (and the implementation), getpass.getuser
+            # can fail with any exception.  Eg when USERNAME env variable is not
+            # available on Windows, it will fail with an ImportError
+            user = ''
+            try:
+                user = getpass.getuser()
+            except Exception:
+                pass
             _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( user )
     return _current_authentication_.mechanism
 
