@@ -270,7 +270,7 @@ class OpenQmlTableView(OpenTableView):
         self.list_action = admin.get_list_action()
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def render(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
 
         class QmlListActionGuiContext(ListActionGuiContext):
@@ -301,6 +301,12 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context.view = backend.property('view')
 
         UpdateActions().gui_run(list_gui_context)
+
+        return new_model
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        cls.render(gui_context, serialized_step)
 
 
 @dataclass

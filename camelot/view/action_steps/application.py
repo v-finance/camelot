@@ -63,66 +63,6 @@ class Exit(ActionStep, DataclassSerializable):
             model_thread.stop()
         QtCore.QCoreApplication.exit(self.return_code)
 
-@dataclass
-class MainWindow(ActionStep, DataclassSerializable):
-    """
-    Open a top level application window
-    
-    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
-        object
-
-    .. attribute:: window_title
-
-        The title of the main window, defaults to the application name if `None`
-        is given
-
-    """
-
-    admin: InitVar[ApplicationAdmin]
-    window_title: str = field(init=False)
-
-    admin_route: Route = field(init=False)
-
-    def __post_init__(self, admin):
-        self.window_title = admin.get_name()
-        self.admin_route = admin.get_admin_route()
-
-    @classmethod
-    def render(cls, gui_context, step):
-        """create the main window. this method is used to unit test
-        the action step."""
-        from ..mainwindowproxy import MainWindowProxy
-
-        main_window_context = gui_context.copy()
-        main_window_context.progress_dialog = None
-        main_window_context.admin = AdminRoute.admin_for(tuple(step["admin_route"]))
-
-        # Check if a QMainWindow already exists
-        window = None
-        app = QtWidgets.QApplication.instance()
-        for widget in app.allWidgets():
-            if isinstance(widget, QtWidgets.QMainWindow):
-                # Make sure a QMainWindow is reused only once
-                if not hasattr(widget, '_reused_by_view_action_steps_application'):
-                    widget._reused_by_view_action_steps_application = True
-                    window = widget
-                    break
-
-        main_window_proxy = MainWindowProxy(
-            gui_context=main_window_context, window=window
-        )
-
-        gui_context.workspace = main_window_context.workspace
-        main_window_proxy.parent().setWindowTitle(step["window_title"])
-        return main_window_proxy.parent()
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        main_window = cls.render(gui_context, step)
-        if main_window.statusBar() is not None:
-            main_window.statusBar().hide()
-        main_window.show()
 
 @dataclass
 class QmlMainWindow(ActionStep, DataclassSerializable):
@@ -239,15 +179,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
         )
         return navigation_panel
 
-    '''
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        navigation_panel = self.render(gui_context, step)
-        gui_context.workspace.parent().addDockWidget(
-            Qt.DockWidgetArea.LeftDockWidgetArea, navigation_panel
-        )
-    '''
 
 @dataclass
 class MainMenu(ActionStep, DataclassSerializable):
