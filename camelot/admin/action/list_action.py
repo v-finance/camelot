@@ -459,7 +459,7 @@ delete_selection = DeleteSelection()
 class SwitchRank(EditAction):
     """Switch the rank of the selected rank-based rows in a table."""
 
-    icon = Icon('sort')
+    icon = Icon('arrows-alt-v')
     tooltip = _('Switch rank')
     verbose_name = _('Switch rank')
     name = 'switch_rank'
