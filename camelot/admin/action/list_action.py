@@ -468,8 +468,7 @@ class SwitchRank(EditAction):
         super().model_run(model_context, mode)
         admin = model_context.admin
         rank_col = admin.entity.get_rank_column()
-        if rank_col is None:
-            raise UserException(ugettext(self.Message.entity_not_rank_based.value).format(admin.entity))
+        assert self.Message.entity_not_rank_based.value.format(admin.entity)
         if model_context.selection_count != 2:
             raise UserException(self.Message.select_2_lines.value)
         first_obj, second_obj = list(model_context.get_selection())
