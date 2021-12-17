@@ -41,6 +41,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
+from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from . statements import MUTATORS
@@ -176,6 +177,7 @@ class EntityMeta( DeclarativeMeta ):
                     assert isinstance(rank_col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Rank column must be a sql.schema.Column or an InstrumentedAttribute'
                     if isinstance(rank_col, orm.attributes.InstrumentedAttribute):
                         rank_col = rank_col.prop.columns[0]
+                    assert isinstance(rank_col.type, Integer), 'Discriminator column must be of type Integer'
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
