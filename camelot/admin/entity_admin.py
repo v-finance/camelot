@@ -275,6 +275,13 @@ and used as a custom action.
         toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions()
         return toolbar_actions + self._get_shared_toolbar_actions()
 
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions(self, direction):
+        actions = super(EntityAdmin, self).get_related_toolbar_actions(direction)
+        if direction == 'onetomany' and self.entity.get_ranked_by() is not None:
+            actions.append(list_action.switch_rank)
+        return actions
+
     def get_descriptor_field_attributes(self, field_name):
         """Returns a set of default field attributes based on introspection
         of the descriptor of a field.
