@@ -272,6 +272,13 @@ class EntityMeta( DeclarativeMeta ):
             assert discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_value)
             discriminator.__set__(entity_instance, discriminator_value)
 
+    def get_rank_column(cls):
+        rank_col = cls._get_facade_arg('rank_col')
+        if rank_col is not None:
+            if isinstance(rank_col, sql.schema.Column):
+                return getattr(cls, rank_col.key)
+            return rank_col
+
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
