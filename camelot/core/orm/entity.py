@@ -170,7 +170,13 @@ class EntityMeta( DeclarativeMeta ):
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
-            
+
+                rank_col = facade_args.get('rank_col')
+                if rank_col is not None:
+                    assert isinstance(rank_col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Rank column must be a sql.schema.Column or an InstrumentedAttribute'
+                    if isinstance(rank_col, orm.attributes.InstrumentedAttribute):
+                        rank_col = rank_col.prop.columns[0]
+
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity' and dict_.get('__tablename__') is not None:
