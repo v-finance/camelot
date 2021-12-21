@@ -374,7 +374,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
         pass
 
     def copy(self, base_class=None):
-        return ApplicationActionGuiContext()
+        new_gui_context = ApplicationActionGuiContext()
+        if base_class is None:
+            return new_gui_context
+        return new_gui_context.copy(base_class)
 
     @property
     def mode_name(self):

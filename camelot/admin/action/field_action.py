@@ -125,11 +125,15 @@ class SelectObject(FieldAction):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        admin = model_context.field_attributes.get('admin')
-        if admin is not None:
-            selected_objects = yield action_steps.SelectObjects(admin)
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            selected_objects = yield action_steps.SelectObjects(field_admin)
             for selected_object in selected_objects:
-                yield action_steps.UpdateEditor('selected_object', selected_object)
+                model_context.admin.set_field_value(
+                    model_context.obj, model_context.field, selected_object
+                )
+                model_context.admin.set_defaults(model_context.obj)
+                yield None
                 break
 
     def get_state(self, model_context):
