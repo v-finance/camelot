@@ -3,7 +3,6 @@ import itertools
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py
 from camelot.core.exception import UserException
-from camelot.view.controls.view import AbstractView
 from camelot.admin.admin_route import AdminRoute
 
 LOGGER = logging.getLogger(__name__)
@@ -130,44 +129,16 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context, name, step, props={}):
+def qml_action_step(gui_context, name, step, props={}, keep_context_id=False):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
-    context_id = qml_action_dispatch.register(gui_context)
+    if keep_context_id:
+        assert gui_context.context_id is not None
+        context_id = gui_context.context_id
+    else:
+        context_id = qml_action_dispatch.register(gui_context)
     backend = get_qml_root_backend()
     backend.actionStep(context_id, name, step, props)
     return context_id
-
-
-class QmlView(AbstractView):
-    """
-    A QML view.
-
-    This creates the main QML widget to which all QML items should be added.
-    """
-
-    def __init__(self, gui_context, url, initial_properties={}):
-        super().__init__()
-        self.setObjectName('qml_view')
-        self.gui_context = gui_context
-        engine = get_qml_engine()
-        self.quick_view = QtQuick.QQuickView(engine, None)
-        self.quick_view.engine().addImportPath(':/')
-        self.quick_view.setInitialProperties(initial_properties)
-        self.quick_view.setSource(url)
-        check_qml_errors(self.quick_view, url)
-        self.quick_view.setResizeMode(QtQuick.QQuickView.ResizeMode.SizeRootObjectToView)
-        container = QtWidgets.QWidget.createWindowContainer(self.quick_view)
-        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop)
-        layout.addWidget(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-    @QtCore.qt_slot()
-    def close(self):
-        return False
-
-    def refresh(self):
-        pass

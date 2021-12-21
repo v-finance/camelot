@@ -239,6 +239,7 @@ updated state for the widget.
     visible: bool = True
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
+    shortcut: typing.Optional[str] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
@@ -483,6 +484,7 @@ with a view.
         state.icon = self.icon
         state.tooltip = self.get_tooltip()
         state.modes = self.modes
+        state.shortcut = self.shortcut
         return state
 
 
