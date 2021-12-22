@@ -50,7 +50,7 @@ from sqlalchemy.sql.operators import between_op
 from ...core.utils import ugettext, ugettext_lazy as _
 from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt
+from ...core.qt import Qt, QtGui
 from ...view.utils import locale
 
 from .base import Action, Mode, RenderHint
@@ -873,9 +873,7 @@ class SearchFilter(Action, AbstractModelFilter):
 
     render_hint = RenderHint.SEARCH_BUTTON
     name = 'search_filter'
-
-    #shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find),
-                               #self)
+    shortcut = QtGui.QKeySequence.StandardKey.Find
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
