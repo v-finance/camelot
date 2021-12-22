@@ -303,6 +303,7 @@ class CloseList(Action):
     icon = Icon('backspace')
     tooltip = _('Close')
     name = 'close'
+    shortcut = QtGui.QKeySequence.StandardKey.Close
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
