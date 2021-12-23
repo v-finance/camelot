@@ -64,8 +64,12 @@ class AbstractActionWidget( object ):
         self.setVisible(state.visible)
 
     def set_state_v2(self, state):
-        self.setEnabled(state['enabled'])
-        self.setVisible(state['visible'])
+        self.set_widget_state(self, state)
+
+    @classmethod
+    def set_widget_state(cls, widget, state):
+        widget.setEnabled(state['enabled'])
+        widget.setVisible(state['visible'])
 
     # REMOVE THIS...
     """
@@ -308,21 +312,27 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
     def set_state_v2( self, state ):
-        AbstractActionWidget.set_state_v2(self, state)
+        self.set_menu_v2(state, self)
+        self.set_toolbutton_state(self, state)
+
+    @classmethod
+    def set_toolbutton_state(cls, toolbutton, state):
+        # warning, this method does not set the menu, so does not work for
+        # modes.
+        cls.set_widget_state(toolbutton, state)
         if state['verbose_name'] != None:
-            self.setText( str( state['verbose_name'] ) )
+            toolbutton.setText( str( state['verbose_name'] ) )
         if state['icon'] != None:
             icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            self.setIcon( from_admin_icon(icon).getQIcon() )
+            toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
         else:
-            self.setIcon( QtGui.QIcon() )
+            toolbutton.setIcon( QtGui.QIcon() )
         if state['tooltip'] != None:
-            self.setToolTip( str( state['tooltip'] ) )
+            toolbutton.setToolTip( str( state['tooltip'] ) )
         else:
-            self.setToolTip( '' )
-        self.set_menu_v2(state, self)
+            toolbutton.setToolTip( '' )
         if state['modes']:
-            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+            toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
 
     @QtCore.qt_slot()

@@ -37,7 +37,7 @@ LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
-
+from ...core.item_model import ActionModeRole
 from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action.base import State
 from camelot.admin.action.application_action import Refresh
@@ -115,6 +115,30 @@ class FormEditors(QtCore.QObject):
             editor.set_label(widget_label)
         return widget_label
 
+
+class FormDataWidgetMapper(QtWidgets.QDataWidgetMapper):
+    """
+    Custom data widget mapper, to handle actions being triggered.
+    """
+
+    def setItemDelegate(self, delegate):
+        super().setItemDelegate(delegate)
+        delegate.actionTriggered.connect(self.actionTriggered)
+
+    @QtCore.qt_slot(list, QtWidgets.QWidget)
+    def actionTriggered(self, action_route, widget):
+        column = self.mappedSection(widget)
+        if column == -1:
+            return
+        model = self.model()
+        if model is None:
+            return
+        if is_deleted(model):
+            return
+        index = model.index(self.currentIndex(), column)
+        model.setData(index, json.dumps([action_route, None]), ActionModeRole)
+
+
 class FormWidget(QtWidgets.QWidget):
     """A form widget comes inside a form view"""
 
@@ -123,7 +147,7 @@ class FormWidget(QtWidgets.QWidget):
     def __init__(self, admin, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
         self.columns, self.form_display, self.admin = columns, form_display, admin
-        widget_mapper = QtWidgets.QDataWidgetMapper(self)
+        widget_mapper = FormDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )

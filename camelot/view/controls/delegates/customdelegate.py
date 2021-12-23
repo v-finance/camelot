@@ -229,7 +229,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-
         # update actions
         self.update_field_action_states(editor, index)
 
@@ -238,9 +237,12 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
             return
-        for action_widget in editor.findChildren(ActionToolbutton):
+        for action_widget in editor.findChildren(QtWidgets.QToolButton):
+            action_route = action_widget.property('action_route')
+            if not action_route:
+                continue
             try:
-                action_index = action_routes.index(list(action_widget.action_route))
+                action_index = action_routes.index(list(action_route))
             except ValueError:
                 LOGGER.error('action route not found {}, available routes'.format(
                     action_widget.action_route
@@ -250,7 +252,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 continue
             state = action_states[action_index]
             if state is not None:
-                action_widget.set_state_v2(state)
+                ActionToolbutton.set_toolbutton_state(action_widget, state)
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
