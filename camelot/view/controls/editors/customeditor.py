@@ -28,7 +28,6 @@
 #  ============================================================================
 
 from ....admin.action.base import RenderHint
-from ....admin.admin_route import AdminRoute
 from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.admin.action import FieldActionGuiContext
@@ -143,6 +142,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
     completionPrefixChanged = QtCore.qt_signal(str)
+    actionTriggered = QtCore.qt_signal(list)
 
     _font_height = None
     _font_width = None
@@ -170,12 +170,18 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         """
         return self.contentsRect().height()
 
+    @QtCore.qt_slot()
+    def action_button_clicked(self):
+        self.actionTriggered.emit(self.sender().property('action_route'))
+
     def add_actions(self, action_routes, layout):
         for action_route in action_routes:
-            action = AdminRoute.action_for(action_route)
-            action_widget = self.render_action(action, self)
-            action_widget.action_route = action_route
+            action_widget = QtWidgets.QToolButton(parent=self)
+            action_widget.setAutoRaise(True)
+            action_widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+            action_widget.setProperty('action_route', action_route)
             action_widget.setFixedHeight(self.get_height())
+            action_widget.clicked.connect(self.action_button_clicked)
             layout.addWidget(action_widget)
 
     def sizeHint(self):

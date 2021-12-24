@@ -30,12 +30,14 @@ import datetime
 
 
 
-from ....core.qt import QtWidgets
+from ....core.qt import QtWidgets, QtCore
 from .customeditor import AbstractCustomEditor, set_background_color_palette
 from camelot.core import constants
 
 class TimeEditor(QtWidgets.QTimeEdit, AbstractCustomEditor):
-  
+
+    actionTriggered = QtCore.qt_signal(list)
+
     def __init__(self, 
                  parent,
                  editable = True,

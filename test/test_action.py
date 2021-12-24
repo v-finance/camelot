@@ -20,6 +20,9 @@ from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
+from camelot.admin.action.field_action import (
+    SelectObject, FieldActionModelContext
+)
 from camelot.admin.action.list_action import SetFilters
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
@@ -941,6 +944,39 @@ class ApplicationActionsCase(
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
         list(self.gui_run(segmentation_fault, self.gui_context))
+
+
+class FieldActionCase(TestMetaData, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        batch_job_admin = app_admin.get_related_admin(Movie)
+        cls.setup_sample_model()
+        cls.load_example_data()
+        cls.model_context = FieldActionModelContext()
+        cls.model_context.admin = batch_job_admin
+        director_attributes = list(batch_job_admin.get_static_field_attributes(
+            ['director']
+        ))[0]
+        cls.model_context.field = 'director'
+        cls.model_context.field_attributes = director_attributes
+        cls.model_context.obj = cls.session.query(Movie).offset(1).first()
+
+
+    def test_select_object(self):
+        select_object = SelectObject()
+        object_selected = False
+        person = self.session.query(Person).first()
+        self.assertTrue(person)
+        self.assertNotEqual(self.model_context.obj.director, person)
+        generator = select_object.model_run(self.model_context, mode=None)
+        for step in generator:
+            if isinstance(step, action_steps.SelectObjects):
+                generator.send([person])
+                object_selected = True
+        self.assertTrue(object_selected)
+        self.assertEqual(self.model_context.obj.director, person)
 
 class ListFilterCase(TestMetaData):
 
