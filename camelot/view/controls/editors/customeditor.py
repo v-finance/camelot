@@ -180,7 +180,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             action_widget.setAutoRaise(True)
             action_widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
             action_widget.setProperty('action_route', action_route)
-            action_widget.setFixedHeight(self.get_height())
+            action_widget.setFixedHeight(min(action_widget.height(), self.get_height()))
             action_widget.clicked.connect(self.action_button_clicked)
             layout.addWidget(action_widget)
 

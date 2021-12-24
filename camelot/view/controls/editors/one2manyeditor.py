@@ -97,6 +97,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.direction = direction
         self.create_inline = create_inline
         layout.addWidget(table)
+        toolbar = QtWidgets.QToolBar(self)
+        toolbar.setIconSize(QtCore.QSize(16, 16))
+        toolbar.setOrientation(Qt.Orientation.Vertical)
+        layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
         self.field_gui_context = self.gui_context # set in CustomEditor constructor
@@ -104,7 +108,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.list_gui_context.view = self
         self.list_gui_context.admin_route = self.admin_route
         self.list_gui_context.item_view = table
-        self.set_right_toolbar_actions(kw['action_routes'], kw.get('action_states', []))
+        self.add_actions(kw['action_routes'], toolbar)
+        self.set_right_toolbar_actions(kw['action_routes'], kw.get('action_states', []), toolbar)
         self.set_columns(columns)
 
         selection_model = table.selectionModel()
@@ -135,15 +140,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
         return qobject
 
     @QtCore.qt_slot(object)
-    def set_right_toolbar_actions(self, action_routes, action_states):
+    def set_right_toolbar_actions(self, action_routes, action_states, toolbar):
         route2state = {}
         for action_state in action_states:
             route2state[action_state[0]] = action_state[1]
 
         if action_routes is not None:
-            toolbar = QtWidgets.QToolBar(self)
-            toolbar.setIconSize(QtCore.QSize(16, 16))
-            toolbar.setOrientation(Qt.Orientation.Vertical)
             for action_route in action_routes:
                 action = AdminRoute.action_for(action_route)
                 if not isinstance(action, (FieldAction, Filter)):
@@ -157,7 +159,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                     toolbar.addWidget(qaction)
                 else:
                     toolbar.addAction(qaction)
-            self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
             self.update_list_action_states()
