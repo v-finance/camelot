@@ -39,8 +39,7 @@ from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
 from .base import Action, RenderHint
 from .list_action import AddNewObjectMixin
-from .application_action import (ApplicationActionModelContext,
-                                 ApplicationActionGuiContext)
+from .application_action import ApplicationActionModelContext
 
 
 class FieldActionModelContext( ApplicationActionModelContext ):
@@ -74,38 +73,6 @@ class FieldActionModelContext( ApplicationActionModelContext ):
         self.value = None
         self.field_attributes = {}
 
-class FieldActionGuiContext( ApplicationActionGuiContext ):
-    """The context for an :class:`Action` on a field.  On top of the attributes of the
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
-    this context contains :
-
-    .. attribute:: editor
-
-       the editor through which the field is edited.
-
-    """
-
-    model_context = FieldActionModelContext
-
-    def __init__( self ):
-        super( FieldActionGuiContext, self ).__init__()
-        self.editor = None
-
-    def get_window(self):
-        if self.editor is not None:
-            return self.editor.window()
-        return super(FieldActionGuiContext, self).get_window()
-
-    def create_model_context( self ):
-        context = super( FieldActionGuiContext, self ).create_model_context()
-        context.value = self.editor.get_value()
-        context.field_attributes = self.editor.get_field_attributes()
-        return context
-
-    def copy( self, base_class = None ):
-        new_context = super( FieldActionGuiContext, self ).copy( base_class )
-        new_context.editor = self.editor
-        return new_context
 
 class FieldAction(Action):
     """Action class that renders itself as a toolbutton, small enough to
@@ -333,7 +300,7 @@ class AddNewObject( AddNewObjectMixin, FieldAction ):
         if editable == False:
             state.enabled = False
         # Check for editability on the level of the entity
-        admin = self.get_admin(model_context)
+        admin = self.get_admin(model_context, None)
         if admin and not admin.is_editable():
             state.visible = False
             state.enabled = False

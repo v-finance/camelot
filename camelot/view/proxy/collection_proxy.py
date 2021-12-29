@@ -373,6 +373,9 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def get_progress_dialog(self):
         pass
 
+    def get_window(self):
+        return QtCore.QObject.parent(self).window()
+
     def copy(self, base_class=None):
         new_gui_context = ApplicationActionGuiContext()
         if base_class is None:

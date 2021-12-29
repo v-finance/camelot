@@ -37,7 +37,7 @@ import typing
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from .admin_route import Route, AdminRoute, register_list_actions, register_form_actions
-from camelot.admin.action import field_action, list_filter
+from camelot.admin.action import field_action, list_filter, list_action
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
@@ -746,9 +746,24 @@ be specified using the verbose_name attribute.
             python_type = field_attributes.get('python_type')
             if direction.endswith('many') and python_type == list and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
+                # the xtomany field has 2 kinds of actions
+                #
+                #  * the field actions, as every other field, these have access
+                #    to the FieldActionModelContext (parent object, dynamid field attributes etc.)
+                #    and their state is updated when the parent object is updated
+                #
+                #  * the list_actions, that operate on a selection of rows, these
+                #    actions have access to the ListActionModelContext (selection)
+                #    and their state is updated when the selection changes.
+                #
                 if field_attributes.get('actions') is None:
-                    field_attributes['actions'] = [
-                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(direction)
+                    if direction == 'onetomany':
+                        field_attributes['actions'] = [field_action.add_new_object]
+                    if direction == 'manytomany':
+                        field_attributes['actions'] = [list_action.add_existing_object]
+                if field_attributes.get('list_actions') is None:
+                    field_attributes['list_actions'] = [
+                        route_with_render_hint for route_with_render_hint in related_admin.get_related_toolbar_actions(direction)
                     ]
                 if column_width is None:
                     table = related_admin.get_table()

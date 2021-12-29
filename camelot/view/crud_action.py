@@ -564,28 +564,30 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
             logger.warn('Cannot run field action : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
             return
         depending_objects_before_change = set(model_context.admin.get_depending_objects(obj))
-        action = AdminRoute.action_for(tuple(action_route))
         static_field_attributes = model_context.static_field_attributes[column]
+        action = AdminRoute.action_for(tuple(action_route))
+        field_name = static_field_attributes['field_name']
+        old_value = getattr(obj, field_name)
         field_action_model_context = FieldActionModelContext()
         field_action_model_context.admin = model_context.admin
         field_action_model_context.obj = obj
-        field_action_model_context.field = static_field_attributes['field_name']
-        field_action_model_context.value = getattr(
-            obj, static_field_attributes['field_name']
-        )
+        field_action_model_context.field = field_name
+        field_action_model_context.value = old_value
         # @todo : should include dynamic field attributes, but those are not
         # yet used in any of the field actions
         field_action_model_context.field_attributes = static_field_attributes
         yield from action.model_run(field_action_model_context, action_mode)
-        changed_ranges = []
-        updated_objects, created_objects, deleted_objects = set(), set(), set()
-        self.add_changed_object(
-            model_context, depending_objects_before_change, row, obj,
-            changed_ranges, created_objects, updated_objects, deleted_objects
-        )
-        created_objects = tuple(created_objects)
-        updated_objects = tuple(updated_objects)
-        deleted_objects = tuple(deleted_objects)
-        yield action_steps.SetData(changed_ranges, created_objects, updated_objects, deleted_objects)
+        new_value = getattr(obj, field_name)
+        if old_value != new_value:
+            changed_ranges = []
+            updated_objects, created_objects, deleted_objects = set(), set(), set()
+            self.add_changed_object(
+                model_context, depending_objects_before_change, row, obj,
+                changed_ranges, created_objects, updated_objects, deleted_objects
+            )
+            created_objects = tuple(created_objects)
+            updated_objects = tuple(updated_objects)
+            deleted_objects = tuple(deleted_objects)
+            yield action_steps.SetData(changed_ranges, created_objects, updated_objects, deleted_objects)
 
 run_field_action = RunFieldAction()

@@ -34,15 +34,13 @@ from .base import Action, ActionStep, GuiContext, Mode, State, RenderHint
 from .form_action import ( FormActionGuiContext, FormActionModelContext )
 from .list_action import ( ListActionGuiContext, ListActionModelContext, 
                            OpenFormView , RowNumberAction)
-from .field_action import (FieldActionGuiContext,
-                           FieldActionModelContext)
+from .field_action import FieldActionModelContext
 
 __all__ = [
     Action.__name__,
     ActionStep.__name__,
     ApplicationActionGuiContext.__name__,
     ApplicationActionModelContext.__name__,
-    FieldActionGuiContext.__name__,
     FieldActionModelContext.__name__, 
     FormActionGuiContext.__name__,
     FormActionModelContext.__name__,
