@@ -21,7 +21,8 @@ from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import (
-    ClearObject, NewObject, SelectObject, FieldActionModelContext
+    ClearObject, DetachFile, NewObject, SelectObject, FieldActionModelContext,
+    UploadFile
 )
 from camelot.admin.action.list_action import SetFilters
 from camelot.admin.application_admin import ApplicationAdmin
@@ -954,33 +955,43 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         movie_admin = app_admin.get_related_admin(Movie)
         cls.setup_sample_model()
         cls.load_example_data()
-        cls.model_context = FieldActionModelContext()
-        cls.model_context.admin = movie_admin
+        cls.movie = cls.session.query(Movie).offset(1).first()
+        # a model context for the director attribute
+        cls.director_context = FieldActionModelContext()
+        cls.director_context.admin = movie_admin
         director_attributes = list(movie_admin.get_static_field_attributes(
             ['director']
         ))[0]
-        cls.model_context.field = 'director'
-        cls.model_context.field_attributes = director_attributes
-        cls.model_context.obj = cls.session.query(Movie).offset(1).first()
-
+        cls.director_context.field = 'director'
+        cls.director_context.field_attributes = director_attributes
+        cls.director_context.obj = cls.movie
+        # a model context for the script attribute
+        cls.script_context = FieldActionModelContext()
+        cls.script_context.admin = movie_admin
+        script_attributes = list(movie_admin.get_static_field_attributes(
+            ['script']
+        ))[0]
+        cls.script_context.field = 'script'
+        cls.script_context.field_attributes = script_attributes
+        cls.script_context.obj = cls.movie
 
     def test_select_object(self):
         select_object = SelectObject()
         object_selected = False
         person = self.session.query(Person).first()
         self.assertTrue(person)
-        self.assertNotEqual(self.model_context.obj.director, person)
-        generator = select_object.model_run(self.model_context, mode=None)
+        self.assertNotEqual(self.movie, person)
+        generator = select_object.model_run(self.director_context, mode=None)
         for step in generator:
             if isinstance(step, action_steps.SelectObjects):
                 generator.send([person])
                 object_selected = True
         self.assertTrue(object_selected)
-        self.assertEqual(self.model_context.obj.director, person)
+        self.assertEqual(self.movie.director, person)
 
     def test_new_object_and_clear_object(self):
         new_object = NewObject()
-        generator = new_object.model_run(self.model_context, mode=None)
+        generator = new_object.model_run(self.director_context, mode=None)
         open_form = None
         for step in generator:
             if isinstance(step, action_steps.OpenFormView):
@@ -988,10 +999,30 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         self.assertTrue(open_form)
         new_object = step.get_objects()[0]
         self.assertIsInstance(new_object, Person)
-        self.assertEqual(self.model_context.obj.director, new_object)
+        self.assertEqual(self.movie.director, new_object)
         clear_object = ClearObject()
-        list(clear_object.model_run(self.model_context, mode=None))
-        self.assertEqual(self.model_context.obj.director, None)
+        list(clear_object.model_run(self.director_context, mode=None))
+        self.assertEqual(self.movie.director, None)
+
+    def test_upload_and_detach_file(self):
+        upload_file = UploadFile()
+        file_uploaded = False
+        generator = upload_file.model_run(self.script_context, mode=None)
+        for step in generator:
+            if isinstance(step, action_steps.SelectFile):
+                generator.send([__file__])
+                file_uploaded = True
+        self.assertTrue(file_uploaded)
+        self.assertTrue(self.movie.script)
+        detach_file = DetachFile()
+        generator = detach_file.model_run(self.script_context, mode=None)
+        detach_confirmed = False
+        for step in generator:
+            if isinstance(step, action_steps.MessageBox):
+                generator.send(QtWidgets.QMessageBox.StandardButton.Yes)
+                detach_confirmed = True
+        self.assertTrue(detach_confirmed)
+        self.assertEqual(self.movie.script, None)
 
 class ListFilterCase(TestMetaData):
 

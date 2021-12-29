@@ -32,7 +32,7 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
 import json
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 from dataclasses import dataclass, field
 
@@ -45,28 +45,6 @@ from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 
-
-@dataclass
-class UpdateEditor(ActionStep):
-    """This step should be used in the context of an editor action.  It
-    will update an attribute of the editor.
-
-    :param attribute: the name of the attribute of the editor to update
-    :param value: the new value of the attribute
-    :param propagate: set to `True` if the editor should notify the underlying
-       model of it's change, so that the changes can be written to the model
-    """
-
-    attribute: str
-    value: Any
-    propagate: bool = False
-    
-    def gui_run(self, gui_context):
-        if is_deleted(gui_context.editor):
-            return
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
-            gui_context.editor.editingFinished.emit()
 
 @dataclass
 class Refresh( ActionStep, DataclassSerializable ):

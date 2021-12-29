@@ -203,7 +203,9 @@ class UploadFile(FieldAction):
                     remove = True
             yield action_steps.UpdateProgress(text='Attaching file')
             stored_file = storage.checkin(file_name)
-            yield action_steps.UpdateEditor('value', stored_file, propagate=True)
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, stored_file
+            )
             if remove:
                 os.remove(file_name)
 
@@ -231,7 +233,10 @@ class DetachFile(FieldAction):
                                                text=self.message_text,
                                                standard_buttons=buttons)
         if answer == QtWidgets.QMessageBox.StandardButton.Yes:
-            yield action_steps.UpdateEditor('value', None, propagate=True)
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, None
+            )
+            yield None
 
     def get_state(self, model_context):
         state = super(DetachFile, self).get_state(model_context)
