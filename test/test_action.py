@@ -21,7 +21,7 @@ from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import (
-    NewObject, SelectObject, FieldActionModelContext
+    ClearObject, NewObject, SelectObject, FieldActionModelContext
 )
 from camelot.admin.action.list_action import SetFilters
 from camelot.admin.application_admin import ApplicationAdmin
@@ -978,7 +978,7 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         self.assertTrue(object_selected)
         self.assertEqual(self.model_context.obj.director, person)
 
-    def test_new_object(self):
+    def test_new_object_and_clear_object(self):
         new_object = NewObject()
         generator = new_object.model_run(self.model_context, mode=None)
         open_form = None
@@ -989,6 +989,9 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         new_object = step.get_objects()[0]
         self.assertIsInstance(new_object, Person)
         self.assertEqual(self.model_context.obj.director, new_object)
+        clear_object = ClearObject()
+        list(clear_object.model_run(self.model_context, mode=None))
+        self.assertEqual(self.model_context.obj.director, None)
 
 class ListFilterCase(TestMetaData):
 

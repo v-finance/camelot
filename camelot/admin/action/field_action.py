@@ -163,8 +163,12 @@ class ClearObject(OpenObject):
     name = 'clear_object'
 
     def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        yield action_steps.UpdateEditor('selected_object', None)
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, None
+            )
+            yield None
 
     def get_state(self, model_context):
         state = super(ClearObject, self).get_state(model_context)
