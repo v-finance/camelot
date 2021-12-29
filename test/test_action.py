@@ -21,7 +21,7 @@ from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import (
-    SelectObject, FieldActionModelContext
+    NewObject, SelectObject, FieldActionModelContext
 )
 from camelot.admin.action.list_action import SetFilters
 from camelot.admin.application_admin import ApplicationAdmin
@@ -951,12 +951,12 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        batch_job_admin = app_admin.get_related_admin(Movie)
+        movie_admin = app_admin.get_related_admin(Movie)
         cls.setup_sample_model()
         cls.load_example_data()
         cls.model_context = FieldActionModelContext()
-        cls.model_context.admin = batch_job_admin
-        director_attributes = list(batch_job_admin.get_static_field_attributes(
+        cls.model_context.admin = movie_admin
+        director_attributes = list(movie_admin.get_static_field_attributes(
             ['director']
         ))[0]
         cls.model_context.field = 'director'
@@ -977,6 +977,18 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
                 object_selected = True
         self.assertTrue(object_selected)
         self.assertEqual(self.model_context.obj.director, person)
+
+    def test_new_object(self):
+        new_object = NewObject()
+        generator = new_object.model_run(self.model_context, mode=None)
+        open_form = None
+        for step in generator:
+            if isinstance(step, action_steps.OpenFormView):
+                open_form = step
+        self.assertTrue(open_form)
+        new_object = step.get_objects()[0]
+        self.assertIsInstance(new_object, Person)
+        self.assertEqual(self.model_context.obj.director, new_object)
 
 class ListFilterCase(TestMetaData):
 

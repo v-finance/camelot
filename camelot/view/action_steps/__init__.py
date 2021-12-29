@@ -35,7 +35,7 @@ from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
 from .gui import (
-    CloseView, MessageBox, Refresh, SelectItem, SelectSubclass, UpdateEditor
+    CloseView, MessageBox, Refresh, SelectItem, UpdateEditor
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
@@ -89,7 +89,6 @@ __all__ = [
     SelectFile.__name__,
     SelectItem.__name__,
     SelectObjects.__name__,
-    SelectSubclass.__name__,
     SetColumns.__name__,
     SetData.__name__,
     SetFilter.__name__,

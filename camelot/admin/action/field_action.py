@@ -119,14 +119,20 @@ class NewObject(SelectObject):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        admin = model_context.field_attributes['admin']
-        admin = yield action_steps.SelectSubclass(admin)
-        obj = admin.entity()
-        # Give the default fields their value
-        admin.add(obj)
-        admin.set_defaults(obj)
-        yield action_steps.UpdateEditor('new_value', obj)
-        yield action_steps.OpenFormView(obj, admin.get_proxy([obj]), admin)
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            new_object = field_admin.entity()
+            # Give the default fields their value
+            field_admin.add(new_object)
+            field_admin.set_defaults(new_object)
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, new_object
+            )
+            yield action_steps.OpenFormView(
+                new_object,
+                field_admin.get_proxy([new_object]),
+                field_admin
+            )
 
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
