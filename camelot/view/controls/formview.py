@@ -125,8 +125,8 @@ class FormDataWidgetMapper(QtWidgets.QDataWidgetMapper):
         super().setItemDelegate(delegate)
         delegate.actionTriggered.connect(self.actionTriggered)
 
-    @QtCore.qt_slot(list, QtWidgets.QWidget)
-    def actionTriggered(self, action_route, widget):
+    @QtCore.qt_slot(list, object, QtWidgets.QWidget)
+    def actionTriggered(self, action_route, mode, widget):
         column = self.mappedSection(widget)
         if column == -1:
             return
@@ -136,7 +136,7 @@ class FormDataWidgetMapper(QtWidgets.QDataWidgetMapper):
         if is_deleted(model):
             return
         index = model.index(self.currentIndex(), column)
-        model.setData(index, json.dumps([action_route, None]), ActionModeRole)
+        model.setData(index, json.dumps([action_route, mode]), ActionModeRole)
 
 
 class FormWidget(QtWidgets.QWidget):

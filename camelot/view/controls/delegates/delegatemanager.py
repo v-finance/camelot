@@ -41,7 +41,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
   developer
   """
 
-    actionTriggered = QtCore.qt_signal(list, QtWidgets.QWidget)
+    actionTriggered = QtCore.qt_signal(list, object, QtWidgets.QWidget)
 
     def __init__(self, parent=None):
         QtWidgets.QItemDelegate.__init__(self, parent)
@@ -73,9 +73,9 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
-    @QtCore.qt_slot(list)
-    def editorActionTriggered(self, route):
-        self.actionTriggered.emit(route, self.sender())
+    @QtCore.qt_slot(list, object)
+    def editorActionTriggered(self, route, mode):
+        self.actionTriggered.emit(route, mode, self.sender())
 
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""

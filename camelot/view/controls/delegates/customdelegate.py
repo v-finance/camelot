@@ -252,7 +252,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 continue
             state = action_states[action_index]
             if state is not None:
-                ActionToolbutton.set_toolbutton_state(action_widget, state)
+                ActionToolbutton.set_toolbutton_state(
+                    action_widget, state, editor.action_menu_triggered
+                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

@@ -130,7 +130,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
     completionPrefixChanged = QtCore.qt_signal(str)
-    actionTriggered = QtCore.qt_signal(list)
+    actionTriggered = QtCore.qt_signal(list, object)
 
     _font_height = None
     _font_width = None
@@ -157,7 +157,13 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     @QtCore.qt_slot()
     def action_button_clicked(self):
-        self.actionTriggered.emit(self.sender().property('action_route'))
+        self.actionTriggered.emit(self.sender().property('action_route'), None)
+
+    @QtCore.qt_slot(bool)
+    def action_menu_triggered(self, checked):
+        mode = self.sender().data()
+        action_route = self.sender().property('action_route')
+        self.actionTriggered.emit(action_route, mode)
 
     def add_actions(self, action_routes, layout):
         for action_route in action_routes:
