@@ -82,9 +82,11 @@ class UpdateMixin(object):
                 delegate = field_attributes['delegate']
                 value = row_data[column]
                 field_action_model_context = FieldActionModelContext()
+                field_action_model_context.admin = admin
                 field_action_model_context.field = field_attributes['field_name']
                 field_action_model_context.value = value
                 field_action_model_context.field_attributes = field_attributes
+                field_action_model_context.obj = obj
                 item = delegate.get_standard_item(locale, field_action_model_context)
                 items.append((column, item))
             try:
