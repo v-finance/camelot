@@ -89,7 +89,7 @@ class SelectFile( ActionStep, DataclassSerializable ):
         else:
             get_filename = QtWidgets.QFileDialog.getOpenFileNames
         with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
+            selected = get_filename(parent=gui_context.get_window(),
                                     caption=str(cls.caption),
                                     directory=directory,
                                     filter=step["file_name_filter"])
@@ -148,7 +148,7 @@ class SaveFile( ActionStep, DataclassSerializable ):
             directory = os.path.join(directory, step["file_name"])
         get_filename = QtWidgets.QFileDialog.getSaveFileName
         with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
+            selected = get_filename(parent=gui_context.get_window(),
                                     caption=str(cls.caption),
                                     directory=directory,
                                     filter=step["file_name_filter"])
@@ -190,7 +190,7 @@ class SelectDirectory(ActionStep, DataclassSerializable):
             directory = str(variant_to_py(settings.value('datasource')))
         get_directory = QtWidgets.QFileDialog.getExistingDirectory
         with hide_progress_dialog( gui_context ):
-            selected = get_directory(parent=gui_context.workspace,
+            selected = get_directory(parent=gui_context.get_window(),
                                      caption=str(cls.caption),
                                      directory=directory,
                                      options=step["options"])

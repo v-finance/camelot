@@ -96,7 +96,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
         # Test if file is readable, both os.access and QFileInfo.isReadable
         # can result in false positives on windows.
         f = QtCore.QFile(path)
-        if f.open(QtCore.QIODevice.ReadOnly):
+        if f.open(QtCore.QIODevice.OpenModeFlag.ReadOnly):
             f.close()
         else:
             raise UserException(
