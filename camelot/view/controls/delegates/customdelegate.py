@@ -38,7 +38,6 @@ from ....core.serializable import json_encoder
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
-from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -153,11 +152,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
-            if isinstance(action, FieldAction):
-                state = action.get_state(model_context)
-                states.append(dataclasses.asdict(state))
-            else:
-                states.append(None)
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))

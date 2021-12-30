@@ -74,21 +74,14 @@ class FieldActionModelContext( ApplicationActionModelContext ):
         self.field_attributes = {}
 
 
-class FieldAction(Action):
-    """Action class that renders itself as a toolbutton, small enough to
-    fit in an editor"""
-
-    name = 'field_action'
-    render_hint = RenderHint.TOOL_BUTTON
-
-
-class SelectObject(FieldAction):
+class SelectObject(Action):
     """Allows the user to select an object, and set the selected object as
     the new value of the editor"""
 
     icon = Icon('search') # 'tango/16x16/actions/system-search.png'
     tooltip = _('select existing')
     name = 'select_object'
+    render_hint = RenderHint.TOOL_BUTTON
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -175,13 +168,14 @@ class ClearObject(OpenObject):
         state.enabled = model_context.field_attributes.get('editable', False)
         return state
 
-class UploadFile(FieldAction):
+class UploadFile(Action):
     """Upload a new file into the storage of the field"""
 
     icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     tooltip = _('Attach file')
     file_name_filter = 'All files (*)'
     name = 'attach_file'
+    render_hint = RenderHint.TOOL_BUTTON
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -216,7 +210,7 @@ class UploadFile(FieldAction):
         state.visible = (model_context.value is None)
         return state
 
-class DetachFile(FieldAction):
+class DetachFile(Action):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
@@ -225,6 +219,7 @@ class DetachFile(FieldAction):
     message_title = _('Detach this file ?')
     message_text = _('If you continue, you will no longer be able to open this file.')
     name = 'detach_file'
+    render_hint = RenderHint.TOOL_BUTTON
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -245,12 +240,13 @@ class DetachFile(FieldAction):
         state.visible = (model_context.value is not None)
         return state
 
-class OpenFile(FieldAction):
+class OpenFile(Action):
     """Open the file shown in the editor"""
 
     icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
     name = 'open_file'
+    render_hint = RenderHint.TOOL_BUTTON
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -283,7 +279,7 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
-class AddNewObject( AddNewObjectMixin, FieldAction ):
+class AddNewObject(AddNewObjectMixin, Action):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not.
 
@@ -296,6 +292,7 @@ class AddNewObject( AddNewObjectMixin, FieldAction ):
     tooltip = _('New')
     verbose_name = _('New')
     name = 'new_object'
+    render_hint = RenderHint.TOOL_BUTTON
 
     def get_admin(self, model_context, mode):
         """

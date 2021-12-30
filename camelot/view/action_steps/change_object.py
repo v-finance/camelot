@@ -33,7 +33,6 @@ from typing import Any, List, Dict, Tuple
 
 from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.list_action import ListActionModelContext
-from camelot.admin.action.field_action import FieldActionModelContext, FieldAction
 from camelot.admin.action.form_action import FormActionGuiContext, FormActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
@@ -406,17 +405,12 @@ class ChangeObjects( ActionStep ):
 
     @staticmethod
     def _add_action_states(admin, proxy, action_routes, action_states):
-        field_model_context = FieldActionModelContext()
-        field_model_context.value = proxy
         list_model_context = ListActionModelContext()
         list_model_context.admin = admin
         list_model_context.proxy = proxy
         for action_route in action_routes:
             action = AdminRoute.action_for(action_route)
-            if isinstance(action, FieldAction):
-                state = action.get_state(field_model_context)
-            else:
-                state = action.get_state(list_model_context)
+            state = action.get_state(list_model_context)
             action_states.append((action_route, state))
 
     def get_objects( self ):
