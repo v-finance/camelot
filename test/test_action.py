@@ -24,7 +24,7 @@ from camelot.admin.action.field_action import (
     ClearObject, DetachFile, NewObject, SelectObject, FieldActionModelContext,
     UploadFile, add_existing_object,
 )
-from camelot.admin.action.list_action import SetFilters
+from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -45,6 +45,7 @@ from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, delegates, tableview
 from camelot.view.controls.action_widget import ActionPushButton
 from camelot.view.controls.tableview import TableView
+from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
 from camelot_example.importer import ImportCovers
@@ -942,34 +943,29 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         cls.setup_sample_model()
         cls.load_example_data()
         cls.movie = cls.session.query(Movie).offset(1).first()
+        movie_list_model_context = ListActionModelContext()
+        movie_list_model_context.admin = movie_admin
         # a model context for the director attribute
-        cls.director_context = FieldActionModelContext()
-        cls.director_context.admin = movie_admin
         director_attributes = list(movie_admin.get_static_field_attributes(
             ['director']
         ))[0]
-        cls.director_context.field = 'director'
-        cls.director_context.field_attributes = director_attributes
-        cls.director_context.obj = cls.movie
+        cls.director_context = UpdateMixin.field_action_model_context(
+            movie_list_model_context, cls.movie, director_attributes
+        )
         # a model context for the script attribute
-        cls.script_context = FieldActionModelContext()
-        cls.script_context.admin = movie_admin
         script_attributes = list(movie_admin.get_static_field_attributes(
             ['script']
         ))[0]
-        cls.script_context.field = 'script'
-        cls.script_context.field_attributes = script_attributes
-        cls.script_context.obj = cls.movie
+        cls.script_context = UpdateMixin.field_action_model_context(
+            movie_list_model_context, cls.movie, script_attributes
+        )
         # a model context for the tags attribute
-        cls.tags_context = FieldActionModelContext()
-        cls.tags_context.admin = movie_admin
         tags_attributes = list(movie_admin.get_static_field_attributes(
             ['tags']
         ))[0]
-        cls.tags_context.field = 'tags'
-        cls.tags_context.field_attributes = tags_attributes
-        cls.tags_context.obj = cls.movie
-        cls.tags_context.value = cls.movie.tags
+        cls.tags_context = UpdateMixin.field_action_model_context(
+            movie_list_model_context, cls.movie, tags_attributes
+        )
 
     def test_select_object(self):
         select_object = SelectObject()
