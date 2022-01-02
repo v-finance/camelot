@@ -22,7 +22,7 @@ from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import (
     ClearObject, DetachFile, NewObject, SelectObject, FieldActionModelContext,
-    UploadFile
+    UploadFile, add_existing_object,
 )
 from camelot.admin.action.list_action import SetFilters
 from camelot.admin.application_admin import ApplicationAdmin
@@ -48,7 +48,7 @@ from camelot.view.controls.tableview import TableView
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
 from camelot_example.importer import ImportCovers
-from camelot_example.model import Movie
+from camelot_example.model import Movie, Tag
 
 from sqlalchemy import orm, schema, types
 
@@ -574,24 +574,13 @@ class ListActionsCase(
         self.process()
         self.assertFalse(selected_object in self.session)
 
-    def test_add_existing_object(self):
-        initial_row_count = self._row_count(self.item_model)
-        action = list_action.AddExistingObject()
-        steps = self.gui_run(action, self.gui_context)
-        for step in steps:
-            # SelectObjects is a serializable action
-            if isinstance(step, tuple) and step[0] == action_steps.SelectObjects.__name__:
-                steps.send([Person(first_name='Unknown', last_name='Unknown')])
-        new_row_count = self._row_count(self.item_model)
-        self.assertEqual(new_row_count, initial_row_count+1)
+    def test_remove_selection(self):
+        remove_selection_action = list_action.RemoveSelection()
+        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
 
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
         add_new_object_action.gui_run( self.gui_context )
-
-    def test_remove_selection(self):
-        remove_selection_action = list_action.RemoveSelection()
-        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
@@ -931,10 +920,7 @@ class ApplicationActionsCase(
     def test_open_new_view( self ):
         person_admin = app_admin.get_related_admin(Person)
         open_new_view_action = application_action.OpenNewView(person_admin)
-        generator = self.gui_run(open_new_view_action, self.gui_context)
-        for step in generator:
-            if isinstance(step, action_steps.SelectSubclass):
-                generator.send(person_admin)
+        list(self.gui_run(open_new_view_action, self.gui_context))
 
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()
@@ -974,6 +960,16 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         cls.script_context.field = 'script'
         cls.script_context.field_attributes = script_attributes
         cls.script_context.obj = cls.movie
+        # a model context for the tags attribute
+        cls.tags_context = FieldActionModelContext()
+        cls.tags_context.admin = movie_admin
+        tags_attributes = list(movie_admin.get_static_field_attributes(
+            ['tags']
+        ))[0]
+        cls.tags_context.field = 'tags'
+        cls.tags_context.field_attributes = tags_attributes
+        cls.tags_context.obj = cls.movie
+        cls.tags_context.value = cls.movie.tags
 
     def test_select_object(self):
         select_object = SelectObject()
@@ -1023,6 +1019,21 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
                 detach_confirmed = True
         self.assertTrue(detach_confirmed)
         self.assertEqual(self.movie.script, None)
+
+    def test_add_existing_object(self):
+        tag = self.session.query(Tag).first()
+        self.assertTrue(tag)
+        state = add_existing_object.get_state(self.tags_context)
+        self.assertTrue(state.visible)
+        self.assertTrue(state.enabled)
+        initial_row_count = len(self.movie.tags)
+        generator = add_existing_object.model_run(self.tags_context, mode=None)
+        for step in generator:
+            if isinstance(step, action_steps.SelectObjects):
+                generator.send([tag])
+        new_row_count = len(self.movie.tags)
+        self.assertEqual(new_row_count, initial_row_count+1)
+
 
 class ListFilterCase(TestMetaData):
 

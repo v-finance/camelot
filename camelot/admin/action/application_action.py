@@ -336,7 +336,7 @@ class OpenNewView( EntityAction ):
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        admin = yield action_steps.SelectSubclass(self._entity_admin)
+        admin = self._entity_admin
         new_object = admin.entity()
         # Give the default fields their value
         admin.add(new_object)

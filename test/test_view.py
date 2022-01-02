@@ -10,7 +10,6 @@ import os
 import sys
 import unittest
 
-from camelot.admin.action.application import Application
 from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate

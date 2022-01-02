@@ -1126,31 +1126,6 @@ class SetFilters(Action, AbstractModelFilter):
 
 set_filters = SetFilters()
 
-class AddExistingObject( EditAction ):
-    """Add an existing object to a list if it is not yet in the
-    list"""
-    
-    tooltip = _('Add')
-    verbose_name = _('Add')
-    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
-    name = 'add_object'
-    
-    def model_run( self, model_context, mode ):
-        from sqlalchemy.orm import object_session
-        from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        objs_to_add = yield action_steps.SelectObjects(model_context.admin)
-        for obj_to_add in objs_to_add:
-            for obj in model_context.get_collection():
-                if obj_to_add == obj:
-                    return
-            model_context.proxy.append(obj_to_add)
-        yield action_steps.UpdateObjects(objs_to_add)
-        for obj_to_add in objs_to_add:
-            yield action_steps.FlushSession(object_session(obj_to_add))
-            break
-
-add_existing_object = AddExistingObject()
 
 class AddNewObjectMixin(object):
     

@@ -34,6 +34,8 @@ various actions that are beyond the icons shown in the editors of a form.
 
 import os
 
+from sqlalchemy import orm
+
 from ...core.qt import QtWidgets, QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
@@ -74,7 +76,27 @@ class FieldActionModelContext( ApplicationActionModelContext ):
         self.field_attributes = {}
 
 
-class SelectObject(Action):
+class EditFieldAction(Action):
+    """A base class for an action that will modify the model, it will be
+    disabled when the field_attributes for the field are set to  not-editable
+    or the admin is not editable"""
+
+    name = '_edit_field'
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, FieldActionModelContext)
+        state = super().get_state(model_context)
+        # editability at the level of the field
+        state.enabled = model_context.field_attributes.get('editable', False)
+        # editability at the level of the entity admin
+        admin = model_context.field_attributes.get('admin')
+        if (admin is not None) and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
+
+
+class SelectObject(EditFieldAction):
     """Allows the user to select an object, and set the selected object as
     the new value of the editor"""
 
@@ -97,9 +119,8 @@ class SelectObject(Action):
                 break
 
     def get_state(self, model_context):
-        state = super(SelectObject, self).get_state(model_context)
+        state = super().get_state(model_context)
         state.visible = (model_context.value is None)
-        state.enabled = model_context.field_attributes.get('editable', False)
         return state
 
 class NewObject(SelectObject):
@@ -148,7 +169,7 @@ class OpenObject(SelectObject):
         state.enabled = (model_context.value is not None)
         return state
 
-class ClearObject(OpenObject):
+class ClearObject(EditFieldAction):
     """Set the new value of the editor to `None`"""
 
     icon = Icon('eraser') # 'tango/16x16/actions/edit-clear.png'
@@ -165,10 +186,10 @@ class ClearObject(OpenObject):
 
     def get_state(self, model_context):
         state = super(ClearObject, self).get_state(model_context)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state.visible = (model_context.value is not None)
         return state
 
-class UploadFile(Action):
+class UploadFile(EditFieldAction):
     """Upload a new file into the storage of the field"""
 
     icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
@@ -204,13 +225,12 @@ class UploadFile(Action):
                 os.remove(file_name)
 
     def get_state(self, model_context):
-        state = super(UploadFile, self).get_state(model_context)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state = super().get_state(model_context)
         state.enabled = (state.enabled is True) and (model_context.value is None)
         state.visible = (model_context.value is None)
         return state
 
-class DetachFile(Action):
+class DetachFile(EditFieldAction):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
@@ -234,8 +254,7 @@ class DetachFile(Action):
             yield None
 
     def get_state(self, model_context):
-        state = super(DetachFile, self).get_state(model_context)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state = super().get_state(model_context)
         state.enabled = (state.enabled is True) and (model_context.value is not None)
         state.visible = (model_context.value is not None)
         return state
@@ -279,7 +298,7 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
-class AddNewObject(AddNewObjectMixin, Action):
+class AddNewObject(EditFieldAction, AddNewObjectMixin):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not.
 
@@ -301,21 +320,31 @@ class AddNewObject(AddNewObjectMixin, Action):
         """
         return model_context.field_attributes.get('admin')
 
-    def get_proxy(self, model_context, admin):
-        return model_context.value
-
-    def get_state( self, model_context ):
-        assert isinstance(model_context, FieldActionModelContext)
-        state = super().get_state( model_context )
-        # Check for editability on the level of the field
-        editable = model_context.field_attributes.get( 'editable', True )
-        if editable == False:
-            state.enabled = False
-        # Check for editability on the level of the entity
-        admin = self.get_admin(model_context, None)
-        if admin and not admin.is_editable():
-            state.visible = False
-            state.enabled = False
-        return state
-
 add_new_object = AddNewObject()
+
+class AddExistingObject(EditFieldAction):
+    """Add an existing object to a list if it is not yet in the
+    list"""
+    
+    tooltip = _('Add')
+    verbose_name = _('Add')
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
+    name = 'add_object'
+    
+    def model_run( self, model_context, mode ):
+        from camelot.view import action_steps
+        super().model_run(model_context, mode)
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            objs_to_add = yield action_steps.SelectObjects(field_admin)
+            for obj_to_add in objs_to_add:
+                for obj in model_context.value:
+                    if obj_to_add == obj:
+                        return
+                model_context.value.append(obj_to_add)
+            yield action_steps.UpdateObjects(objs_to_add)
+            for obj_to_add in objs_to_add:
+                yield action_steps.FlushSession(orm.object_session(obj_to_add))
+                break
+
+add_existing_object = AddExistingObject()
