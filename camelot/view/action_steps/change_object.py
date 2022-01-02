@@ -90,7 +90,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
-            admin=admin, model=model, form_display=form_display,
+            admin_route=admin_route, model=model, form_display=form_display,
             columns=columns, parent=self
         )
         note_layout = QtWidgets.QVBoxLayout()
@@ -108,7 +108,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         self.gui_context = FormActionGuiContext()
         self.gui_context.workspace = self
-        self.gui_context.admin = admin
+        self.gui_context.admin_route = admin_route
         self.gui_context.view = self
         self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
