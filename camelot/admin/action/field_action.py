@@ -298,7 +298,7 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
-class AddNewObject(EditFieldAction, AddNewObjectMixin):
+class AddNewObject(AddNewObjectMixin, EditFieldAction):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not.
 
@@ -312,6 +312,9 @@ class AddNewObject(EditFieldAction, AddNewObjectMixin):
     verbose_name = _('New')
     name = 'new_object'
     render_hint = RenderHint.TOOL_BUTTON
+
+    def get_proxy(self, model_context, admin):
+        return model_context.value
 
     def get_admin(self, model_context, mode):
         """
