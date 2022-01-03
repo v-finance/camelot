@@ -131,6 +131,10 @@ class OpenFormView(ActionStep):
         """
         return self.objects
 
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return AdminRoute.admin_for(self.admin_route)
+
     def render(self, gui_context):
         from camelot.view.controls.formview import FormView
 
