@@ -27,7 +27,7 @@ from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
-from camelot.core.orm import Session
+from camelot.core.orm import EntityBase, EntityMeta, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import party
 from camelot.model.party import Person
@@ -46,7 +46,8 @@ from camelot.view.qml_view import get_qml_root_backend
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
 
-from sqlalchemy import orm, schema, types
+from sqlalchemy import MetaData, orm, schema, types
+from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
@@ -569,6 +570,77 @@ class ListActionsCase(
         delete_selection_action.gui_run( self.gui_context )
         self.process()
         self.assertFalse(selected_object in self.session)
+
+    def test_switch_rank(self):
+
+        metadata = MetaData()
+        Entity = declarative_base(cls = EntityBase,
+                                  metadata = metadata,
+                                  metaclass = EntityMeta,
+                                  class_registry = dict(),
+                                  constructor = None,
+                                  name = 'Entity' )
+        metadata.bind = 'sqlite://'
+        session = Session()
+
+        class A(Entity):
+
+            rank = schema.Column(types.Integer, nullable=False)
+            type = schema.Column(types.Unicode, nullable=False)
+
+            __facade_args__ = {
+                'ranked_by': (rank, type)
+            }
+
+            class Admin(EntityAdmin):
+                pass
+
+        metadata.create_all()
+        selected_object = self.model_context.get_object()
+        self.assertTrue(selected_object in self.session)
+        switch_rank_action = list_action.SwitchRank()
+
+        # The action should not be present in the related toolbar actions of the entity if its not rank-based.
+        related_toolbar_actions = [action.route[-1] for action in self.model_context.admin.get_related_toolbar_actions('onetomany')]
+        self.assertNotIn(list_action.SwitchRank.name, related_toolbar_actions)
+        # If the action is run on a non rank-based entity anyways, an assertion should block it.
+        with self.assertRaises(AssertionError) as exc:
+            list(switch_rank_action.model_run(self.model_context, None))
+        self.assertEqual(str(exc.exception), list_action.SwitchRank.Message.entity_not_rank_based.value.format(self.model_context.admin.entity))
+
+        # The action should be present on a rank-based entity:
+        admin = app_admin.get_related_admin(A)
+        related_toolbar_actions = [action.route[-1] for action in admin.get_related_toolbar_actions('onetomany')]
+        self.assertIn(list_action.SwitchRank.name, related_toolbar_actions)
+
+        # The action should raise an exception if no 2 lines are selected:
+        ax1 = A(type='x', rank=1)
+        ax2 = A(type='x', rank=2)
+        ay1 = A(type='y', rank=1)
+        session.flush()
+        model_context = list_action.ListActionModelContext()
+        model_context.proxy = admin.get_proxy([ax1, ax2, ay1])
+        model_context.admin = admin
+        with self.assertRaises(UserException) as exc:
+            list(switch_rank_action.model_run(model_context, None))
+        self.assertEqual(exc.exception.text, list_action.SwitchRank.Message.select_2_lines.value)
+
+        # 2 lines selected within the same rank dimension should work:
+        model_context.selected_rows = [(0,1)]
+        model_context.selection_count = 2
+        list(switch_rank_action.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 2)
+        self.assertEqual(ax2.rank, 1)
+
+        # The action should not allow changing the rank between incompatible objects (that do not share the same rank dimension).
+        model_context.selected_rows = [(0,0), (2,2)]
+        model_context.selection_count = 2
+        with self.assertRaises(UserException) as exc:
+            list(switch_rank_action.model_run(model_context, None))
+        self.assertEqual(exc.exception.text, list_action.SwitchRank.Message.incompatible_rank_dimension.value)
+
+        metadata.drop_all()
+        metadata.clear()
 
     def test_add_existing_object(self):
         initial_row_count = self._row_count(self.item_model)
