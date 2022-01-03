@@ -373,11 +373,6 @@ class FormView(AbstractView):
                 toolbar.addWidget(action_widget)
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
-            # @todo : this show is needed on OSX or the form window
-            # is hidden after the toolbar is added, maybe this can
-            # be solved using windowflags, since this causes some
-            # flicker
-            self.show()
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):

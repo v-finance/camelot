@@ -319,7 +319,7 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
     def set_state_v2( self, state ):
         self.set_menu_v2(state, self)
-        self.set_toolbutton_state(self, state)
+        self.set_toolbutton_state(self, state, self.action_triggered)
 
     @classmethod
     def set_toolbutton_state(cls, toolbutton, state, slot):
