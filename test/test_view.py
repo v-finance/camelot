@@ -467,7 +467,7 @@ class FormTest(
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate(delegate)
         self.widgets = FormEditors(
-            self.qt_parent, self.movie_admin.get_fields(), self.movie_admin
+            self.qt_parent, self.movie_admin.get_fields(),
         )
         self.person_entity = Person
         self.gui_context = GuiContext()
