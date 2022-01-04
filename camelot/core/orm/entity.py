@@ -41,6 +41,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
+from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from . statements import MUTATORS
@@ -170,7 +171,17 @@ class EntityMeta( DeclarativeMeta ):
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
-            
+
+                ranked_by = facade_args.get('ranked_by')
+                if ranked_by is not None:
+                    ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
+                    for col in ranked_by:
+                        assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Ranked by definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute` or a tuple of those instances'
+                    rank_col = ranked_by[0]
+                    if isinstance(rank_col, orm.attributes.InstrumentedAttribute):
+                        rank_col = rank_col.prop.columns[0]
+                    assert isinstance(rank_col.type, Integer), 'The first column/attributes of the ranked by definition, indicating the rank column, should be of type Integer'
+
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity' and dict_.get('__tablename__') is not None:
@@ -265,6 +276,13 @@ class EntityMeta( DeclarativeMeta ):
         if discriminator is not None:
             assert discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_value)
             discriminator.__set__(entity_instance, discriminator_value)
+
+    def get_ranked_by(cls):
+        ranked_by = cls._get_facade_arg('ranked_by')
+        if ranked_by is not None:
+            ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
+            rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]
+            return tuple(rank_cols)
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
