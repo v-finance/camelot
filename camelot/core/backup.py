@@ -257,6 +257,7 @@ class BackupMechanism(object):
                     yield (number_of_tables+i, steps, _('Copy data from table %s')%to_table.name)
                     self.copy_table_data(from_meta_data.tables[to_table.name], to_table,
                                          from_connection, to_connection)
+                    self.update_table_after_restore(to_table, to_connection)
                     
             yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
             self.update_schema_after_restore(from_connection, to_connection)
@@ -269,21 +270,21 @@ class BackupMechanism(object):
         """This method might be subclassed to turn off/on foreign key checks"""
         to_connection.execute(to_table.delete())
 
+    def update_table_after_restore(self, to_table, to_connection):
+        to_dialect = to_connection.engine.url.get_dialect().name
+        if to_dialect == 'postgresql':
+            for column in to_table.columns:
+                # Support both sqlalchemy's as Camelot's primary key type.
+                if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
+                   column.autoincrement=='auto' and column.primary_key==True and \
+                   len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
+                    column_name = column.name
+                    table_name = to_table.name
+                    seq_name = table_name + "_" + column_name + "_seq"
+                    to_connection.execute("select setval('%s', coalesce(max(%s),1)) from %s" % (seq_name, column_name, table_name))
+
     def copy_table_data(self, from_table, to_table, from_connection, to_connection):
         query = sql.select([from_table])
-        to_dialect = to_connection.engine.url.get_dialect().name
         table_data = [row for row in from_connection.execute(query).fetchall()]
         if len(table_data):
             to_connection.execute(to_table.insert(), table_data)
-            if to_dialect == 'postgresql':
-                for column in to_table.columns:
-                    # Support both sqlalchemy's as Camelot's primary key type.
-                    if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
-                       column.autoincrement=='auto' and column.primary_key==True and \
-                       len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
-                        column_name = column.name
-                        table_name = to_table.name
-                        seq_name = table_name + "_" + column_name + "_seq"
-                        to_connection.execute("select setval('%s', max(%s)) from %s" % (seq_name, column_name, table_name))
-
-
