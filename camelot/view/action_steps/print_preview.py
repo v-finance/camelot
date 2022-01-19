@@ -91,8 +91,12 @@ class PrintPreview( ActionStep ):
     def __init__( self, document, print_thread=None ):
         self.document = document
         # document must be in current thread
-        for document in self.document:
+        if isinstance(self.document, QtCore.QObject):
             assert document.thread() == QtCore.QThread.currentThread()
+        elif isinstance(self.document, list):
+            for document in self.document:
+                if isinstance(document, QtCore.QObject):
+                    assert document.thread() == QtCore.QThread.currentThread()
         if print_thread is not None:
             self.document.moveToThread(print_thread)
         else:
@@ -124,7 +128,7 @@ class PrintPreview( ActionStep ):
 
     def paint_on_printer( self, printer ):
         # document must be in current thread
-        for document in self.document:
+        if isinstance(document, QtCore.QObject):
             assert document.thread() == QtCore.QThread.currentThread()
         self.document.print_(printer)
 
