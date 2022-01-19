@@ -58,7 +58,7 @@ class EntityMeta( DeclarativeMeta ):
     -------------------------
     This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
     Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
-    To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
+    To set the discriminator column, the '__entity_args__' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
     This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
     In order to register a facade class: see documentation on EntityFacadeMeta.
     
@@ -67,7 +67,7 @@ class EntityMeta( DeclarativeMeta ):
               |     ...
               |     described_by = Column(IntEnum(some_class_types), ...)
               |     ...
-              |     __facade_args__ = {
+              |     __entity_args__ = {
               |         'discriminator': described_by
               |     }
               |     ...
@@ -134,10 +134,10 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__mapper_args__', dict())
             
             for base in bases:
-                if hasattr(base, '__facade_args__'):
+                if hasattr(base, '__entity_args__'):
                     break
             else:
-                dict_.setdefault('__facade_args__', dict())
+                dict_.setdefault('__entity_args__', dict())
             
             for base in bases:
                 if hasattr(base, '__types__'):
@@ -157,9 +157,9 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__cls_for_type__', dict())
         
-            facade_args = dict_.get('__facade_args__')
-            if facade_args is not None:
-                discriminator = facade_args.get('discriminator')
+            entity_args = dict_.get('__entity_args__')
+            if entity_args is not None:
+                discriminator = entity_args.get('discriminator')
                 if discriminator is not None:
                     assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
                     discriminator_col = discriminator
@@ -172,7 +172,7 @@ class EntityMeta( DeclarativeMeta ):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
 
-                ranked_by = facade_args.get('ranked_by')
+                ranked_by = entity_args.get('ranked_by')
                 if ranked_by is not None:
                     ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
                     for col in ranked_by:
@@ -232,13 +232,13 @@ class EntityMeta( DeclarativeMeta ):
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
-    def _get_facade_arg(cls, key):
+    def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
-            if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
-                return cls_.__facade_args__[key]
+            if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
+                return cls_.__entity_args__[key]
     
     def get_cls_discriminator(cls):
-        discriminator = cls._get_facade_arg('discriminator')
+        discriminator = cls._get_entity_arg('discriminator')
         if discriminator is not None:
             if isinstance(discriminator, sql.schema.Column):
                 return getattr(cls, discriminator.key)
@@ -253,7 +253,7 @@ class EntityMeta( DeclarativeMeta ):
             discriminator.__set__(entity_instance, discriminator_value)
 
     def get_ranked_by(cls):
-        ranked_by = cls._get_facade_arg('ranked_by')
+        ranked_by = cls._get_entity_arg('ranked_by')
         if ranked_by is not None:
             ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
             rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]

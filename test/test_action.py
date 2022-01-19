@@ -588,7 +588,7 @@ class ListActionsCase(
             rank = schema.Column(types.Integer, nullable=False)
             type = schema.Column(types.Unicode, nullable=False)
 
-            __facade_args__ = {
+            __entity_args__ = {
                 'ranked_by': (rank, type)
             }
 
