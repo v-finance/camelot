@@ -90,6 +90,9 @@ class PrintPreview( ActionStep ):
     
     def __init__( self, document ):
         self.document = document
+        # document must be in current thread
+        for document in self.document:
+            assert document.thread() == QtCore.QThread.currentThread()
         self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.margin_left = None
@@ -117,6 +120,9 @@ class PrintPreview( ActionStep ):
             printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
 
     def paint_on_printer( self, printer ):
+        # document must be in current thread
+        for document in self.document:
+            assert document.thread() == QtCore.QThread.currentThread()
         self.document.print_(printer)
 
     def render( self, gui_context ):
