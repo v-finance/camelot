@@ -88,12 +88,15 @@ class PrintPreview( ActionStep ):
     .. image:: /_static/simple_report.png
         """
     
-    def __init__( self, document ):
+    def __init__( self, document, print_thread=None ):
         self.document = document
         # document must be in current thread
         for document in self.document:
             assert document.thread() == QtCore.QThread.currentThread()
-        self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
+        if print_thread is not None:
+            self.document.moveToThread(print_thread)
+        else:
+            self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.margin_left = None
         self.margin_top = None
