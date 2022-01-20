@@ -264,7 +264,7 @@ class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
-    to be non-editable using __facade_args__ = { 'editable': False }.
+    to be non-editable using __entity_args__ = { 'editable': False }.
     """
 
     name = 'edit_action'
