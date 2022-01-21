@@ -81,7 +81,7 @@ class Memento( Entity ):
                                   index = True )    
     previous_attributes = orm.deferred( schema.Column( PickleType() ) )
 
-    __facade_args__ = {
+    __entity_args__ = {
         'editable': False
     }
     

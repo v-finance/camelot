@@ -288,6 +288,9 @@ class OpenQmlTableView(OpenTableView):
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
 
+        for action in step['actions']:
+            new_model.add_action_route(tuple(action['route']))
+
         context_id = qml_action_step(list_gui_context, 'OpenTableView',
                 serialized_step, { 'model': new_model })
 

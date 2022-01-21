@@ -264,7 +264,7 @@ class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
-    to be non-editable using __facade_args__ = { 'editable': False }.
+    to be non-editable using __entity_args__ = { 'editable': False }.
     """
 
     name = 'edit_action'
@@ -273,6 +273,9 @@ class EditAction( ListContextAction ):
     class Message(enum.Enum):
 
         no_single_selection = _('Can only select 1 line')
+        select_2_lines = _('Please select 2 lines')
+        entity_not_rank_based = '{} has no rank column registered'
+        incompatible_rank_dimension = _('The selected lines are not part of the same rank dimension')
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
@@ -453,6 +456,43 @@ class DeleteSelection( EditAction ):
         return state
 
 delete_selection = DeleteSelection()
+
+class SwitchRank(EditAction):
+    """Switch the rank of the selected rank-based rows in a table."""
+
+    icon = Icon('arrows-alt-v')
+    tooltip = _('Switch rank')
+    verbose_name = _('Switch rank')
+    name = 'switch_rank'
+
+    def model_run( self, model_context, mode ):
+        from camelot.view import action_steps
+        super().model_run(model_context, mode)
+        admin = model_context.admin
+        ranked_by = admin.entity.get_ranked_by()
+        assert ranked_by is not None, self.Message.entity_not_rank_based.value.format(admin.entity)
+        if model_context.selection_count != 2:
+            raise UserException(self.Message.select_2_lines.value)
+        first_obj, second_obj = list(model_context.get_selection())
+        rank_prop = ranked_by[0] if isinstance(ranked_by, tuple) else ranked_by
+        for rank_col in ranked_by[1:]:
+            if rank_col.__get__(first_obj, None) != rank_col.__get__(second_obj, None):
+                raise UserException(self.Message.incompatible_rank_dimension.value)
+        rank_1 = rank_prop.__get__(first_obj, None)
+        rank_2 = rank_prop.__get__(second_obj, None)
+        rank_prop.__set__(first_obj, rank_2)
+        rank_prop.__set__(second_obj, rank_1)
+        updated_objects = set(list(admin.get_depending_objects(first_obj)) + list(admin.get_depending_objects(second_obj)))
+        yield action_steps.UpdateObjects(updated_objects)
+        yield action_steps.FlushSession(model_context.session)
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        state.enabled = model_context.selection_count == 2
+        return state
+
+switch_rank = SwitchRank()
 
 class AbstractToPrevious(object):
 
