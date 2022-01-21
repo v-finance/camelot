@@ -88,9 +88,19 @@ class PrintPreview( ActionStep ):
     .. image:: /_static/simple_report.png
         """
     
-    def __init__( self, document ):
+    def __init__( self, document, print_thread=None ):
         self.document = document
-        self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
+        # document must be in current thread
+        if isinstance(self.document, QtCore.QObject):
+            assert document.thread() == QtCore.QThread.currentThread()
+        elif isinstance(self.document, list):
+            for document in self.document:
+                if isinstance(document, QtCore.QObject):
+                    assert document.thread() == QtCore.QThread.currentThread()
+        if print_thread is not None:
+            self.document.moveToThread(print_thread)
+        else:
+            self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.margin_left = None
         self.margin_top = None
@@ -117,6 +127,9 @@ class PrintPreview( ActionStep ):
             printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
 
     def paint_on_printer( self, printer ):
+        # document must be in current thread
+        if isinstance(document, QtCore.QObject):
+            assert document.thread() == QtCore.QThread.currentThread()
         self.document.print_(printer)
 
     def render( self, gui_context ):
