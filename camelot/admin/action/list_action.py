@@ -459,13 +459,24 @@ delete_selection = DeleteSelection()
 
 class SwitchRankUp(EditAction):
     """
-    Switch the rank of the selected rank-based row in a table with that of the row with a rank directly before it within the same rank dimension.
+    Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly higher within the same rank dimension.
+    Note that ranking higher in this context (usually) refers to a rank value that is lower in numerical value.
     """
 
     icon = Icon('arrow-up')
     tooltip = _('Switch rank up')
     verbose_name = _('Switch rank up')
     name = 'switch_rank_up'
+
+    def get_obj_to_switch(obj_rank, objects):
+        """
+        Based on the given selected object's rank, return the suited rank-object tuple candidate to switch with out of the given list of objects within the same rank dimension.
+        For this rank-up action, this is defined as the object with the lowest rank that is ranked higher as the selected object.
+        Note that ranking higher in this context (usually) refers to a rank value that is lower in numerical value, and vice versa.
+        :obj_rank: The rank of the selected object.
+        :objects: list of rank-object tuples within the same rank dimension as the selected object.
+        """
+        return min([(rank, obj) for (rank, obj) in objects if rank < obj_rank])
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
@@ -478,21 +489,18 @@ class SwitchRankUp(EditAction):
             raise UserException(self.Message.no_single_selection.value)
         for obj in model_context.get_selection():
             obj_rank = rank_prop.__get__(obj, None)
-            obj_to_switch = obj_to_switch_rank = None
+            # Compose a list of rank-object tuples of objects within the same rank dimension.
+            compatible_objects = []
             for other_obj in model_context.get_collection():
-                if other_obj != obj:
-                    try:
-                        for rank_col in ranked_by[1:]:
-                            if rank_col.__get__(obj, None) != rank_col.__get__(other_obj, None):
-                                raise UserException(self.Message.incompatible_rank_dimension.value)
-                    except UserException:
-                        continue
-                    other_obj_rank = rank_prop.__get__(other_obj, None)
-                    if other_obj_rank < obj_rank and (obj_to_switch_rank is None or other_obj_rank > obj_to_switch_rank):
-                        obj_to_switch_rank = other_obj_rank
-                        obj_to_switch = other_obj
+                for rank_col in ranked_by[1:]:
+                    if rank_col.__get__(obj, None) != rank_col.__get__(other_obj, None):
+                        break
+                else:
+                    compatible_objects.append((rank_prop.__get__(other_obj, None), other_obj))
 
-            if obj_to_switch is not None:
+            # If there are compatible objects, determine the object to switch it and finally perform the switch itself.
+            if compatible_objects:
+                obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(compatible_objects)
                 rank_prop.__set__(obj, obj_to_switch_rank)
                 rank_prop.__set__(obj_to_switch, obj_rank)
                 updated_objects = set(list(admin.get_depending_objects(obj)) + list(admin.get_depending_objects(obj_to_switch)))
@@ -509,9 +517,10 @@ class SwitchRankUp(EditAction):
 
 switch_rank_up = SwitchRankUp()
 
-class SwitchRankDown(EditAction):
+class SwitchRankDown(SwitchRankUp):
     """
-    Switch the rank of the selected rank-based row in a table with that of the row with a rank directly after it within the same rank dimension.
+    Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly lower within the same rank dimension.
+    Note that ranking lower in this context (usually) refers to a rank value that is higher in numerical value.
     """
 
     icon = Icon('arrow-down')
@@ -519,45 +528,12 @@ class SwitchRankDown(EditAction):
     verbose_name = _('Switch rank down')
     name = 'switch_rank_down'
 
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        admin = model_context.admin
-        ranked_by = admin.entity.get_ranked_by()
-        assert ranked_by is not None, self.Message.entity_not_rank_based.value.format(admin.entity)
-        rank_prop = ranked_by[0] if isinstance(ranked_by, tuple) else ranked_by
-        if model_context.selection_count != 1:
-            raise UserException(self.Message.no_single_selection.value)
-        for obj in model_context.get_selection():
-            obj_rank = rank_prop.__get__(obj, None)
-            obj_to_switch = obj_to_switch_rank = None
-            for other_obj in model_context.get_collection():
-                if other_obj != obj:
-                    try:
-                        for rank_col in ranked_by[1:]:
-                            if rank_col.__get__(obj, None) != rank_col.__get__(other_obj, None):
-                                raise UserException(self.Message.incompatible_rank_dimension.value)
-                    except UserException:
-                        continue
-                    other_obj_rank = rank_prop.__get__(other_obj, None)
-                    if other_obj_rank > obj_rank and (obj_to_switch_rank is None or other_obj_rank > obj_to_switch_rank):
-                        obj_to_switch_rank = other_obj_rank
-                        obj_to_switch = other_obj
-
-            if obj_to_switch is not None:
-                rank_prop.__set__(obj, obj_to_switch_rank)
-                rank_prop.__set__(obj_to_switch, obj_rank)
-                updated_objects = set(list(admin.get_depending_objects(obj)) + list(admin.get_depending_objects(obj_to_switch)))
-                yield action_steps.UpdateObjects(updated_objects)
-                yield action_steps.FlushSession(model_context.session)
-                for updated_obj in updated_objects:
-                    model_context.session.refresh(updated_obj)
-
-    def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
-        state = super().get_state(model_context)
-        state.enabled = model_context.selection_count == 1
-        return state
+    def get_obj_to_switch(obj_rank, objects):
+        """
+        For this rank-down action, the object to switch with is defined as the object with the highest rank that is ranked lower as the selected object.
+        Note that ranking lower in this context (usually) refers to a rank value that is higher in numerical value, and vice versa.
+        """
+        return max([(rank, obj) for (rank, obj) in objects if rank > obj_rank])
 
 switch_rank_down = SwitchRankDown()
 
