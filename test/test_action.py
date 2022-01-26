@@ -619,11 +619,12 @@ class ListActionsCase(
         # The action should raise an exception if no single line is selected:
         ax1 = A(type='x', rank=1)
         ax2 = A(type='x', rank=2)
+        ax3 = A(type='x', rank=3)
         ay1 = A(type='y', rank=1)
         session.flush()
         model_context = list_action.ListActionModelContext()
-        model_context.proxy = admin.get_proxy([ax1, ax2, ay1])
-        model_context.collection_count = 3
+        model_context.proxy = admin.get_proxy([ax1, ax2, ay1, ax3])
+        model_context.collection_count = 4
         model_context.admin = admin
         for action in (switch_up_action, switch_down_action):
             with self.assertRaises(UserException) as exc:
@@ -637,14 +638,40 @@ class ListActionsCase(
             self.assertEqual(exc.exception.text, action.Message.no_single_selection.value)
 
         # A single selected line should work:
-        model_context.selected_rows = [(1,1)]
+        model_context.selected_rows = [(0,0)]
         model_context.selection_count = 1
+        # Switch down with at least two rank-compatible objects with a lower rank and verify
+        # the one directly lower is taken:
+        list(switch_down_action.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 2)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 3)
+        # Switch down again:
+        list(switch_down_action.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 3)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 2)
+        # Now test switching back up:
         list(switch_up_action.model_run(model_context, None))
         self.assertEqual(ax1.rank, 2)
         self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 3)
+        list(switch_up_action.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+        # The action should not switch ranks if no compatible objects are defined, e.g.:
+        # * Trying to switch up with already highest rank
+        list(switch_up_action.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+        model_context.selected_rows = [(3,3)]
+        # * Trying to switch down with already lowest rank
         list(switch_down_action.model_run(model_context, None))
         self.assertEqual(ax1.rank, 1)
         self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
 
         metadata.drop_all()
         metadata.clear()
