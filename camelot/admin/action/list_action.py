@@ -460,7 +460,7 @@ delete_selection = DeleteSelection()
 class SwitchRankUp(EditAction):
     """
     Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly higher within the same rank dimension.
-    Note that ranking higher in this context (usually) refers to a rank value that is lower in numerical value.
+    Note that ranking higher in this context refers to a rank value that is lower in numerical value.
     """
 
     icon = Icon('arrow-up')
@@ -472,11 +472,11 @@ class SwitchRankUp(EditAction):
         """
         Based on the given selected object's rank, return the suited rank-object tuple candidate to switch with out of the given list of objects within the same rank dimension.
         For this rank-up action, this is defined as the object with the lowest rank that is ranked higher as the selected object.
-        Note that ranking higher in this context (usually) refers to a rank value that is lower in numerical value, and vice versa.
+        Note that ranking higher in this context refers to a rank value that is lower in numerical value, and vice versa.
         :obj_rank: The rank of the selected object.
         :objects: list of rank-object tuples within the same rank dimension as the selected object.
         """
-        return min([(rank, obj) for (rank, obj) in objects if rank < obj_rank])
+        return max([(rank, obj) for (rank, obj) in objects if rank < obj_rank] or [(None, None)])
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
@@ -498,9 +498,9 @@ class SwitchRankUp(EditAction):
                 else:
                     compatible_objects.append((rank_prop.__get__(other_obj, None), other_obj))
 
-            # If there are compatible objects, determine the object to switch it and finally perform the switch itself.
-            if compatible_objects:
-                obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(obj_rank, compatible_objects)
+            # Determine the object to switch it and perform the switch if there's a switch candidate found.
+            obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(obj_rank, compatible_objects)
+            if obj_to_switch is not None:
                 rank_prop.__set__(obj, obj_to_switch_rank)
                 rank_prop.__set__(obj_to_switch, obj_rank)
                 updated_objects = set(list(admin.get_depending_objects(obj)) + list(admin.get_depending_objects(obj_to_switch)))
@@ -520,7 +520,7 @@ switch_rank_up = SwitchRankUp()
 class SwitchRankDown(SwitchRankUp):
     """
     Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly lower within the same rank dimension.
-    Note that ranking lower in this context (usually) refers to a rank value that is higher in numerical value.
+    Note that ranking lower in this context refers to a rank value that is higher in numerical value.
     """
 
     icon = Icon('arrow-down')
@@ -531,9 +531,9 @@ class SwitchRankDown(SwitchRankUp):
     def get_obj_to_switch(self, obj_rank, objects):
         """
         For this rank-down action, the object to switch with is defined as the object with the highest rank that is ranked lower as the selected object.
-        Note that ranking lower in this context (usually) refers to a rank value that is higher in numerical value, and vice versa.
+        Note that ranking lower in this context refers to a rank value that is higher in numerical value, and vice versa.
         """
-        return max([(rank, obj) for (rank, obj) in objects if rank > obj_rank])
+        return min([(rank, obj) for (rank, obj) in objects if rank > obj_rank] or [(None, None)])
 
 switch_rank_down = SwitchRankDown()
 
