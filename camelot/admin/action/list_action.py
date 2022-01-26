@@ -468,7 +468,7 @@ class SwitchRankUp(EditAction):
     verbose_name = _('Switch rank up')
     name = 'switch_rank_up'
 
-    def get_obj_to_switch(obj_rank, objects):
+    def get_obj_to_switch(self, obj_rank, objects):
         """
         Based on the given selected object's rank, return the suited rank-object tuple candidate to switch with out of the given list of objects within the same rank dimension.
         For this rank-up action, this is defined as the object with the lowest rank that is ranked higher as the selected object.
@@ -500,7 +500,7 @@ class SwitchRankUp(EditAction):
 
             # If there are compatible objects, determine the object to switch it and finally perform the switch itself.
             if compatible_objects:
-                obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(compatible_objects)
+                obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(obj_rank, compatible_objects)
                 rank_prop.__set__(obj, obj_to_switch_rank)
                 rank_prop.__set__(obj_to_switch, obj_rank)
                 updated_objects = set(list(admin.get_depending_objects(obj)) + list(admin.get_depending_objects(obj_to_switch)))
@@ -528,7 +528,7 @@ class SwitchRankDown(SwitchRankUp):
     verbose_name = _('Switch rank down')
     name = 'switch_rank_down'
 
-    def get_obj_to_switch(obj_rank, objects):
+    def get_obj_to_switch(self, obj_rank, objects):
         """
         For this rank-down action, the object to switch with is defined as the object with the highest rank that is ranked lower as the selected object.
         Note that ranking lower in this context (usually) refers to a rank value that is higher in numerical value, and vice versa.
