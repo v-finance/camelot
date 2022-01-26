@@ -457,16 +457,16 @@ class DeleteSelection( EditAction ):
 
 delete_selection = DeleteSelection()
 
-class SwitchRankUp(EditAction):
+class MoveRankUp(EditAction):
     """
     Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly higher within the same rank dimension.
     Note that ranking higher in this context refers to a rank value that is lower in numerical value.
     """
 
     icon = Icon('arrow-up')
-    tooltip = _('Switch rank up')
-    verbose_name = _('Switch rank up')
-    name = 'switch_rank_up'
+    tooltip = _('Move rank up')
+    verbose_name = _('Move rank up')
+    name = 'move_rank_up'
 
     def get_obj_to_switch(self, obj_rank, objects):
         """
@@ -515,18 +515,18 @@ class SwitchRankUp(EditAction):
         state.enabled = model_context.selection_count == 1
         return state
 
-switch_rank_up = SwitchRankUp()
+move_rank_up = MoveRankUp()
 
-class SwitchRankDown(SwitchRankUp):
+class MoveRankDown(MoveRankUp):
     """
     Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly lower within the same rank dimension.
     Note that ranking lower in this context refers to a rank value that is higher in numerical value.
     """
 
     icon = Icon('arrow-down')
-    tooltip = _('Switch rank down')
-    verbose_name = _('Switch rank down')
-    name = 'switch_rank_down'
+    tooltip = _('Move rank down')
+    verbose_name = _('Move rank down')
+    name = 'move_rank_down'
 
     def get_obj_to_switch(self, obj_rank, objects):
         """
@@ -535,7 +535,7 @@ class SwitchRankDown(SwitchRankUp):
         """
         return min([(rank, obj) for (rank, obj) in objects if rank > obj_rank] or [(None, None)])
 
-switch_rank_down = SwitchRankDown()
+move_rank_down = MoveRankDown()
 
 class AbstractToPrevious(object):
 
