@@ -279,7 +279,7 @@ and used as a custom action.
     def get_related_toolbar_actions(self, direction):
         actions = super(EntityAdmin, self).get_related_toolbar_actions(direction)
         if direction == 'onetomany' and self.entity.get_ranked_by() is not None:
-            actions.append(list_action.switch_rank)
+            actions.extend([list_action.move_rank_up, list_action.move_rank_down])
         return actions
 
     def get_descriptor_field_attributes(self, field_name):

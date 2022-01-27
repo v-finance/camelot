@@ -571,8 +571,7 @@ class ListActionsCase(
         self.process()
         self.assertFalse(selected_object in self.session)
 
-    def test_switch_rank(self):
-
+    def test_move_rank_up_down(self):
         metadata = MetaData()
         Entity = declarative_base(cls = EntityBase,
                                   metadata = metadata,
@@ -598,46 +597,79 @@ class ListActionsCase(
         metadata.create_all()
         selected_object = self.model_context.get_object()
         self.assertTrue(selected_object in self.session)
-        switch_rank_action = list_action.SwitchRank()
 
-        # The action should not be present in the related toolbar actions of the entity if its not rank-based.
+        # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
         related_toolbar_actions = [action.route[-1] for action in self.model_context.admin.get_related_toolbar_actions('onetomany')]
-        self.assertNotIn(list_action.SwitchRank.name, related_toolbar_actions)
+        self.assertNotIn(list_action.move_rank_up.name, related_toolbar_actions)
+        self.assertNotIn(list_action.move_rank_down.name, related_toolbar_actions)
         # If the action is run on a non rank-based entity anyways, an assertion should block it.
-        with self.assertRaises(AssertionError) as exc:
-            list(switch_rank_action.model_run(self.model_context, None))
-        self.assertEqual(str(exc.exception), list_action.SwitchRank.Message.entity_not_rank_based.value.format(self.model_context.admin.entity))
+        for action in (list_action.move_rank_up, list_action.move_rank_down):
+            with self.assertRaises(AssertionError) as exc:
+                list(action.model_run(self.model_context, None))
+            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(self.model_context.admin.entity))
 
         # The action should be present on a rank-based entity:
         admin = app_admin.get_related_admin(A)
         related_toolbar_actions = [action.route[-1] for action in admin.get_related_toolbar_actions('onetomany')]
-        self.assertIn(list_action.SwitchRank.name, related_toolbar_actions)
+        self.assertIn(list_action.move_rank_up.name, related_toolbar_actions)
+        self.assertIn(list_action.move_rank_down.name, related_toolbar_actions)
 
-        # The action should raise an exception if no 2 lines are selected:
+        # The action should raise an exception if no single line is selected:
         ax1 = A(type='x', rank=1)
         ax2 = A(type='x', rank=2)
+        ax3 = A(type='x', rank=3)
         ay1 = A(type='y', rank=1)
         session.flush()
         model_context = list_action.ListActionModelContext()
-        model_context.proxy = admin.get_proxy([ax1, ax2, ay1])
+        model_context.proxy = admin.get_proxy([ax1, ax2, ay1, ax3])
+        model_context.collection_count = 4
         model_context.admin = admin
-        with self.assertRaises(UserException) as exc:
-            list(switch_rank_action.model_run(model_context, None))
-        self.assertEqual(exc.exception.text, list_action.SwitchRank.Message.select_2_lines.value)
-
-        # 2 lines selected within the same rank dimension should work:
+        for action in (list_action.move_rank_up, list_action.move_rank_down):
+            with self.assertRaises(UserException) as exc:
+                list(action.model_run(model_context, None))
+            self.assertEqual(exc.exception.text, action.Message.no_single_selection.value)
         model_context.selected_rows = [(0,1)]
         model_context.selection_count = 2
-        list(switch_rank_action.model_run(model_context, None))
+        for action in (list_action.move_rank_up, list_action.move_rank_down):
+            with self.assertRaises(UserException) as exc:
+                list(action.model_run(model_context, None))
+            self.assertEqual(exc.exception.text, action.Message.no_single_selection.value)
+
+        # A single selected line should work:
+        model_context.selected_rows = [(0,0)]
+        model_context.selection_count = 1
+        # Move down with at least two rank-compatible objects with a lower rank and verify
+        # the one directly lower is taken:
+        list(list_action.move_rank_down.model_run(model_context, None))
         self.assertEqual(ax1.rank, 2)
         self.assertEqual(ax2.rank, 1)
-
-        # The action should not allow changing the rank between incompatible objects (that do not share the same rank dimension).
-        model_context.selected_rows = [(0,0), (2,2)]
-        model_context.selection_count = 2
-        with self.assertRaises(UserException) as exc:
-            list(switch_rank_action.model_run(model_context, None))
-        self.assertEqual(exc.exception.text, list_action.SwitchRank.Message.incompatible_rank_dimension.value)
+        self.assertEqual(ax3.rank, 3)
+        # Move down again:
+        list(list_action.move_rank_down.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 3)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 2)
+        # Now test switching back up:
+        list(list_action.move_rank_up.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 2)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 3)
+        list(list_action.move_rank_up.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+        # The action should not switch ranks if no compatible objects are defined, e.g.:
+        # * Trying to move up with already highest rank
+        list(list_action.move_rank_up.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+        model_context.selected_rows = [(3,3)]
+        # * Trying to move down with already lowest rank
+        list(list_action.move_rank_down.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
 
         metadata.drop_all()
         metadata.clear()
