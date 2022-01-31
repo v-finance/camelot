@@ -289,6 +289,9 @@ class OpenQmlTableView(OpenTableView):
         new_model.set_value(step['proxy_route'])
 
         for action in step['actions']:
+            action_name = action['route'][-1]
+            if 'group_box_filter_' in action_name or 'combo_box_filter_' in action_name:
+                continue
             new_model.add_action_route(tuple(action['route']))
 
         context_id = qml_action_step(list_gui_context, 'OpenTableView',
