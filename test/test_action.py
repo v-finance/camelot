@@ -30,7 +30,7 @@ from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
-from camelot.core.orm import Session
+from camelot.core.orm import EntityBase, EntityMeta, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import party
 from camelot.model.party import Person
@@ -49,7 +49,8 @@ from camelot.view.qml_view import get_qml_root_backend
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie
 
-from sqlalchemy import orm, schema, types
+from sqlalchemy import MetaData, orm, schema, types
+from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
@@ -572,6 +573,109 @@ class ListActionsCase(
         delete_selection_action.gui_run( self.gui_context )
         self.process()
         self.assertFalse(selected_object in self.session)
+
+    def test_move_rank_up_down(self):
+        metadata = MetaData()
+        Entity = declarative_base(cls = EntityBase,
+                                  metadata = metadata,
+                                  metaclass = EntityMeta,
+                                  class_registry = dict(),
+                                  constructor = None,
+                                  name = 'Entity' )
+        metadata.bind = 'sqlite://'
+        session = Session()
+
+        class A(Entity):
+
+            rank = schema.Column(types.Integer, nullable=False)
+            type = schema.Column(types.Unicode, nullable=False)
+
+            __entity_args__ = {
+                'ranked_by': (rank, type)
+            }
+
+            class Admin(EntityAdmin):
+                pass
+
+        metadata.create_all()
+        selected_object = self.model_context.get_object()
+        self.assertTrue(selected_object in self.session)
+
+        # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
+        related_toolbar_actions = [action.route[-1] for action in self.model_context.admin.get_related_toolbar_actions('onetomany')]
+        self.assertNotIn(list_action.move_rank_up.name, related_toolbar_actions)
+        self.assertNotIn(list_action.move_rank_down.name, related_toolbar_actions)
+        # If the action is run on a non rank-based entity anyways, an assertion should block it.
+        for action in (list_action.move_rank_up, list_action.move_rank_down):
+            with self.assertRaises(AssertionError) as exc:
+                list(action.model_run(self.model_context, None))
+            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(self.model_context.admin.entity))
+
+        # The action should be present on a rank-based entity:
+        admin = app_admin.get_related_admin(A)
+        related_toolbar_actions = [action.route[-1] for action in admin.get_related_toolbar_actions('onetomany')]
+        self.assertIn(list_action.move_rank_up.name, related_toolbar_actions)
+        self.assertIn(list_action.move_rank_down.name, related_toolbar_actions)
+
+        # The action should raise an exception if no single line is selected:
+        ax1 = A(type='x', rank=1)
+        ax2 = A(type='x', rank=2)
+        ax3 = A(type='x', rank=3)
+        ay1 = A(type='y', rank=1)
+        session.flush()
+        model_context = list_action.ListActionModelContext()
+        model_context.proxy = admin.get_proxy([ax1, ax2, ay1, ax3])
+        model_context.collection_count = 4
+        model_context.admin = admin
+        for action in (list_action.move_rank_up, list_action.move_rank_down):
+            with self.assertRaises(UserException) as exc:
+                list(action.model_run(model_context, None))
+            self.assertEqual(exc.exception.text, action.Message.no_single_selection.value)
+        model_context.selected_rows = [(0,1)]
+        model_context.selection_count = 2
+        for action in (list_action.move_rank_up, list_action.move_rank_down):
+            with self.assertRaises(UserException) as exc:
+                list(action.model_run(model_context, None))
+            self.assertEqual(exc.exception.text, action.Message.no_single_selection.value)
+
+        # A single selected line should work:
+        model_context.selected_rows = [(0,0)]
+        model_context.selection_count = 1
+        # Move down with at least two rank-compatible objects with a lower rank and verify
+        # the one directly lower is taken:
+        list(list_action.move_rank_down.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 2)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 3)
+        # Move down again:
+        list(list_action.move_rank_down.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 3)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 2)
+        # Now test switching back up:
+        list(list_action.move_rank_up.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 2)
+        self.assertEqual(ax2.rank, 1)
+        self.assertEqual(ax3.rank, 3)
+        list(list_action.move_rank_up.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+        # The action should not switch ranks if no compatible objects are defined, e.g.:
+        # * Trying to move up with already highest rank
+        list(list_action.move_rank_up.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+        model_context.selected_rows = [(3,3)]
+        # * Trying to move down with already lowest rank
+        list(list_action.move_rank_down.model_run(model_context, None))
+        self.assertEqual(ax1.rank, 1)
+        self.assertEqual(ax2.rank, 2)
+        self.assertEqual(ax3.rank, 3)
+
+        metadata.drop_all()
+        metadata.clear()
 
     def test_add_existing_object(self):
         initial_row_count = self._row_count(self.item_model)
