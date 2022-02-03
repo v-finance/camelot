@@ -46,8 +46,8 @@ def check_document_thread_affinity(document, print_thread=None):
             LOGGER.error('Document thread affinity error:')
             LOGGER.error('    document thread: {}'.format(document.thread()))
             LOGGER.error('    current thread:  {}'.format(QtCore.QThread.currentThread()))
-            LOGGER.error('    print_thread:    {}'.fromat(print_thread))
-            LOGGER.error('    GUI thread:      {}'.fromat(QtCore.QCoreApplication.instance().thread()))
+            LOGGER.error('    print_thread:    {}'.format(print_thread))
+            LOGGER.error('    GUI thread:      {}'.format(QtCore.QCoreApplication.instance().thread()))
         assert document.thread() == QtCore.QThread.currentThread()
 
 def check_documents_thread_affinity(documents, print_thread=None):
