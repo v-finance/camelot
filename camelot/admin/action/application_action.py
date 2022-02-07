@@ -110,7 +110,7 @@ class ApplicationActionGuiContext( GuiContext ):
     def get_progress_dialog(self):
         from camelot.view.qml_view import get_qml_window, get_qml_root_backend
         window = get_qml_window()
-        if window is not None:
+        if window is not None and window.isVisible():
             progress_dialog = window.findChild(QtCore.QObject, 'qml_progress_dialog')
             if progress_dialog is not None:
                 return progress_dialog
