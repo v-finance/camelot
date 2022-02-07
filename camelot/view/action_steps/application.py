@@ -162,20 +162,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'NavigationPanel', serialized_step)
 
-    @classmethod
-    def render(self, gui_context, step):
-        """create the navigation panel.
-        this method is used to unit test the action step."""
-        from ..controls.section_widget import NavigationPane
-        navigation_panel = NavigationPane(
-            gui_context,
-            gui_context.workspace
-        )
-        navigation_panel.set_sections(
-            step["menu"]["items"], step["action_states"]
-        )
-        return navigation_panel
-
 
 @dataclass
 class MainMenu(ActionStep, DataclassSerializable):
