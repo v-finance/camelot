@@ -56,12 +56,9 @@ class Exit(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         from camelot.view.model_thread import get_model_thread
         model_thread = get_model_thread()
-        # we might exit the application when the workspace is not even there
-        if gui_context.workspace != None:
-            gui_context.workspace.close_all_views()
         if model_thread != None:
             model_thread.stop()
-        QtCore.QCoreApplication.exit(self.return_code)
+        qml_action_step(gui_context, 'Exit', serialized_step)
 
 
 @dataclass
