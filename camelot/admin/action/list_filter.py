@@ -484,10 +484,8 @@ class FieldFilter(AbstractFilterStrategy):
                 field_operands.append(self.from_string(admin, session, operand))
         except utils.ParsingError:
             return
-        for attribute in self.attributes:
-            
         filter_clauses = []
-        for attribute in self.attribute:
+        for attribute in self.attributes:
             filter_clause = operator.operator(attribute, *operands)
             if filter_clause is not None:
                 where_conditions = []
@@ -496,7 +494,7 @@ class FieldFilter(AbstractFilterStrategy):
                 if self.where is not None:
                     where_conditions.append(self.where)
                 if where_conditions:
-                    return sql.and_(*where_conditions, filter_clause)
+                    filter_clauses.append(sql.and_(*where_conditions, filter_clause))
                 filter_clauses.append(filter_clause)
         if len(filter_clauses) == 1:
             return filter_clauses[0]
@@ -616,8 +614,8 @@ class NoFilter(FieldFilter):
 
     name = 'no_filter'
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        super().__init__(attribute, where, key or str(attribute), verbose_name, priority_level, **field_attributes)
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+        super().__init__(*attributes, where=where, key=key or str(attributes[0]), verbose_name=verbose_name, priority_level=priority_level, **field_attributes)
 
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -642,8 +640,8 @@ class StringFilter(FieldFilter):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
 
-    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **kwargs):
-        super().__init__(attribute, where, key, verbose_name, priority_level, **kwargs)
+    def __init__(self, *attributes, allow_digits=True, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **kwargs):
+        super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level, **kwargs)
         self.allow_digits = allow_digits
 
     def get_type_clause(self, field_attributes, operator, *operands):
@@ -666,7 +664,7 @@ class DecimalFilter(FieldFilter):
     _default_from_string = utils.float_from_string
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        super().__init__(attribute, where, key, verbose_name, priority_level, **field_attributes)
+        super().__init__(attribute, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level, **field_attributes)
         self.precision = field_attributes.get('precision')
 
     def get_type_clause(self, field_attributes, operator, *float_operands):
@@ -779,9 +777,10 @@ class ChoicesFilter(FieldFilter):
     python_type = str
     operators = (Operator.eq, Operator.ne)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        self.python_type = self.get_attribute_python_type(attribute)
-        super().__init__(attribute, where, key, verbose_name, priority_level)
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+        for attribute in attributes:
+            self.python_type = self.get_attribute_python_type(attribute)
+        super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level)
         self.choices = field_attributes.get('choices')
 
     def value_to_string(self, filter_value, admin):
