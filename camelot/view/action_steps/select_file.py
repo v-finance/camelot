@@ -33,6 +33,7 @@ from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
+from camelot.view.qml_view import qml_action_step
 
 from dataclasses import dataclass, field
 
@@ -140,21 +141,10 @@ class SaveFile( ActionStep, DataclassSerializable ):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        settings = QtCore.QSettings()
-        directory = str(variant_to_py(settings.value('datasource')))
-        directory = os.path.dirname(directory)
-        if step["file_name"] is not None:
-            directory = os.path.join(directory, step["file_name"])
-        get_filename = QtWidgets.QFileDialog.getSaveFileName
-        with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(cls.caption),
-                                    directory=directory,
-                                    filter=step["file_name_filter"])
-            selected = selected[0]
+        with hide_progress_dialog(gui_context):
+            response = qml_action_step(gui_context, 'SaveFile', serialized_step)
+            selected = response['selected']
             if selected:
-                settings.setValue('datasource', py_to_variant(selected))
                 return str(selected)
             else:
                 raise CancelRequest()
