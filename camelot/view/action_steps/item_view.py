@@ -289,8 +289,8 @@ class OpenQmlTableView(OpenTableView):
         new_model.set_value(step['proxy_route'])
 
         for action in step['actions']:
-            action_name = action['route'][-1]
-            if 'group_box_filter_' in action_name or 'combo_box_filter_' in action_name:
+            render_hint = action['render_hint']
+            if render_hint in ['combo_box', 'non_exclusive_group_box', 'exclusive_group_box']:
                 continue
             new_model.add_action_route(tuple(action['route']))
 
