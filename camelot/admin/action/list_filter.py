@@ -419,15 +419,18 @@ class FieldFilter(AbstractFilterStrategy):
     attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         """
         :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
         """
-        self.assert_valid_attribute(attribute)
-        key = key or attribute.key
+        assert len(attributes) >= 1
+        for attribute in attributes:
+            self.assert_valid_attribute(attribute)
+        key = key or attributes[0].key
         super().__init__(key, where, verbose_name, priority_level, **field_attributes)
-        self.attribute = attribute
+        self.attributes = attributes
+        self.attribute = attributes[0]
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
 
@@ -481,16 +484,24 @@ class FieldFilter(AbstractFilterStrategy):
                 field_operands.append(self.from_string(admin, session, operand))
         except utils.ParsingError:
             return
-        filter_clause = self.get_type_clause(field_attributes, operator, *field_operands)
-        if filter_clause is not None:
-            where_conditions = []
-            if operator.pre_condition is not None:
-                where_conditions.append(operator.pre_condition(self.attribute))
-            if self.where is not None:
-                where_conditions.append(self.where)
-            if where_conditions:
-                return sql.and_(*where_conditions, filter_clause)
-            return filter_clause
+        for attribute in self.attributes:
+            
+        filter_clauses = []
+        for attribute in self.attribute:
+            filter_clause = operator.operator(attribute, *operands)
+            if filter_clause is not None:
+                where_conditions = []
+                if operator.pre_condition is not None:
+                    where_conditions.append(operator.pre_condition(attribute))
+                if self.where is not None:
+                    where_conditions.append(self.where)
+                if where_conditions:
+                    return sql.and_(*where_conditions, filter_clause)
+                filter_clauses.append(filter_clause)
+        if len(filter_clauses) == 1:
+            return filter_clauses[0]
+        elif len(filter_clauses) > 1:
+            return sql.or_(*filter_clauses)
 
     def get_type_clause(self, field_attributes, operator, *operands):
         """
