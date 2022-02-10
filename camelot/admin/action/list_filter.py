@@ -315,6 +315,7 @@ class AbstractFilterStrategy(object):
 
     class AssertionMessage(enum.Enum):
 
+        no_attributes =                  'No attributes given'
         no_queryable_attribute =         'The given attribute is not a valid QueryableAttribute'
         python_type_mismatch =           'The python_type of the given attribute does not match the python_type of this filter strategy'
         nr_operands_arity_mismatch =     'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
@@ -412,25 +413,25 @@ class FieldFilter(AbstractFilterStrategy):
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attributes.
     :attribute search_operator: The default operator that this strategy will use when constructing a filter clause
                                 meant for searching based on a search text. By default the `Operator.eq` is used.
-    :attr connective_operator: A logical multiary sql operator (AND or OR) to connect the attribute clauses of this field filter's. Defaults to `sqlalchemy.sql.or_`.
     """
 
-    connective_operator = Operator.or_
     search_operator = Operator.eq
     attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
-    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, connective_operator = Operator.or_, **field_attributes):
         """
         :param attributes: queryable attributes for which this field filter should be applied. The first attribute's key will be used as this field filter's key.
         :param key: Optional string to use as this strategy's key. By default the first attribute's key will be used.
+        :attr connective_operator: A logical multiary sql operator (AND or OR) to connect the attribute clauses of this field filter's. Defaults to `sqlalchemy.sql.or_`.
         """
-        assert len(attributes) >= 1
+        assert len(attributes) >= 1, self.AssertionMessage.no_attributes.value
         for attribute in attributes:
             self.assert_valid_attribute(attribute)
         key = key or attributes[0].key
         super().__init__(key, where, verbose_name, priority_level, **field_attributes)
         self.attributes = attributes
+        self.connective_operator = connective_operator
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
 

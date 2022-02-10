@@ -1133,6 +1133,10 @@ class ListFilterCase(TestMetaData):
                     self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.invalid_relationship_attribute.value)
                 else:
                     self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.no_queryable_attribute.value)
+                    # Check assertion on no attributes provided:s
+                    with self.assertRaises(AssertionError) as exc:
+                        strategy_cls()
+                    self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.no_attributes.value)
 
                 if strategy_cls != list_filter.One2ManyFilter:
                     filter_strategy = strategy_cls(col, **fa)
@@ -1162,3 +1166,7 @@ class ListFilterCase(TestMetaData):
         # The choices filter should allow all python types:
         list_filter.ChoicesFilter(A.int_col)
         list_filter.ChoicesFilter(A.text_col)
+        # But in case of multiple attribute, should assert if their python type differs:
+        with self.assertRaises(AssertionError) as exc:
+            list_filter.ChoicesFilter(A.int_col, A.text_col)
+        self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.python_type_mismatch.value)
