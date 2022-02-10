@@ -776,6 +776,9 @@ class ChoicesFilter(FieldFilter):
     def value_to_string(self, filter_value, admin):
         return filter_value
 
+    def from_string(self, admin, session, operand):
+        return operand
+
 class MonthsFilter(IntFilter):
 
     name = 'months_filter'
