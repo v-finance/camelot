@@ -27,8 +27,6 @@
 #
 #  ============================================================================
 import typing
-import json
-import os
 
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
@@ -39,7 +37,7 @@ from camelot.view.qml_view import qml_action_step
 from dataclasses import dataclass, field
 
 from ...core.serializable import DataclassSerializable
-from ...core.qt import QtWidgets, variant_to_py, py_to_variant, QtCore
+from ...core.qt import QtWidgets
 
 @dataclass
 class SelectFile( ActionStep, DataclassSerializable ):
