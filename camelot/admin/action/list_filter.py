@@ -408,9 +408,8 @@ class AbstractFilterStrategy(object):
 
 class FieldFilter(AbstractFilterStrategy):
     """
-    Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
-    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
-    :attribute nullable: flag that indicates whether this strategy's field attribute is nullable or not, which influences which operators may or may not be applicable
+    Abstract interface for defining a column-based filter clause on one or more queryable attributes of an entity, as part of that entity admin's query.
+    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attributes.
     :attribute search_operator: The default operator that this strategy will use when constructing a filter clause
                                 meant for searching based on a search text. By default the `Operator.eq` is used.
     """
@@ -421,8 +420,8 @@ class FieldFilter(AbstractFilterStrategy):
 
     def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         """
-        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
-        :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
+        :param attributes: queryable attributes for which this field filter should be applied. The first attribute's key will be used as this field filter's key.
+        :param key: Optional string to use as this strategy's key. By default the first attribute's key will be used.
         """
         assert len(attributes) >= 1
         for attribute in attributes:
@@ -430,9 +429,13 @@ class FieldFilter(AbstractFilterStrategy):
         key = key or attributes[0].key
         super().__init__(key, where, verbose_name, priority_level, **field_attributes)
         self.attributes = attributes
-        self.attribute = attributes[0]
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
+
+    @property
+    def attribute(self):
+        for attribute in self.attributes:
+            return attribute
 
     @classmethod
     def get_attribute_python_type(cls, attribute):
@@ -472,8 +475,8 @@ class FieldFilter(AbstractFilterStrategy):
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and operands, within the given admin and session.
-        The resulting clause will consists of this strategy's field type clause,
-        expanded with a condition on the attribute being set (None check) and the optionally set where conditions.
+        The resulting clause will consists of a connective between field type clauses for each of this field strategy's attributes,
+        expanded with conditions on the attributes being set (None check) and the optionally set where conditions.
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
@@ -496,9 +499,7 @@ class FieldFilter(AbstractFilterStrategy):
                 if where_conditions:
                     filter_clauses.append(sql.and_(*where_conditions, filter_clause))
                 filter_clauses.append(filter_clause)
-        if len(filter_clauses) == 1:
-            return filter_clauses[0]
-        elif len(filter_clauses) > 1:
+        if filter_clauses:
             return sql.or_(*filter_clauses)
 
     def get_type_clause(self, field_attributes, operator, *operands):
@@ -512,7 +513,7 @@ class FieldFilter(AbstractFilterStrategy):
 
     def from_string(self, admin, session, operand):
         operand = super().from_string(admin, session, operand)
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         return field_attributes.get('from_string', self._default_from_string)(operand)
 
 class RelatedFilter(AbstractFilterStrategy):
@@ -689,7 +690,7 @@ class DecimalFilter(FieldFilter):
             return super().get_type_clause(field_attributes, operator, float_operands[0]-delta, float_operands[1]+delta)
     
     def value_to_string(self, value, admin):
-        admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
+        admin_field_attributes = admin.get_field_attributes(self.key).items()
         field_attributes = {h:copy.copy(v) for h,v in admin_field_attributes}
         field_attributes['suffix'] = None
         delegate = field_attributes.get('delegate')
@@ -709,7 +710,7 @@ class TimeFilter(FieldFilter):
     _default_from_string = utils.time_from_string
 
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         delegate = field_attributes.get('delegate')
         model_context = FieldActionModelContext()
         model_context.admin = admin
@@ -726,7 +727,7 @@ class DateFilter(FieldFilter):
     _default_from_string = utils.date_from_string
     
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         delegate = field_attributes.get('delegate')
         model_context = FieldActionModelContext()
         model_context.admin = admin
@@ -743,7 +744,7 @@ class IntFilter(FieldFilter):
     _default_from_string = utils.int_from_string
 
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         delegate = field_attributes.get('delegate')
         to_string = field_attributes.get('to_string')
         model_context = FieldActionModelContext()
@@ -761,7 +762,7 @@ class BoolFilter(FieldFilter):
     _default_from_string = utils.bool_from_string
 
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         delegate = field_attributes.get('delegate')
         to_string = field_attributes.get('to_string')
         model_context = FieldActionModelContext()
@@ -778,8 +779,10 @@ class ChoicesFilter(FieldFilter):
     operators = (Operator.eq, Operator.ne)
 
     def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        for attribute in attributes:
-            self.python_type = self.get_attribute_python_type(attribute)
+        # Overrule the python type at the instance level to that of the first attribute,
+        # as a choices filter can be defined on attributes of various python types.
+        if attributes:
+            self.python_type = self.get_attribute_python_type(attributes[0])
         super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level)
         self.choices = field_attributes.get('choices')
 
