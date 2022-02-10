@@ -412,8 +412,10 @@ class FieldFilter(AbstractFilterStrategy):
     Implementations of this interface should define it's python type, which will be asserted to match with that of the set attributes.
     :attribute search_operator: The default operator that this strategy will use when constructing a filter clause
                                 meant for searching based on a search text. By default the `Operator.eq` is used.
+    :attr connective_operator: A logical multiary sql operator (AND or OR) to connect the attribute clauses of this field filter's. Defaults to `sqlalchemy.sql.or_`.
     """
 
+    connective_operator = Operator.or_
     search_operator = Operator.eq
     attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
@@ -487,20 +489,20 @@ class FieldFilter(AbstractFilterStrategy):
                 field_operands.append(self.from_string(admin, session, operand))
         except utils.ParsingError:
             return
-        filter_clauses = []
+        attribute_clauses = []
         for attribute in self.attributes:
-            filter_clause = self.get_attribute_clause(field_attributes, attribute, operator, *field_operands)
-            if filter_clause is not None:
+            attribute_clause = self.get_attribute_clause(field_attributes, attribute, operator, *field_operands)
+            if attribute_clause is not None:
                 where_conditions = []
                 if operator.pre_condition is not None:
                     where_conditions.append(operator.pre_condition(attribute))
                 if self.where is not None:
                     where_conditions.append(self.where)
                 if where_conditions:
-                    filter_clauses.append(sql.and_(*where_conditions, filter_clause))
-                filter_clauses.append(filter_clause)
-        if filter_clauses:
-            return sql.or_(*filter_clauses)
+                    attribute_clauses.append(sql.and_(*where_conditions, attribute_clause))
+                attribute_clauses.append(attribute_clause)
+        if attribute_clauses:
+            return self.connective_operator.operator(*attribute_clauses)
 
     def get_attribute_clause(self, field_attributes, attribute, operator, *operands):
         """
