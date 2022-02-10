@@ -68,12 +68,9 @@ class SelectFile( ActionStep, DataclassSerializable ):
     """
 
     file_name_filter: str = ''
-    single: bool = field(init=False)
+    single: bool = True
 
     caption = _('Open')
-
-    def __post_init__(self):
-        self.single = True
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
@@ -137,26 +134,17 @@ class SelectDirectory(ActionStep, DataclassSerializable):
 
     """
 
-    caption = _('Select directory')
+    directory: typing.Optional[str] = None
+    options: list = field(default_factory=lambda: [QtWidgets.QFileDialog.Option.ShowDirsOnly])
 
-    def __post_init__(self):
-        self.options = QtWidgets.QFileDialog.Options.ShowDirsOnly
-        self.directory = None
+    caption = _('Select directory')
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        settings = QtCore.QSettings()
-        if step["directory"] is not None:
-            directory = step["directory"]
-        else:
-            directory = str(variant_to_py(settings.value('datasource')))
-        get_directory = QtWidgets.QFileDialog.getExistingDirectory
-        with hide_progress_dialog( gui_context ):
-            selected = get_directory(parent=gui_context.workspace,
-                                     caption=str(cls.caption),
-                                     directory=directory,
-                                     options=step["options"])
+        with hide_progress_dialog(gui_context):
+            response = qml_action_step(gui_context, 'SelectDirectory', serialized_step)
+            selected = response['selected']
             if selected:
-                settings.setValue('datasource', py_to_variant(selected))
-            return str(selected)
+                return selected
+            else:
+                raise CancelRequest()
