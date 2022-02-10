@@ -480,7 +480,7 @@ class FieldFilter(AbstractFilterStrategy):
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         field_operands = []
         try:
             for operand in operands:
@@ -489,7 +489,7 @@ class FieldFilter(AbstractFilterStrategy):
             return
         filter_clauses = []
         for attribute in self.attributes:
-            filter_clause = operator.operator(attribute, *operands)
+            filter_clause = self.get_attribute_clause(field_attributes, attribute, operator, *field_operands)
             if filter_clause is not None:
                 where_conditions = []
                 if operator.pre_condition is not None:
@@ -502,18 +502,19 @@ class FieldFilter(AbstractFilterStrategy):
         if filter_clauses:
             return sql.or_(*filter_clauses)
 
-    def get_type_clause(self, field_attributes, operator, *operands):
+    def get_attribute_clause(self, field_attributes, attribute, operator, *operands):
         """
-        Return a column-based expression filter clause on this filter strategy's attribute with the given filter operator and operands.
+        Return a column-based expression filter clause for the given attribute with the given filter operator and operands.
         :param field_attributes: The field attributes for this filter strategy's attribute on the entity admin
                                  that will use the resulting clause as part of its query.
         :param operands: the filter values that are used as the operands for the given operator to filter by.
         """
-        return operator.operator(self.attribute, *operands)
+        assert attribute in self.attributes
+        return operator.operator(attribute, *operands)
 
     def from_string(self, admin, session, operand):
         operand = super().from_string(admin, session, operand)
-        field_attributes = admin.get_field_attributes(self.key)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
         return field_attributes.get('from_string', self._default_from_string)(operand)
 
 class RelatedFilter(AbstractFilterStrategy):
@@ -645,12 +646,12 @@ class StringFilter(FieldFilter):
         super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level, **kwargs)
         self.allow_digits = allow_digits
 
-    def get_type_clause(self, field_attributes, operator, *operands):
-        filter_clause = super().get_type_clause(field_attributes, operator, *operands)
+    def get_attribute_clause(self, field_attributes, attribute, operator, *operands):
+        filter_clause = super().get_attribute_clause(field_attributes, attribute, operator, *operands)
         if operator == Operator.is_empty:
-            return sql.or_(super().get_type_clause(field_attributes, Operator.eq, ''), filter_clause)
+            return sql.or_(super().get_attribute_clause(field_attributes, attribute, Operator.eq, ''), filter_clause)
         elif operator == Operator.is_not_empty:
-            return sql.and_(super().get_type_clause(field_attributes, Operator.ne, ''), filter_clause)
+            return sql.and_(super().get_attribute_clause(field_attributes, attribute, Operator.ne, ''), filter_clause)
         elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
             return filter_clause
 
@@ -668,29 +669,29 @@ class DecimalFilter(FieldFilter):
         super().__init__(attribute, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level, **field_attributes)
         self.precision = field_attributes.get('precision')
 
-    def get_type_clause(self, field_attributes, operator, *float_operands):
-        precision = self.attribute.type.precision
+    def get_attribute_clause(self, field_attributes, attribute, operator, *float_operands):
+        precision = attribute.type.precision
         if isinstance(precision, (tuple)):
             precision = precision[1]
         delta = 0.1**( precision or 0 )
 
         if operator == Operator.eq and float_operands[0] is not None:
-            return sql.and_(self.attribute>=float_operands[0]-delta, self.attribute<=float_operands[0]+delta)
+            return sql.and_(attribute>=float_operands[0]-delta, attribute<=float_operands[0]+delta)
 
         if operator == Operator.ne and float_operands[0] is not None:
-            return sql.or_(self.attribute<float_operands[0]-delta, self.attribute>float_operands[0]+delta) 
+            return sql.or_(attribute<float_operands[0]-delta, attribute>float_operands[0]+delta) 
 
         elif operator in (Operator.lt, Operator.le) and float_operands[0] is not None:
-            return super().get_type_clause(field_attributes, operator, float_operands[0]-delta)
+            return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]-delta)
 
         elif operator in (Operator.gt, Operator.ge) and float_operands[0] is not None:
-            return super().get_type_clause(field_attributes, operator, float_operands[0]+delta)
+            return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]+delta)
 
         elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
-            return super().get_type_clause(field_attributes, operator, float_operands[0]-delta, float_operands[1]+delta)
+            return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]-delta, float_operands[1]+delta)
     
     def value_to_string(self, value, admin):
-        admin_field_attributes = admin.get_field_attributes(self.key).items()
+        admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
         field_attributes = {h:copy.copy(v) for h,v in admin_field_attributes}
         field_attributes['suffix'] = None
         delegate = field_attributes.get('delegate')
@@ -710,7 +711,7 @@ class TimeFilter(FieldFilter):
     _default_from_string = utils.time_from_string
 
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.key)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         model_context = FieldActionModelContext()
         model_context.admin = admin
@@ -727,7 +728,7 @@ class DateFilter(FieldFilter):
     _default_from_string = utils.date_from_string
     
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.key)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         model_context = FieldActionModelContext()
         model_context.admin = admin
@@ -744,7 +745,7 @@ class IntFilter(FieldFilter):
     _default_from_string = utils.int_from_string
 
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.key)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         to_string = field_attributes.get('to_string')
         model_context = FieldActionModelContext()
@@ -762,7 +763,7 @@ class BoolFilter(FieldFilter):
     _default_from_string = utils.bool_from_string
 
     def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.key)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
         delegate = field_attributes.get('delegate')
         to_string = field_attributes.get('to_string')
         model_context = FieldActionModelContext()
