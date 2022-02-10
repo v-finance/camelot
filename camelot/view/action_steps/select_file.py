@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import typing
 import json
 import os
 
@@ -76,39 +77,11 @@ class SelectFile( ActionStep, DataclassSerializable ):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        settings = QtCore.QSettings()
-        datasource = settings.value('datasource')
-        # we have no guarantee on what is inside datasource
-        try:
-            directory = str(variant_to_py(datasource))
-            directory = os.path.dirname(directory)
-        except TypeError:
-            directory = ''
-        if step["single"]:
-            get_filename = QtWidgets.QFileDialog.getOpenFileName
-        else:
-            get_filename = QtWidgets.QFileDialog.getOpenFileNames
-        with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(cls.caption),
-                                    directory=directory,
-                                    filter=step["file_name_filter"])
-            selected = selected[0]
-            # selected is an empty string if cancel is pressed
+        with hide_progress_dialog(gui_context):
+            response = qml_action_step(gui_context, 'SelectFile', serialized_step)
+            selected = response['selected']
             if selected:
-                if step["single"]:
-                    settings.setValue(
-                        'datasource',
-                        py_to_variant(str(selected))
-                    )
-                    return [str(selected)]
-                else:
-                    settings.setValue(
-                        'datasource',
-                        py_to_variant(str(selected[0]))
-                    )
-                    return [str(fn) for fn in selected]
+                return selected
             else:
                 raise CancelRequest()
 
@@ -135,7 +108,7 @@ class SaveFile( ActionStep, DataclassSerializable ):
     """
 
     file_name_filter: str = ''
-    file_name: str = None
+    file_name: typing.Optional[str] = None
 
     caption = _('Save')
 
@@ -145,7 +118,7 @@ class SaveFile( ActionStep, DataclassSerializable ):
             response = qml_action_step(gui_context, 'SaveFile', serialized_step)
             selected = response['selected']
             if selected:
-                return str(selected)
+                return selected
             else:
                 raise CancelRequest()
 
