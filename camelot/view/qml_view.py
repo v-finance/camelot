@@ -1,5 +1,6 @@
 import logging
 import itertools
+import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py
 from camelot.core.exception import UserException
@@ -140,5 +141,5 @@ def qml_action_step(gui_context, name, step, props={}, keep_context_id=False):
     else:
         context_id = qml_action_dispatch.register(gui_context)
     backend = get_qml_root_backend()
-    backend.actionStep(context_id, name, step, props)
-    return context_id
+    response = backend.actionStep(context_id, name, step, props)
+    return json.loads(response.data())

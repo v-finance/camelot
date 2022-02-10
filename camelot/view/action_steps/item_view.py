@@ -294,11 +294,13 @@ class OpenQmlTableView(OpenTableView):
                 continue
             new_model.add_action_route(tuple(action['route']))
 
-        context_id = qml_action_step(list_gui_context, 'OpenTableView',
+        response = qml_action_step(list_gui_context, 'OpenTableView',
                 serialized_step, { 'model': new_model })
+        context_id = response['context_id']
 
         root_backend = get_qml_root_backend()
         backend = root_backend.findChild(QtCore.QObject, 'qml_table_view_backend_{}'.format(context_id))
+        assert backend
         item_view = ItemViewProxy(backend)
 
         new_model.setParent(item_view)
