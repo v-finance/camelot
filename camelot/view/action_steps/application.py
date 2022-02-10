@@ -56,12 +56,9 @@ class Exit(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         from camelot.view.model_thread import get_model_thread
         model_thread = get_model_thread()
-        # we might exit the application when the workspace is not even there
-        if gui_context.workspace != None:
-            gui_context.workspace.close_all_views()
         if model_thread != None:
             model_thread.stop()
-        QtCore.QCoreApplication.exit(self.return_code)
+        qml_action_step(gui_context, 'Exit', serialized_step)
 
 
 @dataclass
@@ -164,20 +161,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'NavigationPanel', serialized_step)
-
-    @classmethod
-    def render(self, gui_context, step):
-        """create the navigation panel.
-        this method is used to unit test the action step."""
-        from ..controls.section_widget import NavigationPane
-        navigation_panel = NavigationPane(
-            gui_context,
-            gui_context.workspace
-        )
-        navigation_panel.set_sections(
-            step["menu"]["items"], step["action_states"]
-        )
-        return navigation_panel
 
 
 @dataclass

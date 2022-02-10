@@ -719,3 +719,31 @@ class CollectionProxy(QtGui.QStandardItemModel):
 
         request = ChangeSelection(self._action_routes, model_context)
         self._append_request(request, None)
+
+    @QtCore.qt_slot(list, int)
+    def change_selection_v2(self, row_ranges, current_row):
+        self.logger.debug('change_selection_v2 called')
+
+        # Create model context based on selection
+        # model_conext.field_attributes required???
+        model_context = ListActionModelContext()
+        model_context.proxy = self.get_value()
+        model_context.admin = self.get_admin()
+        if current_row != -1:
+            model_context.current_row = current_row
+            model_context.current_column = 0
+        model_context.collection_count = self.rowCount()
+        if model_context.current_column is not None:
+            model_context.current_field_name = variant_to_py(
+                self.headerData(
+                    model_context.current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
+                )
+            )
+        assert len(row_ranges) % 2 == 0
+        for i in range(len(row_ranges) // 2):
+            rows_range = ( row_ranges[2 * i], row_ranges[2 * i + 1] )
+            model_context.selected_rows.append( rows_range )
+            model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+
+        request = ChangeSelection(self._action_routes, model_context)
+        self._append_request(request, None)

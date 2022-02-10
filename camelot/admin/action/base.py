@@ -467,7 +467,7 @@ with a view.
         # only create a progress dialog if there is none yet, or if the
         # existing dialog was canceled
         LOGGER.debug( 'action gui run started' )
-        with ProgressLevel(gui_context, str(self.verbose_name)):
+        with ProgressLevel(gui_context, str(self.verbose_name or '')):
             super(Action, self).gui_run(gui_context)
         LOGGER.debug( 'gui run finished' )
         
