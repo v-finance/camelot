@@ -135,14 +135,18 @@ class AbstractActionWidget( object ):
         :param state: a `camelot.admin.action.State` object
         :param parent: a parent for the menu
         """
+        self._set_menu(self, state, parent, self.action_triggered)
+
+    @classmethod
+    def _set_menu(cls, widget, state, parent, slot):
         if state['modes']:
-            # self is not always a QWidget, so QMenu is created without
+            # widget is not always a QWidget, so QMenu is created without
             # parent
-            menu = self.menu()
+            menu = widget.menu()
             if menu is None:
                 menu = QtWidgets.QMenu(parent=parent)
                 # setMenu does not transfer ownership
-                self.setMenu(menu)
+                widget.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
                 icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color']) if mode_data['icon'] is not None else None
@@ -155,12 +159,14 @@ class AbstractActionWidget( object ):
                     mode_menu = mode.render(menu)
                     for submode in mode.modes:
                         submode_action = submode.render(mode_menu)
-                        submode_action.triggered.connect(self.action_triggered)
+                        submode_action.triggered.connect(slot)
+                        submode_action.setProperty('action_route', widget.property('action_route'))
                         mode_menu.addAction(submode_action)
                 else:
                     mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                     mode_action = mode.render(menu)
-                    mode_action.triggered.connect(self.action_triggered)
+                    mode_action.triggered.connect(slot)
+                    mode_action.setProperty('action_route', widget.property('action_route'))
                     menu.addAction(mode_action)
 
     # not named triggered to avoid confusion with standard Qt slot
@@ -313,13 +319,14 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
     def set_state_v2( self, state ):
         self.set_menu_v2(state, self)
-        self.set_toolbutton_state(self, state)
+        self.set_toolbutton_state(self, state, self.action_triggered)
 
     @classmethod
-    def set_toolbutton_state(cls, toolbutton, state):
+    def set_toolbutton_state(cls, toolbutton, state, slot):
         # warning, this method does not set the menu, so does not work for
         # modes.
         cls.set_widget_state(toolbutton, state)
+        cls._set_menu(toolbutton, state, toolbutton, slot)
         if state['verbose_name'] != None:
             toolbutton.setText( str( state['verbose_name'] ) )
         if state['icon'] != None:

@@ -123,14 +123,15 @@ shortcut confusion and reduce the number of status updates.
                              form_action.to_last_form,
                              application_action.refresh,
                              form_action.show_history ]
-    onetomany_actions = [ list_action.add_new_object,
-                          list_action.delete_selection,
-                          list_action.duplicate_selection,
-                          list_action.export_spreadsheet ]
+    onetomany_actions = [
+        list_action.delete_selection,
+        list_action.duplicate_selection,
+        list_action.export_spreadsheet
+    ]
     manytomany_actions = [
-        list_action.add_existing_object,
         list_action.remove_selection,
-        list_action.export_spreadsheet ]
+        list_action.export_spreadsheet
+    ]
 
     def __init__(self, name=None, author=None, domain=None):
         #

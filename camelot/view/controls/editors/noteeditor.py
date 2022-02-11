@@ -43,7 +43,7 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
     """
     
     editingFinished = QtCore.qt_signal()
-    actionTriggered = QtCore.qt_signal(list)
+    actionTriggered = QtCore.qt_signal(list, object)
     
     def __init__( self, 
                   parent = None,

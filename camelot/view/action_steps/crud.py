@@ -13,6 +13,8 @@ from ...core.item_model import FieldAttributesRole, CompletionsRole
 class UpdateMixin(object):
     
     def update_item_model(self, item_model):
+        if is_deleted(item_model):
+            return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
@@ -41,6 +43,8 @@ class RowCount(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(self, item_model, serialized_step):
+        if is_deleted(item_model):
+            return
         step = json.loads(serialized_step)
         if step["rows"] is not None:
             item_model._refresh_content(step["rows"])
@@ -53,6 +57,8 @@ class SetColumns(ActionStep):
         self.static_field_attributes = static_field_attributes
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         item_model.beginResetModel()
         item_model.settings.beginGroup( 'column_width' )
         item_model.settings.beginGroup( '0' )
@@ -108,6 +114,8 @@ class Completion(ActionStep):
         self.completions = completion        
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return

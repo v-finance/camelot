@@ -33,7 +33,6 @@ from typing import Any, List, Dict, Tuple
 
 from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.list_action import ListActionModelContext
-from camelot.admin.action.field_action import FieldActionModelContext, FieldAction
 from camelot.admin.action.form_action import FormActionGuiContext, FormActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
@@ -91,7 +90,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
-            admin=admin, model=model, form_display=form_display,
+            admin_route=admin_route, model=model, form_display=form_display,
             columns=columns, parent=self
         )
         note_layout = QtWidgets.QVBoxLayout()
@@ -109,7 +108,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         self.gui_context = FormActionGuiContext()
         self.gui_context.workspace = self
-        self.gui_context.admin = admin
+        self.gui_context.admin_route = admin_route
         self.gui_context.view = self
         self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
@@ -406,17 +405,12 @@ class ChangeObjects( ActionStep ):
 
     @staticmethod
     def _add_action_states(admin, proxy, action_routes, action_states):
-        field_model_context = FieldActionModelContext()
-        field_model_context.value = proxy
         list_model_context = ListActionModelContext()
         list_model_context.admin = admin
         list_model_context.proxy = proxy
         for action_route in action_routes:
             action = AdminRoute.action_for(action_route)
-            if isinstance(action, FieldAction):
-                state = action.get_state(field_model_context)
-            else:
-                state = action.get_state(list_model_context)
+            state = action.get_state(list_model_context)
             action_states.append((action_route, state))
 
     def get_objects( self ):

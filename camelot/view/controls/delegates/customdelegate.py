@@ -38,7 +38,6 @@ from ....core.serializable import json_encoder
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
-from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -153,11 +152,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
-            if isinstance(action, FieldAction):
-                state = action.get_state(model_context)
-                states.append(dataclasses.asdict(state))
-            else:
-                states.append(None)
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
@@ -252,7 +248,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 continue
             state = action_states[action_index]
             if state is not None:
-                ActionToolbutton.set_toolbutton_state(action_widget, state)
+                ActionToolbutton.set_toolbutton_state(
+                    action_widget, state, editor.action_menu_triggered
+                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

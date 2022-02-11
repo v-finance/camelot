@@ -125,10 +125,8 @@ class ApplicationActionGuiContext( GuiContext ):
         return get_qml_window()
 
     def create_model_context(self):
-        # the possibility of having no admin class is an aberation, needed
-        # to keep the FieldAction working
-        context = super( ApplicationActionGuiContext, self ).create_model_context()
-        context.admin = AdminRoute.admin_for(self.admin_route) if self.admin_route is not None else None
+        context = super(ApplicationActionGuiContext, self).create_model_context()
+        context.admin = AdminRoute.admin_for(self.admin_route)
         # todo : action routes should be translated to actions here
         context.actions = list(self.action_routes.keys())
         return context
@@ -338,7 +336,7 @@ class OpenNewView( EntityAction ):
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        admin = yield action_steps.SelectSubclass(self._entity_admin)
+        admin = self._entity_admin
         new_object = admin.entity()
         # Give the default fields their value
         admin.add(new_object)
