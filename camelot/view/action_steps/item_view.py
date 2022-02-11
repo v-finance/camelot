@@ -289,13 +289,18 @@ class OpenQmlTableView(OpenTableView):
         new_model.set_value(step['proxy_route'])
 
         for action in step['actions']:
+            render_hint = action['render_hint']
+            if render_hint in ['combo_box', 'non_exclusive_group_box', 'exclusive_group_box']:
+                continue
             new_model.add_action_route(tuple(action['route']))
 
-        context_id = qml_action_step(list_gui_context, 'OpenTableView',
+        response = qml_action_step(list_gui_context, 'OpenTableView',
                 serialized_step, { 'model': new_model })
+        context_id = response['context_id']
 
         root_backend = get_qml_root_backend()
         backend = root_backend.findChild(QtCore.QObject, 'qml_table_view_backend_{}'.format(context_id))
+        assert backend
         item_view = ItemViewProxy(backend)
 
         new_model.setParent(item_view)

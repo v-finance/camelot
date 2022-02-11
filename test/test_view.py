@@ -905,25 +905,6 @@ class ControlsTest(
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
-    def test_section_widget(self):
-        model_context = self.gui_context.create_model_context()
-        # to avoid the default constructor accessing the db
-        step = action_steps.NavigationPanel.__new__(action_steps.NavigationPanel)
-        step.menu = self.app_admin.get_navigation_menu()
-        step.action_states = list()
-        action_steps.NavigationPanel._add_action_states(
-            model_context, step.menu.items, step.action_states
-        )
-        widget = action_steps.NavigationPanel.render(
-            self.gui_context, dataclasses.asdict(step)
-        )
-        self.grab_widget(widget)
-
-    def test_main_window(self):
-        #proxy = MainWindowProxy( self.gui_context )
-        #self.grab_widget(proxy.parent())
-        pass # obsolete?
-
     def test_multiple_main_windows(self):
         """Make sure we can still create multiple QMainWindows"""
         # This is not longer possible using the launcher
