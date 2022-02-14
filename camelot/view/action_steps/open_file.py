@@ -38,6 +38,7 @@ from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.exception import UserException
+from camelot.view.qml_view import qml_action_step
 
 from io import BytesIO
 
@@ -86,31 +87,8 @@ class OpenFile( ActionStep, DataclassSerializable ):
 
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
-        step = json.loads(serialized_step)
-        path = step['path']
-        if not os.path.isfile(path):
-            raise UserException(
-                _('Could not open file'),
-                detail=ugettext('"%s" is not a file') % path
-            )
-        # Test if file is readable, both os.access and QFileInfo.isReadable
-        # can result in false positives on windows.
-        f = QtCore.QFile(path)
-        if f.open(QtCore.QIODevice.OpenModeFlag.ReadOnly):
-            f.close()
-        else:
-            raise UserException(
-                _('Could not open file'),
-                detail=ugettext('"%s" is not readable') % path
-            )
-        #
-        # support for windows shares
-        if not path.startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile(path)
-        else:
-            url = QtCore.QUrl(path, QtCore.QUrl.ParsingMode.TolerantMode)
-        return QtGui.QDesktopServices.openUrl( url )
-    
+        qml_action_step(gui_context, 'OpenFile', serialized_step)
+
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
     preferred application of the user.
