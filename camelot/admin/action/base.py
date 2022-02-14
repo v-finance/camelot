@@ -82,7 +82,7 @@ strictly to the :class:`ModelContext`
         from camelot.view.controls.progress_dialog import ProgressDialog
         from camelot.view.qml_view import get_qml_root_backend
         root_backend = get_qml_root_backend()
-        if root_backend.isSplash():
+        if not root_backend.isVisible():
             return None
         app = QtWidgets.QApplication.instance()
         progress_dialog = app.property('application_progress')

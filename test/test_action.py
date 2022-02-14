@@ -112,7 +112,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     images_path = test_view.static_images_path
 
     def setUp(self):
-        get_qml_root_backend().setSplash(False)
+        get_qml_root_backend().setVisible(True, False)
         self.action = ImportCovers()
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
@@ -168,7 +168,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
-        get_qml_root_backend().setSplash(False)
+        get_qml_root_backend().setVisible(True, False)
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin_route = self.admin_route
