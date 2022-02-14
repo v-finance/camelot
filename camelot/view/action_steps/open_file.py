@@ -26,18 +26,10 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import json
-
 from dataclasses import dataclass
 
-import os
-
-from ...core.qt import QtCore, QtGui
-  
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
-from camelot.core.utils import ugettext, ugettext_lazy as _
-from camelot.core.exception import UserException
 from camelot.view.qml_view import qml_action_step
 
 from io import BytesIO
