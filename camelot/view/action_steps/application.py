@@ -224,21 +224,6 @@ class MainMenu(ActionStep, DataclassSerializable):
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
 
-    '''
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        from ..controls.busy_widget import BusyWidget
-        if gui_context.workspace is None:
-            return
-        main_window = gui_context.workspace.parent()
-        if main_window is None:
-            return
-        step = json.loads(serialized_step)
-        menu_bar = main_window.menuBar()
-        self.render(gui_context, step["menu"]["items"], menu_bar, step["action_states"])
-        menu_bar.setCornerWidget(BusyWidget())
-    '''
-
 
 @dataclass
 class InstallTranslator(ActionStep, DataclassSerializable):
