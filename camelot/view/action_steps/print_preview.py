@@ -31,7 +31,6 @@ from dataclasses import dataclass
 from ...core.qt import QtCore, QtGui, QtPrintSupport
 
 from camelot.admin.action import ActionStep
-from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
