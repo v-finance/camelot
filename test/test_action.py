@@ -35,7 +35,7 @@ from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockListActionGuiContext, MockModelContext
 from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.action_steps import PrintHtml, SelectItem
+from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject, ChangeField
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, delegates, tableview
@@ -798,23 +798,6 @@ class ListActionsCase(
                 action_step.gui_run(self.gui_context)
         self.assertTrue(action_step)
 
-    def test_print_html( self ):
-
-        # begin html print
-        class PersonSummary(Action):
-
-            verbose_name = _('Summary')
-
-            def model_run(self, model_context, mode):
-                person = model_context.get_object()
-                yield PrintHtml("<h1>This will become the personal report of {}!</h1>".format(person))
-        # end html print
-
-        action = PersonSummary()
-        steps = list(self.gui_run(action, self.gui_context))
-        dialog = steps[0].render(self.gui_context)
-        dialog.show()
-        self.grab_widget(dialog)
 
 class FormActionsCase(
     RunningThreadCase,

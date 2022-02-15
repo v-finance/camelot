@@ -152,23 +152,7 @@ class PrintPreview( ActionStep ):
         return filename
 
 
-class PrintHtml( PrintPreview ):
-    """
-    Display a print preview dialog box for an html string.
-    
-    :param html: a string containing the html to render in the print
-        preview.
-        
-    the rendering of the html can be customised using the same attributes
-    as those of the :class:`PrintPreview` class.
-        """
-    
-    def __init__( self, html ):
-        document = QtGui.QTextDocument()
-        document.setHtml( html )
-        super( PrintHtml, self ).__init__( document )
-
-class PrintJinjaTemplate( PrintHtml ):
+class PrintJinjaTemplate( PrintPreview ):
     """Render a jinja template into a print preview dialog.
             
     :param template: the name of the template as it can be fetched from
@@ -189,6 +173,6 @@ class PrintJinjaTemplate( PrintHtml ):
         self.template = environment.get_template( template )
         self.html = self.template.render( context )
         self.context = context
-        super( PrintJinjaTemplate, self).__init__( self.html )
-
-
+        document = QtGui.QTextDocument()
+        document.setHtml( self.html )
+        super().__init__( document )
