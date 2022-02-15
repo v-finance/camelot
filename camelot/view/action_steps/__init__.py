@@ -44,7 +44,7 @@ from .item_view import (
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from .orm import (CreateObjects, DeleteObjects, FlushSession, UpdateObjects)
-from .print_preview import ( PrintPreview, PrintJinjaTemplate)
+from .print_preview import PrintPreview
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .update_progress import UpdateProgress
@@ -75,7 +75,6 @@ __all__ = [
     OpenString.__name__,
     OpenTableView.__name__,
     OpenQmlTableView.__name__,
-    PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
     RefreshItemView.__name__,

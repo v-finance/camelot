@@ -150,29 +150,3 @@ class PrintPreview( ActionStep ):
         printer.setOutputFileName(filename)
         self.paint_on_printer(printer)
         return filename
-
-
-class PrintJinjaTemplate( PrintPreview ):
-    """Render a jinja template into a print preview dialog.
-            
-    :param template: the name of the template as it can be fetched from
-        the Jinja environment.
-        
-    :param context: a dictionary with objects to be used when rendering
-        the template
-        
-    :param environment: a :class:`jinja2.Environment` object to be used
-        to load templates from.  This defaults to the `environment` object
-        available in :mod:`camelot.core.templates`
-    """
-        
-    def __init__( self,
-                  template, 
-                  context={},
-                  environment = environment ):
-        self.template = environment.get_template( template )
-        self.html = self.template.render( context )
-        self.context = context
-        document = QtGui.QTextDocument()
-        document.setHtml( self.html )
-        super().__init__( document )
