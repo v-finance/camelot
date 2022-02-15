@@ -337,15 +337,6 @@ class ListActionsCase(
         #self.assertTrue( get_state( to_first ).enabled )
         #self.assertTrue( get_state( to_previous ).enabled )
 
-    def test_print_preview(self):
-        action = list_action.PrintPreview()
-        for step in self.gui_run(action, self.gui_context):
-            if isinstance(step, action_steps.PrintPreview):
-                dialog = step.render(self.gui_context)
-                dialog.show()
-                self.grab_widget(dialog)
-        self.assertTrue(dialog)
-
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
         for step in self.gui_run(action, self.gui_context):
