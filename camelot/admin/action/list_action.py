@@ -790,35 +790,6 @@ class ExportSpreadsheet( ListContextAction ):
 
 export_spreadsheet = ExportSpreadsheet()
     
-class PrintPreview( ListContextAction ):
-    """Print all rows in a table"""
-
-    render_hint = RenderHint.TOOL_BUTTON
-    icon = Icon('print') # 'tango/16x16/actions/document-print-preview.png'
-    tooltip = _('Print Preview')
-    verbose_name = _('Print Preview')
-    name = 'print'
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        admin = model_context.admin
-        columns = admin.get_columns()
-        
-        table = []
-        to_strings = [admin.get_field_attributes(field)['to_string'] for field in columns]
-        column_range = range( len( columns ) )
-        for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getattr( obj, columns[i] ) ) for i in column_range] )
-        context = {
-          'title': admin.get_verbose_name_plural(),
-          'table': table,
-          'columns': [admin.get_field_attributes(field)['name'] for field in columns],
-        }
-        yield action_steps.PrintJinjaTemplate( template = 'list.html',
-                                               context = context )
-
-print_preview = PrintPreview()
-
 class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
