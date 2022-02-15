@@ -224,6 +224,19 @@ class MainMenu(ActionStep, DataclassSerializable):
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
 
+@dataclass
+class SetLanguage(ActionStep, DataclassSerializable):
+    """
+    Set the application language. The language is used needed to load translations.
+
+    :param language: The two-letter, ISO 639 language code (e.g. 'nl').
+    """
+
+    language: str
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        qml_action_step(gui_context, 'SetLanguage', serialized_step)
 
 @dataclass
 class InstallTranslator(ActionStep, DataclassSerializable):

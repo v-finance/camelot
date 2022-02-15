@@ -29,7 +29,7 @@
 
 from .application import (
     QmlMainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState,
+    MainMenu, UpdateActionsState, SetLanguage
 )
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -89,6 +89,7 @@ __all__ = [
     SetColumns.__name__,
     SetData.__name__,
     SetFilter.__name__,
+    SetLanguage.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
     ToLastForm.__name__,
