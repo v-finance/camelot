@@ -36,6 +36,7 @@ from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from ...core.serializable import DataclassSerializable
+from camelot.view.qml_view import qml_action_step
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
@@ -117,8 +118,9 @@ updated.
                     raise CancelRequest()
             else:
                 # C++ QmlProgressDialog
-                progress_dialog.fromJson(serialized_step)
-                if progress_dialog.wasCanceled():
+                response = qml_action_step(gui_context, 'UpdateProgress', serialized_step)
+                if response['was_canceled']:
                     # reset progress dialog
-                    progress_dialog.fromJson(QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
+                    reset_step = QtCore.QByteArray(json.dumps({ 'reset': True }).encode())
+                    qml_action_step(gui_context, 'UpdateProgress', reset_step)
                     raise CancelRequest()
