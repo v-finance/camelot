@@ -82,7 +82,7 @@ class Filter(Action):
 
     name = 'filter'
 
-    def __init__(self, attribute, default=All, verbose_name=None):
+    def __init__(self, *attributes, default=All, verbose_name=None):
         """
         :param attribute: the attribute on which to filter, this attribute
             may contain dots to indicate relationships that need to be followed, 
@@ -94,7 +94,14 @@ class Filter(Action):
         :param verbose_name: the name of the filter as shown to the user, defaults
             to the name of the field on which to filter.
         """
-        self.attribute = attribute
+        assert len(attributes) > 0
+        attribute = attributes[0]
+        if isinstance(attribute, str):
+            self.filter_strategy = None
+            self.attribute = attribute
+        else:
+            self.filter_strategy = ChoicesFilter(*attributes)
+            self.attribute = self.filter_strategy.attribute
         self.default = default
         self.verbose_name = verbose_name
         self.exclusive = True
@@ -114,24 +121,29 @@ class Filter(Action):
     def decorate_query(self, query, values):
         if All in values:
             return query
-        if self.joins:
-            query = query.join(*self.joins)
-        if 'precision' in self.attributes:
-            delta = pow( 10,  -1*self.attributes['precision'])
-            for value in values:
-                query = query.filter(sql.and_(self.column < value+delta,
-                                              self.column > value-delta))
+        if self.filter_strategy is not None:
+            operator = Operator.in_ if values else Operator.is_empty
+            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *values)
+            return query.filter(filter_clause)
         else:
-            not_none_values = [v for v in values if v is not None]
-            if len(not_none_values):
-                where_clause = self.column.in_(not_none_values)
+            if self.joins:
+                query = query.join(*self.joins)
+            if 'precision' in self.attributes:
+                delta = pow( 10,  -1*self.attributes['precision'])
+                for value in values:
+                    query = query.filter(sql.and_(self.column < value+delta,
+                                                  self.column > value-delta))
             else:
-                where_clause = False
-            if None in values:
-                where_clause = sql.or_(where_clause,
-                                       self.column==None)
-            query = query.filter(where_clause)
-        return query
+                not_none_values = [v for v in values if v is not None]
+                if len(not_none_values):
+                    where_clause = self.column.in_(not_none_values)
+                else:
+                    where_clause = False
+                if None in values:
+                    where_clause = sql.or_(where_clause,
+                                           self.column==None)
+                query = query.filter(where_clause)
+            return query
 
     def get_state(self, model_context):
         """
@@ -140,6 +152,7 @@ class Filter(Action):
         state = super(Filter, self).get_state(model_context)
         session = model_context.session
         entity = model_context.admin.entity
+        self.admin = model_context.admin
 
         if self.joins is None:
             self.joins = []
@@ -199,8 +212,8 @@ class GroupBoxFilter(Filter):
     render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
     name = 'group_box_filter'
 
-    def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
-        super().__init__(attribute, default, verbose_name)
+    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True):
+        super().__init__(*attributes, default=default, verbose_name=verbose_name)
         self.exclusive = exclusive
         self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
 
