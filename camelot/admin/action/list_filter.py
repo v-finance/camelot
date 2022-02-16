@@ -154,25 +154,28 @@ class Filter(Action):
         entity = model_context.admin.entity
         self.admin = model_context.admin
 
-        if self.joins is None:
-            self.joins = []
-            related_admin = model_context.admin
-            for field_name in self.attribute.split('.'):
-                attributes = related_admin.get_field_attributes(field_name)
-                self.filter_names.append(attributes['name'])
-                # @todo: if the filter is not on an attribute of the relation, but on 
-                # the relation itselves
-                if 'target' in attributes:
-                    self.joins.append(getattr(related_admin.entity, field_name))
-                    related_admin = attributes['admin']
-            self.column = getattr(related_admin.entity, field_name)
-            self.attributes = attributes
-        
-        query = session.query(self.column).select_from(entity).join(*self.joins)
+        if self.filter_strategy is None:
+            if self.joins is None:
+                self.joins = []
+                related_admin = model_context.admin
+                for field_name in self.attribute.split('.'):
+                    attributes = related_admin.get_field_attributes(field_name)
+                    self.filter_names.append(attributes['name'])
+                    # @todo: if the filter is not on an attribute of the relation, but on 
+                    # the relation itselves
+                    if 'target' in attributes:
+                        self.joins.append(getattr(related_admin.entity, field_name))
+                        related_admin = attributes['admin']
+                self.column = getattr(related_admin.entity, field_name)
+                self.attributes = attributes
+            query = session.query(self.column).select_from(entity).join(*self.joins)
+        else:
+            self.attributes = self.admin.get_field_attributes(self.attribute.key)
+            self.filter_names.append(self.attributes['name'])
+            query = session.query(self.attribute).select_from(entity)
         query = query.distinct()
 
         modes = list()
-
         for value in query:
             if 'to_string' in self.attributes:
                 verbose_name = self.attributes['to_string'](value[0])
