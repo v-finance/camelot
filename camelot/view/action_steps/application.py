@@ -62,7 +62,7 @@ class Exit(ActionStep, DataclassSerializable):
 
 
 @dataclass
-class QmlMainWindow(ActionStep, DataclassSerializable):
+class MainWindow(ActionStep, DataclassSerializable):
     """
     This action step also takes care of other python stuff for now
     (e.g. stopping the model thread).

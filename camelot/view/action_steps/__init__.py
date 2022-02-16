@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from .application import (
-    QmlMainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
+    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
     MainMenu, UpdateActionsState, SetLanguage
 )
 from .change_object import ChangeField, ChangeObject, ChangeObjects
@@ -65,7 +65,7 @@ __all__ = [
     FlushSession.__name__,
     InstallTranslator.__name__,
     MainMenu,
-    QmlMainWindow.__name__,
+    MainWindow.__name__,
     MessageBox.__name__,
     NavigationPanel.__name__,
     OpenFile.__name__,
