@@ -97,14 +97,16 @@ class Memento( Entity ):
             return self.model
         return ''
 
-    class Admin( EntityAdmin ):
-        verbose_name = _( 'History' )
-        verbose_name_plural = _( 'History' )
-        list_display = ['creation_date', 'authentication', 'model',
-                        'primary_key', ]
-        form_display = list_display + ['previous']
-        list_filter = [list_filter.ComboBoxFilter('model')]
-        field_attributes = {'previous':{'target':PreviousAttribute,
-                                        'delegate':delegates.One2ManyDelegate,
-                                        'python_type':list}
-                            }
+class MementoAdmin( EntityAdmin ):
+    verbose_name = _( 'History' )
+    verbose_name_plural = _( 'History' )
+    list_display = ['creation_date', 'authentication', 'model',
+                    'primary_key', ]
+    form_display = list_display + ['previous']
+    list_filter = [list_filter.ComboBoxFilter(Memento.model)]
+    field_attributes = {'previous':{'target':PreviousAttribute,
+                                    'delegate':delegates.One2ManyDelegate,
+                                    'python_type':list}
+                        }
+
+Memento.Admin = MementoAdmin
