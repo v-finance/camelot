@@ -197,6 +197,7 @@ class MainMenu(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'MainMenu', serialized_step)
 
+    '''
     @classmethod
     def render(cls, gui_context, items, parent_menu, action_states):
         """
@@ -223,6 +224,7 @@ class MainMenu(ActionStep, DataclassSerializable):
                 parent_menu.addAction(qaction)
             else:
                 raise Exception('Cannot handle menu item {}'.format(item))
+    '''
 
 @dataclass
 class SetLanguage(ActionStep, DataclassSerializable):
@@ -257,15 +259,7 @@ class InstallTranslator(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        app = QtCore.QCoreApplication.instance()
-        translator = AdminRoute.admin_for(tuple(step["admin_route"])).get_translator()
-        if isinstance(translator, list):
-            for t in translator:
-                t.setParent(app)
-                app.installTranslator(t)
-        else:
-            app.installTranslator(translator)
+        qml_action_step(gui_context, 'InstallTranslator', serialized_step)
 
 @dataclass
 class RemoveTranslators(ActionStep, DataclassSerializable):
