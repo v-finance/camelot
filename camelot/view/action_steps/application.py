@@ -104,7 +104,6 @@ class MainWindow(ActionStep, DataclassSerializable):
         qml_action_step(gui_context, 'MainWindow', serialized_step)
 
 
-
 @dataclass
 class NavigationPanel(ActionStep, DataclassSerializable):
     """
@@ -196,35 +195,6 @@ class MainMenu(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'MainMenu', serialized_step)
-
-    '''
-    @classmethod
-    def render(cls, gui_context, items, parent_menu, action_states):
-        """
-        :return: a :class:`QtWidgets.QMenu` object
-        """
-        for item in items:
-            if (item["verbose_name"] is None) and (item["action_route"] is None):
-                parent_menu.addSeparator()
-                continue
-            elif item["verbose_name"] is not None:
-                menu = QtWidgets.QMenu(item["verbose_name"], parent_menu)
-                parent_menu.addMenu(menu)
-                cls.render(gui_context, item["items"], menu, action_states)
-            elif item["action_route"] is not None:
-                action = AdminRoute.action_for(tuple(item["action_route"]))
-                qaction = ActionAction(action, gui_context, parent_menu)
-                state = None
-                for action_state in action_states:
-                    if action_state[0] == item["action_route"]:
-                        state = action_state[1]
-                        break
-                if state is not None:
-                    qaction.set_state_v2(state)
-                parent_menu.addAction(qaction)
-            else:
-                raise Exception('Cannot handle menu item {}'.format(item))
-    '''
 
 @dataclass
 class SetLanguage(ActionStep, DataclassSerializable):
