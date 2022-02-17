@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
-
-import dataclasses
 import datetime
 import json
 import logging
@@ -30,7 +27,7 @@ from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_p
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import City, Person
 from camelot.test import GrabMixinCase, RunningThreadCase
-from camelot.view import action_steps, forms
+from camelot.view import forms
 from camelot.view.action_steps import OpenFormView
 from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates, editors
