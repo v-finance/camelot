@@ -835,12 +835,16 @@ class Filter(Action):
     def get_operator(self, values):
         return Operator.in_ if values else Operator.is_empty
 
+    def get_operands(self, values):
+        return values
+
     def decorate_query(self, query, values):
         if All in values:
             return query
         if self.filter_strategy is not None:
             operator = self.get_operator(values)
-            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *values)
+            operands = self.get_operands(values)
+            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *operands)
             return query.filter(filter_clause)
         else:
             if self.joins:
