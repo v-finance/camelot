@@ -56,180 +56,6 @@ from ...view.utils import locale
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
 
-@dataclass
-class FilterMode(Mode):
-
-    checked: bool = False
-
-    def __init__(self, value, verbose_name, checked=False):
-        super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
-        self.checked = checked
-
-    def decorate_query(self, query, value):
-        return self.decorator(query, value)
-
-# This used to be:
-#
-#     class All(object):
-#         pass
-#
-# It has been replaced by All = '__all' to allow serialization
-#
-All = '__all'
-
-class Filter(Action):
-    """Base class for filters"""
-
-    name = 'filter'
-    filter_strategy = ChoicesFilter
-
-    def __init__(self, *attributes, default=All, verbose_name=None):
-        """
-        :param attribute: the attribute on which to filter, this attribute
-            may contain dots to indicate relationships that need to be followed, 
-            eg.  'person.name'
-
-        :param default: the default value to filter on when the view opens,
-            defaults to showing all records.
-        
-        :param verbose_name: the name of the filter as shown to the user, defaults
-            to the name of the field on which to filter.
-        """
-        assert len(attributes) > 0
-        attribute = attributes[0]
-        if isinstance(attribute, str):
-            self.filter_strategy = None
-            self.attribute = attribute
-        else:
-            self.filter_strategy = self.filter_strategy(*attributes)
-            self.attribute = self.filter_strategy.attribute
-        self.default = default
-        self.verbose_name = verbose_name
-        self.exclusive = True
-        self.joins = None
-        self.column = None
-        self.attributes = None
-        self.filter_names = []
-
-    def get_name(self):
-        return '{}_{}'.format(self.name, self.attribute)
-
-    def gui_run(self, gui_context, value):
-        model = gui_context.item_view.model()
-        if model is not None:
-            model.set_filter(self, value)
-
-    def get_operator(self, values):
-        return Operator.in_ if values else Operator.is_empty
-
-    def decorate_query(self, query, values):
-        if All in values:
-            return query
-        if self.filter_strategy is not None:
-            operator = self.get_operator(values)
-            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *values)
-            return query.filter(filter_clause)
-        else:
-            if self.joins:
-                query = query.join(*self.joins)
-            if 'precision' in self.attributes:
-                delta = pow( 10,  -1*self.attributes['precision'])
-                for value in values:
-                    query = query.filter(sql.and_(self.column < value+delta,
-                                                  self.column > value-delta))
-            else:
-                not_none_values = [v for v in values if v is not None]
-                if len(not_none_values):
-                    where_clause = self.column.in_(not_none_values)
-                else:
-                    where_clause = False
-                if None in values:
-                    where_clause = sql.or_(where_clause,
-                                           self.column==None)
-                query = query.filter(where_clause)
-            return query
-
-    def get_state(self, model_context):
-        """
-        :return:  a :class:`filter_data` object
-        """
-        state = super(Filter, self).get_state(model_context)
-        session = model_context.session
-        entity = model_context.admin.entity
-        self.admin = model_context.admin
-
-        if self.filter_strategy is None:
-            if self.joins is None:
-                self.joins = []
-                related_admin = model_context.admin
-                for field_name in self.attribute.split('.'):
-                    attributes = related_admin.get_field_attributes(field_name)
-                    self.filter_names.append(attributes['name'])
-                    # @todo: if the filter is not on an attribute of the relation, but on 
-                    # the relation itselves
-                    if 'target' in attributes:
-                        self.joins.append(getattr(related_admin.entity, field_name))
-                        related_admin = attributes['admin']
-                self.column = getattr(related_admin.entity, field_name)
-                self.attributes = attributes
-            query = session.query(self.column).select_from(entity).join(*self.joins)
-        else:
-            self.attributes = self.admin.get_field_attributes(self.attribute.key)
-            self.filter_names.append(self.attributes['name'])
-            query = session.query(self.attribute).select_from(entity)
-        query = query.distinct()
-
-        modes = list()
-        for value in query:
-            if 'to_string' in self.attributes:
-                verbose_name = self.attributes['to_string'](value[0])
-            else:
-                verbose_name = value[0]
-            if self.attributes.get('translate_content', False):
-                verbose_name = ugettext(verbose_name)
-            mode = FilterMode(value=value[0],
-                              verbose_name=verbose_name,
-                              checked=((value[0]==self.default) or (self.exclusive==False)))
-        
-            # option_name name can be of type ugettext_lazy, convert it to unicode
-            # to make it sortable
-            modes.append(mode)
-
-        state.verbose_name = self.verbose_name or self.filter_names[0]
-        # sort outside the query to sort on the verbose name of the value
-        modes.sort(key=lambda state:state.verbose_name)
-        # put all mode first, no mater of its verbose name
-        if self.exclusive:
-            all_mode = FilterMode(value=All,
-                                  verbose_name=ugettext('All'),
-                                  checked=(self.default==All))
-            modes.insert(0, all_mode)
-        else:
-            #if attributes.get('nullable', True):
-            none_mode = FilterMode(value=None,
-                                   verbose_name=ugettext('None'),
-                                   checked=True)
-            modes.append(none_mode)
-        state.modes = modes
-        return state
-
-class GroupBoxFilter(Filter):
-    """Filter where the items are displayed in a QGroupBox"""
-
-    render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
-    name = 'group_box_filter'
-
-    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True):
-        super().__init__(*attributes, default=default, verbose_name=verbose_name)
-        self.exclusive = exclusive
-        self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
-
-class ComboBoxFilter(Filter):
-    """Filter where the items are displayed in a QComboBox"""
-
-    render_hint = RenderHint.COMBO_BOX
-    name = 'combo_box_filter'
-
 arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
 class PriorityLevel(enum.Enum):
@@ -939,3 +765,178 @@ class SearchFilter(Action, AbstractModelFilter):
         yield action_steps.SetFilter(self, value)
 
 search_filter = SearchFilter()
+
+
+@dataclass
+class FilterMode(Mode):
+
+    checked: bool = False
+
+    def __init__(self, value, verbose_name, checked=False):
+        super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
+        self.checked = checked
+
+    def decorate_query(self, query, value):
+        return self.decorator(query, value)
+
+# This used to be:
+#
+#     class All(object):
+#         pass
+#
+# It has been replaced by All = '__all' to allow serialization
+#
+All = '__all'
+
+class Filter(Action):
+    """Base class for filters"""
+
+    name = 'filter'
+    filter_strategy = ChoicesFilter
+
+    def __init__(self, *attributes, default=All, verbose_name=None):
+        """
+        :param attribute: the attribute on which to filter, this attribute
+            may contain dots to indicate relationships that need to be followed, 
+            eg.  'person.name'
+
+        :param default: the default value to filter on when the view opens,
+            defaults to showing all records.
+        
+        :param verbose_name: the name of the filter as shown to the user, defaults
+            to the name of the field on which to filter.
+        """
+        assert len(attributes) > 0
+        attribute = attributes[0]
+        if isinstance(attribute, str):
+            self.filter_strategy = None
+            self.attribute = attribute
+        else:
+            self.filter_strategy = self.filter_strategy(*attributes)
+            self.attribute = self.filter_strategy.attribute
+        self.default = default
+        self.verbose_name = verbose_name
+        self.exclusive = True
+        self.joins = None
+        self.column = None
+        self.attributes = None
+        self.filter_names = []
+
+    def get_name(self):
+        return '{}_{}'.format(self.name, self.attribute)
+
+    def gui_run(self, gui_context, value):
+        model = gui_context.item_view.model()
+        if model is not None:
+            model.set_filter(self, value)
+
+    def get_operator(self, values):
+        return Operator.in_ if values else Operator.is_empty
+
+    def decorate_query(self, query, values):
+        if All in values:
+            return query
+        if self.filter_strategy is not None:
+            operator = self.get_operator(values)
+            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *values)
+            return query.filter(filter_clause)
+        else:
+            if self.joins:
+                query = query.join(*self.joins)
+            if 'precision' in self.attributes:
+                delta = pow( 10,  -1*self.attributes['precision'])
+                for value in values:
+                    query = query.filter(sql.and_(self.column < value+delta,
+                                                  self.column > value-delta))
+            else:
+                not_none_values = [v for v in values if v is not None]
+                if len(not_none_values):
+                    where_clause = self.column.in_(not_none_values)
+                else:
+                    where_clause = False
+                if None in values:
+                    where_clause = sql.or_(where_clause,
+                                           self.column==None)
+                query = query.filter(where_clause)
+            return query
+
+    def get_state(self, model_context):
+        """
+        :return:  a :class:`filter_data` object
+        """
+        state = super(Filter, self).get_state(model_context)
+        session = model_context.session
+        entity = model_context.admin.entity
+        self.admin = model_context.admin
+
+        if self.filter_strategy is None:
+            if self.joins is None:
+                self.joins = []
+                related_admin = model_context.admin
+                for field_name in self.attribute.split('.'):
+                    attributes = related_admin.get_field_attributes(field_name)
+                    self.filter_names.append(attributes['name'])
+                    # @todo: if the filter is not on an attribute of the relation, but on 
+                    # the relation itselves
+                    if 'target' in attributes:
+                        self.joins.append(getattr(related_admin.entity, field_name))
+                        related_admin = attributes['admin']
+                self.column = getattr(related_admin.entity, field_name)
+                self.attributes = attributes
+            query = session.query(self.column).select_from(entity).join(*self.joins)
+        else:
+            self.attributes = self.admin.get_field_attributes(self.attribute.key)
+            self.filter_names.append(self.attributes['name'])
+            query = session.query(self.attribute).select_from(entity)
+        query = query.distinct()
+
+        modes = list()
+        for value in query:
+            if 'to_string' in self.attributes:
+                verbose_name = self.attributes['to_string'](value[0])
+            else:
+                verbose_name = value[0]
+            if self.attributes.get('translate_content', False):
+                verbose_name = ugettext(verbose_name)
+            mode = FilterMode(value=value[0],
+                              verbose_name=verbose_name,
+                              checked=((value[0]==self.default) or (self.exclusive==False)))
+        
+            # option_name name can be of type ugettext_lazy, convert it to unicode
+            # to make it sortable
+            modes.append(mode)
+
+        state.verbose_name = self.verbose_name or self.filter_names[0]
+        # sort outside the query to sort on the verbose name of the value
+        modes.sort(key=lambda state:state.verbose_name)
+        # put all mode first, no mater of its verbose name
+        if self.exclusive:
+            all_mode = FilterMode(value=All,
+                                  verbose_name=ugettext('All'),
+                                  checked=(self.default==All))
+            modes.insert(0, all_mode)
+        else:
+            #if attributes.get('nullable', True):
+            none_mode = FilterMode(value=None,
+                                   verbose_name=ugettext('None'),
+                                   checked=True)
+            modes.append(none_mode)
+        state.modes = modes
+        return state
+
+class GroupBoxFilter(Filter):
+    """Filter where the items are displayed in a QGroupBox"""
+
+    render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
+    name = 'group_box_filter'
+
+    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True):
+        super().__init__(*attributes, default=default, verbose_name=verbose_name)
+        self.exclusive = exclusive
+        self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
+
+class ComboBoxFilter(Filter):
+    """Filter where the items are displayed in a QComboBox"""
+
+    render_hint = RenderHint.COMBO_BOX
+    name = 'combo_box_filter'
