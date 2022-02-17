@@ -139,6 +139,10 @@ class AbstractActionWidget( object ):
 
     @classmethod
     def _set_menu(cls, widget, state, parent, slot):
+        """
+        slot can be None for use in unittests where the action wont be
+        triggered
+        """
         if state['modes']:
             # widget is not always a QWidget, so QMenu is created without
             # parent
@@ -159,13 +163,15 @@ class AbstractActionWidget( object ):
                     mode_menu = mode.render(menu)
                     for submode in mode.modes:
                         submode_action = submode.render(mode_menu)
-                        submode_action.triggered.connect(slot)
+                        if slot is not None:
+                            submode_action.triggered.connect(slot)
                         submode_action.setProperty('action_route', widget.property('action_route'))
                         mode_menu.addAction(submode_action)
                 else:
                     mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
                     mode_action = mode.render(menu)
-                    mode_action.triggered.connect(slot)
+                    if slot is not None:
+                        mode_action.triggered.connect(slot)
                     mode_action.setProperty('action_route', widget.property('action_route'))
                     menu.addAction(mode_action)
 
