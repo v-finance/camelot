@@ -81,6 +81,7 @@ class Filter(Action):
     """Base class for filters"""
 
     name = 'filter'
+    filter_strategy = ChoicesFilter
 
     def __init__(self, *attributes, default=All, verbose_name=None):
         """
@@ -100,7 +101,7 @@ class Filter(Action):
             self.filter_strategy = None
             self.attribute = attribute
         else:
-            self.filter_strategy = ChoicesFilter(*attributes)
+            self.filter_strategy = self.filter_strategy(*attributes)
             self.attribute = self.filter_strategy.attribute
         self.default = default
         self.verbose_name = verbose_name
@@ -118,11 +119,14 @@ class Filter(Action):
         if model is not None:
             model.set_filter(self, value)
 
+    def get_operator(self, values):
+        return Operator.in_ if values else Operator.is_empty
+
     def decorate_query(self, query, values):
         if All in values:
             return query
         if self.filter_strategy is not None:
-            operator = Operator.in_ if values else Operator.is_empty
+            operator = self.get_operator(values)
             filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *values)
             return query.filter(filter_clause)
         else:
