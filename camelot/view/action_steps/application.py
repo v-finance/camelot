@@ -62,7 +62,7 @@ class Exit(ActionStep, DataclassSerializable):
 
 
 @dataclass
-class QmlMainWindow(ActionStep, DataclassSerializable):
+class MainWindow(ActionStep, DataclassSerializable):
     """
     This action step also takes care of other python stuff for now
     (e.g. stopping the model thread).
@@ -102,7 +102,6 @@ class QmlMainWindow(ActionStep, DataclassSerializable):
         transferto(event_filter, event_filter)
         qml_window.installEventFilter(event_filter)
         qml_action_step(gui_context, 'MainWindow', serialized_step)
-
 
 
 @dataclass
@@ -197,48 +196,19 @@ class MainMenu(ActionStep, DataclassSerializable):
     def gui_run(self, gui_context, serialized_step):
         qml_action_step(gui_context, 'MainMenu', serialized_step)
 
-    @classmethod
-    def render(cls, gui_context, items, parent_menu, action_states):
-        """
-        :return: a :class:`QtWidgets.QMenu` object
-        """
-        for item in items:
-            if (item["verbose_name"] is None) and (item["action_route"] is None):
-                parent_menu.addSeparator()
-                continue
-            elif item["verbose_name"] is not None:
-                menu = QtWidgets.QMenu(item["verbose_name"], parent_menu)
-                parent_menu.addMenu(menu)
-                cls.render(gui_context, item["items"], menu, action_states)
-            elif item["action_route"] is not None:
-                action = AdminRoute.action_for(tuple(item["action_route"]))
-                qaction = ActionAction(action, gui_context, parent_menu)
-                state = None
-                for action_state in action_states:
-                    if action_state[0] == item["action_route"]:
-                        state = action_state[1]
-                        break
-                if state is not None:
-                    qaction.set_state_v2(state)
-                parent_menu.addAction(qaction)
-            else:
-                raise Exception('Cannot handle menu item {}'.format(item))
+@dataclass
+class SetLanguage(ActionStep, DataclassSerializable):
+    """
+    Set the application language. The language is used needed to load translations.
 
-    '''
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        from ..controls.busy_widget import BusyWidget
-        if gui_context.workspace is None:
-            return
-        main_window = gui_context.workspace.parent()
-        if main_window is None:
-            return
-        step = json.loads(serialized_step)
-        menu_bar = main_window.menuBar()
-        self.render(gui_context, step["menu"]["items"], menu_bar, step["action_states"])
-        menu_bar.setCornerWidget(BusyWidget())
-    '''
+    :param language: The two-letter, ISO 639 language code (e.g. 'nl').
+    """
 
+    language: str
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        qml_action_step(gui_context, 'SetLanguage', serialized_step)
 
 @dataclass
 class InstallTranslator(ActionStep, DataclassSerializable):
@@ -259,15 +229,7 @@ class InstallTranslator(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        app = QtCore.QCoreApplication.instance()
-        translator = AdminRoute.admin_for(tuple(step["admin_route"])).get_translator()
-        if isinstance(translator, list):
-            for t in translator:
-                t.setParent(app)
-                app.installTranslator(t)
-        else:
-            app.installTranslator(translator)
+        qml_action_step(gui_context, 'InstallTranslator', serialized_step)
 
 @dataclass
 class RemoveTranslators(ActionStep, DataclassSerializable):
