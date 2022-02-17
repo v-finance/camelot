@@ -362,9 +362,11 @@ class FieldFilter(AbstractFilterStrategy):
         return operator.operator(attribute, *operands)
 
     def from_string(self, admin, session, operand):
+        if isinstance(operand, self.python_type):
+            return operand
         operand = super().from_string(admin, session, operand)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        return field_attributes.get('from_string', self._default_from_string)(operand)
+        return field_attributes.get('from_string', self.__class__._default_from_string)(operand)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
