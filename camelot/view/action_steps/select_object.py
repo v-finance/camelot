@@ -29,7 +29,6 @@
 
 
 from dataclasses import dataclass, InitVar, field
-import json
 
 from ...core.qt import QtWidgets, QtCore
 
