@@ -36,10 +36,9 @@ from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
-from ...core.qt import QtCore, QtWidgets, QtQuick, transferto
+from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
-from camelot.view.controls.action_widget import ActionAction
 from camelot.view.qml_view import qml_action_step, get_qml_window, qml_action_dispatch, get_qml_root_backend
 
 LOGGER = logging.getLogger(__name__)
