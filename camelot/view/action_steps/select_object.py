@@ -30,15 +30,12 @@
 
 from dataclasses import dataclass, InitVar, field
 
-from ...core.qt import QtWidgets, QtCore
-
 from camelot.admin.admin_route import RouteWithRenderHint, AdminRoute
 from camelot.admin.action import ActionStep, Action
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.controls.tableview import TableView
 from camelot.view.qml_view import qml_action_step, qml_action_dispatch
 
 from .item_view import OpenTableView, OpenQmlTableView
@@ -74,27 +71,6 @@ class CancelSelection(Action):
 
 cancel_selection = CancelSelection()
 
-class SelectDialog(QtWidgets.QDialog):
-    
-    def __init__(self, gui_context, admin_route, verbose_name, parent = None):
-        super( SelectDialog, self ).__init__( parent )
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins( 0, 0, 0, 0 )
-        layout.setSpacing( 0 )
-        self.setWindowTitle( _('Select %s') % verbose_name )
-        self.setSizeGripEnabled(True)
-        table = TableView(gui_context, admin_route, parent=self)
-        table.setObjectName('table_view')
-        table.close_clicked_signal.connect(self.close_view)
-        layout.addWidget(table)
-        self.setLayout( layout )
-        self.objects = []
-
-    @QtCore.qt_slot()
-    def close_view(self):
-        self.reject()
-
-
 @dataclass
 class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step
@@ -126,13 +102,6 @@ class SelectObjects( OpenTableView ):
         self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
         # list_action
         self.list_action = AdminRoute._register_list_action_route(admin.get_admin_route(), confirm_selection)
-
-    @classmethod
-    def render(cls, gui_context, step):
-        dialog = SelectDialog(gui_context, tuple(step['admin_route']), step['verbose_name_plural'])
-        table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
-        cls.update_table_view(table_view, step)
-        return dialog
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
