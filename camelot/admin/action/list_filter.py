@@ -409,7 +409,7 @@ class RelatedFilter(AbstractFilterStrategy):
         for join in self.joins:
             related_query = related_query.join(join)
         if self.where is not None:
-            related_query.filter(self.where)
+            related_query = related_query.filter(self.where)
         return related_query
 
     def get_clause(self, admin, session, operator, *operands):
@@ -814,8 +814,8 @@ class Filter(Action):
             self.filter_strategy = None
             self.attribute = attribute
         else:
-            self.filter_strategy = self.filter_strategy(*attributes)
-            self.attribute = self.filter_strategy.attribute
+            self.filter_strategy = self.get_strategy(*attributes)
+            self.attribute = attribute
         self.default = default
         self.verbose_name = verbose_name
         self.exclusive = True
@@ -823,6 +823,9 @@ class Filter(Action):
         self.column = None
         self.attributes = None
         self.filter_names = []
+
+    def get_strategy(self, *attributes):
+        return self.filter_strategy(*attributes)
 
     def get_name(self):
         return '{}_{}'.format(self.name, self.attribute)
