@@ -196,30 +196,19 @@ class MainMenu(ActionStep, DataclassSerializable):
         qml_action_step(gui_context, 'MainMenu', serialized_step)
 
 @dataclass
-class SetLanguage(ActionStep, DataclassSerializable):
-    """
-    Set the application language. The language is used needed to load translations.
-
-    :param language: The two-letter, ISO 639 language code (e.g. 'nl').
-    """
-
-    language: str
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'SetLanguage', serialized_step)
-
-@dataclass
 class InstallTranslator(ActionStep, DataclassSerializable):
     """
     Install a translator in the application.  Ownership of the translator will
     be moved to the application.
+
+    :param language: The two-letter, ISO 639 language code (e.g. 'nl').
 
     :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
         object
 
     """
 
+    language: str
     admin: InitVar[ApplicationAdmin]
     admin_route: AdminRoute = field(init=False)
 
