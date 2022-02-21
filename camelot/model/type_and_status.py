@@ -380,10 +380,11 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     name = 'status_filter'
     filter_strategy = list_filter.RelatedFilter
 
-    def __init__(self, attribute, default=list_filter.All, verbose_name=None, exclusive=True):
+    def __init__(self, attribute, joins=[], default=list_filter.All, verbose_name=None, exclusive=True):
         if not isinstance(attribute, str):
             assert issubclass(attribute, WithStatus)
             attribute = attribute._status_history.classified_by
+            self.joins = joins
         super().__init__(attribute, default=default, verbose_name=verbose_name, exclusive=exclusive)
 
     def get_strategy(self, attribute):
@@ -391,7 +392,7 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
         current_date = sql.functions.current_date()
         return self.filter_strategy(
             list_filter.ChoicesFilter(attribute),
-            joins=[history_type.status_for],
+            joins=[history_type.status_for] + self.joins,
             where=sql.and_(
                 history_type.status_from_date <= current_date,
                 history_type.status_for_id == history_type.status_for.prop.entity.class_.id,
