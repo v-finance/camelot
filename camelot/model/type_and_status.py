@@ -378,16 +378,31 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     """
 
     name = 'status_filter'
+    filter_strategy = list_filter.RelatedFilter
+
+    def get_strategy(self, attribute):
+        history_type = attribute.class_
+        current_date = sql.functions.current_date()
+        return self.filter_strategy(
+            list_filter.ChoicesFilter(attribute),
+            joins=[history_type.status_for],
+            where=sql.and_(
+                history_type.status_from_date <= current_date,
+                history_type.status_for_id == history_type.status_for.prop.entity.class_.id,
+                history_type.status_thru_date >= current_date))
 
     def decorate_query(self, query, values):
-        if list_filter.All in values:
+        if self.filter_strategy is not None:
+            query = super().decorate_query(query, values)
+        else:
+            if list_filter.All in values:
+                return query
+            if (len(values) == 0) and (self.exclusive==False):
+                return query.filter(self.column==None)
+            query = query.outerjoin(*self.joins)
+            where_clauses = [self.column==v for v in values]
+            query = query.filter(sql.or_(*where_clauses))
             return query
-        if (len(values) == 0) and (self.exclusive==False):
-            return query.filter(self.column==None)
-        query = query.outerjoin(*self.joins)
-        where_clauses = [self.column==v for v in values]
-        query = query.filter(sql.or_(*where_clauses))
-        return query
 
     def filter(self, it, value):
         """
@@ -410,10 +425,21 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        self.attributes = admin.get_field_attributes(self.attribute)
-        history_type = self.attributes['target']
-        history_admin = admin.get_related_admin(history_type)
+        self.admin = model_context.admin
+        if self.filter_strategy is not None:
+            self.attributes = self.admin.get_field_attributes(self.attribute.key)
+            history_type = self.attribute.class_
+        else:
+            self.attributes = self.admin.get_field_attributes(self.attribute)
+            history_type = self.attributes['target']
+            current_date = sql.functions.current_date()
+            self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
+                                                 history_type.status_for_id == self.get_entity_id(model_context),
+                                                 history_type.status_thru_date >= current_date)
+                              )
+            self.column = getattr(history_type, 'classified_by')
+
+        history_admin = self.admin.get_related_admin(history_type)
         classification_fa = history_admin.get_field_attributes('classified_by')
 
         target = classification_fa.get('target')
@@ -424,13 +450,6 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
 
         state.modes = []
         modes = []
-        current_date = sql.functions.current_date()
-        self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                             history_type.status_for_id == self.get_entity_id(model_context),
-                                             history_type.status_thru_date >= current_date)
-                      )
-        self.column = getattr(history_type, 'classified_by')
-
         for value, name in choices:
             mode = list_filter.FilterMode(
                 value=value,
