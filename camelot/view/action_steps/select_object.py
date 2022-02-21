@@ -40,8 +40,9 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.controls.tableview import TableView
+from camelot.view.qml_view import qml_action_step, qml_action_dispatch
 
-from .item_view import OpenTableView
+from .item_view import OpenTableView, OpenQmlTableView
 
 @dataclass
 class SetSelectedObjects(ActionStep):
@@ -49,9 +50,9 @@ class SetSelectedObjects(ActionStep):
     objects: list
 
     def gui_run(self, gui_context):
-        dialog = gui_context.view.parent()
+        dialog = gui_context.view
         dialog.objects = self.objects
-        dialog.accept()
+        dialog.hide()
 
 class ConfirmSelection(Action):
 
@@ -70,7 +71,7 @@ class CancelSelection(Action):
     name = 'cancel_selection'
 
     def gui_run(self, gui_context):
-        gui_context.view.parent().reject()
+        gui_context.view.hide()
 
 cancel_selection = CancelSelection()
 
@@ -136,14 +137,12 @@ class SelectObjects( OpenTableView ):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        dialog = cls.render(gui_context, step)
         with hide_progress_dialog(gui_context):
-            # strange things happen on windows 7 and later with maximizing
-            # this dialog, maximizing it here appears to work
-            dialog.showMaximized()
-            if dialog.exec() == QtWidgets.QDialog.DialogCode.Rejected:
-                raise CancelRequest()
-            return dialog.objects
+            response, model = OpenQmlTableView.render(gui_context, 'SelectObjectsInitialize', serialized_step)
+            context_id = response['context_id']
+            list_gui_context = qml_action_dispatch.get_context(context_id)
+            response = qml_action_step(list_gui_context, 'SelectObjectsFinalize', serialized_step)
 
-
+            if hasattr(list_gui_context.view, 'objects'):
+                return list_gui_context.view.objects
+            raise CancelRequest()

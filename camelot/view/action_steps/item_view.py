@@ -270,7 +270,7 @@ class OpenQmlTableView(OpenTableView):
         self.list_action = admin.get_list_action()
 
     @classmethod
-    def render(cls, gui_context, serialized_step):
+    def render(cls, gui_context, action_step_name, serialized_step):
         step = json.loads(serialized_step)
 
         class QmlListActionGuiContext(ListActionGuiContext):
@@ -294,7 +294,7 @@ class OpenQmlTableView(OpenTableView):
                 continue
             new_model.add_action_route(tuple(action['route']))
 
-        response = qml_action_step(list_gui_context, 'OpenTableView',
+        response = qml_action_step(list_gui_context, action_step_name,
                 serialized_step, { 'model': new_model })
         context_id = response['context_id']
 
@@ -310,11 +310,11 @@ class OpenQmlTableView(OpenTableView):
 
         UpdateActions().gui_run(list_gui_context)
 
-        return new_model
+        return response, new_model
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        cls.render(gui_context, serialized_step)
+        cls.render(gui_context, 'OpenTableView', serialized_step)
 
 
 @dataclass

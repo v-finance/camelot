@@ -107,6 +107,9 @@ class QmlActionDispatch(QtCore.QObject):
             return False
         return gui_context.context_id in self.gui_contexts
 
+    def get_context(self, context_id):
+        return self.gui_contexts[context_id]
+
     def run_action(self, context_id, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(context_id, route, args))
         if context_id not in self.gui_contexts:
