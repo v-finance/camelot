@@ -380,6 +380,12 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     name = 'status_filter'
     filter_strategy = list_filter.RelatedFilter
 
+    def __init__(self, attribute, default=list_filter.All, verbose_name=None, exclusive=True):
+        if not isinstance(attribute, str):
+            assert issubclass(attribute, WithStatus)
+            attribute = attribute._status_history.classified_by
+        super().__init__(attribute, default=default, verbose_name=verbose_name, exclusive=exclusive)
+
     def get_strategy(self, attribute):
         history_type = attribute.class_
         current_date = sql.functions.current_date()
