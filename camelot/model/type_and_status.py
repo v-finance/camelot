@@ -393,7 +393,7 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
 
     def decorate_query(self, query, values):
         if self.filter_strategy is not None:
-            query = super().decorate_query(query, values)
+            return super().decorate_query(query, values)
         else:
             if list_filter.All in values:
                 return query

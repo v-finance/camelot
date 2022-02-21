@@ -233,7 +233,7 @@ class BatchJobAdmin(EntityAdmin):
     verbose_name = _('Batch job')
     list_display = ['host', 'type', 'current_status']
     list_filter = [
-        type_and_status.StatusFilter('status'),
+        type_and_status.StatusFilter(BatchJob._status_history.classified_by),
         list_filter.ComboBoxFilter(BatchJob.host)
     ]
     form_state = 'right'
