@@ -279,7 +279,7 @@ and used as a custom action.
     def get_related_toolbar_actions(self, direction):
         actions = super(EntityAdmin, self).get_related_toolbar_actions(direction)
         if direction == 'onetomany' and self.entity.get_ranked_by() is not None:
-            actions.append(list_action.switch_rank)
+            actions.extend([list_action.move_rank_up, list_action.move_rank_down])
         return actions
 
     def get_descriptor_field_attributes(self, field_name):
@@ -389,12 +389,12 @@ and used as a custom action.
             # the default stuff
             #
             pass
-        # Check __facade_args__ for 'editable' & 'editable_fields'
-        facade_arg_editable = self.entity._get_facade_arg('editable')
-        if facade_arg_editable is not None and not facade_arg_editable:
-             facade_arg_editable_fields = self.entity._get_facade_arg('editable_fields')
-             if facade_arg_editable_fields is None or field_name not in facade_arg_editable_fields:
-                 attributes['editable'] = False
+        # Check __entity_args__ for 'editable' & 'editable_fields'
+        entity_arg_editable = self.entity._get_entity_arg('editable')
+        if entity_arg_editable is not None and not entity_arg_editable:
+            entity_arg_editable_fields = self.entity._get_entity_arg('editable_fields')
+            if entity_arg_editable_fields is None or field_name not in entity_arg_editable_fields:
+                attributes['editable'] = False
         return attributes
 
     def _expand_field_attributes(self, field_attributes, field_name):
@@ -761,9 +761,9 @@ and used as a custom action.
     def is_editable(self):
         """Return True if the Entity is editable.
 
-        An entity is consdered editable if there is no __facade_args__ { 'editable': False }
+        An entity is consdered editable if there is no __entity_args__ { 'editable': False }
         """
-        editable = self.entity._get_facade_arg('editable')
+        editable = self.entity._get_entity_arg('editable')
         if editable is None:
             return True
         return editable

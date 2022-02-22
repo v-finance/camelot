@@ -56,160 +56,6 @@ from ...view.utils import locale
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
 
-@dataclass
-class FilterMode(Mode):
-
-    checked: bool = False
-
-    def __init__(self, value, verbose_name, checked=False):
-        super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
-        self.checked = checked
-
-    def decorate_query(self, query, value):
-        return self.decorator(query, value)
-
-# This used to be:
-#
-#     class All(object):
-#         pass
-#
-# It has been replaced by All = '__all' to allow serialization
-#
-All = '__all'
-
-class Filter(Action):
-    """Base class for filters"""
-
-    name = 'filter'
-
-    def __init__(self, attribute, default=All, verbose_name=None):
-        """
-        :param attribute: the attribute on which to filter, this attribute
-            may contain dots to indicate relationships that need to be followed, 
-            eg.  'person.name'
-
-        :param default: the default value to filter on when the view opens,
-            defaults to showing all records.
-        
-        :param verbose_name: the name of the filter as shown to the user, defaults
-            to the name of the field on which to filter.
-        """
-        self.attribute = attribute
-        self.default = default
-        self.verbose_name = verbose_name
-        self.exclusive = True
-        self.joins = None
-        self.column = None
-        self.attributes = None
-        self.filter_names = []
-
-    def get_name(self):
-        return '{}_{}'.format(self.name, self.attribute)
-
-    def gui_run(self, gui_context, value):
-        model = gui_context.item_view.model()
-        if model is not None:
-            model.set_filter(self, value)
-
-    def decorate_query(self, query, values):
-        if All in values:
-            return query
-        if self.joins:
-            query = query.join(*self.joins)
-        if 'precision' in self.attributes:
-            delta = pow( 10,  -1*self.attributes['precision'])
-            for value in values:
-                query = query.filter(sql.and_(self.column < value+delta,
-                                              self.column > value-delta))
-        else:
-            not_none_values = [v for v in values if v is not None]
-            if len(not_none_values):
-                where_clause = self.column.in_(not_none_values)
-            else:
-                where_clause = False
-            if None in values:
-                where_clause = sql.or_(where_clause,
-                                       self.column==None)
-            query = query.filter(where_clause)
-        return query
-
-    def get_state(self, model_context):
-        """
-        :return:  a :class:`filter_data` object
-        """
-        state = super(Filter, self).get_state(model_context)
-        session = model_context.session
-        entity = model_context.admin.entity
-
-        if self.joins is None:
-            self.joins = []
-            related_admin = model_context.admin
-            for field_name in self.attribute.split('.'):
-                attributes = related_admin.get_field_attributes(field_name)
-                self.filter_names.append(attributes['name'])
-                # @todo: if the filter is not on an attribute of the relation, but on 
-                # the relation itselves
-                if 'target' in attributes:
-                    self.joins.append(getattr(related_admin.entity, field_name))
-                    related_admin = attributes['admin']
-            self.column = getattr(related_admin.entity, field_name)
-            self.attributes = attributes
-        
-        query = session.query(self.column).select_from(entity).join(*self.joins)
-        query = query.distinct()
-
-        modes = list()
-
-        for value in query:
-            if 'to_string' in self.attributes:
-                verbose_name = self.attributes['to_string'](value[0])
-            else:
-                verbose_name = value[0]
-            if self.attributes.get('translate_content', False):
-                verbose_name = ugettext(verbose_name)
-            mode = FilterMode(value=value[0],
-                              verbose_name=verbose_name,
-                              checked=((value[0]==self.default) or (self.exclusive==False)))
-        
-            # option_name name can be of type ugettext_lazy, convert it to unicode
-            # to make it sortable
-            modes.append(mode)
-
-        state.verbose_name = self.verbose_name or self.filter_names[0]
-        # sort outside the query to sort on the verbose name of the value
-        modes.sort(key=lambda state:state.verbose_name)
-        # put all mode first, no mater of its verbose name
-        if self.exclusive:
-            all_mode = FilterMode(value=All,
-                                  verbose_name=ugettext('All'),
-                                  checked=(self.default==All))
-            modes.insert(0, all_mode)
-        else:
-            #if attributes.get('nullable', True):
-            none_mode = FilterMode(value=None,
-                                   verbose_name=ugettext('None'),
-                                   checked=True)
-            modes.append(none_mode)
-        state.modes = modes
-        return state
-
-class GroupBoxFilter(Filter):
-    """Filter where the items are displayed in a QGroupBox"""
-
-    render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
-    name = 'group_box_filter'
-
-    def __init__(self, attribute, default=All, verbose_name=None, exclusive=True):
-        super().__init__(attribute, default, verbose_name)
-        self.exclusive = exclusive
-        self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
-
-class ComboBoxFilter(Filter):
-    """Filter where the items are displayed in a QComboBox"""
-
-    render_hint = RenderHint.COMBO_BOX
-    name = 'combo_box_filter'
-
 arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
 class PriorityLevel(enum.Enum):
@@ -315,6 +161,7 @@ class AbstractFilterStrategy(object):
 
     class AssertionMessage(enum.Enum):
 
+        no_attributes =                  'No attributes given'
         no_queryable_attribute =         'The given attribute is not a valid QueryableAttribute'
         python_type_mismatch =           'The python_type of the given attribute does not match the python_type of this filter strategy'
         nr_operands_arity_mismatch =     'The provided number of operands ({}) does not correspond with the arity of the given operator, which expects min {} and max {} operands.'
@@ -408,9 +255,8 @@ class AbstractFilterStrategy(object):
 
 class FieldFilter(AbstractFilterStrategy):
     """
-    Abstract interface for defining a column-based filter clause on a queryable attribute of an entity, as part of that entity admin's query.
-    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attribute.
-    :attribute nullable: flag that indicates whether this strategy's field attribute is nullable or not, which influences which operators may or may not be applicable
+    Abstract interface for defining a column-based filter clause on one or more queryable attributes of an entity, as part of that entity admin's query.
+    Implementations of this interface should define it's python type, which will be asserted to match with that of the set attributes.
     :attribute search_operator: The default operator that this strategy will use when constructing a filter clause
                                 meant for searching based on a search text. By default the `Operator.eq` is used.
     """
@@ -419,17 +265,26 @@ class FieldFilter(AbstractFilterStrategy):
     attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, connective_operator = Operator.or_, **field_attributes):
         """
-        :param attribute: a queryable attribute for which this field filter should be applied. It's key will be used as this field filter's key.
-        :param key: Optional string to use as this strategy's key. By default the attribute's key will be used.
+        :param attributes: queryable attributes for which this field filter should be applied. The first attribute's key will be used as this field filter's key.
+        :param key: Optional string to use as this strategy's key. By default the first attribute's key will be used.
+        :attr connective_operator: A logical multiary sql operator (AND or OR) to connect the attribute clauses of this field filter's. Defaults to `sqlalchemy.sql.or_`.
         """
-        self.assert_valid_attribute(attribute)
-        key = key or attribute.key
+        assert len(attributes) >= 1, self.AssertionMessage.no_attributes.value
+        for attribute in attributes:
+            self.assert_valid_attribute(attribute)
+        key = key or attributes[0].key
         super().__init__(key, where, verbose_name, priority_level, **field_attributes)
-        self.attribute = attribute
+        self.attributes = attributes
+        self.connective_operator = connective_operator
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
+
+    @property
+    def attribute(self):
+        for attribute in self.attributes:
+            return attribute
 
     @classmethod
     def get_attribute_python_type(cls, attribute):
@@ -469,42 +324,49 @@ class FieldFilter(AbstractFilterStrategy):
     def get_clause(self, admin, session, operator, *operands):
         """
         Construct a filter clause for the given filter operator and operands, within the given admin and session.
-        The resulting clause will consists of this strategy's field type clause,
-        expanded with a condition on the attribute being set (None check) and the optionally set where conditions.
+        The resulting clause will consists of a connective between field type clauses for each of this field strategy's attributes,
+        expanded with conditions on the attributes being set (None check) and the optionally set where conditions.
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
-        field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = admin.get_field_attributes(self.key)
         field_operands = []
         try:
             for operand in operands:
                 field_operands.append(self.from_string(admin, session, operand))
         except utils.ParsingError:
             return
-        filter_clause = self.get_type_clause(field_attributes, operator, *field_operands)
-        if filter_clause is not None:
-            where_conditions = []
-            if operator.pre_condition is not None:
-                where_conditions.append(operator.pre_condition(self.attribute))
-            if self.where is not None:
-                where_conditions.append(self.where)
-            if where_conditions:
-                return sql.and_(*where_conditions, filter_clause)
-            return filter_clause
+        attribute_clauses = []
+        for attribute in self.attributes:
+            attribute_clause = self.get_attribute_clause(field_attributes, attribute, operator, *field_operands)
+            if attribute_clause is not None:
+                where_conditions = []
+                if operator.pre_condition is not None:
+                    where_conditions.append(operator.pre_condition(attribute))
+                if self.where is not None:
+                    where_conditions.append(self.where)
+                if where_conditions:
+                    attribute_clauses.append(sql.and_(*where_conditions, attribute_clause))
+                attribute_clauses.append(attribute_clause)
+        if attribute_clauses:
+            return self.connective_operator.operator(*attribute_clauses)
 
-    def get_type_clause(self, field_attributes, operator, *operands):
+    def get_attribute_clause(self, field_attributes, attribute, operator, *operands):
         """
-        Return a column-based expression filter clause on this filter strategy's attribute with the given filter operator and operands.
+        Return a column-based expression filter clause for the given attribute with the given filter operator and operands.
         :param field_attributes: The field attributes for this filter strategy's attribute on the entity admin
                                  that will use the resulting clause as part of its query.
         :param operands: the filter values that are used as the operands for the given operator to filter by.
         """
-        return operator.operator(self.attribute, *operands)
+        assert attribute in self.attributes
+        return operator.operator(attribute, *operands)
 
     def from_string(self, admin, session, operand):
+        if isinstance(operand, self.python_type):
+            return operand
         operand = super().from_string(admin, session, operand)
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        return field_attributes.get('from_string', self._default_from_string)(operand)
+        return field_attributes.get('from_string', self.__class__._default_from_string)(operand)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
@@ -547,7 +409,7 @@ class RelatedFilter(AbstractFilterStrategy):
         for join in self.joins:
             related_query = related_query.join(join)
         if self.where is not None:
-            related_query.filter(self.where)
+            related_query = related_query.filter(self.where)
         return related_query
 
     def get_clause(self, admin, session, operator, *operands):
@@ -605,8 +467,8 @@ class NoFilter(FieldFilter):
 
     name = 'no_filter'
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        super().__init__(attribute, where, key or str(attribute), verbose_name, priority_level, **field_attributes)
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+        super().__init__(*attributes, where=where, key=key or str(attributes[0]), verbose_name=verbose_name, priority_level=priority_level, **field_attributes)
 
     @classmethod
     def assert_valid_attribute(cls, attribute):
@@ -631,16 +493,16 @@ class StringFilter(FieldFilter):
     # Flag that configures whether this string search strategy should be performed when the search text only contains digits.
     allow_digits = True
 
-    def __init__(self, attribute, allow_digits=True, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **kwargs):
-        super().__init__(attribute, where, key, verbose_name, priority_level, **kwargs)
+    def __init__(self, *attributes, allow_digits=True, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **kwargs):
+        super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level, **kwargs)
         self.allow_digits = allow_digits
 
-    def get_type_clause(self, field_attributes, operator, *operands):
-        filter_clause = super().get_type_clause(field_attributes, operator, *operands)
+    def get_attribute_clause(self, field_attributes, attribute, operator, *operands):
+        filter_clause = super().get_attribute_clause(field_attributes, attribute, operator, *operands)
         if operator == Operator.is_empty:
-            return sql.or_(super().get_type_clause(field_attributes, Operator.eq, ''), filter_clause)
+            return sql.or_(super().get_attribute_clause(field_attributes, attribute, Operator.eq, ''), filter_clause)
         elif operator == Operator.is_not_empty:
-            return sql.and_(super().get_type_clause(field_attributes, Operator.ne, ''), filter_clause)
+            return sql.and_(super().get_attribute_clause(field_attributes, attribute, Operator.ne, ''), filter_clause)
         elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
             return filter_clause
 
@@ -655,29 +517,29 @@ class DecimalFilter(FieldFilter):
     _default_from_string = utils.float_from_string
 
     def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        super().__init__(attribute, where, key, verbose_name, priority_level, **field_attributes)
+        super().__init__(attribute, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level, **field_attributes)
         self.precision = field_attributes.get('precision')
 
-    def get_type_clause(self, field_attributes, operator, *float_operands):
-        precision = self.attribute.type.precision
+    def get_attribute_clause(self, field_attributes, attribute, operator, *float_operands):
+        precision = attribute.type.precision
         if isinstance(precision, (tuple)):
             precision = precision[1]
         delta = 0.1**( precision or 0 )
 
         if operator == Operator.eq and float_operands[0] is not None:
-            return sql.and_(self.attribute>=float_operands[0]-delta, self.attribute<=float_operands[0]+delta)
+            return sql.and_(attribute>=float_operands[0]-delta, attribute<=float_operands[0]+delta)
 
         if operator == Operator.ne and float_operands[0] is not None:
-            return sql.or_(self.attribute<float_operands[0]-delta, self.attribute>float_operands[0]+delta) 
+            return sql.or_(attribute<float_operands[0]-delta, attribute>float_operands[0]+delta) 
 
         elif operator in (Operator.lt, Operator.le) and float_operands[0] is not None:
-            return super().get_type_clause(field_attributes, operator, float_operands[0]-delta)
+            return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]-delta)
 
         elif operator in (Operator.gt, Operator.ge) and float_operands[0] is not None:
-            return super().get_type_clause(field_attributes, operator, float_operands[0]+delta)
+            return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]+delta)
 
         elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
-            return super().get_type_clause(field_attributes, operator, float_operands[0]-delta, float_operands[1]+delta)
+            return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]-delta, float_operands[1]+delta)
     
     def value_to_string(self, value, admin):
         admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
@@ -768,13 +630,19 @@ class ChoicesFilter(FieldFilter):
     python_type = str
     operators = (Operator.eq, Operator.ne)
 
-    def __init__(self, attribute, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
-        self.python_type = self.get_attribute_python_type(attribute)
-        super().__init__(attribute, where, key, verbose_name, priority_level)
+    def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
+        # Overrule the python type at the instance level to that of the first attribute,
+        # as a choices filter can be defined on attributes of various python types.
+        if attributes:
+            self.python_type = self.get_attribute_python_type(attributes[0])
+        super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level)
         self.choices = field_attributes.get('choices')
 
     def value_to_string(self, filter_value, admin):
         return filter_value
+
+    def from_string(self, admin, session, operand):
+        return operand
 
 class MonthsFilter(IntFilter):
 
@@ -899,3 +767,185 @@ class SearchFilter(Action, AbstractModelFilter):
         yield action_steps.SetFilter(self, value)
 
 search_filter = SearchFilter()
+
+
+@dataclass
+class FilterMode(Mode):
+
+    checked: bool = False
+
+    def __init__(self, value, verbose_name, checked=False):
+        super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
+        self.checked = checked
+
+    def decorate_query(self, query, value):
+        return self.decorator(query, value)
+
+# This used to be:
+#
+#     class All(object):
+#         pass
+#
+# It has been replaced by All = '__all' to allow serialization
+#
+All = '__all'
+
+class Filter(Action):
+    """Base class for filters"""
+
+    name = 'filter'
+    filter_strategy = ChoicesFilter
+
+    def __init__(self, *attributes, default=All, verbose_name=None):
+        """
+        :param attribute: the attribute on which to filter, this attribute
+            may contain dots to indicate relationships that need to be followed, 
+            eg.  'person.name'
+
+        :param default: the default value to filter on when the view opens,
+            defaults to showing all records.
+        
+        :param verbose_name: the name of the filter as shown to the user, defaults
+            to the name of the field on which to filter.
+        """
+        assert len(attributes) > 0
+        attribute = attributes[0]
+        if isinstance(attribute, str):
+            self.filter_strategy = None
+            self.attribute = attribute
+        else:
+            self.filter_strategy = self.get_strategy(*attributes)
+            self.attribute = attribute
+        self.default = default
+        self.verbose_name = verbose_name
+        self.exclusive = True
+        self.joins = None
+        self.column = None
+        self.attributes = None
+        self.filter_names = []
+
+    def get_strategy(self, *attributes):
+        return self.filter_strategy(*attributes)
+
+    def get_name(self):
+        return '{}_{}'.format(self.name, self.attribute)
+
+    def gui_run(self, gui_context, value):
+        model = gui_context.item_view.model()
+        if model is not None:
+            model.set_filter(self, value)
+
+    def get_operator(self, values):
+        return Operator.in_ if values else Operator.is_empty
+
+    def get_operands(self, values):
+        return values
+
+    def decorate_query(self, query, values):
+        if All in values:
+            return query
+        if self.filter_strategy is not None:
+            operator = self.get_operator(values)
+            operands = self.get_operands(values)
+            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *operands)
+            return query.filter(filter_clause)
+        else:
+            if self.joins:
+                query = query.join(*self.joins)
+            if 'precision' in self.attributes:
+                delta = pow( 10,  -1*self.attributes['precision'])
+                for value in values:
+                    query = query.filter(sql.and_(self.column < value+delta,
+                                                  self.column > value-delta))
+            else:
+                not_none_values = [v for v in values if v is not None]
+                if len(not_none_values):
+                    where_clause = self.column.in_(not_none_values)
+                else:
+                    where_clause = False
+                if None in values:
+                    where_clause = sql.or_(where_clause,
+                                           self.column==None)
+                query = query.filter(where_clause)
+            return query
+
+    def get_state(self, model_context):
+        """
+        :return:  a :class:`filter_data` object
+        """
+        state = super(Filter, self).get_state(model_context)
+        session = model_context.session
+        entity = model_context.admin.entity
+        self.admin = model_context.admin
+
+        if self.filter_strategy is None:
+            if self.joins is None:
+                self.joins = []
+                related_admin = model_context.admin
+                for field_name in self.attribute.split('.'):
+                    attributes = related_admin.get_field_attributes(field_name)
+                    self.filter_names.append(attributes['name'])
+                    # @todo: if the filter is not on an attribute of the relation, but on 
+                    # the relation itselves
+                    if 'target' in attributes:
+                        self.joins.append(getattr(related_admin.entity, field_name))
+                        related_admin = attributes['admin']
+                self.column = getattr(related_admin.entity, field_name)
+                self.attributes = attributes
+            query = session.query(self.column).select_from(entity).join(*self.joins)
+        else:
+            self.attributes = self.admin.get_field_attributes(self.attribute.key)
+            self.filter_names.append(self.attributes['name'])
+            query = session.query(self.attribute).select_from(entity)
+        query = query.distinct()
+
+        modes = list()
+        for value in query:
+            if 'to_string' in self.attributes:
+                verbose_name = self.attributes['to_string'](value[0])
+            else:
+                verbose_name = value[0]
+            if self.attributes.get('translate_content', False):
+                verbose_name = ugettext(verbose_name)
+            mode = FilterMode(value=value[0],
+                              verbose_name=verbose_name,
+                              checked=((value[0]==self.default) or (self.exclusive==False)))
+        
+            # option_name name can be of type ugettext_lazy, convert it to unicode
+            # to make it sortable
+            modes.append(mode)
+
+        state.verbose_name = self.verbose_name or self.filter_names[0]
+        # sort outside the query to sort on the verbose name of the value
+        modes.sort(key=lambda state:state.verbose_name)
+        # put all mode first, no mater of its verbose name
+        if self.exclusive:
+            all_mode = FilterMode(value=All,
+                                  verbose_name=ugettext('All'),
+                                  checked=(self.default==All))
+            modes.insert(0, all_mode)
+        else:
+            #if attributes.get('nullable', True):
+            none_mode = FilterMode(value=None,
+                                   verbose_name=ugettext('None'),
+                                   checked=True)
+            modes.append(none_mode)
+        state.modes = modes
+        return state
+
+class GroupBoxFilter(Filter):
+    """Filter where the items are displayed in a QGroupBox"""
+
+    render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
+    name = 'group_box_filter'
+
+    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True):
+        super().__init__(*attributes, default=default, verbose_name=verbose_name)
+        self.exclusive = exclusive
+        self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
+
+class ComboBoxFilter(Filter):
+    """Filter where the items are displayed in a QComboBox"""
+
+    render_hint = RenderHint.COMBO_BOX
+    name = 'combo_box_filter'
