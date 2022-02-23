@@ -52,6 +52,7 @@ from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import Qt, QtGui
 from ...view.utils import locale
+from ...view.qml_view import qml_action_dispatch
 
 from .base import Action, Mode, RenderHint
 from .field_action import FieldActionModelContext
@@ -831,7 +832,10 @@ class Filter(Action):
         return '{}_{}'.format(self.name, self.attribute)
 
     def gui_run(self, gui_context, value):
-        model = gui_context.item_view.model()
+        if gui_context.item_view is not None:
+            model = gui_context.item_view.model()
+        else:
+            model = qml_action_dispatch.get_model(gui_context.context_id)
         if model is not None:
             model.set_filter(self, value)
 

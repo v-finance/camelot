@@ -44,6 +44,7 @@ from .application_action import ( ApplicationActionGuiContext,
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
+from camelot.view.qml_view import qml_action_step, qml_action_dispatch
 
 import xlsxwriter
 
@@ -214,6 +215,16 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                     rows_range = ( selection_range.top(), selection_range.bottom() )
                     selected_rows.append( rows_range )
                     selection_count += ( rows_range[1] - rows_range[0] ) + 1
+        else:
+            model = qml_action_dispatch.get_model(self.context_id)
+            if model is not None:
+                collection_count = model.rowCount()
+                proxy = model.get_value()
+            response = qml_action_step(self, 'GetSelection', keep_context_id=True)
+            selection_count = response['selection_count']
+            current_row = response['current_row']
+            for i in range(len(response['selected_rows']) // 2):
+                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
         context.selection_count = selection_count
         context.collection_count = collection_count
         context.selected_rows = selected_rows
@@ -399,17 +410,23 @@ class DeleteSelection( EditAction ):
     verbose_name = _('Delete')
 
     def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the row that replaces the deleted one
-        #
-        gui_context.item_view.close_editor()
-        super( DeleteSelection, self ).gui_run( gui_context )
-        # this refresh call could be avoided if the removal of an object
-        # in the collection through the DeleteObject action step handled this
-        gui_context.item_view.model().refresh()
-        gui_context.item_view.clearSelection()
+        if gui_context.item_view is not None:
+            #
+            # if there is an open editor on a row that will be deleted, there
+            # might be an assertion failure in QT, or the data of the editor
+            # might be pushed to the row that replaces the deleted one
+            #
+            gui_context.item_view.close_editor()
+            super( DeleteSelection, self ).gui_run( gui_context )
+            # this refresh call could be avoided if the removal of an object
+            # in the collection through the DeleteObject action step handled this
+            gui_context.item_view.model().refresh()
+            gui_context.item_view.clearSelection()
+        else:
+            super().gui_run(gui_context)
+            model = qml_action_dispatch.get_model(gui_context.context_id)
+            if model is not None:
+                model.refresh() # this will also clear the selection
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
@@ -551,17 +568,20 @@ class ToPreviousRow( AbstractToPrevious, ListContextAction ):
     name = 'to_previous'
 
     def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        selection = item_view.selectedIndexes()
-        rows = item_view.model().rowCount()
-        if rows <= 0:
-            return
-        if selection:
-            current_row = selection[0].row()
-            previous_row = ( current_row - 1 ) % rows
+        if gui_context.item_view is not None:
+            item_view = gui_context.item_view
+            selection = item_view.selectedIndexes()
+            rows = item_view.model().rowCount()
+            if rows <= 0:
+                return
+            if selection:
+                current_row = selection[0].row()
+                previous_row = ( current_row - 1 ) % rows
+            else:
+                previous_row = 0
+            item_view.selectRow( previous_row )
         else:
-            previous_row = 0
-        item_view.selectRow( previous_row )
+            qml_action_step(gui_context, 'ToPreviousRow', keep_context_id=True)
 
     def get_state( self, model_context ):
         state = super( ToPreviousRow, self ).get_state( model_context )
@@ -585,7 +605,10 @@ class ToFirstRow( AbstractToFirst, ToPreviousRow ):
     name = 'to_first'
 
     def gui_run( self, gui_context ):
-        gui_context.item_view.selectRow( 0 )
+        if gui_context.item_view is not None:
+            gui_context.item_view.selectRow( 0 )
+        else:
+            qml_action_step(gui_context, 'ToFirstRow', keep_context_id=True)
 
 to_first_row = ToFirstRow()
 
@@ -603,17 +626,20 @@ class ToNextRow( AbstractToNext, ListContextAction ):
     name = 'to_next'
 
     def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        selection = item_view.selectedIndexes()
-        rows = item_view.model().rowCount()
-        if rows <= 0:
-            return
-        if selection:
-            current_row = selection[0].row()
-            next_row = ( current_row + 1 ) % rows
+        if gui_context.item_view is not None:
+            item_view = gui_context.item_view
+            selection = item_view.selectedIndexes()
+            rows = item_view.model().rowCount()
+            if rows <= 0:
+                return
+            if selection:
+                current_row = selection[0].row()
+                next_row = ( current_row + 1 ) % rows
+            else:
+                next_row = 0
+            item_view.selectRow( next_row )
         else:
-            next_row = 0
-        item_view.selectRow( next_row )
+            qml_action_step(gui_context, 'ToNextRow', keep_context_id=True)
 
     def get_state( self, model_context ):
         state = super( ToNextRow, self ).get_state( model_context )
@@ -638,8 +664,10 @@ class ToLastRow( AbstractToLast, ToNextRow ):
     name = 'to_last'
 
     def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        item_view.selectRow( item_view.model().rowCount() - 1 )
+        if gui_context.item_view is not None:
+            gui_context.item_view.selectRow( item_view.model().rowCount() - 1 )
+        else:
+            qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
 
 to_last_row = ToLastRow()
 
@@ -963,7 +991,8 @@ class ReplaceFieldContents( EditAction ):
         # might be an assertion failure in QT, or the data of the editor 
         # might be pushed to the changed row
         #
-        gui_context.item_view.close_editor()
+        if gui_context.item_view is not None:
+            gui_context.item_view.close_editor()
         super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context, mode ):

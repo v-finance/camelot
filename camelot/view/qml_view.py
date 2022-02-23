@@ -88,17 +88,19 @@ class QmlActionDispatch(QtCore.QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui_contexts = {}
+        self.models = {}
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
 
-
-    def register(self, gui_context):
+    def register(self, gui_context, model=None):
         if gui_context.context_id is not None:
             if id(self.gui_contexts[gui_context.context_id]) == id(gui_context):
                 return gui_context.context_id
         context_id = self._context_ids.__next__()
         self.gui_contexts[context_id] = gui_context
+        if model is not None:
+            self.models[context_id] = model
         gui_context.context_id = context_id
         return context_id
 
@@ -109,6 +111,9 @@ class QmlActionDispatch(QtCore.QObject):
 
     def get_context(self, context_id):
         return self.gui_contexts[context_id]
+
+    def get_model(self, context_id):
+        return self.models.get(context_id)
 
     def run_action(self, context_id, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(context_id, route, args))
@@ -133,7 +138,7 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context, name, step, props={}, keep_context_id=False):
+def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, keep_context_id=False, model=None):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
@@ -142,7 +147,7 @@ def qml_action_step(gui_context, name, step, props={}, keep_context_id=False):
         assert gui_context.context_id is not None
         context_id = gui_context.context_id
     else:
-        context_id = qml_action_dispatch.register(gui_context)
+        context_id = qml_action_dispatch.register(gui_context, model)
     backend = get_qml_root_backend()
     response = backend.actionStep(context_id, name, step, props)
     return json.loads(response.data())
