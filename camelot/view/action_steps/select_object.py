@@ -35,6 +35,7 @@ from camelot.admin.action import ActionStep, Action
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
+from camelot.view.action_steps import CloseView
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step, qml_action_dispatch
 
@@ -66,8 +67,8 @@ class CancelSelection(Action):
     verbose_name = _('Cancel')
     name = 'cancel_selection'
 
-    def gui_run(self, gui_context):
-        gui_context.view.hide()
+    def model_run(self, model_context, mode):
+        yield CloseView()
 
 cancel_selection = CancelSelection()
 
