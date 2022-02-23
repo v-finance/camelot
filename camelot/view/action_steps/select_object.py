@@ -47,9 +47,8 @@ class SetSelectedObjects(ActionStep):
     objects: list
 
     def gui_run(self, gui_context):
-        dialog = gui_context.view
-        dialog.objects = self.objects
-        dialog.hide()
+        qml_action_dispatch.set_return_value(gui_context.context_id, self.objects)
+        qml_action_step(gui_context, 'CloseView', keep_context_id=True)
 
 class ConfirmSelection(Action):
 
@@ -109,9 +108,6 @@ class SelectObjects( OpenTableView ):
         with hide_progress_dialog(gui_context):
             response, model = OpenQmlTableView.render(gui_context, 'SelectObjectsInitialize', serialized_step)
             context_id = response['context_id']
-            list_gui_context = qml_action_dispatch.get_context(context_id)
-            response = qml_action_step(list_gui_context, 'SelectObjectsFinalize', serialized_step)
-
-            if hasattr(list_gui_context.view, 'objects'):
-                return list_gui_context.view.objects
+            if qml_action_dispatch.has_return_value(context_id):
+                return qml_action_dispatch.get_return_value(context_id)
             raise CancelRequest()

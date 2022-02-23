@@ -89,6 +89,7 @@ class QmlActionDispatch(QtCore.QObject):
         super().__init__(parent)
         self.gui_contexts = {}
         self.models = {}
+        self.return_values = {}
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
@@ -134,6 +135,16 @@ class QmlActionDispatch(QtCore.QObject):
             gui_context.mode_name = args
             action.gui_run( gui_context )
 
+    def set_return_value(self, context_id, value):
+        self.return_values[context_id] = value
+
+    def has_return_value(self, context_id):
+        return context_id in self.return_values
+
+    def get_return_value(self, context_id, remove=True):
+        return_value = self.return_values[context_id]
+        del self.return_values[context_id]
+        return return_value
 
 qml_action_dispatch = QmlActionDispatch()
 
