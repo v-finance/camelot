@@ -665,7 +665,8 @@ class ToLastRow( AbstractToLast, ToNextRow ):
 
     def gui_run( self, gui_context ):
         if gui_context.item_view is not None:
-            gui_context.item_view.selectRow( item_view.model().rowCount() - 1 )
+            item_view = gui_context.item_view
+            item_view.selectRow( item_view.model().rowCount() - 1 )
         else:
             qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
 
