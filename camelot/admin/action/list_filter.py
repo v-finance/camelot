@@ -831,7 +831,7 @@ class Filter(Action):
         return '{}_{}'.format(self.name, self.attribute)
 
     def gui_run(self, gui_context, value):
-        model = gui_context.item_view.model()
+        model = gui_context.get_item_model()
         if model is not None:
             model.set_filter(self, value)
 

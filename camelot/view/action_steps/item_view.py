@@ -37,20 +37,18 @@ from typing import Any, Union, List, Tuple
 import json
 
 from ...admin.admin_route import Route, AdminRoute
-from ...admin.action.application_action import UpdateActions
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt, QtCore
+from ...core.qt import Qt
 from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
-from ..item_view import ItemViewProxy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
 )
-from ..qml_view import get_qml_root_backend, qml_action_step
+from ..qml_view import qml_action_step
 
 
 @dataclass
@@ -66,8 +64,8 @@ class Sort( ActionStep, DataclassSerializable ):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
-        if gui_context.item_view != None:
-            model = gui_context.item_view.model()
+        model = gui_context.get_item_model()
+        if model is not None:
             model.sort( step["column"], step["order"] )
 
 @dataclass
@@ -84,8 +82,8 @@ class SetFilter( ActionStep ):
     cancelable = False
 
     def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            model = gui_context.item_view.model()
+        model = gui_context.get_item_model()
+        if model is not None:
             model.set_filter(self.list_filter, self.value)
 
 row_count_instance = RowCount()
@@ -270,7 +268,7 @@ class OpenQmlTableView(OpenTableView):
         self.list_action = admin.get_list_action()
 
     @classmethod
-    def render(cls, gui_context, serialized_step):
+    def render(cls, gui_context, action_step_name, serialized_step):
         step = json.loads(serialized_step)
 
         class QmlListActionGuiContext(ListActionGuiContext):
@@ -294,36 +292,48 @@ class OpenQmlTableView(OpenTableView):
                 continue
             new_model.add_action_route(tuple(action['route']))
 
-        response = qml_action_step(list_gui_context, 'OpenTableView',
-                serialized_step, { 'model': new_model })
-        context_id = response['context_id']
+        response = qml_action_step(list_gui_context, action_step_name,
+                serialized_step, { 'model': new_model }, model=new_model)
 
-        root_backend = get_qml_root_backend()
-        backend = root_backend.findChild(QtCore.QObject, 'qml_table_view_backend_{}'.format(context_id))
-        assert backend
-        item_view = ItemViewProxy(backend)
-
-        new_model.setParent(item_view)
-
-        list_gui_context.item_view = item_view
-        list_gui_context.view = backend.property('view')
-
-        UpdateActions().gui_run(list_gui_context)
-
-        return new_model
+        return response, new_model
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        cls.render(gui_context, serialized_step)
+        cls.render(gui_context, 'OpenTableView', serialized_step)
 
+@dataclass
+class ToFirstRow(ActionStep, DataclassSerializable):
+    """Move to the first row in a table"""
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        if gui_context.item_view is not None:
+            gui_context.item_view.selectRow( 0 )
+        else:
+            qml_action_step(gui_context, 'ToFirstRow', keep_context_id=True)
+
+@dataclass
+class ToLastRow(ActionStep, DataclassSerializable):
+    """Move to the last row in a table"""
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        if gui_context.item_view is not None:
+            item_view = gui_context.item_view
+            item_view.selectRow( item_view.model().rowCount() - 1 )
+        else:
+            qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
-    def gui_run(self, gui_context):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
+        else:
+            qml_action_step(gui_context, 'ClearSelection', serialized_step, keep_context_id=True)
 
 @dataclass
 class RefreshItemView(ActionStep, DataclassSerializable):
@@ -333,12 +343,11 @@ class RefreshItemView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
-            model = gui_context.item_view.model()
-            if model is not None:
-                model.refresh()
-                # this should reset the sort, since a refresh might cause
-                # new row to appear, and so the proxy needs to be reindexed
-                # this sorting of reset is not implemented, therefor, we simply
-                # sort on the first column to force reindexing
-                model.sort(0, Qt.SortOrder.AscendingOrder)
+        model = gui_context.get_item_model()
+        if model is not None:
+            model.refresh()
+            # this should reset the sort, since a refresh might cause
+            # new row to appear, and so the proxy needs to be reindexed
+            # this sorting of reset is not implemented, therefor, we simply
+            # sort on the first column to force reindexing
+            model.sort(0, Qt.SortOrder.AscendingOrder)

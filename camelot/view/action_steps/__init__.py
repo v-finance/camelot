@@ -29,7 +29,7 @@
 
 from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState, SetLanguage
+    MainMenu, UpdateActionsState
 )
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -39,7 +39,7 @@ from .gui import (
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView, OpenQmlTableView
+    RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -89,10 +89,11 @@ __all__ = [
     SetColumns.__name__,
     SetData.__name__,
     SetFilter.__name__,
-    SetLanguage.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
+    ToFirstRow.__name__,
     ToLastForm.__name__,
+    ToLastRow.__name__,
     ToNextForm.__name__,
     ToPreviousForm.__name__,
     Update.__name__,
