@@ -902,49 +902,6 @@ class ImportFromFile( EditAction ):
         
 import_from_file = ImportFromFile()
 
-class ReplaceFieldContents( EditAction ):
-    """Select a field an change the content for a whole selection"""
-    
-    verbose_name = _('Replace field contents')
-    tooltip = _('Replace the content of a field for all rows in a selection')
-    icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
-    message = _('Field is not editable')
-    resolution = _('Only select editable rows')
-    shortcut = QtGui.QKeySequence.StandardKey.Replace
-    name = 'replace'
-
-    def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the changed row
-        #
-        if gui_context.item_view is not None:
-            gui_context.item_view.close_editor()
-        super(ReplaceFieldContents, self ).gui_run(gui_context)
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        field_name, value = yield action_steps.ChangeField(
-            model_context.admin,
-            field_name = model_context.current_field_name
-        )
-        yield action_steps.UpdateProgress( text = _('Replacing field') )
-        dynamic_field_attributes = model_context.admin.get_dynamic_field_attributes
-        with model_context.session.begin():
-            for obj in model_context.get_selection():
-                dynamic_fa = list(dynamic_field_attributes(obj, [field_name]))[0]
-                if dynamic_fa.get('editable', True) == False:
-                    raise UserException(self.message, resolution=self.resolution)
-                setattr( obj, field_name, value )
-                # dont rely on the session to update the gui, since the objects
-                # might not be in a session
-            yield action_steps.UpdateObjects(model_context.get_selection())
-            yield action_steps.FlushSession(model_context.session)
-
-replace_field_contents = ReplaceFieldContents()
-
 class FilterValue(object):
     """
     Abstract helper class for the `SetFilters` action to configure the filter values
