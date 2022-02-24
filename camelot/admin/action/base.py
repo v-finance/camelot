@@ -312,6 +312,22 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         yield
 
+    @classmethod
+    def deserialize_result(cls, gui_context, serialized_result):
+        """
+        :param gui_context:  An object of type
+            :class:`camelot.admin.action.GuiContext`, which is the context
+            of this action available in the *GUI thread*.  What is in the
+            context depends on how the action was called.
+
+        :param serialized_result: The serialized result comming from the client.
+
+        :return: The deserialized result. The default implementation returns the
+            serialized result as is. This function can be reimplemented to change
+            this behavior.
+        """
+        return serialized_result
+
 class ProgressLevel(object):
 
     def __init__(self, gui_context, verbose_name):

@@ -225,6 +225,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     step_type, serialized_step = yielded
                     cls = MetaActionStep.action_steps[step_type]
                     to_send = cls.gui_run(self._gui_context, serialized_step)
+                    to_send = cls.deserialize_result(self._gui_context, to_send)
                 else:
                     to_send = yielded.gui_run(self._gui_context)
                 self._was_canceled( self._gui_context )

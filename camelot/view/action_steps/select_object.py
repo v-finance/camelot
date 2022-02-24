@@ -30,46 +30,11 @@
 
 from dataclasses import dataclass, InitVar, field
 
-from camelot.admin.admin_route import RouteWithRenderHint, AdminRoute
-from camelot.admin.action import ActionStep, Action
-from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext as _
-from camelot.view.action_steps import CloseView
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_step, qml_action_dispatch
+from camelot.view.qml_view import qml_action_dispatch
 
 from .item_view import OpenTableView, OpenQmlTableView
-
-@dataclass
-class SetSelectedObjects(ActionStep):
-
-    objects: list
-
-    def gui_run(self, gui_context):
-        qml_action_dispatch.set_return_value(gui_context.context_id, self.objects)
-        qml_action_step(gui_context, 'CloseView', keep_context_id=True)
-
-class ConfirmSelection(Action):
-
-    verbose_name = _('OK')
-    name = 'confirm_selection'
-    icon = Icon('check') # 'tango/16x16/emblems/emblem-symbolic-link.png'
-
-    def model_run(self, model_context, mode):
-        yield SetSelectedObjects(list(model_context.get_selection()))
-
-confirm_selection = ConfirmSelection()
-
-class CancelSelection(Action):
-
-    verbose_name = _('Cancel')
-    name = 'cancel_selection'
-
-    def model_run(self, model_context, mode):
-        yield CloseView()
-
-cancel_selection = CancelSelection()
 
 @dataclass
 class SelectObjects( OpenTableView ):
@@ -92,22 +57,31 @@ class SelectObjects( OpenTableView ):
             value = admin.get_query()
         super(SelectObjects, self).__post_init__(admin, value)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
-        # actions
-        self.actions = [
-            RouteWithRenderHint(AdminRoute._register_list_action_route(admin.get_admin_route(), action),
-                                action.render_hint) for action in [cancel_selection, confirm_selection]
-        ]
+        self.actions = admin.get_list_actions().copy()
+        self.actions.extend(admin.get_filters())
         self.actions.extend(admin.get_select_list_toolbar_actions())
         self.action_states = list()
         self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
-        # list_action
-        self.list_action = AdminRoute._register_list_action_route(admin.get_admin_route(), confirm_selection)
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         with hide_progress_dialog(gui_context):
-            response, model = OpenQmlTableView.render(gui_context, 'SelectObjectsInitialize', serialized_step)
-            context_id = response['context_id']
-            if qml_action_dispatch.has_return_value(context_id):
-                return qml_action_dispatch.get_return_value(context_id)
-            raise CancelRequest()
+            response, model = OpenQmlTableView.render(gui_context, 'SelectObjects', serialized_step)
+            if not response['selection_count']:
+                raise CancelRequest()
+            return response
+
+    @classmethod
+    def deserialize_result(cls, gui_context, response):
+        objects = []
+        list_gui_context = qml_action_dispatch.get_context(response['context_id'])
+        model = list_gui_context.get_item_model()
+        if model is not None:
+            proxy = model.get_value()
+            selected_rows = response['selected_rows']
+            for i in range(len(selected_rows) // 2):
+                first_row = selected_rows[2 * i]
+                last_row = selected_rows[2 * i + 1]
+                for obj in proxy[first_row:last_row + 1]:
+                    objects.append(obj)
+        return objects
