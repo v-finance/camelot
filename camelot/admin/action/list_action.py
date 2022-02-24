@@ -908,16 +908,6 @@ class ReplaceFieldContents( EditAction ):
     shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
 
-    def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the changed row
-        #
-        if gui_context.item_view is not None:
-            gui_context.item_view.close_editor()
-        super(ReplaceFieldContents, self ).gui_run(gui_context)
-
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         super().model_run(model_context, mode)
