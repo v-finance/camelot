@@ -561,11 +561,9 @@ class ToFirstRow( AbstractToFirst, ListContextAction ):
 
     name = 'to_first'
 
-    def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            gui_context.item_view.selectRow( 0 )
-        else:
-            qml_action_step(gui_context, 'ToFirstRow', keep_context_id=True)
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield action_steps.ToFirstRow()
 
 to_first_row = ToFirstRow()
 
@@ -590,12 +588,9 @@ class ToLastRow( AbstractToLast, ListContextAction ):
 
     name = 'to_last'
 
-    def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            item_view = gui_context.item_view
-            item_view.selectRow( item_view.model().rowCount() - 1 )
-        else:
-            qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield action_steps.ToLastRow()
 
 to_last_row = ToLastRow()
 

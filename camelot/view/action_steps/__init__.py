@@ -39,7 +39,7 @@ from .gui import (
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView, OpenQmlTableView
+    RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
@@ -91,7 +91,9 @@ __all__ = [
     SetFilter.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
+    ToFirstRow.__name__,
     ToLastForm.__name__,
+    ToLastRow.__name__,
     ToNextForm.__name__,
     ToPreviousForm.__name__,
     Update.__name__,

@@ -301,6 +301,28 @@ class OpenQmlTableView(OpenTableView):
     def gui_run(cls, gui_context, serialized_step):
         cls.render(gui_context, 'OpenTableView', serialized_step)
 
+@dataclass
+class ToFirstRow(ActionStep, DataclassSerializable):
+    """Move to the first row in a table"""
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        if gui_context.item_view is not None:
+            gui_context.item_view.selectRow( 0 )
+        else:
+            qml_action_step(gui_context, 'ToFirstRow', keep_context_id=True)
+
+@dataclass
+class ToLastRow(ActionStep, DataclassSerializable):
+    """Move to the last row in a table"""
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        if gui_context.item_view is not None:
+            item_view = gui_context.item_view
+            item_view.selectRow( item_view.model().rowCount() - 1 )
+        else:
+            qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
