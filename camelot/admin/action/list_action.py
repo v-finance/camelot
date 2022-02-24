@@ -548,35 +548,6 @@ class AbstractToPrevious(object):
     tooltip = _('Previous')
     verbose_name = _('Previous')
     
-class ToPreviousRow( AbstractToPrevious, ListContextAction ):
-    """Move to the previous row in a table"""
-
-    name = 'to_previous'
-
-    def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            item_view = gui_context.item_view
-            selection = item_view.selectedIndexes()
-            rows = item_view.model().rowCount()
-            if rows <= 0:
-                return
-            if selection:
-                current_row = selection[0].row()
-                previous_row = ( current_row - 1 ) % rows
-            else:
-                previous_row = 0
-            item_view.selectRow( previous_row )
-        else:
-            qml_action_step(gui_context, 'ToPreviousRow', keep_context_id=True)
-
-    def get_state( self, model_context ):
-        state = super( ToPreviousRow, self ).get_state( model_context )
-        #if state.enabled:
-        #    state.enabled = ( model_context.current_row > 0 )
-        return state
-
-to_previous_row = ToPreviousRow()
-
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -585,7 +556,7 @@ class AbstractToFirst(object):
     tooltip = _('First')
     verbose_name = _('First')
 
-class ToFirstRow( AbstractToFirst, ToPreviousRow ):
+class ToFirstRow( AbstractToFirst, ListContextAction ):
     """Move to the first row in a table"""
 
     name = 'to_first'
@@ -606,36 +577,6 @@ class AbstractToNext(object):
     tooltip = _('Next')
     verbose_name = _('Next')
     
-class ToNextRow( AbstractToNext, ListContextAction ):
-    """Move to the next row in a table"""
-
-    name = 'to_next'
-
-    def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            item_view = gui_context.item_view
-            selection = item_view.selectedIndexes()
-            rows = item_view.model().rowCount()
-            if rows <= 0:
-                return
-            if selection:
-                current_row = selection[0].row()
-                next_row = ( current_row + 1 ) % rows
-            else:
-                next_row = 0
-            item_view.selectRow( next_row )
-        else:
-            qml_action_step(gui_context, 'ToNextRow', keep_context_id=True)
-
-    def get_state( self, model_context ):
-        state = super( ToNextRow, self ).get_state( model_context )
-        #if state.enabled:
-        #    max_row = model_context.collection_count - 1
-        #    state.enabled = ( model_context.current_row < max_row )
-        return state
-
-to_next_row = ToNextRow()
-
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -644,7 +585,7 @@ class AbstractToLast(object):
     tooltip = _('Last')
     verbose_name = _('Last')
     
-class ToLastRow( AbstractToLast, ToNextRow ):
+class ToLastRow( AbstractToLast, ListContextAction ):
     """Move to the last row in a table"""
 
     name = 'to_last'
