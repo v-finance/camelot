@@ -296,11 +296,6 @@ class OpenQmlTableView(OpenTableView):
         response = qml_action_step(list_gui_context, action_step_name,
                 serialized_step, { 'model': new_model }, model=new_model)
 
-        # FIXME: is this needed?
-        # - actions states have already been serialized
-        # - set_filter changes action states?
-        UpdateActions().gui_run(list_gui_context)
-
         return response, new_model
 
     @classmethod
