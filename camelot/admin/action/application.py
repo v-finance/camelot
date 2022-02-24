@@ -127,7 +127,7 @@ class Application( Action ):
         load_translations(connection)
         yield action_steps.UpdateProgress( 3, 5, _('Install translator') )
         language = QtCore.QLocale.languageToCode(QtCore.QLocale().language())
-        yield action_steps.InstallTranslator( language, model_context.admin )
+        yield action_steps.InstallTranslator( language )
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
         yield action_steps.NavigationPanel(
             self.application_admin.get_navigation_menu(), model_context=model_context

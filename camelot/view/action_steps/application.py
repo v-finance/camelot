@@ -202,18 +202,9 @@ class InstallTranslator(ActionStep, DataclassSerializable):
     be moved to the application.
 
     :param language: The two-letter, ISO 639 language code (e.g. 'nl').
-
-    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
-        object
-
     """
 
     language: str
-    admin: InitVar[ApplicationAdmin]
-    admin_route: AdminRoute = field(init=False)
-
-    def __post_init__(self, admin):
-        self.admin_route = admin.get_admin_route()
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
