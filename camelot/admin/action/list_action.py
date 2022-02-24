@@ -185,6 +185,11 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
             return self.item_view.window()
         return super(ListActionGuiContext, self).get_window()
 
+    def get_item_model(self):
+        if self.item_view is not None:
+            return self.item_view.model()
+        return qml_action_dispatch.get_model(self.context_id)
+
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
@@ -216,7 +221,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                     selected_rows.append( rows_range )
                     selection_count += ( rows_range[1] - rows_range[0] ) + 1
         else:
-            model = qml_action_dispatch.get_model(self.context_id)
+            model = self.get_item_model()
             if model is not None:
                 collection_count = model.rowCount()
                 proxy = model.get_value()
@@ -424,7 +429,7 @@ class DeleteSelection( EditAction ):
             gui_context.item_view.clearSelection()
         else:
             super().gui_run(gui_context)
-            model = qml_action_dispatch.get_model(gui_context.context_id)
+            model = gui_context.get_item_model()
             if model is not None:
                 model.refresh() # this will also clear the selection
 

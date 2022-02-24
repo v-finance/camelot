@@ -49,7 +49,7 @@ from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
 )
-from ..qml_view import qml_action_step, qml_action_dispatch
+from ..qml_view import qml_action_step
 
 
 @dataclass
@@ -65,10 +65,7 @@ class Sort( ActionStep, DataclassSerializable ):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
-        if gui_context.item_view is not None:
-            model = gui_context.item_view.model()
-        else:
-            model = qml_action_dispatch.get_model(gui_context.context_id)
+        model = gui_context.get_item_model()
         if model is not None:
             model.sort( step["column"], step["order"] )
 
@@ -86,10 +83,7 @@ class SetFilter( ActionStep ):
     cancelable = False
 
     def gui_run( self, gui_context ):
-        if gui_context.item_view is not None:
-            model = gui_context.item_view.model()
-        else:
-            model = qml_action_dispatch.get_model(gui_context.context_id)
+        model = gui_context.get_item_model()
         if model is not None:
             model.set_filter(self.list_filter, self.value)
 
@@ -333,10 +327,7 @@ class RefreshItemView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
-            model = gui_context.item_view.model()
-        else:
-            model = qml_action_dispatch.get_model(gui_context.context_id)
+        model = gui_context.get_item_model()
         if model is not None:
             model.refresh()
             # this should reset the sort, since a refresh might cause
