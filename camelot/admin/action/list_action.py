@@ -414,18 +414,6 @@ class DeleteSelection( EditAction ):
     tooltip = _('Delete')
     verbose_name = _('Delete')
 
-    def gui_run( self, gui_context ):
-        super().gui_run(gui_context)
-        if gui_context.item_view is not None:
-            # this refresh call could be avoided if the removal of an object
-            # in the collection through the DeleteObject action step handled this
-            gui_context.item_view.model().refresh()
-            gui_context.item_view.clearSelection()
-        else:
-            model = gui_context.get_item_model()
-            if model is not None:
-                model.refresh() # this will also clear the selection
-
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         super().model_run(model_context, mode)
