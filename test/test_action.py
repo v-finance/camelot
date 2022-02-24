@@ -318,6 +318,8 @@ class ListActionsCase(
 
         gui_context = MockListActionGuiContext()
         to_first = list_action.ToFirstRow()
+        to_previous = list_action.ToPreviousRow()
+        to_next = list_action.ToNextRow()
         to_last = list_action.ToLastRow()
 
         # the state does not change when the current row changes,
@@ -325,9 +327,15 @@ class ListActionsCase(
         to_last.gui_run( gui_context )
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
+        to_previous.gui_run( gui_context )
+        #self.assertTrue( get_state( to_last ).enabled )
+        #self.assertTrue( get_state( to_next ).enabled )
         to_first.gui_run( gui_context )
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
+        to_next.gui_run( gui_context )
+        #self.assertTrue( get_state( to_first ).enabled )
+        #self.assertTrue( get_state( to_previous ).enabled )
 
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
@@ -442,6 +450,18 @@ class ListActionsCase(
                 dialog = step.render()
                 dialog.show()
                 self.grab_widget(dialog, suffix='confirmation')
+
+    def test_replace_field_contents( self ):
+        action = list_action.ReplaceFieldContents()
+        steps = action.model_run(self.gui_context.create_model_context(), None)
+        for step in steps:
+            if isinstance(step, ChangeField):
+                dialog = step.render()
+                field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
+                field_editor.set_value('first_name')
+                dialog.show()
+                self.grab_widget( dialog )
+                steps.send(('first_name', 'known'))
 
     def test_open_form_view( self ):
         # sort and filter the original model
