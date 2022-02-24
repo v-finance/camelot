@@ -415,20 +415,13 @@ class DeleteSelection( EditAction ):
     verbose_name = _('Delete')
 
     def gui_run( self, gui_context ):
+        super().gui_run(gui_context)
         if gui_context.item_view is not None:
-            #
-            # if there is an open editor on a row that will be deleted, there
-            # might be an assertion failure in QT, or the data of the editor
-            # might be pushed to the row that replaces the deleted one
-            #
-            gui_context.item_view.close_editor()
-            super( DeleteSelection, self ).gui_run( gui_context )
             # this refresh call could be avoided if the removal of an object
             # in the collection through the DeleteObject action step handled this
             gui_context.item_view.model().refresh()
             gui_context.item_view.clearSelection()
         else:
-            super().gui_run(gui_context)
             model = gui_context.get_item_model()
             if model is not None:
                 model.refresh() # this will also clear the selection
