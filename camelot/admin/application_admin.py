@@ -114,8 +114,7 @@ shortcut confusion and reduce the number of status updates.
                      list_action.delete_selection,
                      list_action.duplicate_selection ]
     help_actions = []
-    export_actions = [ list_action.print_preview,
-                       list_action.export_spreadsheet ]
+    export_actions = [ list_action.export_spreadsheet ]
     form_toolbar_actions = [ form_action.close_form,
                              form_action.to_first_form,
                              form_action.to_previous_form,

@@ -31,7 +31,6 @@ from dataclasses import dataclass
 from ...core.qt import QtCore, QtGui, QtPrintSupport
 
 from camelot.admin.action import ActionStep
-from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
@@ -150,45 +149,3 @@ class PrintPreview( ActionStep ):
         printer.setOutputFileName(filename)
         self.paint_on_printer(printer)
         return filename
-
-
-class PrintHtml( PrintPreview ):
-    """
-    Display a print preview dialog box for an html string.
-    
-    :param html: a string containing the html to render in the print
-        preview.
-        
-    the rendering of the html can be customised using the same attributes
-    as those of the :class:`PrintPreview` class.
-        """
-    
-    def __init__( self, html ):
-        document = QtGui.QTextDocument()
-        document.setHtml( html )
-        super( PrintHtml, self ).__init__( document )
-
-class PrintJinjaTemplate( PrintHtml ):
-    """Render a jinja template into a print preview dialog.
-            
-    :param template: the name of the template as it can be fetched from
-        the Jinja environment.
-        
-    :param context: a dictionary with objects to be used when rendering
-        the template
-        
-    :param environment: a :class:`jinja2.Environment` object to be used
-        to load templates from.  This defaults to the `environment` object
-        available in :mod:`camelot.core.templates`
-    """
-        
-    def __init__( self,
-                  template, 
-                  context={},
-                  environment = environment ):
-        self.template = environment.get_template( template )
-        self.html = self.template.render( context )
-        self.context = context
-        super( PrintJinjaTemplate, self).__init__( self.html )
-
-

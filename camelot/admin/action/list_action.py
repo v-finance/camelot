@@ -44,6 +44,7 @@ from .application_action import ( ApplicationActionGuiContext,
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
+from camelot.view.qml_view import qml_action_step, qml_action_dispatch
 
 import xlsxwriter
 
@@ -184,6 +185,11 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
             return self.item_view.window()
         return super(ListActionGuiContext, self).get_window()
 
+    def get_item_model(self):
+        if self.item_view is not None:
+            return self.item_view.model()
+        return qml_action_dispatch.get_model(self.context_id)
+
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
@@ -214,6 +220,16 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                     rows_range = ( selection_range.top(), selection_range.bottom() )
                     selected_rows.append( rows_range )
                     selection_count += ( rows_range[1] - rows_range[0] ) + 1
+        else:
+            model = self.get_item_model()
+            if model is not None:
+                collection_count = model.rowCount()
+                proxy = model.get_value()
+            response = qml_action_step(self, 'GetSelection', keep_context_id=True)
+            selection_count = response['selection_count']
+            current_row = response['current_row']
+            for i in range(len(response['selected_rows']) // 2):
+                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
         context.selection_count = selection_count
         context.collection_count = collection_count
         context.selected_rows = selected_rows
@@ -398,19 +414,6 @@ class DeleteSelection( EditAction ):
     tooltip = _('Delete')
     verbose_name = _('Delete')
 
-    def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the row that replaces the deleted one
-        #
-        gui_context.item_view.close_editor()
-        super( DeleteSelection, self ).gui_run( gui_context )
-        # this refresh call could be avoided if the removal of an object
-        # in the collection through the DeleteObject action step handled this
-        gui_context.item_view.model().refresh()
-        gui_context.item_view.clearSelection()
-
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         super().model_run(model_context, mode)
@@ -545,32 +548,6 @@ class AbstractToPrevious(object):
     tooltip = _('Previous')
     verbose_name = _('Previous')
     
-class ToPreviousRow( AbstractToPrevious, ListContextAction ):
-    """Move to the previous row in a table"""
-
-    name = 'to_previous'
-
-    def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        selection = item_view.selectedIndexes()
-        rows = item_view.model().rowCount()
-        if rows <= 0:
-            return
-        if selection:
-            current_row = selection[0].row()
-            previous_row = ( current_row - 1 ) % rows
-        else:
-            previous_row = 0
-        item_view.selectRow( previous_row )
-
-    def get_state( self, model_context ):
-        state = super( ToPreviousRow, self ).get_state( model_context )
-        #if state.enabled:
-        #    state.enabled = ( model_context.current_row > 0 )
-        return state
-
-to_previous_row = ToPreviousRow()
-
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -579,13 +556,14 @@ class AbstractToFirst(object):
     tooltip = _('First')
     verbose_name = _('First')
 
-class ToFirstRow( AbstractToFirst, ToPreviousRow ):
+class ToFirstRow( AbstractToFirst, ListContextAction ):
     """Move to the first row in a table"""
 
     name = 'to_first'
 
-    def gui_run( self, gui_context ):
-        gui_context.item_view.selectRow( 0 )
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield action_steps.ToFirstRow()
 
 to_first_row = ToFirstRow()
 
@@ -597,33 +575,6 @@ class AbstractToNext(object):
     tooltip = _('Next')
     verbose_name = _('Next')
     
-class ToNextRow( AbstractToNext, ListContextAction ):
-    """Move to the next row in a table"""
-
-    name = 'to_next'
-
-    def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        selection = item_view.selectedIndexes()
-        rows = item_view.model().rowCount()
-        if rows <= 0:
-            return
-        if selection:
-            current_row = selection[0].row()
-            next_row = ( current_row + 1 ) % rows
-        else:
-            next_row = 0
-        item_view.selectRow( next_row )
-
-    def get_state( self, model_context ):
-        state = super( ToNextRow, self ).get_state( model_context )
-        #if state.enabled:
-        #    max_row = model_context.collection_count - 1
-        #    state.enabled = ( model_context.current_row < max_row )
-        return state
-
-to_next_row = ToNextRow()
-
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -632,14 +583,14 @@ class AbstractToLast(object):
     tooltip = _('Last')
     verbose_name = _('Last')
     
-class ToLastRow( AbstractToLast, ToNextRow ):
+class ToLastRow( AbstractToLast, ListContextAction ):
     """Move to the last row in a table"""
 
     name = 'to_last'
 
-    def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        item_view.selectRow( item_view.model().rowCount() - 1 )
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield action_steps.ToLastRow()
 
 to_last_row = ToLastRow()
 
@@ -833,35 +784,6 @@ class ExportSpreadsheet( ListContextAction ):
 
 export_spreadsheet = ExportSpreadsheet()
     
-class PrintPreview( ListContextAction ):
-    """Print all rows in a table"""
-
-    render_hint = RenderHint.TOOL_BUTTON
-    icon = Icon('print') # 'tango/16x16/actions/document-print-preview.png'
-    tooltip = _('Print Preview')
-    verbose_name = _('Print Preview')
-    name = 'print'
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        admin = model_context.admin
-        columns = admin.get_columns()
-        
-        table = []
-        to_strings = [admin.get_field_attributes(field)['to_string'] for field in columns]
-        column_range = range( len( columns ) )
-        for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getattr( obj, columns[i] ) ) for i in column_range] )
-        context = {
-          'title': admin.get_verbose_name_plural(),
-          'table': table,
-          'columns': [admin.get_field_attributes(field)['name'] for field in columns],
-        }
-        yield action_steps.PrintJinjaTemplate( template = 'list.html',
-                                               context = context )
-
-print_preview = PrintPreview()
-
 class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
@@ -985,15 +907,6 @@ class ReplaceFieldContents( EditAction ):
     resolution = _('Only select editable rows')
     shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
-
-    def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the changed row
-        #
-        gui_context.item_view.close_editor()
-        super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps

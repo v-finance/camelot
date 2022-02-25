@@ -28,8 +28,8 @@
 #  ============================================================================
 
 from .application import (
-    QmlMainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState,
+    MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
+    MainMenu, UpdateActionsState
 )
 from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -39,12 +39,12 @@ from .gui import (
 )
 from .item_view import (
     Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
-    RefreshItemView, OpenQmlTableView
+    RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from .orm import (CreateObjects, DeleteObjects, FlushSession, UpdateObjects)
-from .print_preview import ( PrintHtml, PrintPreview, PrintJinjaTemplate)
+from .print_preview import PrintPreview
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .update_progress import UpdateProgress
@@ -65,7 +65,7 @@ __all__ = [
     FlushSession.__name__,
     InstallTranslator.__name__,
     MainMenu,
-    QmlMainWindow.__name__,
+    MainWindow.__name__,
     MessageBox.__name__,
     NavigationPanel.__name__,
     OpenFile.__name__,
@@ -75,8 +75,6 @@ __all__ = [
     OpenString.__name__,
     OpenTableView.__name__,
     OpenQmlTableView.__name__,
-    PrintHtml.__name__,
-    PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
     RefreshItemView.__name__,
@@ -92,7 +90,9 @@ __all__ = [
     SetFilter.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
+    ToFirstRow.__name__,
     ToLastForm.__name__,
+    ToLastRow.__name__,
     ToNextForm.__name__,
     ToPreviousForm.__name__,
     Update.__name__,
