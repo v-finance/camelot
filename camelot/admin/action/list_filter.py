@@ -796,7 +796,7 @@ class Filter(Action):
     name = 'filter'
     filter_strategy = ChoicesFilter
 
-    def __init__(self, *attributes, default=All, verbose_name=None):
+    def __init__(self, *attributes, default=All, verbose_name=None, joins=[], where=None):
         """
         :param attribute: the attribute on which to filter, this attribute
             may contain dots to indicate relationships that need to be followed, 
@@ -808,6 +808,8 @@ class Filter(Action):
         :param verbose_name: the name of the filter as shown to the user, defaults
             to the name of the field on which to filter.
         """
+        self.joins = joins
+        self.where = where
         self.filter_strategy = self.get_strategy(*attributes)
         self.attribute = attributes[0]
         self.default = default
@@ -817,7 +819,10 @@ class Filter(Action):
         self.filter_names = []
 
     def get_strategy(self, *attributes):
-        return self.filter_strategy(*attributes)
+        field_filter_strategy = self.filter_strategy(*attributes, where=self.where)
+        if self.joins:
+            return RelatedFilter(field_filter_strategy, joins=self.joins, where=self.where)
+        return field_filter_strategy
 
     def get_name(self):
         return '{}_{}'.format(self.name, self.attribute)
@@ -894,8 +899,8 @@ class GroupBoxFilter(Filter):
     render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
     name = 'group_box_filter'
 
-    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True):
-        super().__init__(*attributes, default=default, verbose_name=verbose_name)
+    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True, joins=[], where=None):
+        super().__init__(*attributes, default=default, verbose_name=verbose_name, joins=joins, where=where)
         self.exclusive = exclusive
         self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
 
