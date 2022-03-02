@@ -150,7 +150,7 @@ class Movie( Entity ):
         list_display = ['cover', 'title', 'releasedate', 'rating',]
         lines_per_row = 5
         # define filters to be available in the table view
-        list_filter = ['genre', list_filter.ComboBoxFilter('director.full_name')]
+        list_filter = ['genre']
         # if the search function needs to look in related object attributes,
         # those should be specified within list_search
         list_search = ['director.full_name']
