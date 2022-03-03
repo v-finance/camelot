@@ -83,14 +83,6 @@ class Translation( Entity ):
     # cache, to prevent too much of the same sql queries
     _cache = dict()
 
-    class Admin( EntityAdmin ):
-        verbose_name_plural = _( 'Translations' )
-        form_size = ( 700, 150 )
-        list_display = ['source', 'language', 'value']#, 'uid']
-        list_filter = ['language']
-        list_actions = [ExportAsPO()]
-        field_attributes = { 'language':{ 'default':default_language } }
-
     @classmethod
     def translate( cls, source, language ):
         """Translate source to language, return None if no translation is found"""
@@ -133,4 +125,12 @@ class Translation( Entity ):
             return translation
         return ''
 
+class TranslationAdmin( EntityAdmin ):
+    verbose_name_plural = _( 'Translations' )
+    form_size = ( 700, 150 )
+    list_display = ['source', 'language', 'value']#, 'uid']
+    list_filter = [Translation.language]
+    list_actions = [ExportAsPO()]
+    field_attributes = { 'language':{ 'default':default_language } }
 
+Translation.Admin = TranslationAdmin
