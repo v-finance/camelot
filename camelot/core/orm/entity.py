@@ -96,6 +96,45 @@ class EntityMeta( DeclarativeMeta ):
        All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
        NOTE: this class registration system could possibly be moved to the level of the facade, to not be limited to a single hierarchy for each entity class.
 
+    * 'ranked_by'
+       This entity argument allows registering a rank-based entity class its ranking definition.
+       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
+       which should be an Integer type column that holds the numeric rank value.
+       The registered rank definition can be retrieved on an entity class pos- declaration using the provided `get_ranked_by` method.
+       See its documentation for more details.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     rank = Column(Integer())
+       |     ...
+       |     __entity_args__ = {
+       |         'ranked_by': rank,
+       |     }
+       |     ...
+       |
+       | SomeClass.get_ranked_by() == (SomeClass.rank,)
+
+       Because the ranking dimension of an entity may be more complex than a single ranking column, e.g. for financial roles the ranking dimension is seperated for each role type. 
+       Therefor, the registration also supports a tuple of columns, whereby the first item should be the column that holds the rank value,
+       while the remaining columns act as discriminator of the ranking dimension.
+       This may well include, but not limited to, the discriminator column.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     described_by = Column(IntEnum(some_class_types), ...)
+       |     rank = Column(Integer())
+       |     ...
+       |     __entity_args__ = {
+       |         'ranked_by': (rank, described_by),
+       |     }
+       |     ...
+       |
+       | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
