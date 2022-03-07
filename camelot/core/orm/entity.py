@@ -51,54 +51,22 @@ LOGGER = logging.getLogger('camelot.core.orm.entity')
 
 class EntityMeta( DeclarativeMeta ):
     """
-    Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
-    This metaclass processes the Property and ClassMutator objects.
-    
-    Facade class registration
-    -------------------------
-    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
-    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
-    To set the discriminator column, the '__entity_args__' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
-    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
-    In order to register a facade class: see documentation on EntityFacadeMeta.
-    
-    :example: | class SomeClass(Entity):
-              |     __tablename__ = 'some_tablename'
-              |     ...
-              |     described_by = Column(IntEnum(some_class_types), ...)
-              |     ...
-              |     __entity_args__ = {
-              |         'discriminator': described_by
-              |     }
-              |     ...
-              |
-              | class SomeFacadeClass(EntityFacade)
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass,
-              |         'type': some_class_types.certain_type.name
-              |     }
-              |     ...
-              |
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass, 
-              |         'group': allowed_type_groups.certain_type_group.name
-              |     }
-              |     ...
-              |
-              | class DefaultFacadeClass(EntityFacade)
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass,
-              |         'default': True
-              |     }
-              |     ...
-    
-    This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
-    This will return the registered class for a specific given type or type group, if any are registered on the class (or its Base). See its documentation for more details.
-    
-    :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
-              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
-              | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
-    
+    Specialized metaclass for Entity classes that inherits from :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
+    It provides entities with the following behaviour and/or functionality:
+
+    Auto-setting of primary key column
+    ----------------------------------
+    If no primary key column is defined in an entity's class definition yet, an primary key column named 'id' will be set on the class.
+    NOTE: this behaviour is deprecated, and should be replaced by explicity primary column definitions in the entity classes themselves
+    before switching to SQLAlchemy version 1.4. In that SQLA version, the `sqlalchemy.ext.declarative` package is integrated into `sqlalchemy.orm`
+    and the declarative mapping registry style is changed, which impacts this primary key column setting.    
+
+    Entity args
+    -----------
+    This metaclass also provides entity classes with a means to configure options or register traits, which can be used to facilitate various use cases involving the entity.
+    These options can be passed through via the __entity_args__ class attribute,
+    that supports arguments that reference locally mapped columns directly from within the class declaration (as seen in the examples below).
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
