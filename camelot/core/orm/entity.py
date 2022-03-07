@@ -135,6 +135,12 @@ class EntityMeta( DeclarativeMeta ):
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
 
+    * 'editable'
+       This entity argument is a flag that when set to False will register the entity class as globally non-editable.
+
+    * 'editable_fields'
+       List of field_names that should be excluded from the globally non-editable registration, if present.
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
