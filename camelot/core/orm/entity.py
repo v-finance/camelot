@@ -59,13 +59,42 @@ class EntityMeta( DeclarativeMeta ):
     If no primary key column is defined in an entity's class definition yet, an primary key column named 'id' will be set on the class.
     NOTE: this behaviour is deprecated, and should be replaced by explicity primary column definitions in the entity classes themselves
     before switching to SQLAlchemy version 1.4. In that SQLA version, the `sqlalchemy.ext.declarative` package is integrated into `sqlalchemy.orm`
-    and the declarative mapping registry style is changed, which impacts this primary key column setting.    
+    and the declarative mapping registry style is changed, which impacts this primary key column setting.
 
     Entity args
     -----------
     This metaclass also provides entity classes with a means to configure options or register traits, which can be used to facilitate various use cases involving the entity.
     These options can be passed through via the __entity_args__ class attribute,
     that supports arguments that reference locally mapped columns directly from within the class declaration (as seen in the examples below).
+    Currently, the following entity args are supported:
+
+    * 'discriminator'
+       The discriminator entity argument registers one of the entity's type based columns as one by which entity instances can be categorized by,
+       on a more broader basis than the primary key identity.
+       This column should be an Enumeration type column, which defines the types that are allowed as values for the discriminator column.
+       The enumeration's types and/or type_groups are extracted from its definition and set as class attributes on the entity class.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     described_by = Column(IntEnum(some_class_types), ...)
+       |     ...
+       |     __entity_args__ = {
+       |         'discriminator': described_by,
+       |     }
+       |     ...
+       |
+       | SomeClass.__types__ == some_class_types
+
+       This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator property,
+       and `set_discriminator_value` to set the discriminator value one a provided entity instance.
+       In unison with discriminator entity argument, the metaclass also imparts an entity class with the ability to register and later retrieve classes for a specify discriminator type or type group.
+       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific type (group) with the 'get_cls_by_type' method.
+       See its documentation for more details.
+
+       All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
+       NOTE: this class registration system could possibly be moved to the level of the facade, to not be limited to a single hierarchy for each entity class.
 
     Notes on metaclasses
     --------------------
