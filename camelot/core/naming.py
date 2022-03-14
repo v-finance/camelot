@@ -15,7 +15,13 @@ class AbstractNamingContext(object):
     def bind(self, name: Name, obj):
         raise NotImplementedError
 
+    def rebind(self, name: Name, obj):
+        raise NotImplementedError
+
     def bind_context(self, name: Name, context):
+        raise NotImplementedError
+
+    def rebind_context(self, name: Name, context):
         raise NotImplementedError
 
     def unbind(self, name: Name):
