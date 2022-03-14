@@ -15,15 +15,35 @@ Name = typing.Tuple[str, ...]
 class AbstractNamingContext(object):
 
     def bind(self, name: Name, obj):
+        """
+        Creates a binding of a name and an object in the naming context.
+        :param name: Name of the object
+        :param obj: The object to bind with the given name
+        """
         raise NotImplementedError
 
     def rebind(self, name: Name, obj):
+        """
+        Creates a binding of a name and an object in the naming context even if the name is already bound in the context.
+        :param name: Name of the object
+        :param obj: The object to bind with the given name
+        """
         raise NotImplementedError
 
     def bind_context(self, name: Name, context):
+        """
+        Names an object that is a naming context. Naming contexts that are bound using bind_context() participate in name resolution when compound names are passed to be resolved.
+        :param name: Name of the object
+        :param obj: The AbstractNamingContext obj to bind with the given name
+        """
         raise NotImplementedError
 
     def rebind_context(self, name: Name, context):
+        """
+        Creates a binding of a name and a naming context in the naming context even if the name is already bound in the context.
+        :param name: Name of the object
+        :param obj: The AbstractNamingContext obj to bind with the given name
+        """
         raise NotImplementedError
 
     def bind_new_context(self, name):
@@ -31,12 +51,23 @@ class AbstractNamingContext(object):
         raise NotImplementedError
 
     def unbind(self, name: Name):
+        """
+        Removes a name binding from the context.
+        :param name: Name of the object
+        """
         raise NotImplementedError
 
     def resolve(self, name: Name):
+        """
+        Retrieve the object bound to a name in the context. The given name must exactly match the bound name.
+        :param name: Name of the object
+        """
         raise NotImplementedError
 
     def list(self):
+        """
+        Returns the set of bindings in the naming context.
+        """
         raise NotImplementedError
 
     def __contains__(self, name: Name):
