@@ -26,6 +26,10 @@ class AbstractNamingContext(object):
     def rebind_context(self, name: Name, context):
         raise NotImplementedError
 
+    def bind_new_context(self, name):
+        """Creates a new context and binds it to the name supplied as an argument."""
+        raise NotImplementedError
+
     def unbind(self, name: Name):
         raise NotImplementedError
 
@@ -71,7 +75,13 @@ class NamingContext(AbstractNamingContext):
     starting point for resolution of names.
     """
 
-    _names = dict()  
+    def __init__(self):
+        self._names = dict()
+
+    def bind_new_context(self, name):
+        context = self.__class__()
+        self.bind(name, context)
+        return context
 
     def bind(self, name, obj):
         self._bind(name, obj)
@@ -116,3 +126,40 @@ class NamingContext(AbstractNamingContext):
                 raise NamingException(NamingException.Message.context_expected)
             return entry.resolve(name[1:])
         return entry
+
+class InitialNamingContext(AbstractNamingContext):
+    """
+    Singleton class that provides the initial naming context.
+    """
+
+    _instance = None
+    _context = NamingContext()
+
+    def __new__(class_, *args, **kwargs):
+        if not isinstance(class_._instance, class_):
+            class_._instance = object.__new__(class_, *args, **kwargs)
+        return class_._instance
+
+    def bind(self, name: Name, obj):
+        self._context.bind(name, obj)
+
+    def rebind(self, name: Name, obj):
+        self._context.rebind(name, obj)
+
+    def bind_context(self, name: Name, context):
+        self._context.bind_context(name, context)
+
+    def rebind_context(self, name: Name, context):
+        self._context.rebind_context(name, context)
+
+    def bind_new_context(self, name):
+        return self._context.bind_new_context(name)
+
+    def unbind(self, name: Name):
+        self._context.unbind(name)
+
+    def resolve(self, name: Name):
+        return self._context.resolve(name)
+
+    def list(self):
+        return self._context.list()
