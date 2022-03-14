@@ -269,10 +269,8 @@ class ListActionsCase(
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
         cls.thread.post(cls.load_example_data)
-        cls.group_box_filter = list_filter.GroupBoxFilter(
-            'last_name', exclusive=True
-        )
-        cls.combo_box_filter = list_filter.ComboBoxFilter('last_name')
+        cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
+        cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
         cls.process()
         gc.disable()
 

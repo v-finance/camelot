@@ -796,7 +796,7 @@ class Filter(Action):
     name = 'filter'
     filter_strategy = ChoicesFilter
 
-    def __init__(self, *attributes, default=All, verbose_name=None):
+    def __init__(self, *attributes, default=All, verbose_name=None, joins=[], where=None):
         """
         :param attribute: the attribute on which to filter, this attribute
             may contain dots to indicate relationships that need to be followed, 
@@ -808,24 +808,21 @@ class Filter(Action):
         :param verbose_name: the name of the filter as shown to the user, defaults
             to the name of the field on which to filter.
         """
-        assert len(attributes) > 0
-        attribute = attributes[0]
-        if isinstance(attribute, str):
-            self.filter_strategy = None
-            self.attribute = attribute
-        else:
-            self.filter_strategy = self.get_strategy(*attributes)
-            self.attribute = attribute
+        self.joins = joins
+        self.where = where
+        self.filter_strategy = self.get_strategy(*attributes)
+        self.attribute = attributes[0]
         self.default = default
         self.verbose_name = verbose_name
         self.exclusive = True
-        self.joins = None
-        self.column = None
         self.attributes = None
         self.filter_names = []
 
     def get_strategy(self, *attributes):
-        return self.filter_strategy(*attributes)
+        field_filter_strategy = self.filter_strategy(*attributes, where=self.where)
+        if self.joins:
+            return RelatedFilter(field_filter_strategy, joins=self.joins, where=self.where)
+        return field_filter_strategy
 
     def get_name(self):
         return '{}_{}'.format(self.name, self.attribute)
@@ -844,30 +841,10 @@ class Filter(Action):
     def decorate_query(self, query, values):
         if All in values:
             return query
-        if self.filter_strategy is not None:
-            operator = self.get_operator(values)
-            operands = self.get_operands(values)
-            filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *operands)
-            return query.filter(filter_clause)
-        else:
-            if self.joins:
-                query = query.join(*self.joins)
-            if 'precision' in self.attributes:
-                delta = pow( 10,  -1*self.attributes['precision'])
-                for value in values:
-                    query = query.filter(sql.and_(self.column < value+delta,
-                                                  self.column > value-delta))
-            else:
-                not_none_values = [v for v in values if v is not None]
-                if len(not_none_values):
-                    where_clause = self.column.in_(not_none_values)
-                else:
-                    where_clause = False
-                if None in values:
-                    where_clause = sql.or_(where_clause,
-                                           self.column==None)
-                query = query.filter(where_clause)
-            return query
+        operator = self.get_operator(values)
+        operands = self.get_operands(values)
+        filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *operands)
+        return query.filter(filter_clause)
 
     def get_state(self, model_context):
         """
@@ -877,26 +854,9 @@ class Filter(Action):
         session = model_context.session
         entity = model_context.admin.entity
         self.admin = model_context.admin
-
-        if self.filter_strategy is None:
-            if self.joins is None:
-                self.joins = []
-                related_admin = model_context.admin
-                for field_name in self.attribute.split('.'):
-                    attributes = related_admin.get_field_attributes(field_name)
-                    self.filter_names.append(attributes['name'])
-                    # @todo: if the filter is not on an attribute of the relation, but on 
-                    # the relation itselves
-                    if 'target' in attributes:
-                        self.joins.append(getattr(related_admin.entity, field_name))
-                        related_admin = attributes['admin']
-                self.column = getattr(related_admin.entity, field_name)
-                self.attributes = attributes
-            query = session.query(self.column).select_from(entity).join(*self.joins)
-        else:
-            self.attributes = self.admin.get_field_attributes(self.attribute.key)
-            self.filter_names.append(self.attributes['name'])
-            query = session.query(self.attribute).select_from(entity)
+        self.attributes = self.admin.get_field_attributes(self.attribute.key)
+        self.filter_names.append(self.attributes['name'])
+        query = session.query(self.attribute).select_from(entity)
         query = query.distinct()
 
         modes = list()
@@ -939,8 +899,8 @@ class GroupBoxFilter(Filter):
     render_hint = RenderHint.EXCLUSIVE_GROUP_BOX
     name = 'group_box_filter'
 
-    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True):
-        super().__init__(*attributes, default=default, verbose_name=verbose_name)
+    def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True, joins=[], where=None):
+        super().__init__(*attributes, default=default, verbose_name=verbose_name, joins=joins, where=where)
         self.exclusive = exclusive
         self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
 

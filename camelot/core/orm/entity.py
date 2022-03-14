@@ -51,54 +51,96 @@ LOGGER = logging.getLogger('camelot.core.orm.entity')
 
 class EntityMeta( DeclarativeMeta ):
     """
-    Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
-    This metaclass processes the Property and ClassMutator objects.
-    
-    Facade class registration
-    -------------------------
-    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
-    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
-    To set the discriminator column, the '__entity_args__' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
-    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
-    In order to register a facade class: see documentation on EntityFacadeMeta.
-    
-    :example: | class SomeClass(Entity):
-              |     __tablename__ = 'some_tablename'
-              |     ...
-              |     described_by = Column(IntEnum(some_class_types), ...)
-              |     ...
-              |     __entity_args__ = {
-              |         'discriminator': described_by
-              |     }
-              |     ...
-              |
-              | class SomeFacadeClass(EntityFacade)
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass,
-              |         'type': some_class_types.certain_type.name
-              |     }
-              |     ...
-              |
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass, 
-              |         'group': allowed_type_groups.certain_type_group.name
-              |     }
-              |     ...
-              |
-              | class DefaultFacadeClass(EntityFacade)
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass,
-              |         'default': True
-              |     }
-              |     ...
-    
-    This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
-    This will return the registered class for a specific given type or type group, if any are registered on the class (or its Base). See its documentation for more details.
-    
-    :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
-              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
-              | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
-    
+    Specialized metaclass for Entity classes that inherits from :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
+    It provides entities with the following behaviour and/or functionality:
+
+    Auto-setting of primary key column
+    ----------------------------------
+    If no primary key column is defined in an entity's class definition yet, an primary key column named 'id' will be set on the class.
+    NOTE: this behaviour is deprecated, and should be replaced by explicity primary column definitions in the entity classes themselves
+    before switching to SQLAlchemy version 1.4. In that SQLA version, the `sqlalchemy.ext.declarative` package is integrated into `sqlalchemy.orm`
+    and the declarative mapping registry style is changed, which impacts this primary key column setting.
+
+    Entity args
+    -----------
+    This metaclass also provides entity classes with a means to configure options or register traits, which can be used to facilitate various use cases involving the entity.
+    These options can be passed through via the __entity_args__ class attribute,
+    that supports arguments that reference locally mapped columns directly from within the class declaration (as seen in the examples below).
+    Currently, the following entity args are supported:
+
+    * 'discriminator'
+       The discriminator entity argument registers one of the entity's type based columns as one by which entity instances can be categorized by,
+       on a more broader basis than the primary key identity.
+       This column should be an Enumeration type column, which defines the types that are allowed as values for the discriminator column.
+       The enumeration's types and/or type_groups are extracted from its definition and set as class attributes on the entity class.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     described_by = Column(IntEnum(some_class_types), ...)
+       |     ...
+       |     __entity_args__ = {
+       |         'discriminator': described_by,
+       |     }
+       |     ...
+       |
+       | SomeClass.__types__ == some_class_types
+
+       This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator property,
+       and `set_discriminator_value` to set the discriminator value one a provided entity instance.
+       In unison with discriminator entity argument, the metaclass also imparts an entity class with the ability to register and later retrieve classes for a specify discriminator type or type group.
+       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific type (group) with the 'get_cls_by_type' method.
+       See its documentation for more details.
+
+       All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
+       NOTE: this class registration system could possibly be moved to the level of the facade, to not be limited to a single hierarchy for each entity class.
+
+    * 'ranked_by'
+       This entity argument allows registering a rank-based entity class its ranking definition.
+       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
+       which should be an Integer type column that holds the numeric rank value.
+       The registered rank definition can be retrieved on an entity class pos- declaration using the provided `get_ranked_by` method.
+       See its documentation for more details.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     rank = Column(Integer())
+       |     ...
+       |     __entity_args__ = {
+       |         'ranked_by': rank,
+       |     }
+       |     ...
+       |
+       | SomeClass.get_ranked_by() == (SomeClass.rank,)
+
+       Because the ranking dimension of an entity may be more complex than a single ranking column, e.g. for financial roles the ranking dimension is seperated for each role type. 
+       Therefor, the registration also supports a tuple of columns, whereby the first item should be the column that holds the rank value,
+       while the remaining columns act as discriminator of the ranking dimension.
+       This may well include, but not limited to, the discriminator column.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     described_by = Column(IntEnum(some_class_types), ...)
+       |     rank = Column(Integer())
+       |     ...
+       |     __entity_args__ = {
+       |         'ranked_by': (rank, described_by),
+       |     }
+       |     ...
+       |
+       | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
+
+    * 'editable'
+       This entity argument is a flag that when set to False will register the entity class as globally non-editable.
+
+    * 'editable_fields'
+       List of field_names that should be excluded from the globally non-editable registration, if present.
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
