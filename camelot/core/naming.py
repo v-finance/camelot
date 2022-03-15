@@ -113,7 +113,7 @@ class NamingContext(AbstractNamingContext):
     """
 
     def __init__(self):
-        self._names = dict()
+        self._names = {btype: dict() for btype in BindingType}
         self._name = None
 
     def check_bounded(func):
@@ -248,20 +248,15 @@ class NamingContext(AbstractNamingContext):
         """
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
+        if binding_type not in BindingType:
+            raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            bind = self._names.get(name[0])
-            if rebind:
-                if bind is not None:
-                    bound_obj, bound_type = bind
-                    if binding_type == BindingType.named_context and bound_type == BindingType.named_object:
-                        raise NamingException(NamingException.Message.not_context)
-                    if binding_type == BindingType.named_object and bound_type == BindingType.named_context:
-                        raise NamingException(NamingException.Message.not_object)
-            elif bind is not None:
+            bound_obj = self._names[binding_type].get(name[0])
+            if not rebind and bound_obj is not None:
                 raise NamingException(NamingException.Message.already_bound)
 
             # Add the object to the registry for the given binding_type.
-            self._names[name[0]] = (binding_type, obj)
+            self._names[binding_type][name[0]] = obj
             # Determine the full composite named of the bounded object (extending that of this NamingContext).
             composite_name = (*self._name, name[0])
             # If the object is a NamingContext, assign the composite name.
@@ -271,7 +266,9 @@ class NamingContext(AbstractNamingContext):
                 obj._name = composite_name
             return composite_name
         else:
-            context = self._resolve_context(name[0])
+            context = self._names[BindingType.named_context][name]
+            if context is None:
+                raise NamingException(NamingException.Message.not_found)
             if binding_type == BindingType.named_context:
                 if rebind:
                     return obj.rebind_context(name[1:], obj)
@@ -294,34 +291,19 @@ class NamingContext(AbstractNamingContext):
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
         if len(name) == 1:
-            bind = self._names.get(name[0])
-            if bind is None:
+            obj = self._names[BindingType.named_object].get(name[0])
+            if obj is None:
                 raise NamingException(NamingException.Message.not_found)
-            _, obj = bind
             return obj
         else:
-            context = self._resolve_context(name[0])
+            context = self._names[BindingType.named_context][name[0]]
+            if context is None:
+                raise NamingException(NamingException.Message.not_found)
+
             return context.resolve(name[1:])
 
-    def _resolve_context(self, name):
-        """
-        Resolve the given name in this context non-recursively, expecting the result to be a NamingContext.
-        :param name: name under which the object will be bound.
-        :raises:
-            NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
-            NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext`
-        """
-        bind = self._names[name]
-        if bind is None:
-            raise NamingException(NamingException.Message.not_found)
-        bound_type, bound_context = bind
-        if bound_type != BindingType.named_context:
-            raise NamingException(NamingException.Message.not_context)
-        return bound_context
-
     def list(self):
-        return self._names.keys()
+        return self._names[BindingType.named_object].keys()
 
 class InitialNamingContext(NamingContext):
     """
