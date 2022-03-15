@@ -85,6 +85,11 @@ class AbstractNamingContext(object):
         for name in self.list():
             LOGGER.info(self.verbose_name(name))
 
+class BindingType(Enum):
+
+    named_object = 1
+    named_context = 2
+
 class NamingException(Exception):
 
     def __init__(self, message, *args, **kwargs):
@@ -96,10 +101,11 @@ class NamingException(Exception):
     class Message(Enum):
 
         not_found = 'The given name does not identify a binding'
-        not_context = 'Trying to rebind a context, but an object was found'
-        #not_object = 'Trying to rebind an object, but a context was found'
+        not_context = 'Trying to rebind a context, while an existing object bind was found'
+        not_object = 'Trying to rebind an object, while an existing context bind was found'
         already_bound = 'An object is already bound to the specified name'
         invalid_name = 'The given name is invalid'
+        invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
         context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
 
 class NamingContext(AbstractNamingContext):
@@ -127,7 +133,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.already_bound : An object is already bound under the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
-        self.add_binding(name, obj, rebind=False) #BindingType.nobject
+        self.add_binding(name, obj, rebind=False, BindingType.named_object)
 
     def rebind(self, name, obj):
         """
@@ -144,7 +150,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.not_found: if no binding was found for the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
-        self.add_binding(name, obj, rebind=True)
+        self.add_binding(name, obj, rebind=True, BindingType.named_object)
 
     def bind_context(self, name, context):
         """
@@ -164,7 +170,7 @@ class NamingContext(AbstractNamingContext):
         if not isinstance(context, AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected)
         # Add binding implements all four flavors of binding
-        self.add_binding(name, context, rebind=False) # BindingType.ncontext
+        self.add_binding(name, context, rebind=False, BindingType.named_context)
 
     def rebind_context(self, name, context):
         """
@@ -181,7 +187,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.already_bound : when an object is already bound under the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
-        self.add_binding(name, context, rebind=True)
+        self.add_binding(name, context, rebind=True, BindingType.named_context)
 
     def bind_new_context(self, name):
         """
@@ -194,7 +200,7 @@ class NamingContext(AbstractNamingContext):
         self.bind_context(name, context)
         return context
 
-    def add_binding(self, name, obj, rebind=False):
+    def add_binding(self, name, obj, rebind, binding_type):
         """
         Helper method that implements the addition of all types of bindings.
         It resolves the name to make sure no binding exists already (in case of a bind and bind_context).
@@ -207,35 +213,37 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NamingException NamingException.Message.not_context: if no existing context binding was found when trying to rebind a NamingContext.
             NamingException NamingException.Message.not_found: if no binding was found for the given name.
-            NamingException NamingException.Message.already_bound : An object is already bound under the supplied name.
+            NamingException NamingException.Message.already_bound: when an object is already bound under the supplied name.
+            NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
         """
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
         if len(name) == 1:
+            bind = self._names.get(name[0])
             if rebind:
-                entry = self._names.get(name[0])
-                if entry is not None:
-                    if isinstance(obj, NamingContext):
-                        if not isinstance(entry, NamingContext):
-                            raise NamingException(NamingException.Message.not_context)
-                    #elif isinstance(entry, NamingContext):
-                        #raise NamingException(NamingException.Message.not_object)
-                #self._names[name[0]] = None
-            else:
+                if bind is not None:
+                    bound_obj, bound_type = bind
+                    if binding_type == BindingType.named_context and bound_type == BindingType.named_object:
+                        raise NamingException(NamingException.Message.not_context)
+                    if binding_type == BindingType.named_object and bound_type == BindingType.named_context:
+                        raise NamingException(NamingException.Message.not_object)
+            elif bind is not None:
                 raise NamingException(NamingException.Message.already_bound)
-            self._names[name[0]] = obj
+            self._names[name[0]] = (binding_type, obj)
         else:
             context = self._resolve_context(name)
-            if isinstance(obj, NamingContext):
+            if binding_type == BindingType.named_context:
                 if rebind:
                     obj.rebind_context(name[1:], obj)
                 else:
                     obj.bind_context(name[1:], obj)
-            else:
+            elif binding_type == BindingType.named_object:
                 if rebind:
                     context.rebind(name[1:], obj)
                 else:
                     context.bind(name[1:], obj)
+            else:
+                raise NamingException(NamingException.Message.invalid_binding_type)
 
     def resolve(self, name: Name):
         """
@@ -246,9 +254,10 @@ class NamingContext(AbstractNamingContext):
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
         if len(name) == 1:
-            obj = self._names.get(name[0])
-            if obj is None:
+            bind = self._names.get(name[0])
+            if bind is None:
                 raise NamingException(NamingException.Message.not_found)
+            _, obj = bind
             return obj
         else:
             context = self._resolve_context(name)
@@ -262,12 +271,13 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.not_found: if no binding was found for the given name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext`
         """
-        context = self._names[name]
-        if context is None:
+        bind = self._names[name]
+        if bind is None:
             raise NamingException(NamingException.Message.not_found)
-        if not isinstance(context, NamingContext):
+        bound_type, bound_context = bind
+        if bound_type != BindingType.named_context:
             raise NamingException(NamingException.Message.not_context)
-        return context
+        return bound_context
 
     def list(self):
         return self._names.keys()
