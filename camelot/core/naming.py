@@ -255,7 +255,7 @@ class NamingContext(AbstractNamingContext):
             # Add the object to the registry for the given binding_type.
             self._names[name[0]] = (binding_type, obj)
             # Determine the full composite named of the bounded object (extending that of this NamingContext).
-            composite_name = (*self._name, name)
+            composite_name = (*self._name, name[0])
             # If the object is a NamingContext, assign the composite name.
             if binding_type == BindingType.named_context:
                 if obj._name is not None:
