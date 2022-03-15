@@ -81,10 +81,6 @@ class AbstractNamingContext(object):
     def verbose_name(cls, route):
         return '/'.join(route)
 
-    def dump_names(self):
-        for name in self.list():
-            LOGGER.info(self.verbose_name(name))
-
 class BindingType(Enum):
 
     named_object = 1
@@ -128,6 +124,11 @@ class NamingContext(AbstractNamingContext):
                 raise NamingException(NamingException.Message.context_unbounded)
             return func(self, *args, **kwargs)
         return wrapper
+
+    @check_bounded
+    def dump_names(self):
+        for name in self.list():
+            LOGGER.info(self.verbose_name(*self._name, name))
 
     @check_bounded
     def bind(self, name, obj):
