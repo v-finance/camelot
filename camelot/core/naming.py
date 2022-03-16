@@ -160,7 +160,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
         """
         if isinstance(name, str) and len(name):
-            return (name,)
+            return tuple([name])
         if isinstance(name, tuple) and len(name):
             for _name in name:
                 cls._assert_valid_name(_name)
@@ -335,7 +335,7 @@ class NamingContext(AbstractNamingContext):
             # Add the object to the registry for the given binding_type.
             self._bindings[binding_type][name[0]] = obj
             # Determine the full composite named of the bound object (extending that of this NamingContext).
-            qual_name = self.get_qual_name((name[0],))
+            qual_name = self.get_qual_name(name[0])
             # If the object is a NamingContext, assign the composite name.
             if binding_type == BindingType.named_context:
                 if obj._name is not None:

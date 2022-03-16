@@ -31,7 +31,7 @@ class AdminRoute(object):
     """
 
     _admin_counter = itertools.count()
-    _admin_routes = naming_context.bind_new_context(('admin',))
+    _admin_routes = naming_context.bind_new_context('admin')
 
     @classmethod
     def admin_for(cls, route):
@@ -65,17 +65,17 @@ class AdminRoute(object):
         """
         next_admin = cls._admin_counter.__next__()
         try:
-            cls._admin_routes.resolve_context((admin.get_name(),))
+            cls._admin_routes.resolve_context(admin.get_name())
         except NameNotFoundException:
-            cls._admin_routes.bind_new_context((admin.get_name(),))
+            cls._admin_routes.bind_new_context(admin.get_name())
         admin_context = cls._admin_routes.bind_new_context((admin.get_name(), str(next_admin)))
         admin_route = cls._admin_routes.bind((admin.get_name(), str(next_admin)), admin)
         LOGGER.debug('Registered admin route: {} -> {}'.format(admin_route, admin))
         # Create and bind subcontexts for the different type of admin's actions:
-        admin_context.bind_new_context(('actions',))
-        admin_context.bind_new_context(('field',))
-        admin_context.bind_new_context(('form',)).bind_new_context(('actions',))
-        admin_context.bind_new_context(('list',)).bind_new_context(('actions',))
+        admin_context.bind_new_context('actions')
+        admin_context.bind_new_context('field')
+        admin_context.bind_new_context('form').bind_new_context('actions')
+        admin_context.bind_new_context('list').bind_new_context('actions')
         return admin_route
 
     @classmethod
@@ -129,14 +129,14 @@ class AdminRoute(object):
         assert admin_route in naming_context
         field_context = naming_context.resolve_context((*admin_route, 'field'))
         try:
-            context = field_context.resolve_context((field_name, 'actions',))
+            context = field_context.resolve_context((field_name, 'actions'))
         except NameNotFoundException:
-            context = field_context.bind_new_context((field_name,)).bind_new_context(('actions',))
+            context = field_context.bind_new_context(field_name).bind_new_context('actions')
         try:
-            action_route = context.bind((action.get_name(),), action)
+            action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:
-            action_route = context.get_qual_name((action.get_name(),))
-            assert action == context.resolve((action.get_name(),)), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Registered field action route: {} -> {}'.format(action_route, action))
         return action_route
 
@@ -147,10 +147,10 @@ class AdminRoute(object):
         assert admin_route in naming_context
         context = naming_context.resolve_context((*admin_route, 'list', 'actions'))
         try:
-            action_route = context.bind((action.get_name(),), action)
+            action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:
-            action_route = context.get_qual_name((action.get_name(),))
-            assert action == context.resolve((action.get_name(),)), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Registered list action route: {} -> {}'.format(action_route, action))
         return action_route
 
@@ -161,10 +161,10 @@ class AdminRoute(object):
         assert admin_route in naming_context
         context = naming_context.resolve_context((*admin_route, 'form', 'actions'))
         try:
-            action_route = context.bind((action.get_name(),), action)
+            action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:
-            action_route = context.get_qual_name((action.get_name(),))
-            assert action == context.resolve((action.get_name(),)), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Registered form action route: {} -> {}'.format(action_route, action))
         return action_route
 
@@ -173,12 +173,12 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in naming_context
-        context = naming_context.resolve_context((*admin_route, 'actions',))
+        context = naming_context.resolve_context((*admin_route, 'actions'))
         try:
-            action_route = context.bind((action.get_name(),), action)
+            action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:
-            action_route = context.get_qual_name((action.get_name(),))
-            assert action == context.resolve((action.get_name(),)), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
         LOGGER.debug('Registered action route: {} -> {}'.format(action_route, action))
         return action_route
 
